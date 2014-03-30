@@ -86,7 +86,7 @@ public class ScopeEditorPanel {
   private PanelProgressIndicator myCurrentProgress;
   private NamedScopesHolder myHolder;
 
-  public ScopeEditorPanel(Project project, final NamedScopesHolder holder) {
+  public ScopeEditorPanel(@NotNull final Project project, final NamedScopesHolder holder) {
     myProject = project;
     myHolder = holder;
 
@@ -103,20 +103,23 @@ public class ScopeEditorPanel {
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
 
     myTreeMarker = new Marker() {
+      @Override
       public boolean isMarked(VirtualFile file) {
-        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, myHolder)
-                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myHolder), myHolder));
+        return myCurrentScope != null && (myCurrentScope instanceof PackageSetBase ? ((PackageSetBase)myCurrentScope).contains(file, project, myHolder)
+                                                                                   : myCurrentScope.contains(PackageSetBase.getPsiFile(file, myProject), myHolder));
       }
     };
 
     myPatternField.setDialogCaption("Pattern");
     myPatternField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         onTextChange();
       }
     });
 
     myPatternField.getTextField().addCaretListener(new CaretListener() {
+      @Override
       public void caretUpdate(CaretEvent e) {
         myCaretPosition = e.getDot();
         updateCaretPositionText();
@@ -124,6 +127,7 @@ public class ScopeEditorPanel {
     });
 
     myPatternField.getTextField().addFocusListener(new FocusListener() {
+      @Override
       public void focusGained(FocusEvent e) {
         if (myErrorMessage != null) {
           myPositionPanel.setVisible(true);
@@ -131,6 +135,7 @@ public class ScopeEditorPanel {
         }
       }
 
+      @Override
       public void focusLost(FocusEvent e) {
         myPositionPanel.setVisible(false);
         myPanel.revalidate();
@@ -249,21 +254,25 @@ public class ScopeEditorPanel {
     buttonsPanel.add(excludeRec);
 
     include.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         includeSelected(false);
       }
     });
     includeRec.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         includeSelected(true);
       }
     });
     exclude.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         excludeSelected(false);
       }
     });
     excludeRec.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         excludeSelected(true);
       }
@@ -399,6 +408,7 @@ public class ScopeEditorPanel {
   private JComponent createTreeToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     final Runnable update = new Runnable() {
+      @Override
       public void run() {
         rebuild(true);
       }
@@ -431,12 +441,15 @@ public class ScopeEditorPanel {
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){
     myUpdateAlarm.cancelAllRequests();
     final Runnable request = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
           public void run() {
             if (updateText) {
               final String text = myCurrentScope != null ? myCurrentScope.getText() : null;
               SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   try {
                     myIsInUpdate = true;
@@ -541,12 +554,14 @@ public class ScopeEditorPanel {
 
   private void updateTreeModel(final boolean requestFocus) throws ProcessCanceledException {
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
-    progress.setBordersVisible(false); 
+    progress.setBordersVisible(false);
     myCurrentProgress = progress;
     Runnable updateModel = new Runnable() {
+      @Override
       public void run() {
         final ProcessCanceledException [] ex = new ProcessCanceledException[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             try {
@@ -563,6 +578,7 @@ public class ScopeEditorPanel {
               }
 
               SwingUtilities.invokeLater(new Runnable(){
+                @Override
                 public void run() { //not under progress
                   myPackageTree.setModel(model);
                   myTreeExpansionMonitor.restore();
@@ -620,6 +636,7 @@ public class ScopeEditorPanel {
     myMatchingCountPanel.repaint();
     if (requestFocus) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myPatternField.getTextField().requestFocusInWindow();
         }
@@ -641,6 +658,7 @@ public class ScopeEditorPanel {
     private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -672,11 +690,13 @@ public class ScopeEditorPanel {
       myUpdate = update;
     }
 
+    @Override
     @NotNull
     protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
         group.add(new AnAction(provider.getDisplayName()) {
+          @Override
           public void actionPerformed(final AnActionEvent e) {
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             myUpdate.run();
@@ -686,6 +706,7 @@ public class ScopeEditorPanel {
       return group;
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
@@ -703,10 +724,12 @@ public class ScopeEditorPanel {
       myUpdate = update;
     }
 
+    @Override
     public boolean isSelected(AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
@@ -719,31 +742,32 @@ public class ScopeEditorPanel {
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
       super(new Consumer<JComponent>() {
+        @Override
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);
         }
       });
-      myRequestFocus = requestFocus;
-    }
-
-    public void start() {
-      super.start();
+      myRequestFocus = requestFocus; 
       myTextChanged = false;
     }
 
+    @Override
     public boolean isCanceled() {
       return super.isCanceled() || myTextChanged;
     }
 
+    @Override
     public void stop() {
       super.stop();
       setToComponent(myMatchingCountLabel, myRequestFocus);
     }
 
+    @Override
     public String getText() { //just show non-blocking progress
       return null;
     }
 
+    @Override
     public String getText2() {
       return null;
     }

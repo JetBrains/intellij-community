@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.resolve
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -123,8 +125,8 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assert other0.isInheritor(i0, true)
     assert !other0.isInheritor(i0, false)
 
-    assert ClassInheritorsSearch.search(i0).findAll() == [m0, b1, other0]
-    assert ClassInheritorsSearch.search(m0).findAll() == [b1, other0]
+    assert ClassInheritorsSearch.search(i0).findAll() == [m0, b1, other0] as Set
+    assert ClassInheritorsSearch.search(m0).findAll() == [b1, other0] as Set
 
     assert fooInheritors(i0) == [fooMethod(m0), fooMethod(other0)] as Set
     assert fooInheritors(m0) == [fooMethod(other0), fooMethod(b1)] as Set
@@ -149,10 +151,50 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
     Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
     PsiFile javaSrc = psiManager.findFile(pkgChildren.find { it.name == 'LibraryClass.java' })
-    assert !javaSrc.node.parsed
+    assert !javaSrc.contentsLoaded
+    assert !javaSrc.stub
 
     assert pkg.containsClassNamed('LibraryClass')
+    assert !javaSrc.contentsLoaded
+    assert !javaSrc.stub
     assert !javaSrc.node.parsed
   }
 
+  @Override
+  protected boolean toAddSourceRoot() {
+    return false;
+  }
+
+  public void "test do not build stubs in source jars"() {
+    def facade = JavaPsiFacade.getInstance(project)
+    def scope = GlobalSearchScope.allScope(project)
+
+    String testDataPathForTest = PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources"
+    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(testDataPathForTest)
+    def localFile = myFixture.copyFileToProject(testDataPathForTest + File.separator + "Foo.java", 'Foo.java')
+    assert localFile != null
+
+    checkFileIsNotLoadedAndHasNoStub(localFile)
+    assert facade.findClasses('Foo', scope).size() == 0
+    PsiTestUtil.addLibrary(myModule, 'cas', lib.path, [] as String[], ["/classesAndSources.jar!/"] as String[])
+
+    def vfile = lib.findChild("classesAndSources.jar")
+    assert vfile != null
+    vfile = JarFileSystem.getInstance().getJarRootForLocalFile(vfile);
+    assert vfile != null
+    vfile = vfile.findChild('LibraryClass.java');
+    assert vfile != null
+
+    assert facade.findClasses('LibraryClass', scope).size() == 0
+
+    checkFileIsNotLoadedAndHasNoStub(vfile)
+  }
+
+  private void checkFileIsNotLoadedAndHasNoStub(VirtualFile vfile) {
+    def file = PsiManager.getInstance(project).findFile(vfile);
+    assert file != null
+
+    assert !file.contentsLoaded
+    assert !file.stub
+  }
 }

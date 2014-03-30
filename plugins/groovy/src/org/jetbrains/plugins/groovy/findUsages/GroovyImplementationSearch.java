@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,9 +32,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyImplementationSearch implements QueryExecutor<PsiElement, PsiElement> {
+public class GroovyImplementationSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull PsiElement source, @NotNull Processor<PsiElement> consumer) {
+  public boolean execute(@NotNull DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull Processor<PsiElement> consumer) {
+    final PsiElement source = queryParameters.getElement();
     if (source instanceof GrAccessorMethod) {
       GrField property = ((GrAccessorMethod)source).getProperty();
       return consumer.process(property);
@@ -41,7 +43,7 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
     else if (source instanceof GrMethod) {
       GrReflectedMethod[] reflectedMethods = ((GrMethod)source).getReflectedMethods();
       for (GrReflectedMethod reflectedMethod : reflectedMethods) {
-        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(reflectedMethod);
+        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(reflectedMethod, queryParameters.getScope());
         if (!ContainerUtil.process(implementations, consumer)) return false;
       }
     }
@@ -49,7 +51,7 @@ public class GroovyImplementationSearch implements QueryExecutor<PsiElement, Psi
     else if (source instanceof GrField) {
       for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors((GrField)source)) {
 
-        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(method);
+        PsiMethod[] implementations = MethodImplementationsSearch.getMethodImplementations(method, queryParameters.getScope());
         if (!ContainerUtil.process(implementations, consumer)) return false;
       }
     }

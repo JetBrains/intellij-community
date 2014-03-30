@@ -5,8 +5,8 @@ class C {
     System.out.println(s2 + s3);
 
     AutoCloseable r1 = null;
-    try (AutoCloseable r2 = r1, AutoCloseable r3 = null) {
-      System.out.println(r2 + r3);
+    try (AutoCloseable r2 = r1; AutoCloseable r3 = null) {
+      System.out.println(r2.toString() + r3.toString());
     }
   }
 
@@ -20,7 +20,7 @@ class C {
       System.out.println(r2 + r3);
     }
   }
-  
+
   int boxing(Long l) {
     long ll = l;
     return (int) ll;
@@ -83,4 +83,47 @@ class C {
     return null;
   }
 
+  public void neededResourceVariable(java.io.InputStream in) throws java.io.IOException {
+    try (java.io.InputStream inn = in) {
+      final int read = inn.read();
+      // do stuff with in
+    }
+  }
+
+  int parenthesized() {
+    final int  i = 1 + 2;
+    return (i);
+  }
+
+  void parenthesized2() {
+    final RuntimeException  t = new RuntimeException();
+    throw (t);
+  }
+
+  void parenthesized3(int i) {
+    int j = (i);
+  }
+
+  void parenthesized4(int k) {
+    final int j = 1;
+    k = (j);
+  }
+
+  void parenthesized5() {
+    final int j = 1;
+    int k = (j);
+    System.out.println(k);
+  }
+
+  void usedIn8Inner(int j) {
+    for (int i = 0; i < 7; i++) {
+      int k = i;
+      int n = j;
+      class F {
+        {
+          System.out.println(k + n);
+        }
+      }
+    }
+  } 
 }

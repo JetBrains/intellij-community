@@ -27,16 +27,17 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
+import org.jetbrains.plugins.javaFX.packaging.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -105,57 +106,46 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        ArtifactAntGenerationContext context,
                                        CompositeGenerator generator) {
     if (preprocessing) return;
+    if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) return;
+
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
-    final String artifactName = FileUtil.getNameWithoutExtension(rootElement.getName());
 
-    final String tempDirPath = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
+    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
+    String artifactFileName = rootElement.getName();
+    for (PackagingElement<?> child : rootElement.getChildren()) {
+      if (child instanceof ArchivePackagingElement) {
+        artifactFileName = ((ArchivePackagingElement)child).getArchiveFileName();
+        children.addAll(((ArchivePackagingElement)child).getChildren());
+      } else {
+        children.add(child);
+      }
+    }
 
-    final List<PackagingElement<?>> children = rootElement.getChildren();
+    final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+
+    final String tempDirPath = BuildProperties.propertyRef(
+      context.createNewTempFileProperty("artifact.temp.output." + artifactName, artifactFileName));
+
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
                                                               new DirectoryAntCopyInstructionCreator(tempDirPath),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
     }
-    
-    final String artifactFileName = rootElement.getName();
+
     final JavaFxArtifactProperties properties =
       (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
 
-    //register application
-    final String appId = artifactName + "_id";
-    final Tag applicationTag = new Tag("fx:application",
-                                       new Pair<String, String>("id", appId),
-                                       new Pair<String, String>("name", artifactName),
-                                       new Pair<String, String>("mainClass", properties.getAppClass()));
-    generator.add(applicationTag);
-
-    //create jar task
-    final Tag createJarTag = new Tag("fx:jar",
-                                     new Pair<String, String>("destfile", tempDirPath + "/" + artifactFileName));
-    createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-    createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
-    generator.add(createJarTag);
-
-    //deploy task
-    final Tag deployTag = new Tag("fx:deploy",
-                                  new Pair<String, String>("width", properties.getWidth()),
-                                  new Pair<String, String>("height", properties.getHeight()),
-                                  new Pair<String, String>("updatemode", properties.getUpdateMode()),
-                                  new Pair<String, String>("outdir", tempDirPath + "/deploy"),
-                                  new Pair<String, String>("outfile", artifactName));
-    deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-
-    deployTag.add(new Tag("fx:info",
-                          new Pair<String, String>("title", properties.getTitle()),
-                          new Pair<String, String>("vendor", properties.getVendor()),
-                          new Pair<String, String>("description", properties.getDescription())));
-    final Tag deployResourcesTag = new Tag("fx:resources");
-    deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempDirPath), 
-                                                 new Pair<String, String>("includes", artifactFileName)));
-    deployTag.add(deployResourcesTag);
-
-    generator.add(deployTag);
+    final JavaFxArtifactProperties.JavaFxPackager javaFxPackager =
+      new JavaFxArtifactProperties.JavaFxPackager(artifact, properties, context.getProject()) {
+        @Override
+        protected void registerJavaFxPackagerError(String message) {}
+      };
+    final List<JavaFxAntGenerator.SimpleTag> tags = 
+      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifact.getName(), tempDirPath);
+    for (JavaFxAntGenerator.SimpleTag tag : tags) {
+      buildTags(generator, tag);
+    }
 
     if (properties.isEnabledSigning()) {
 
@@ -187,7 +177,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
       final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
-      fileset.add(new Tag("include", new Pair<String, String>("name", artifactFileName)));
+      fileset.add(new Tag("include", new Pair<String, String>("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
@@ -197,6 +187,25 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
     deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
     generator.add(deleteTag);
+  }
+
+  private static void buildTags(CompositeGenerator generator, final JavaFxAntGenerator.SimpleTag tag) {
+    final Tag newTag = new Tag(tag.getName(), tag.getPairs()){
+      @Override
+      public void generate(PrintWriter out) throws IOException {
+        final String value = tag.getValue();
+        if (value == null) {
+          super.generate(out);
+        } else {
+          out.print("<" + tag.getName() + ">" + value + "</" + tag.getName() + ">");
+        }
+      }
+    };
+
+    for (JavaFxAntGenerator.SimpleTag simpleTag : tag.getSubTags()) {
+      buildTags(newTag, simpleTag);
+    }
+    generator.add(newTag);
   }
 
   private static String artifactBasedProperty(final String property, String artifactName) {

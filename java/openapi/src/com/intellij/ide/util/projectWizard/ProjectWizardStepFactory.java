@@ -47,7 +47,7 @@ public abstract class ProjectWizardStepFactory {
 
   /**
    * @deprecated Use another version of this method:
-   * @see com.intellij.ide.util.projectWizard.ProjectWizardStepFactory#createSourcePathsStep(WizardContext, SourcePathsBuilder, javax.swing.Icon, String) 
+   * @see com.intellij.ide.util.projectWizard.ProjectWizardStepFactory#createSourcePathsStep(WizardContext, SourcePathsBuilder, javax.swing.Icon, String)
    */
   public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
 
@@ -72,7 +72,7 @@ public abstract class ProjectWizardStepFactory {
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder);
 
   @Nullable
-  public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider);
+  public abstract ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider);
 
-  public abstract ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter);
+  public abstract ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter);
 }

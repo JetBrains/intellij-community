@@ -215,6 +215,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
+  @Override
   protected void resetEditorFrom(final RunConfigurationBase configuration) {
     ArrayList<LogFileOptions> list = new ArrayList<LogFileOptions>();
     final ArrayList<LogFileOptions> logFiles = configuration.getLogFiles();
@@ -246,6 +247,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myShowConsoleOnStdErrCb.setSelected(configuration.isShowConsoleOnStdErr());
   }
 
+  @Override
   protected void applyEditorTo(final RunConfigurationBase configuration) throws ConfigurationException {
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
@@ -277,12 +279,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     configuration.setShowConsoleOnStdErr(myShowConsoleOnStdErrCb.isSelected());
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
     return myWholePanel;
-  }
-
-  protected void disposeEditor() {
   }
 
   private static boolean showEditorDialog(@NotNull LogFileOptions options) {
@@ -303,8 +303,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       super(DiagnosticBundle.message("log.monitor.log.file.column"));
     }
 
+    @Override
     public TableCellRenderer getRenderer(final LogFileOptions p0) {
       return new DefaultTableCellRenderer() {
+        @Override
         public Component getTableCellRendererComponent(JTable table,
                                                        Object value,
                                                        boolean isSelected,
@@ -320,14 +322,17 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       };
     }
 
+    @Override
     public LogFileOptions valueOf(final LogFileOptions object) {
       return object;
     }
 
+    @Override
     public TableCellEditor getEditor(final LogFileOptions item) {
       return new LogFileCellEditor(item);
     }
 
+    @Override
     public void setValue(final LogFileOptions o, final LogFileOptions aValue) {
       if (aValue != null) {
         if (!o.getName().equals(aValue.getName()) || !o.getPathPattern().equals(aValue.getPathPattern())
@@ -340,6 +345,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       }
     }
 
+    @Override
     public boolean isCellEditable(final LogFileOptions o) {
       return !myLog2Predefined.containsKey(o);
     }
@@ -350,18 +356,22 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
 
+    @Override
     public Class getColumnClass() {
       return Boolean.class;
     }
 
+    @Override
     public Boolean valueOf(final LogFileOptions object) {
       return object.isEnabled();
     }
 
+    @Override
     public boolean isCellEditable(LogFileOptions element) {
       return true;
     }
 
+    @Override
     public void setValue(LogFileOptions element, Boolean checked) {
       final PredefinedLogFile predefinedLogFile = myLog2Predefined.get(element);
       if (predefinedLogFile != null) {
@@ -376,18 +386,22 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 
+    @Override
     public Class getColumnClass() {
       return Boolean.class;
     }
 
+    @Override
     public Boolean valueOf(final LogFileOptions element) {
       return element.isSkipContent();
     }
 
+    @Override
     public boolean isCellEditable(LogFileOptions element) {
       return !myLog2Predefined.containsKey(element);
     }
 
+    @Override
     public void setValue(LogFileOptions element, Boolean skipped) {
       element.setSkipContent(skipped.booleanValue());
     }
@@ -395,7 +409,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
   private class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
-    private LogFileOptions myLogFileOptions;
+    private final LogFileOptions myLogFileOptions;
 
     public LogFileCellEditor(LogFileOptions options) {
       myLogFileOptions = options;
@@ -403,6 +417,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       getChildComponent().setEditable(false);
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           showEditorDialog(myLogFileOptions);
           JTextField textField = getChildComponent();
@@ -413,6 +428,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       });
     }
 
+    @Override
     public Object getCellEditorValue() {
       return myLogFileOptions;
     }
@@ -421,6 +437,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       return myComponent.getChildComponent();
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       getChildComponent().setText(((LogFileOptions)value).getName());
       return myComponent;

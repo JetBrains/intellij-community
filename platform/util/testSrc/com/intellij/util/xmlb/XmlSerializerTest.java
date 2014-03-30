@@ -17,13 +17,16 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.*;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -806,6 +809,8 @@ public class XmlSerializerTest extends TestCase {
     public int COUNT = 3;
     @Attribute("name")
     public String name = "James";
+    @Attribute("occupation")
+    public String occupation;
   }
   public void testBeanWithPrimitivePropertyBoundToAttribute() {
     final BeanWithPropertiesBoundToAttribute bean = new BeanWithPropertiesBoundToAttribute();
@@ -848,7 +853,7 @@ public class XmlSerializerTest extends TestCase {
 
     bean.STRING_V = "skip";
 
-    assertSerializer(bean, "<BeanWithPropertyFilter />", "Serialization failure", null);
+    assertSerializer(bean, "<BeanWithPropertyFilter />", null);
   }
 
   public static class BeanWithJDOMElement {
@@ -1024,6 +1029,31 @@ public class XmlSerializerTest extends TestCase {
     }
   }
 
+  public static class ConversionFromTextToAttributeBean {
+    @Property(surroundWithTag = false)
+    public ConditionBean myConditionBean = new ConditionBean();
+  }
+  @Tag("condition")
+  public static class ConditionBean {
+    @Attribute("expression")
+    public String myNewCondition;
+    @Text
+    public String myOldCondition;
+  }
+
+  public void testConversionFromTextToAttribute() {
+    ConversionFromTextToAttributeBean bean = new ConversionFromTextToAttributeBean();
+    bean.myConditionBean.myOldCondition = "2+2";
+    doSerializerTest("<ConversionFromTextToAttributeBean>\n" +
+                     "  <condition>2+2</condition>\n" +
+                     "</ConversionFromTextToAttributeBean>", bean);
+
+    bean = new ConversionFromTextToAttributeBean();
+    bean.myConditionBean.myNewCondition = "2+2";
+    doSerializerTest("<ConversionFromTextToAttributeBean>\n" +
+                     "  <condition expression=\"2+2\" />\n" +
+                     "</ConversionFromTextToAttributeBean>", bean);
+  }
 
   public void testDeserializeInto() throws Exception {
     BeanWithPublicFields bean = new BeanWithPublicFields();
@@ -1086,15 +1116,69 @@ public class XmlSerializerTest extends TestCase {
       bean);
   }
 
+  private static class BeanWithConverter {
+    private static class MyConverter extends Converter<Ref<String>> {
+      @Nullable
+      @Override
+      public Ref<String> fromString(@NotNull String value) {
+        return Ref.create(value);
+      }
+
+      @NotNull
+      @Override
+      public String toString(@NotNull Ref<String> o) {
+        return StringUtil.notNullize(o.get());
+      }
+    }
+
+    @Attribute(converter = MyConverter.class)
+    public Ref<String> foo;
+
+    @OptionTag(converter = MyConverter.class)
+    public Ref<String> bar;
+  }
+
+  public void testConverter() {
+    BeanWithConverter bean = new BeanWithConverter();
+    doSerializerTest("<BeanWithConverter>\n" +
+                     "  <option name=\"bar\" />\n" +
+                     "</BeanWithConverter>", bean);
+
+    bean.foo = Ref.create("testValue");
+    doSerializerTest("<BeanWithConverter foo=\"testValue\">\n" +
+                     "  <option name=\"bar\" />\n" +
+                     "</BeanWithConverter>", bean);
+
+    bean.foo = Ref.create();
+    bean.bar = Ref.create("testValue2");
+    doSerializerTest("<BeanWithConverter foo=\"\">\n" +
+                     "  <option name=\"bar\" value=\"testValue2\" />\n" +
+                     "</BeanWithConverter>", bean);
+  }
+
+  private static class BeanWithDefaultAttributeName {
+    @Attribute
+    public String getFoo() {
+      return "foo";
+    }
+
+    public void setFoo(@SuppressWarnings("UnusedParameters") String value) {
+    }
+  }
+
+  public void testDefaultAttributeName() {
+    BeanWithDefaultAttributeName bean = new BeanWithDefaultAttributeName();
+    doSerializerTest("<BeanWithDefaultAttributeName foo=\"foo\" />", bean);
+  }
 
   //---------------------------------------------------------------------------------------------------
-  private static void assertSerializer(Object bean, String expected, SerializationFilter filter) {
-    assertSerializer(bean, expected, "Serialization failure", filter);
+  private static Element assertSerializer(Object bean, String expected, SerializationFilter filter) {
+    return assertSerializer(bean, expected, "Serialization failure", filter);
   }
 
   private static Object doSerializerTest(String expectedText, Object bean) {
     try {
-      Element element = assertSerializer(bean, expectedText, "Serialization failure", null);
+      Element element = assertSerializer(bean, expectedText, null);
 
       //test deserializer
 

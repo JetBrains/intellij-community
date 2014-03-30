@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,24 +38,9 @@ public class StatusBarUI extends ComponentUI {
   }
 
   @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-  }
-
-  @Override
-  public void uninstallUI(JComponent c) {
-    super.uninstallUI(c);
-  }
-
-  @Override
   public void paint(final Graphics g, final JComponent c) {
     final Rectangle bounds = c.getBounds();
     BACKGROUND_PAINTER.paintBorder(c, g, 0, 0, bounds.width, bounds.height);
-  }
-
-  @Override
-  public void update(Graphics g, JComponent c) {
-    super.update(g, c);
   }
 
   @Override

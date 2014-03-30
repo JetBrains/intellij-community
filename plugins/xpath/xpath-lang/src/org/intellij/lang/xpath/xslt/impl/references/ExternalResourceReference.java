@@ -16,11 +16,8 @@
 
 package org.intellij.lang.xpath.xslt.impl.references;
 
-import org.intellij.lang.xpath.xslt.quickfix.DownloadResourceFix;
-
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -30,85 +27,91 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.xslt.quickfix.DownloadResourceFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-class ExternalResourceReference implements PsiReference, QuickFixProvider<ExternalResourceReference> {
-    private final XmlAttribute myAttribute;
-    private final ExternalResourceManager myResourceManager = ExternalResourceManager.getInstance();
+class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
+  private final XmlAttribute myAttribute;
+  private final ExternalResourceManager myResourceManager = ExternalResourceManager.getInstance();
 
-    public ExternalResourceReference(XmlAttribute attribute) {
-        myAttribute = attribute;
-    }
+  public ExternalResourceReference(XmlAttribute attribute) {
+    myAttribute = attribute;
+  }
 
-    public void registerQuickfix(HighlightInfo highlightInfo, ExternalResourceReference psiReference) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new DownloadResourceFix(myAttribute.getValue()));
-    }
+  @Nullable
+  @Override
+  public LocalQuickFix[] getQuickFixes() {
+    return new LocalQuickFix[] { new DownloadResourceFix(myAttribute.getValue()) };
+  }
 
-    @Nullable
-    public PsiElement getElement() {
-        return myAttribute.getValueElement();
-    }
 
-    public TextRange getRangeInElement() {
-        final XmlAttributeValue value = myAttribute.getValueElement();
-        return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);
-    }
+  @Nullable
+  public PsiElement getElement() {
+    return myAttribute.getValueElement();
+  }
 
-    @Nullable
-    public PsiElement resolve() {
-        final String value = myAttribute.getValue();
-        final String resourceLocation = myResourceManager.getResourceLocation(value);
+  public TextRange getRangeInElement() {
+    final XmlAttributeValue value = myAttribute.getValueElement();
+    return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);
+  }
 
-        //noinspection StringEquality
-        if (resourceLocation != value) {
-            VirtualFile file;
-            try {
-                file = VfsUtil.findFileByURL(new URL(resourceLocation));
-            } catch (MalformedURLException e) {
-                try {
-                    file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
-                } catch (MalformedURLException e1) {
-                    file = null;
-                }
-            }
-            if (file != null) {
-                return myAttribute.getManager().findFile(file);
-            }
+  @Nullable
+  public PsiElement resolve() {
+    final String value = myAttribute.getValue();
+    final String resourceLocation = myResourceManager.getResourceLocation(value);
+
+    //noinspection StringEquality
+    if (resourceLocation != value) {
+      VirtualFile file;
+      try {
+        file = VfsUtil.findFileByURL(new URL(resourceLocation));
+      }
+      catch (MalformedURLException e) {
+        try {
+          file = VfsUtil.findFileByURL(new File(resourceLocation).toURI().toURL());
         }
-        return null;
+        catch (MalformedURLException e1) {
+          file = null;
+        }
+      }
+      if (file != null) {
+        return myAttribute.getManager().findFile(file);
+      }
     }
+    return null;
+  }
 
-    @NotNull
-    public String getCanonicalText() {
-        return myAttribute.getValue();
-    }
+  @NotNull
+  public String getCanonicalText() {
+    return myAttribute.getValue();
+  }
 
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-        myAttribute.setValue(newElementName);
-        final XmlAttributeValue value = myAttribute.getValueElement();
-        assert value != null;
-        return value;
-    }
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    myAttribute.setValue(newElementName);
+    final XmlAttributeValue value = myAttribute.getValueElement();
+    assert value != null;
+    return value;
+  }
 
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-        throw new UnsupportedOperationException();
-    }
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new UnsupportedOperationException();
+  }
 
-    public boolean isReferenceTo(PsiElement element) {
-        return element == resolve();
-    }
+  public boolean isReferenceTo(PsiElement element) {
+    return element == resolve();
+  }
 
-    @NotNull
-    public Object[] getVariants() {
-        return myResourceManager.getResourceUrls(null, false);
-    }
+  @NotNull
+  public Object[] getVariants() {
+    return myResourceManager.getResourceUrls(null, false);
+  }
 
-    public boolean isSoft() {
-        return false;
-    }
+  public boolean isSoft() {
+    return false;
+  }
 }

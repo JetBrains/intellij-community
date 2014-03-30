@@ -17,4 +17,3 @@ Groovy script
       PsiElement(GDOC_COMMENT_DATA)('>     the type of the element')
     PsiWhiteSpace('\n')
     PsiElement(GDOC_COMMENT_END)('*/')
-

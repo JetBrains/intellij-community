@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -44,7 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
-  private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
+  public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -91,7 +92,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, null, ModalityState.current());
+      rebuildList(myInitialIndex, 0, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -255,12 +256,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     cleanupUI(isOk);
-    myActionListener.onClose();
-  }
-
-  @Nullable
-  public static ChooseByNamePopup getActivePopup(@NotNull final Project project) {
-    return CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY.get(project);
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (myActionListener != null) {
+      myActionListener.onClose();
+    }
   }
 
   private void cleanupUI(boolean ok) {
@@ -333,12 +332,17 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("([^:]+)(?::|@|,|)\\[?(\\d+)?(?:(?:\\D)(\\d+)?)?\\]?");
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   @Override
   public String transformPattern(String pattern) {
+    final ChooseByNameModel model = getModel();
+    return getTransformedPattern(pattern, model);
+  }
+
+  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
@@ -348,12 +352,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       regex = patternToDetectLinesAndColumns;
     }
 
-    if (pattern.indexOf('#') != -1) {
-      regex = patternToDetectMembers;
-    }
+    if (model instanceof GotoClassModel2) {
+      if (pattern.indexOf('#') != -1) {
+        regex = patternToDetectMembers;
+      }
 
-    if (pattern.indexOf('$') != -1) {
-      regex = patternToDetectAnonymousClasses;
+      if (pattern.indexOf('$') != -1) {
+        regex = patternToDetectAnonymousClasses;
+      }
     }
 
     if (regex != null) {
@@ -363,7 +369,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
 
-    return super.transformPattern(pattern);
+    return pattern;
   }
 
   public int getLinePosition() {

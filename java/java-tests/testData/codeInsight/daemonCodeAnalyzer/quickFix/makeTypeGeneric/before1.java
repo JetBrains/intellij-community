@@ -4,7 +4,7 @@ class CCCC {
   private final static Comparator <caret>TT = new Comparator<String>() {
     @Override
     public int compare(String o1, String o2) {
-      return 0;  //To change body of implemented methods use File | Settings | File Templates.
+      return 0;
     }
   };
   }

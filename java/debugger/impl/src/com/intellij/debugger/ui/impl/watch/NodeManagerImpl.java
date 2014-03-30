@@ -122,8 +122,12 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   public void dispose() {
-    myHistories.clear();
+    clearHistory();
     super.dispose();
+  }
+
+  public void clearHistory() {
+    myHistories.clear();
   }
 
   private DebuggerTree getTree() {

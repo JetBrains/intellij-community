@@ -22,7 +22,9 @@
  */
 package com.intellij.lang.injection;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -74,7 +76,7 @@ public abstract class InjectedLanguageManager {
   @NotNull
   public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
-  public abstract boolean isInjectedFragment(PsiFile file);
+  public abstract boolean isInjectedFragment(@NotNull PsiFile file);
 
   @Nullable
   public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
@@ -83,4 +85,14 @@ public abstract class InjectedLanguageManager {
   public abstract List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
 
   public abstract void dropFileCaches(@NotNull PsiFile file);
+
+  public abstract PsiFile getTopLevelFile(@NotNull PsiElement element);
+
+  @NotNull
+  public abstract List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile);
+
+  public abstract void startRunInjectors(@NotNull Document hostDocument, boolean synchronously);
+
+  public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
+  public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
 }

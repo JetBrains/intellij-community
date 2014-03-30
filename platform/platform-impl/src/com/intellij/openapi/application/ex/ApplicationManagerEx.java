@@ -26,10 +26,16 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class ApplicationManagerEx extends ApplicationManager {
+
+  public static final String IDEA_APPLICATION = "idea";
+
   public static ApplicationEx getApplicationEx() {
     return (ApplicationEx) ourApplication;
   }
 
+  /**
+   * @param appName used to load default configs; if you are not sure, use {@link #IDEA_APPLICATION}.
+   */
   public static void createApplication(boolean internal,
                                        boolean isUnitTestMode,
                                        boolean isHeadlessMode,

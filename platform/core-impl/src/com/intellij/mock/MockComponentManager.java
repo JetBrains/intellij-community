@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,35 +63,35 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public BaseComponent getComponent(String name) {
+  public BaseComponent getComponent(@NotNull String name) {
     return null;
   }
 
-  public <T> void registerService(Class<T> serviceInterface, Class<? extends T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull Class<? extends T> serviceImplementation) {
     myPicoContainer.unregisterComponent(serviceInterface.getName());
     myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceImplementation) {
     registerService(serviceImplementation, serviceImplementation);
   }
 
-  public <T> void registerService(Class<T> serviceInterface, T serviceImplementation) {
+  public <T> void registerService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
     myPicoContainer.registerComponentInstance(serviceInterface.getName(), serviceImplementation);
   }
 
-  public <T> void addComponent(Class<T> interfaceClass, T instance) {
+  public <T> void addComponent(@NotNull Class<T> interfaceClass, @NotNull T instance) {
     myComponents.put(interfaceClass, instance);
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
   @Override
-  public <T> T getComponent(Class<T> interfaceClass, T defaultImplementation) {
+  public <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementation) {
     return getComponent(interfaceClass);
   }
 
@@ -102,7 +102,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   @NotNull
-  public <T> T[] getComponents(Class<T> baseClass) {
+  public <T> T[] getComponents(@NotNull Class<T> baseClass) {
     final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
     return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
@@ -113,6 +113,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return myPicoContainer;
   }
 
+  @NotNull
   @Override
   public MessageBus getMessageBus() {
     return myMessageBus;
@@ -127,8 +128,9 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   public void dispose() {
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
   }
 

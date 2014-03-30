@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
@@ -62,7 +62,7 @@ import java.util.List;
  * Most often this string is an identifier (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#DUMMY_IDENTIFIER}).
  * This is usually done to guarantee that there'll always be some non-empty element there, which will be easy to describe via {@link ElementPattern}s.
  * Also a reference can suddenly appear in that position, which will certainly help invoking its {@link PsiReference#getVariants()}.
- * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>  
+ * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>
  *
  * Q: How do I get automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
@@ -119,7 +119,7 @@ import java.util.List;
  * If your contributor isn't even invoked, probably there was another contributor that said 'stop' to the system, and yours happened to be ordered after
  * that contributor. To test this hypothesis, put a breakpoint to
  * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, com.intellij.util.Consumer)},
- * to the 'return false' line.<p> 
+ * to the 'return false' line.<p>
  *
  * @author peter
  */
@@ -141,8 +141,9 @@ public abstract class CompletionContributor {
    *
    * If you want to implement this functionality directly by overriding this method, the following is for you.
    * Always check that parameters match your situation, and that completion type ({@link CompletionParameters#getCompletionType()}
-   * is of your favourite kind. This method is run outside of read action, so you have to manage this manually
-   * ({@link com.intellij.openapi.application.Application#runReadAction(Runnable)}). Don't take read actions for too long.<p>
+   * is of your favourite kind. This method is run inside a read action. If you do any long activity non-related to PSI in it, please
+   * ensure you call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()} often enough so that the completion process 
+   * can be cancelled smoothly when the user begins to type in the editor. 
    *
    * @param parameters
    * @param result
@@ -205,6 +206,13 @@ public abstract class CompletionContributor {
   }
 
   /**
+   * Allow autoPopup to appear after custom symbol
+   */
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    return false;
+  }
+
+  /**
    * Invoked in a read action in parallel to the completion process. Used to calculate the replacement offset
    * (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#setReplacementOffset(int)})
    * if it takes too much time to spend it in {@link #beforeCompletion(CompletionInitializationContext)},
@@ -216,7 +224,7 @@ public abstract class CompletionContributor {
    */
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
   }
-
+  
   /**
    * @param actionId
    * @return String representation of action shortcut. Useful while advertising something
@@ -228,8 +236,9 @@ public abstract class CompletionContributor {
 
   public static List<CompletionContributor> forParameters(final CompletionParameters parameters) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
+      @Override
       public List<CompletionContributor> compute() {
-        return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+        return forLanguage(PsiUtilCore.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
       }
     });
   }
@@ -245,8 +254,9 @@ public abstract class CompletionContributor {
       super("com.intellij.completion.contributor");
     }
 
+    @NotNull
     @Override
-    protected List<CompletionContributor> buildExtensions(String stringKey, Language key) {
+    protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
       final THashSet<String> allowed = new THashSet<String>();
       while (key != null) {
         allowed.add(keyToString(key));
@@ -256,7 +266,9 @@ public abstract class CompletionContributor {
       return buildExtensions(allowed);
     }
 
-    protected String keyToString(Language key) {
+    @NotNull
+    @Override
+    protected String keyToString(@NotNull Language key) {
       return key.getID();
     }
   }

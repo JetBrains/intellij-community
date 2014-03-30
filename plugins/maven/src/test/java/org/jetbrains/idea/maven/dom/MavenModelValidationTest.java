@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-
-import java.io.IOException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -42,6 +42,26 @@ public class MavenModelValidationTest extends MavenDomWithIndicesTestCase {
                                             "</parent>");
 
     assertCompletionVariants(modulePom, "src", "module1", "pom.xml");
+  }
+
+  public void testRelativePathDefaultValue() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+
+    VirtualFile modulePom = createModulePom("module1",
+                                            "<groupId>test</groupId>" +
+                                            "<artifactId>module1</artifactId>" +
+                                            "<version>1</version>" +
+                                            "<parent>" +
+                                            "<relativePath>../pom.<caret>xml</relativePath>" +
+                                            "</parent>");
+
+    configTest(modulePom);
+    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+
+    assertInstanceOf(elementAtCaret, PsiFile.class);
+    assertEquals(((PsiFile)elementAtCaret).getVirtualFile(), myProjectPom);
   }
 
   public void testUnderstandingProjectSchemaWithoutNamespace() throws Exception {

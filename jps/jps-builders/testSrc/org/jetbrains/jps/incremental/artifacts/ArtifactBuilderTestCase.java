@@ -32,7 +32,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -136,17 +135,4 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     assertDeletedAndCopied(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  protected static void rename(String path, String newName) {
-    try {
-      File file = new File(FileUtil.toSystemDependentName(path));
-      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-      final File tempFile = new File(file.getParentFile(), "__" + newName);
-      FileUtil.rename(file, tempFile);
-      FileUtil.copyContent(tempFile, new File(file.getParentFile(), newName));
-      FileUtil.delete(tempFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 }

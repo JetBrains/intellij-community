@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -109,7 +110,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel myListenersPanel;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
-  private ArrayList<Map.Entry> propertiesList;
+  private final ArrayList<Map.Entry> propertiesList = new ArrayList<Map.Entry>();
   private TestNGListenersTableModel listenerModel;
 
   private TestNGConfiguration config;
@@ -199,6 +200,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       else if (field instanceof EditorTextFieldWithBrowseButton) {
         final com.intellij.openapi.editor.Document componentDocument =
           ((EditorTextFieldWithBrowseButton)field).getChildComponent().getDocument();
+        
         model.setDocument(i, componentDocument);
       }
       else {
@@ -228,6 +230,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private void redisplay() {
     if (packageTest.isSelected()) {
       packagePanel.setVisible(true);
+      packageField.setVisible(true);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(false);
@@ -251,7 +254,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       myPattern.setVisible(false);
     }
     else if (groupTest.isSelected()) {
-      packagePanel.setVisible(false);
+      packagePanel.setVisible(true);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(true);
@@ -259,7 +262,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       myPattern.setVisible(false);
     }
     else if (suiteTest.isSelected()) {
-      packagePanel.setVisible(false);
+      packagePanel.setVisible(true);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(false);
@@ -267,7 +270,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       myPattern.setVisible(false);
     }
     else if (patternTest.isSelected()) {
-      packagePanel.setVisible(false);
+      packagePanel.setVisible(true);
       classField.setVisible(false);
       methodField.setVisible(false);
       groupField.setVisible(false);
@@ -302,7 +305,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       packagesInProject.setSelected(true);
     }
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
-    propertiesList = new ArrayList<Map.Entry>();
+    propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
 
@@ -408,7 +411,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
     }));
 
-    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true);
+    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
+                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+                                                                                                      PlainTextLanguage.INSTANCE.getAssociatedFileType());
     new TextFieldCompletionProvider() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
@@ -502,10 +507,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
-  @Override
-  protected void disposeEditor() {
-  }
-
   public void onTypeChanged(TestType type) {
     //LOGGER.info("onTypeChanged with " + type);
     if (type != TestType.PACKAGE && type != TestType.SUITE) {
@@ -544,7 +545,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     else if (type == TestType.GROUP) {
       groupTest.setSelected(true);
       groupField.setEnabled(true);
-      packageField.setEnabled(false);
+      packageField.setVisible(false);
       classField.setEnabled(false);
       methodField.setEnabled(false);
       suiteField.setEnabled(false);
@@ -553,7 +554,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     else if (type == TestType.SUITE) {
       suiteTest.setSelected(true);
       suiteField.setEnabled(true);
-      packageField.setEnabled(false);
+      packageField.setVisible(false);
       classField.setEnabled(false);
       methodField.setEnabled(false);
       groupField.setEnabled(false);
@@ -563,7 +564,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       patternTest.setSelected(true);
       myPattern.setEnabled(true);
       suiteField.setEnabled(false);
-      packageField.setEnabled(false);
+      packageField.setVisible(false);
       classField.setEnabled(false);
       methodField.setEnabled(false);
       groupField.setEnabled(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,14 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_MOVE_CARET_RIGHT = "EditorRight";
   @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_UP = "EditorPageUp";
   @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_DOWN = "EditorPageDown";
+  @NonNls String ACTION_EDITOR_NEXT_WORD = "EditorNextWord";
+  @NonNls String ACTION_EDITOR_PREVIOUS_WORD = "EditorPreviousWord";
   @NonNls String ACTION_EDITOR_TAB = "EditorTab";
   @NonNls String ACTION_EDITOR_ESCAPE = "EditorEscape";
   @NonNls String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   @NonNls String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
   @NonNls String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
+  @NonNls String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
 
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
@@ -68,6 +71,8 @@ public interface IdeActions {
   @NonNls String ACTION_CODE_COMPLETION = "CodeCompletion";
   @NonNls String ACTION_SMART_TYPE_COMPLETION = "SmartTypeCompletion";
   @Deprecated @NonNls String ACTION_CLASS_NAME_COMPLETION = "ClassNameCompletion";
+  @NonNls String ACTION_HIPPIE_COMPLETION = "HippieCompletion";
+  @NonNls String ACTION_HIPPIE_BACKWARD_COMPLETION = "HippieBackwardCompletion";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM = "EditorChooseLookupItem";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_ALWAYS = "EditorChooseLookupItemAlways";
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_REPLACE = "EditorChooseLookupItemReplace";
@@ -110,6 +115,9 @@ public interface IdeActions {
   @NonNls String ACTION_FIND = "Find";
   @NonNls String ACTION_FIND_NEXT = "FindNext";
   @NonNls String ACTION_FIND_PREVIOUS = "FindPrevious";
+  @NonNls String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
+  @NonNls String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
+  @NonNls String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
   @NonNls String ACTION_COMPILE = "Compile";
   @NonNls String ACTION_COMPILE_PROJECT = "CompileProject";
   @NonNls String ACTION_MAKE_MODULE = "MakeModule";
@@ -183,6 +191,8 @@ public interface IdeActions {
   @NonNls String GROUP_OTHER_MENU = "OtherMenu";
   @NonNls String GROUP_EDITOR = "EditorActions";
   @NonNls String GROUP_DEBUGGER = "DebuggerActions";
+  
+  @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
 
   @NonNls String ACTION_REFRESH = "Refresh";
 
@@ -211,6 +221,7 @@ public interface IdeActions {
   @NonNls String ACTION_QUICK_JAVADOC = "QuickJavaDoc";
   @NonNls String ACTION_QUICK_IMPLEMENTATIONS = "QuickImplementations";
   @NonNls String ACTION_CHECKIN_PROJECT = "CheckinProject";
+  @NonNls String ACTION_FILE_STRUCTURE_POPUP = "FileStructurePopup";
 
   @NonNls String GROUP_USAGE_VIEW_POPUP = "UsageView.Popup";
 
@@ -260,4 +271,8 @@ public interface IdeActions {
   String CHANGES_VIEW_ROLLBACK = "ChangesView.Rollback";
 
   String CONSOLE_CLEAR_ALL = "ConsoleView.ClearAll";
+  String MOVE_TO_ANOTHER_CHANGE_LIST = "ChangesView.Move";
+
+  String ACTION_RECENT_FILES = "RecentFiles";
+  String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
 }

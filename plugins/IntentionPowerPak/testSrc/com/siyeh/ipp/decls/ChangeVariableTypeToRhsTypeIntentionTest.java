@@ -11,6 +11,7 @@ public class ChangeVariableTypeToRhsTypeIntentionTest extends IPPTestCase {
   public void testSimple() { doTest("Declare 'ss' with type 'ArrayList<String>'"); }
 
   public void testSameType() { assertIntentionNotAvailable(); }
+  public void testAnonymous() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {

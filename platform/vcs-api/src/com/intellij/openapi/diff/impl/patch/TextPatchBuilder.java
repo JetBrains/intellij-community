@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
@@ -111,16 +111,16 @@ public class TextPatchBuilder {
         continue;
       }
 
-      final String beforeContent = beforeRevision.getContentAsString();
+      final DiffString beforeContent = DiffString.createNullable(beforeRevision.getContentAsString());
       if (beforeContent == null) {
         throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getPath().getPath());
       }
-      final String afterContent = afterRevision.getContentAsString();
+      final DiffString afterContent = DiffString.createNullable(afterRevision.getContentAsString());
       if (afterContent == null) {
         throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath().getPath());
       }
-      String[] beforeLines = tokenize(beforeContent);
-      String[] afterLines = tokenize(afterContent);
+      DiffString[] beforeLines = tokenize(beforeContent);
+      DiffString[] afterLines = tokenize(afterContent);
 
       DiffFragment[] woFormattingBlocks;
       DiffFragment[] step1lineFragments;
@@ -164,10 +164,10 @@ public class TextPatchBuilder {
               checkCanceled();
               
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
-                addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
+                addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
               }
               for(int i=fragment.getStartingLine1(); i<fragment.getStartingLine1()+fragment.getModifiedLines1(); i++) {
-                addLineToHunk(hunk, beforeLines [i], PatchLine.Type.REMOVE);
+                addLineToHunk(hunk, beforeLines[i], PatchLine.Type.REMOVE);
               }
               for(int i=fragment.getStartingLine2(); i<fragment.getStartingLine2()+fragment.getModifiedLines2(); i++) {
                 addLineToHunk(hunk, afterLines[i], PatchLine.Type.ADD);
@@ -175,14 +175,14 @@ public class TextPatchBuilder {
               contextStart1 = fragment.getStartingLine1()+fragment.getModifiedLines1();
             }
             for(int i=contextStart1; i<contextEnd1; i++) {
-              addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
+              addLineToHunk(hunk, beforeLines[i], PatchLine.Type.CONTEXT);
             }
           }
         }
 
         checkPathEndLine(patch, c.getAfter());
       } else if (! beforeRevision.getPath().equals(afterRevision.getPath())) {
-        final TextFilePatch movedPatch = buildMovedFile(myBasePath, beforeRevision, afterRevision, beforeLines);
+        final TextFilePatch movedPatch = buildMovedFile(myBasePath, beforeRevision, afterRevision);
         checkPathEndLine(movedPatch, c.getAfter());
         result.add(movedPatch);
       }
@@ -205,8 +205,9 @@ public class TextPatchBuilder {
     }
   }
 
-  private static String[] tokenize(String text) {
-    return text.length() == 0 ?  new String[]{text} : new LineTokenizer(text).execute();
+  @NotNull
+  private static DiffString[] tokenize(@NotNull DiffString text) {
+    return text.length() == 0 ? new DiffString[]{text} : text.tokenize();
   }
 
   private FilePatch buildBinaryPatch(final String basePath,
@@ -221,20 +222,20 @@ public class TextPatchBuilder {
     return patch;
   }
 
-  private static void addLineToHunk(final PatchHunk hunk, final String line, final PatchLine.Type type) {
+  private static void addLineToHunk(@NotNull final PatchHunk hunk, @NotNull final DiffString line, final PatchLine.Type type) {
     final PatchLine patchLine;
-    if (!line.endsWith("\n")) {
-      patchLine = new PatchLine(type, line);
+    if (!line.endsWith('\n')) {
+      patchLine = new PatchLine(type, line.toString());
       patchLine.setSuppressNewLine(true);
     }
     else {
-      patchLine = new PatchLine(type, line.substring(0, line.length()-1));
+      patchLine = new PatchLine(type, line.substring(0, line.length() - 1).toString());
     }
     hunk.addLine(patchLine);
   }
 
   private TextFilePatch buildMovedFile(final String basePath, final AirContentRevision beforeRevision,
-                                              final AirContentRevision afterRevision, final String[] lines) throws VcsException {
+                                       final AirContentRevision afterRevision) throws VcsException {
     final TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
     final PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
     result.addHunk(hunk);
@@ -242,14 +243,14 @@ public class TextPatchBuilder {
   }
 
   private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision) throws VcsException {
-    final String content = afterRevision.getContentAsString();
+    final DiffString content = DiffString.createNullable(afterRevision.getContentAsString());
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath().getPath());
     }
-    String[] lines = tokenize(content);
+    DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
-    for(String line: lines) {
+    for (DiffString line : lines) {
       checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.ADD);
     }
@@ -258,14 +259,14 @@ public class TextPatchBuilder {
   }
 
   private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision) throws VcsException {
-    final String content = beforeRevision.getContentAsString();
+    final DiffString content = DiffString.createNullable(beforeRevision.getContentAsString());
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath().getPath());
     }
-    String[] lines = tokenize(content);
+    DiffString[] lines = tokenize(content);
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
-    for(String line: lines) {
+    for (DiffString line : lines) {
       checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
     }

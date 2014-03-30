@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -39,9 +38,6 @@ import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNConflictChoice;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,7 +65,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
 
     public MyChecker(final AnActionEvent e) {
       final DataContext dc = e.getDataContext();
-      myProject = PlatformDataKeys.PROJECT.getData(dc);
+      myProject = CommonDataKeys.PROJECT.getData(dc);
       final Change[] changes = VcsDataKeys.CHANGE_LEAD_SELECTION.getData(dc);
 
       if (myProject == null || changes == null || changes.length != 1) {
@@ -109,18 +105,19 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
     final int result = Messages.showYesNoDialog(checker.getProject(),
                                                 SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
                                                 Messages.getQuestionIcon());
-    if (result == DialogWrapper.OK_EXIT_CODE) {
+    if (result == Messages.YES) {
       final Ref<VcsException> exception = new Ref<VcsException>();
       ProgressManager.getInstance().run(new Task.Backgroundable(checker.getProject(), markText, true, BackgroundFromStartOption.getInstance()) {
         public void run(@NotNull ProgressIndicator indicator) {
           final ConflictedSvnChange change = checker.getChange();
           final FilePath path = change.getTreeConflictMarkHolder();
-          final SVNWCClient client = SvnVcs.getInstance(checker.getProject()).createWCClient();
+          SvnVcs vcs = SvnVcs.getInstance(checker.getProject());
+
           try {
-            client.doResolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true, SVNConflictChoice.MERGED);
+            vcs.getFactory(path.getIOFile()).createConflictClient().resolve(path.getIOFile(), SVNDepth.EMPTY, false, false, true);
           }
-          catch (SVNException e1) {
-            exception.set(new VcsException(e1));
+          catch (VcsException e) {
+            exception.set(e);
           }
           VcsDirtyScopeManager.getInstance(checker.getProject()).filePathsDirty(getDistinctFiles(change), null);
         }

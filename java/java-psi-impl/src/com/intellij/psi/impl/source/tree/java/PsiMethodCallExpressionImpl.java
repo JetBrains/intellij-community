@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -151,8 +152,9 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       for (int i = 0; i < results.length; i++) {
-        final PsiType type = getResultType(call, methodExpression, results[i]);
+        final PsiType type = getResultType(call, methodExpression, results[i], languageLevel);
         if (type == null) {
           return null;
         }
@@ -169,11 +171,13 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
 
     @Nullable
-    private static PsiType getResultType(PsiExpression call, PsiReferenceExpression methodExpression, JavaResolveResult result) {
+    private static PsiType getResultType(PsiMethodCallExpression call,
+                                         PsiReferenceExpression methodExpression,
+                                         JavaResolveResult result,
+                                         @NotNull final LanguageLevel languageLevel) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
 
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
                                                                                     new Condition<IElementType>() {
@@ -193,40 +197,52 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
       if (is15OrHigher) {
-        final PsiSubstitutor substitutor = result.getSubstitutor();
-        PsiType substitutedReturnType = substitutor.substitute(ret);
-        if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
-        if (PsiUtil.isRawSubstitutor(method, substitutor)) {
-          final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
-          if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {
-            return returnTypeErasure;
-          }
-        }
-        PsiType lowerBound = PsiType.NULL;
-        if (substitutedReturnType instanceof PsiCapturedWildcardType) {
-          lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();
-        } else if (substitutedReturnType instanceof PsiWildcardType) {
-          lowerBound = ((PsiWildcardType)substitutedReturnType).getSuperBound();
-        }
-        if (lowerBound != PsiType.NULL) { //? super
-          final PsiClass containingClass = method.getContainingClass();
-          final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-          final PsiClass childClass = qualifierExpression != null ? PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType()) : null;
-          if (containingClass != null && childClass != null) {
-            final PsiType typeInChildClassTypeParams = TypeConversionUtil.getSuperClassSubstitutor(containingClass, childClass, PsiSubstitutor.EMPTY).substitute(ret);
-            final PsiClass substituted = PsiUtil.resolveClassInClassTypeOnly(typeInChildClassTypeParams);
-            if (substituted instanceof PsiTypeParameter) {
-              final PsiClassType[] extendsListTypes = substituted.getExtendsListTypes();
-              if (extendsListTypes.length == 1) {
-                return extendsListTypes[0];
-              }
-            }
-          }
-        }
-        return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+        return captureReturnType(call, method, ret, result.getSubstitutor());
       }
       return TypeConversionUtil.erasure(ret);
     }
+  }
+
+  public static PsiType captureReturnType(PsiMethodCallExpression call,
+                                          PsiMethod method,
+                                          PsiType ret,
+                                          PsiSubstitutor substitutor) {
+    PsiType substitutedReturnType = substitutor.substitute(ret);
+    if (substitutedReturnType == null) return TypeConversionUtil.erasure(ret);
+    if (InferenceSession.wasUncheckedConversionPerformed(call)) {
+      // 18.5.2
+      // if unchecked conversion was necessary, then this substitution provides the parameter types of the invocation type, 
+      // while the return type and thrown types are given by the erasure of m's type (without applying θ').
+      return TypeConversionUtil.erasure(substitutedReturnType);
+    }
+    if (PsiUtil.isRawSubstitutor(method, substitutor)) {
+      final PsiType returnTypeErasure = TypeConversionUtil.erasure(ret);
+      if (Comparing.equal(TypeConversionUtil.erasure(substitutedReturnType), returnTypeErasure)) {
+        return returnTypeErasure;
+      }
+    }
+    PsiType lowerBound = PsiType.NULL;
+    if (substitutedReturnType instanceof PsiCapturedWildcardType) {
+      lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();
+    } else if (substitutedReturnType instanceof PsiWildcardType) {
+      lowerBound = ((PsiWildcardType)substitutedReturnType).getSuperBound();
+    }
+    if (lowerBound != PsiType.NULL) { //? super
+      final PsiClass containingClass = method.getContainingClass();
+      final PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
+      final PsiClass childClass = qualifierExpression != null ? PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType()) : null;
+      if (containingClass != null && childClass != null) {
+        final PsiType typeInChildClassTypeParams = TypeConversionUtil.getSuperClassSubstitutor(containingClass, childClass, PsiSubstitutor.EMPTY).substitute(ret);
+        final PsiClass substituted = PsiUtil.resolveClassInClassTypeOnly(typeInChildClassTypeParams);
+        if (substituted instanceof PsiTypeParameter) {
+          final PsiClassType[] extendsListTypes = substituted.getExtendsListTypes();
+          if (extendsListTypes.length == 1) {
+            return extendsListTypes[0];
+          }
+        }
+      }
+    }
+    return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
   }
 }
 

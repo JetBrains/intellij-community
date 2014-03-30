@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.actions;
 
-import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
@@ -27,7 +27,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -37,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       CompilerManager.getInstance(project).make(new ModuleCompileScope(module, false), filter, null);
     }
     else {
-      final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      final FileSetCompileScope scope = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (scope != null) {
         CompilerManager.getInstance(project).make(scope, filter, null);
       }
@@ -73,13 +73,19 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     DataContext dataContext = event.getDataContext();
     presentation.setVisible(false);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    if (CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
+      presentation.setEnabled(false);
+      return;
+    }
+    
+    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     final Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
@@ -95,7 +101,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
 
     presentation.setVisible(true);
     presentation.setText(createPresentationText(""), true);
-    final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final FileSetCompileScope scope = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (moduleContext == null && scope == null) {
       presentation.setEnabled(false);
       return;
@@ -115,7 +121,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }
@@ -170,7 +176,6 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       return null;
     }
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final FileTypeManager typeManager = FileTypeManager.getInstance();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();

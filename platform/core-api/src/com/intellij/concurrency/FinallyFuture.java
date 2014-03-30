@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -27,14 +29,18 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
   private final DoOnce myFinallyBlock;
   private final AsyncFuture<V> myInner;
 
-  public FinallyFuture(AsyncFuture<V> inner, Runnable finallyBlock) {
+  public FinallyFuture(@NotNull AsyncFuture<V> inner, @NotNull Runnable finallyBlock) {
     myInner = inner;
     myFinallyBlock = new DoOnce(finallyBlock);
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
-    return myInner.cancel(mayInterruptIfRunning);
+    boolean cancel = myInner.cancel(mayInterruptIfRunning);
+    if (cancel) {
+      myFinallyBlock.execute();
+    }
+    return cancel;
   }
 
   @Override
@@ -58,14 +64,15 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
   }
 
   @Override
-  public void addConsumer(Executor executor, final ResultConsumer<V> consumer) {
+  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<V> consumer) {
     myInner.addConsumer(executor, new ResultConsumer<V>() {
       @Override
       public void onSuccess(V value) {
         try {
           myFinallyBlock.execute();
           consumer.onSuccess(value);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           consumer.onFailure(t);
         }
       }
@@ -74,7 +81,8 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
       public void onFailure(Throwable t) {
         try {
           myFinallyBlock.execute();
-        } catch (Throwable t1) {
+        }
+        catch (Throwable t1) {
           t = t1;
         }
         consumer.onFailure(t);
@@ -83,7 +91,7 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
   }
 
   @Override
-  public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public V get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     boolean timeoutOccurred = false;
     try {
       try {
@@ -93,10 +101,11 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
         timeoutOccurred = true;
         throw t;
       }
-    } finally {
-      if (!timeoutOccurred)
-        myFinallyBlock.execute();
     }
-
+    finally {
+      if (!timeoutOccurred) {
+        myFinallyBlock.execute();
+      }
+    }
   }
 }

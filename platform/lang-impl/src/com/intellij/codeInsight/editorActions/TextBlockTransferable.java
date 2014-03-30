@@ -44,7 +44,7 @@ class TextBlockTransferable implements Transferable {
     List<DataFlavor> dataFlavors = new ArrayList<DataFlavor>();
     Collections.addAll(dataFlavors, DataFlavor.stringFlavor, DataFlavor.plainTextFlavor);
     final DataFlavor flavor = RawText.getDataFlavor();
-    if (flavor != null) {
+    if (myRawText != null && flavor != null) {
       dataFlavors.add(flavor);
     }
     for(TextBlockTransferableData data: extraData) {
@@ -80,7 +80,7 @@ class TextBlockTransferable implements Transferable {
           return data;
         }
       }
-      if (Comparing.equal(RawText.getDataFlavor(), flavor)) {
+      if (myRawText != null && Comparing.equal(RawText.getDataFlavor(), flavor)) {
         return myRawText;
       }
       else if (DataFlavor.stringFlavor.equals(flavor)) {

@@ -1,13 +1,11 @@
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.contrib.ssl.EasySSLProtocolSocketFactory;
-import org.apache.commons.httpclient.protocol.Protocol;
-import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,21 +18,21 @@ import java.net.URLEncoder;
  * @author Dmitry Avdeev
  */
 public abstract class BaseRepositoryImpl extends BaseRepository {
-  public static final String EASY_HTTPS = "easyhttps";
-
-  static {
-    Protocol.registerProtocol(EASY_HTTPS, new Protocol(EASY_HTTPS, (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
-  }
+  private static final Logger LOG = Logger.getInstance(BaseRepositoryImpl.class);
+  private final HttpClient myClient;
 
   protected BaseRepositoryImpl() {
+    myClient = createClient();
   }
 
   protected BaseRepositoryImpl(TaskRepositoryType type) {
     super(type);
+    myClient = createClient();
   }
 
-  protected BaseRepositoryImpl(BaseRepository other) {
+  protected BaseRepositoryImpl(BaseRepositoryImpl other) {
     super(other);
+    myClient = other.myClient;
   }
 
   protected static String encodeUrl(@NotNull String s) {
@@ -47,9 +45,19 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected HttpClient getHttpClient() {
-    HttpClient client = new HttpClient();
+    return myClient;
+  }
+
+  private HttpClient createClient() {
+    HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
     configureHttpClient(client);
     return client;
+  }
+
+  protected final void reconfigureClient() {
+    synchronized (myClient) {
+      configureHttpClient(myClient);
+    }
   }
 
   protected void configureHttpClient(HttpClient client) {
@@ -81,7 +89,8 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
       if (login.length() > domainIndex + 1) {
         String user = login.substring(domainIndex + 1);
         return new NTCredentials(user, password, host, domain);
-      } else {
+      }
+      else {
         return null;
       }
     }
@@ -90,7 +99,8 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     }
   }
 
-  protected void configureHttpMethod(HttpMethod method) {}
+  protected void configureHttpMethod(HttpMethod method) {
+  }
 
   public abstract class HttpTestConnection<T extends HttpMethod> extends CancellableConnection {
 
@@ -111,5 +121,37 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     }
 
     protected abstract void doTest(T method) throws Exception;
+  }
+
+  @Override
+  public void setUseProxy(boolean useProxy) {
+    if (useProxy != isUseProxy()) {
+      super.setUseProxy(useProxy);
+      reconfigureClient();
+    }
+  }
+
+  @Override
+  public void setUseHttpAuthentication(boolean useHttpAuthentication) {
+    if (useHttpAuthentication != isUseHttpAuthentication()) {
+      super.setUseHttpAuthentication(useHttpAuthentication);
+      reconfigureClient();
+    }
+  }
+
+  @Override
+  public void setPassword(String password) {
+    if (!password.equals(getPassword())) {
+      super.setPassword(password);
+      reconfigureClient();
+    }
+  }
+
+  @Override
+  public void setUsername(String username) {
+    if (!username.equals(getUsername())) {
+      super.setUsername(username);
+      reconfigureClient();
+    }
   }
 }

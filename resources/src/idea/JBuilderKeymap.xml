@@ -134,7 +134,6 @@
     </action>
     <action id="ShowBookmarks">
       <keyboard-shortcut first-keystroke="shift F11"/>
-      <keyboard-shortcut first-keystroke="shift control K"/>
     </action>
     <action id="ShowSettings"/>
     <action id="StructuralSearchPlugin.StructuralReplaceAction"/>

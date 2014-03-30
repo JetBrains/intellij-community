@@ -35,9 +35,9 @@ public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<Module>("Module");
 
   public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     if (isLibraryElement) {
-      List<OrderEntry> orders = projectRootManager.getFileIndex().getOrderEntriesForFile(file);
+      List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
       for(OrderEntry orderEntry:orders) {
         if (orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
             orderEntry instanceof LibraryOrderEntry) {
@@ -47,12 +47,13 @@ public class ModuleUtilCore {
       return false;
     }
     else {
-      return projectRootManager.getFileIndex().isInContent(file);
+      return projectFileIndex.isInContent(file);
     }
   }
 
   public static String getModuleNameInReadAction(@NotNull final Module module) {
     return new ReadAction<String>(){
+      @Override
       protected void run(final Result<String> result) throws Throwable {
         result.setResult(module.getName());
       }
@@ -62,7 +63,7 @@ public class ModuleUtilCore {
   public static boolean isModuleDisposed(PsiElement element) {
     if (!element.isValid()) return true;
     final Project project = element.getProject();
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     final PsiFile file = element.getContainingFile();
     if (file == null) return true;
     VirtualFile vFile = file.getVirtualFile();
@@ -73,22 +74,24 @@ public class ModuleUtilCore {
 
   @Nullable
   public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return fileIndex.getModuleForFile(file);
+    return ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(file);
   }
 
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
-    if (!element.isValid()) return null;
+    if (!element.isValid()) {
+      return null;
+    }
+    PsiFile containingFile = element.getContainingFile();
+    if (containingFile != null && !containingFile.isValid()) return null;
 
-    Project project = element.getProject();
+    Project project = (containingFile == null ? element : containingFile).getProject();
     if (project.isDefault()) return null;
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
       VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
       if (vFile == null) {
-        PsiFile containingFile = element.getContainingFile();
         vFile = containingFile == null ? null : containingFile.getOriginalFile().getVirtualFile();
         if (vFile == null) {
           return element.getUserData(KEY_MODULE);
@@ -112,7 +115,6 @@ public class ModuleUtilCore {
       }
       return fileIndex.getModuleForFile(vFile);
     }
-    PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
       PsiElement context;
       while ((context = containingFile.getContext()) != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -22,7 +24,7 @@ import java.util.concurrent.Future;
  * Author: dmitrylomov
  */
 public class AsyncUtil {
-  public static <V> V get(Future<V> result) {
+  public static <V> V get(@NotNull Future<V> result) {
     try {
       return result.get();
     }
@@ -30,11 +32,13 @@ public class AsyncUtil {
       throw new Error(e);
     }
     catch (ExecutionException e) {
-      if (e.getCause() instanceof RuntimeException)
-        throw (RuntimeException) e.getCause();
-      else
-        throw new Error(e);
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException)cause;
+      }
+      else {
+        throw new Error(cause);
+      }
     }
-
   }
 }

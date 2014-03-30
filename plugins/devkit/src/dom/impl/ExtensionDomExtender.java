@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 /**
@@ -49,16 +49,71 @@ import java.util.*;
  */
 public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
+  private static final Converter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
+
+  private static class MyRequired implements Required {
+    @Override
+    public boolean value() {
+      return true;
+    }
+
+    @Override
+    public boolean nonEmpty() {
+      return true;
+    }
+
+    @Override
+    public boolean identifier() {
+      return false;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+      return Required.class;
+    }
+  }
+
+  private static class MyExtendClass extends ExtendClassImpl {
+    private final String myInterfaceName;
+
+    private MyExtendClass(String interfaceName) {
+      myInterfaceName = interfaceName;
+    }
+
+    @Override
+    public boolean allowAbstract() {
+      return false;
+    }
+
+    @Override
+    public boolean allowInterface() {
+      return false;
+    }
+
+    @Override
+    public boolean allowEnum() {
+      return false;
+    }
+
+    @Override
+    public String value() {
+      return myInterfaceName;
+    }
+  }
+
   private static final DomExtender EXTENSION_EXTENDER = new DomExtender() {
     public void registerExtensions(@NotNull final DomElement domElement, @NotNull final DomExtensionsRegistrar registrar) {
       final ExtensionPoint extensionPoint = (ExtensionPoint)domElement.getChildDescription().getDomDeclaration();
       assert extensionPoint != null;
 
-      String interfaceName = extensionPoint.getInterface().getStringValue();
+      final String interfaceName = extensionPoint.getInterface().getStringValue();
       final Project project = extensionPoint.getManager().getProject();
 
       if (interfaceName != null) {
-        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class).setConverter(CLASS_CONVERTER);
+        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+          .setConverter(CLASS_CONVERTER)
+          .addCustomAnnotation(new MyExtendClass(interfaceName))
+          .addCustomAnnotation(new MyRequired());
         registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
                      Collections.<With>emptyList());
       }
@@ -131,10 +186,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
                                              final ExtensionPoint extensionPoint,
                                              String prefix,
                                              @Nullable String pluginId) {
-    final XmlTag tag = extensionPoint.getXmlTag();
-    String epName = tag.getAttributeValue("name");
+    String epName = extensionPoint.getName().getStringValue();
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
-    if (epName == null) epName = tag.getAttributeValue("qualifiedName");
+    if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
     if (epName == null) return;
     if (!epName.startsWith(prefix)) return;
 
@@ -162,8 +216,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field, With withElement) {
-    final PsiMethod getter = PropertyUtils.findGetterForField(field);
-    final PsiMethod setter = PropertyUtils.findSetterForField(field);
+    final PsiMethod getter = PropertyUtil.findGetterForField(field);
+    final PsiMethod setter = PropertyUtil.findSetterForField(field);
     if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
       return;
     }
@@ -174,10 +228,18 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
-        boolean isClass = withElement != null || isClassField(fieldName);
+        Class clazz = String.class;
+        if (withElement != null || isClassField(fieldName)) {
+          clazz = PsiClass.class;
+        } else if (field.getType() == PsiType.BOOLEAN) {
+          clazz = Boolean.class;
+        }
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), isClass ? PsiClass.class : String.class).setDeclaringElement(field);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
+        if (clazz.equals(String.class)) {
+          markAsLanguage(extension, fieldName);
+        }
       }
       return;
     }
@@ -207,6 +269,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
   }
 
+  private static void markAsLanguage(DomExtension extension, String fieldName) {
+    if ("language".equals(fieldName)) {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+  }
+
   private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
     if (withElement != null) {
       final String withClassName = withElement.getImplements().getStringValue();
@@ -217,7 +285,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         }
       });
     }
-    if (isClassField(fieldName) || withElement != null) {
+    if (withElement != null || isClassField(fieldName)) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }

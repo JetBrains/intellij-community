@@ -8,6 +8,6 @@ class BrokenCreateMethod {
     }
 
     private Map<String, String[]> toMulti(Map<String, String> bar) {
-        <selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 }

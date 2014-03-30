@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -44,22 +45,24 @@ public class IStubFileElementType<T extends PsiFileStub> extends IFileElementTyp
     return new DefaultStubBuilder();
   }
 
+  @NotNull
   @Override
   public String getExternalId() {
     return "psi.file";
   }
 
   @Override
-  public void serialize(final T stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final T stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public T deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public T deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return (T)new PsiFileStubImpl(null);
   }
 
   @Override
-  public void indexStub(final PsiFileStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiFileStub stub, @NotNull final IndexSink sink) {
   }
 
   public boolean shouldBuildStubFor(final VirtualFile file) {

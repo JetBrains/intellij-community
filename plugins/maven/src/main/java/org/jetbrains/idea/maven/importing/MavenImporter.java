@@ -22,6 +22,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -33,6 +34,8 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -47,13 +50,23 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
-    final List<MavenImporter> result = new ArrayList<MavenImporter>();
-    final Set<ModuleType> moduleTypes = new THashSet<ModuleType>();
+    List<MavenImporter> result = null;
+    Set<ModuleType> moduleTypes = null;
+
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
       if (importer.isApplicable(p)) {
+        if (result == null) {
+          result = new ArrayList<MavenImporter>();
+          moduleTypes = new THashSet<ModuleType>();
+        }
+
         result.add(importer);
         moduleTypes.add(importer.getModuleType());
       }
+    }
+
+    if (result == null) {
+      return Collections.emptyList();
     }
 
     if (moduleTypes.size() <= 1) {
@@ -64,8 +77,9 @@ public abstract class MavenImporter {
     // Now we select one module type and return only those importers that are ok with it.
     // If possible - return at least one importer that explicitly supports packaging of the given maven project.
     ModuleType moduleType = result.get(0).getModuleType();
+    List<String> supportedPackagings = new ArrayList<String>();
     for (MavenImporter importer : result) {
-      final List<String> supportedPackagings = new ArrayList<String>();
+      supportedPackagings.clear();
       importer.getSupportedPackagings(supportedPackagings);
       if (supportedPackagings.contains(p.getPackaging())) {
         moduleType = importer.getModuleType();
@@ -104,11 +118,21 @@ public abstract class MavenImporter {
     return null;
   }
 
+  @Deprecated
   public void resolve(Project project,
                       MavenProject mavenProject,
                       NativeMavenProjectHolder nativeMavenProject,
                       MavenEmbedderWrapper embedder)
     throws MavenProcessCanceledException {
+  }
+
+  public void resolve(Project project,
+                      MavenProject mavenProject,
+                      NativeMavenProjectHolder nativeMavenProject,
+                      MavenEmbedderWrapper embedder,
+                      ResolveContext context)
+    throws MavenProcessCanceledException {
+    resolve(project, mavenProject, nativeMavenProject, embedder);
   }
 
   public abstract void preProcess(Module module,
@@ -129,9 +153,28 @@ public abstract class MavenImporter {
     return true;
   }
 
+  public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
+    List<String> sources = new ArrayList<String>();
+    collectSourceFolders(mavenProject, sources);
+    for (String path : sources) {
+      result.consume(path, JavaSourceRootType.SOURCE);
+    }
+    List<String> testSources = new ArrayList<String>();
+    collectTestFolders(mavenProject, testSources);
+    for (String path : testSources) {
+      result.consume(path, JavaSourceRootType.TEST_SOURCE);
+    }
+  }
+
+  /**
+   * @deprecated override {@link #collectSourceRoots} instead
+   */
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }
 
+  /**
+   * @deprecated override {@link #collectSourceRoots} instead
+   */
   public void collectTestFolders(MavenProject mavenProject, List<String> result) {
   }
 

@@ -284,7 +284,9 @@ public class ReferenceExpressionCompletionContributor {
       final PsiType expectedType = parameters.getExpectedType();
       if (!OBJECT_METHOD_PATTERN.accepts(object) || allowGetClass(object, parameters)) {
         if (parameters.getParameters().getInvocationCount() >= 3 || !itemType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
+          if (!(object instanceof PsiMethod && ((PsiMethod)object).getParameterList().getParametersCount() > 0)) {
+            addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
+          }
         }
       }
 
@@ -489,8 +491,13 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   private static boolean shouldChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {
-    if (item.getObject() instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)item.getObject();
+    Object object = item.getObject();
+    if (object instanceof PsiModifierListOwner && ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+
+    if (object instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)object;
       if (psiMethod().withName("toArray").withParameterCount(1)
                      .definedInClass(CommonClassNames.JAVA_UTIL_COLLECTION).accepts(method)) {
         return false;

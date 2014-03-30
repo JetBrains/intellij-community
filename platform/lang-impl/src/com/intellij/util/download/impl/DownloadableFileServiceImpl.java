@@ -48,10 +48,24 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
         return new DownloadableFileSetDescriptionImpl<DownloadableFileDescription>(version.getName(), version.getVersion(), files);
       }
 
+      @Override
       protected DownloadableFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
         return getInstance().createFileDescription(url, item.getName());
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description) {
+    return createDownloader(description.getFiles(), description.getName());
+  }
+
+  @NotNull
+  @Override
+  public FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
+                                         @NotNull String presentableDownloadName) {
+    return new FileDownloaderImpl(fileDescriptions, null, null, presentableDownloadName);
   }
 
   @NotNull

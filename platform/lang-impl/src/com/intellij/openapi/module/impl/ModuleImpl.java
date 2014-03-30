@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
+import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IModuleStore;
 import com.intellij.openapi.components.impl.stores.ModuleStoreImpl;
@@ -53,7 +52,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
+public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
   @NotNull private final Project myProject;
@@ -65,11 +64,13 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   private String myName;
 
+  private String myModuleType;
+
   private IModuleStore myComponentStore;
   private final ModuleScopeProvider myModuleScopeProvider;
 
   public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project);
+    super(project, "Module " + moduleNameByFileName(PathUtil.getFileName(filePath)));
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
@@ -77,13 +78,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
     init(filePath);
-
   }
 
   @Override
-  protected void bootstrapPicoContainer() {
+  protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    super.bootstrapPicoContainer();
+    super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
@@ -111,9 +111,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   public void loadModuleComponents() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
       loadComponentsConfiguration(plugin.getModuleComponents(), plugin, false);
     }
   }
@@ -237,64 +237,86 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      myModuleType = optionValue;
+    }
     getStateStore().setOption(optionName, optionValue);
   }
 
   @Override
   public void clearOption(@NotNull String optionName) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      myModuleType = null;
+    }
     getStateStore().clearOption(optionName);
   }
 
   @Override
   public String getOptionValue(@NotNull String optionName) {
+    if (ELEMENT_TYPE.equals(optionName)) {
+      if (myModuleType == null) {
+        myModuleType = getStateStore().getOptionValue(optionName);
+      }
+      return myModuleType;
+    }
     return getStateStore().getOptionValue(optionName);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope() {
     return myModuleScopeProvider.getModuleScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
     return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
     return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentScope() {
     return myModuleScopeProvider.getModuleContentScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
     return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
@@ -315,8 +337,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return StringUtil.trimEnd(fileName, ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
@@ -327,7 +350,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
     @Override
-    public void propertyChanged(VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
       if (!isModuleAdded) return;
       final Object requestor = event.getRequestor();
       if (MODULE_RENAMING_REQUESTOR.equals(requestor)) return;
@@ -349,8 +372,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       final VirtualFile moduleFile = getModuleFile();
       if (moduleFile == null) return;
       if (moduleFile.equals(event.getFile())) {
+        String oldName = myName;
         myName = moduleNameByFileName(moduleFile.getName());
-        ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this);
+        ModuleManagerImpl.getInstanceImpl(getProject()).fireModuleRenamedByVfsEvent(ModuleImpl.this, oldName);
       }
     }
 
@@ -365,7 +389,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
 
     @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       final VirtualFile oldParent = event.getOldParent();
       final VirtualFile newParent = event.getNewParent();
       final String dirName = event.getFileName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals;
 
-import com.intellij.psi.PsiLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public interface GrLiteral extends GrExpression, PsiLiteral {
+public interface GrLiteral extends GrExpression, GrLiteralContainer {
 }

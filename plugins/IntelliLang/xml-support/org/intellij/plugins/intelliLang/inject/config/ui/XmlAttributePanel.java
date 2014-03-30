@@ -17,6 +17,8 @@ package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -35,6 +37,9 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
 
   private EditorTextField myLocalName;
   private ComboBox myNamespace;
+  private JTextField myNameTextField;
+
+  private boolean myUseGeneratedName;
 
   public XmlAttributePanel(XmlAttributeInjection injection, Project project) {
     super(injection, project);
@@ -43,9 +48,6 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
     myNamespace.setModel(TagPanel.createNamespaceUriModel(project));
 
     init(injection.copy());
-
-    // be sure to add the listener after initializing the textfield's value
-    myLocalName.getDocument().addDocumentListener(new TreeUpdateListener());
   }
 
   public JPanel getComponent() {
@@ -53,13 +55,21 @@ public class XmlAttributePanel extends AbstractInjectionPanel<XmlAttributeInject
   }
 
   protected void resetImpl() {
+    myNameTextField.setText(myOrigInjection.getDisplayName());
     myLocalName.setText(myOrigInjection.getAttributeName());
     myNamespace.getEditor().setItem(myOrigInjection.getAttributeNamespace());
+
+    myUseGeneratedName = Comparing.equal(myOrigInjection.getDisplayName(), myOrigInjection.getGeneratedName());
   }
 
-  protected void apply(XmlAttributeInjection i) {
-    i.setAttributeName(myLocalName.getText());
-    i.setAttributeNamespace(getNamespace());
+  protected void apply(XmlAttributeInjection other) {
+    other.setAttributeName(myLocalName.getText());
+    other.setAttributeNamespace(getNamespace());
+
+    String name = myNameTextField.getText();
+    boolean useGenerated = myUseGeneratedName && Comparing.equal(myOrigInjection.getDisplayName(), name);
+    String newName = useGenerated || StringUtil.isEmptyOrSpaces(name) ? other.getGeneratedName() : name;
+    other.setDisplayName(newName);
   }
 
   private String getNamespace() {

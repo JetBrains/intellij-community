@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.find.FindModel;
+import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -132,6 +134,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     myTree.addKeyListener(
       new KeyAdapter() {
+        @Override
         public void keyPressed(KeyEvent e) {
           if (!e.isConsumed() && KeyEvent.VK_ENTER == e.getKeyCode()) {
             TreePath path = myTree.getSelectionPath();
@@ -150,7 +153,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     );
 
 
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, FindInProjectUtil.setupViewPresentation(false, new FindModel()));
     myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     Disposer.register(this, myUsagePreviewPanel);
     myUsagePreviewPanel.setVisible(mySettings.isShowPreview());
@@ -158,8 +161,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     setContent(createCenterComponent());
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(final TreeSelectionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (myUsagePreviewPanel.isVisible()) {
               updatePreviewPanel();
@@ -259,6 +264,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myUsagePreviewPanel.updateLayout(infos.isEmpty() ? null : infos);
   }
 
+  @Override
   public void dispose() {
     if (myVisibilityWatcher != null) {
       myVisibilityWatcher.deinstall(this);
@@ -280,7 +286,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   /**
    * Updates current filter. If previously set filter was removed then empty filter is set.
-   * 
+   *
    * @see TodoTreeBuilder#setTodoFilter
    */
   void updateTodoFilter() {
@@ -290,7 +296,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   /**
    * Sets specified <code>TodoFilter</code>. The method also updates window's title.
-   * 
+   *
    * @see TodoTreeBuilder#setTodoFilter
    */
   private void setTodoFilter(TodoFilter filter) {
@@ -317,7 +323,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     if(node.getUserObject() == null){
       return null;
     }
-    return myTodoTreeBuilder.getFileForNode(node);
+    return TodoTreeBuilder.getFileForNode(node);
   }
 
   protected void setDisplayName(String tabName) {
@@ -338,8 +344,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     return getSelectedFile();
   }
 
+  @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -363,14 +370,14 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
-    else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return getSelectedElement();
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiFile file = getSelectedFile();
       if (file != null) {
         return new VirtualFile[]{file.getVirtualFile()};
@@ -386,28 +393,34 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     return super.getData(dataId);
   }
 
+  @Override
   @Nullable
   public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();
   }
 
+  @Override
   public String getNextOccurenceActionName() {
     return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
+  @Override
   @Nullable
   public OccurenceInfo goNextOccurence() {
     return myOccurenceNavigator.goNextOccurence();
   }
 
+  @Override
   public boolean hasNextOccurence() {
     return myOccurenceNavigator.hasNextOccurence();
   }
 
+  @Override
   public String getPreviousOccurenceActionName() {
     return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     return myOccurenceNavigator.hasPreviousOccurence();
   }
@@ -415,8 +428,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected void rebuildWithAlarm(final Alarm alarm) {
     alarm.cancelAllRequests();
     alarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             try {
               myTodoTreeBuilder.rebuildCache();
@@ -426,6 +441,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
           }
         });
         final Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             updateTree();
           }
@@ -436,18 +452,22 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MyTreeExpander implements TreeExpander {
+    @Override
     public boolean canCollapse() {
       return true;
     }
 
+    @Override
     public boolean canExpand() {
       return true;
     }
 
+    @Override
     public void collapseAll() {
       myTodoTreeBuilder.collapseAll();
     }
 
+    @Override
     public void expandAll() {
       myTodoTreeBuilder.expandAll(null);
     }
@@ -460,10 +480,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     MyAutoScrollToSourceHandler() {
     }
 
+    @Override
     protected boolean isAutoScrollMode() {
       return mySettings.isAutoScrollToSource();
     }
 
+    @Override
     protected void setAutoScrollMode(boolean state) {
       mySettings.setAutoScrollToSource(state);
     }
@@ -473,6 +495,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
    * Provides support for "Ctrl+Alt+Up/Down" navigation.
    */
   private final class MyOccurenceNavigator implements OccurenceNavigator {
+    @Override
     public boolean hasNextOccurence() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
@@ -491,6 +514,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       }
     }
 
+    @Override
     public boolean hasPreviousOccurence() {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
@@ -506,20 +530,24 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       return parent == null || parent.getIndex(node) == 0 && isFirst(parent);
     }
 
+    @Override
     @Nullable
     public OccurenceInfo goNextOccurence() {
       return goToPointer(getNextPointer());
     }
 
+    @Override
     @Nullable
     public OccurenceInfo goPreviousOccurence() {
       return goToPointer(getPreviousPointer());
     }
 
+    @Override
     public String getNextOccurenceActionName() {
       return IdeBundle.message("action.next.todo");
     }
 
+    @Override
     public String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.todo");
     }
@@ -590,10 +618,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       super(IdeBundle.message("action.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.arePackagesShown();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setShownPackages(state);
       myTodoTreeBuilder.setShowPackages(state);
@@ -605,10 +635,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       super(IdeBundle.message("action.group.by.modules"), null, AllIcons.ObjectBrowser.ShowModules);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.areModulesShown();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setShownModules(state);
       myTodoTreeBuilder.setShowModules(state);
@@ -620,15 +652,18 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       super(IdeBundle.message("action.flatten.packages"), null, PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(mySettings.arePackagesShown());
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.areFlattenPackages();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setAreFlattenPackages(state);
       myTodoTreeBuilder.setFlattenPackages(state);
@@ -636,9 +671,12 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   private final class MyVisibilityWatcher extends VisibilityWatcher {
+    @Override
     public void visibilityChanged() {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myTodoTreeBuilder.setUpdatable(isShowing());
+      if (myProject.isOpen()) {
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        myTodoTreeBuilder.setUpdatable(isShowing());
+      }
     }
   }
 
@@ -648,14 +686,17 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       super("Preview Source", null, AllIcons.Actions.PreviewDetails);
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return mySettings.isShowPreview();
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setShowPreview(state);
       myUsagePreviewPanel.setVisible(state);

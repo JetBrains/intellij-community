@@ -78,7 +78,8 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
       final PsiElement parent = context.getParent();
       if (parent instanceof XmlAttribute) {
         final XmlAttribute attribute = (XmlAttribute)parent;
-        if (FxmlConstants.FX_VALUE.equals(attribute.getName())) {
+        final String attributeName = attribute.getName();
+        if (FxmlConstants.FX_VALUE.equals(attributeName)) {
           final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
           if (tagClass != null) {
             final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);

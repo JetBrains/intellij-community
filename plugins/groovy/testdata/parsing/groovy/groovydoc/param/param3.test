@@ -36,4 +36,3 @@ Groovy script
         PsiElement(GDOC_TAG_VALUE_TOKEN)('element')
       PsiElement(DOC_COMMENT_BAD_CHARACTER)('\n')
     PsiElement(GDOC_COMMENT_END)('*/')
-

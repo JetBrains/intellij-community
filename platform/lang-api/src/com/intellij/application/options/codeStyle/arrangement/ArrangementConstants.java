@@ -31,6 +31,14 @@ public class ArrangementConstants {
   @NonNls public static final String MATCHING_RULES_CONTROL_TOOLBAR_PLACE        = "Arrangement.Rule.Match.Control.ToolBar.Place";
   @NonNls public static final String MATCHING_RULES_CONTROL_PLACE                = "Arrangement.Rule.Match.Control.Place";
 
+  @NonNls public static final String MATCHING_RULE_ADD                           = "Arrangement.Rule.Add";
+  @NonNls public static final String MATCHING_RULE_REMOVE                        = "Arrangement.Rule.Remove";
+  @NonNls public static final String MATCHING_RULE_EDIT                          = "Arrangement.Rule.Edit";
+  @NonNls public static final String MATCHING_RULE_MOVE_UP                       = "Arrangement.Rule.Match.Condition.Move.Up";
+  @NonNls public static final String MATCHING_RULE_MOVE_DOWN                     = "Arrangement.Rule.Match.Condition.Move.Down";
+  @NonNls public static final String GROUPING_RULE_MOVE_UP                       = "Arrangement.Rule.Group.Condition.Move.Up";
+  @NonNls public static final String GROUPING_RULE_MOVE_DOWN                     = "Arrangement.Rule.Group.Condition.Move.Down";
+
   public static final int HORIZONTAL_PADDING    = 8;
   public static final int VERTICAL_PADDING      = 4;
   public static final int HORIZONTAL_GAP        = 5;

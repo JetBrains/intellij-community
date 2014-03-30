@@ -15,17 +15,18 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.awt.*;
 
 /**
  * @author nik
@@ -34,7 +35,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private final XDebuggerTree myTree;
   private final Rectangle myLastVisibleNodeRect;
   private final Map<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo> myNode2State = new HashMap<XDebuggerTreeNode, XDebuggerTreeState.NodeInfo>();
-  private final Map<XValueNodeImpl, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<XValueNodeImpl, XDebuggerTreeState.NodeInfo>();
+  private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<RestorableStateNode, XDebuggerTreeState.NodeInfo>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
 
@@ -59,24 +60,21 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private void restoreNode(final XDebuggerTreeNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo) {
-    if (treeNode instanceof XValueNodeImpl) {
-      XValueNodeImpl node = (XValueNodeImpl)treeNode;
-      String nodeName = node.getName();
-      String nodeValue = node.getValue();
-      if (nodeName == null || nodeValue == null) {
-        myNode2ParentState.put(node, parentInfo);
+    if (treeNode instanceof RestorableStateNode) {
+      RestorableStateNode node = (RestorableStateNode)treeNode;
+      if (node.isComputed()) {
+        doRestoreNode(node, parentInfo, node.getName());
       }
       else {
-        doRestoreNode(node, parentInfo, nodeName, nodeValue);
+        myNode2ParentState.put(node, parentInfo);
       }
     }
   }
 
-  private void doRestoreNode(final XValueNodeImpl treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName,
-                             final String nodeValue) {
+  private void doRestoreNode(final RestorableStateNode treeNode, final XDebuggerTreeState.NodeInfo parentInfo, final String nodeName) {
     XDebuggerTreeState.NodeInfo childInfo = parentInfo.removeChild(nodeName);
     if (childInfo != null) {
-      if (!childInfo.getValue().equals(nodeValue)) {
+      if (!Comparing.equal(childInfo.getValue(), treeNode.getRawValue())) {
         treeNode.markChanged();
       }
       if (!myStopRestoringSelection && childInfo.isSelected()) {
@@ -89,14 +87,17 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
         }
       }
 
-      restoreChildren(treeNode, childInfo);
+      restoreChildren((XDebuggerTreeNode)treeNode, childInfo);
+    }
+    else {
+      treeNode.markChanged();
     }
   }
 
-  public void nodeLoaded(@NotNull final XValueNodeImpl node, final String name, final String value) {
+  public void nodeLoaded(@NotNull final RestorableStateNode node, final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     if (parentInfo != null) {
-      doRestoreNode(node, parentInfo, name, value);
+      doRestoreNode(node, parentInfo, name);
     }
     disposeIfFinished();
   }

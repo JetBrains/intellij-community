@@ -31,7 +31,6 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.jetbrains.idea.svn.portable.JavaHLSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -47,13 +46,15 @@ import java.util.LinkedList;
 public class SvnRecursiveStatusWalker {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnRecursiveStatusWalker");
   private final StatusWalkerPartner myPartner;
+  private final SvnVcs myVcs;
   private final Project myProject;
   private final StatusReceiver myReceiver;
   private final LinkedList<MyItem> myQueue;
   private final MyHandler myHandler;
 
-  public SvnRecursiveStatusWalker(final Project project, final StatusReceiver receiver, final StatusWalkerPartner partner) {
-    myProject = project;
+  public SvnRecursiveStatusWalker(final SvnVcs vcs, final StatusReceiver receiver, final StatusWalkerPartner partner) {
+    myVcs = vcs;
+    myProject = vcs.getProject();
     myReceiver = receiver;
     myPartner = partner;
     myQueue = new LinkedList<MyItem>();
@@ -61,7 +62,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
-    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), false);
+    final MyItem root = new MyItem(myVcs, rootPath, depth, myPartner.createStatusClient(), false);
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
@@ -70,7 +71,6 @@ public class SvnRecursiveStatusWalker {
       final MyItem item = myQueue.removeFirst();
       final FilePath path = item.getPath();
       final File ioFile = path.getIOFile();
-      if (! ioFile.exists()) continue;  // skip items that have already moved/deleted (some time passed after they were reported as dirty)
 
       if (path.isDirectory()) {
         myHandler.setCurrentItem(item);
@@ -84,7 +84,7 @@ public class SvnRecursiveStatusWalker {
         }
       } else {
         try {
-          final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
+          final SVNStatus status = item.getClient(ioFile).doStatus(ioFile, false, false);
           myReceiver.process(path, status);
         } catch (SVNException e) {
           handleStatusException(item, path, e);
@@ -116,18 +116,20 @@ public class SvnRecursiveStatusWalker {
     private final Project myProject;
     private final FilePath myPath;
     private final SVNDepth myDepth;
-    private final SVNStatusClient myClient;
     private final SvnStatusClientI mySvnClient;
+    private final SvnStatusClientI myCommandLineClient;
     private final boolean myIsInnerCopyRoot;
     private final SvnConfiguration myConfiguration17;
+    private final SvnVcs myVcs;
 
-    private MyItem(Project project, FilePath path, SVNDepth depth, SVNStatusClient client, boolean isInnerCopyRoot) {
-      myProject = project;
+    private MyItem(SvnVcs vcs, FilePath path, SVNDepth depth, SVNStatusClient client, boolean isInnerCopyRoot) {
+      myVcs = vcs;
+      myProject = vcs.getProject();
       myConfiguration17 = SvnConfiguration.getInstance(myProject);
       myPath = path;
       myDepth = depth;
-      myClient = client;
-      mySvnClient = new SvnkitSvnStatusClient(client);
+      mySvnClient = new SvnkitSvnStatusClient(myVcs, client);
+      myCommandLineClient = new SvnCommandLineStatusClient(myVcs);
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
@@ -139,22 +141,20 @@ public class SvnRecursiveStatusWalker {
       return myDepth;
     }
 
-    public SvnStatusClientI getClient() {
-      return mySvnClient;
-    }
-    
     public SvnStatusClientI getClient(final File file) {
-      if (! SVNDepth.INFINITY.equals(myDepth)) {
+      // TODO: refactor to ClientFactory usage but carefully save all parameters passed in myClient - fileProvider and
+      // TODO: event handler (for cancel support)
+      WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
+
+      if (format == WorkingCopyFormat.ONE_DOT_EIGHT) {
+        return myCommandLineClient;
+      }
+
+      if (format == WorkingCopyFormat.ONE_DOT_SIX) {
         return mySvnClient;
       }
-      // check format
-      if (CheckJavaHL.isPresent() && SvnConfiguration.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
-          Svn17Detector.is17(myProject, file)) {
-        return new JavaHLSvnStatusClient(myProject);
-      } else if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration17.myUseAcceleration) && Svn17Detector.is17(myProject, file)) {
-        return new SvnCommandLineStatusClient(myProject);
-      }
-      return mySvnClient;
+
+      return myConfiguration17.isCommandLine() ? myCommandLineClient : mySvnClient;
     }
 
     public boolean isIsInnerCopyRoot() {
@@ -187,7 +187,7 @@ public class SvnRecursiveStatusWalker {
           return true;
         }
         if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-          final MyItem childItem = new MyItem(myProject, path, newDepth, myPartner.createStatusClient(), true);
+          final MyItem childItem = new MyItem(myVcs, path, newDepth, myPartner.createStatusClient(), true);
           myQueue.add(childItem);
         } else if (vf != null) {
           myReceiver.processUnversioned(vf);
@@ -229,12 +229,13 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void checkIfCopyRootWasReported(@Nullable final SVNStatus ioFileStatus, final File ioFile) {
-      if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, myCurrentItem.getPath().getIOFile())) {
+      File itemFile = myCurrentItem.getPath().getIOFile();
+      if (! myMetCurrentItem && FileUtil.filesEqual(ioFile, itemFile)) {
         myMetCurrentItem = true;
         SVNStatus statusInner;
         try {
           statusInner = ioFileStatus != null ? ioFileStatus :
-            myCurrentItem.getClient().doStatus(myCurrentItem.getPath().getIOFile(), false);
+            myCurrentItem.getClient(itemFile).doStatus(itemFile, false);
         }
         catch (SVNException e) {
           LOG.info(e);
@@ -262,10 +263,9 @@ public class SvnRecursiveStatusWalker {
         }
         if (vf != null) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
-            myReceiver.processCopyRoot(vf, statusInner.getURL(),
-                                     WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()), statusInner.getRepositoryRootURL());
+            myReceiver.processCopyRoot(vf, statusInner.getURL(), myVcs.getWorkingCopyFormat(ioFile), statusInner.getRepositoryRootURL());
           } else {
-            myReceiver.bewareRoot(vf, statusInner.getURL(), WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+            myReceiver.bewareRoot(vf, statusInner.getURL());
           }
         }
       }
@@ -295,7 +295,7 @@ public class SvnRecursiveStatusWalker {
             //myReceiver.processUnversioned(vFile);
             //processRecursively(vFile, myCurrentItem.getDepth());
           } else {
-            final MyItem childItem = new MyItem(myProject, new FilePathImpl(vFile), SVNDepth.INFINITY,
+            final MyItem childItem = new MyItem(myVcs, new FilePathImpl(vFile), SVNDepth.INFINITY,
                                                 myPartner.createStatusClient(), true);
             myQueue.add(childItem);
           }

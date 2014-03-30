@@ -149,7 +149,6 @@ public class ListScrollingUtil {
 
   public static void ensureIndexIsVisible(JList list, int index, int moveDirection) {
     int visible = getVisibleRowCount(list);
-    int size = list.getModel().getSize();
     int top;
     int bottom;
     if (moveDirection == 0) {
@@ -164,6 +163,11 @@ public class ListScrollingUtil {
       top = index;
       bottom = index + ROW_PADDING;
     }
+    ensureRangeIsVisible(list, top, bottom);
+  }
+
+  public static void ensureRangeIsVisible(JList list, int top, int bottom) {
+    int size = list.getModel().getSize();
     if (top < 0) {
       top = 0;
     }

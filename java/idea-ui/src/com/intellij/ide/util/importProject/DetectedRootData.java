@@ -26,14 +26,10 @@ import java.util.*;
 /**
  * @author nik
  */
-class DetectedRootData {
+public class DetectedRootData {
   private final File myDirectory;
-  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = new MultiMap<DetectedProjectRoot, ProjectStructureDetector>() {
-    @Override
-    protected Map<DetectedProjectRoot, Collection<ProjectStructureDetector>> createMap() {
-      return new LinkedHashMap<DetectedProjectRoot, Collection<ProjectStructureDetector>>();
-    }
-  };
+  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
+
   private boolean myIncluded = true;
   private DetectedProjectRoot mySelectedRoot;
 
@@ -71,6 +67,10 @@ class DetectedRootData {
     return roots.toArray(new DetectedProjectRoot[roots.size()]);
   }
 
+  public boolean isEmpty() {
+    return myRoots.isEmpty();
+  }
+
   public boolean isIncluded() {
     return myIncluded;
   }
@@ -93,7 +93,7 @@ class DetectedRootData {
     mySelectedRoot = root;
   }
 
-  public void removeRoot(DetectedProjectRoot root) {
-    myRoots.remove(root);
+  public Collection<ProjectStructureDetector> removeRoot(DetectedProjectRoot root) {
+    return myRoots.remove(root);
   }
 }

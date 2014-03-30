@@ -15,11 +15,11 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
-import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -78,12 +78,12 @@ public class GitMultiRootBranchConfig {
   
   @NotNull
   Collection<String> getLocalBranches() {
-    return getCommonBranches(true);
+    return GitBranchUtil.getCommonBranches(myRepositories, true);
   }  
 
   @NotNull
   Collection<String> getRemoteBranches() {
-    return getCommonBranches(false);
+    return GitBranchUtil.getCommonBranches(myRepositories, false);
   }
 
   /**
@@ -121,7 +121,7 @@ public class GitMultiRootBranchConfig {
         trackingBranches = tb;
       }
       else {
-        trackingBranches.retainAll(tb);
+        trackingBranches = ContainerUtil.intersection(trackingBranches, tb);
       }
     }
     return trackingBranches == null ? Collections.<String>emptyList() : trackingBranches;
@@ -142,33 +142,6 @@ public class GitMultiRootBranchConfig {
   private static GitRemoteBranch getTrackedBranch(@NotNull GitRepository repository, @NotNull String branchName) {
     GitLocalBranch branch = GitBranchUtil.findLocalBranchByName(repository, branchName);
     return branch == null ? null : branch.findTrackedBranch(repository);
-  }
-
-  @NotNull
-  private Collection<String> getCommonBranches(boolean local) {
-    Collection<String> commonBranches = null;
-    for (GitRepository repository : myRepositories) {
-      GitBranchesCollection branchesCollection = repository.getBranches();
-
-      Collection<String> names = local
-                                 ? GitBranchUtil.convertBranchesToNames(branchesCollection.getLocalBranches())
-                                 : GitBranchUtil.getBranchNamesWithoutRemoteHead(branchesCollection.getRemoteBranches());
-      if (commonBranches == null) {
-        commonBranches = names;
-      }
-      else {
-        commonBranches.retainAll(names);
-      }
-    }
-
-    if (commonBranches != null) {
-      ArrayList<String> common = new ArrayList<String>(commonBranches);
-      Collections.sort(common);
-      return common;
-    }
-    else {
-      return Collections.emptyList();
-    }
   }
 
   @Override

@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,12 +32,15 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -118,22 +123,7 @@ public class PropertiesComponent extends JPanel {
     if (file != null) {
       myFile = file;
       myVcs = vcs;
-      try {
-        vcs.createWCClient().doGetProperty(file, null, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY, new ISVNPropertyHandler() {
-          public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-            final SVNPropertyValue value = property.getValue();
-            if (value != null) {
-              props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
-            }
-          }
-          public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-          }
-          public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-          }
-        }, null);
-      } catch (SVNException e) {
-        props.clear();
-      }
+      collectProperties(vcs, file, props);
     }
     DefaultTableModel model = (DefaultTableModel) myTable.getModel();
     model.setDataVector(createTableModel(props), new Object[] {"Name", "Value"});
@@ -157,6 +147,30 @@ public class PropertiesComponent extends JPanel {
     }
     if (myTable.getRowCount() > 0) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
+    }
+  }
+
+  private void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
+    try {
+      ISVNPropertyHandler handler = new ISVNPropertyHandler() {
+        public void handleProperty(File path, SVNPropertyData property) throws SVNException {
+          final SVNPropertyValue value = property.getValue();
+          if (value != null) {
+            props.put(property.getName(), SVNPropertyValue.getPropertyAsString(property.getValue()));
+          }
+        }
+
+        public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
+        }
+
+        public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
+        }
+      };
+      vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, SVNDepth.EMPTY,
+                                                       handler);
+    }
+    catch (VcsException e) {
+      props.clear();
     }
   }
 
@@ -232,7 +246,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project p = e.getData(PlatformDataKeys.PROJECT);
+      Project p = e.getData(CommonDataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(ID);
     }
   }
@@ -251,7 +265,30 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class SetKeywordsAction extends AnAction {
+  private abstract class BasePropertyAction extends AnAction {
+
+    protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
+      if (!StringUtil.isEmpty(property)) {
+        try {
+          myVcs.getFactory(myFile).createPropertyClient()
+            .setProperty(myFile, property, value != null ? SVNPropertyValue.create(value) : null,
+                         SVNDepth.getInfinityOrEmptyDepth(recursive), force);
+        }
+        catch (VcsException error) {
+          VcsBalloonProblemNotifier
+            .showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
+          // show error message.
+        }
+      }
+    }
+
+    protected void updateFileView(boolean recursive) {
+      setFile(myVcs, myFile);
+      updateFileStatus(recursive);
+    }
+  }
+
+  private class SetKeywordsAction extends BasePropertyAction {
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Edit Keywords");
@@ -263,34 +300,27 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      SVNWCClient wcClient = myVcs.createWCClient();
+      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       SVNPropertyData propValue = null;
       try {
-        propValue = wcClient.doGetProperty(myFile, SVNProperty.KEYWORDS, SVNRevision.UNDEFINED, SVNRevision.WORKING);
-      } catch (SVNException e1) {
-        // show error message
+        propValue = myVcs.getFactory(myFile).createPropertyClient()
+          .getProperty(SvnTarget.fromFile(myFile), SVNProperty.KEYWORDS, false, SVNRevision.WORKING);
       }
-      
+      catch (VcsException e1) {
+        // show erorr message
+      }
+
       SetKeywordsDialog dialog = new SetKeywordsDialog(project,
                                                        propValue != null ? SVNPropertyValue.getPropertyAsString(propValue.getValue()) : null);
       dialog.show();
       if (dialog.isOK()) {
-        String value = dialog.getKeywords();
-        try {
-          wcClient.doSetProperty(myFile, SVNProperty.KEYWORDS, SVNPropertyValue.create(value), false, false, null);
-        }
-        catch (SVNException err) {
-          // show error message
-          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
-        }
+        setProperty(SvnPropertyKeys.SVN_KEYWORDS, dialog.getKeywords(), false, false);
       }
-      setFile(myVcs, myFile);
-      updateFileStatus(false);
+      updateFileView(false);
     }
   }
 
-  private class DeletePropertyAction extends AnAction {
+  private class DeletePropertyAction extends BasePropertyAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Delete Property");
       e.getPresentation().setDescription("Delete selected property");
@@ -301,18 +331,12 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      try {
-        myVcs.createWCClient().doSetProperty(myFile, getSelectedPropertyName(), null, true, false, null);
-      } catch (SVNException error) {
-        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
-        // show error message.
-      }
-      setFile(myVcs, myFile);
-      updateFileStatus(false);
+      setProperty(getSelectedPropertyName(), null, false, true);
+      updateFileView(false);
     }
   }
 
-  private class AddPropertyAction extends AnAction {
+  private class AddPropertyAction extends BasePropertyAction {
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Add Property");
@@ -324,30 +348,20 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, null,
               myFile.isDirectory());
       dialog.show();
       boolean recursive = false;
       if (dialog.isOK()) {
-        String name = dialog.getPropertyName();
-        String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = myVcs.createWCClient();
-        try {
-          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, null);
-        }
-        catch (SVNException err) {
-          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
-          // show error message
-        }
+        setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
       }
-      setFile(myVcs, myFile);
-      updateFileStatus(recursive);
+      updateFileView(recursive);
     }
   }
 
-  private class EditPropertyAction extends AnAction {
+  private class EditPropertyAction extends BasePropertyAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Edit Property");
       e.getPresentation().setDescription("Edit selected property value");
@@ -358,25 +372,15 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[] {myFile}, getSelectedPropertyName(), myFile.isDirectory());
       dialog.show();
       boolean recursive = false;
       if (dialog.isOK()) {
-        String name = dialog.getPropertyName();
-        String value = dialog.getPropertyValue();
         recursive = dialog.isRecursive();
-        SVNWCClient wcClient = myVcs.createWCClient();
-        try {
-          wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
-        }
-        catch (SVNException err) {
-          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
-          // show error message
-        }
+        setProperty(dialog.getPropertyName(), dialog.getPropertyValue(), recursive, false);
       }
-      setFile(myVcs, myFile);
-      updateFileStatus(recursive);
+      updateFileView(recursive);
     }
   }
 
@@ -407,12 +411,12 @@ public class PropertiesComponent extends JPanel {
       if (myVcs == null) {
         return;
       }
-      VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
         File f = new File(vf.getPath());
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
-          Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+          Project p = CommonDataKeys.PROJECT.getData(e.getDataContext());
           ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
         }
 

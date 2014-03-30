@@ -16,12 +16,10 @@
 
 package com.intellij.execution.configurations;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author yole
@@ -44,29 +42,31 @@ public abstract class ConfigurationTypeBase implements ConfigurationType {
   }
 
   protected void addFactory(ConfigurationFactory factory) {
-    List<ConfigurationFactory> newFactories = new ArrayList<ConfigurationFactory>(myFactories.length + 1);
-    Collections.addAll(newFactories, myFactories);
-    newFactories.add(factory);
-    myFactories = newFactories.toArray(new ConfigurationFactory[newFactories.size()]);
+    myFactories = ArrayUtil.append(myFactories, factory);
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return myDescription;
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return myFactories;
   }

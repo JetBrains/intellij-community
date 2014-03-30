@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
 import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
@@ -28,8 +27,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import gnu.trove.TIntArrayList;
@@ -246,6 +247,13 @@ public class ArrangementMatchingRulesControl extends JBTable {
     refreshEditor();
   }
 
+  public void removeRow(int rowIndex) {
+    if (rowIndex < myEditorRow) {
+      hideEditor();
+    }
+    getModel().removeRow(rowIndex);
+  }
+
   public void refreshEditor() {
     ArrangementMatchingRulesModel model = getModel();
     if (myEditorRow >= model.getSize()) {
@@ -342,10 +350,10 @@ public class ArrangementMatchingRulesControl extends JBTable {
     }
     myEditorRow = rowToEdit + 1;
     ArrangementEditorComponent editor = new ArrangementEditorComponent(this, myEditorRow, myEditor);
-    Container parent = getParent();
     int width = getBounds().width;
-    if (parent instanceof JViewport) {
-      width -= ((JScrollPane)parent.getParent()).getVerticalScrollBar().getWidth();
+    JScrollPane scrollPane = JBScrollPane.findScrollPane(getParent());
+    if (scrollPane != null) {
+      width -= scrollPane.getVerticalScrollBar().getWidth();
     }
     editor.applyAvailableWidth(width);
     myEditor.reset(rowToEdit);

@@ -43,6 +43,7 @@ public interface GrTypeDefinition
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
   ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = new ArrayFactory<GrTypeDefinition>() {
+    @NotNull
     @Override
     public GrTypeDefinition[] create(int count) {
       return new GrTypeDefinition[count];

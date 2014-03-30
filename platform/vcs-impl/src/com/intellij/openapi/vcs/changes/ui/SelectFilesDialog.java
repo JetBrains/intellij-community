@@ -42,17 +42,31 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  public SelectFilesDialog(Project project, List<VirtualFile> originalFiles, String prompt, VcsShowConfirmationOption confirmationOption,
-                           boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
+  protected SelectFilesDialog(Project project, List<VirtualFile> originalFiles, String prompt,
+                              VcsShowConfirmationOption confirmationOption,
+                              boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
     super(project, false, confirmationOption, prompt, showDoNotAskOption);
     myDeletableFiles = deletableFiles;
     myFileList = new VirtualFileList(project, originalFiles, selectableFiles, deletableFiles);
     myFileList.setChangesToDisplay(originalFiles);
-    init();
+  }
+
+  @NotNull
+  public static SelectFilesDialog init(Project project, List<VirtualFile> originalFiles, String prompt,
+                                       VcsShowConfirmationOption confirmationOption,
+                                       boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
+    SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles,
+                                                     showDoNotAskOption, deletableFiles);
+    dialog.init();
+    return dialog;
   }
 
   public Collection<VirtualFile> getSelectedFiles() {
     return myFileList.getIncludedChanges();
+  }
+
+  public void setSelectedFiles(@NotNull final Collection<VirtualFile> selected) {
+    myFileList.setIncludedChanges(selected);
   }
 
   @NotNull
@@ -111,7 +125,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
       if (key.equals(PlatformDataKeys.DELETE_ELEMENT_PROVIDER) && myDeleteProvider != null) {
         sink.put(key, myDeleteProvider);
       }
-      else if (key.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY)) {
+      else if (key.equals(CommonDataKeys.VIRTUAL_FILE_ARRAY)) {
         sink.put(key, ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class));
       }
     }

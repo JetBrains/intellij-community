@@ -15,30 +15,28 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 
-import java.io.File;
-
-public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
+public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile {
   private MavenSettings mySettings;
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -46,22 +44,24 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     mySettings = new MavenSettings(project);
   }
 
+  @Override
   public MavenRunConfiguration clone() {
     MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
     clone.mySettings = mySettings.clone();
     return clone;
   }
 
+  @NotNull
+  @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    return new MavenRunConfigurationSettings(getProject());
-  }
+    SettingsEditorGroup<MavenRunConfiguration> group = new SettingsEditorGroup<MavenRunConfiguration>();
 
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
+    group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
 
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
+    group.addEditor(ProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
+    group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<MavenRunConfiguration>());
+    return group;
   }
 
   public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
@@ -69,21 +69,22 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       .createJavaParameters(project, mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings, this);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     JavaCommandLineState state = new JavaCommandLineState(env) {
+      @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         return MavenRunConfiguration.this.createJavaParameters(env.getProject());
       }
 
+      @NotNull
       @Override
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         DefaultExecutionResult res = (DefaultExecutionResult)super.execute(executor, runner);
-        if (res != null) {
-          if (executor.getId().equals(ToolWindowId.RUN)
-              && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
-            MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, executor, env);
-            res.setRestartActions(resumeAction);
-          }
+        if (executor.getId().equals(ToolWindowId.RUN)
+            && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
+          MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, env);
+          res.setRestartActions(resumeAction);
         }
         return res;
       }
@@ -106,14 +107,11 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return state;
   }
 
-  public void checkConfiguration() throws RuntimeConfigurationException {
-
-  }
-
   private void updateProjectsFolders() {
     MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
@@ -145,6 +143,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     mySettings.myRunnerParameters = p;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
 
@@ -160,20 +159,14 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
     element.addContent(XmlSerializer.serialize(mySettings));
   }
 
-  public boolean isGeneratedName() {
-    return Comparing.equal(getName(), getGeneratedName());
-  }
-
+  @Override
   public String suggestedName() {
-    return getGeneratedName();
-  }
-
-  private String getGeneratedName() {
     return MavenRunConfigurationType.generateName(getProject(), mySettings.myRunnerParameters);
   }
 
@@ -198,6 +191,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       myRunnerParameters = rp.clone();
     }
 
+    @Override
     protected MavenSettings clone() {
       return new MavenSettings(myGeneralSettings, myRunnerSettings, myRunnerParameters);
     }

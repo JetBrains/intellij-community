@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -53,6 +54,7 @@ import java.util.List;
  */
 public class SSHCredentialsDialog extends DialogWrapper implements ActionListener, DocumentListener {
   private boolean myAllowSave;
+  private boolean myIsAgentAllowed;
   private String myUserName;
 
   private String myRealm;
@@ -61,6 +63,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   private JPasswordField myPasswordText;
   private JPasswordField myPassphraseText;
   private TextFieldWithBrowseButton myKeyFileText;
+  private JBRadioButton mySshAgentButton;
   private JRadioButton myPasswordButton;
   private JRadioButton myKeyButton;
   private JLabel myPasswordLabel;
@@ -73,12 +76,18 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   @NonNls private static final String HELP_ID = "vcs.subversion.authentication";
   private boolean myKeyFileEmptyOrCorrect;
 
-  protected SSHCredentialsDialog(Project project, String realm, String userName, boolean allowSave, final int port) {
+  protected SSHCredentialsDialog(Project project,
+                                 String realm,
+                                 String userName,
+                                 boolean allowSave,
+                                 final int port,
+                                 boolean isAgentAllowed) {
     super(project, true);
     myProject = project;
     myRealm = realm;
     myUserName = userName;
     myAllowSave = allowSave;
+    myIsAgentAllowed = isAgentAllowed;
     setResizable(true);
     getHelpAction().setEnabled(true);
     init();
@@ -145,6 +154,16 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     gb.gridx = 0;
     gb.fill = GridBagConstraints.NONE;
     gb.gridwidth = 3;
+
+    // ssh agent type
+    mySshAgentButton = new JBRadioButton(SvnBundle.message("radio.ssh.authentication.with.agent"));
+    panel.add(mySshAgentButton, gb);
+    gb.gridy += 1;
+    gb.weightx = 0;
+    gb.gridx = 0;
+    gb.fill = GridBagConstraints.NONE;
+    gb.gridwidth = 3;
+
     // password type
     myPasswordButton = new JRadioButton(SvnBundle.message("radio.ssh.authentication.with.password"));
     panel.add(myPasswordButton, gb);
@@ -254,10 +273,12 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myPortField.getDocument().addDocumentListener(this);
 
     ButtonGroup group = new ButtonGroup();
+    group.add(mySshAgentButton);
     group.add(myPasswordButton);
     group.add(myKeyButton);
-    group.setSelected(myPasswordButton.getModel(), true);
-    group.setSelected(myPasswordButton.getModel(), false);
+
+    mySshAgentButton.setEnabled(myIsAgentAllowed);
+    group.setSelected((myIsAgentAllowed ? mySshAgentButton : myPasswordButton).getModel(), true);
 
     gb.gridy += 1;
     gb.gridx = 0;
@@ -283,6 +304,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     myAllowSaveCheckBox.setSelected(false);
     myAllowSaveCheckBox.setEnabled(myAllowSave);
 
+    mySshAgentButton.addActionListener(this);
     myKeyButton.addActionListener(this);
     myPasswordButton.addActionListener(this);
 
@@ -314,6 +336,9 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         if (! myKeyFileEmptyOrCorrect) return false;
         ok = myKeyFileText != null && myKeyFileText.getText().trim().length() > 0;
       }
+      else {
+        ok = mySshAgentButton.isSelected();
+      }
         if (ok) {
             String portNumber = myPortField.getText();
             try {
@@ -325,6 +350,10 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
         }
     }
     return ok;
+  }
+
+  public boolean isSshAgentSelected() {
+    return mySshAgentButton.isSelected();
   }
 
   public String getUserName() {
@@ -383,7 +412,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
   }
 
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() == myPasswordButton || e.getSource() == myKeyButton) {
+    if (e.getSource() == myPasswordButton || e.getSource() == myKeyButton || e.getSource() == mySshAgentButton) {
       updateFields();
       checkKeyFile();
       updateOKButton();

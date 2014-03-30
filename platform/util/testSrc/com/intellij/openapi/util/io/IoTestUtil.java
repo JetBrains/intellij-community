@@ -211,16 +211,20 @@ public class IoTestUtil {
   @NotNull
   public static File createTestJar() throws IOException {
     File jarFile = FileUtil.createTempFile("test.", ".jar");
+    writeEntry(jarFile, "entry.txt", "test");
+    return jarFile;
+  }
+
+  public static void writeEntry(@NotNull File jarFile, @NotNull String name, @NotNull String content) throws IOException {
     JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
     try {
-      stream.putNextEntry(new JarEntry("entry.txt"));
-      stream.write("test".getBytes("UTF-8"));
+      stream.putNextEntry(new JarEntry(name));
+      stream.write(content.getBytes("UTF-8"));
       stream.closeEntry();
     }
     finally {
       stream.close();
     }
-    return jarFile;
   }
 
   @NotNull
@@ -237,7 +241,12 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestFile(@NotNull String name) throws IOException {
-    return createTestFile(new File(FileUtil.getTempDirectory()), name, null);
+    return createTestFile(name, null);
+  }
+
+  @NotNull
+  public static File createTestFile(@NotNull String name, @Nullable String content) throws IOException {
+    return createTestFile(new File(FileUtil.getTempDirectory()), name, content);
   }
 
   @NotNull
@@ -247,6 +256,7 @@ public class IoTestUtil {
 
   @NotNull
   public static File createTestFile(@NotNull File parent, @NotNull String name, @Nullable String content) throws IOException {
+    assertTrue(parent.getPath(), parent.isDirectory() || parent.mkdirs());
     File file = new File(parent, name);
     assertTrue(file.getPath(), file.createNewFile());
     if (content != null) {
@@ -261,5 +271,13 @@ public class IoTestUtil {
         FileUtil.delete(file);
       }
     }
+  }
+
+  public static void setHidden(@NotNull String path, boolean hidden) throws IOException, InterruptedException {
+    assertTrue(SystemInfo.isWindows);
+
+    ProcessBuilder command = new ProcessBuilder("attrib", hidden ? "+H" : "-H", path);
+    int res = runCommand(command);
+    assertEquals(command.command().toString(), 0, res);
   }
 }

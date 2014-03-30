@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunner;
@@ -58,6 +59,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent {
   private MyKeymapListener myKeymapListener;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @NotNull
   public static MavenShortcutsManager getInstance(Project project) {
     return project.getComponent(MavenShortcutsManager.class);
   }

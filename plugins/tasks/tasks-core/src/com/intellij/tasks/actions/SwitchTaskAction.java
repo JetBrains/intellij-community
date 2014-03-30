@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
     ListPopupImpl popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
@@ -62,7 +62,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   public static ListPopupImpl createPopup(final DataContext dataContext,
                                           @Nullable final Runnable onDispose,
                                           boolean withTitle) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
@@ -146,7 +146,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     if (tasks.size() == 1 && task != null) {
       group.add(new AnAction("&Switch to") {
         public void actionPerformed(AnActionEvent e) {
-          manager.activateTask(task, !shiftPressed.get(), true);
+          manager.activateTask(task, !shiftPressed.get());
         }
       });
     }
@@ -201,7 +201,7 @@ public class SwitchTaskAction extends BaseTaskAction {
       group.add(new TaskListItem(task, group.size() == 1 ? "" : null, false) {
         @Override
         void select() {
-          manager.activateTask(task, !shiftPressed.get(), true);
+          manager.activateTask(task, !shiftPressed.get());
         }
       });
     }
@@ -212,7 +212,7 @@ public class SwitchTaskAction extends BaseTaskAction {
         group.add(new TaskListItem(task, i == 0 ? "Recently Closed Tasks" : null, true) {
           @Override
           void select() {
-            manager.activateTask(task, !shiftPressed.get(), true);
+            manager.activateTask(task, !shiftPressed.get());
           }
         });
       }
@@ -243,9 +243,9 @@ public class SwitchTaskAction extends BaseTaskAction {
                                                       "Do you want to remove it and move the changes to the active changelist?",
                                                       "Changelist Not Empty", Messages.getWarningIcon());
           switch (result) {
-            case 0:
+            case Messages.YES:
               break l;
-            case 1:
+            case Messages.NO:
               removeIt = false;
               break;
             default:

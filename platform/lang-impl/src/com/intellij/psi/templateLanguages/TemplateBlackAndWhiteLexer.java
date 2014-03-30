@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.psi.templateLanguages;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TemplateBlackAndWhiteLexer extends Lexer {
@@ -39,11 +40,12 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
   }
 
   @Override
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBaseLexer.start(buffer, startOffset, endOffset, initialState);
     setupTemplateToken();
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBaseLexer.getBufferSequence();
@@ -139,13 +141,14 @@ public class TemplateBlackAndWhiteLexer extends Lexer {
     }
   }
 
+  @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
     return new Position(myTemplateLexer.getCurrentPosition(), myBaseLexer.getCurrentPosition());
   }
 
   @Override
-  public void restore(LexerPosition position) {
+  public void restore(@NotNull LexerPosition position) {
     final Position p = (Position)position;
     myBaseLexer.restore(p.getBasePosition());
     final LexerPosition templatePos = p.getTemplatePosition();

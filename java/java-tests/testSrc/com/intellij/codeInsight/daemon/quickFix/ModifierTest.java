@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.pom.java.LanguageLevel;
 
-public class ModifierTest extends LightQuickFixTestCase {
+public class ModifierTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

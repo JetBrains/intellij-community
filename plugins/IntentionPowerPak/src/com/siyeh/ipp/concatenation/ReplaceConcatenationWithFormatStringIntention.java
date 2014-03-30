@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
@@ -57,7 +58,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       newExpression.append(formatParameter.getText());
     }
     newExpression.append(')');
-    replaceExpression(newExpression.toString(), expression);
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
   }
 
   private static boolean replaceWithPrintfExpression(PsiExpression expression, CharSequence formatString,
@@ -113,7 +114,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       newExpression.append(formatParameter.getText());
     }
     newExpression.append(')');
-    replaceExpression(newExpression.toString(), methodCallExpression);
+    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
     return true;
   }
 }

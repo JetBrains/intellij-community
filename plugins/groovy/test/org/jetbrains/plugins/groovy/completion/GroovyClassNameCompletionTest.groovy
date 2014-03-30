@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,13 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
 
   public void testInFieldDeclaration() throws Exception {doTest();}
   public void testInParameter() throws Exception {doTest();}
-  public void testInImport() throws Exception {doTest();}
+  public void testInImport() throws Exception {
+    addClassToProject("a", "FooBar")
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    complete()
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
 
   public void testWhenClassExistsInSamePackage() throws Exception {
     addClassToProject("a", "FooBar")
@@ -82,7 +88,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>a")
     myFixture.complete(CompletionType.BASIC, 2)
-    myFixture.type '.'.charAt(0)
+    myFixture.type '.'
     myFixture.checkResult "a.FooBarGooDoo.<caret>a"
   }
 

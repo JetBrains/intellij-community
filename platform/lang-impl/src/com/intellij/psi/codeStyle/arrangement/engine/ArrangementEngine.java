@@ -27,15 +27,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
@@ -57,12 +53,25 @@ import java.util.*;
  */
 public class ArrangementEngine {
 
+  /**
+   * Arranges given PSI root contents that belong to the given ranges.
+   * <b>Note:</b> After arrangement editor foldings we'll be preserved.
+   *
+   * @param editor
+   * @param file   target PSI root
+   * @param ranges target ranges to use within the given root
+   */
   public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
-    arrange(file, ranges, null);
-    // This should be uncommented as soon as cdr pushed fixes for range markers processing.
-    //arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
+    arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
+  /**
+   * Arranges given PSI root contents that belong to the given ranges.
+   * <b>Note:</b> Editor foldings are not expected to be preserved.
+   *
+   * @param file   target PSI root
+   * @param ranges target ranges to use within the given root
+   */
   public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
     arrange(file, ranges, null);
   }
@@ -216,15 +225,17 @@ public class ArrangementEngine {
   /**
    * Arranges (re-orders) given entries according to the given rules.
    *
-   * @param entries  entries to arrange
-   * @param rules    rules to use for arrangement
-   * @param <E>      arrangement entry type
-   * @return         arranged list of the given rules
+   * @param entries            entries to arrange
+   * @param rules              rules to use for arrangement
+   * @param rulesByPriority    rules sorted by priority ('public static' rule will have higher priority than 'public')
+   * @param <E>                arrangement entry type
+   * @return                   arranged list of the given rules
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
-                                                             @NotNull List<? extends ArrangementMatchRule> rules)
+                                                             @NotNull List<? extends ArrangementMatchRule> rules,
+                                                             @NotNull List<? extends ArrangementMatchRule> rulesByPriority)
   {
     List<E> arranged = ContainerUtilRt.newArrayList();
     Set<E> unprocessed = ContainerUtilRt.newLinkedHashSet();
@@ -247,55 +258,61 @@ public class ArrangementEngine {
     }
 
     Set<E> matched = new HashSet<E>();
-    
-    int startIndex;
-    for (ArrangementMatchRule rule : rules) {
+
+    MultiMap<ArrangementMatchRule, E> elementsByRule = new MultiMap<ArrangementMatchRule, E>();
+    for (ArrangementMatchRule rule : rulesByPriority) {
       matched.clear();
-      startIndex = arranged.size();
       for (E entry : unprocessed) {
         if (entry.canBeMatched() && rule.getMatcher().isMatched(entry)) {
-          arranged.add(entry);
+          elementsByRule.putValue(rule, entry);
           matched.add(entry);
         }
       }
       unprocessed.removeAll(matched);
-      
-      // Sort by name if necessary.
-      if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
-        sortByName(arranged, startIndex);
+    }
+
+    for (ArrangementMatchRule rule : rules) {
+      if (elementsByRule.containsKey(rule)) {
+        final Collection<E> arrangedEntries = elementsByRule.get(rule);
+
+        // Sort by name if necessary.
+        if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
+          sortByName((List<E>)arrangedEntries);
+        }
+        arranged.addAll(arrangedEntries);
       }
     }
     arranged.addAll(unprocessed);
 
     for (int i = 0; i < arranged.size() && !dependent.isEmpty(); i++) {
       E e = arranged.get(i);
+      List<E> shouldBeAddedAfterCurrentElement = ContainerUtil.newArrayList();
+
       for (Iterator<Pair<Set<ArrangementEntry>, E>> iterator = dependent.iterator(); iterator.hasNext(); ) {
         Pair<Set<ArrangementEntry>, E> pair = iterator.next();
         pair.first.remove(e);
         if (pair.first.isEmpty()) {
           iterator.remove();
-          arranged.add(i + 1, pair.second);
+          shouldBeAddedAfterCurrentElement.add(pair.second);
         }
       }
+
+      arranged.addAll(i + 1, shouldBeAddedAfterCurrentElement);
     }
 
     return arranged;
   }
 
-  private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries, int startIndex) {
-    int entriesToSortNumber = entries.size() - startIndex;
-    if (entriesToSortNumber < 2) {
+  private static <E extends ArrangementEntry> void sortByName(@NotNull List<E> entries) {
+    if (entries.size() < 2) {
       return;
     }
-    List<E> buffer = new ArrayList<E>(entriesToSortNumber);
-    List<E> subList = entries.subList(startIndex, entries.size());
-    buffer.addAll(subList);
     final TObjectIntHashMap<E> weights = new TObjectIntHashMap<E>();
     int i = 0;
-    for (E e : buffer) {
+    for (E e : entries) {
       weights.put(e, ++i);
     }
-    ContainerUtil.sort(buffer, new Comparator<E>() {
+    ContainerUtil.sort(entries, new Comparator<E>() {
       @Override
       public int compare(E e1, E e2) {
         String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
@@ -314,8 +331,6 @@ public class ArrangementEngine {
         }
       }
     });
-    subList.clear();
-    entries.addAll(buffer);
   }
 
   @SuppressWarnings("unchecked")
@@ -324,19 +339,46 @@ public class ArrangementEngine {
     if (wrappers.isEmpty()) {
       return;
     }
-    Map<E, ArrangementEntryWrapper<E>> map = new LinkedHashMap<E, ArrangementEntryWrapper<E>>();
-    for (ArrangementEntryWrapper<E> wrapper : wrappers) {
-      map.put(wrapper.getEntry(), wrapper);
-    }
-    List<E> arranged = arrange(map.keySet(), context.rules);
 
+    Map<E, ArrangementEntryWrapper<E>> map = ContainerUtilRt.newHashMap();
+    List<E> arranged = ContainerUtilRt.newArrayList();
+    List<E> toArrange = ContainerUtilRt.newArrayList(); 
+    for (ArrangementEntryWrapper<E> wrapper : wrappers) {
+      E entry = wrapper.getEntry();
+      map.put(wrapper.getEntry(), wrapper);
+      if (!entry.canBeMatched()) {
+        // Split entries to arrange by 'can not be matched' rules.
+        // See IDEA-104046 for a problem use-case example.
+        if (toArrange.isEmpty()) {
+          arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
+        }
+        arranged.add(entry);
+        toArrange.clear();
+      }
+      else {
+        toArrange.add(entry);
+      }
+    }
+    if (!toArrange.isEmpty()) {
+      arranged.addAll(arrange(toArrange, context.rules, context.rulesByPriority));
+    }
 
     context.changer.prepare(wrappers, context);
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.
     for (int i = arranged.size() - 1; i >= 0; i--) {
       ArrangementEntryWrapper<E> arrangedWrapper = map.get(arranged.get(i));
       ArrangementEntryWrapper<E> initialWrapper = wrappers.get(i);
-      context.changer.replace(arrangedWrapper, initialWrapper, i > 0 ? map.get(arranged.get(i - 1)) : null, context);
+
+      ArrangementEntryWrapper<E> previous = i > 0 ? map.get(arranged.get(i - 1)) : null;
+      ArrangementEntryWrapper<E> previousInitial = i > 0 ? wrappers.get(i - 1) : null;
+
+      if (arrangedWrapper.equals(initialWrapper)) {
+        if (previous != null && previous.equals(previousInitial) || previous == null && previousInitial == null) {
+          continue;
+        }
+      }
+
+      context.changer.replace(arrangedWrapper, initialWrapper, previous, context);
     }
   }
 
@@ -348,6 +390,7 @@ public class ArrangementEngine {
     @NotNull public final Collection<ArrangementEntryWrapper<E>> wrappers;
     @NotNull public final Document                               document;
     @NotNull public final List<? extends ArrangementMatchRule>   rules;
+    @NotNull public final List<? extends ArrangementMatchRule>   rulesByPriority;
     @NotNull public final CodeStyleSettings                      settings;
     @NotNull public final Changer                                changer;
 
@@ -355,12 +398,14 @@ public class ArrangementEngine {
                     @NotNull Collection<ArrangementEntryWrapper<E>> wrappers,
                     @NotNull Document document,
                     @NotNull List<? extends ArrangementMatchRule> rules,
+                    @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                     @NotNull CodeStyleSettings settings, @NotNull Changer changer)
     {
       this.rearranger = rearranger;
       this.wrappers = wrappers;
       this.document = document;
       this.rules = rules;
+      this.rulesByPriority = rulesByPriority;
       this.settings = settings;
       this.changer = changer;
     }
@@ -395,7 +440,8 @@ public class ArrangementEngine {
       else {
         changer = new DefaultChanger();
       }
-      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), codeStyleSettings, changer);
+      final List<? extends ArrangementMatchRule> rulesByPriority = ArrangementUtil.getRulesSortedByPriority(arrangementSettings);
+      return new Context<T>(rearranger, wrappers, document, arrangementSettings.getRules(), rulesByPriority, codeStyleSettings, changer);
     }
   }
 
@@ -581,7 +627,8 @@ public class ArrangementEngine {
           if (w.getStartOffset() >= oldWrapper.getStartOffset() && w.getStartOffset() < newWrapper.getStartOffset()) {
             w.applyShift(newWrapper.getEndOffset() - newWrapper.getStartOffset());
           }
-          else if (w.getStartOffset() < oldWrapper.getStartOffset() && w.getStartOffset() > newWrapper.getStartOffset()) {
+          else if (oldWrapper != w && w.getStartOffset() <= oldWrapper.getStartOffset() &&
+                   w.getStartOffset() > newWrapper.getStartOffset()) {
             w.applyShift(newWrapper.getStartOffset() - newWrapper.getEndOffset());
           }
         }
@@ -620,6 +667,10 @@ public class ArrangementEngine {
       }
     }
 
+    /**
+     * @return position <code>x</code> for which <code>myDocument.getText().substring(x, startOffset)</code> contains
+     * <code>blankLinesNumber</code> line feeds and <code>myDocument.getText.charAt(x-1) == '\n'</code>
+     */
     private int getBlankLineOffset(int blankLinesNumber, int startOffset) {
       int startLine = myDocument.getLineNumber(startOffset);
       if (startLine <= 0) {

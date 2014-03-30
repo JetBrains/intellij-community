@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.source.tree.MarkersHolderFileViewProvider;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +42,8 @@ import java.util.List;
 /**
  * @author cdr
 */
-public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider {
+public class InjectedFileViewProvider extends SingleRootFileViewProvider implements FreeThreadedFileViewProvider,
+                                                                                    MarkersHolderFileViewProvider {
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindowImpl myDocumentWindow;
@@ -93,7 +96,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     Language language = getBaseLanguage();
     PsiFile file = getPsi(language);
-    final Language hostFileLanguage = InjectedLanguageUtil.getTopLevelFile(file).getLanguage();
+    final Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
@@ -202,6 +205,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     myPatchingLeaves = patchingLeaves;
   }
 
+  @Override
   @NotNull
   public RangeMarker[] getCachedMarkers() {
     List<RangeMarker> markers = new SmartList<RangeMarker>();

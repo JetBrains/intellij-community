@@ -18,9 +18,8 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -52,12 +51,12 @@ class ExportToHTMLManager {
    */
   public static void executeExport(final DataContext dataContext) throws FileNotFoundException {
     PsiDirectory psiDirectory = null;
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       psiDirectory = (PsiDirectory)psiElement;
     }
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;
     if(psiFile != null || psiDirectory != null) {
@@ -72,7 +71,7 @@ class ExportToHTMLManager {
       }
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     boolean isSelectedTextEnabled = false;
     if(editor != null && editor.getSelectionModel().hasSelection()) {
       isSelectedTextEnabled = true;
@@ -116,7 +115,7 @@ class ExportToHTMLManager {
       }
       textPainter.paint(null, psiFile.getFileType());
       if (exportToHTMLSettings.OPEN_IN_BROWSER) {
-        BrowserUtil.launchBrowser(textPainter.getHTMLFileName());
+        BrowserUtil.browse(textPainter.getHTMLFileName());
       }
     }
     else {
@@ -233,6 +232,7 @@ class ExportToHTMLManager {
       myProject = project;
     }
 
+    @Override
     public void run() {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
@@ -267,7 +267,7 @@ class ExportToHTMLManager {
           dirToShow += File.separatorChar;
         }
         dirToShow += PsiDirectoryFactory.getInstance(myProject).getQualifiedName(myPsiDirectory, false).replace('.', File.separatorChar);
-        BrowserUtil.launchBrowser(dirToShow);
+        BrowserUtil.browse(dirToShow);
       }
     }
   }

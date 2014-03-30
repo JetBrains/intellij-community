@@ -118,6 +118,26 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertEquals("java.lang.Class<? extends java.lang.String>", type.getCanonicalText());
   }
 
+  public void testToString() throws Exception {
+    final PsiReference ref = configureByFile();
+    assertThat(ref, instanceOf(PsiReferenceExpression.class));
+    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+    final PsiElement resolve = refExpr.resolve();
+    assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
+    final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
+    assertTrue(containingClass != null ? containingClass.getName() : null, containingClass instanceof PsiAnonymousClass);
+  }
+
+  public void testCovariantReturnTypeAnonymous() throws Exception {
+    final PsiReference ref = configureByFile();
+    assertThat(ref, instanceOf(PsiReferenceExpression.class));
+    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+    final PsiElement resolve = refExpr.resolve();
+    assertTrue(resolve != null ? resolve.toString() : null, resolve instanceof PsiMethod);
+    final PsiClass containingClass = ((PsiMethod)resolve).getContainingClass();
+    assertTrue(containingClass != null ? containingClass.getName() : null, !(containingClass instanceof PsiAnonymousClass));
+  }
+
   public void testFilterFixedVsVarargs1() throws Exception {
     final PsiReference ref = configureByFile();
     assertThat(ref, instanceOf(PsiReferenceExpression.class));

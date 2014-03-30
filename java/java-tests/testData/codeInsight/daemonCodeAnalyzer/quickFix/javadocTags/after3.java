@@ -5,7 +5,7 @@ class a {
  * @param a
  * @param b
 */
-public void <caret>foo(int a, int b, in c){
+public void foo(int a, int b, in c){
 
 }
 }

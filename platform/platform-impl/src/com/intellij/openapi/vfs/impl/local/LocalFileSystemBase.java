@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,7 +77,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public VirtualFile findFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    if (path == null) return null;
     return findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
@@ -197,16 +197,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected String normalize(@NotNull String path) {
     if (path.isEmpty()) {
       try {
-        return new File("").getCanonicalPath();
+        path = new File("").getCanonicalPath();
       }
       catch (IOException e) {
         return path;
       }
     }
-
-    if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows) {
       if (path.charAt(0) == '/' && !path.startsWith("//")) {
-        path = path.substring(1);  // hack over new File(path).toUrl().getFile()
+        path = path.substring(1);  // hack over new File(path).toURI().toURL().getFile()
       }
 
       if (path.contains("~")) {
@@ -218,19 +217,28 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
     }
-    else {
-      if (!StringUtil.startsWithChar(path, '/')) {
-        path = new File(path).getAbsolutePath();
-      }
+
+    File file = new File(path);
+    if (!isAbsoluteFileOrDriveLetter(file)) {
+      path = file.getAbsolutePath();
     }
 
     return FileUtil.normalize(path);
   }
 
+  private static boolean isAbsoluteFileOrDriveLetter(File file) {
+    String path = file.getPath();
+    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+      // just drive letter.
+      // return true, despite the fact that technically it's not an absolute path
+      return true;
+    }
+    return file.isAbsolute();
+  }
+
   @Override
   public VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
     String path = file.getAbsolutePath();
-    if (path == null) return null;
     return refreshAndFindFileByPath(path.replace(File.separatorChar, '/'));
   }
 
@@ -365,15 +373,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(@NotNull File physicalFile) throws IOException {
-    if (!FileSystemUtil.isSymLink(physicalFile)) {
-      File[] list = physicalFile.listFiles();
-      if (list != null) {
-        for (File aList : list) {
-          delete(aList);
-        }
-      }
-    }
-    if (!physicalFile.delete()) {
+    if (!FileUtil.delete(physicalFile)) {
       throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
     }
   }
@@ -442,7 +442,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
     try {
-      final int length = (int)file.getLength();
+      long l = file.getLength();
+      if (l > Integer.MAX_VALUE) throw new IOException("File is too large: " + l + ", " + file);
+      final int length = (int)l;
       if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       return FileUtil.loadBytes(stream, length);
     }
@@ -472,7 +474,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static boolean shallUseSafeStream(final Object requestor, @NotNull VirtualFile file) {
-    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.isSymLink();
+    return requestor instanceof SafeWriteRequestor && GeneralSettings.getInstance().isUseSafeWrite() && !file.is(VFileProperty.SYMLINK);
   }
 
   @Override
@@ -527,8 +529,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull final VirtualFile vFile,
                               @NotNull final VirtualFile newParent,
                               @NotNull final String copyName) throws IOException {
-    final FileAttributes attributes = getAttributes(vFile);
+    if (!PathUtil.isValidFileName(copyName)) {
+      throw new IOException("Invalid file name: " + copyName);
+    }
 
+    FileAttributes attributes = getAttributes(vFile);
     if (attributes == null || attributes.isSpecial()) {
       throw new FileNotFoundException("Not a file: " + vFile);
     }
@@ -690,7 +695,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
     String path = normalize(file.getPath());
     if (path == null) return null;
-    if (StringUtil.isEmpty(path) || file.getParent() == null && path.startsWith("//")) {
+    if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
     return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));

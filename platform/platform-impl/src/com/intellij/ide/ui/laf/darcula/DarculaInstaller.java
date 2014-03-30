@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.JBColor;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,30 +28,31 @@ import com.intellij.openapi.ui.Messages;
 public class DarculaInstaller {
 
   public static void uninstall() {
+    JBColor.setDark(false);
+    IconLoader.setUseDarkIcons(false);
     if (DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(DefaultColorsScheme.DEFAULT_SCHEME_NAME);
+      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
       if (scheme != null) {
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
       }
     }
-
-    restart();
-  }
-
-  private static void restart() {
-    if (Messages.showOkCancelDialog("You must restart the IDE to changes take effect. Restart now?", "Restart Is Required", "Restart", "Postpone", Messages.getQuestionIcon()) == Messages.OK) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
+    update();
   }
 
   public static void install() {
+    JBColor.setDark(true);
+    IconLoader.setUseDarkIcons(true);
     if (!DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
       final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(DarculaLaf.NAME);
       if (scheme != null) {
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
       }
     }
+    update();
+  }
 
-    restart();
+  protected static void update() {
+    UISettings.getInstance().fireUISettingsChanged();
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 }

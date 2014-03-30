@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Is intended to hold utility methods to use during {@link Document} processing.
- * 
- * @author Denis Zhdanov
- * @since 5/16/12 10:12 AM
  */
-public class DocumentUtil {
-
+public final class DocumentUtil {
   private DocumentUtil() {
   }
 
@@ -57,5 +55,31 @@ public class DocumentUtil {
     finally {
       documentEx.setInBulkUpdate(!executeInBulk);
     }
+  }
+
+  public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(runnable);
+      }
+    });
+  }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = document.getLineEndOffset(line);
+    return getFirstNonSpaceCharOffset(document, startOffset, endOffset);
+  }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int startOffset, int endOffset) {
+    CharSequence text = document.getImmutableCharSequence();
+    for (int i = startOffset; i < endOffset; i++) {
+      char c = text.charAt(i);
+      if (c != ' ' && c != '\t') {
+        return i;
+      }
+    }
+    return startOffset;
   }
 }

@@ -106,6 +106,12 @@ public class GenerateEqualsHelper implements Runnable {
     return id;
   }
 
+  private static boolean shouldAddOverrideAnnotation(PsiElement context) {
+    CodeStyleSettings style = CodeStyleSettingsManager.getSettings(context.getProject());
+
+    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
+  }
+
   @Override
   public void run() {
     try {
@@ -133,8 +139,7 @@ public class GenerateEqualsHelper implements Runnable {
       else {
         if (!mySuperHasHashCode) {
           @NonNls String text = "";
-          CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-          if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
+          if (shouldAddOverrideAnnotation(myClass)) {
             text += "@Override\n";
           }
 
@@ -172,7 +177,7 @@ public class GenerateEqualsHelper implements Runnable {
 
     @NonNls StringBuffer buffer = new StringBuffer();
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
+    if (shouldAddOverrideAnnotation(myClass)) {
       buffer.append("@Override\n");
     }
     buffer.append("public boolean equals(Object ").append(myParameterName).append(") {\n");
@@ -327,8 +332,7 @@ public class GenerateEqualsHelper implements Runnable {
   private PsiMethod createHashCode() throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
 
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject);
-    if (GenerateMembersUtil.shouldAddOverrideAnnotation(myClass, false)) {
+    if (shouldAddOverrideAnnotation(myClass)) {
       buffer.append("@Override\n");
     }
     buffer.append("public int hashCode() {\n");
@@ -407,10 +411,9 @@ public class GenerateEqualsHelper implements Runnable {
 
   private static void addTempForDoubleInitialization(PsiField field, @NonNls StringBuilder buffer) {
     buffer.append(" = ");
+    buffer.append("Double.doubleToLongBits(");
     buffer.append(field.getName());
-    buffer.append(" != +0.0d ? Double.doubleToLongBits(");
-    buffer.append(field.getName());
-    buffer.append(") : 0L;\n");
+    buffer.append(");\n");
   }
 
   private String addTempDeclaration(@NonNls StringBuilder buffer, boolean resultDeclarationCompleted) {

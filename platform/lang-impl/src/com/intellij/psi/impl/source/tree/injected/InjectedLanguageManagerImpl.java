@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -36,19 +37,22 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,18 +60,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author cdr
  */
-public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable{
+public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   private final Project myProject;
   private final DumbService myDumbService;
-  private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
   private volatile DaemonProgressIndicator myProgress;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
@@ -79,36 +79,32 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     myDumbService = dumbService;
 
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME);
-    multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
+    ((ExtensionPointImpl<MultiHostInjector>)multiPoint).addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
       @Override
       public void extensionAdded(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        registerMultiHostInjector(injector);
+        clearInjectorCache();
       }
 
       @Override
       public void extensionRemoved(@NotNull MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        unregisterMultiHostInjector(injector);
+        clearInjectorCache();
       }
-    },this);
+    }, false, this);
     final ExtensionPointListener<LanguageInjector> myListener = new ExtensionPointListener<LanguageInjector>() {
       @Override
       public void extensionAdded(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-        psiManagerInjectorsChanged();
+        clearInjectorCache();
       }
 
       @Override
       public void extensionRemoved(@NotNull LanguageInjector extension, @Nullable PluginDescriptor pluginDescriptor) {
-        psiManagerInjectorsChanged();
+        clearInjectorCache();
       }
     };
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
-    psiManagerPoint.addExtensionPointListener(myListener,this);
+    ((ExtensionPointImpl<LanguageInjector>)psiManagerPoint).addExtensionPointListener(myListener, false, this);
     myProgress = new DaemonProgressIndicator();
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
-      @Override
-      public void daemonFinished() {
-      }
-
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonCancelEventOccurred() {
         myProgress.cancel();
@@ -118,8 +114,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public void dispose() {
+    EditorWindowImpl.disposeInvalidEditors();
   }
 
+  @Override
   public void startRunInjectors(@NotNull final Document hostDocument, final boolean synchronously) {
     if (myProject.isDisposed()) return;
     if (!synchronously && ApplicationManager.getApplication().isWriteAccessAllowed()) return;
@@ -128,8 +126,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
     if (hostPsiFile == null) return;
 
-    final CopyOnWriteArrayList<DocumentWindow> injected =
-      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    final ConcurrentList<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
@@ -159,7 +156,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-            PsiDocumentManagerImpl.checkConsistency(injectedPsi, stillInjectedDocument[0]);
+            PsiDocumentManagerBase.checkConsistency(injectedPsi, stillInjectedDocument[0]);
           }
         });
         synchronized (PsiLock.LOCK) {
@@ -179,8 +176,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       @Override
       public void run() {
         if (myProgress.isCanceled()) return;
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously,
-                                                                  commitProcessor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, true, commitProcessor);
       }
     };
 
@@ -204,22 +200,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
   }
 
-  public void psiManagerInjectorsChanged() {
-    LanguageInjector[] extensions = Extensions.getExtensions(LanguageInjector.EXTENSION_POINT_NAME);
-    if (extensions.length == 0) {
-      MultiHostInjector prev = myPsiManagerRegisteredInjectorsAdapter.getAndSet(null);
-      if (prev != null) {
-        unregisterMultiHostInjector(prev);
-      }
-    }
-    else {
-      PsiManagerRegisteredInjectorsAdapter adapter = new PsiManagerRegisteredInjectorsAdapter();
-      if (myPsiManagerRegisteredInjectorsAdapter.compareAndSet(null, adapter)) {
-        registerMultiHostInjector(adapter);
-      }
-    }
-  }
-
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
@@ -236,7 +216,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
-    ProperTextRange.assertProperRange(injectedTextRange);
+    TextRange.assertProperRange(injectedTextRange);
     PsiFile file = injectedContext.getContainingFile();
     if (file == null) return injectedTextRange;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
@@ -254,53 +234,62 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return documentWindow.injectedToHost(offset);
   }
 
-  private final ConcurrentMap<Class, MultiHostInjector[]> injectors = new ConcurrentHashMap<Class, MultiHostInjector[]>();
-  private final ClassMapCachingNulls<MultiHostInjector> cachedInjectors = new ClassMapCachingNulls<MultiHostInjector>(injectors, new MultiHostInjector[0]);
+  // used only from tests => no need for complex synchronization
+  private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());  
+  private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
+
+  private ClassMapCachingNulls<MultiHostInjector> getInjectorMap() {
+    ClassMapCachingNulls<MultiHostInjector> cached = cachedInjectors;
+    if (cached != null) {
+      return cached;
+    }
+
+    Map<Class, MultiHostInjector[]> injectors = ContainerUtil.newHashMap();
+
+    List<MultiHostInjector> allInjectors = ContainerUtil.newArrayList();
+    allInjectors.addAll(myManualInjectors);
+    Collections.addAll(allInjectors, MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME.getExtensions(myProject));
+    if (LanguageInjector.EXTENSION_POINT_NAME.getExtensions().length > 0) {
+      allInjectors.add(PsiManagerRegisteredInjectorsAdapter.INSTANCE);
+    }
+    
+    for (MultiHostInjector injector : allInjectors) {
+      for (Class<? extends PsiElement> place : injector.elementsToInjectIn()) {
+        LOG.assertTrue(place != null, injector);
+        MultiHostInjector[] existing = injectors.get(place);
+        injectors.put(place, existing == null ? new MultiHostInjector[]{injector} : ArrayUtil.append(existing, injector));
+      }
+    }
+
+    ClassMapCachingNulls<MultiHostInjector> result = new ClassMapCachingNulls<MultiHostInjector>(injectors, new MultiHostInjector[0]);
+    cachedInjectors = result;
+    return result;
+  }
+  
+  private void clearInjectorCache() {
+    cachedInjectors = null;
+  }
 
   @Override
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
-    for (Class<? extends PsiElement> place : injector.elementsToInjectIn()) {
-      LOG.assertTrue(place != null, injector);
-      while (true) {
-        MultiHostInjector[] injectors = this.injectors.get(place);
-        if (injectors == null) {
-          if (this.injectors.putIfAbsent(place, new MultiHostInjector[]{injector}) == null) break;
-        }
-        else {
-          MultiHostInjector[] newInfos = ArrayUtil.append(injectors, injector);
-          if (this.injectors.replace(place, injectors, newInfos)) break;
-        }
-      }
-    }
-    cachedInjectors.clearCache();
+    myManualInjectors.add(injector);
+    clearInjectorCache();
   }
-
+  
   @Override
   public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
-    boolean removed = false;
-    Iterator<Map.Entry<Class,MultiHostInjector[]>> iterator = injectors.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<Class,MultiHostInjector[]> entry = iterator.next();
-      MultiHostInjector[] infos = entry.getValue();
-      int i = ArrayUtil.find(infos, injector);
-      if (i != -1) {
-        MultiHostInjector[] newInfos = ArrayUtil.remove(infos, i);
-        if (newInfos.length == 0) {
-          iterator.remove();
-        }
-        else {
-          injectors.put(entry.getKey(), newInfos);
-        }
-        removed = true;
-      }
+    try {
+      return myManualInjectors.remove(injector);
     }
-    cachedInjectors.clearCache();
-    return removed;
+    finally {
+      clearInjectorCache();
+    }
   }
 
 
   @Override
-  public String getUnescapedText(@NotNull final PsiElement injectedNode) {
+  public String
+  getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -368,7 +357,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   @Override
-  public boolean isInjectedFragment(final PsiFile file) {
+  public boolean isInjectedFragment(@NotNull final PsiFile file) {
     return file.getViewProvider() instanceof InjectedFileViewProvider;
   }
 
@@ -382,6 +371,30 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
+  @Override
+  public PsiFile getTopLevelFile(@NotNull PsiElement element) {
+    return InjectedLanguageUtil.getTopLevelFile(element);
+  }
+
+  @NotNull
+  @Override
+  public List<DocumentWindow> getCachedInjectedDocuments(@NotNull PsiFile hostPsiFile) {
+    return InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+  }
+
+  @Override
+  public void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(host, visitor);
+  }
+
+  @Override
+  public void enumerateEx(@NotNull PsiElement host,
+                          @NotNull PsiFile containingFile,
+                          boolean probeUp,
+                          @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    InjectedLanguageUtil.enumerate(host, containingFile, probeUp, visitor);
+  }
+
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {
@@ -393,14 +406,18 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     finally {
       cachedManager.myInjectorsClone.clear();
     }
-    cachedManager.myInjectorsClone.putAll(cachedManager.injectors);
+    cachedManager.myInjectorsClone.putAll(cachedManager.getInjectorMap().getBackingMap());
   }
   @TestOnly
   public static void checkInjectorsAreDisposed(@NotNull Project project) {
     InjectedLanguageManagerImpl cachedManager = (InjectedLanguageManagerImpl)project.getUserData(INSTANCE_CACHE);
-    if (cachedManager == null) return;
+    if (cachedManager == null) {
+      return;
+    }
     try {
-      for (Map.Entry<Class, MultiHostInjector[]> entry : cachedManager.injectors.entrySet()) {
+      ClassMapCachingNulls<MultiHostInjector> cached = cachedManager.cachedInjectors;
+      if (cached == null) return;
+      for (Map.Entry<Class, MultiHostInjector[]> entry : cached.getBackingMap().entrySet()) {
         Class key = entry.getKey();
         if (cachedManager.myInjectorsClone.isEmpty()) return;
         MultiHostInjector[] oldInjectors = cachedManager.myInjectorsClone.get(key);
@@ -420,7 +437,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     boolean process(PsiElement element, MultiHostInjector injector);
   }
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
-    MultiHostInjector[] infos = cachedInjectors.get(element.getClass());
+    MultiHostInjector[] infos = getInjectorMap().get(element.getClass());
     if (infos != null) {
       final boolean dumb = myDumbService.isDumb();
       for (MultiHostInjector injector : infos) {
@@ -455,13 +472,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
+    public static final PsiManagerRegisteredInjectorsAdapter INSTANCE = new PsiManagerRegisteredInjectorsAdapter();
     @Override
     public void getLanguagesToInject(@NotNull final MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
       InjectedLanguagePlaces placesRegistrar = new InjectedLanguagePlaces() {
         @Override
         public void addPlace(@NotNull Language language, @NotNull TextRange rangeInsideHost, @NonNls @Nullable String prefix, @NonNls @Nullable String suffix) {
-          ProperTextRange.assertProperRange(rangeInsideHost);
+          TextRange.assertProperRange(rangeInsideHost);
           injectionPlacesRegistrar
             .startInjecting(language)
             .addPlace(prefix, suffix, host, rangeInsideHost)

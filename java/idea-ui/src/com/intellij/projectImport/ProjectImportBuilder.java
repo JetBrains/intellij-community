@@ -18,6 +18,7 @@ package com.intellij.projectImport;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -72,7 +73,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
 
   @Nullable
   public static Project getCurrentProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
   }
 
   protected String getTitle() {

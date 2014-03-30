@@ -27,6 +27,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -163,7 +164,7 @@ public class EmptyXmlTag implements XmlTag {
 
   @Override
   public String[] knownNamespaces() {
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override
@@ -199,9 +200,10 @@ public class EmptyXmlTag implements XmlTag {
         return "";
       }
 
+      @NotNull
       @Override
       public TextRange getTextRange() {
-        return null;
+        throw new IncorrectOperationException();
       }
 
       @NotNull
@@ -212,6 +214,10 @@ public class EmptyXmlTag implements XmlTag {
 
       @Override
       public void setText(String value) {
+      }
+
+      @Override
+      public void setEscapedText(String value) {
       }
 
       @Override
@@ -261,14 +267,16 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
+  @NotNull
   @Override
   public Project getProject() throws PsiInvalidElementAccessException {
-    return null;
+    throw new IncorrectOperationException();
   }
 
+  @NotNull
   @Override
   public Language getLanguage() {
-    return null;
+    throw new IncorrectOperationException();
   }
 
   @Override
@@ -498,14 +506,16 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getResolveScope() {
-    return null;
+    throw new IncorrectOperationException();
   }
 
+  @NotNull
   @Override
   public SearchScope getUseScope() {
-    return null;
+    throw new IncorrectOperationException();
   }
 
   @Override

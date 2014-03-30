@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof PsiMethod) {
       invoke((PsiMethod)element, project, editor);
     }
@@ -68,9 +68,14 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
     new InvertBooleanDialog(var).show();
   }
 
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
-    if (elements.length == 1 && elements[0] instanceof PsiMethod) {
-      invoke((PsiMethod)elements[0], project, null);
+  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    if (elements.length == 1) {
+      if (elements[0] instanceof PsiMethod) {
+        invoke((PsiMethod)elements[0], project, null);
+      }
+      else if (elements[0] instanceof PsiVariable) {
+        invoke((PsiVariable)elements[0], project, null);
+      }
     }
   }
 

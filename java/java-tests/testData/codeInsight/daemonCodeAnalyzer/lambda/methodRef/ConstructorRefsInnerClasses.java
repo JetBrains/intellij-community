@@ -16,11 +16,11 @@ class NonStaticInner {
   static void call12(I2 s) {}
 
   static {
-    <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I1'">I1 i1 = NonStaticInner.Inner :: new;</error>
-    call11<error descr="'call11(NonStaticInner.I1)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
+    I1 i1 = <error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>;
+    call11(<error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>);
 
-    <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner.I2'">I2 i2 = NonStaticInner.Inner :: new;</error>
-    call12<error descr="'call12(NonStaticInner.I2)' in 'NonStaticInner' cannot be applied to '(<method reference>)'">(NonStaticInner.Inner :: new)</error>;
+    I2 i2 = <error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>;
+    call12(<error descr="An enclosing instance of type NonStaticInner is not in scope">NonStaticInner.Inner :: new</error>);
   }
 }
 

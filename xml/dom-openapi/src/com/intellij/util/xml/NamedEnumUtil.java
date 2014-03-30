@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.Function;
-import com.intellij.util.ReflectionCache;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.Function;
+import com.intellij.util.ReflectionUtil;
 
 /**
  * @author peter
@@ -47,7 +47,7 @@ public class NamedEnumUtil {
   }
 
   private static <T extends Enum> Function<Enum, String> getShow(final Class<T> enumClass) {
-    return ReflectionCache.isAssignable(NamedEnum.class, enumClass) ? NAMED_SHOW : SIMPLE_SHOW;
+    return ReflectionUtil.isAssignable(NamedEnum.class, enumClass) ? NAMED_SHOW : SIMPLE_SHOW;
   }
 
   public static <T extends Enum> String getEnumValueByElement(final T element) {

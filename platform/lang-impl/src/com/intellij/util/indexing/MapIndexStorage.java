@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,25 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectAndLibrariesScope;
+import com.intellij.psi.search.ProjectScopeImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentMap;
+import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -41,35 +48,55 @@ import java.util.concurrent.locks.ReentrantLock;
 */
 public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
+  private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.no.cashed.hashids", true);
+  private final boolean myBuildKeyHashToVirtualFileMapping;
   private PersistentMap<Key, ValueContainer<Value>> myMap;
+  private PersistentBTreeEnumerator<int[]> myKeyHashToVirtualFileMapping;
   private SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
+  private volatile int myLastScannedId;
   private final File myStorageFile;
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
 
   private final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
-  private boolean myHighKeySelectivity;
+  private final boolean myHighKeySelectivity;
+  private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      l.lock();
+      try {
+        if (!myMap.isClosed()) {
+          myCache.clear();
+          if (myMap.isDirty()) myMap.force();
+        }
+      }
+      finally {
+        l.unlock();
+      }
+    }
+  });
 
   public MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize
   ) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, false);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, false);
   }
 
   public MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
-                         boolean highKeySelectivity) throws IOException {
-
+                         boolean highKeySelectivity,
+                         boolean buildKeyHashToVirtualFileMapping) throws IOException {
     myStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
     myDataExternalizer = valueExternalizer;
     myHighKeySelectivity = highKeySelectivity;
+    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping && FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
 
@@ -118,6 +145,13 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     };
 
     myMap = map;
+
+    myKeyHashToVirtualFileMapping = myBuildKeyHashToVirtualFileMapping ? new KeyHash2VirtualFileEnumerator(getProjectFile()) : null;
+  }
+
+  @NotNull
+  private File getProjectFile() {
+    return new File(myStorageFile.getPath() + ".project");
   }
 
   @Override
@@ -128,6 +162,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         myCache.clear();
         myMap.force();
       }
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.force();
     }
     finally {
       l.unlock();
@@ -137,7 +172,9 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   @Override
   public void close() throws StorageException {
     try {
+      myLowMemoryFlusher.stop();
       flush();
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
       myMap.close();
     }
     catch (IOException e) {
@@ -159,12 +196,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   public void clear() throws StorageException{
     try {
       myMap.close();
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.close();
     }
     catch (IOException e) {
       LOG.error(e);
     }
     try {
       FileUtil.delete(myStorageFile);
+      if (myKeyHashToVirtualFileMapping != null) IOUtil.deleteAllFilesStartingWith(getProjectFile());
       initMapAndCache();
     }
     catch (IOException e) {
@@ -183,10 +222,62 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @Override
-  public boolean processKeys(final Processor<Key> processor) throws StorageException {
+  public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, final IdFilter idFilter) throws StorageException {
     l.lock();
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
+      if (myBuildKeyHashToVirtualFileMapping && idFilter != null) {
+        TIntHashSet hashMaskSet = null;
+        long l = System.currentTimeMillis();
+
+        File fileWithCaches = getSavedProjectFileValueIds(myLastScannedId, scope);
+        final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS &&
+                                         (scope instanceof ProjectScopeImpl || scope instanceof ProjectAndLibrariesScope) &&
+                                         fileWithCaches != null;
+        int id = myKeyHashToVirtualFileMapping.getLargestId();
+
+        if (useCachedHashIds && id == myLastScannedId) {
+          try {
+            hashMaskSet = loadHashedIds(fileWithCaches);
+          } catch (IOException ex) {
+            LOG.info(ex);
+          }
+        }
+
+        if (hashMaskSet == null) {
+          if (useCachedHashIds && myLastScannedId != 0) {
+            FileUtil.asyncDelete(fileWithCaches);
+          }
+
+          hashMaskSet = new TIntHashSet(1000);
+          final TIntHashSet finalHashMaskSet = hashMaskSet;
+          myKeyHashToVirtualFileMapping.iterateData(new Processor<int[]>() {
+            @Override
+            public boolean process(int[] key) {
+              if (!idFilter.containsFileId(key[1])) return true;
+              finalHashMaskSet.add(key[0]);
+              ProgressManager.checkCanceled();
+              return true;
+            }
+          });
+
+          if (useCachedHashIds) {
+            saveHashedIds(hashMaskSet, id, scope);
+          }
+        }
+
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Scanned keyHashToVirtualFileMapping of " + myStorageFile + " for " + (System.currentTimeMillis() - l));
+        }
+        final TIntHashSet finalHashMaskSet = hashMaskSet;
+        return myMap.processKeys(new Processor<Key>() {
+          @Override
+          public boolean process(Key key) {
+            if (!finalHashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+            return processor.process(key);
+          }
+        });
+      }
       return myMap.processKeys(processor);
     }
     catch (IOException e) {
@@ -208,10 +299,76 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @NotNull
+  private static TIntHashSet loadHashedIds(@NotNull File fileWithCaches) throws IOException {
+    DataInputStream inputStream = null;
+    try {
+      inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(fileWithCaches)));
+      int capacity = DataInputOutputUtil.readINT(inputStream);
+      TIntHashSet hashMaskSet = new TIntHashSet(capacity);
+      while(capacity > 0) {
+        hashMaskSet.add(DataInputOutputUtil.readINT(inputStream));
+        --capacity;
+      }
+      inputStream.close();
+      return hashMaskSet;
+    }
+    finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        }
+        catch (IOException ignored) {}
+      }
+    }
+  }
+
+  private void saveHashedIds(@NotNull TIntHashSet hashMaskSet, int largestId, @NotNull GlobalSearchScope scope) {
+    File newFileWithCaches = getSavedProjectFileValueIds(largestId, scope);
+    assert newFileWithCaches != null;
+    DataOutputStream stream = null;
+
+    boolean savedSuccessfully = false;
+    try {
+      stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
+      DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
+      final DataOutputStream finalStream = stream;
+      savedSuccessfully = hashMaskSet.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          try {
+            DataInputOutputUtil.writeINT(finalStream, value);
+            return true;
+          } catch (IOException ex) {
+            return false;
+          }
+        }
+      });
+    }
+    catch (IOException ignored) {
+    }
+    finally {
+      if (stream != null) {
+        try {
+          stream.close();
+          if (savedSuccessfully) myLastScannedId = largestId;
+        }
+        catch (IOException ignored) {}
+      }
+    }
+  }
+
+  @Nullable
+  private File getSavedProjectFileValueIds(int id, @NotNull GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    if (project == null) return null;
+    return new File(myStorageFile.getPath() + ".project."+project.hashCode() + "."+id + "." + scope.isSearchInLibraries());
+  }
+
+  @NotNull
   @Override
   public Collection<Key> getKeys() throws StorageException {
     List<Key> keys = new ArrayList<Key>();
-    processKeys(new CommonProcessors.CollectProcessor<Key>(keys));
+    processKeys(new CommonProcessors.CollectProcessor<Key>(keys), null, null);
     return keys;
   }
 
@@ -240,13 +397,24 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     try {
+      if (myKeyHashToVirtualFileMapping != null) {
+        myKeyHashToVirtualFileMapping.enumerate(new int[] { myKeyDescriptor.getHashCode(key), inputId });
+      }
+
       myMap.markDirty();
       if (!myHighKeySelectivity) {
         read(key).addValue(inputId, value);
         return;
       }
 
-      ChangeTrackingValueContainer<Value> cached = myCache.getIfCached(key);
+      ChangeTrackingValueContainer<Value> cached;
+      try {
+        l.lock();
+        cached = myCache.getIfCached(key);
+      } finally {
+        l.unlock();
+      }
+
       if (cached != null) {
         cached.addValue(inputId, value);
         return;
@@ -262,7 +430,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   @Override
-  public void removeAllValues(Key key, int inputId) throws StorageException {
+  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
     try {
       myMap.markDirty();
       // important: assuming the key exists in the index
@@ -273,4 +441,32 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
+  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+    @Override
+    public void save(@NotNull DataOutput out, int[] value) throws IOException {
+      DataInputOutputUtil.writeINT(out, value[0]);
+      DataInputOutputUtil.writeINT(out, value[1]);
+    }
+
+    @Override
+    public int[] read(@NotNull DataInput in) throws IOException {
+      return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
+    }
+
+    @Override
+    public int getHashCode(int[] value) {
+      return value[0] * 31 + value[1];
+    }
+
+    @Override
+    public boolean isEqual(int[] val1, int[] val2) {
+      return val1[0] == val2[0] && val1[1] == val2[1];
+    }
+  }
+
+  private static class KeyHash2VirtualFileEnumerator extends PersistentBTreeEnumerator<int[]> {
+    public KeyHash2VirtualFileEnumerator(File projectFile) throws IOException {
+      super(projectFile, new IntPairInArrayKeyDescriptor(), 4096);
+    }
+  }
 }

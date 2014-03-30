@@ -1,7 +1,17 @@
 <idea-plugin>
   <id>hg4idea</id>
   <name>hg4idea</name>
-  <description>Provides integration with Mercurial version control system. Supports Mercurial 1.3+.</description>
+  <description>
+      <![CDATA[
+      Allows working with <a href="http://mercurial.selenic.com/">Mercurial version control system</a>.
+      The following features are available:
+        <ul>
+        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
+        <li>Ability to browse, check out sources from and import into the available Mercurial repositories, when Mercurial is not enabled.</li>
+        <li>When Mercurial is enabled, the Mercurial node appears on the VCS menu, and on the context menu of the editor.
+        </ul>
+      ]]>
+   </description>
   <category>VCS Integration</category>
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
@@ -10,23 +20,29 @@
   <extensions defaultExtensionNs="com.intellij">
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
+    <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
+    <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
+                        serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
-    <projectService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
-                            serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.log.HgContentRevisionFactory"/>
   </extensions>
 
   <project-components>
     <component>
       <interface-class>org.zmlx.hg4idea.HgRepositoryWatcher</interface-class>
       <implementation-class>org.zmlx.hg4idea.HgRepositoryWatcher</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.zmlx.hg4idea.repo.HgRepositoryManager</implementation-class>
     </component>
   </project-components>
 
@@ -49,75 +65,45 @@
       <separator/>
 
       <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" />
-      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" />
+      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction">
+        <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+      </action>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
       <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>
       <separator/>
 
+      <action id="hg4idea.branches" class="org.zmlx.hg4idea.action.HgBranchesAction" text="_Branches..."/>
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.updateTo" class="org.zmlx.hg4idea.action.HgUpdateToAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+      <separator/>
+      <action id="hg4idea.Rebase.Abort" class="org.zmlx.hg4idea.action.HgAbortRebaseAction" text="Abort Rebasing"/>
+      <action id="hg4idea.Rebase.Continue" class="org.zmlx.hg4idea.action.HgContinueRebaseAction" text="Continue Rebasing"/>
+
+      <separator/>
+      <reference id="ChangesView.Browse"/>
+      <separator/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
+    <group id="Hg.LogContextMenu">
+      <separator/>
+    </group>
+
+    <action class="org.zmlx.hg4idea.action.HgUpdateToFromLogAction" id="hg4idea.UpdateToRevision" text="Update to Revision"/>
+    <action class="org.zmlx.hg4idea.action.HgCreateTagFromLogAction" id="hg4idea.CreateNewTag" text="New Tag"
+            description="Create new tag pointing to this commit"/>
+
+    <group id="Hg.Log.ContextMenu">
+      <reference id="hg4idea.UpdateToRevision"/>
+      <reference id="hg4idea.CreateNewTag"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+    </group>
+
   </actions>
 
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
-  
-  <change-notes>
-  <![CDATA[
-  <h3>Changes in 0.6.16-luciad.9-9.0.2</h3>
-  <ul>
-    <li>[enhancement] you can now diff to renamed versions of a file in the history window
-    <li>[enhancement] you can now clone from within IntelliJ
-    <li>[bugfix] the revert command now also works during a merge operation
-    <li>[bugfix] moving a file between two mercurial repositories now works
-    <li>[bugfix] reduced the number of temporary files created and made sure that they and all their derivatives are deleted (again ...)
-  </ul>
-  <h3>Changes in 0.6.16-luciad.8-9.0.2</h3>
-  <ul>
-    <li>compatible with IntelliJ 9.0.2
-    <li>[enhancement] the local pane of the diff window invoked from the 'Changes' view is now editable
-    <li>[bugfix] the history items are now sorted numerically on revision instead of lexically
-    <li>[bugfix] the history of a file now contains all revisions in which it changed
-    <li>[bugfix] renames are now shown properly in the changes view
-    <li>[bugfix] paths to hg.exe on Windows now also work
-  </ul>
-  <h3>Changes in 0.6.14-luciad.7-9.0.1</h3>
-  <ul>
-    <li>[bugfix] the plugin now deletes _all_ temporary files it creates
-  </ul>
-  <h3>Changes in 0.6.14-luciad.6-9.0.1</h3>
-  <ul>
-    <li>[bugfix] fixed possible exceptions when parsing revisions
-  </ul>
-  <h3>Changes in 0.6.14-luciad.5-9.0.1</h3>
-  <ul>
-    <li>[bugfix] fixed distribution, the plugin can now be installed again
-  </ul>
-  <h3>Changes in 0.6.14-luciad.4-9.0.1</h3>
-  <ul>
-    <li>[enhancement] the update behavior now emulates the fetch extension, except that it allows local modifications where possible
-    <li>[enhancement] added more VCS-related actions to the popup menus of files
-    <li>[bugfix] the plugin now cleans up the temporary files it creates
-  </ul>
-  <h3>Changes in 0.6.14-luciad.3-9.0.1</h3>
-  <ul>
-    <li>[bugfix] committing a merge no longer complains about ignored files
-    <li>[enhancement] 'Add to VCS' action is now available in right-click of files (merged from upstream) 
-  </ul>
-  <h3>Changes from the regular hg4idea</h3>
-  <ul>
-    <li>[bugfix] three-way merge editor now shows the correct content
-    <li>[bugfix] prompts during merge and update etc. are now shown in the IDE instead of ignored
-    <li>[bugfix] authentication dialog is now shown on the correct thread, allowing push and pull to secured servers
-    <li>[enhancement] better error and warning reporting
-    <li>[enhancement] update now works more consistently, especially when not at head revisions
-    <li>[enhancement] default commit button now also works when committing merges
-  </ul>
-  ]]>
-  </change-notes>
 </idea-plugin>

@@ -36,4 +36,45 @@ public class AutoUnboxing {
         Boolean c = Boolean.TRUE & false;
         Long d = Integer.valueOf(2) & 1L;
     }
+
+    private boolean noWarn(Integer i1, Integer i2) {
+      return i1 == i2;
+    }
+
+    void m(Boolean b) {
+        assert b;
+    }
+
+    void n(Integer i) {
+      switch(i) {
+        case 1: break;
+        case 2: break;
+        case 3: break;
+        default:
+      }
+    }
+
+    void m(Object o, Boolean b, Number n) {
+        if ((boolean) o) {}
+        if ((boolean) b) {}
+        if ((int)n) {}
+    }
+
+    boolean polyadic() {
+        return true && Boolean.TRUE && true;
+    }
+
+  void n() {
+    boolean b = Boolean.valueOf(true) == ;
+    boolean c = Boolean.valueOf(true) ==
+                Boolean.valueOf(false) ==
+                Boolean.valueOf(true);
+    boolean d = Boolean.valueOf(true) ==
+                Boolean.valueOf(false);
+    boolean e = Boolean.valueOf(true) ==
+                false;
+    boolean f = true ==
+                Boolean.valueOf(false);
+    boolean g = Boolean.valueOf(true) == Boolean.valueOf(false) == true;
+  }
 }

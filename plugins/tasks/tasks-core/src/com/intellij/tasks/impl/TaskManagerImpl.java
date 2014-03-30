@@ -30,9 +30,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
+import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -42,6 +46,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -160,7 +165,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         if (associatedTask != null && !getActiveTask().equals(associatedTask)) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              activateTask(associatedTask, true, false);
+              activateTask(associatedTask, true);
             }
           }, myProject.getDisposed());
         }
@@ -205,7 +210,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void removeTask(LocalTask task) {
     if (task.isDefault()) return;
     if (myActiveTask.equals(task)) {
-      activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true, false);
+      activateTask(myTasks.get(LocalTaskImpl.DEFAULT_TASK_ID), true);
     }
     myTasks.remove(task.getId());
     myDispatcher.getMulticaster().taskRemoved(task);
@@ -242,7 +247,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(@Nullable final String query, final boolean forceRequest) {
-    return getIssues(query, 50, 0, forceRequest, true, new EmptyProgressIndicator());
+    return getIssues(query, 0, 50, forceRequest, true, new EmptyProgressIndicator());
   }
 
   @Override
@@ -252,8 +257,23 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                               boolean forceRequest,
                               final boolean withClosed,
                               @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = getIssuesFromRepositories(query, max, since, forceRequest, cancelled);
-    if (tasks == null) return getCachedIssues(withClosed);
+    return getIssues(query, 0, max, forceRequest, withClosed, cancelled);
+  }
+
+  @Override
+  public List<Task> getIssues(@Nullable String query,
+                              int offset,
+                              int limit,
+                              boolean forceRequest,
+                              final boolean withClosed,
+                              @NotNull ProgressIndicator indicator) {
+    long start = System.currentTimeMillis();
+    List<Task> tasks = getIssuesFromRepositories(query, offset, limit, withClosed, forceRequest, indicator);
+    if (tasks != null) {
+      LOG.debug(String.format("Total %s ms to download %d issues", System.currentTimeMillis() - start, tasks.size()));
+    } else {
+      return getCachedIssues(withClosed);
+    }
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return ContainerUtil.filter(tasks, new Condition<Task>() {
       @Override
@@ -341,8 +361,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
-  public void activateTask(@NotNull final Task origin, boolean clearContext, boolean createChangelist) {
-    if (origin.equals(getActiveTask())) return;
+  public LocalTask activateTask(@NotNull final Task origin, boolean clearContext) {
+    LocalTask activeTask = getActiveTask();
+    if (origin.equals(activeTask)) return activeTask;
 
     saveActiveTask();
 
@@ -353,7 +374,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
-    if (!isVcsEnabled()) return;
+    return restoreVcsContext(task);
+  }
+
+  private LocalTask restoreVcsContext(LocalTask task) {
+    if (!isVcsEnabled()) return task;
+
     List<ChangeListInfo> changeLists = task.getChangeLists();
     if (!changeLists.isEmpty()) {
       ChangeListInfo info = changeLists.get(0);
@@ -364,10 +390,55 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
       myChangeListManager.setDefaultChangeList(changeList);
     }
-    else if (createChangelist) {
-      String name = getChangelistName(origin);
-      String comment = TaskUtil.getChangeListComment(origin);
-      createChangeList(task, name, comment);
+
+    List<BranchInfo> branches = task.getBranches(false);
+    VcsTaskHandler.TaskInfo info = fromBranches(branches);
+
+    switchBranch(info);
+    return task;
+  }
+
+  public void switchBranch(VcsTaskHandler.TaskInfo info) {
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.switchToTask(info, null);
+    }
+  }
+
+  private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
+    MultiMap<String, String> map = new MultiMap<String, String>();
+    for (BranchInfo branch : branches) {
+      map.putValue(branch.name, branch.repository);
+    }
+    return new VcsTaskHandler.TaskInfo(map);
+  }
+
+  public void createBranch(LocalTask task, LocalTask previousActive, String name) {
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      VcsTaskHandler.TaskInfo info = handler.getActiveTask();
+      if (previousActive != null) {
+        addBranches(previousActive, info, false);
+      }
+      addBranches(task, info, true);
+      addBranches(task, handler.startNewTask(name), false);
+    }
+  }
+
+  public void mergeBranch(LocalTask task) {
+    VcsTaskHandler.TaskInfo original = fromBranches(task.getBranches(true));
+    VcsTaskHandler.TaskInfo feature = fromBranches(task.getBranches(false));
+
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
+    for (VcsTaskHandler handler : handlers) {
+      handler.closeTask(feature, original);
+    }
+  }
+
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info, boolean original) {
+    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info, original);
+    for (BranchInfo branchInfo : branchInfos) {
+      task.addBranch(branchInfo);
     }
   }
 
@@ -507,7 +578,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>();
-    for (TaskRepositoryType repositoryType : ourRepositoryTypes) {
+    for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Object o : element.getChildren()) {
         if (((Element)o).getName().equals(repositoryType.getName())) {
           try {
@@ -520,6 +591,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           }
           catch (XmlSerializationException e) {
             // ignore
+            LOG.error(e.getMessage());
           }
         }
       }
@@ -536,7 +608,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       if (server.type == null || server.url == null) {
         continue;
       }
-      for (TaskRepositoryType<?> repositoryType : ourRepositoryTypes) {
+      for (TaskRepositoryType<?> repositoryType : TaskRepositoryType.getRepositoryTypes()) {
         if (repositoryType.getName().equals(server.type)) {
           for (TaskRepository repository : myRepositories) {
             if (!repositoryType.equals(repository.getRepositoryType())) {
@@ -676,7 +748,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private void doUpdate(@Nullable Runnable onComplete) {
     try {
-      List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false, new EmptyProgressIndicator());
+      List<Task> issues = getIssuesFromRepositories(null, 0, myConfig.updateIssuesCount, false, false, new EmptyProgressIndicator());
       if (issues == null) return;
 
       synchronized (myIssueCache) {
@@ -705,8 +777,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Nullable
   private List<Task> getIssuesFromRepositories(@Nullable String request,
-                                               int max,
-                                               long since,
+                                               int offset,
+                                               int limit,
+                                               boolean withClosed,
                                                boolean forceRequest,
                                                @NotNull final ProgressIndicator cancelled) {
     List<Task> issues = null;
@@ -715,15 +788,26 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
-        final Task[] tasks = repository.getIssues(request, max, since, cancelled);
+        Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
-        ContainerUtil.addAll(issues, tasks);
+        if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
+          List<Task> filteredTasks = TaskSearchSupport.filterTasks(request, ContainerUtil.list(tasks));
+          ContainerUtil.addAll(issues, filteredTasks);
+        } else {
+          ContainerUtil.addAll(issues, tasks);
+        }
       }
       catch (ProcessCanceledException ignored) {
         // OK
       }
       catch (Exception e) {
+        String reason = "";
+        // Fix to IDEA-111810
+        if (e.getClass() == Exception.class) {
+          // probably contains some message meaningful to end-user
+          reason = e.getMessage();
+        }
         //noinspection InstanceofCatchParameter
         if (e instanceof SocketTimeoutException) {
           LOG.warn("Socket timeout from " + repository);
@@ -733,17 +817,21 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
         myBadRepositories.add(repository);
         if (forceRequest) {
-          notifyAboutConnectionFailure(repository);
+          notifyAboutConnectionFailure(repository, reason);
         }
       }
     }
     return issues;
   }
 
-  private void notifyAboutConnectionFailure(final TaskRepository repository) {
+  private void notifyAboutConnectionFailure(final TaskRepository repository, String details) {
     Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
+    String content = "<p><a href=\"\">Configure server...</a></p>";
+    if (!StringUtil.isEmpty(details)) {
+      content =  "<p>" + details + "</p>" + content;
+    }
     Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
-                                              "<p><a href=\"\">Configure server...</a></p>", NotificationType.WARNING,
+                                              content, NotificationType.WARNING,
                                               new NotificationListener() {
                                                 public void hyperlinkUpdate(@NotNull Notification notification,
                                                                             @NotNull HyperlinkEvent event) {
@@ -760,6 +848,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public boolean isVcsEnabled() {
     return ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length > 0;
+  }
+
+  @Override
+  public AbstractVcs getActiveVcs() {
+    AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    if (vcss.length == 0) return null;
+    for (AbstractVcs vcs : vcss) {
+      if (vcs.getType() == VcsType.distributed) {
+        return vcs;
+      }
+    }
+    return vcss[0];
   }
 
   @Override
@@ -797,7 +897,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     task.addChangelist(changeListInfo);
     addTask(task);
     if (changeList.isDefault()) {
-      activateTask(task, false, false);
+      activateTask(task, false);
     }
   }
 
@@ -824,7 +924,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     createChangeList(task, name, comment);
   }
 
-  public void createChangeList(LocalTask task, String name, @Nullable String comment) {
+  private void createChangeList(LocalTask task, String name, @Nullable String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
       changeList = myChangeListManager.addChangeList(name, comment);
@@ -841,15 +941,39 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String getChangelistName(Task task) {
-    if (task.isIssue() && myConfig.changelistNameFormat != null) {
-      return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
-    }
-    return task.getSummary();
+    String name = task.isIssue() && myConfig.changelistNameFormat != null
+               ? TaskUtil.formatTask(task, myConfig.changelistNameFormat)
+               : task.getSummary();
+    return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
+
+  public String suggestBranchName(Task task) {
+    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
+      return task.getId().replace(' ', '-');
+    }
+    else {
+      String summary = task.getSummary();
+      List<String> words = StringUtil.getWordsIn(summary);
+      String[] strings = ArrayUtil.toStringArray(words);
+      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
+    }
+  }
+
 
   @TestOnly
   public ChangeListAdapter getChangeListListener() {
     return myChangeListListener;
+  }
+
+  /**
+   * Reconfigure repository's HTTP clients probably to apply new connection settings.
+   */
+  public void reconfigureRepositoryClients() {
+    for (TaskRepository repository : myRepositories) {
+      if (repository instanceof BaseRepositoryImpl) {
+        ((BaseRepositoryImpl)repository).reconfigureClient();
+      }
+    }
   }
 
   public static class Config {
@@ -866,15 +990,23 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public int updateInterval = 20;
     public int updateIssuesCount = 100;
 
+    // create task options
     public boolean clearContext = true;
     public boolean createChangelist = true;
+    public boolean createBranch = true;
+
+    // close task options
+    public boolean closeIssue = true;
+    public boolean commitChanges = true;
+    public boolean mergeBranch = true;
+
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
     public boolean markAsInProgress = false;
+
     public String changelistNameFormat = "{id} {summary}";
 
     public boolean searchClosedTasks = false;
-
     @Tag("servers")
     public Element servers = new Element("servers");
   }

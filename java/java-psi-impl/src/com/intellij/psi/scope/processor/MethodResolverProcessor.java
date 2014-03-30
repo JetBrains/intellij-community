@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,31 +20,39 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates = false;
 
-  public MethodResolverProcessor(@NotNull PsiMethodCallExpression place){
-    this(place, new PsiConflictResolver[]{new JavaMethodsConflictResolver(place.getArgumentList())});
-    setArgumentList(place.getArgumentList());
+  public MethodResolverProcessor(@NotNull PsiMethodCallExpression place, @NotNull PsiFile placeFile) {
+    this(place, place.getArgumentList(), placeFile);
+  }
+
+  public MethodResolverProcessor(@NotNull PsiCallExpression place,
+                                 @NotNull PsiExpressionList argumentList, 
+                                 @NotNull PsiFile placeFile){
+    this(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList, PsiUtil.getLanguageLevel(placeFile))});
+    setArgumentList(argumentList);
     obtainTypeArguments(place);
   }
 
-  public MethodResolverProcessor(PsiClass classConstr, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place) {
-    super(place, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList)}, new SmartList<CandidateInfo>());
+  public MethodResolverProcessor(PsiClass classConstr, @NotNull PsiExpressionList argumentList, @NotNull PsiElement place, @NotNull PsiFile placeFile) {
+    super(place, placeFile, new PsiConflictResolver[]{new JavaMethodsConflictResolver(argumentList,
+                                                                                      PsiUtil.getLanguageLevel(placeFile))}, new SmartList<CandidateInfo>());
     setIsConstructor(true);
     setAccessClass(classConstr);
     setArgumentList(argumentList);
   }
 
-  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiConflictResolver[] resolvers) {
-    super(place, resolvers, new SmartList<CandidateInfo>());
+  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers) {
+    super(place, placeFile, resolvers, new SmartList<CandidateInfo>());
   }
 
   @Override
-  public void handleEvent(Event event, Object associated) {
+  public void handleEvent(@NotNull Event event, Object associated) {
     if (event == JavaScopeProcessorEvent.CHANGE_LEVEL) {
       if (myHasAccessibleStaticCorrectCandidate) myStopAcceptingCandidates = true;
     }
@@ -52,7 +60,12 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
+  }
+
+  @Override
+  protected boolean acceptVarargs() {
+    return true;
   }
 }

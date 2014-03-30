@@ -57,7 +57,9 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
       readFromXml("file:///ProductivityFeaturesRegistry.xml");
     }
     catch (Exception e) {
-      LOG.error(e);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(e);
+      }
     }
 
     try {

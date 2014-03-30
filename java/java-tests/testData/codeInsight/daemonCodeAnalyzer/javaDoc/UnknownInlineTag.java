@@ -1,7 +1,7 @@
 /**
  * {<warning>@linked</warning>}
  */
-public class Foo {
+class Foo {
   /**
    * @param i some param {<warning>@vaaalue</warning> #field}
    */

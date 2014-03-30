@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -26,17 +25,28 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -61,6 +71,9 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeystore;
   private String myStorepass;
   private String myKeypass;
+  private boolean myConvertCss2Bin;
+  private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
+  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -94,17 +107,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
 
-    final String binPath = ((JavaSdk)fxCompatibleSdk.getSdkType()).getBinPath(fxCompatibleSdk);
-
     final JavaFxArtifactProperties properties =
             (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
-    
-    if (StringUtil.isEmptyOrSpaces(properties.getAppClass())) {
-      compileContext.addMessage(CompilerMessageCategory.ERROR, "No application class specified for JavaFX package", null, -1, -1);
-      return;
-    }
 
-    new JavaFxPackager(artifact, properties, compileContext).createJarAndDeploy(binPath);
+    final JavaFxPackager javaFxPackager = new JavaFxPackager(artifact, properties, project) {
+      @Override
+      protected void registerJavaFxPackagerError(String message) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
+    };
+    javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
   }
 
   @Override
@@ -243,20 +255,76 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myKeypass = keypass;
   }
 
-  private static class JavaFxPackager extends AbstractJavaFxPackager {
+  public boolean isConvertCss2Bin() {
+    return myConvertCss2Bin;
+  }
+
+  public void setConvertCss2Bin(boolean convertCss2Bin) {
+    myConvertCss2Bin = convertCss2Bin;
+  }
+
+  public String getPreloaderClass(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      final JavaFxPreloaderArtifactProperties properties =
+        (JavaFxPreloaderArtifactProperties)artifact.getProperties(JavaFxPreloaderArtifactPropertiesProvider.getInstance());
+      return properties.getPreloaderClass();
+    }
+    return null;
+  }
+
+  public String getPreloaderJar(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      return ((ArchivePackagingElement)artifact.getRootElement()).getArchiveFileName();
+    }
+    return null;
+  }
+
+
+  private static Artifact getPreloaderArtifact(Artifact rootArtifact, Project project) {
+    for (PackagingElement<?> element : rootArtifact.getRootElement().getChildren()) {
+      if (element instanceof ArtifactPackagingElement) {
+        final Artifact artifact = ((ArtifactPackagingElement)element)
+          .findArtifact(ArtifactManager.getInstance(project).getResolvingContext());
+        if (artifact != null && artifact.getArtifactType() instanceof JavaFxPreloaderArtifactType) {
+          return artifact;
+        }
+      }
+    }
+    return null;
+  }
+
+  public String getNativeBundle() {
+    return myNativeBundle;
+  }
+
+  public void setNativeBundle(String nativeBundle) {
+    myNativeBundle = nativeBundle;
+  }
+
+  public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+    return myCustomManifestAttributes;
+  }
+
+  public void setCustomManifestAttributes(List<JavaFxManifestAttribute> customManifestAttributes) {
+    myCustomManifestAttributes = customManifestAttributes;
+  }
+
+  public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
-    private final CompileContext myCompileContext;
+    private final Project myProject;
 
-    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, CompileContext compileContext) {
+    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, Project project) {
       myArtifact = artifact;
       myProperties = properties;
-      myCompileContext = compileContext;
+      myProject = project;
     }
 
     @Override
-    protected String getArtifactRootName() {
-      return myArtifact.getRootElement().getName();
+    protected String getArtifactName() {
+      return myArtifact.getName();
     }
 
     @Override
@@ -266,6 +334,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (PackagingElement<?> element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof ArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((ArchivePackagingElement)element).getArchiveFileName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -300,20 +373,25 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
-    protected void registerJavaFxPackagerError(String message) {
-      myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+    public String getPreloaderClass() {
+      return myProperties.getPreloaderClass(myArtifact, myProject);
     }
 
     @Override
-    protected String prepareParam(String param) {
-      return GeneralCommandLine.prepareCommand(param);
+    public String getPreloaderJar() {
+      return myProperties.getPreloaderJar(myArtifact, myProject);
     }
-    
+
+    @Override
+    public boolean convertCss2Bin() {
+      return myProperties.isConvertCss2Bin();
+    }
+
     @Override
     protected String getHtmlParamFile() {
       return myProperties.getHtmlParamFile();
     }
-    
+
     @Override
     protected String getParamFile() {
       return myProperties.getParamFile();
@@ -322,6 +400,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getUpdateMode() {
       return myProperties.getUpdateMode();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return JavaFxPackagerConstants.NativeBundles.valueOf(myProperties.getNativeBundle());
     }
 
     @Override
@@ -352,6 +435,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public boolean isEnabledSigning() {
       return myProperties.isEnabledSigning();
+    }
+
+    @Override
+    public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+      return myProperties.getCustomManifestAttributes();
     }
   }
 }

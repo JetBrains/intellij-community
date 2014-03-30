@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,13 +95,12 @@ public class TypeMigrationLabeler {
       final PsiElement element = p.getFirst().retrieve();
       LOG.assertTrue(element != null);
       final PsiType type = ((PsiExpression)element).getType();
-      report[j++] = "Cannot convert type of expression <b>" +
-                    StringUtil.escapeXml(element.getText()) +
-                    "</b>" +
-                    " from <b>" +
-                    StringUtil.escapeXml(type.getCanonicalText()) +
-                    "</b> to <b>" + StringUtil.escapeXml(p.getSecond().getCanonicalText()) +
-                    "</b><br>";
+      report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXml(element.getText()) + "</b>" +
+                    (type != null
+                     ? " from <b>" + StringUtil.escapeXml(type.getCanonicalText()) + "</b>" +
+                       " to <b>" + StringUtil.escapeXml(p.getSecond().getCanonicalText()) + "</b>"
+                     : "")
+                    + "<br>";
     }
 
     return report;
@@ -460,17 +458,23 @@ public class TypeMigrationLabeler {
       else if (resolved instanceof PsiExpression){
         return (((PsiExpression)resolved).getType());
       } else if (resolved instanceof PsiReferenceParameterList) {
-        final PsiElement parent = resolved.getParent();
-        LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
-        final PsiClass psiClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
-        return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, TypeConversionUtil.getSuperClassSubstitutor(psiClass, PsiTreeUtil.getParentOfType(parent,
-                                                                                                                                     PsiClass.class),
-                                                                                                         PsiSubstitutor.EMPTY));
+        PsiElement parent = resolved.getParent();
+        while (parent != null) {
+          LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
+          final PsiClass psiClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
+          final PsiClass containingClass = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+          if (psiClass != null && containingClass != null) {
+           final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, containingClass, PsiSubstitutor.EMPTY);
+           if (classSubstitutor != null) {
+             return JavaPsiFacade.getElementFactory(parent.getProject()).createType(psiClass, classSubstitutor);
+           }
+          }
+          parent = PsiTreeUtil.getParentOfType(parent, PsiJavaCodeReferenceElement.class, true);
+        }
       } else if (resolved instanceof PsiClass) {
         return JavaPsiFacade.getElementFactory(resolved.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
       }
     }
-    LOG.error("should not happen: " + resolved.getClass());
     return null;
   }
 
@@ -481,7 +485,7 @@ public class TypeMigrationLabeler {
         final Runnable checkTimeToStopRunnable = new Runnable() {
           public void run() {
             if (Messages.showYesNoCancelDialog("Found more than 10 roots to migrate. Do you want to preview?", "Type Migration",
-                                               Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                               Messages.getWarningIcon()) == Messages.YES) {
               myException = new MigrateException();
             }
           }
@@ -539,7 +543,6 @@ public class TypeMigrationLabeler {
   }
 
   void markFailedConversion(final Pair<PsiType, PsiType> typePair, final PsiExpression expression) {
-    LOG.assertTrue(expression.getType() != null);
     LOG.assertTrue(typePair.getSecond() != null);
     myFailedConversions.add(new Pair<PsiAnchor, PsiType>(PsiAnchor.create(expression), typePair.getSecond()));
   }

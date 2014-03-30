@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -41,6 +41,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     super(node);
   }
 
+  @Override
   public PsiReference getReference() {
     return this;
   }
@@ -52,6 +53,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     super.subtreeChanged();
   }
 
+  @Override
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
@@ -60,10 +62,12 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return null;
   }
 
+  @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     final PsiElement refNameElement = getReferenceNameElement();
     if (refNameElement != null) {
@@ -73,6 +77,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return new TextRange(0, getTextLength());
   }
 
+  @Override
   public PsiElement handleElementRenameSimple(String newElementName) throws IncorrectOperationException {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
@@ -86,16 +91,18 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
         newNameNode = factory.createLiteralFromValue(newElementName).getFirstChild().getNode();
       }
       assert newNameNode != null && node != null;
-      node.getTreeParent().replaceChild(node, newNameNode);
+      getNode().replaceChild(node, newNameNode);
     }
 
     return this;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     return handleElementRenameSimple(newElementName);
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
     final boolean fullyQualified = isFullyQualified();
@@ -115,7 +122,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
 
       final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qualifiedName);
       if (!preserveQualification) {
-        GrReferenceAdjuster.shortenReferences(qualifiedRef);
+        JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(qualifiedRef);
       }
       return qualifiedRef;
     }
@@ -131,7 +138,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       String qName = psiClass.getQualifiedName() + "." + member.getName();
       final GrReferenceElement<Q> qualifiedRef = bindWithQualifiedRef(qName);
       if (!preserveQualification) {
-        GrReferenceAdjuster.shortenReferences(qualifiedRef);
+        JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(qualifiedRef);
       }
       return qualifiedRef;
     }
@@ -151,6 +158,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
 
   public abstract boolean isFullyQualified();
 
+  @Override
   @NotNull
   public PsiType[] getTypeArguments() {
     final GrTypeArgumentList typeArgsList = getTypeArgumentList();
@@ -158,7 +166,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
 
     final GrTypeElement[] args = typeArgsList.getTypeArgumentElements();
     if (args.length == 0) return PsiType.EMPTY_ARRAY;
-    PsiType[] result = new PsiType[args.length];
+    PsiType[] result = PsiType.createArray(args.length);
     for (int i = 0; i < result.length; i++) {
       result[i] = args[i].getType();
     }
@@ -166,15 +174,18 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return result;
   }
 
+  @Override
   @Nullable
   public GrTypeArgumentList getTypeArgumentList() {
     return (GrTypeArgumentList)findChildByType(GroovyElementTypes.TYPE_ARGUMENTS);
   }
 
+  @Override
   public void setQualifier(@Nullable Q newQualifier) {
     PsiImplUtil.setQualifier(this, newQualifier);
   }
 
+  @Override
   public String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
@@ -191,4 +202,8 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return whiteSpaceAndComments;
   }
 
+  @Override
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
 }

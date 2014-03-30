@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class TableUtil {
@@ -72,43 +73,70 @@ public class TableUtil {
 
   @NotNull
   public static List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
-    if (table.isEditing()){
-      table.getCellEditor().stopCellEditing();
-    }
-    TableModel model = table.getModel();
+    final TableModel model = table.getModel();
     if (!(model instanceof ItemRemovable)) {
       throw new RuntimeException("model must be instance of ItemRemovable");
     }
 
+    if (table.getSelectionModel().isSelectionEmpty()) {
+      return new ArrayList<Object[]>(0);
+    }
+
+    final List<Object[]> removedItems = new SmartList<Object[]>();
+    final ItemRemovable itemRemovable = (ItemRemovable)model;
+    final int columnCount = model.getColumnCount();
+    doRemoveSelectedItems(table, new ItemRemovable() {
+      @Override
+      public void removeRow(int index) {
+        Object[] row = new Object[columnCount];
+        for (int column = 0; column < columnCount; column++) {
+          row[column] = model.getValueAt(index, column);
+        }
+        removedItems.add(row);
+        itemRemovable.removeRow(index);
+      }
+    }, applyable);
+    return ContainerUtil.reverse(removedItems);
+  }
+
+  public static boolean doRemoveSelectedItems(@NotNull JTable table, @NotNull ItemRemovable itemRemovable, @Nullable ItemChecker applyable) {
+    if (table.isEditing()) {
+      table.getCellEditor().stopCellEditing();
+    }
+
     ListSelectionModel selectionModel = table.getSelectionModel();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if (minSelectionIndex == -1) return new ArrayList<Object[]>(0);
+    int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
+    if (minSelectionIndex == -1 || maxSelectionIndex == -1) {
+      return false;
+    }
 
-    List<Object[]> removedItems = new LinkedList<Object[]>();
-
-    final int columnCount = model.getColumnCount();
-    for (int idx = table.getRowCount() - 1; idx >= 0; idx--) {
-      if (selectionModel.isSelectedIndex(idx) && (applyable == null || applyable.isOperationApplyable(model, idx))) {
-        final Object[] row = new Object[columnCount];
-        for(int column = 0; column < columnCount; column++){
-          row[column] = model.getValueAt(idx, column);
-        }
-        removedItems.add(0, row);
-        ((ItemRemovable)model).removeRow(idx);
+    TableModel model = table.getModel();
+    boolean removed = false;
+    for (int index = maxSelectionIndex; index >= 0; index--) {
+      if (selectionModel.isSelectedIndex(index) && (applyable == null || applyable.isOperationApplyable(model, index))) {
+        itemRemovable.removeRow(index);
+        removed = true;
       }
     }
+
+    if (!removed) {
+      return false;
+    }
+
     int count = model.getRowCount();
     if (count == 0) {
       table.clearSelection();
     }
-    else if (table.getSelectedRow() == -1) {
+    else if (selectionModel.getMinSelectionIndex() == -1) {
       if (minSelectionIndex >= model.getRowCount()) {
         selectionModel.setSelectionInterval(model.getRowCount() - 1, model.getRowCount() - 1);
-      } else {
+      }
+      else {
         selectionModel.setSelectionInterval(minSelectionIndex, minSelectionIndex);
       }
     }
-    return removedItems;
+    return true;
   }
 
   public static int moveSelectedItemsUp(@NotNull JTable table) {
@@ -199,49 +227,29 @@ public class TableUtil {
     table.setRowSelectionInterval(0, 0);
   }
 
-  public static void configureAllowedCellSelection(@NotNull JTable table, @NotNull Condition<Point> cellCondition) {
-    for (String keyStroke : new String[]{"ENTER","TAB","shift TAB","RIGHT","LEFT","UP","DOWN"}) {
-      final Object key = SwingActionWrapper.getKeyForActionMap(table, KeyStroke.getKeyStroke(keyStroke));
-      if (key != null) {
-        new MyFocusAction(table, cellCondition, key);
-      }
-    }
+  public static void setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
+    setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
   }
 
-  public static class MyFocusAction extends SwingActionWrapper<JTable> {
-    private final Condition<Point> myCellCondition;
+  public static void setupCheckboxColumn(@NotNull TableColumn column) {
+    int checkboxWidth = new JCheckBox().getPreferredSize().width;
+    column.setResizable(false);
+    column.setPreferredWidth(checkboxWidth);
+    column.setMaxWidth(checkboxWidth);
+    column.setMinWidth(checkboxWidth);
+  }
 
-    public MyFocusAction(@NotNull JTable table, @NotNull Condition<Point> cellCondition, @NotNull Object key) {
-      super(table, key);
-      myCellCondition = cellCondition;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-      final JTable table = getComponent();
-      int originalRow = table.getSelectedRow();
-      int originalColumn = table.getSelectedColumn();
-
-      getDelegate().actionPerformed(e);
-
-      final Point coord = new Point(table.getSelectedColumn(), table.getSelectedRow());
-
-      while (!myCellCondition.value(coord)) {
-        getDelegate().actionPerformed(e);
-
-        if (coord.y == table.getSelectedRow()
-            && coord.x == table.getSelectedColumn()) {
-          table.changeSelection(originalRow, originalColumn, false, false);
-          break;
-        }
-
-        coord.y = table.getSelectedRow();
-        coord.x = table.getSelectedColumn();
-
-        if (coord.y == originalRow && coord.x == originalColumn) {
-          break;
+  public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
+    if (scrollPane != null) {
+      if (temporaryHideVerticalScrollBar) {
+        final JScrollBar bar = scrollPane.getVerticalScrollBar();
+        if (bar == null || !bar.isVisible()) {
+          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         }
       }
+      scrollPane.revalidate();
+      scrollPane.repaint();
     }
   }
 }

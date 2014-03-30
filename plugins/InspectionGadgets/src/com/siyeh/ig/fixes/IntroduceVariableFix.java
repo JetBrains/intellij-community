@@ -26,6 +26,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -53,6 +54,12 @@ public class IntroduceVariableFix extends InspectionGadgetsFix {
     }
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return InspectionGadgetsBundle.message("introduce.variable.quickfix");
+  }
+
   @Nullable
   public PsiExpression getExpressionToExtract(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
@@ -66,9 +73,9 @@ public class IntroduceVariableFix extends InspectionGadgetsFix {
     }
     final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
     final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-    dataContextContainer.doWhenDone(new AsyncResult.Handler<DataContext>() {
+    dataContextContainer.doWhenDone(new Consumer<DataContext>() {
       @Override
-      public void run(DataContext dataContext) {
+      public void consume(DataContext dataContext) {
         handler.invoke(project, new PsiElement[]{expression}, dataContext);
       }
     });

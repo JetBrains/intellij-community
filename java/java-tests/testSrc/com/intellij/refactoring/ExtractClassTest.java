@@ -1,4 +1,20 @@
 /*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * User: anna
  * Date: 20-Aug-2008
  */
@@ -6,6 +22,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -16,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +41,7 @@ import java.util.Collections;
 import java.util.TreeSet;
 
 public class ExtractClassTest extends MultiFileTestCase{
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/extractClass/";
@@ -42,10 +61,16 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   private void doTestMethod(final String methodName, final String conflicts) throws Exception {
+    doTestMethod(methodName, conflicts, "Test");
+  }
+
+  private void doTestMethod(final String methodName,
+                            final String conflicts,
+                            final String qualifiedName) throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+        PsiClass aClass = myJavaFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -99,6 +124,14 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   public void testEnumSwitch() throws Exception {
     doTestMethod();
+  }
+
+  public void testImplicitReferenceTypeParameters() throws Exception {
+    doTestMethod();
+  }
+
+  public void testStaticImports() throws Exception {
+    doTestMethod("foo", null, "foo.Test");
   }
 
   public void testNoConstructorParams() throws Exception {
@@ -161,7 +194,8 @@ public class ExtractClassTest extends MultiFileTestCase{
   private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
                              boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", null, "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
+                                                                  "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();

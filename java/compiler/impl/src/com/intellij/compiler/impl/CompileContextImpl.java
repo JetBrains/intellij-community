@@ -26,6 +26,7 @@ import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -40,6 +41,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -99,7 +101,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsAnnotationProcessorsEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
 
     if (compilerSession != null) {
-      compilerSession.setContentIdKey(compileScope.getUserData(CompilerManager.CONTENT_ID_KEY));
+      final Key sessionId = ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.get(compileScope);
+      if (sessionId != null) {
+        // in case compilation is started as a part of some execution session, 
+        // all compilation tasks should have the same sessionId in order for successive task not to clean messages 
+        // from previous compilation tasks run within this execution session
+        compilerSession.setSessionId(sessionId);
+      }
     }
     recalculateOutputDirs();
     final CompilerWorkspaceConfiguration workspaceConfig = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -151,7 +159,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
       return true;
     }
-    if (isUnderRoots(myRootToModuleMap.keySet(), file)) {
+    if (VfsUtilCore.isUnder(file, myRootToModuleMap.keySet())) {
       return true;
     }
     final Module module = getModuleByFile(file);
@@ -305,7 +313,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (!myRebuildRequested) {
       myRebuildRequested = true;
       myRebuildReason = message;
-      addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      final boolean isOutOfProcessBuild = myDependencyCache == null;
+      if (!isOutOfProcessBuild) {
+        addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
     }
   }
 
@@ -313,6 +324,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myRebuildRequested;
   }
 
+  @Nullable
   public String getRebuildReason() {
     return myRebuildReason;
   }
@@ -445,7 +457,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
       return true;
     }
-    if (isUnderRoots(myGeneratedTestRoots, fileOrDir)) {
+    if (VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots)) {
       return true;
     }
     return false;
@@ -455,23 +467,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
       return true;
     }
-    if (isUnderRoots(myRootToModuleMap.keySet(), fileOrDir)) {
+    if (VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet())) {
       return true;
     }
     return false;
-  }
-
-  public static boolean isUnderRoots(@NotNull Set<VirtualFile> roots, @NotNull VirtualFile file) {
-    VirtualFile parent = file;
-    while (true) {
-      if (parent == null) {
-        return false;
-      }
-      if (roots.contains(parent)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
   }
 
   public UUID getSessionId() {

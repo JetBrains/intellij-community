@@ -29,6 +29,7 @@ import java.util.List;
 public class FakeRerunAction extends AnAction implements DumbAware {
   protected static final List<RestartAction> registry = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     RestartAction action = RestartAction.findActualAction();
     if (action != null && action.isEnabled()) {

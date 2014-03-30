@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -69,17 +70,18 @@ public class SimpleEditorPreview implements PreviewPanel{
     String text = page.getDemoText();
 
     HighlightsExtractor extractant2 = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
-    myHighlightData = extractant2.extractHighlights(text);
-
+    List<HighlightData> highlights = new ArrayList<HighlightData>();
+    String stripped = extractant2.extractHighlights(text, highlights);
+    myHighlightData = highlights.toArray(new HighlightData[highlights.size()]);
     int selectedLine = -1;
-    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(extractant2.cutDefinedTags(text), 10, 3, selectedLine, myOptions, false);
+    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(stripped, 10, 3, selectedLine, myOptions, false);
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
     if (navigatable) {
       addMouseMotionListener(myEditor, page.getHighlighter(), myHighlightData, false);
 
-      CaretListener listener = new CaretListener() {
+      CaretListener listener = new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           navigate(myEditor, true, e.getNewPosition(), page.getHighlighter(), myHighlightData, false);

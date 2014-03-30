@@ -43,11 +43,13 @@ public class OutputFiltersDialog extends DialogWrapper {
     initGui();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.settings.ide.settings.external.tools.output.filters");
   }
@@ -55,6 +57,7 @@ public class OutputFiltersDialog extends DialogWrapper {
   private void initGui() {
     myFiltersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myFiltersList.setCellRenderer(new ColoredListCellRenderer() {
+      @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FilterInfo info = (FilterInfo)value;
         append(info.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -83,6 +86,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     return prefix + number;
   }
 
+  @Override
   protected void doOKAction() {
     if (myModified) {
       myFilters = new FilterInfo[myFiltersModel.getSize()];
@@ -93,6 +97,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     for (FilterInfo myFilter : myFilters) {
       myFiltersModel.addElement(myFilter.createCopy());
@@ -155,6 +160,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myFiltersList;
   }
@@ -167,6 +173,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     return myFilters;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.tools.OutputFiltersDialog";
   }

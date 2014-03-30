@@ -117,7 +117,7 @@ public class FrameworkDetectionProcessor {
   }
 
   private static class FrameworkDetectorData {
-    private FrameworkDetector myDetector;
+    private final FrameworkDetector myDetector;
     private final ElementPattern<FileContent> myFilePattern;
     private final List<VirtualFile> mySuitableFiles = new ArrayList<VirtualFile>();
 

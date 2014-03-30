@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,22 +143,18 @@ public abstract class AppIcon {
       Application app = ApplicationManager.getApplication();
 
       if (app != null && myAppListener == null) {
-        myAppListener = new ApplicationActivationListener() {
+        myAppListener = new ApplicationActivationListener.Adapter() {
           @Override
           public void applicationActivated(IdeFrame ideFrame) {
             hideProgress(ideFrame.getProject(), myCurrentProcessId);
             _setOkBadge(ideFrame, false);
             _setTextBadge(ideFrame, null);
           }
-
-          @Override
-          public void applicationDeactivated(IdeFrame ideFrame) {
-          }
         };
         app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
       }
 
-      return app != null ? app.isActive() : false;
+      return app != null && app.isActive();
     }
   }
 

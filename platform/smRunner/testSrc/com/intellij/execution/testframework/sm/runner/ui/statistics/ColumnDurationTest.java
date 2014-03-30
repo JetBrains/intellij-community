@@ -258,7 +258,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
   public void testTotal_TotalSuite() {
     doRender(mySuite, 0);
     assertFragmentsSize(1);
-    assertEquals(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragmentsContainer.getAttribsAt(0));
     assertEquals(myColumn.valueOf(mySuite), myFragmentsContainer.getTextAt(0));
   }
   
@@ -278,7 +278,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
 
     public MyRenderer(final SMTestProxy proxy,
                        final UITestUtil.FragmentsContainer fragmentsContainer) {
-      super(proxy);
+      super();
       myFragmentsContainer = fragmentsContainer;
     }
 

@@ -66,7 +66,7 @@ public abstract class GroovyFix implements LocalQuickFix {
   protected abstract void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException;
 
-  private static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
+  protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
     final PsiFile containingPsiFile = problemElement.getContainingFile();
     if (containingPsiFile == null) {
       return false;

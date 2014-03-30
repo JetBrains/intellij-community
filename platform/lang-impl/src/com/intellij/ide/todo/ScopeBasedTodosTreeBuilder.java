@@ -26,13 +26,14 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
 public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
-  private JComboBox myScopes;
+  private final JComboBox myScopes;
 
   public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, JComboBox scopes){
     super(tree,treeModel,project);
     myScopes = scopes;
   }
 
+  @Override
   @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new ScopeBasedTodosTreeStructure(myProject, myScopes);

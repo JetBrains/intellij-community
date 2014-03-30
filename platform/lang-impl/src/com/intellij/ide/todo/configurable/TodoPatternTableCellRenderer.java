@@ -32,6 +32,7 @@ final class TodoPatternTableCellRenderer extends DefaultTableCellRenderer{
     myPatterns=patterns;
   }
 
+  @Override
   public Component getTableCellRendererComponent(
     JTable table,
     Object value,

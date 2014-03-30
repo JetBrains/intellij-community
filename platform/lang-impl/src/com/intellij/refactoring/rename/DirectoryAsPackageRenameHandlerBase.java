@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.TitledHandler;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -28,7 +28,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,6 +64,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInComments,
                                                               boolean searchInNonJavaFiles);
 
+  @Override
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     if (element instanceof PsiDirectory) {
@@ -91,10 +91,12 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return element;
   }
 
+  @Override
   public boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -102,13 +104,14 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     doRename(element, project, nameSuggestionContext, editor);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     final PsiElement nameSuggestionContext = element;
     element = adjustForRename(dataContext, element);
     LOG.assertTrue(element != null);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     doRename(element, project, nameSuggestionContext, editor);
   }
 
@@ -146,7 +149,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           }
           final String promptMessage = "Package \'" +
                                        aPackage.getName() +
-                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename " + 
+                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename " +
                                        (moduleDirs == null ? "current directory" : "current module directories");
           if (projectDirectories.length > 0) {
             int ret = Messages
@@ -154,13 +157,13 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           RefactoringBundle.message("rename.current.directory"),
                             RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText(),
                           Messages.getWarningIcon());
-            if (ret == 2) return;
+            if (ret == Messages.CANCEL) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
-                       ret == 0 ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
+                       ret == Messages.YES ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
           }
           else {
             if (Messages.showOkCancelDialog(project, promptMessage + "?", RefactoringBundle.message("warning.title"),
-                                    Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                    Messages.getWarningIcon()) == Messages.OK) {
               renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
             }
           }
@@ -175,10 +178,10 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                         RefactoringBundle.message("rename.package.button.text"),
                                           RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText(),
                                         Messages.getWarningIcon());
-          if (ret == 0) {
+          if (ret == Messages.YES) {
             PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
           }
-          else if (ret == 1) {
+          else if (ret == Messages.NO) {
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
           }
         }
@@ -219,6 +222,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     }
   }
 
+  @Override
   public String getActionTitle() {
     return RefactoringBundle.message("rename.directory.title");
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,18 +29,22 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
@@ -54,7 +59,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
@@ -73,8 +80,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -82,7 +87,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
-  private static final boolean EXPAND_ALL = Registry.is("find.usage.expand.all");
 
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
@@ -94,8 +98,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final Factory<UsageSearcher> myUsageSearcherFactory;
   private final Project myProject;
 
-  private boolean mySearchInProgress = true;
-  private ExporterToTextFile myTextFileExporter;
+  private volatile boolean mySearchInProgress = true;
+  private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final UsageModelTracker myModelTracker;
@@ -104,10 +108,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected = false;
-  static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
+  public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {
-      if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;
+      if (o1 == o2) return 0;
+      if (o1 == NULL_NODE) return -1;
+      if (o2 == NULL_NODE) return 1;
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
         if (selfcompared != 0) return selfcompared;
@@ -126,7 +132,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         return 0;
       }
-      return -1;
+      return o1.toString().compareTo(o2.toString());
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
@@ -139,6 +145,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
   private Splitter myPreviewSplitter;
+  private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
+
+  // true if usages tree is currently expanding
+  // (either at the end of find usages thanks to the 'expand usages after find' setting or
+  // because the user pressed 'expand all' button. During this, some ugly hacks applied
+  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
+  private boolean expandingAll;
+  private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
 
   UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
@@ -157,7 +171,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         TreePath path = getPathForLocation(e.getX(), e.getY());
         if (path != null) {
           if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-            return UsageViewTreeCellRenderer.getTooltipText(path.getLastPathComponent());
+            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
           }
         }
         return null;
@@ -166,6 +180,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public boolean isPathEditable(final TreePath path) {
         return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+      }
+
+      // hack to avoid quadratic expandAll()
+      @Override
+      public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+        return expandingAll ? EmptyEnumeration.<TreePath>getInstance() : super.getExpandedDescendants(parent);
       }
     };
     myRootPanel = new MyPanel(myTree);
@@ -185,6 +205,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
+    myUsageViewTreeCellRenderer = new UsageViewTreeCellRenderer(this);
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
@@ -210,7 +231,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             initTree();
             toolWindowPanel.setContent(myCentralPanel);
 
-            myTree.setCellRenderer(new UsageViewTreeCellRenderer(UsageViewImpl.this));
+            myTree.setCellRenderer(myUsageViewTreeCellRenderer);
             collapseAll();
 
             myModelTracker.addListener(UsageViewImpl.this);
@@ -249,22 +270,38 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }, new Condition<Object>() {
       @Override
       public boolean value(Object o) {
-        return isDisposed || project.isDisposed() || searchHasBeenCancelled();
+        return isDisposed || project.isDisposed();
       }
     },200);
   }
 
   protected boolean searchHasBeenCancelled() {
-    return false;
+    ProgressIndicator progress = associatedProgress;
+    return progress != null && progress.isCanceled();
   }
-  
-  protected void setCurrentSearchCancelled(boolean flag){}
-  
+
+  protected void cancelCurrentSearch() {
+    ProgressIndicator progress = associatedProgress;
+    if (progress != null) {
+      ProgressWrapper.unwrap(progress).cancel();
+    }
+  }
+
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     disposeUsageContextPanels();
 
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
+    // add reaction to scrolling:
+    // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
+    // and we need to recalculate it when the node scrolled into visible rectangle
+    treePane.getViewport().addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        // clear renderer cache of node preferred size
+        myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+      }
+    });
     myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
@@ -421,7 +458,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         Object component = path.getLastPathComponent();
         if (!(component instanceof Node)) return;
         Node node = (Node)component;
-        if (node.needsUpdate()) {
+        if (!expandingAll && node.needsUpdate()) {
           checkNodeValidity(node, path);
         }
       }
@@ -431,7 +468,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
-    //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath o) {
+        Object value = o.getLastPathComponent();
+        TreeCellRenderer renderer = myTree.getCellRenderer();
+        if (renderer instanceof UsageViewTreeCellRenderer) {
+          UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
+          return coloredRenderer.getPlainTextForNode(value);
+        }
+        return value == null ? null : value.toString();
+      }
+    }, true);
   }
 
   @NotNull
@@ -509,6 +557,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void expandAll() {
         UsageViewImpl.this.expandAll();
+        UsageViewSettings.getInstance().setExpanded(true);
       }
 
       @Override
@@ -519,6 +568,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void collapseAll() {
         UsageViewImpl.this.collapseAll();
+        UsageViewSettings.getInstance().setExpanded(false);
       }
 
       @Override
@@ -529,8 +579,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
 
-    myTextFileExporter = new ExporterToTextFile(this);
-
     final JComponent component = getComponent();
 
     final AnAction expandAllAction = actionsManager.createExpandAllAction(treeExpander, component);
@@ -539,14 +587,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     scheduleDisposeOnClose(new Disposable() {
       @Override
       public void dispose() {
-        collapseAllAction.unregisterCustomShortcutSet(component);
         expandAllAction.unregisterCustomShortcutSet(component);
+        collapseAllAction.unregisterCustomShortcutSet(component);
       }
     });
 
 
     return new AnAction[] {
-      showSettings(),
+      canShowSettings() ? showSettings() : null,
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
       ActionManager.getInstance().getAction("PinToolwindowTab"),
@@ -561,11 +609,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     };
   }
 
+  private boolean canShowSettings() {
+    if (myTargets.length == 0) return false;
+    NavigationItem target = myTargets[0];
+    return target instanceof ConfigurableUsageTarget;
+  }
+
   @NotNull
   private AnAction showSettings() {
-    return new AnAction("Settings...", "Show find usages settings dialog", AllIcons.General.ProjectSettings) {
+    final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
+    String description = configurableUsageTarget == null ? "Show find usages settings dialog" : "Show settings for "+configurableUsageTarget.getLongDescriptiveName();
+    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
-        KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut();
+        KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
           registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
         }
@@ -575,6 +631,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
+  }
+
+  private static ConfigurableUsageTarget getConfigurableTarget(@NotNull UsageTarget[] targets) {
+    ConfigurableUsageTarget configurableUsageTarget = null;
+    if (targets.length != 0) {
+      NavigationItem target = targets[0];
+      if (target instanceof ConfigurableUsageTarget) {
+        configurableUsageTarget = (ConfigurableUsageTarget)target;
+      }
+    }
+    return configurableUsageTarget;
   }
 
   @NotNull
@@ -667,7 +734,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void expandAll() {
-    TreeUtil.expandAll(myTree);
+    expandingAll = true;
+    try {
+      TreeUtil.expandAll(myTree);
+    }
+    finally {
+      expandingAll = false;
+    }
   }
 
   private void collapseAll() {
@@ -693,6 +766,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   @Nullable
   public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
+  }
+
+  static KeyboardShortcut getShowUsagesWithSettingsShortcut(@NotNull UsageTarget[] targets) {
+    ConfigurableUsageTarget configurableTarget = getConfigurableTarget(targets);
+    return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
+  }
+
+  void associateProgress(ProgressIndicator indicator) {
+    associatedProgress = indicator;
   }
 
   private class CloseAction extends CloseTabToolbarAction {
@@ -750,15 +832,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void doReRun() {
-    final AtomicInteger tooManyUsages = new AtomicInteger();
-    final CountDownLatch waitWhileUserClick = new CountDownLatch(1);
     final AtomicInteger usageCountWithoutDefinition = new AtomicInteger(0);
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
+    final Project project = myProject;
+    Task.Backgroundable task = new Task.Backgroundable(project, UsageViewManagerImpl.getProgressTitle(myPresentation)) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
+        final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
         setSearchInProgress(true);
-        final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
-        setCurrentSearchCancelled(false);
+        associateProgress(indicator);
 
         myChangesDetected = false;
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
@@ -766,32 +847,33 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
-            if (tooManyUsages.get() == 1) {
-              try {
-                waitWhileUserClick.await(1, TimeUnit.SECONDS);
-              }
-              catch (InterruptedException ignored) {
-              }
-            }
+            TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
 
             boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
             if (incrementCounter) {
               final int usageCount = usageCountWithoutDefinition.incrementAndGet();
-              if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
-                ((UsageViewManagerImpl)usageViewManager)
-                  .showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get(), UsageViewImpl.this);
+              if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
+                if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                  UsageViewManagerImpl
+                    .showTooManyUsagesWarning(project, tooManyUsagesStatus, indicator, getPresentation(), usageCountWithoutDefinition.get(), UsageViewImpl.this);
+                }
               }
-              appendUsage(usage);
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
+                public void run() {
+                  appendUsage(usage);
+                }
+              });
             }
-            ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-            return indicator == null || !indicator.isCanceled();
+            return !indicator.isCanceled();
           }
         });
         drainQueuedUsageNodes();
         setSearchInProgress(false);
       }
-    });
+    };
+    ProgressManager.getInstance().run(task);
   }
 
   private void reset() {
@@ -839,6 +921,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         myTransferToEDTQueue.offer(runnable);
       }
     });
+    if (node != null) {
+      // update and cache flags while the node is still hot
+      node.update(this);
+    }
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     return node;
   }
@@ -854,6 +940,36 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           TreeModel treeModel = myTree.getModel();
           ((DefaultTreeModel)treeModel).removeNodeFromParent(node);
           ((GroupNode)myTree.getModel().getRoot()).removeUsage(node);
+        }
+      });
+    }
+  }
+
+  @Override
+  public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
+    final Set<UsageNode> nodes = new THashSet<UsageNode>(usages.size());
+    for (Usage usage : usages) {
+      UsageNode node = myUsageNodes.remove(usage);
+      if (node != null && node != NULL_NODE) {
+        nodes.add(node);
+      }
+    }
+    if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (isDisposed) return;
+          DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+          for (UsageNode node : nodes) {
+            MutableTreeNode parent = (MutableTreeNode)node.getParent();
+            int childIndex = parent.getIndex(node);
+            if (childIndex != -1) {
+              parent.remove(childIndex);
+            }
+          }
+          ((GroupNode)myTree.getModel().getRoot()).removeUsagesBulk(nodes);
+
+          treeModel.reload();
         }
       });
     }
@@ -912,7 +1028,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myUsageNodes.size();
   }
 
-  public void setContent(@NotNull Content content) {
+  void setContent(@NotNull Content content) {
     myContent = content;
     content.setDisposer(this);
   }
@@ -958,7 +1074,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       shouldCheckChildren = false;
       // optimization: do not call expensive update() on invisible node
     }
-    if (shouldCheckChildren) {
+    UsageViewTreeCellRenderer.RowLocation isVisible =
+      myUsageViewTreeCellRenderer.isRowVisible(myTree.getRowForPath(new TreePath(((DefaultMutableTreeNode)node).getPath())),
+                                               myTree.getVisibleRect());
+
+    // if row is below visible rectangle, no sense to update it or any children
+    if (shouldCheckChildren && isVisible != UsageViewTreeCellRenderer.RowLocation.AFTER_VISIBLE_RECT) {
       for (int i=0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
         checkNodeValidity(child, path.pathByAddingChild(child));
@@ -966,7 +1087,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     // call update last, to let children a chance to update their cache first
-    if (node instanceof Node && node != getModelRoot()) {
+    if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
       ((Node)node).update(this);
     }
   }
@@ -977,15 +1098,20 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-        updateImmediately();
+        PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+        documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", new Runnable() {
+          @Override
+          public void run() {
+            updateImmediately();
+          }
+        });
       }
     }, 300);
   }
 
   @Override
   public void close() {
+    cancelCurrentSearch();
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
@@ -1001,6 +1127,19 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       ToolTipManager.sharedInstance().unregisterComponent(myTree);
       myModelTracker.removeListener(this);
       myUpdateAlarm.cancelAllRequests();
+    }
+    disposeSmartPointers();
+  }
+
+  private void disposeSmartPointers() {
+    SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
+    for (Usage usage : myUsageNodes.keySet()) {
+      if (usage instanceof UsageInfo2UsageAdapter) {
+        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
+        if (pointer != null) {
+          pointerManager.removePointer(pointer);
+        }
+      }
     }
   }
 
@@ -1025,7 +1164,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             return;
           }
           showNode(firstUsageNode);
-          if (EXPAND_ALL) {
+          if (UsageViewSettings.getInstance().isExpanded()) {
             expandAll();
           }
         }
@@ -1097,6 +1236,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return true;
   }
 
+  @NotNull
   @Override
   public UsageViewPresentation getPresentation() {
     return myPresentation;
@@ -1302,6 +1442,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         @Override
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
+          if (node instanceof Node && ((Node)node).isExcluded()) return null;
           return getNavigatableForNode(node);
         }
 
@@ -1374,15 +1515,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
-      if (key == PlatformDataKeys.PROJECT) {
-        sink.put(PlatformDataKeys.PROJECT, myProject);
+      if (key == CommonDataKeys.PROJECT) {
+        sink.put(CommonDataKeys.PROJECT, myProject);
       }
       else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
 
-      else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
-        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
+      else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
       else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
@@ -1398,11 +1539,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
         Usage[] ua = usages != null ? usages.toArray(new Usage[usages.size()]) : null;
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
-        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, data);
+        sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
       else if (key == PlatformDataKeys.HELP_ID) {
@@ -1528,7 +1669,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
           int answer = Messages.showOkCancelDialog(myProject, message, title, options[0], options[1], Messages.getErrorIcon());
-          if (answer == 0) {
+          if (answer == Messages.OK) {
             refreshUsages();
           }
         }

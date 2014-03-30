@@ -31,23 +31,28 @@ public class UnknownConfigurationType implements ConfigurationType {
 
   public static final String NAME = "Unknown";
 
+  @Override
   public String getDisplayName() {
     return getId();
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return "Configuration which cannot be loaded due to some reasons";
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.RunConfigurations.Unknown;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return NAME;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[] {new ConfigurationFactory(new UnknownConfigurationType()) {
       @Override

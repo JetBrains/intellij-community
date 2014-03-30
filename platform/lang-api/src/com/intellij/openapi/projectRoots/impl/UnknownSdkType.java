@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -35,35 +36,41 @@ public class UnknownSdkType extends SdkType{
   /**
    * @param typeName the name of the SDK type that this SDK serves as a plug for
    */
-  private UnknownSdkType(String typeName) {
+  private UnknownSdkType(@NotNull String typeName) {
     super(typeName);
   }
 
-  public static UnknownSdkType getInstance(String typeName) {
+  @NotNull
+  public static UnknownSdkType getInstance(@NotNull String typeName) {
     UnknownSdkType instance = ourTypeNameToInstanceMap.get(typeName);
     if (instance == null) {
       instance = new UnknownSdkType(typeName);
       ourTypeNameToInstanceMap.put(typeName, instance);
-    }                                                                  
+    }
     return instance;
   }
 
+  @Override
   public String suggestHomePath() {
     return null;
   }
 
+  @Override
   public boolean isValidSdkHome(String path) {
     return false;
   }
 
+  @Override
   public String getVersionString(String sdkHome) {
     return "";
   }
 
+  @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return currentSdkName;
   }
 
+  @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
   }
@@ -80,13 +87,16 @@ public class UnknownSdkType extends SdkType{
     return null;
   }
 
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  @Override
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
   }
 
+  @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.unknown.name");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdk;
   }

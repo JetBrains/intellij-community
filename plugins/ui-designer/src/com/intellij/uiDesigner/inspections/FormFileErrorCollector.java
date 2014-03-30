@@ -15,11 +15,7 @@
  */
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -52,10 +48,10 @@ public class FormFileErrorCollector extends FormErrorCollector {
     final ProblemDescriptor problemDescriptor = myManager.createProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
                                                                                   (LocalQuickFix)null,
                                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
-    if (problemDescriptor instanceof ProblemDescriptorImpl && component != null) {
+    if (problemDescriptor instanceof ProblemDescriptorBase && component != null) {
       FormElementNavigatable navigatable = new FormElementNavigatable(myFile.getProject(), myFile.getVirtualFile(),
                                                                       component.getId());
-      ((ProblemDescriptorImpl) problemDescriptor).setNavigatable(navigatable);
+      ((ProblemDescriptorBase) problemDescriptor).setNavigatable(navigatable);
     }
     myProblems.add(problemDescriptor);
   }

@@ -38,22 +38,7 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
 
   @Override
   public RenameDialog createRenameDialog(Project project, final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
-      @Override
-      protected boolean getSearchForReferences() {
-        return RenamePsiFileProcessor.getSearchForReferences(element);
-      }
-
-      @Override
-      protected void setSearchForReferences(boolean value) {
-        if (element instanceof PsiFile) {
-          RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = value;
-        }
-        else {
-          RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
-        }
-      }
-    };
+    return new PsiFileRenameDialog(project, element, nameSuggestionContext, editor);
   }
 
   private static boolean getSearchForReferences(PsiElement element) {
@@ -69,5 +54,26 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
       return Collections.emptyList();
     }
     return super.findReferences(element);
+  }
+
+  protected static class PsiFileRenameDialog extends RenameWithOptionalReferencesDialog {
+    public PsiFileRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+      super(project, element, nameSuggestionContext, editor);
+    }
+
+    @Override
+    protected boolean getSearchForReferences() {
+      return RenamePsiFileProcessor.getSearchForReferences(getPsiElement());
+    }
+
+    @Override
+    protected void setSearchForReferences(boolean value) {
+      if (getPsiElement() instanceof PsiFile) {
+        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = value;
+      }
+      else {
+        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
+      }
+    }
   }
 }

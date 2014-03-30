@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,8 +73,9 @@ public class BeforeCheckinHandlerUtil {
   private static boolean isFileUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     if (StdFileTypes.JAVA == file.getFileType()) {
-      return index.isInSource(file) && !index.isInLibrarySource(file);
-    } else {
+      return index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !index.isInLibrarySource(file);
+    }
+    else {
       return index.isInContent(file) && !index.isInLibrarySource(file) ;
     }
   }

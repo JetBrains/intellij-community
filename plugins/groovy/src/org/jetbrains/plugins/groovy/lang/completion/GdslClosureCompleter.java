@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +41,6 @@ public class GdslClosureCompleter extends ClosureCompleter {
   protected List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
                                                          PsiMethod method,
                                                          PsiSubstitutor substitutor,
-                                                         Document document,
-                                                         int offset,
                                                          PsiElement place) {
     final ArrayList<ClosureDescriptor> descriptors = new ArrayList<ClosureDescriptor>();
     GrReferenceExpression ref = (GrReferenceExpression)place;
@@ -79,7 +76,7 @@ public class GdslClosureCompleter extends ClosureCompleter {
   private static void processExecutors(PsiType qtype, GrReferenceExpression ref, final ArrayList<ClosureDescriptor> descriptors) {
     GroovyDslFileIndex.processExecutors(qtype, ref, new BaseScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof ClosureDescriptor) {
           descriptors.add((ClosureDescriptor)element);
         }

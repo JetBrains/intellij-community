@@ -28,8 +28,8 @@ import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
+import com.intellij.psi.codeStyle.arrangement.std.StdRulePriorityAwareSettings
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
@@ -146,7 +146,7 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     }
     
     def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
-    settings.arrangementSettings = new StdArrangementSettings(args.groups ?: [], args.rules ?: [])
+    settings.arrangementSettings = new StdRulePriorityAwareSettings(args.groups ?: [], args.rules ?: [])
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.editor, myFixture.file, info.ranges);
     

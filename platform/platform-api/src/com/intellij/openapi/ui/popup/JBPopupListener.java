@@ -21,12 +21,13 @@ public interface JBPopupListener {
 
   void onClosed(LightweightWindowEvent event);
 
-  class Adapter implements JBPopupListener{
+  class Adapter implements JBPopupListener {
+    @Override
     public void beforeShown(LightweightWindowEvent event) {
     }
 
+    @Override
     public void onClosed(LightweightWindowEvent event) {
     }
   }
-
 }

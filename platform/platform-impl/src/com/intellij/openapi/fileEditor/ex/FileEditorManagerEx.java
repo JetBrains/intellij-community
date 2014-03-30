@@ -65,7 +65,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   @Nullable
   public abstract VirtualFile getFile(@NotNull FileEditor editor);
 
-  public abstract void updateFilePresentation(VirtualFile file);
+  public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**
    *
@@ -73,6 +73,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    */
   public abstract EditorWindow getCurrentWindow();
 
+  @NotNull
   public abstract AsyncResult<EditorWindow> getActiveWindow();
 
   public abstract void setCurrentWindow(EditorWindow window);
@@ -101,7 +102,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
-  @NotNull public abstract VirtualFile[] getSiblings(VirtualFile file);
+  @NotNull
+  public abstract VirtualFile[] getSiblings(@NotNull VirtualFile file);
 
   public abstract void createSplitter(int orientation, @Nullable EditorWindow window);
 
@@ -122,8 +124,10 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract void closeAllFiles();
 
+  @NotNull
   public abstract EditorsSplitters getSplitters();
 
+  @Override
   @NotNull
   public FileEditor[] openFile(@NotNull final VirtualFile file, final boolean focusEditor) {
     return openFileWithProviders(file, focusEditor, false).getFirst ();
@@ -135,13 +139,15 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
     return openFileWithProviders(file, focusEditor, searchForOpen).getFirst();
   }
 
-  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                         boolean focusEditor,
-                                                                                         boolean searchForSplitter);
+  @NotNull
+  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                boolean focusEditor,
+                                                                                boolean searchForSplitter);
 
-  @NotNull public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                         boolean focusEditor,
-                                                                                         @NotNull EditorWindow window);
+  @NotNull
+  public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                                boolean focusEditor,
+                                                                                @NotNull EditorWindow window);
 
   public abstract boolean isChanged(@NotNull EditorComposite editor);
 
@@ -152,7 +158,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract boolean isInsideChange();
 
   @Nullable
-  public final Object getData(String dataId, Editor editor, final VirtualFile file) {
+  public final Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull VirtualFile file) {
     for (final EditorDataProvider dataProvider : myDataProviders) {
       final Object o = dataProvider.getData(dataId, editor, file);
       if (o != null) return o;
@@ -160,10 +166,12 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
     return null;
   }
 
+  @Override
   public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
     myDataProviders.add(provider);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, new Disposable() {
+        @Override
         public void dispose() {
           myDataProviders.remove(provider);
         }
@@ -186,6 +194,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract EditorsSplitters getSplittersFor(Component c);
 
 
-  public abstract ActionCallback notifyPublisher(Runnable runnable);
+  @NotNull
+  public abstract ActionCallback notifyPublisher(@NotNull Runnable runnable);
 
 }

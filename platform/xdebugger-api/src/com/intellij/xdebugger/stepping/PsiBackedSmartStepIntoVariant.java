@@ -36,6 +36,7 @@ public class PsiBackedSmartStepIntoVariant<T extends PsiNamedElement & Navigatio
     assert myPresentation != null: "Invalid presentation:" + myElement;
   }
 
+  @Override
   public String getText() {
     String location = myPresentation.getLocationString();
     return myPresentation.getPresentableText() + (location != null ? " " + location: "");
@@ -46,6 +47,7 @@ public class PsiBackedSmartStepIntoVariant<T extends PsiNamedElement & Navigatio
     return myPresentation.getIcon(false);
   }
 
+  @NotNull
   public T getElement() {
     return myElement;
   }

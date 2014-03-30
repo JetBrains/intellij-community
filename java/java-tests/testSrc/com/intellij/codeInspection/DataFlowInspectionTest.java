@@ -16,14 +16,15 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ConditionCheckManager;
+import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -31,6 +32,12 @@ import java.io.IOException;
  * @author peter
  */
 public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7;
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -40,6 +47,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   private void doTest() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -61,16 +69,24 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
+  public void testExceptionFromFinally() throws Throwable { doTest(); }
+  public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
+  public void testNestedFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
 
   public void testIDEA84489() throws Throwable { doTest(); }
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
+  public void testComparingToNullableShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
+  public void testStringConcatAlwaysNotNull() throws Throwable { doTest(); }
 
+  public void testNotNullPrimitive() throws Throwable { doTest(); }
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
+  public void testFinalFieldsInitializedNotNull() throws Throwable { doTest(); }
   public void testMultiCatch() throws Throwable { doTest(); }
   public void testContinueFlushesLoopVariable() throws Throwable { doTest(); }
 
@@ -87,7 +103,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testFinalFieldsDifferentInstances() throws Throwable { doTest(); }
   public void testThisFieldGetters() throws Throwable { doTest(); }
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
+  public void testAccessorPlusMutator() throws Throwable { doTest(); }
+  public void testClosureVariableField() throws Throwable { doTest(); }
+  public void testOptionalThis() { doTest(); }
 
+  public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
   public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
 
@@ -95,6 +115,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testReturningNullFromVoidMethod() throws Throwable { doTest(); }
 
   public void testCatchRuntimeException() throws Throwable { doTest(); }
+  public void testCatchThrowable() throws Throwable { doTest(); }
   public void testNotNullCatchParameter() { doTest(); }
 
   public void testAssertFailInCatch() throws Throwable {
@@ -103,30 +124,11 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testPreserveNullableOnUncheckedCast() throws Throwable { doTest(); }
+  public void testPrimitiveCastMayChangeValue() throws Throwable { doTest(); }
 
   public void testPassingNullableIntoVararg() throws Throwable { doTest(); }
-  public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
+  public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
-
-  public void testAnnotatedTypeParameters() throws Throwable {
-    setupCustomAnnotations();
-    doTest();
-  }
-
-  private void setupCustomAnnotations() {
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
-    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    nnnManager.setNotNulls("foo.NotNull");
-    nnnManager.setNullables("foo.Nullable");
-    Disposer.register(myTestRootDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        nnnManager.setNotNulls();
-        nnnManager.setNullables();
-      }
-    });
-  }
 
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
@@ -134,6 +136,43 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
+
+  public void testReportConstantReferences() {
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
+
+  private void doTestReportConstantReferences() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void _testReportConstantReferences_ReplaceWithString() {
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  public void _testReportConstantReferences_ReplaceWithIntConstant() {
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'CONST'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  public void _testReportConstantReferences_ReplaceWithEnum() {
+    myFixture.addClass("package foo; public enum MyEnum { FOO }");
+    doTestReportConstantReferences();
+    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'FOO'"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  public void _testReportConstantReferences_NotInComplexAssignment() {
+    doTestReportConstantReferences();
+    assertEmpty(myFixture.filterAvailableIntentions("Replace with"));
+  }
+  public void _testReportConstantReferences_Switch() { doTestReportConstantReferences(); }
 
   public void testCheckFieldInitializers() {
     doTest();
@@ -145,25 +184,24 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testMutableVolatileNullableFieldsTreatment() { doTest(); }
   public void testMutableNotAnnotatedFieldsTreatment() { doTest(); }
   public void testSuperCallMayChangeFields() { doTest(); }
+  public void testOtherCallMayChangeFields() { doTest(); }
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
-  public void _testSymmetricUncheckedCast() { doTest(); }
+  public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
-
-  public void testNullableForeachVariable() {
-    setupCustomAnnotations();
-    doTest();
-  }
+  public void testThrowNull() { doTest(); }
 
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
   public void testOmnipresentExceptions() { doTest(); }
 
   public void testEqualsHasNoSideEffects() { doTest(); }
+
+  public void testHonorGetterAnnotation() { doTest(); }
 
   public void testIsNullCheck() throws Exception {
     ConditionCheckManager.getInstance(myModule.getProject()).getIsNullCheckMethods().add(
@@ -223,4 +261,74 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     assert psiMethod != null;
     return new ConditionChecker.FromPsiBuilder(psiMethod, psiMethod.getParameterList().getParameters()[0], type).build();
   }
+
+  public void testIgnoreAssertions() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testContractAnnotation() { doTest(); }
+  public void testContractInLoopNotTooComplex() { doTest(); }
+  public void testContractWithNullable() { doTest(); }
+  public void testContractPreservesUnknownNullability() { doTest(); }
+  public void testContractSeveralClauses() { doTest(); }
+  public void testContractVarargs() { doTest(); }
+
+  public void testBoxingImpliesNotNull() { doTest(); }
+  public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
+  public void testNoGenericCCE() { doTest(); }
+  public void testLongCircuitOperations() { doTest(); }
+  public void testUnconditionalForLoop() { doTest(); }
+  public void testAnonymousMethodIndependence() { doTest(); }
+  public void testAnonymousFieldIndependence() { doTest(); }
+  public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
+  public void testForeachOverWildcards() { doTest(); }
+  public void testFinalGetter() { doTest(); }
+  
+  public void testManySequentialIfsNotComplex() { doTest(); }
+  public void testManySequentialInstanceofsNotComplex() { doTest(); }
+  public void testLongDisjunctionsNotComplex() { doTest(); }
+  public void testWhileNotComplex() { doTest(); }
+  public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
+  public void testManyContinuesNotComplex() { doTest(); }
+  public void testFinallyNotComplex() { doTest(); }
+
+  public void testVariablesDiverge() { doTest(); }
+  public void testMergeByNullability() { doTest(); }
+  public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
+  public void testDontForgetEqInfoWhenMergingByType() { doTest(); }
+  public void testDontMakeNullableAfterInstanceof() { doTest(); }
+  public void testDontMakeUnrelatedVariableNotNullWhenMerging() { doTest(); }
+  public void testDontMakeUnrelatedVariableFalseWhenMerging() { doTest(); }
+  public void testDontLoseInequalityInformation() { doTest(); }
+  
+  public void testNotEqualsTypo() { doTest(); }
+  public void testAndEquals() { doTest(); }
+
+  public void testUnusedCallDoesNotMakeUnknown() { doTest(); }
+  public void testGettersAndPureNoFlushing() { doTest(); }
+  
+  public void testNotNullAfterDereference() { doTest(); }
+
+  public void testSameComparisonTwice() { doTest(); }
+
+  public void testParametersAreNonnullByDefault() {
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNonnullByDefault {}");
+    myFixture.addClass("package javax.annotation; public @interface ParametersAreNullableByDefault {}");
+    
+    myFixture.addClass("package foo; public class AnotherPackageNotNull { public static void foo(String s) {}}");
+    myFixture.addFileToProject("foo/package-info.java", "@javax.annotation.ParametersAreNonnullByDefault package foo;");
+    
+    doTest(); 
+  }
+
+  public void testTrueOrEqualsSomething() {
+    doTest();
+    myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+  
+  public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

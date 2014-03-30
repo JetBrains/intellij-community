@@ -21,14 +21,17 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -44,17 +47,23 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Context for creating run configurations from a location in the source code.
+ *
+ * @see RunConfigurationProducer
+ */
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
-  private final RuntimeConfiguration myRuntimeConfiguration;
+  private final RunConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
 
   public static Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
   private List<RuntimeConfigurationProducer> myPreferredProducers;
+  private List<ConfigurationFromContext> myConfigurationsFromContext;
 
   public static ConfigurationContext getFromContext(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
@@ -71,7 +80,7 @@ public class ConfigurationContext {
   }
 
   private ConfigurationContext(final DataContext dataContext) {
-    myRuntimeConfiguration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
+    myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     myModule = LangDataKeys.MODULE.getData(dataContext);
     @SuppressWarnings({"unchecked"})
@@ -80,7 +89,7 @@ public class ConfigurationContext {
       myLocation = location;
       return;
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       myLocation = null;
       return;
@@ -93,6 +102,12 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<PsiElement>(project, myModule, element);
   }
 
+  /**
+   * Returns the configuration created from this context.
+   *
+   * @return the configuration, or null if none of the producers were able to create a configuration from this context.
+   */
+  @Nullable
   public RunnerAndConfigurationSettings getConfiguration() {
     if (myConfiguration == null) createConfiguration();
     return myConfiguration;
@@ -106,16 +121,42 @@ public class ConfigurationContext {
         null;
   }
 
+  public void setConfiguration(RunnerAndConfigurationSettings configuration) {
+    myConfiguration = configuration;
+  }
+
+  @Deprecated
   @Nullable
   public RunnerAndConfigurationSettings updateConfiguration(final RuntimeConfigurationProducer producer) {
     myConfiguration = producer.getConfiguration();
     return myConfiguration;
   }
 
+  /**
+   * Returns the source code location for this context.
+   *
+   * @return the source code location, or null if no source code fragment is currently selected.
+   */
+  @Nullable
   public Location getLocation() {
     return myLocation;
   }
 
+  /**
+   * Returns the PSI element at caret for this context.
+   *
+   * @return the PSI element, or null if no source code fragment is currently selected.
+   */
+  @Nullable
+  public PsiElement getPsiLocation() {
+    return myLocation != null ? myLocation.getPsiElement() : null;
+  }
+
+  /**
+   * Finds an existing run configuration matching the context.
+   *
+   * @return an existing configuration, or null if none was found.
+   */
   @Nullable
   public RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) return myExistingConfiguration.get();
@@ -130,17 +171,32 @@ public class ConfigurationContext {
     }
 
     final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
-    if (producers == null) return null;
     if (myRuntimeConfiguration != null) {
-      for (RuntimeConfigurationProducer producer : producers) {
-        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+      if (producers != null) {
+        for (RuntimeConfigurationProducer producer : producers) {
+          final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+          if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
+            myExistingConfiguration.set(configuration);
+          }
+        }
+      }
+      for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
         if (configuration != null && configuration.getConfiguration() == myRuntimeConfiguration) {
           myExistingConfiguration.set(configuration);
         }
       }
     }
-    for (RuntimeConfigurationProducer producer : producers) {
-      final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+    if (producers != null) {
+      for (RuntimeConfigurationProducer producer : producers) {
+        final RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+        if (configuration != null) {
+          myExistingConfiguration.set(configuration);
+        }
+      }
+    }
+    for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+      RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(this);
       if (configuration != null) {
         myExistingConfiguration.set(configuration);
       }
@@ -151,7 +207,7 @@ public class ConfigurationContext {
   @Nullable
   private static PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
     PsiElement element = null;
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -163,10 +219,11 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      element = elements != null && elements.length >= 1 ? elements[0] : null;
     }
     if (element == null) {
-      final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file != null) {
         element = PsiManager.getInstance(project).findFile(file);
       }
@@ -178,7 +235,9 @@ public class ConfigurationContext {
     return RunManager.getInstance(getProject());
   }
 
-  public Project getProject() { return myLocation.getProject(); }
+  public Project getProject() {
+    return myLocation.getProject();
+  }
 
   public Module getModule() {
     return myModule;
@@ -188,16 +247,39 @@ public class ConfigurationContext {
     return DataManager.getInstance().getDataContext(myContextComponent);
   }
 
+  /**
+   * Returns original {@link RunConfiguration} from this context.
+   * For example, it could be some test framework runtime configuration that had been launched
+   * and that had brought a result test tree on which a right-click action was performed.
+   *
+   * @param type {@link ConfigurationType} instance to filter original runtime configuration by its type
+   * @return {@link RunConfiguration} instance, it could be null
+   */
   @Nullable
-  public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
-    return myRuntimeConfiguration != null && Comparing.strEqual(type.getId(), myRuntimeConfiguration.getType().getId()) ? myRuntimeConfiguration : null;
+  public RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
+    if (type == null) {
+      return myRuntimeConfiguration;
+    }
+    if (myRuntimeConfiguration != null
+        && ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type)) {
+      return myRuntimeConfiguration;
+    }
+    return null;
   }
 
+  @Deprecated
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
       myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
     }
     return myPreferredProducers;
+  }
+
+  public List<ConfigurationFromContext> getConfigurationsFromContext() {
+    if (myConfigurationsFromContext == null) {
+      myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);
+    }
+    return myConfigurationsFromContext;
   }
 }

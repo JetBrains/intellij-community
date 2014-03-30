@@ -15,12 +15,20 @@
  */
 package com.intellij.slicer;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
  * @author cdr
  */
 public interface MyColoredTreeCellRenderer {
-  void customizeCellRenderer(SliceUsageCellRenderer renderer,
-                             JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus);
+  void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+                             @NotNull JTree tree,
+                             Object value,
+                             boolean selected,
+                             boolean expanded,
+                             boolean leaf,
+                             int row,
+                             boolean hasFocus);
 }

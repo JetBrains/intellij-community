@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
     holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs, new Function<String, LocalQuickFix>() {
       @Override
       public LocalQuickFix fun(final String s) {
-        return new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s, null) {
+        return new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
           @NotNull
           @Override
           public String getText() {

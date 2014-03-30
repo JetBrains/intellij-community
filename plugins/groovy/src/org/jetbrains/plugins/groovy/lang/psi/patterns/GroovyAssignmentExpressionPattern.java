@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class GroovyAssignmentExpressionPattern extends GroovyExpressionPattern<G
   public GroovyAssignmentExpressionPattern operation(final IElementType pattern) {
     return with(new PatternCondition<GrAssignmentExpression>("operation") {
       public boolean accepts(@NotNull final GrAssignmentExpression psiBinaryExpression, final ProcessingContext context) {
-        return pattern == psiBinaryExpression.getOperationToken();
+        return pattern == psiBinaryExpression.getOperationTokenType();
       }
     });
   }

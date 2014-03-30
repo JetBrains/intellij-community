@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.impl.dom;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author mike
  */
-public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
+public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor implements XmlHighlightingAwareElementDescriptor {
   private final DomChildrenDescription myChildrenDescription;
 
   public DomElementXmlDescriptor(@NotNull final DomElement domElement) {
@@ -80,6 +81,11 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
     }
 
     return name;
+  }
+
+  @Override
+  public boolean shouldCheckRequiredAttributes() {
+    return false;
   }
 
   private static class MyRootDomChildrenDescription implements DomChildrenDescription {

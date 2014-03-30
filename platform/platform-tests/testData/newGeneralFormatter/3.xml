@@ -1,0 +1,18 @@
+<Block start="0" end="23">
+  <Block start="0" end="3"/>
+  <Space minspaces="2" maxspaces="2" minlinefeeds="0" maxlinefeeds="100"/>
+  <Block start="4" end="7"/>
+  <Space minspaces="2" maxspaces="2" minlinefeeds="0" maxlinefeeds="100" keepLineBreaks="true"/>
+  <Block start="8" end="23">    
+    <Block start="8" end="11"><Indent type="NORMAL" count="1" spaces="0"/></Block>
+    <Space minspaces="2" maxspaces="2" minlinefeeds="0" maxlinefeeds="100" keepLineBreaks="true"/>
+    <Block start="12" end="15"><Indent type="NORMAL" count="1" spaces="0"/></Block>
+    <Space minspaces="2" maxspaces="2" minlinefeeds="0" maxlinefeeds="100" keepLineBreaks="true"/>
+    <Block start="16" end="23">      
+      <Indent type="NORMAL" count="1" spaces="0"/>
+      <Block start="16" end="19"><Indent type="LABEL" count="1" spaces="0"/></Block>
+      <Space minspaces="2" maxspaces="2" minlinefeeds="2" maxlinefeeds="100" keepLineBreaks="true"/>
+      <Block start="20" end="23"><Indent type="LABEL" count="1" spaces="0"/></Block>
+    </Block>
+  </Block>
+</Block>

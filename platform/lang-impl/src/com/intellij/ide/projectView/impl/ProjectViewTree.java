@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,14 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
     }
     return super.getToggleClickCount();
   }
+
+  //@Override
+  //public Color getBackground() {
+  //  if (!UIUtil.isUnderDarcula()) {
+  //    return super.getBackground();
+  //  }
+  //  return new ColorUIResource(0x414750);
+  //}
 
   @Override
   public boolean isFileColorsEnabled() {

@@ -54,10 +54,13 @@ public class CompletionElement{
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
     if (myElement instanceof PsiVariable) {
-      return "#" + ((PsiVariable)myElement).getName();
+      return getVariableUniqueId((PsiVariable)myElement);
     }
 
     return null;
   }
 
+  public static String getVariableUniqueId(final PsiVariable variable) {
+    return "#" + variable.getName();
+  }
 }

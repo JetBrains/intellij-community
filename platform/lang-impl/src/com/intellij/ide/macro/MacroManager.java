@@ -18,6 +18,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -56,6 +57,7 @@ public final class MacroManager {
     registerMacro(new FileNameWithoutExtension());
     registerMacro(new FileNameWithoutAllExtensions());
     registerMacro(new FilePathMacro());
+    registerMacro(new UnixSeparatorsMacro());
     registerMacro(new FileEncodingMacro());
     registerMacro(new FileDirRelativeToProjectRootMacro());
     registerMacro(new FilePathRelativeToProjectRootMacro());
@@ -80,6 +82,7 @@ public final class MacroManager {
     registerMacro(new LineNumberMacro());
     registerMacro(new ColumnNumberMacro());
 
+    registerMacro(new ClipboardContentMacro());
     registerMacro(new SelectedTextMacro());
     registerMacro(new SelectionStartLineMacro());
     registerMacro(new SelectionStartColumnMacro());
@@ -120,7 +123,7 @@ public final class MacroManager {
     if (PlatformDataKeys.FILE_EDITOR.getData(dataContext) != null) {
       return dataContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return dataContext;
     }
@@ -194,6 +197,7 @@ public final class MacroManager {
 
   public String expandSilentMarcos(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
     final Convertor<Macro, Macro> convertor = new Convertor<Macro, Macro>() {
+      @Override
       public Macro convert(Macro macro) {
         if (macro instanceof PromptingMacro) {
           return new Macro.Silent(macro, "");

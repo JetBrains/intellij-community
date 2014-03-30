@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,19 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
 import java.util.Map;
 
 /**
@@ -50,25 +50,29 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myKindLabel.setLabelFor(myKindCombo);
     myKindCombo.registerUpDownHint(myNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
-    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        validateName();
-      }
-    });
     init();
   }
 
-  private void validateName() {
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
     if (myInputValidator != null) {
       final String text = myNameField.getText();
-      setOKActionEnabled(myInputValidator.canClose(text));
-      if (myInputValidator instanceof InputValidatorEx) {
-        setErrorText(((InputValidatorEx)myInputValidator).getErrorText(text));
+      final boolean canClose = myInputValidator.canClose(text);
+      if (!canClose) {
+        String errorText = LangBundle.message("incorrect.name");
+        if (myInputValidator instanceof InputValidatorEx) {
+          String message = ((InputValidatorEx)myInputValidator).getErrorText(text);
+          if (message != null) {
+            errorText = message;
+          }
+        }
+        return new ValidationInfo(errorText, myNameField);
       }
     }
+    return super.doValidate();
   }
-  
+
   protected JTextField getNameField() {
     return myNameField;
   }
@@ -122,6 +126,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
       return this;
@@ -133,6 +138,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                          @NotNull final FileCreator<T> creator) {
       final Ref<T> created = Ref.create(null);
@@ -154,7 +160,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
           return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
         }
       };
-      myDialog.validateName();
+
       myDialog.show();
       if (myDialog.getExitCode() == OK_EXIT_CODE) {
         return created.get();

@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.JavaPsiFacade;
@@ -41,5 +42,5 @@ public abstract class JavaPsiFacadeEx extends JavaPsiFacade {
   }
 
   @TestOnly
-  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter);
+  public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, Disposable parentDisposable);
 }

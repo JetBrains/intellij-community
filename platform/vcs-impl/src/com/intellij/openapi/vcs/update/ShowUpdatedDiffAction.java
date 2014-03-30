@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   }
 
   private boolean isVisible(final DataContext dc) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     return (project != null) && (VcsDataKeys.LABEL_BEFORE.getData(dc) != null) && (VcsDataKeys.LABEL_AFTER.getData(dc) != null);
   }
 
@@ -65,7 +65,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     final DataContext dc = e.getDataContext();
     if ((! isVisible(dc)) || (! isEnabled(dc))) return;
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     final Label before = (Label) VcsDataKeys.LABEL_BEFORE.getData(dc);
     final Label after = (Label) VcsDataKeys.LABEL_AFTER.getData(dc);
@@ -151,11 +151,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     }
 
     public String getContent() throws VcsException {
-      if (myContent != null) {
-        final String s = myContent.get();
-        if (s != null) {
-          return s;
-        }
+      final String s = com.intellij.reference.SoftReference.dereference(myContent);
+      if (s != null) {
+        return s;
       }
 
       final String loaded = myLoader.convert(myPointer);

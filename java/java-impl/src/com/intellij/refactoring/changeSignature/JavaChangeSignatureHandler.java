@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -39,7 +40,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = findTargetMember(file, editor);
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     invokeOnElement(project, editor, element);
   }
@@ -65,7 +66,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, @Nullable final DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
+    Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
   }
 
@@ -89,7 +90,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
     final boolean allowDelegation = containingClass != null && !containingClass.isInterface();
-    final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr);
+    final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr == null ? method : refExpr);
     dialog.show();
   }
 

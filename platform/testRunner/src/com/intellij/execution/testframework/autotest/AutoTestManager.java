@@ -4,35 +4,49 @@ import com.intellij.execution.DelayedDocumentWatcher;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.WeakList;
+import com.intellij.util.containers.WeakHashMap;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author yole
  */
 public class AutoTestManager {
-  private static final int AUTOTEST_DELAY = 10000;
+  static final Key<Boolean> AUTOTESTABLE = Key.create("auto.test.manager.supported");
+  public static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
 
-  private final DelayedDocumentWatcher myDocumentWatcher;
-  private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
+  private final Project myProject;
+
+  private int myDelay;
+  private DelayedDocumentWatcher myDocumentWatcher;
+
+  // accessed only from EDT
+  private final Set<Content> myEnabledDescriptors = Collections.newSetFromMap(new WeakHashMap<Content, Boolean>());
 
   public static AutoTestManager getInstance(Project project) {
     return ServiceManager.getService(project, AutoTestManager.class);
   }
 
   public AutoTestManager(Project project) {
-    myDocumentWatcher = new DelayedDocumentWatcher(project, new Alarm(Alarm.ThreadToUse.SWING_THREAD, project), AUTOTEST_DELAY, new Consumer<VirtualFile[]>() {
+    myProject = project;
+    myDelay = PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, 3000);
+    myDocumentWatcher = createWatcher();
+  }
+
+  private DelayedDocumentWatcher createWatcher() {
+    return new DelayedDocumentWatcher(myProject, myDelay, new Consumer<Set<VirtualFile>>() {
       @Override
-      public void consume(VirtualFile[] files) {
+      public void consume(Set<VirtualFile> files) {
         for (Content content : myEnabledDescriptors) {
           runAutoTest(content);
         }
@@ -41,7 +55,7 @@ public class AutoTestManager {
       @Override
       public boolean value(VirtualFile file) {
         // Vladimir.Krivosheev — I don't know, why AutoTestManager checks it, but old behavior is preserved
-        return FileEditorManager.getInstance(myDocumentWatcher.getProject()).isFileOpen(file);
+        return FileEditorManager.getInstance(myProject).isFileOpen(file);
       }
     });
   }
@@ -49,9 +63,7 @@ public class AutoTestManager {
   public void setAutoTestEnabled(RunContentDescriptor descriptor, boolean enabled) {
     Content content = descriptor.getAttachedContent();
     if (enabled) {
-      if (!myEnabledDescriptors.contains(content)) {
-        myEnabledDescriptors.add(content);
-      }
+      myEnabledDescriptors.add(content);
       myDocumentWatcher.activate();
     }
     else {
@@ -80,5 +92,19 @@ public class AutoTestManager {
       return;
     }
     restarter.run();
+  }
+
+  int getDelay() {
+    return myDelay;
+  }
+
+  void setDelay(int delay) {
+    myDelay = delay;
+    myDocumentWatcher.deactivate();
+    myDocumentWatcher = createWatcher();
+    if (!myEnabledDescriptors.isEmpty()) {
+      myDocumentWatcher.activate();
+    }
+    PropertiesComponent.getInstance(myProject).setValue(AUTO_TEST_MANAGER_DELAY, String.valueOf(myDelay));
   }
 }

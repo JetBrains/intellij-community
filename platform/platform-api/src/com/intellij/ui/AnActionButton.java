@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -55,25 +56,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
-    return new AnActionButton(presentation.getText(),
-                                                     presentation.getDescription(),
-                                                     presentation.getIcon()) {
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        action.actionPerformed(e);
-      }
-
-      @Override
-      public void updateButton(AnActionEvent e) {
-        action.update(e);
-        final boolean enabled = e.getPresentation().isEnabled();
-        final boolean visible = e.getPresentation().isVisible();
-        if (enabled && visible) {
-          super.updateButton(e);
-        }
-      }
-    };
+    return action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
+                                                   : new AnActionButtonWrapper(presentation, action);
   }
 
   public boolean isEnabled() {
@@ -120,7 +104,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   
   public final void addCustomUpdater(@NotNull AnActionButtonUpdater updater) {
     if (myUpdaters == null) {
-      myUpdaters = new HashSet<AnActionButtonUpdater>();
+      myUpdaters = new SmartHashSet<AnActionButtonUpdater>();
     }
     myUpdaters.add(updater);
   }
@@ -145,6 +129,10 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   public JComponent getContextComponent() {
     return myContextComponent;
+  }
+
+  public DataContext getDataContext() {
+    return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
   private boolean isContextComponentOk() {
@@ -173,5 +161,48 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       }
     }
     return null;
+  }
+
+  public static class CheckedAnActionButton extends AnActionButtonWrapper implements CheckedActionGroup {
+    private final AnAction myDelegate;
+
+    public CheckedAnActionButton(Presentation presentation, AnAction action) {
+      super(presentation, action);
+      myDelegate = action;
+    }
+
+    public AnAction getDelegate() {
+      return myDelegate;
+    }
+  }
+
+  private static class AnActionButtonWrapper extends AnActionButton {
+
+    private final AnAction myAction;
+
+    public AnActionButtonWrapper(Presentation presentation, AnAction action) {
+      super(presentation.getText(), presentation.getDescription(), presentation.getIcon());
+      myAction = action;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myAction.actionPerformed(e);
+    }
+
+    @Override
+    public void updateButton(AnActionEvent e) {
+      myAction.update(e);
+      final boolean enabled = e.getPresentation().isEnabled();
+      final boolean visible = e.getPresentation().isVisible();
+      if (enabled && visible) {
+        super.updateButton(e);
+      }
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myAction.isDumbAware();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,10 +94,11 @@ public class ProjectUtil {
    *         null otherwise
    */
   @Nullable
-  public static Project openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-
+  public static Project openOrImport(@NotNull String path, Project projectToClose, boolean forceOpenInNewFrame) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (virtualFile == null) return null;
+    virtualFile.refresh(false, false);
+
     ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
     if (strong != null) {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
@@ -123,6 +124,7 @@ public class ProjectUtil {
 
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!project.isDisposed()) {
               final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
@@ -136,6 +138,7 @@ public class ProjectUtil {
 
       return project;
     }
+
     return null;
   }
 
@@ -211,7 +214,7 @@ public class ProjectUtil {
                                                 IdeBundle.message("button.newframe"),
                                                 Messages.getQuestionIcon(),
                                                 new ProjectNewWindowDoNotAskOption());
-        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+        return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
       }
       else {
         int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
@@ -221,8 +224,8 @@ public class ProjectUtil {
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());
-        return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-               exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
+        return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+               exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
       }
     }
     return confirmOpenNewProject;
@@ -251,6 +254,7 @@ public class ProjectUtil {
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
     FocusCommand cmd = new FocusCommand() {
+      @NotNull
       @Override
       public ActionCallback run() {
         JFrame f = WindowManager.getInstance().getFrame(p);
@@ -266,16 +270,8 @@ public class ProjectUtil {
       AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
       cmd.run();
     } else {
-      IdeFocusManager.getInstance(p).requestFocus(cmd, false);
+      IdeFocusManager.getInstance(p).requestFocus(cmd, true);
     }
-  }
-
-  /**
-   * @deprecated use {@linkplain com.intellij.openapi.project.ProjectUtil#isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
   }
 
   public static String getBaseDir() {

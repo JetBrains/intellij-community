@@ -47,6 +47,7 @@ public class UiDebugger extends JPanel implements Disposable {
 
     myTabs = new JBTabsImpl(null, ActionManager.getInstance(), null, this);
     myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setPaintBorder(1, 0, 0, 0).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
+      @Override
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(4, 4, 4, 4));
@@ -61,6 +62,7 @@ public class UiDebugger extends JPanel implements Disposable {
         init();
       }
 
+      @Override
       protected JComponent createCenterPanel() {
         Disposer.register(getDisposable(), UiDebugger.this);
         return myTabs.getComponent();
@@ -83,6 +85,7 @@ public class UiDebugger extends JPanel implements Disposable {
         final JSlider slider = new JSlider(0, 100);
         slider.setValue(100);
         slider.addChangeListener(new ChangeListener() {
+          @Override
           public void stateChanged(ChangeEvent e) {
             final int value = slider.getValue();
             float alpha = value / 100f;
@@ -107,6 +110,7 @@ public class UiDebugger extends JPanel implements Disposable {
       @Override
       protected Action[] createActions() {
         return new Action[] {new AbstractAction("Close") {
+          @Override
           public void actionPerformed(ActionEvent e) {
             doOKAction();
           }
@@ -131,6 +135,7 @@ public class UiDebugger extends JPanel implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     for (UiDebuggerExtension each : myExtensions) {
       each.disposeUiResources();

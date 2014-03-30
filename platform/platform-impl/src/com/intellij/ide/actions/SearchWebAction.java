@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.net.URLEncoder;
 
 public class SearchWebAction extends AnAction implements DumbAware {
@@ -34,16 +33,9 @@ public class SearchWebAction extends AnAction implements DumbAware {
       return;
     }
     provider.performCopy(dataContext);
-    Transferable contents = CopyPasteManager.getInstance().getContents();
-    String string;
-    try {
-      string = contents == null? null : (String)contents.getTransferData(DataFlavor.stringFlavor);
-    }
-    catch (Exception ex) {
-      return;
-    }
+    String string = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
     if (StringUtil.isNotEmpty(string)) {
-      BrowserUtil.launchBrowser("http://www.google.com/search?q="+ URLEncoder.encode(string));
+      BrowserUtil.browse("http://www.google.com/search?q=" + URLEncoder.encode(string));
     }
   }
 

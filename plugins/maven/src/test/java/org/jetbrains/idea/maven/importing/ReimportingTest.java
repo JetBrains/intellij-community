@@ -252,7 +252,7 @@ public class ReimportingTest extends MavenImportingTestCase {
 
   }
 
-  private String createPomXmlWithModuleDependency(final String dependencyType) {
+  private static String createPomXmlWithModuleDependency(final String dependencyType) {
     return "<groupId>test</groupId>" +
            "<artifactId>m1</artifactId>" +
            "<version>1</version>" +

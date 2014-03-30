@@ -31,11 +31,13 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder{
     super(tree,treeModel,project);
   }
 
+  @Override
   @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new CurrentFileTodosTreeStructure(myProject);
   }
 
+  @Override
   void rebuildCache(){
     myFileTree.clear();
     myDirtyFileSet.clear();

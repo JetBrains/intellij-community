@@ -37,12 +37,7 @@ public class KnownRepositoryLocations {
   private final Map<String, Long> myAuthors;
 
   public KnownRepositoryLocations() {
-    myMap = new MultiMap<String, String>() {
-      @Override
-      protected Collection<String> createCollection() {
-        return new HashSet<String>();
-      }
-    };
+    myMap = MultiMap.createSet();
     myLocations = new HashMap<Pair<String, String>, Long>();
     myLastRevision = new HashMap<Long, RevisionId>();
     myFirstRevision = new HashMap<Long, RevisionId>();

@@ -5,22 +5,23 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.InspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class RedundantSuppressTest extends InspectionTestCase {
   private GlobalInspectionToolWrapper myWrapper;
-  private InspectionTool[] myInspectionTools;
+  private InspectionToolWrapper[] myInspectionToolWrappers;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     InspectionToolRegistrar.getInstance().ensureInitialized();
-    myInspectionTools = new InspectionTool[]{new LocalInspectionToolWrapper(new I18nInspection()),
+    myInspectionToolWrappers = new InspectionToolWrapper[]{new LocalInspectionToolWrapper(new I18nInspection()),
       new GlobalInspectionToolWrapper(new EmptyMethodInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
-      protected InspectionTool[] getInspectionTools(PsiElement psiElement, InspectionManager manager) {
-        return myInspectionTools;
+      protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
+        return myInspectionToolWrappers;
       }
     });
   }

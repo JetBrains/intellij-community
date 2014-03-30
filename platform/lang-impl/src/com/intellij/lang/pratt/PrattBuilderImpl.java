@@ -51,37 +51,45 @@ public class PrattBuilderImpl extends PrattBuilder {
     return new PrattBuilderImpl(builder, null, registry);
   }
 
+  @Override
   public PrattBuilder expecting(final String expectedMessage) {
     myExpectedMessage = expectedMessage;
     return this;
   }
 
+  @Override
   public PrattBuilder withLowestPriority(final int priority) {
     myPriority = priority;
     return this;
   }
 
+  @Override
   public Lexer getLexer() {
     return ((PsiBuilderImpl) myBuilder).getLexer();
   }
 
+  @Override
   public void setTokenTypeRemapper(@Nullable final ITokenTypeRemapper remapper) {
     myBuilder.setTokenTypeRemapper(remapper);
   }
 
+  @Override
   public MutableMarker mark() {
     return new MutableMarker(myLeftSiblings, myBuilder.mark(), myLeftSiblings.size());
   }
 
+  @Override
   @Nullable
   public IElementType parse() {
     checkParsed();
     return myLeftSiblings.size() != 1 ? null : myLeftSiblings.getLast();
   }
 
+  @Override
   protected PrattBuilder createChildBuilder() {
     assert myParsingStarted;
     return new PrattBuilderImpl(myBuilder, this, myRegistry) {
+      @Override
       protected void doParse() {
         super.doParse();
         PrattBuilderImpl.this.myLeftSiblings.addAll(getResultTypes());
@@ -126,32 +134,38 @@ public class PrattBuilderImpl extends PrattBuilder {
     return null;
   }
 
+  @Override
   public void advance() {
     myLeftSiblings.addLast(getTokenType());
     myBuilder.advanceLexer();
   }
 
+  @Override
   public void error(final String errorText) {
     final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
     marker.drop();
   }
 
+  @Override
   @Nullable
   public IElementType getTokenType() {
     return myBuilder.getTokenType();
   }
 
+  @Override
   @Nullable
   public String getTokenText() {
     return myBuilder.getTokenText();
   }
 
+  @Override
   public void reduce(@NotNull final IElementType type) {
     myStartMarker.finish(type);
     myStartMarker = myStartMarker.precede();
   }
 
+  @Override
   @NotNull
   public List<IElementType> getResultTypes() {
     checkParsed();
@@ -165,14 +179,17 @@ public class PrattBuilderImpl extends PrattBuilder {
     }
   }
 
+  @Override
   public PrattBuilder getParent() {
     return myParentBuilder;
   }
 
+  @Override
   public int getPriority() {
     return myPriority;
   }
 
+  @Override
   public int getCurrentOffset() {
     return myBuilder.getCurrentOffset();
   }

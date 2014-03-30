@@ -19,13 +19,14 @@
  */
 package com.intellij.lang.properties.refactoring;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.editor.ResourceBundleUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#" + ResourceBundleRenameHandler.class.getName());
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }
@@ -57,7 +58,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return false;
     }
 
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
 
     ResourceBundleEditor editor = ResourceBundleUtil.getEditor(dataContext);
     return (editor == null || editor.getState(FileEditorStateLevel.NAVIGATION).getPropertyName() == null /* user selected non-bundle key element */)
@@ -103,7 +104,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     private boolean doRename(final String inputString) {
       final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
       for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile.getContainingFile())) return false;
+        if (!FileModificationService.getInstance().prepareFileForWrite(propertiesFile.getContainingFile())) return false;
       }
 
       RenameProcessor renameProcessor = null;

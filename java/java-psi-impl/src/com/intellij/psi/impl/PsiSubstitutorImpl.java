@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -84,7 +86,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap.containsKey(typeParameter);
   }
 
-  private PsiType getFromMap(PsiTypeParameter typeParameter) {
+  private PsiType getFromMap(@NotNull PsiTypeParameter typeParameter) {
     if (typeParameter instanceof LightTypeParameter) {
       typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
@@ -97,13 +99,13 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       //noinspection ConstantConditions
       return null;
     }
-    assert type.isValid();
+    PsiUtil.ensureValidType(type);
     PsiType substituted = type.accept(myAddingBoundsSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
   }
 
   @Override
-  public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
+  public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
     return addBounds(substitute(typeParameter), typeParameter);
   }
 
@@ -128,16 +130,14 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       // First bound
       return substitute(extendsTypes[0]);
     }
-    else {
-      // Object
-      return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
-    }
+    // Object
+    return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
   private abstract static class SubstitutionVisitorBase extends PsiTypeVisitorEx<PsiType> {
     @Override
     public PsiType visitType(PsiType type) {
-      LOG.assertTrue(false);
+      LOG.error(type);
       return null;
     }
 
@@ -160,7 +160,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           final PsiWildcardType wildcard = ((PsiCapturedWildcardType)newBound).getWildcard();
           if (wildcardType.isExtends() != wildcard.isExtends()) {
             if (wildcard.isBounded()) {
-              return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBound) 
+              return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBound)
                                               : PsiWildcardType.createSuper(wildcardType.getManager(), newBound);
             }
             else {
@@ -168,20 +168,44 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
             }
           }
           if (!wildcard.isBounded()) return PsiWildcardType.createUnbounded(wildcardType.getManager());
+          return newBound;
         }
 
-        return PsiWildcardType.changeBound(wildcardType, newBound);
+        return rebound(wildcardType, newBound);
       }
     }
 
     private static PsiType handleBoundComposition(PsiWildcardType wildcardType, PsiWildcardType bound) {
+      final PsiType newBoundBound = bound.getBound();
       if (bound.isExtends() == wildcardType.isExtends()) {
-        final PsiType newBoundBound = bound.getBound();
         if (newBoundBound != null) {
-          return PsiWildcardType.changeBound(wildcardType, newBoundBound);
+          return rebound(wildcardType, newBoundBound);
         }
       }
+
+      if (newBoundBound != null) {
+        return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBoundBound)
+                                        : PsiWildcardType.createSuper(wildcardType.getManager(), newBoundBound);
+      }
+
       return PsiWildcardType.createUnbounded(wildcardType.getManager());
+    }
+
+    private static PsiWildcardType rebound(PsiWildcardType type, PsiType newBound) {
+      LOG.assertTrue(type.getBound() != null);
+      LOG.assertTrue(newBound.isValid());
+
+      if (type.isExtends()) {
+        if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return PsiWildcardType.createUnbounded(type.getManager());
+        }
+        else {
+          return PsiWildcardType.createExtends(type.getManager(), newBound);
+        }
+      }
+      else {
+        return PsiWildcardType.createSuper(type.getManager(), newBound);
+      }
     }
 
     @Override
@@ -220,6 +244,18 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     @Override
     public abstract PsiType visitClassType(PsiClassType classType);
 
+    @Nullable
+    @Override
+    public PsiType visitIntersectionType(PsiIntersectionType intersectionType) {
+      final List<PsiType> substituted = ContainerUtil.map(intersectionType.getConjuncts(), new Function<PsiType, PsiType>() {
+        @Override
+        public PsiType fun(PsiType psiType) {
+          return psiType.accept(SubstitutionVisitorBase.this);
+        }
+      });
+      return PsiIntersectionType.createIntersection(substituted);
+    }
+
     @Override
     public PsiType visitDisjunctionType(PsiDisjunctionType disjunctionType) {
       final List<PsiType> substituted = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, PsiType>() {
@@ -254,31 +290,29 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
-      assert classType.isValid();
-      assert aClass.isValid();
+
+      PsiUtilCore.ensureValid(aClass);
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
         if (containsInMap(typeParameter)) {
           PsiType result = substituteTypeParameter(typeParameter);
           if (result != null) {
-            assert result.isValid();
+            PsiUtil.ensureValidType(result);
           }
           return result;
         }
-        else {
-          return classType;
-        }
+        return classType;
       }
       final Map<PsiTypeParameter, PsiType> hashMap = new HashMap<PsiTypeParameter, PsiType>(2);
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }
       PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
-      assert result.isValid();
+      PsiUtil.ensureValidType(result);
       return result;
     }
 
-    private PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
+    private PsiType substituteTypeParameter(@NotNull PsiTypeParameter typeParameter) {
       PsiType t = getFromMap(typeParameter);
       if (myKind == SubstituteKind.SIMPLE) {
         return t;
@@ -322,7 +356,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
   }
 
-  private PsiType addBounds(PsiType substituted, final PsiTypeParameter typeParameter) {
+  private PsiType addBounds(PsiType substituted, @NotNull PsiTypeParameter typeParameter) {
     PsiType oldSubstituted = substituted;
     PsiElement captureContext = null;
     if (substituted instanceof PsiCapturedWildcardType) {
@@ -340,8 +374,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText(
           CommonClassNames.JAVA_LANG_OBJECT)) {
           if (originalBound == null ||
-              (!TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
-               !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound))) { //erasure is essential to avoid infinite recursion
+              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
+              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
             if (wildcardType.isExtends()) {
               final PsiType glb = GenericsUtil.getGreatestLowerBound(wildcardType.getBound(), substitutedBoundType);
               if (glb != null) {
@@ -355,55 +389,58 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+      final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
+      if (erasure != null) {
+        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+        for (PsiType boundType : boundTypes) {
+          if (TypeConversionUtil.isAssignable(erasure, boundType)) {
+            return boundType;
+          }
+        }
+      }
     }
 
     if (captureContext != null) {
-      LOG.assertTrue(substituted instanceof PsiWildcardType);
-      substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard() 
-                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
+      substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard()
+                    ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext, typeParameter);
     }
     return substituted;
   }
 
-  private PsiType correctExternalSubstitution(PsiType substituted, final PsiType original) {
-    if (original == null) return null;
-
-    if (substituted == null) {
-      return original.accept(new PsiTypeVisitor<PsiType>() {
-        @Override
-        public PsiType visitArrayType(PsiArrayType arrayType) {
-          return new PsiArrayType(arrayType.getComponentType().accept(this));
-        }
-
-        @Override
-        public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
-          return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
-        }
-
-        @Override
-        public PsiType visitClassType(PsiClassType classType) {
-          PsiClass aClass = classType.resolve();
-          if (aClass != null) {
-            if (aClass instanceof PsiTypeParameter) {
-              return rawTypeForTypeParameter((PsiTypeParameter)aClass);
-            }
-            else {
-              return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
-            }
-          }
-          else {
-            return classType;
-          }
-        }
-
-        @Override
-        public PsiType visitType(PsiType type) {
-          LOG.error(type.getInternalCanonicalText());
-          return null;
-        }
-      });
+  private PsiType correctExternalSubstitution(PsiType substituted, @NotNull PsiType original) {
+    if (substituted != null) {
+      return substituted;
     }
-    return substituted;
+    return original.accept(new PsiTypeVisitor<PsiType>() {
+      @Override
+      public PsiType visitArrayType(PsiArrayType arrayType) {
+        return new PsiArrayType(arrayType.getComponentType().accept(this));
+      }
+
+      @Override
+      public PsiType visitEllipsisType(PsiEllipsisType ellipsisType) {
+        return new PsiEllipsisType(ellipsisType.getComponentType().accept(this));
+      }
+
+      @Override
+      public PsiType visitClassType(PsiClassType classType) {
+        PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+          return classType;
+        }
+        if (aClass instanceof PsiTypeParameter) {
+          return rawTypeForTypeParameter((PsiTypeParameter)aClass);
+        }
+        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+      }
+
+      @Override
+      public PsiType visitType(PsiType type) {
+        LOG.error(type.getInternalCanonicalText());
+        return null;
+      }
+    });
   }
 
   @Override
@@ -411,11 +448,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return new PsiSubstitutorImpl(mySubstitutionMap);
   }
 
+  @NotNull
   @Override
   public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
     if (mapping != null && !mapping.isValid()) {
-      LOG.error("Invalid type in substitutor: " + mapping);
+      LOG.error("Invalid type in substitutor: " + mapping + "; " + mapping.getClass());
     }
     ret.mySubstitutionMap.put(typeParameter, mapping);
     return ret;
@@ -440,6 +478,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
   }
 
+  @NotNull
   @Override
   public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     PsiSubstitutorImpl substitutor = clone();
@@ -447,8 +486,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return substitutor;
   }
 
+  @NotNull
   @Override
-  public PsiSubstitutor putAll(PsiSubstitutor another) {
+  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
     if (another instanceof EmptySubstitutorImpl) return this;
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl)another;
     PsiSubstitutorImpl substitutor = clone();
@@ -471,7 +511,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         buffer.append(" of ");
         buffer.append(((PsiMethod)owner).getName());
         buffer.append(" in ");
-        buffer.append(((PsiMethod)owner).getContainingClass().getQualifiedName());
+        PsiClass aClass = ((PsiMethod)owner).getContainingClass();
+        buffer.append(aClass != null ? aClass.getQualifiedName() : "<no class>");
       }
       buffer.append(" -> ");
       if (entry.getValue() != null) {

@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.TypeOrElementOrAttributeReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -86,7 +86,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           tag.accept(new XmlRecursiveElementVisitor() {
             @Override
             public void visitXmlTag(XmlTag tag) {
-              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().length() == 0) {
+              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
                 tags.add(tag);
               }
               super.visitXmlTag(tag);
@@ -97,7 +97,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
               PsiReference ref = null;
               boolean skip = false;
               for (PsiReference reference : value.getReferences()) {
-                if (reference instanceof SchemaReferencesProvider.TypeOrElementOrAttributeReference) {
+                if (reference instanceof TypeOrElementOrAttributeReference) {
                   ref = reference;
                 } else if (reference instanceof SchemaPrefixReference) {
                   skip = true;
@@ -141,7 +141,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     final PsiElement parent = element.getParent();
     if (parent instanceof XmlTag) {
       XmlTag tag = (XmlTag)parent;
-      if (tag.getNamespacePrefix().length() == 0) {
+      if (tag.getNamespacePrefix().isEmpty()) {
         while (tag != null) {
           final XmlAttribute attr = tag.getAttribute("xmlns");
           if (attr != null) return attr;

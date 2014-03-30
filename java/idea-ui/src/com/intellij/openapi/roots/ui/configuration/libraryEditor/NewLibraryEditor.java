@@ -23,15 +23,14 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -39,6 +38,7 @@ import java.util.List;
 public class NewLibraryEditor extends LibraryEditorBase {
   private String myLibraryName;
   private final MultiMap<OrderRootType, LightFilePointer> myRoots;
+  private final Set<LightFilePointer> myExcludedRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private LibraryType myType;
   private LibraryProperties myProperties;
@@ -51,6 +51,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
     myType = type;
     myProperties = properties;
     myRoots = new MultiMap<OrderRootType, LightFilePointer>();
+    myExcludedRoots = new LinkedHashSet<LightFilePointer>();
   }
 
   @Override
@@ -86,8 +87,11 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   public String[] getUrls(OrderRootType rootType) {
-    final Collection<LightFilePointer> pointers = myRoots.get(rootType);
-    List<String> urls = new ArrayList<String>();
+    return pointersToUrls(myRoots.get(rootType));
+  }
+
+  private static String[] pointersToUrls(Collection<LightFilePointer> pointers) {
+    List<String> urls = new ArrayList<String>(pointers.size());
     for (LightFilePointer pointer : pointers) {
       urls.add(pointer.getUrl());
     }
@@ -116,6 +120,11 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
+  public String[] getExcludedRootUrls() {
+    return pointersToUrls(myExcludedRoots);
+  }
+
+  @Override
   public void setName(String name) {
     myLibraryName = name;
   }
@@ -136,6 +145,15 @@ public class NewLibraryEditor extends LibraryEditorBase {
   }
 
   @Override
+  public void addExcludedRoot(@NotNull String url) {
+    myExcludedRoots.add(new LightFilePointer(url));
+  }
+
+  public void removeExcludedRoot(@NotNull String url) {
+    myExcludedRoots.remove(new LightFilePointer(url));
+  }
+
+  @Override
   public void addJarDirectory(final String url, boolean recursive, OrderRootType rootType) {
     addRoot(url, rootType);
     myJarDirectories.add(rootType, url, recursive);
@@ -143,8 +161,24 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   public void removeRoot(String url, OrderRootType rootType) {
-    myRoots.removeValue(rootType, new LightFilePointer(url));
+    myRoots.remove(rootType, new LightFilePointer(url));
+    Iterator<LightFilePointer> iterator = myExcludedRoots.iterator();
+    while (iterator.hasNext()) {
+      LightFilePointer pointer = iterator.next();
+      if (!isUnderRoots(pointer.getUrl())) {
+        iterator.remove();
+      }
+    }
     myJarDirectories.remove(rootType, url);
+  }
+
+  private boolean isUnderRoots(@NotNull String url) {
+    for (LightFilePointer pointer : myRoots.values()) {
+      if (VfsUtilCore.isEqualOrAncestor(pointer.getUrl(), url)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

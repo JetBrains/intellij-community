@@ -47,6 +47,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
     myFileType = fileType;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     myCodeFragment = (PsiCodeFragment)value;
 
@@ -65,6 +66,7 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
 
   protected EditorTextField createEditorField(Document document) {
     EditorTextField field = new EditorTextField(document, myProject, myFileType) {
+      @Override
       protected boolean shouldHaveBorder() {
         return false;
       }
@@ -73,10 +75,12 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
     return field;
   }
 
+  @Override
   public PsiCodeFragment getCellEditorValue() {
     return myCodeFragment;
   }
 
+  @Override
   public boolean stopCellEditing() {
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ModalityStateEx extends ModalityState {
   private static final WeakReference[] EMPTY_REFS_ARRAY = new WeakReference[0];
@@ -52,8 +54,8 @@ public class ModalityStateEx extends ModalityState {
 
   @NotNull
   ModalityStateEx appendEntity(@NotNull Object anEntity){
-    ArrayList<Object> list = new ArrayList<Object>();
-    for (WeakReference modalEntity : myModalEntities) {
+    List<Object> list = new ArrayList<Object>(myModalEntities.length+1);
+    for (Reference modalEntity : myModalEntities) {
       Object entity = modalEntity.get();
       if (entity == null) continue;
       list.add(entity);

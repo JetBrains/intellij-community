@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -62,7 +62,7 @@ import java.util.List;
  * @author max
  */
 public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
-                                                       DocumentBasedComponent {
+                                                       DocumentBasedComponent, FocusListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -73,6 +73,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Component myNextFocusable = null;
   private boolean myWholeTextSelected = false;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled = false;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
@@ -119,7 +120,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // todo[dsl,max]
     setFocusable(true);
     // dsl: this is a weird way of doing things....
-    addFocusListener(new FocusListener() {
+    super.addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
         requestFocus();
@@ -312,7 +313,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return super.isFocusOwner();
   }
 
-  void releaseEditor(final Editor editor) {
+  void releaseEditor(@NotNull final Editor editor) {
     if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -321,6 +322,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
     remove(editor.getComponent());
+
+    editor.getContentComponent().removeFocusListener(this);
+
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       @Override
@@ -333,7 +337,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     if (application.isUnitTestMode() || application.isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       application.invokeLater(runnable);
     }
   }
@@ -412,26 +417,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // set mode in editor
     editor.setOneLineMode(isOneLineMode);
 
-    final EditorColorsManager mgr = EditorColorsManager.getInstance();
-    final EditorColorsScheme defaultScheme = UIUtil.isUnderDarcula()
-                                             ? mgr.getScheme(mgr.getGlobalScheme().getName())
-                                             : mgr.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
-    final EditorColorsScheme customGlobalScheme = isOneLineMode ? defaultScheme : null;
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    final EditorColorsScheme defaultScheme =
+      UIUtil.isUnderDarcula() ? colorsManager.getGlobalScheme() : colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme customGlobalScheme = isOneLineMode? defaultScheme : null;
 
-    // Probably we need change scheme only for color schemas with white BG, but on the other hand
-    // FindUsages dialog always uses FindUsages color scheme based on a default one and should be also fixed
-    //
-    //final EditorColorsScheme customGlobalScheme;
-    //final EditorColorsScheme currentScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    //if (currentScheme.getDefaultBackground() == Color.WHITE) {
-    //  customGlobalScheme = currentScheme;
-    //} else {
-    //  final EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
-    //  customGlobalScheme = isOneLineMode ? defaultScheme : null;
-    //}
     editor.setColorsScheme(editor.createBoundColorSchemeDelegate(customGlobalScheme));
 
-    final EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
     colorsScheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     editor.setColorsScheme(new DelegateColorScheme(colorsScheme) {
       @Override
@@ -448,7 +441,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     // color scheme settings:
     setupEditorFont(editor);
     updateBorder(editor);
-    editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
+    editor.setBackgroundColor(getBackgroundColor(isEnabled(), colorsScheme));
   }
 
 
@@ -473,6 +466,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     settings.setAdditionalLinesCount(0);
     settings.setAdditionalColumnsCount(1);
     settings.setRightMarginShown(false);
+    settings.setRightMargin(-1);
     settings.setFoldingOutlineShown(false);
     settings.setLineNumbersShown(false);
     settings.setLineMarkerAreaShown(false);
@@ -532,6 +526,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
+    editor.getContentComponent().addFocusListener(this);
     
     editor.setPlaceholder(myHintText);
 
@@ -559,8 +554,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
-      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula()) {
-        editor.setBorder(UIUtil.isUnderDarcula() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
+      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
         editor.addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(Editor editor) {
@@ -598,13 +593,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
       myIsViewer = !enabled;
-      if (myEditor == null) {
+      EditorEx editor = myEditor;
+      if (editor == null) {
         return;
       }
-      Editor editor = myEditor;
       releaseEditor(editor);
-      myEditor = createEditor();
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      initEditor();
       revalidate();
     }
   }
@@ -614,6 +608,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (UIUtil.getParentOfType(CellRendererPane.class, this) != null && UIUtil.isUnderDarcula()) {
       return getParent().getBackground();
     }
+
+    if (UIUtil.isUnderDarcula()) return UIUtil.getTextFieldBackground();
+
     return enabled
            ? colorsScheme.getDefaultBackground()
            : UIUtil.getInactiveTextFieldBackgroundColor();
@@ -755,10 +752,34 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
+  public synchronized void addFocusListener(FocusListener l) {
+    myFocusListeners.add(l);
+  }
+
+  @Override
+  public synchronized void removeFocusListener(FocusListener l) {
+    myFocusListeners.remove(l);
+  }
+
+  @Override
+  public void focusGained(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusGained(e);
+    }
+  }
+
+  @Override
+  public void focusLost(FocusEvent e) {
+    for (FocusListener listener : myFocusListeners) {
+      listener.focusLost(e);
+    }
+  }
+
+  @Override
   public Object getData(String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) return null;
 
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
 

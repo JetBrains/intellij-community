@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
@@ -81,7 +82,7 @@ public class LibraryEditingUtil {
     return candidateName;
   }
 
-  public static Predicate<Library> getNotAddedLibrariesCondition(final ModuleRootModel rootModel) {
+  public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {
     final OrderEntry[] orderEntries = rootModel.getOrderEntries();
     final Set<Library> result = new HashSet<Library>(orderEntries.length);
     for (OrderEntry orderEntry : orderEntries) {
@@ -100,6 +101,13 @@ public class LibraryEditingUtil {
         if (library instanceof LibraryImpl) {
           final Library source = ((LibraryImpl)library).getSource();
           if (source != null && result.contains(source)) return false;
+        }
+        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+        if (kind != null) {
+          LibraryType type = LibraryType.findByKind(kind);
+          if (type != null && !type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+            return false;
+          }
         }
         return true;
       }
@@ -200,7 +208,7 @@ public class LibraryEditingUtil {
 
       if (library != null) {
         final ModuleRootModel rootModel = rootConfigurable.getContext().getModulesConfigurator().getRootModel(module);
-        if (!getNotAddedLibrariesCondition(rootModel).apply(library)) {
+        if (!getNotAddedSuitableLibrariesCondition(rootModel, rootConfigurable.getFacetConfigurator()).apply(library)) {
           continue;
         }
       }

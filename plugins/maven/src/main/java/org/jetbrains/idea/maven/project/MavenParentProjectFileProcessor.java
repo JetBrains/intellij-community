@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
                              @NotNull VirtualFile projectFile,
                              @Nullable MavenParentDesc parentDesc) {
     VirtualFile superPom = generalSettings.getEffectiveSuperPom();
-    if (Comparing.equal(projectFile, superPom)) return null;
+    if (projectFile.equals(superPom)) return null;
 
     RESULT_TYPE result = null;
 

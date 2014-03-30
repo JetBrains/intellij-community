@@ -15,12 +15,15 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.portable.PortableStatus;
-import org.jetbrains.idea.svn.portable.StatusCallbackConvertor;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.wc.SVNInfo;
@@ -40,6 +43,40 @@ import java.util.*;
  * Time: 7:59 PM
  */
 public class SvnStatusHandler extends DefaultHandler {
+
+  private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);
+
+  public static final Map<String, SVNStatusType> ourStatusTypes = ContainerUtil.newHashMap();
+
+  static {
+    // TODO: Check STATUS_MERGED as it is marked deprecated
+    put(SVNStatusType.STATUS_ADDED, SVNStatusType.STATUS_CONFLICTED, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_EXTERNAL,
+        SVNStatusType.STATUS_IGNORED, SVNStatusType.STATUS_INCOMPLETE, SVNStatusType.STATUS_MERGED, SVNStatusType.STATUS_MISSING,
+        SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NORMAL, SVNStatusType.STATUS_OBSTRUCTED,
+        SVNStatusType.STATUS_REPLACED, SVNStatusType.STATUS_UNVERSIONED);
+  }
+
+  private static void put(@NotNull SVNStatusType... statusTypes) {
+    for (SVNStatusType statusType : statusTypes) {
+      put(statusType);
+    }
+  }
+
+  private static void put(@NotNull SVNStatusType statusType) {
+    ourStatusTypes.put(statusType.toString(), statusType);
+  }
+
+  @Nullable
+  public static SVNStatusType getStatus(@NotNull String code) {
+    SVNStatusType result = ourStatusTypes.get(code);
+
+    if (result == null) {
+      LOG.info("Unknown status type " + code);
+    }
+
+    return result;
+  }
+
   private String myChangelistName;
   private List<PortableStatus> myDefaultListStatuses;
   private MultiMap<String, PortableStatus> myCurrentListChanges;
@@ -257,6 +294,12 @@ public class SvnStatusHandler extends DefaultHandler {
         return new Target();
       }
     });
+    myElementsMap.put("against", new Getter<ElementHandlerBase>() {
+      @Override
+      public ElementHandlerBase get() {
+        return new Against();
+      }
+    });
     myElementsMap.put("wc-status", new Getter<ElementHandlerBase>() {
       @Override
       public ElementHandlerBase get() {
@@ -321,6 +364,18 @@ public class SvnStatusHandler extends DefaultHandler {
     }
   }
 
+  private static SVNStatusType parseContentsStatus(Attributes attributes) throws SAXException {
+    final String item = attributes.getValue("item");
+    assertSAX(item != null);
+    return getStatus(item);
+  }
+
+  private static SVNStatusType parsePropertiesStatus(Attributes attributes) throws SAXException {
+    final String props = attributes.getValue("props");
+    assertSAX(props != null);
+    return getStatus(props);
+  }
+
   private static class Fake extends ElementHandlerBase {
     private Fake() {
       super(new String[]{"status"}, new String[]{});
@@ -362,9 +417,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      final SVNDate date = SVNDate.parseDate(s);
-      //if (SVNDate.NULL.equals(date)) return;
-      pending.setRemoteDate(date);
+      pending.setCommittedDate(SVNDate.parseDate(s));
     }
   }
 
@@ -387,7 +440,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
-      pending.setRemoteAuthor(s);
+      pending.setAuthor(s);
     }
   }
 
@@ -404,13 +457,8 @@ public class SvnStatusHandler extends DefaultHandler {
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String revision = attributes.getValue("revision");
-      if (! StringUtil.isEmptyOrSpaces(revision)) {
-        try {
-          final long number = Long.parseLong(revision);
-          status.setRemoteRevision(SVNRevision.create(number));
-        } catch (NumberFormatException e) {
-          throw new SAXException(e);
-        }
+      if (!StringUtil.isEmpty(revision)) {
+        status.setCommittedRevision(SVNRevision.create(Long.valueOf(revision)));
       }
     }
 
@@ -582,7 +630,11 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      //not used now
+      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
+      status.setRemotePropertiesStatus(propertiesStatus);
+
+      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
+      status.setRemoteContentsStatus(contentsStatus);
     }
 
     @Override
@@ -623,13 +675,9 @@ public class SvnStatusHandler extends DefaultHandler {
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
-      final String props = attributes.getValue("props");
-      assertSAX(props != null);
-      final SVNStatusType propertiesStatus = StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(props));
+      final SVNStatusType propertiesStatus = parsePropertiesStatus(attributes);
       status.setPropertiesStatus(propertiesStatus);
-      final String item = attributes.getValue("item");
-      assertSAX(item != null);
-      final SVNStatusType contentsStatus = StatusCallbackConvertor.convert(org.apache.subversion.javahl.types.Status.Kind.valueOf(item));
+      final SVNStatusType contentsStatus = parseContentsStatus(attributes);
       status.setContentsStatus(contentsStatus);
 
       if (SVNStatusType.STATUS_CONFLICTED.equals(propertiesStatus) || SVNStatusType.STATUS_CONFLICTED.equals(contentsStatus)) {
@@ -683,7 +731,7 @@ public class SvnStatusHandler extends DefaultHandler {
     private final File myBase;
 
     private Entry(final File base) {
-      super(new String[]{"wc-status"}, new String[]{});
+      super(new String[]{"wc-status", "repos-status"}, new String[]{});
       myBase = base;
     }
 
@@ -691,16 +739,7 @@ public class SvnStatusHandler extends DefaultHandler {
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
       final String path = attributes.getValue("path");
       assertSAX(path != null);
-      final File file;
-      if (new File(path).isAbsolute()) {
-        file = new File(path);
-      } else {
-        if (".".equals(path)) {
-          file = myBase;
-        } else {
-          file = new File(myBase, path);
-        }
-      }
+      final File file = CommandUtil.resolvePath(myBase, path);
       status.setFile(file);
       final boolean exists = file.exists();
       if (exists) {
@@ -796,11 +835,33 @@ and no "mod4" under
 
   private static class Target extends ElementHandlerBase {
     private Target() {
-      super(new String[]{}, new String[]{"entry"});
+      super(new String[]{"against"}, new String[]{"entry"});
     }
 
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) {
+    }
+
+    @Override
+    public void postEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void preEffect(DataCallback callback) {
+    }
+
+    @Override
+    public void characters(String s, PortableStatus pending, SVNLockWrapper lock) {
+    }
+  }
+
+  private static class Against extends ElementHandlerBase {
+    private Against() {
+      super(new String[0], new String[0]);
+    }
+
+    @Override
+    protected void updateStatus(Attributes attributes, PortableStatus status, SVNLockWrapper lock) throws SAXException {
     }
 
     @Override

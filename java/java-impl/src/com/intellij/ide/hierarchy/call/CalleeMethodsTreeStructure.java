@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -36,7 +37,8 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     myScopeType = scopeType;
   }
 
-  protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
+  @NotNull
+  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

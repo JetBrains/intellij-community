@@ -1,0 +1,2 @@
+# todo[nik, kb] does it make sense to place icons here? May be it would be better to move them to 'icons' module? Or we can extract a separate 'darcula-ui' module
+skip: *

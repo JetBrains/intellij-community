@@ -39,6 +39,7 @@ public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollecto
   }
 
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     Set<String> modulesTypes = new HashSet<String>();

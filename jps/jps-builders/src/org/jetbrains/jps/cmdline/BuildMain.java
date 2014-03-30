@@ -16,20 +16,21 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -45,9 +46,8 @@ import java.util.UUID;
  * @author Eugene Zhuravlev
  *         Date: 4/16/12
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {
-  public static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create("_force_model_loading");
-
   private static final String LOG_CONFIG_FILE_NAME = "build-log.xml";
   private static final String LOG_FILE_NAME = "build.log";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
@@ -58,42 +58,42 @@ public class BuildMain {
     LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
   }
 
-  private static NioClientSocketChannelFactory ourChannelFactory;
+  private static final int HOST_ARG = 0;
+  private static final int PORT_ARG = HOST_ARG + 1;
+  private static final int SESSION_ID_ARG = PORT_ARG + 1;
+  private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
+
+  private static NioEventLoopGroup ourEventLoopGroup;
 
   public static void main(String[] args){
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
-    final String host = args[0];
-    final int port = Integer.parseInt(args[1]);
-    final UUID sessionId = UUID.fromString(args[2]);
-    final File systemDir = new File(FileUtil.toCanonicalPath(args[3]));
+    final String host = args[HOST_ARG];
+    final int port = Integer.parseInt(args[PORT_ARG]);
+    final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
+    @SuppressWarnings("ConstantConditions")
+    final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
     Utils.setSystemRoot(systemDir);
 
-    ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.getInstance(), SharedThreadPool.getInstance(), 1);
-    final ClientBootstrap bootstrap = new ClientBootstrap(ourChannelFactory);
-    bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      public ChannelPipeline getPipeline() throws Exception {
-        return Channels.pipeline(
-          new ProtobufVarint32FrameDecoder(),
-          new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
-          new ProtobufVarint32LengthFieldPrepender(),
-          new ProtobufEncoder(),
-          new MyMessageHandler(sessionId)
-        );
+    ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+    final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) throws Exception {
+        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   new MyMessageHandler(sessionId));
       }
-    });
-    bootstrap.setOption("tcpNoDelay", true);
-    bootstrap.setOption("keepAlive", true);
+    }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
 
-    final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
-    future.awaitUninterruptibly();
-
+    final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
     final boolean success = future.isSuccess();
-
     if (success) {
-      Channels.write(future.getChannel(), CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
+      future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
     }
     else {
-      final Throwable reason = future.getCause();
+      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+      final Throwable reason = future.cause();
       System.err.println("Error connecting to " + host + ":" + port + "; reason: " + (reason != null? reason.getMessage() : "unknown"));
       if (reason != null) {
         reason.printStackTrace(System.err);
@@ -103,7 +103,7 @@ public class BuildMain {
     }
   }
 
-  private static class MyMessageHandler extends SimpleChannelHandler {
+  private static class MyMessageHandler extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
     private final UUID mySessionId;
     private volatile BuildSession mySession;
 
@@ -112,10 +112,9 @@ public class BuildMain {
     }
 
     @Override
-    public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
+    public void messageReceived(final ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
       final CmdlineRemoteProto.Message.Type type = message.getType();
-      final Channel channel = ctx.getChannel();
+      final Channel channel = context.channel();
 
       if (type == CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE) {
         final CmdlineRemoteProto.Message.ControllerMessage controllerMessage = message.getControllerMessage();
@@ -127,7 +126,9 @@ public class BuildMain {
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta);
               mySession = session;
               SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
+                @Override
                 public void run() {
+                  //noinspection finally
                   try {
                     session.run();
                   }
@@ -174,35 +175,28 @@ public class BuildMain {
         }
       }
 
-      Channels.write(channel, CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
+      channel.writeAndFlush(
+        CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure("Unsupported message type: " + type.name(), null)));
     }
 
     @Override
-    public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    public void channelInactive(ChannelHandlerContext context) throws Exception {
       try {
-        super.channelClosed(ctx, e);
+        super.channelInactive(context);
       }
       finally {
         new Thread("Shutdown thread") {
+          @Override
           public void run() {
+            //noinspection finally
             try {
-              ourChannelFactory.releaseExternalResources();
+              ourEventLoopGroup.shutdownGracefully();
             }
             finally {
               System.exit(0);
             }
           }
         }.start();
-      }
-    }
-
-    @Override
-    public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-      try {
-        super.channelDisconnected(ctx, e);
-      }
-      finally {
-        ctx.getChannel().close();
       }
     }
   }
@@ -219,88 +213,86 @@ public class BuildMain {
     }
     catch (IOException e) {
       System.err.println("Failed to configure logging: ");
+      //noinspection UseOfSystemOutOrSystemErr
       e.printStackTrace(System.err);
     }
 
-    Logger.setFactory(new Logger.Factory() {
-      @Override
-      public Logger getLoggerInstance(String category) {
-        final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-        return new Logger() {
-          @Override
-          public boolean isDebugEnabled() {
-            return logger.isDebugEnabled();
-          }
-
-          @Override
-          public void debug(@NonNls String message) {
-            logger.debug(message);
-          }
-
-          @Override
-          public void debug(@Nullable Throwable t) {
-            logger.debug("", t);
-          }
-
-          @Override
-          public void debug(@NonNls String message, @Nullable Throwable t) {
-            logger.debug(message, t);
-          }
-
-          @Override
-          public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-            logger.error(message, t);
-          }
-
-          @Override
-          public void info(@NonNls String message) {
-            logger.info(message);
-          }
-
-          @Override
-          public void info(@NonNls String message, @Nullable Throwable t) {
-            logger.info(message, t);
-          }
-
-          @Override
-          public void warn(@NonNls String message, @Nullable Throwable t) {
-            logger.warn(message, t);
-          }
-
-          @Override
-          public void setLevel(Level level) {
-            logger.setLevel(level);
-          }
-        };
-      }
-    });
+    Logger.setFactory(MyLoggerFactory.class);
   }
 
-  private static void ensureLogConfigExists(final File logConfig) {
+  private static void ensureLogConfigExists(final File logConfig) throws IOException {
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
-      try {
-        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
-        if (in != null) {
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+      if (in != null) {
+        try {
+          final FileOutputStream out = new FileOutputStream(logConfig);
           try {
-            final FileOutputStream out = new FileOutputStream(logConfig);
-            try {
-              FileUtil.copy(in, out);
-            }
-            finally {
-              out.close();
-            }
+            FileUtil.copy(in, out);
           }
           finally {
-            in.close();
+            out.close();
           }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
+        finally {
+          in.close();
+        }
       }
     }
   }
 
+  private static class MyLoggerFactory implements Logger.Factory {
+    @Override
+    public Logger getLoggerInstance(String category) {
+      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+
+      return new Logger() {
+        @Override
+        public boolean isDebugEnabled() {
+          return logger.isDebugEnabled();
+        }
+
+        @Override
+        public void debug(@NonNls String message) {
+          logger.debug(message);
+        }
+
+        @Override
+        public void debug(@Nullable Throwable t) {
+          logger.debug("", t);
+        }
+
+        @Override
+        public void debug(@NonNls String message, @Nullable Throwable t) {
+          logger.debug(message, t);
+        }
+
+        @Override
+        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
+          logger.error(message, t);
+        }
+
+        @Override
+        public void info(@NonNls String message) {
+          logger.info(message);
+        }
+
+        @Override
+        public void info(@NonNls String message, @Nullable Throwable t) {
+          logger.info(message, t);
+        }
+
+        @Override
+        public void warn(@NonNls String message, @Nullable Throwable t) {
+          logger.warn(message, t);
+        }
+
+        @Override
+        public void setLevel(Level level) {
+          logger.setLevel(level);
+        }
+      };
+    }
+  }
 }

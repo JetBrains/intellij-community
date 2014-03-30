@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+/** @deprecated use com.intellij.lang.java.JavaDocLexer (to remove in IDEA 14) */
 public class DocCommentLexer extends MergingLexerAdapter {
   public DocCommentLexer(final DocCommentTokenTypes tokenTypes, final boolean isJdk15Enabled) {
     super(new AsteriskStripperLexer(new _JavaDocLexer(isJdk15Enabled, tokenTypes), tokenTypes),
@@ -44,7 +46,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
     }
 
     @Override
-    public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
       myBufferIndex =  startOffset;
       myBufferEndOffset = endOffset;
@@ -58,6 +60,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
       return myState;
     }
 
+    @NotNull
     @Override
     public CharSequence getBufferSequence() {
       return myBuffer;

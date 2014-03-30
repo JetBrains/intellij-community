@@ -6,11 +6,18 @@ Groovy script
     PsiErrorElement:'(' expected
       <empty list>
   PsiWhiteSpace(' ')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('expr1')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        PsiElement(identifier)('expr2')
   PsiErrorElement:';' or new line expected
-    PsiElement(identifier)('expr1')
-    PsiWhiteSpace(' ')
-    PsiElement(identifier)('expr2')
-    PsiWhiteSpace(' ')
+    <empty list>
+  PsiWhiteSpace(' ')
+  PsiErrorElement:'else' without 'if'
     PsiElement(else)('else')
-    PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  Reference expression
     PsiElement(identifier)('expr3')

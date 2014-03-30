@@ -42,6 +42,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = new ArrayFactory<PsiDocTag>() {
+    @NotNull
     @Override
     public PsiDocTag[] create(final int count) {
       return count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];
@@ -191,19 +192,27 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         }
         needToAddNewline = true;
       }
-      if (anchor.getElementType() != DOC_TAG) {
-        final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
-        final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, charTable, getManager());
-        final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, charTable, getManager());
-        final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
-        final TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
-        newLine.getTreeParent().addChild(indentWS);
-        newLine.getTreeParent().addChild(leadingAsterisk);
-        newLine.getTreeParent().addChild(commentData);
-        super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
 
-        anchor = commentData;
-        before = Boolean.FALSE;
+      if (anchor.getElementType() != DOC_TAG) {
+        if (nodeOnSameLineWithCommentStartBlock(anchor)
+            || !nodeIsNextAfterAsterisks(anchor)
+            || !docTagEndsWithLineFeedAndAsterisks(first))
+        {
+          final CharTable charTable = SharedImplUtil.findCharTableByTree(this);
+          final TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, charTable, getManager());
+          final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, charTable, getManager());
+          final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
+          final TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, getManager());
+
+          newLine.getTreeParent().addChild(indentWS);
+          newLine.getTreeParent().addChild(leadingAsterisk);
+          newLine.getTreeParent().addChild(commentData);
+
+          super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
+
+          anchor = commentData;
+          before = Boolean.FALSE;
+        }
       }
       else {
         needToAddNewline = true;
@@ -240,6 +249,45 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         toBeDeleted = next;
       }
     }
+  }
+
+  private static boolean nodeIsNextAfterAsterisks(@NotNull ASTNode node) {
+    ASTNode current = TreeUtil.findSiblingBackward(node, DOC_COMMENT_LEADING_ASTERISKS);
+    if (current == null || current == node) return false;
+    while (current.getTreeNext() != node) {
+      current = current.getTreeNext();
+      CharSequence currentText = current.getChars();
+      if (CharArrayUtil.shiftForward(currentText, 0, " \t") != currentText.length()) return false;
+    }
+    return true;
+  }
+
+  private static boolean docTagEndsWithLineFeedAndAsterisks(@NotNull ASTNode node) {
+    assert (node.getElementType() == DOC_TAG);
+    ASTNode lastAsterisks = TreeUtil.findChildBackward(node, DOC_COMMENT_LEADING_ASTERISKS);
+    if (lastAsterisks == null || !lastAsterisks.getTreePrev().textContains('\n')) {
+      return false;
+    }
+    //So last asterisk is placed on new line, checking if after it there are no non-whitespace symbols
+    ASTNode last = node.getLastChildNode();
+    ASTNode current = lastAsterisks;
+    while (current != last) {
+      current = current.getTreeNext();
+      CharSequence currentText = current.getChars();
+      if (CharArrayUtil.shiftForward(currentText, 0, " \t") != currentText.length()) return false;
+    }
+    return true;
+  }
+
+  private static boolean nodeOnSameLineWithCommentStartBlock(@NotNull ASTNode node) {
+    ASTNode current = TreeUtil.findSiblingBackward(node, DOC_COMMENT_START);
+    if (current == null) return false;
+    if (current == node) return true;
+    while (current.getTreeNext() != node) {
+      current = current.getTreeNext();
+      if (current.textContains('\n')) return false;
+    }
+    return true;
   }
 
   @Override

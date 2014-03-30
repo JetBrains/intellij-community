@@ -33,4 +33,7 @@ public interface SettingsStep {
 
   void addExpertPanel(@NotNull JComponent panel);
   void addExpertField(@NotNull String label, @NotNull JComponent field);
+
+  @NotNull
+  JTextField getModuleNameField();
 }

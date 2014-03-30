@@ -29,13 +29,15 @@ import javax.swing.*;
  * @author traff
  */
 public class SubstitutedFileType extends LanguageFileType{
-  private final @NotNull FileType originalFileType;
-  private final @NotNull FileType fileType;
+  @NotNull private final FileType myOriginalFileType;
+  @NotNull private final FileType myFileType;
 
-  private SubstitutedFileType(@NotNull FileType originalFileType, @NotNull LanguageFileType substitutionFileType) {
-    super(substitutionFileType.getLanguage());
-    this.originalFileType = originalFileType;
-    this.fileType = substitutionFileType;
+  private SubstitutedFileType(@NotNull FileType originalFileType,
+                              @NotNull LanguageFileType substitutionFileType,
+                              @NotNull Language substitutedLanguage) {
+    super(substitutedLanguage);
+    myOriginalFileType = originalFileType;
+    myFileType = substitutionFileType;
   }
 
   @NotNull
@@ -47,8 +49,8 @@ public class SubstitutedFileType extends LanguageFileType{
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
       LanguageFileType substFileType = substitutedLanguage.getAssociatedFileType();
-      if (!substitutedLanguage.equals(language) && substFileType != null && !substFileType.equals(fileType)) {
-        return new SubstitutedFileType(fileType, substFileType);
+      if (!substitutedLanguage.equals(language) && substFileType != null) {
+        return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
       }
     }
 
@@ -58,38 +60,42 @@ public class SubstitutedFileType extends LanguageFileType{
   @NotNull
   @Override
   public String getName() {
-    return fileType.getName();
+    return myFileType.getName();
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return fileType.getDescription();
+    return myFileType.getDescription();
   }
 
   @NotNull
   @Override
   public String getDefaultExtension() {
-    return fileType.getDefaultExtension();
+    return myFileType.getDefaultExtension();
   }
 
   @Override
   public Icon getIcon() {
-    return fileType.getIcon();
+    return myFileType.getIcon();
   }
 
   @Override
   public String getCharset(@NotNull VirtualFile file, byte[] content) {
-    return fileType.getCharset(file, content);
+    return myFileType.getCharset(file, content);
   }
 
   @NotNull
   public FileType getOriginalFileType() {
-    return originalFileType;
+    return myOriginalFileType;
   }
 
   @NotNull
   public FileType getFileType() {
-    return fileType;
+    return myFileType;
+  }
+
+  public boolean isSameFileType() {
+    return myFileType.equals(myOriginalFileType);
   }
 }

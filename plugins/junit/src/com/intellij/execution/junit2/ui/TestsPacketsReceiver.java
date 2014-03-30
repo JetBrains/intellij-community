@@ -33,6 +33,7 @@ import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.TestStatusListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +43,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,10 +53,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
-
-  public static final Map<Integer, StateChanger> STATE_CLASSES = new HashMap<Integer, StateChanger>();
+  private static final TIntObjectHashMap<StateChanger> STATE_CLASSES = new TIntObjectHashMap<StateChanger>();
   private Map<String, TestProxy> myKnownDynamicParents;
-  private TestProxy myUnboundOutput;
+  private final TestProxy myUnboundOutput;
 
   static {
     mapClass(PoolOfTestStates.RUNNING_INDEX, new RunningStateSetter());
@@ -66,9 +67,9 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     mapClass(PoolOfTestStates.COMPARISON_FAILURE, new StateReader(ComparisonFailureState.class));
   }
 
-  public static void mapClass(final int magnitude, final StateChanger factory) {
+  public static void mapClass(final int magnitude, @NotNull StateChanger factory) {
     factory.setMagnitude(magnitude);
-    STATE_CLASSES.put(new Integer(magnitude), factory);
+    STATE_CLASSES.put(magnitude, factory);
   }
 
   private final InputObjectRegistry myObjectRegistry;
@@ -83,9 +84,9 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     myUnboundOutput = unboundOutput;
     myObjectRegistry = new InputObjectRegistry();
     myConsoleProperties = (JUnitConsoleProperties)consoleView.getProperties();
-    Disposer.register(consoleView, this);
   }
 
+  @Override
   public void processPacket(final String packet) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -123,7 +124,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     }
   }
 
-  public void notifyStart(TestProxy root) {
+  public synchronized void notifyStart(TestProxy root) {
     myModel = new JUnitRunningModel(root, myConsoleProperties);
     Disposer.register(this, myModel);
   }
@@ -162,6 +163,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
             setClassName(parentClass);
           }
 
+          @Override
           public void readFrom(ObjectReader reader) {
           }
         });
@@ -180,7 +182,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     }
 
     final int state = reader.readInt();
-    final StateChanger stateChanger = STATE_CLASSES.get(new Integer(state));
+    final StateChanger stateChanger = STATE_CLASSES.get(state);
     stateChanger.changeStateOf(testProxy, reader);
     synchronized (myCurrentTests) {
       if (stateChanger instanceof RunningStateSetter) {
@@ -200,15 +202,16 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     final JUnitRunningModel model = getModel();
     if (model != null) {
       model.getNotifier().fireRunnerStateChanged(new CompletionEvent(true, reader.readInt()));
+      TestStatusListener.notifySuiteFinished(model.getRoot());
       terminateStillRunning(model);
     }
   }
 
-  public boolean isRunning() {
+  public synchronized boolean isRunning() {
     return !myIsTerminated;
   }
 
-  public void setTerminated(boolean terminated) {
+  public synchronized void setTerminated(boolean terminated) {
     myIsTerminated = terminated;
   }
 
@@ -217,6 +220,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     return myModel;
   }
 
+  @Override
   public void dispose() {
     myModel = null;
   }
@@ -252,7 +256,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
     }
   }
 
-  private static abstract class StateChanger {
+  private abstract static class StateChanger {
     static final Logger LOG = Logger.getInstance("#" + StateChanger.class.getName());
 
     abstract void changeStateOf(TestProxy testProxy, ObjectReader reader);
@@ -283,6 +287,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
   }
 
   private static class RunningStateSetter extends StateChanger {
+    @Override
     public void changeStateOf(final TestProxy testProxy, final ObjectReader reader) {
       testProxy.setState(TestState.RUNNING_STATE);
       TestProxy parent = testProxy.getParent();
@@ -304,6 +309,7 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
       myStateClass = stateClass;
     }
 
+    @Override
     public void changeStateOf(final TestProxy testProxy, final ObjectReader reader) {
       final ReadableState state;
       try {
@@ -319,12 +325,14 @@ public class TestsPacketsReceiver implements OutputPacketProcessor, Disposable {
       complete(testProxy);
     }
 
+    @Override
     public void setMagnitude(final int magnitude) {
       myInstanceMagnitude = magnitude;
     }
   }
 
   private static class TestCompleter extends StateChanger {
+    @Override
     public void changeStateOf(final TestProxy testProxy, final ObjectReader reader) {
       TestState state = testProxy.getState();
       if (!testProxy.getState().isFinal()) {

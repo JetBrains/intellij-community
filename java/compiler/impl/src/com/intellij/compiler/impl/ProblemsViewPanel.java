@@ -25,12 +25,13 @@ public class ProblemsViewPanel extends NewErrorTreeViewPanel {
     myTree.getEmptyText().setText("No compilation problems found");
   }
 
-
+  @Override
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
     super.fillRightToolbarGroup(group);
     group.add(new CompilerPropertiesAction());
   }
 
+  @Override
   protected void addExtraPopupMenuActions(DefaultActionGroup group) {
     group.add(new ExcludeFromCompileAction(myProject, this));
     // todo: do we need compiler's popup actions here?
@@ -51,5 +52,4 @@ public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   protected boolean canHideWarnings() {
     return false;
   }
-
 }

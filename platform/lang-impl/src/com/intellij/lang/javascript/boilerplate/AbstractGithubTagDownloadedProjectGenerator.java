@@ -2,13 +2,16 @@ package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.templates.github.*;
+import com.intellij.platform.templates.github.GeneratorException;
+import com.intellij.platform.templates.github.GithubTagInfo;
+import com.intellij.platform.templates.github.ZipUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,11 +43,18 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @NotNull
   protected abstract String getGithubRepositoryName();
 
+  @Override
   @Nullable
   public abstract String getDescription();
 
   private String getTitle() {
     return getDisplayName();
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
   }
 
   @Override
@@ -54,12 +64,12 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       unpackToDir(project, new File(baseDir.getPath()), tag);
     }
     catch (GeneratorException e) {
-      showErrorMessage(e.getMessage());
+      showErrorMessage(project, e.getMessage());
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        baseDir.refresh(false, true);
+        baseDir.refresh(true, true);
       }
     });
   }
@@ -72,7 +82,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   @Override
   public boolean isPrimaryGenerator() {
-    return "WebStorm".equals(ApplicationNamesInfo.getInstance().getProductName());
+    return PlatformUtils.isWebStorm();
   }
 
   private void unpackToDir(@Nullable Project project,
@@ -82,25 +92,51 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     boolean brokenZip = true;
     if (zipArchiveFile.isFile()) {
       try {
-        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+        ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
         brokenZip = false;
       }
       catch (GeneratorException ignored) {
       }
     }
     if (brokenZip) {
-      GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(
-        project,
-        tag.getZipballUrl(),
-        getTitle(),
-        zipArchiveFile,
-        getGithubUserName(),
-        getGithubRepositoryName()
-      );
-      LOG.info("Downloaded " + zipArchiveFile.getAbsolutePath() + " of size " + zipArchiveFile.length() + " bytes");
-      ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+      String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
+      boolean downloaded = false;
+      if (primaryUrl != null) {
+        try {
+          downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
+          downloaded = true;
+        } catch (GeneratorException e) {
+          LOG.info("Can't download " + primaryUrl, e);
+          FileUtil.delete(zipArchiveFile);
+        }
+      }
+      if (!downloaded) {
+        downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
+      }
     }
   }
+
+  private void downloadAndUnzip(@Nullable Project project,
+                                @NotNull String url,
+                                @NotNull File zipArchiveFile,
+                                @NotNull File extractToDir,
+                                boolean retryOnError) throws GeneratorException {
+    GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(
+      project,
+      url,
+      getTitle(),
+      zipArchiveFile,
+      getGithubUserName(),
+      getGithubRepositoryName(),
+      retryOnError
+    );
+    LOG.info("Content of " + url + " has been successfully downloaded to " + zipArchiveFile.getAbsolutePath()
+             + ", size " + zipArchiveFile.length() + " bytes");
+    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir, true);
+  }
+
+  @Nullable
+  public abstract String getPrimaryZipArchiveUrlForDownload(@NotNull GithubTagInfo tag);
 
   @NotNull
   private File getCacheFile(@NotNull GithubTagInfo tag) {
@@ -113,10 +149,9 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     return GithubDownloadUtil.findCacheFile(getGithubUserName(), getGithubRepositoryName(), fileName);
   }
 
-  private void showErrorMessage(@NotNull String message) {
+  private void showErrorMessage(@NotNull Project project, @NotNull String message) {
     String fullMessage = "Error creating " + getDisplayName() + " project. " + message;
     String title = "Create " + getDisplayName() + " Project";
-    Project project = null;
     Messages.showErrorDialog(project, fullMessage, title);
   }
 

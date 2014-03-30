@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetLoader;
@@ -26,6 +25,7 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -43,7 +43,7 @@ public class BuildTargetTypeState {
     myTargetType = targetType;
     myTargetsState = state;
     myTargetsFile = new File(state.getDataPaths().getTargetTypeDataRoot(targetType), "targets.dat");
-    myConfigurations = new ConcurrentHashMap<BuildTarget<?>, BuildTargetConfiguration>();
+    myConfigurations = new ConcurrentHashMap<BuildTarget<?>, BuildTargetConfiguration>(16, 0.75f, 1);
     myTargetIds = new HashMap<BuildTarget<?>, Integer>();
     load();
   }

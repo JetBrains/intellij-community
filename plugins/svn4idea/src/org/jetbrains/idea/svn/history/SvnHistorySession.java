@@ -20,21 +20,19 @@ import com.intellij.openapi.vcs.history.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.List;
 
 /**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 4/27/12
-* Time: 12:24 PM
-* To change this template use File | Settings | File Templates.
-*/
+ * Created with IntelliJ IDEA.
+ * User: Irina.Chernushina
+ * Date: 4/27/12
+ * Time: 12:24 PM
+ * To change this template use File | Settings | File Templates.
+ */
 public class SvnHistorySession extends VcsAbstractHistorySession {
   private final SvnVcs myVcs;
   private final FilePath myCommittedPath;
@@ -71,19 +69,8 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   }
 
   public static VcsRevisionNumber getCurrentCommittedRevision(final SvnVcs vcs, final File file) {
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      SVNInfo info = wcClient.doInfo(file, SVNRevision.UNDEFINED);
-      if (info != null) {
-        return new SvnRevisionNumber(info.getCommittedRevision());
-      }
-      else {
-        return null;
-      }
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    SVNInfo info = vcs.getInfo(file);
+    return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
   }
 
   public FilePath getCommittedPath() {
@@ -101,7 +88,8 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
 
   @Override
   public VcsHistorySession copy() {
-    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, myHaveMergeSources, getCurrentRevisionNumber(), true, myHasLocalSource);
+    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, myHaveMergeSources, getCurrentRevisionNumber(), true,
+                                 myHasLocalSource);
   }
 
   @Override

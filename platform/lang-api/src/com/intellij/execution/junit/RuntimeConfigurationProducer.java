@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -31,10 +32,15 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
+/**
+ * @deprecated please use {@link com.intellij.execution.actions.RunConfigurationProducer} instead
+ */
 public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
-  public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer"); 
+  public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer");
 
   public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
@@ -61,10 +67,16 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         // replace with existing configuration if any
         final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(type);
         final RunnerAndConfigurationSettings configuration = result.findExistingByElement(_location, configurations, context);
         if (configuration != null) {
           result.myConfiguration = configuration;
+        } else {
+          final ArrayList<String> currentNames = new ArrayList<String>();
+          for (RunnerAndConfigurationSettings configurationSettings : configurations) {
+            currentNames.add(configurationSettings.getName());
+          }
+          result.myConfiguration.setName(RunManager.suggestUniqueName(result.myConfiguration.getName(), currentNames));
         }
       }
     }
@@ -76,7 +88,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public RunnerAndConfigurationSettings findExistingConfiguration(@NotNull Location location, ConfigurationContext context) {
     assert isClone;
     final RunManager runManager = RunManager.getInstance(location.getProject());
-    final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(getConfigurationType());
+    final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(getConfigurationType());
     return findExistingByElement(location, configurations, context);
   }
 
@@ -87,17 +99,23 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     return myConfiguration;
   }
 
+  public void setConfiguration(RunnerAndConfigurationSettings configuration) {
+    assert isClone;
+    myConfiguration = configuration;
+  }
+
   @Nullable
   protected abstract RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context);
 
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
-                                                                 @NotNull final RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull final List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     assert isClone;
     return null;
   }
 
+  @Override
   public RuntimeConfigurationProducer clone() {
     assert !isClone;
     try {
@@ -112,7 +130,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, @Nullable final ConfigurationContext context) {
     if (context != null) {
-      final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+      final RunConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null) {
         final RunConfiguration c = original instanceof DelegatingRuntimeConfiguration? ((DelegatingRuntimeConfiguration)original).getPeer() : original;
         return RunManager.getInstance(project).createConfiguration(c.clone(), myConfigurationFactory);
@@ -128,7 +146,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public ConfigurationType getConfigurationType() {
     return myConfigurationFactory.getType();
   }
-  
+
   public void perform(ConfigurationContext context, Runnable performRunnable){
     performRunnable.run();
   }
@@ -145,6 +163,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {
+    @Override
     public int compare(final RuntimeConfigurationProducer producer1, final RuntimeConfigurationProducer producer2) {
       final PsiElement psiElement1 = producer1.getSourceElement();
       final PsiElement psiElement2 = producer2.getSourceElement();
@@ -161,25 +180,31 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     }
   }
 
-  public static class DelegatingRuntimeConfiguration<T extends RunConfigurationBase & LocatableConfiguration>
-    extends RuntimeConfiguration {
+  /**
+   * @deprecated feel free to pass your configuration to SMTRunnerConsoleProperties directly instead of wrapping in DelegatingRuntimeConfiguration
+   */
+  public static class DelegatingRuntimeConfiguration<T extends LocatableConfiguration>
+    extends LocatableConfigurationBase implements ModuleRunConfiguration {
     private final T myConfig;
 
     public DelegatingRuntimeConfiguration(T config) {
-      super(config.getName(), config.getProject(), config.getFactory());
+      super(config.getProject(), config.getFactory(), config.getName());
       myConfig = config;
     }
 
+    @NotNull
+    @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfig.getConfigurationEditor();
     }
 
     @SuppressWarnings({"CloneDoesntCallSuperClone"})
     @Override
-    public RuntimeConfiguration clone() {
+    public DelegatingRuntimeConfiguration<T> clone() {
       return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
     }
 
+    @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
       return myConfig.getState(executor, env);
     }
@@ -187,11 +212,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     @Override
     public void checkConfiguration() throws RuntimeConfigurationException {
       myConfig.checkConfiguration();
-    }
-
-    @Override
-    public boolean isGeneratedName() {
-      return myConfig.isGeneratedName();
     }
 
     @Override
@@ -211,6 +231,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
 
     public T getPeer() {
       return myConfig;
+    }
+
+    @Override
+    @NotNull
+    public Module[] getModules() {
+      return Module.EMPTY_ARRAY;
     }
   }
 }

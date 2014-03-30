@@ -17,6 +17,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -36,6 +38,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,8 +48,22 @@ import javax.swing.*;
  */
 public abstract class AbstractLanguageInjectionSupport extends LanguageInjectionSupport {
 
-  public boolean useDefaultInjector(final PsiElement host) {
+  @Override
+  public boolean isApplicableTo(PsiLanguageInjectionHost host) {
     return false;
+  }
+
+  public boolean useDefaultInjector(final PsiLanguageInjectionHost host) {
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
+    return InjectorUtils.findCommentInjection(host, "comment", commentRef);
+  }
+
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
   }
 
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
@@ -97,12 +114,13 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   public static AnAction createDefaultAddAction(final Project project,
                                                 final Consumer<BaseInjection> consumer,
                                                 final AbstractLanguageInjectionSupport support) {
+    final String supportTitle = StringUtil.capitalize(support.getId());
     Icon icon = FileTypeManager.getInstance().getFileTypeByExtension(support.getId()).getIcon();
-    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, icon) {
+    return new AnAction("Generic "+ supportTitle, null, icon) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());
-        injection.setDisplayName("New "+ StringUtil.capitalize(support.getId())+" Injection");
+        injection.setDisplayName("New "+ supportTitle +" Injection");
         final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
         if (newInjection != null) {
           consumer.consume(injection);
@@ -117,7 +135,7 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     panel.reset();
     final DialogBuilder builder = new DialogBuilder(project);
     LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(injection.getSupportId());
-    if (support != null && support instanceof AbstractLanguageInjectionSupport) {
+    if (support instanceof AbstractLanguageInjectionSupport) {
       builder.setHelpId(((AbstractLanguageInjectionSupport)support).getHelpId());
     }
     builder.addOkAction();

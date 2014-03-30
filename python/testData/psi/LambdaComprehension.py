@@ -1,0 +1,1 @@
+[x for x in lambda: True, lambda: False if x()]

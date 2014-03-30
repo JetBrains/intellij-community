@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,5 +53,4 @@ public class MockProjectEx  extends MockProject implements ProjectEx {
   public void setOptimiseTestLoadSpeed(final boolean optimiseTestLoadSpeed) {
     throw new UnsupportedOperationException("Method setOptimiseTestLoadSpeed not implemented in " + getClass());
   }
-
-  }
+}

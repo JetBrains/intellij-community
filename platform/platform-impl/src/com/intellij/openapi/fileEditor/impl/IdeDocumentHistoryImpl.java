@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CommandMerger;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -56,7 +55,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private final EditorFactory myEditorFactory;
   private FileDocumentManager myFileDocumentManager;
-  private final FileEditorManagerEx myEditorManager;
+  private FileEditorManagerEx myEditorManager;
   private final VirtualFileManager myVfManager;
   private final CommandProcessor myCmdProcessor;
   private final ToolWindowManager myToolWindowManager;
@@ -109,6 +108,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   @Override
   public final void projectOpened() {
+    myEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
     DocumentListener documentListener = new DocumentAdapter() {
@@ -119,7 +119,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     };
     eventMulticaster.addDocumentListener(documentListener, myProject);
 
-    CaretListener caretListener = new CaretListener() {
+    CaretListener caretListener = new CaretAdapter() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         onCaretPositionChanged(e);
@@ -129,14 +129,14 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent e) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
 
     VirtualFileListener fileListener = new VirtualFileAdapter() {
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         onFileDeleted();
       }
     };
@@ -309,7 +309,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     }
 
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   @Override
@@ -440,7 +440,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
         removed = true;
       }
     }
-    
+
     return removed;
   }
 
@@ -453,6 +453,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     } else {
       editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
     }
+
+    myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
     final FileEditor        [] editors   = editorsWithProviders.getFirst();
     final FileEditorProvider[] providers = editorsWithProviders.getSecond();
@@ -518,7 +520,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
-    private WeakReference<EditorWindow> myWindow;
+    private final WeakReference<EditorWindow> myWindow;
 
     public PlaceInfo(@NotNull VirtualFile file, FileEditorState navigationState, String editorTypeId, @Nullable EditorWindow window) {
       myNavigationState = navigationState;

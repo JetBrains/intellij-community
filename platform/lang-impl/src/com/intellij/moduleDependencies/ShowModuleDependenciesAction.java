@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,10 @@ import java.awt.*;
  * Date: Feb 9, 2005
  */
 public class ShowModuleDependenciesAction extends AnAction{
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
@@ -50,7 +51,7 @@ public class ShowModuleDependenciesAction extends AnAction{
       panel = new ModulesDependenciesPanel(project, modules);
       scope = new AnalysisScope(modules);
     } else {
-      final PsiElement element = LangDataKeys.PSI_FILE.getData(dataContext);
+      final PsiElement element = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
       if (module != null && ModuleManager.getInstance(project).getModules().length > 1){
         MyModuleOrProjectScope dlg = new MyModuleOrProjectScope(module.getName());
@@ -80,9 +81,10 @@ public class ShowModuleDependenciesAction extends AnAction{
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null);
   }
 
@@ -101,6 +103,7 @@ public class ShowModuleDependenciesAction extends AnAction{
       init();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new GridLayout(2, 1));
       panel.add(myProjectScope);

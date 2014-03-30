@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,9 +89,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     // To ensure ToolwindowManager had already initialized in its projectOpened.
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+          @Override
           public void stateChanged() {
             if (myProject.isDisposed()) return;
 
@@ -115,6 +117,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     });
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -139,6 +142,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     class MyDataProvider implements DataProvider {
       private int myInsideGetData = 0;
 
+      @Override
       public Object getData(String dataId) {
         myInsideGetData++;
         try {
@@ -159,6 +163,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     toolWindow.setIcon(executor.getToolWindowIcon());
     new ContentManagerWatcher(toolWindow, contentManager);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
       public void selectionChanged(final ContentManagerEvent event) {
         final Content content = event.getContent();
         final RunContentDescriptor descriptor = content != null ? getRunContentDescriptorByContent(content) : null;
@@ -167,6 +172,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     });
     myToolwindowIdToContentManagerMap.put(toolWindowId, contentManager);
     Disposer.register(contentManager, new Disposable() {
+      @Override
       public void dispose() {
         unregisterToolwindow(toolWindowId);
       }
@@ -178,6 +184,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return myProject.getMessageBus().syncPublisher(RUN_CONTENT_TOPIC);
   }
 
+  @Override
   public void toFrontRunContent(final Executor requestor, final ProcessHandler handler) {
     final RunContentDescriptor descriptor = getDescriptorBy(handler, requestor);
     if (descriptor == null) {
@@ -187,8 +194,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
 
+  @Override
   public void toFrontRunContent(final Executor requestor, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final ContentManager contentManager = getContentManagerForRunner(requestor);
 
@@ -204,8 +213,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     });
   }
 
+  @Override
   public void hideRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!myProject.isDisposed()) {
           final String toolWindowId = executor.getToolWindowId();
@@ -218,6 +229,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     });
   }
 
+  @Override
   @Nullable
   public RunContentDescriptor getSelectedContent(final Executor executor) {
     final ContentManager contentManager = getContentManagerForRunner(executor);
@@ -233,6 +245,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
+  @Override
   @Nullable
   public RunContentDescriptor getSelectedContent() {
     for (String activeWindow : myToolwindowIdZbuffer) {
@@ -259,12 +272,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
+  @Override
   public boolean removeRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     final ContentManager contentManager = getContentManagerForRunner(executor);
     final Content content = getRunContentByDescriptor(contentManager, descriptor);
     return content != null && contentManager.removeContent(content, true);
   }
 
+  @Override
   public void showRunContent(@NotNull final Executor executor, final RunContentDescriptor descriptor) {
     showRunContent(executor, descriptor, descriptor != null ? descriptor.getExecutionId() : 0L);
   }
@@ -293,12 +308,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
     content.setExecutionId(executionId);
     content.setComponent(descriptor.getComponent());
+    content.setPreferredFocusedComponent(descriptor.getPreferredFocusComputable());
     content.putUserData(DESCRIPTOR_KEY, descriptor);
     final ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null) {
       final ProcessAdapter processAdapter = new ProcessAdapter() {
+        @Override
         public void startNotified(final ProcessEvent event) {
           LaterInvocator.invokeLater(new Runnable() {
+            @Override
             public void run() {
               final Icon icon = descriptor.getIcon();
               content.setIcon(icon == null ? executor.getToolWindowIcon() : icon);
@@ -306,8 +324,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           });
         }
 
+        @Override
         public void processTerminated(final ProcessEvent event) {
           LaterInvocator.invokeLater(new Runnable() {
+            @Override
             public void run() {
               final Icon icon = descriptor.getIcon();
               content.setIcon(icon == null ? executor.getDisabledIcon() : IconLoader.getTransparentIcon(icon));
@@ -319,6 +339,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       final Disposable disposer = content.getDisposer();
       if (disposer != null) {
         Disposer.register(disposer, new Disposable() {
+          @Override
           public void dispose() {
             processHandler.removeProcessListener(processAdapter);
           }
@@ -333,6 +354,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(executor.getToolWindowId());
@@ -340,13 +362,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         //
         // window.show() isn't valid here, because it will not
         // mark the window as "last activated" windows and thus
-        // some action like navigation up/down in stactrace wont
+        // some action like navigation up/down in stacktrace wont
         // work correctly
-        window.activate(null, false, false);
+        descriptor.getPreferredFocusComputable();
+        window.activate(null, descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
       }
     });
   }
 
+  @Override
   @Nullable
   @Deprecated
   public RunContentDescriptor getReuseContent(final Executor requestor, DataContext dataContext) {
@@ -354,6 +378,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return getReuseContent(requestor, GenericProgramRunner.CONTENT_TO_REUSE_DATA_KEY.getData(dataContext));
   }
 
+  @Override
   @Nullable
   @Deprecated
   public RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse) {
@@ -367,19 +392,27 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   @Override
   public RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment) {
+    return getReuseContent(executionEnvironment);
+  }
+
+  @Nullable
+  @Override
+  public RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     RunContentDescriptor contentToReuse = executionEnvironment.getContentToReuse();
     if (contentToReuse != null) return contentToReuse;
 
-    final ContentManager contentManager = getContentManagerForRunner(requestor);
+    final ContentManager contentManager = getContentManagerForRunner(executionEnvironment.getExecutor());
     return chooseReuseContentForDescriptor(contentManager, contentToReuse, executionEnvironment.getExecutionId(),
                                            executionEnvironment.toString());
   }
 
+  @Override
   public RunContentDescriptor findContentDescriptor(final Executor requestor, final ProcessHandler handler) {
     return getDescriptorBy(handler, requestor);
   }
 
+  @Override
   public void showRunContent(@NotNull final Executor info, RunContentDescriptor descriptor, RunContentDescriptor contentToReuse) {
     if (contentToReuse != null) {
       final Content attachedContent = contentToReuse.getAttachedContent();
@@ -505,6 +538,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
+  @Override
   public void addRunContentListener(final RunContentListener listener, final Executor executor) {
     final Disposable disposable = Disposer.newDisposable();
     myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
@@ -525,6 +559,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myListeners.put(listener, disposable);
   }
 
+  @Override
   public void addRunContentListener(final RunContentListener listener) {
     final Disposable disposable = Disposer.newDisposable();
     myProject.getMessageBus().connect(disposable).subscribe(RUN_CONTENT_TOPIC, new RunContentWithExecutorListener() {
@@ -541,6 +576,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myListeners.put(listener, disposable);
   }
 
+  @Override
   @NotNull
   public List<RunContentDescriptor> getAllDescriptors() {
     if (myToolwindowIdToContentManagerMap.isEmpty()) {
@@ -561,6 +597,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return descriptors;
   }
 
+  @Override
   public void removeRunContentListener(final RunContentListener listener) {
     Disposable disposable = myListeners.remove(listener);
     if (disposable != null) {
@@ -592,6 +629,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       myExecutor = executor;
     }
 
+    @Override
     public void contentRemoved(final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
@@ -619,6 +657,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
 
+    @Override
     public void contentRemoveQuery(final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         final boolean canClose = closeQuery(false);
@@ -628,9 +667,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
 
+    @Override
     public void projectOpened(final Project project) {
     }
 
+    @Override
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
@@ -638,6 +679,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
 
+    @Override
     public boolean canCloseProject(final Project project) {
       if (project != myProject) return true;
 
@@ -651,6 +693,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return canClose;
     }
 
+    @Override
     public void projectClosing(final Project project) {
     }
 
@@ -719,6 +762,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         semaphore.down();
 
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
           public void run() {
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             try {
@@ -734,6 +778,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
         progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
           public void run() {
             while (true) {
               if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {

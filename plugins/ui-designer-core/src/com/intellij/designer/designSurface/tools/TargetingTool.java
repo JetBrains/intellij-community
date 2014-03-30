@@ -17,11 +17,13 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.ComponentTargetFilter;
 import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 
 /**
@@ -89,6 +91,7 @@ public abstract class TargetingTool extends InputTool {
   protected void updateContext() {
     myContext.setArea(myArea);
     myContext.setInputEvent(myInputEvent);
+    myContext.setModifiers(myInputEvent.getModifiers());
   }
 
   protected void setTarget(@Nullable RadComponent target, @Nullable ContainerTargetFilter filter) {
@@ -99,6 +102,34 @@ public abstract class TargetingTool extends InputTool {
 
       myTarget = target;
       myTargetOperation = filter == null ? null : filter.getOperation();
+    }
+  }
+
+  @Override
+  public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    boolean changedModifiers = event.getModifiers() != myModifiers;
+    super.keyPressed(event, area);
+
+    if (changedModifiers) {
+      handleKeyEvent();
+    }
+  }
+
+  @Override
+  public void keyReleased(KeyEvent event, EditableArea area) throws Exception {
+    boolean changedModifiers = event.getModifiers() != myModifiers;
+    super.keyReleased(event, area);
+
+    if (changedModifiers) {
+      handleKeyEvent();
+    }
+  }
+
+  private void handleKeyEvent() {
+    if (myContext != null) {
+      updateContext();
+      showFeedback();
+      updateCommand();
     }
   }
 
@@ -118,13 +149,15 @@ public abstract class TargetingTool extends InputTool {
     public boolean resultFilter(RadComponent target) {
       updateContext(target);
 
-      if (myTarget == target) {
+      if (myTarget == target && myOperation != null) {
         return true;
       }
 
       RadLayout layout = target.getLayout();
       if (layout != null) {
+        myContext.setContainer(target);
         myOperation = layout.processChildOperation(myContext);
+        myContext.setContainer(null);
       }
 
       return myOperation != null;

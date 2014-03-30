@@ -201,4 +201,30 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("pColor");
   }
 
+  public void "test finish with ="() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  FooFoo f<caret>
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'fooFoo', 'foo'
+    myFixture.type '='
+    myFixture.checkResult '''
+class FooFoo {
+  FooFoo fooFoo = <caret>
+}
+'''
+  }
+
+  public void "test suggest variable names by non-getter initializer call"() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  { long <caret>x = System.nanoTime(); }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'l', 'nanoTime', 'time'
+  }
+
 }

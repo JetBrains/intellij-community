@@ -40,6 +40,7 @@ public class CloseAction extends AnAction implements DumbAware {
     templatePresentation.setDescription(null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final RunContentDescriptor contentDescriptor = getContentDescriptor();
     if (contentDescriptor == null) {
@@ -60,6 +61,7 @@ public class CloseAction extends AnAction implements DumbAware {
     return myExecutor;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(myContentDescriptor != null);
   }

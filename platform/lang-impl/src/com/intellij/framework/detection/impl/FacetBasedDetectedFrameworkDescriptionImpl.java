@@ -43,6 +43,7 @@ public class FacetBasedDetectedFrameworkDescriptionImpl<F extends Facet, C exten
     myModule = module;
   }
 
+  @Override
   protected String getModuleName() {
     return myModule.getName();
   }
@@ -52,6 +53,7 @@ public class FacetBasedDetectedFrameworkDescriptionImpl<F extends Facet, C exten
     doSetup(modifiableModelsProvider, myModule);
   }
 
+  @Override
   @NotNull
   protected Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
     return FacetManager.getInstance(myModule).getFacetsByType(underlyingFacetType);

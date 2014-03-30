@@ -15,16 +15,19 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -42,22 +45,19 @@ import java.util.Map;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
- *
+ * <p/>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
+ *
+ * @see com.intellij.execution.process.OSProcessHandler
  */
 public class GeneralCommandLine implements UserDataHolder {
-  /** @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
-  private static final char QUOTE = '\uEFEF';
 
   private String myExePath = null;
   private File myWorkDirectory = null;
-  private Map<String, String> myEnvParams = null;
+  private final Map<String, String> myEnvParams = new MyTHashMap();
   private boolean myPassParentEnvironment = true;
-  private boolean myPassFixedPathEnvVarOnMac = false;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -65,12 +65,12 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(final String... command) {
+  public GeneralCommandLine(@NotNull String... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(final List<String> command) {
-    final int size = command.size();
+  public GeneralCommandLine(@NotNull List<String> command) {
+    int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
       if (size > 1) {
@@ -99,36 +99,47 @@ public class GeneralCommandLine implements UserDataHolder {
     myWorkDirectory = workDirectory;
   }
 
-  @Nullable
-  public Map<String, String> getEnvParams() {
+  /**
+   * Note: the map returned is forgiving to passing null values into putAll().
+   */
+  @NotNull
+  public Map<String, String> getEnvironment() {
     return myEnvParams;
   }
 
-  public void setEnvParams(@Nullable final Map<String, String> envParams) {
-    myEnvParams = envParams;
+  /**
+   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
+   */
+  @SuppressWarnings("unused")
+  public Map<String, String> getEnvParams() {
+    return getEnvironment();
   }
 
-  public void setPassParentEnvs(final boolean passParentEnvironment) {
+  /**
+   * @deprecated use {@link #getEnvironment()} (to remove in IDEA 14)
+   */
+  @SuppressWarnings("unused")
+  public void setEnvParams(@Nullable Map<String, String> envParams) {
+    myEnvParams.clear();
+    if (envParams != null) {
+      myEnvParams.putAll(envParams);
+    }
+  }
+
+  public void setPassParentEnvironment(boolean passParentEnvironment) {
     myPassParentEnvironment = passParentEnvironment;
+  }
+
+  /**
+   * @deprecated use {@link #setPassParentEnvironment(boolean)} (to remove in IDEA 14)
+   */
+  @SuppressWarnings({"unused", "SpellCheckingInspection"})
+  public void setPassParentEnvs(boolean passParentEnvironment) {
+    setPassParentEnvironment(passParentEnvironment);
   }
 
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
-  }
-
-  /**
-   * Requests to pass a correct value of PATH environment variable to a created child process on Mac OSX.
-   * To determine correct value of PATH environment variable, the following command is invoked:
-   * <pre>
-   *   /bin/bash --login -c "printenv"
-   * </pre>
-   * This command is execute once and its result is cached in memory.
-   * See also http://youtrack.jetbrains.com/issue/IDEA-99154
-   *
-   * @param passFixedPathEnvVarOnMac true if a correct value of PATH environment variable should be passed
-   */
-  public void setPassFixedPathEnvVarOnMac(boolean passFixedPathEnvVarOnMac) {
-    myPassFixedPathEnvVarOnMac = passFixedPathEnvVarOnMac;
   }
 
   public void addParameters(final String... parameters) {
@@ -158,6 +169,10 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public void setCharset(@NotNull final Charset charset) {
     myCharset = charset;
+  }
+
+  public boolean isRedirectErrorStream() {
+    return myRedirectErrorStream;
   }
 
   public void setRedirectErrorStream(final boolean redirectErrorStream) {
@@ -198,13 +213,15 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
-   * (suitable e.g. for passing in a environment variable).
+   * (suitable e.g. for passing in an environment variable).
    *
+   * @param platform a target platform
    * @return command as a newline-separated list.
    */
   @NotNull
-  public String getPreparedCommandLine() {
-    return StringUtil.join(prepareCommands(), "\n");
+  public String getPreparedCommandLine(@NotNull Platform platform) {
+    String exePath = myExePath != null ? myExePath : "";
+    return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList(), platform), "\n");
   }
 
   public Process createProcess() throws ExecutionException {
@@ -212,32 +229,36 @@ public class GeneralCommandLine implements UserDataHolder {
       LOG.debug("Executing [" + getCommandLineString() + "]");
     }
 
-    String[] commands;
+    List<String> commands;
     try {
       checkWorkingDirectory();
 
-      commands = prepareCommands();
-      if (StringUtil.isEmptyOrSpaces(commands[0])) {
+      if (StringUtil.isEmptyOrSpaces(myExePath)) {
         throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
       }
+
+      commands = CommandLineUtil.toCommandLine(myExePath, myProgramParams.getList());
     }
     catch (ExecutionException e) {
-      LOG.warn(e);
+      LOG.info(e);
       throw e;
     }
 
     try {
-      ProcessBuilder builder = new ProcessBuilder(commands);
-      Map<String, String> environment = builder.environment();
-      setupEnvironment(environment);
-      builder.directory(myWorkDirectory);
-      builder.redirectErrorStream(myRedirectErrorStream);
-      return builder.start();
+      return startProcess(commands);
     }
     catch (IOException e) {
-      LOG.warn(e);
+      LOG.info(e);
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  protected Process startProcess(@NotNull List<String> commands) throws IOException {
+    ProcessBuilder builder = new ProcessBuilder(commands);
+    setupEnvironment(builder.environment());
+    builder.directory(myWorkDirectory);
+    builder.redirectErrorStream(myRedirectErrorStream);
+    return builder.start();
   }
 
   private void checkWorkingDirectory() throws ExecutionException {
@@ -245,52 +266,23 @@ public class GeneralCommandLine implements UserDataHolder {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+      throw new ExecutionException(
+        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
       throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
     }
   }
 
-  private String[] prepareCommands() {
-    final List<String> parameters = myProgramParams.getList();
-    final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
-    for (int i = 0; i < parameters.size(); i++) {
-      result[i + 1] = prepareCommand(parameters.get(i));
-    }
-    return result;
-  }
+  protected void setupEnvironment(@NotNull Map<String, String> environment) {
+    environment.clear();
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() && org.jetbrains.jps.incremental.ExternalProcessUtil.prepareCommand()
-  public static String prepareCommand(String parameter) {
-    if (SystemInfo.isWindows) {
-      if (parameter.contains("\"")) {
-        parameter = StringUtil.replace(parameter, "\"", "\\\"");
-      }
-      else if (parameter.length() == 0) {
-        parameter = "\"\"";
-      }
+    if (myPassParentEnvironment) {
+      environment.putAll(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
+                                                   : EnvironmentUtil.getEnvironmentMap());
     }
-
-    if (parameter.length() >= 2 && parameter.charAt(0) == QUOTE && parameter.charAt(parameter.length() - 1) == QUOTE) {
-      parameter = '"' + parameter.substring(1, parameter.length() - 1) + '"';
-    }
-
-    return parameter;
-  }
-
-  private void setupEnvironment(final Map<String, String> environment) {
-    if (!myPassParentEnvironment) {
-      environment.clear();
-    }
-    else if (SystemInfo.isMac && myPassFixedPathEnvVarOnMac) {
-      String pathEnvVarValue = PathEnvironmentVariableUtil.getFixedPathEnvVarValueOnMac();
-      if (pathEnvVarValue != null) {
-        environment.put(PathEnvironmentVariableUtil.PATH_ENV_VAR_NAME, pathEnvVarValue);
-      }
-    }
-    if (myEnvParams != null) {
+    
+    if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
         envVars.putAll(environment);
@@ -313,7 +305,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public static String inescapableQuote(@NotNull String parameter) {
-    return QUOTE + parameter + QUOTE;
+    return CommandLineUtil.specialQuote(parameter);
   }
 
   @Override
@@ -336,5 +328,14 @@ public class GeneralCommandLine implements UserDataHolder {
       myUserData = ContainerUtil.newHashMap();
     }
     myUserData.put(key, value);
+  }
+
+  private static class MyTHashMap extends THashMap<String, String> {
+    @Override
+    public void putAll(Map<? extends String, ? extends String> map) {
+      if (map != null) {
+        super.putAll(map);
+      }
+    }
   }
 }

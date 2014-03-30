@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
                             GrMethodStub.buildFlags(psi));
   }
 
-  public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrMethodStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
     GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
@@ -58,7 +58,8 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     dataStream.writeByte(stub.getFlags());
   }
 
-  public GrMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrMethodStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     final String[] annNames = GrStubUtils.readStringArray(dataStream);
     String[] namedParameters = GrStubUtils.readStringArray(dataStream);
@@ -67,7 +68,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     return new GrMethodStub(parentStub, ref, annNames, namedParameters, this, typeText, flags);
   }
 
-  public void indexStub(GrMethodStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrMethodStub stub, @NotNull IndexSink sink) {
     String name = stub.getName();
     sink.occurrence(GrMethodNameIndex.KEY, name);
     if (GrStubUtils.isGroovyStaticMemberStub(stub)) {

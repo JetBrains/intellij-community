@@ -31,6 +31,7 @@ public class BasicProgramRunner extends DefaultProgramRunner {
     return "Basic";
   }
 
+  @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return DefaultRunExecutor.EXECUTOR_ID.equals(executorId) && !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }

@@ -3,8 +3,7 @@ myLabel:
 -----
 Groovy script
   Labeled statement
-    Label
-      PsiElement(identifier)('myLabel')
+    PsiElement(identifier)('myLabel')
     PsiElement(:)(':')
     PsiElement(new line)('\n')
     Additive expression

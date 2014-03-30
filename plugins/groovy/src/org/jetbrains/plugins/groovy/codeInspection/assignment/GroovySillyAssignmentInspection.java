@@ -52,17 +52,17 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
     return true;
   }
 
+  @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
-  private static class Visitor
-      extends BaseInspectionVisitor {
+  private static class Visitor extends BaseInspectionVisitor {
 
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 
-      final IElementType sign = assignment.getOperationToken();
+      final IElementType sign = assignment.getOperationTokenType();
       if (!sign.equals(GroovyTokenTypes.mASSIGN)) {
         return;
       }
@@ -71,8 +71,7 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
       if (rhs == null) {
         return;
       }
-      if (!(rhs instanceof GrReferenceExpression) ||
-          !(lhs instanceof GrReferenceExpression)) {
+      if (!(rhs instanceof GrReferenceExpression) || !(lhs instanceof GrReferenceExpression)) {
         return;
       }
       final GrReferenceExpression rhsReference = (GrReferenceExpression) rhs;
@@ -94,8 +93,7 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
       }
       final PsiElement rhsReferent = rhsReference.resolve();
       final PsiElement lhsReferent = lhsReference.resolve();
-      if (rhsReferent != null && lhsReferent != null &&
-          !rhsReferent.equals(lhsReferent)) {
+      if (rhsReferent == null || lhsReferent == null || !rhsReferent.equals(lhsReferent)) {
         return;
       }
       registerError(assignment);

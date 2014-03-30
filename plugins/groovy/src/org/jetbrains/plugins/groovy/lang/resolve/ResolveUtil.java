@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -125,22 +126,31 @@ public class ResolveUtil {
     }
 
     final PsiScopeProcessor nonCodeProcessor = processNonCodeMethods ? processor : null;
-    return PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
-      @Override
-      public boolean process(PsiElement scope, PsiElement lastParent) {
-        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
-          return false;
-        }
-        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
-        issueLevelChangeEvents(processor, scope);
-        return true;
-      }
-    });
+      return doTreeWalkUp(place, originalPlace, processor, nonCodeProcessor, state);
     }
     catch (StackOverflowError e) {
       LogMessageEx.error(LOG, "StackOverflow", e, place.getContainingFile().getText());
       throw e;
     }
+  }
+
+  public static boolean doTreeWalkUp(@NotNull final PsiElement place,
+                                     @NotNull final PsiElement originalPlace,
+                                     @NotNull final PsiScopeProcessor processor,
+                                     @Nullable final PsiScopeProcessor nonCodeProcessor,
+                                     @NotNull final ResolveState state) {
+    final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+
+    return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
+      @Override
+      public boolean process(PsiElement scope, PsiElement lastParent) {
+        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
+          return false;
+        }
+        issueLevelChangeEvents(processor, scope);
+        return true;
+      }
+    });
   }
 
   static boolean doProcessDeclarations(@NotNull PsiElement place,
@@ -149,7 +159,12 @@ public class ResolveUtil {
                                        @NotNull PsiScopeProcessor plainProcessor,
                                        @Nullable PsiScopeProcessor nonCodeProcessor,
                                        @NotNull ResolveState state) {
-    if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+    if (scope instanceof GrClosableBlock && nonCodeProcessor != null) {
+      if (!((GrClosableBlock)scope).processClosureDeclarations(plainProcessor, nonCodeProcessor, state, lastParent, place)) return false;
+    }
+    else {
+      if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+    }
     if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
     return true;
   }
@@ -193,11 +208,13 @@ public class ResolveUtil {
     }
 
     if (scope instanceof GrClosableBlock) {
-      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
-      if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+      ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, scope);
 
-      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
-      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
+      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
+      if (superClass != null && !superClass.processDeclarations(processor, state, null, place)) return false;
+
+      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, state)) return false;
+      if (!processNonCodeMembers(GrClosureType.create(((GrClosableBlock)scope), false), processor, place, state)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -217,6 +234,8 @@ public class ResolveUtil {
                                         ResolveState state,
                                         PsiElement lastParent,
                                         PsiElement place) {
+    if (!shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
+
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
       if (!run.processDeclarations(processor, state, null, place)) return false;
@@ -250,6 +269,14 @@ public class ResolveUtil {
                                                @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
+    return processAllDeclarationsSeparately(type, processor, processor, state, place);
+  }
+
+  public static boolean processAllDeclarationsSeparately(@NotNull PsiType type,
+                                                          @NotNull PsiScopeProcessor processor,
+                                                          @NotNull PsiScopeProcessor nonCodeProcessor,
+                                                          @NotNull ResolveState state,
+                                                          @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -259,8 +286,8 @@ public class ResolveUtil {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    if (!processNonCodeMembers(type, processor, place, state)) return false;
-    if (!processCategoryMembers(place, processor, state)) return false;
+    if (!processCategoryMembers(place, nonCodeProcessor, state)) return false;
+    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
     return true;
   }
 
@@ -337,7 +364,6 @@ public class ResolveUtil {
     else {
       key = TypeConversionUtil.erasure(base).getCanonicalText();
     }
-    if (key == null) key = "";
     Map<String, PsiType> result = cache.get(key);
     if (result == null) {
       result = new HashMap<String, PsiType>();
@@ -350,7 +376,6 @@ public class ResolveUtil {
   @NotNull
   private static String rawCanonicalText(@NotNull PsiType type) {
     final String result = type.getCanonicalText();
-    if (result == null) return "";
     final int i = result.indexOf('<');
     if (i > 0) return result.substring(0, i);
     return result;
@@ -423,7 +448,7 @@ public class ResolveUtil {
   }
 
   private static boolean isApplicableLabelStatement(PsiElement element, String labelName) {
-    return ((element instanceof GrLabeledStatement && labelName.equals(((GrLabeledStatement)element).getLabelName())));
+    return ((element instanceof GrLabeledStatement && labelName.equals(((GrLabeledStatement)element).getName())));
   }
 
   @Nullable
@@ -615,7 +640,7 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
+  private static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
     GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
     for (int i = 0; i < constructors.length; i++) {
       final boolean isAccessible = PsiUtil.isAccessible(constructors[i], place, null);
@@ -624,7 +649,10 @@ public class ResolveUtil {
     return variants;
   }
 
-  public static GroovyResolveResult[] getAllClassConstructors(PsiClass psiClass, GroovyPsiElement place, PsiSubstitutor substitutor, @Nullable PsiType[] argTypes) {
+  public static GroovyResolveResult[] getAllClassConstructors(@NotNull PsiClass psiClass,
+                                                              @NotNull PsiSubstitutor substitutor,
+                                                              @Nullable PsiType[] argTypes,
+                                                              @NotNull PsiElement place) {
     final MethodResolverProcessor processor = new MethodResolverProcessor(psiClass.getName(), place, true, null, argTypes, PsiType.EMPTY_ARRAY);
     ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
     for (PsiMethod constructor : psiClass.getConstructors()) {
@@ -749,7 +777,9 @@ public class ResolveUtil {
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();
       for (GroovyResolveResult candidate : candidates) {
-        final PsiType type = getSmartReturnType((PsiMethod)candidate.getElement());
+        PsiMethod method = (PsiMethod)candidate.getElement();
+        assert method != null;
+        final PsiType type = getSmartReturnType(method);
         if (isApplicableClosureType(type, argumentTypes, place)) {
           applicable.add(candidate);
         }
@@ -760,7 +790,7 @@ public class ResolveUtil {
       ContainerUtil.addAll(allCandidates, applicable);
     }
 
-    if (allCandidates.size() > 0) {
+    if (!allCandidates.isEmpty()) {
       return allCandidates.toArray(new GroovyResolveResult[allCandidates.size()]);
     }
     else if (!hasApplicableMethods) {
@@ -769,8 +799,9 @@ public class ResolveUtil {
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private static boolean isApplicableClosureType(@Nullable PsiType type, @NotNull PsiType[] argTypes, @NotNull PsiElement place) {
+  private static boolean isApplicableClosureType(@Nullable PsiType type, @Nullable PsiType[] argTypes, @NotNull PsiElement place) {
     if (!(type instanceof GrClosureType)) return false;
+    if (argTypes == null) return true;
 
     final GrSignature signature = ((GrClosureType)type).getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
@@ -821,7 +852,7 @@ public class ResolveUtil {
 
   @Nullable
   public static PsiClass resolveAnnotation(PsiElement insideAnnotation) {
-    final GrAnnotation annotation = PsiTreeUtil.getParentOfType(insideAnnotation, GrAnnotation.class);
+    final GrAnnotation annotation = PsiTreeUtil.getParentOfType(insideAnnotation, GrAnnotation.class, false);
     if (annotation == null) return null;
 
     final GrCodeReferenceElement reference = annotation.getClassReference();
@@ -888,6 +919,44 @@ public class ResolveUtil {
     }
   }
 
+  @NotNull
+  public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull PsiElement place,
+                                                                             @NotNull GroovyResolveResult[] variants,
+                                                                             @NotNull GrNamedArgument[] namedArguments,
+                                                                             @NotNull GrExpression[] expressionArguments,
+                                                                             @NotNull GrClosableBlock[] closureArguments,
+                                                                             @NotNull GrExpression arg) {
+    List<Pair<PsiParameter, PsiType>> expectedParams = ContainerUtil.newArrayList();
+
+    for (GroovyResolveResult variant : variants) {
+      final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
+        variant, place, true, true, namedArguments, expressionArguments, closureArguments
+      );
+
+      if (map != null) {
+        final Pair<PsiParameter, PsiType> pair = map.get(arg);
+        ContainerUtil.addIfNotNull(expectedParams, pair);
+      }
+    }
+    return expectedParams;
+  }
+
+  public static boolean shouldProcessClasses(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
+  }
+
+  public static boolean shouldProcessMethods(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
+  }
+
+  public static boolean shouldProcessProperties(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
+  }
+
+  public static boolean shouldProcessPackages(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE);
+  }
+
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
     private boolean myBorderPassed;
     private final boolean myHasVisibilityModifier;
@@ -904,18 +973,19 @@ public class ResolveUtil {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (myBorderPassed) {
         return false;
       }
       if (element instanceof GrVariable && hasExplicitVisibilityModifiers((GrVariable)element) != myHasVisibilityModifier) {
         return true;
       }
+      if (element instanceof GrBindingVariable) return true;
       return super.execute(element, state);
     }
 
     @Override
-    public void handleEvent(Event event, Object associated) {
+    public void handleEvent(@NotNull Event event, Object associated) {
       if (event == DECLARATION_SCOPE_PASSED) {
         myBorderPassed = true;
       }

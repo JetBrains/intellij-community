@@ -1,4 +1,4 @@
-public class Generic<TYPO descr="Typo: In word 'Testt'">Testt</TYPO> {
+class Generic<TYPO descr="Typo: In word 'Testt'">Testt</TYPO> {
 
     public void a( Gen<TYPO descr="Typo: In word 'Testt'">Testt</TYPO><?> obj ) {
 

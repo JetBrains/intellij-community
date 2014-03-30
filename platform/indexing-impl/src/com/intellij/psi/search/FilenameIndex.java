@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,18 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -51,11 +54,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -67,8 +72,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   @Override
+  public boolean indexDirectories() {
+    return true;
+  }
+
+  @Override
   public int getVersion() {
-    return 0;
+    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 1 : 0);
   }
 
   public static String[] getAllFilenames(Project project) {
@@ -81,17 +91,61 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   }
 
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
-    if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    List<PsiFile> result = new ArrayList<PsiFile>();
+    return (PsiFile[])getFilesByName(project, name, scope, false);
+  }
+
+  public static boolean processFilesByName(@NotNull final String name,
+                                           boolean includeDirs,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Project project,
+                                           @Nullable IdFilter idFilter
+                                       ) {
+    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+
+    FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
+      @Override
+      public boolean process(final VirtualFile file, final Void value) {
+        files.add(file);
+        return true;
+      }
+    }, scope, idFilter);
+
+    if (files.isEmpty()) return false;
+    PsiManager psiManager = PsiManager.getInstance(project);
+    int processedFiles = 0;
+
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      if (psiFile != null) {
-        result.add(psiFile);
+      if (!includeDirs && !file.isDirectory()) {
+        PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile != null) {
+          if(!processor.process(psiFile)) return true;
+          ++processedFiles;
+        }
+      } else if (includeDirs && file.isDirectory()) {
+        PsiDirectory dir = psiManager.findDirectory(file);
+        if (dir != null) {
+          if(!processor.process(dir)) return true;
+          ++processedFiles;
+        }
       }
     }
-    return PsiUtilCore.toPsiFileArray(result);
+    return processedFiles > 0;
+  }
+
+  public static PsiFileSystemItem[] getFilesByName(final Project project,
+                                         final String name,
+                                         @NotNull final GlobalSearchScope scope,
+                                         boolean includeDirs) {
+    SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
+    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, project, null);
+
+    if (includeDirs) {
+      return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
+    }
+    //noinspection SuspiciousToArrayCall
+    return result.toArray(new PsiFile[result.size()]);
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
@@ -104,7 +158,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
     @Override
-    public boolean acceptInput(final VirtualFile file) {
+    public boolean acceptInput(@NotNull final VirtualFile file) {
       return true;
     }
   }
@@ -139,5 +193,10 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
       }
     }
     return files;
+  }
+
+  @Override
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   }
 }

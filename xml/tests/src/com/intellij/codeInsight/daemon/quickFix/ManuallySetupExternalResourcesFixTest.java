@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class ManuallySetupExternalResourcesFixTest extends LightQuickFixTestCase {
+public class ManuallySetupExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +31,7 @@ public interface PsiExpression extends PsiAnnotationMemberValue {
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
 
   ArrayFactory<PsiExpression> ARRAY_FACTORY = new ArrayFactory<PsiExpression>() {
+    @NotNull
     @Override
     public PsiExpression[] create(final int count) {
       return count == 0 ? PsiExpression.EMPTY_ARRAY : new PsiExpression[count];

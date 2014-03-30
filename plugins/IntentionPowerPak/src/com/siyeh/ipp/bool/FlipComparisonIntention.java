@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipComparisonIntention extends MutablyNamedIntention {
@@ -37,7 +38,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
       final PsiJavaToken sign = expression.getOperationSign();
       operatorText = sign.getText();
       flippedOperatorText =
-        ComparisonUtils.getFlippedComparison(sign);
+        ComparisonUtils.getFlippedComparison(sign.getTokenType());
     }
     if (operatorText.equals(flippedOperatorText)) {
       return IntentionPowerPackBundle.message("flip.smth.intention.name",
@@ -66,6 +67,6 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final String expString = rhs.getText() +
                              ComparisonUtils.getFlippedComparison(tokenType) +
                              lhs.getText();
-    replaceExpression(expString, expression);
+    PsiReplacementUtil.replaceExpression(expression, expString);
   }
 }

@@ -58,11 +58,12 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
 
   @Nullable
   protected static Pair<MavenProject, String> getTaskDesc(DataContext context) {
+    List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
+    if (goals == null || goals.size() != 1) return null;
+
     MavenProject mavenProject = MavenActionUtil.getMavenProject(context);
     if (mavenProject == null) return null;
 
-    List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
-    if (goals == null || goals.size() != 1) return null;
 
     return Pair.create(mavenProject, goals.get(0));
   }

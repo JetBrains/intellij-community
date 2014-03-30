@@ -42,4 +42,8 @@ public abstract class ProjectTemplateFileProcessor {
     }
     return content;
   }
+
+  protected static String wrap(String param) {
+    return "${" + param + "}";
+  }
 }

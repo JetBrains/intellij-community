@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,7 +42,6 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
@@ -57,14 +55,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -119,7 +119,7 @@ public class GrabDependencies implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
     final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
@@ -145,23 +145,15 @@ public class GrabDependencies implements IntentionAction {
       //debug
       //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
-      DefaultGroovyScriptRunner
-        .configureGenericGroovyRunner(javaParameters, module, "org.jetbrains.plugins.groovy.grape.GrapeRunner", false);
-      PathsList list;
       try {
-        list = GroovyScriptRunner.getClassPathFromRootModel(module, ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(vfile), javaParameters, true);
+        DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "org.jetbrains.plugins.groovy.grape.GrapeRunner", false, true);
       }
       catch (CantRunException e) {
         NOTIFICATION_GROUP.createNotification("Can't run @Grab: " + ExceptionUtil.getMessage(e), ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
         return;
       }
-      if (list == null) {
-        list = new PathsList();
-      }
-      list.add(PathUtil.getJarPathForClass(GrapeRunner.class));
+      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(GrapeRunner.class));
 
-      javaParameters.getProgramParametersList().add("--classpath");
-      javaParameters.getProgramParametersList().add(list.getPathsString());
       javaParameters.getProgramParametersList().add(queries.get(grabText));
 
       lines.put(grabText, JdkUtil.setupJVMCommandLine(exePath, javaParameters, true));

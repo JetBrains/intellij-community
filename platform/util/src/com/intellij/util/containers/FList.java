@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -28,8 +30,6 @@ public class FList<E> extends AbstractList<E> {
   private FList<E> myTail;
   private int mySize;
 
-  private List<E> myReversedList;
-  
   private FList() {
   }
 
@@ -81,6 +81,7 @@ public class FList<E> extends AbstractList<E> {
     return this;
   }
 
+  @NotNull
   @Override
   public Iterator<E> iterator() {
     return new Iterator<E>() {
@@ -117,22 +118,6 @@ public class FList<E> extends AbstractList<E> {
   @Override
   public int size() {
     return mySize;
-  }
-
-  /**
-   * @deprecated this method will be removed in IDEA 13
-   */
-  @Deprecated
-  public List<E> getReversedList() {
-    List<E> res = myReversedList;
-    if (res == null) {
-      res = new ArrayList<E>(this);
-      Collections.reverse(res);
-
-      myReversedList = res;
-    }
-    
-    return res;
   }
 
   public static <E> FList<E> emptyList() {

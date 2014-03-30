@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,39 @@
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.status.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.action.HgBranchPopup;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
  * Widget to display basic hg status in the IJ status bar.
  */
-public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget.TextPresentation, StatusBarWidget.Multiframe, HgUpdater {
+public class HgStatusWidget extends EditorBasedWidget
+  implements StatusBarWidget.MultipleTextValuesPresentation,
+             StatusBarWidget.Multiframe, HgUpdater {
 
-  private static final String MAX_STRING = "hg: default branch (128)";
+  private static final String MAX_STRING = "Hg: Merging default ";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
-  @NotNull private final HgCurrentBranchStatus myCurrentBranchStatus;
-  private MessageBusConnection myBusConnection;
 
   private volatile String myText = "";
   private volatile String myTooltip = "";
@@ -55,8 +57,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     super(project);
     myVcs = vcs;
     myProjectSettings = projectSettings;
-
-    myCurrentBranchStatus = new HgCurrentBranchStatus();
   }
 
   @Override
@@ -76,42 +76,53 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     update();
   }
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 
   @Override
-  public void fileClosed(FileEditorManager source, VirtualFile file) {
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 
   @Override
-  public String getTooltipText() {
-    return myTooltip;
+  public ListPopup getPopupStep() {
+    Project project = getProject();
+    if (project == null) {
+      return null;
+    }
+    VirtualFile root = HgUtil.getRootForSelectedFile(project);
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository != null) {
+      return HgBranchPopup.getInstance(project, repository).asListPopup();
+    }
+    return null;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public String getSelectedValue() {
     final String text = myText;
     return StringUtil.isEmpty(text) ? "" : "hg: " + text;
   }
 
   @NotNull
   @Override
-  public String getMaxPossibleText() {
+  @Deprecated
+  public String getMaxValue() {
     return MAX_STRING;
   }
 
+
   @Override
-  public float getAlignment() {
-    return Component.LEFT_ALIGNMENT;
+  public String getTooltipText() {
+    return myTooltip;
   }
+
 
   @Override
   // Updates branch information on click
@@ -129,7 +140,7 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   }
 
   public void update(final Project project) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if ((project == null) || project.isDisposed()) {
@@ -137,16 +148,14 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
           return;
         }
 
-        emptyTextAndTooltip();
-
-        if (null != myCurrentBranchStatus.getStatusText()) {
-          myText = myCurrentBranchStatus.getStatusText();
-          myTooltip = myCurrentBranchStatus.getToolTipText();
+        final HgRepository repo = HgUtil.getCurrentRepository(project);
+        if (repo == null) { // the file is not under version control => display nothing
+          emptyTextAndTooltip();
+          return;
         }
-
-        int maxLength = MAX_STRING.length();
-        myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
-        if (!isDisposed()) {
+        myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
+        myText = StringUtil.shortenTextWithEllipsis(myTooltip, MAX_STRING.length(), 5);
+        if (!isDisposed() && myStatusBar != null) {
           myStatusBar.updateWidget(ID());
         }
       }
@@ -160,8 +169,9 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
       return;
     }
 
-    myBusConnection = project.getMessageBus().connect();
-    myBusConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    MessageBusConnection busConnection = project.getMessageBus().connect();
+    busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
+    busConnection.subscribe(HgVcs.BRANCH_TOPIC,this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
   }
@@ -183,10 +193,5 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   private void emptyTextAndTooltip() {
     myText = "";
     myTooltip = "";
-  }
-
-  @NotNull
-  public HgCurrentBranchStatus getCurrentBranchStatus() {
-    return myCurrentBranchStatus;
   }
 }

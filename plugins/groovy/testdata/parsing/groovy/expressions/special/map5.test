@@ -1,5 +1,5 @@
 ["$st aga":1, "$st nee"]
-------
+-----
 Groovy script
   Generalized list
     PsiElement([)('[')
@@ -7,11 +7,15 @@ Groovy script
       Argument label
         Compound Gstring
           PsiElement(Gstring begin)('"')
+          GrStringContentImpl(GString content element)
+            ASTWrapperPsiElement(Gstring content)
+              <empty list>
           GString injection
             PsiElement($)('$')
             Reference expression
               PsiElement(identifier)('st')
-          PsiElement(Gstring content)(' aga')
+          GrStringContentImpl(GString content element)
+            PsiElement(Gstring content)(' aga')
           PsiElement(Gstring end)('"')
       PsiElement(:)(':')
       Literal
@@ -20,10 +24,14 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound Gstring
       PsiElement(Gstring begin)('"')
+      GrStringContentImpl(GString content element)
+        ASTWrapperPsiElement(Gstring content)
+          <empty list>
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('st')
-      PsiElement(Gstring content)(' nee')
+      GrStringContentImpl(GString content element)
+        PsiElement(Gstring content)(' nee')
       PsiElement(Gstring end)('"')
     PsiElement(])(']')

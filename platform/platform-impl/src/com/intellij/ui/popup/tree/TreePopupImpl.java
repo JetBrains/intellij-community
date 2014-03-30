@@ -17,6 +17,7 @@ package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -24,7 +25,6 @@ import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.ui.treeStructure.SimpleNodeRenderer;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -359,7 +359,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
     myChild.show(getContent(), point.x - STEP_X_PADDING, point.y, true);
   }
 
-  private class MyRenderer extends SimpleNodeRenderer {
+  private class MyRenderer extends NodeRenderer {
 
     @Override
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {

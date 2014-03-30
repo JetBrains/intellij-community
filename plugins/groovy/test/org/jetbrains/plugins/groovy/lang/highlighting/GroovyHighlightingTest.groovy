@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
-
 /**
  * @author peter
  */
@@ -427,7 +426,7 @@ catch (<warning descr="Exception 'java.io.IOException' has already been caught">
     testHighlighting('''\
 try {}
 catch (e){}
-catch (<warning descr="Exception 'java.lang.Throwable' has already been caught">e</warning>){}
+catch (<warning descr="Exception 'java.lang.Exception' has already been caught">e</warning>){}
 ''')
   }
 
@@ -568,7 +567,7 @@ int method(x, y, z) {
         42
     }
     else if (z) {
-      return <error descr="Cannot assign 'String' to 'int'">'abc'</error>
+      <error descr="Cannot assign 'String' to 'int'">return</error> 'abc'
     }
     else {
       return 43
@@ -577,18 +576,77 @@ int method(x, y, z) {
 ''')
   }
 
-  void testReassignedVarInClosure() {
+  void testReassignedVarInClosure1() {
     addCompileStatic()
     testHighlighting("""
 $IMPORT_COMPILE_STATIC
 
 @CompileStatic
-test() {
+def test() {
     def var = "abc"
     def cl = {
         var = new Date()
     }
     cl()
+    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure2() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+def test() {
+    def cl = {
+        def var
+        var = new Date()
+    }
+    def var = "abc"
+
+    cl()
+    var.toUpperCase()  //no errors
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure3() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+def test() {
+    def var = "abc"
+    def cl = new Closure(this, this){
+      def call() {
+        var = new Date()
+      }
+    }
+    cl()
+    var.toUpperCase() //no errors
+}
+""", GrUnresolvedAccessInspection)
+  }
+
+  void testReassignedVarInClosure4() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+class X {
+  def var
+}
+
+@CompileStatic
+def test() {
+    def var = "abc"
+    new X().with {
+        var = new Date()
+    }
+
     var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
 }
 """, GrUnresolvedAccessInspection)
@@ -788,8 +846,8 @@ class A {
   class B {}
 }
 
-A.B foo = new <error descr="Cannot reference non-static symbol 'A.B' from static context">A.B</error>()
-''')
+A.B foo = new A.<warning descr="Cannot reference non-static symbol 'A.B' from static context">B</warning>()
+''', GrUnresolvedAccessInspection)
   }
 
   void testDuplicatedVar0() {
@@ -1120,7 +1178,7 @@ print(<error descr="Collection literal contains named and expression arguments a
 ''')
   }
 
-  void testDelegatesToApplicability() {
+  void _testDelegatesToApplicability() {
     testHighlighting('''
       def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
         arg.delegate = target
@@ -1176,5 +1234,588 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
         @interface <error descr="Annotation type cannot be inner">X</error> {}
       }
     ''')
+  }
+
+  void testDuplicatingAnnotations() {
+    testHighlighting('''\
+@interface A {
+  String value()
+}
+
+@A('a')
+@A('a')
+class X{}
+
+@A('a')
+@A('ab')
+class Y{}
+
+<error descr="Duplicate modifier 'public'">public public</error> class Z {}
+''')
+  }
+
+  void testAnnotationAttribute() {
+    testHighlighting('''\
+@interface A {
+  String value() default 'a'
+  String[] values() default []
+}
+
+
+@A('abc')
+def x
+
+@A(<error descr="Expected ''abc' + 'cde'' to be an inline constant">'abc' + 'cde'</error>)
+def y
+
+class C {
+  final static String CONST1 = 'ABC'
+  final static String CONST2 = 'ABC' + 'CDE'
+  final        String CONST3 = 'ABC'
+}
+
+@A(C.CONST1)
+def z
+
+@A(<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">C.CONST2</error>)
+def a
+
+@A(C.CONST3)
+def b
+
+@A(values=['a'])
+def c
+
+@A(values=<error descr="Expected ''a'+'b'' to be an inline constant">['a'+'b']</error>)
+def d
+
+@A(values=[C.CONST1])
+def e
+
+@A(values=<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">[C.CONST1, C.CONST2]</error>)
+def f
+
+@interface X {
+  Class value()
+}
+
+@X(String.class)
+def g
+''')
+  }
+
+  void testDuplicateMethodsWithGenerics() {
+    testHighlighting('''\
+class A<T, E> {
+  <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(T t)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(E e)</error> {}
+}
+
+class B {
+  <error descr="Method with signature foo(Object) is already defined in the class 'B'">def <T> void foo(T t)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'B'">def <E> void foo(E e)</error> {}
+}
+
+class C<T, E> {
+  <error descr="Method with signature foo(Object) is already defined in the class 'C'">def foo(T t, T t2 = null)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'C'">def foo(E e)</error> {}
+}
+
+class D<T, E> {
+  <error descr="Method with signature foo(Object, Object) is already defined in the class 'D'">def foo(T t, E e)</error> {}
+  <error descr="Method with signature foo(Object, Object) is already defined in the class 'D'">def foo(E t, T e)</error> {}
+  def foo(E t) {}
+}''')
+  }
+
+  void testOverriddenReturnType0() {
+    myFixture.addClass('class Base{}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  List<Inh> foo() {} //correct
+}
+''')
+  }
+
+  void testOverriddenReturnType1() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>Collection<Base></error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType2() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>int</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType3() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  <error>Inh[]</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType4() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  Base[] foo() {}
+}
+''')
+  }
+
+  void testEnumConstantAsAnnotationAttribute() {
+    testHighlighting('''\
+enum A {CONST}
+
+@interface I {
+    A foo()
+}
+
+@I(foo = A.CONST) //no error
+def bar
+''')
+  }
+
+  void testUnassignedFieldAsAnnotationAttribute() {
+    testHighlighting('''\
+interface A {
+  String CONST
+}
+
+@interface I {
+    String foo()
+}
+
+@I(foo = <error descr="Expected 'A.CONST' to be an inline constant">A.CONST</error>)
+def bar
+''')
+  }
+
+  void testFinalFieldRewrite() {
+    testHighlighting('''\
+class A {
+  final foo = 1
+
+  def A() {
+    foo = 2 //no error
+  }
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+}
+
+new A().foo = 2 //no error
+''')
+  }
+
+  void testStaticFinalFieldRewrite() {
+    testHighlighting('''\
+class A {
+  static final foo = 1
+
+  def A() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+
+  static {
+    foo = 2 //no error
+  }
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+
+  static def bar() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+}
+
+A.foo = 3 //no error
+''')
+  }
+
+  void testSOEIfExtendsItself() {
+    testHighlighting('''\
+<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A</error></error> {
+  def foo
+}
+
+<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C</error></error> {
+  def foo
+}
+
+<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B</error></error> {
+}
+''')
+  }
+
+  void testFinalParameter() {
+    testHighlighting('''\
+def foo0(final i) {
+  <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
+  print i
+}
+
+def foo1(i) {
+  i = 5
+  print i
+}
+
+def foo2(final i = 4) {
+  <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
+  print i
+}
+
+def foo3(final i) {
+  print i
+}
+''')
+  }
+
+  void testNonStaticInnerClass1() {
+    testHighlighting('''\
+class MyController {
+     static def list() {
+         def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''', GrUnresolvedAccessInspection)
+  }
+
+  void testNonStaticInnerClass2() {
+    testHighlighting('''\
+class MyController {
+     def list() {
+         def myInnerClass = new MyCommand.<warning descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</warning>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''', GrUnresolvedAccessInspection)
+  }
+
+  void testNonStaticInnerClass3() {
+    myFixture.configureByText('_.groovy', '''\
+class MyController {
+     static def list() {
+         def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''')
+
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
+    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  void testNonStaticInnerClass4() {
+    myFixture.configureByText('_.groovy', '''\
+class MyController {
+     def list() {
+         def myInnerClass = new MyCommand.MyInnerClass()
+         print myInnerClass
+    }
+}
+
+class MyCommand {
+    class MyInnerClass {
+    }
+}
+''')
+
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+
+    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightInnerClasses = false
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  void testInnerClassWithStaticMethod() {
+    testHighlighting('''\
+class A {
+    class B {
+        static foo() {}
+
+        static bar() {
+            B.foo() //correct
+        }
+    }
+
+    static foo() {
+      new <error descr="Cannot reference non-static symbol 'A.B' from static context">B</error>()
+    }
+}
+''')
+  }
+
+  void testUnresolvedPropertyWhenGetPropertyDeclared() {
+    myFixture.enableInspections(GrUnresolvedAccessInspection)
+    myFixture.configureByText('_.groovy', '''\
+class DelegatesToTest {
+    void ideSupport() {
+        define {
+            a //delegatesTo provides getProperty from DslDelegate
+        }
+    }
+
+    private static void define(@DelegatesTo(DslDelegate) Closure dsl) {
+    }
+}
+
+class DslDelegate {
+    def getProperty(String name) {
+        {->print 1}
+    }
+
+
+    def ab() {
+        print a  //getPropertyDeclared
+        <warning descr="Cannot resolve symbol 'a'">a</warning>()      //unresolved
+    }
+}
+
+print new DslDelegate().foo   //resolved
+print new DslDelegate().<warning descr="Cannot resolve symbol 'foo'">foo</warning>() //unresolved
+''')
+
+    GrUnresolvedAccessInspection.getInstance(myFixture.file, myFixture.project).myHighlightIfGroovyObjectOverridden = false
+    myFixture.testHighlighting(true, false, true)
+  }
+
+  void testImplementInaccessibleAbstractMethod() {
+    myFixture.addClass('''\
+package p;
+
+public abstract class Base {
+  abstract void foo();
+}
+''')
+    testHighlighting('''\
+<error>class Foo extends p.Base</error> {
+}
+''')
+  }
+
+  void testInjectedLiterals() {
+    testHighlighting("""\
+//language=Groovy
+def groovy1 = '''print 'abc\\' '''
+
+//language=Groovy
+def groovy2 = '''print <error descr="String end expected">'abc\\\\' </error>'''
+
+""")
+  }
+
+  void testAnnotationAsAnnotationValue() {
+    testHighlighting('''\
+@interface A {}
+@interface B {
+  A[] foo()
+}
+@interface C {
+  A foo()
+}
+
+@B(foo = @A)
+@B(foo = [@A])
+@C(foo = @A)
+@C(foo = <error descr="Cannot assign 'Integer' to 'A'">2</error>)
+def foo
+''')
+  }
+
+  void testSameNameMethodWithDifferentAccessModifiers() {
+    testHighlighting('''
+
+class A {
+  def foo(){}
+  def foo(int x) {}
+}
+
+class B {
+  <error descr="Mixing private and public/protected methods of the same name">private def foo()</error>{}
+  <error descr="Mixing private and public/protected methods of the same name">public def foo(int x)</error> {}
+}
+
+class C {
+  private foo(){}
+  private foo(int x) {}
+}
+
+class D {
+  <error>private foo()</error>{}
+  <error>protected foo(int x)</error> {}
+}
+
+class E {
+  <error>private foo()</error>{}
+  <error>def foo(int x)</error> {}
+}
+
+class Z {
+ private Z() {}   //correct
+ private Z(x) {}  //correct
+}
+''')
+  }
+
+  void testImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'immutable'">immutable</error> = 5
+    mutable = 5
+
+  }
+}
+''')
+  }
+
+  void testConstructorInImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  def <error descr="Explicit constructors are not allowed for @Immutable class">A</error>() {}
+}
+''')
+  }
+
+  void testGetterInImmutable() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+  private String mutable
+
+  String <error descr="Repetitive method name 'getImmutable'">getImmutable</error>() {immutable}
+  String getMutable() {mutable}
+}
+''')
+  }
+
+  void testGetterInImmutable2() {
+    testHighlighting('''\
+import groovy.transform.Immutable
+
+@Immutable
+class A {
+  String immutable
+
+  int <error descr="Repetitive method name 'getImmutable'">getImmutable</error>() {1}
+}
+''')
+  }
+
+  void testMinusInAnnotationArg() {
+    testHighlighting('''\
+@interface Xx {
+    int value()
+}
+
+@Xx(-1)
+public class Bar1 { }
+
+@Xx(+1)
+public class Bar2 { }
+
+@Xx(<error descr="Expected '++1' to be an inline constant">++1</error>)
+public class Bar3 { }
+''')
+  }
+
+  void testImportStaticFix() {
+    myFixture.configureByText('a.groovy', '''
+class A {
+  static void foo(String s){}
+}
+
+foo(<caret>)
+''')
+
+    myFixture.getAvailableIntention("Static Import Method 'A.foo'")
+  }
+
+  void testInaccessibleWithCompileStatic() {
+    addCompileStatic()
+    testHighlighting('''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class PrivateTest {
+    void doTest() {
+        Target.<error descr="Access to 'callMe' exceeds its access rights">callMe</error>()
+    }
+}
+
+class Target {
+    private static void callMe() {}
+}
+''')
   }
 }

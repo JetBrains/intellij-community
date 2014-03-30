@@ -19,11 +19,13 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.event.MouseEvent;
 
 public abstract class DoubleClickListener extends ClickListener {
   @Override
-  public final boolean onClick(MouseEvent event, int clickCount) {
+  public final boolean onClick(@NotNull MouseEvent event, int clickCount) {
     if (clickCount == 2 && event.getButton() == MouseEvent.BUTTON1) {
       return onDoubleClick(event);
     }

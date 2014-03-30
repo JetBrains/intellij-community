@@ -1,0 +1,251 @@
+<root>
+  <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean deleteIfExists(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean exists(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isDirectory(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isExecutable(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isHidden(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isReadable(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isSameFile(java.nio.file.Path, java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isSameFile(java.nio.file.Path, java.nio.file.Path) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isSymbolicLink(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isWritable(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean notExists(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files byte[] read(java.io.InputStream, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files byte[] readAllBytes(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path, java.nio.charset.Charset) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path, java.nio.charset.Charset) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.OutputStream newOutputStream(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.Object getAttribute(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.Object getAttribute(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String probeContentType(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.util.Set&lt;? extends java.nio.file.OpenOption&gt;, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.util.Set&lt;? extends java.nio.file.OpenOption&gt;, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.nio.file.DirectoryStream.Filter&lt;? super java.nio.file.Path&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.nio.file.DirectoryStream.Filter&lt;? super java.nio.file.Path&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.FileStore getFileStore(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createDirectories(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createDirectory(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createFile(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createLink(java.nio.file.Path, java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createLink(java.nio.file.Path, java.nio.file.Path) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.nio.file.Path, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createTempFile(java.nio.file.Path, java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path readSymbolicLink(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setLastModifiedTime(java.nio.file.Path, java.nio.file.attribute.FileTime) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setOwner(java.nio.file.Path, java.nio.file.attribute.UserPrincipal) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setOwner(java.nio.file.Path, java.nio.file.attribute.UserPrincipal) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setPosixFilePermissions(java.nio.file.Path, java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setPosixFilePermissions(java.nio.file.Path, java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.UserPrincipal getOwner(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path, java.nio.charset.Charset) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path, java.nio.charset.Charset) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt; getPosixFilePermissions(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.io.OutputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.io.OutputStream) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.nio.file.Path, java.io.OutputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.nio.file.Path, java.io.OutputStream) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long size(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files void delete(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Paths java.nio.file.Path get(java.net.URI) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

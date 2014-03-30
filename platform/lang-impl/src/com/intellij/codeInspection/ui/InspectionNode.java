@@ -16,10 +16,11 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Enumeration;
@@ -28,26 +29,23 @@ import java.util.Enumeration;
  * @author max
  */
 public class InspectionNode extends InspectionTreeNode {
-  public static final Icon TOOL;
-
-  static {
-    TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
-  }
-
+  public static final Icon TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   private boolean myTooBigForOnlineRefresh = false;
 
-  public InspectionNode(InspectionTool tool) {
-    super(tool);
+  public InspectionNode(@NotNull InspectionToolWrapper toolWrapper) {
+    super(toolWrapper);
   }
 
   public String toString() {
-    return getTool().getDisplayName();
+    return getToolWrapper().getDisplayName();
   }
 
-  public InspectionTool getTool() {
-    return (InspectionTool)getUserObject();
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return (InspectionToolWrapper)getUserObject();
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return TOOL;
   }
@@ -57,6 +55,7 @@ public class InspectionNode extends InspectionTreeNode {
     return myTooBigForOnlineRefresh;
   }
 
+  @Override
   public int getProblemCount() {
     int sum = 0;
     Enumeration children = children();

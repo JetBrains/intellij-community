@@ -46,12 +46,14 @@ public interface FacetConfiguration extends JDOMExternalizable {
   /**
    * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#loadState(Object)} instead
    */
+  @Override
   @Deprecated
   void readExternal(final Element element) throws InvalidDataException;
 
   /**
    * @deprecated implement {@link com.intellij.openapi.components.PersistentStateComponent#getState()} instead
    */
+  @Override
   @Deprecated
   void writeExternal(final Element element) throws WriteExternalException;
 }

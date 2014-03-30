@@ -50,11 +50,15 @@ public class AssignShortcutAction extends MavenAction {
 
   @Nullable
   private static String getGoalActionId(DataContext context) {
+    final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
+    if (goals == null || goals.size() != 1) {
+      return null;
+    }
+
     MavenProject project = MavenActionUtil.getMavenProject(context);
     if (project == null) return null;
 
-    final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
-    String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
+    String goal = goals.get(0);
 
     return getShortcutsManager(context).getActionId(project.getPath(), goal);
   }

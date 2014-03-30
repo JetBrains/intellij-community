@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.lang.java.parser.partial;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
-
 
 public class FileParserTest extends JavaParsingTestCase {
   public FileParserTest() {
@@ -40,6 +39,10 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testUnclosedImport1() { doParserTest("import java.awt.*"); }
   public void testUnclosedImport2() { doParserTest("import java.awt."); }
   public void testUnclosedImport3() { doParserTest("import static a"); }
+
+  public void testExtraSemicolons() { doParserTest("package p;;\n" +
+                                                   "import a;;\n" +
+                                                   "class C{};"); }
 
   public void testFileWithClass() { doParserTest("package a;\n" +
                                                  "import b;\n" +

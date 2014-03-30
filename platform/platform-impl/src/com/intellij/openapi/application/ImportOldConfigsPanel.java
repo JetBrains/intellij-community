@@ -45,11 +45,12 @@ public class ImportOldConfigsPanel extends JDialog {
   private JLabel mySuggestLabel;
   private JLabel myHomeLabel;
   private JRadioButton myRbImportAuto;
+
   private final File myGuessedOldConfig;
   private final ConfigImportSettings mySettings;
 
   public ImportOldConfigsPanel(final File guessedOldConfig, ConfigImportSettings settings) {
-    super((Dialog) null, true);
+    super((Dialog)null, true);
     myGuessedOldConfig = guessedOldConfig;
     mySettings = settings;
     init();
@@ -64,13 +65,14 @@ public class ImportOldConfigsPanel extends JDialog {
     group.add(myRbImportAuto);
     myRbDoNotImport.setSelected(true);
 
-    final String productName = mySettings.getProductName(ThreeState.UNSURE);
+    String productName = mySettings.getProductName(ThreeState.UNSURE);
     mySuggestLabel.setText(mySettings.getTitleLabel(productName));
     myRbDoNotImport.setText(mySettings.getDoNotImportLabel(productName));
-    if(myGuessedOldConfig != null) {
+    if (myGuessedOldConfig != null) {
       myRbImportAuto.setText(mySettings.getAutoImportLabel(myGuessedOldConfig));
       myRbImportAuto.setSelected(true);
-    } else {
+    }
+    else {
       myRbImportAuto.setVisible(false);
     }
     myHomeLabel.setText(mySettings.getHomeLabel(productName));
@@ -96,18 +98,15 @@ public class ImportOldConfigsPanel extends JDialog {
 
     myPrevInstallation.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        JFileChooser fc = new JFileChooser();
-        if (myLastSelection != null){
-          fc = new JFileChooser(myLastSelection);
-        }
+        JFileChooser fc = myLastSelection != null ? new JFileChooser(myLastSelection) : new JFileChooser();
 
         fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
         fc.setFileHidingEnabled(!SystemInfo.isLinux);
 
         int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
-        if (returnVal == JFileChooser.APPROVE_OPTION){
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
           File file = fc.getSelectedFile();
-          if (file != null){
+          if (file != null) {
             myLastSelection = file;
             myPrevInstallation.setText(file.getAbsolutePath());
           }
@@ -128,12 +127,13 @@ public class ImportOldConfigsPanel extends JDialog {
     setTitle(ApplicationBundle.message("title.complete.installation"));
 
     update();
+
     pack();
+    setLocationRelativeTo(null);
+  }
 
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
+  private void update() {
+    myPrevInstallation.setEnabled(myRbImport.isSelected());
   }
 
   @Nullable
@@ -163,59 +163,46 @@ public class ImportOldConfigsPanel extends JDialog {
   }
 
   private static String findPreviousInstallationMac(String productName) {
-    //noinspection HardCodedStringLiteral
-    final String mostProbable = "/Applications/" + productName;
-    if (new File(mostProbable).exists()) {
-      return mostProbable;
-    }
-    return "/Applications";
+    String mostProbable = "/Applications/" + productName;
+    return new File(mostProbable).exists() ? mostProbable : "/Applications";
   }
 
   private void close() {
     if (myRbImport.isSelected()) {
-      final String productWithVendor = mySettings.getProductName(ThreeState.YES);
-      String instHome;
+      String instHome = null;
       if (myPrevInstallation.getText() != null) {
         instHome = FileUtil.toSystemDependentName(PathUtil.getCanonicalPath(myPrevInstallation.getText()));
       }
-      else {
-        instHome = null;
-      }
 
-      if (StringUtil.isEmpty(instHome)) {
-        JOptionPane.showMessageDialog(this,
-                                      mySettings.getEmptyHomeErrorText(productWithVendor),
-                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
+      String productWithVendor = mySettings.getProductName(ThreeState.YES);
+      if (StringUtil.isEmptyOrSpaces(instHome)) {
+        showError(mySettings.getEmptyHomeErrorText(productWithVendor));
         return;
       }
 
-      String currentInstanceHomePath = PathManager.getHomePath();
-      if (SystemInfo.isFileSystemCaseSensitive
-          ? currentInstanceHomePath.equals(instHome)
-          : currentInstanceHomePath.equalsIgnoreCase(instHome)) {
-        JOptionPane.showMessageDialog(this,
-                                      mySettings.getCurrentHomeErrorText(productWithVendor),
-                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
+      String thisInstanceHome = PathManager.getHomePath();
+      if (SystemInfo.isFileSystemCaseSensitive ? thisInstanceHome.equals(instHome) : thisInstanceHome.equalsIgnoreCase(instHome)) {
+        showError(mySettings.getCurrentHomeErrorText(productWithVendor));
         return;
       }
 
-      assert instHome != null;
       if (myRbImport.isSelected() && !ConfigImportHelper.isInstallationHomeOrConfig(instHome, mySettings)) {
-        JOptionPane.showMessageDialog(this,
-                                      mySettings.getInvalidHomeErrorText(productWithVendor, instHome),
-                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
+        showError(mySettings.getInvalidHomeErrorText(productWithVendor, instHome));
         return;
       }
 
       if (!new File(instHome).canRead()) {
-        JOptionPane.showMessageDialog(this,
-                                      mySettings.getInaccessibleHomeErrorText(instHome),
-                                      mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
+        showError(mySettings.getInaccessibleHomeErrorText(instHome));
         return;
       }
     }
 
+    //noinspection SSBasedInspection
     dispose();
+  }
+
+  private void showError(String message) {
+    JOptionPane.showMessageDialog(this, message, mySettings.getInstallationHomeRequiredTitle(), JOptionPane.ERROR_MESSAGE);
   }
 
   public boolean isImportEnabled() {
@@ -226,12 +213,11 @@ public class ImportOldConfigsPanel extends JDialog {
     return myRbImportAuto.isSelected() ? myGuessedOldConfig : new File(myPrevInstallation.getText());
   }
 
-  private void update() {
-    myPrevInstallation.setEnabled(myRbImport.isSelected());
-  }
+  public static void main(String[] args) throws Exception {
+    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-  public static void main(String[] args) {
-    ImportOldConfigsPanel dlg = new ImportOldConfigsPanel(null, new ConfigImportSettings());
-    dlg.setVisible(true);
+    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(null, new ConfigImportSettings());
+    dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    dialog.setVisible(true);
   }
 }

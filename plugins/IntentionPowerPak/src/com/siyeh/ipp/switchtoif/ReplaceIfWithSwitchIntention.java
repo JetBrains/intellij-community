@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package com.siyeh.ipp.switchtoif;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ControlFlowUtils;
-import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +66,7 @@ public class ReplaceIfWithSwitchIntention extends Intention {
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
-    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement);
+    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0);
     if (switchExpression == null) {
       return;
     }
@@ -223,20 +225,22 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         values.addCaseExpression(argument);
       }
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
+    else if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR.equals(tokenType)) {
-        extractCaseExpressions(lhs, switchExpression, values);
-        extractCaseExpressions(rhs, switchExpression, values);
+        for (PsiExpression operand : operands) {
+          extractCaseExpressions(operand, switchExpression, values);
+        }
       }
-      else {
+      else if (JavaTokenType.EQEQ.equals(tokenType) && operands.length == 2) {
+        final PsiExpression lhs = operands[0];
+        final PsiExpression rhs = operands[1];
         if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, rhs)) {
           values.addCaseExpression(lhs);
         }
-        else {
+        else if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, lhs)){
           values.addCaseExpression(rhs);
         }
       }

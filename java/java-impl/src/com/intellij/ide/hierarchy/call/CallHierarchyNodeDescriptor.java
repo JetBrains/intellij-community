@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,10 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,12 +48,11 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private final boolean myNavigateToReference;
 
-  public CallHierarchyNodeDescriptor(
-    final Project project,
-    final HierarchyNodeDescriptor parentDescriptor,
-    final PsiElement element,
-    final boolean isBase,
-    final boolean navigateToReference){
+  public CallHierarchyNodeDescriptor(@NotNull Project project,
+                                     final HierarchyNodeDescriptor parentDescriptor,
+                                     @NotNull PsiElement element,
+                                     final boolean isBase,
+                                     final boolean navigateToReference) {
     super(project, parentDescriptor, element, isBase);
     myNavigateToReference = navigateToReference;
   }
@@ -68,7 +64,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     return myElement == null ? null : getEnclosingElement(myElement);
   }
 
-  static PsiMember getEnclosingElement(final PsiElement element){
+  public static PsiMember getEnclosingElement(final PsiElement element){
     return PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class, PsiClass.class);
   }
 
@@ -124,7 +120,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
     if (enclosingElement instanceof PsiMethod) {
-      if (enclosingElement instanceof JspHolderMethod) {
+      if (enclosingElement instanceof SyntheticElement) {
         PsiFile file = enclosingElement.getContainingFile();
         myHighlightedText.getEnding().addText(file != null ? file.getName() : IdeBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
@@ -138,16 +134,16 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         }
         final String methodText = PsiFormatUtil.formatMethod(
           method,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-          PsiFormatUtil.SHOW_TYPE
+          PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+          PsiFormatUtilBase.SHOW_TYPE
         );
         buffer.append(methodText);
 
         myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
       }
     }
-    else if (JspPsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile) {
-      final JspFile file = JspPsiUtil.getJspFile(enclosingElement);
+    else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
+      final PsiFile file = PsiUtilCore.getTemplateLanguageFile(enclosingElement);
       myHighlightedText.getEnding().addText(file.getName(), mainTextAttributes);
     }
     else {
@@ -156,7 +152,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (myUsageCount > 1) {
       myHighlightedText.getEnding().addText(IdeBundle.message("node.call.hierarchy.N.usages", myUsageCount), HierarchyNodeDescriptor.getUsageCountPrefixAttributes());
     }
-    if (!(JspPsiUtil.isInJspFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
+    if (!(FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile)) {
       final PsiClass containingClass = enclosingElement instanceof PsiMethod
                                        ? ((PsiMethod)enclosingElement).getContainingClass()
                                        : (PsiClass)enclosingElement;

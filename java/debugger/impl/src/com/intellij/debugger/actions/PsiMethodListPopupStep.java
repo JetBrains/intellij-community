@@ -15,8 +15,12 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -29,52 +33,70 @@ import java.util.List;
  * @author Eugene Zhuravlev
 *         Date: Nov 21, 2006
 */
-class PsiMethodListPopupStep implements ListPopupStep {
-  private final List<PsiMethod> myMethods;
+class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
+  private final List<SmartStepTarget> myTargets;
   private final OnChooseRunnable myStepRunnable;
+  private final ScopeHighlighter myScopeHighlighter;
 
-
-  public static interface OnChooseRunnable {
-    void execute(PsiMethod chosenMethod);
+  public interface OnChooseRunnable {
+    void execute(SmartStepTarget stepTarget);
   }
 
-  public PsiMethodListPopupStep(final List<PsiMethod> methods, final OnChooseRunnable stepRunnable) {
-    myMethods = methods;
+  public PsiMethodListPopupStep(Editor editor, final List<SmartStepTarget> targets, final OnChooseRunnable stepRunnable) {
+    myTargets = targets;
+    myScopeHighlighter = new ScopeHighlighter(editor);
     myStepRunnable = stepRunnable;
   }
 
   @NotNull
-  public List getValues() {
-    return myMethods;
+  public ScopeHighlighter getScopeHighlighter() {
+    return myScopeHighlighter;
   }
 
-  public boolean isSelectable(Object value) {
+  @NotNull
+  public List<SmartStepTarget> getValues() {
+    return myTargets;
+  }
+
+  public boolean isSelectable(SmartStepTarget value) {
     return true;
   }
 
-  public Icon getIconFor(Object aValue) {
-    if (aValue instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)aValue;
-      return method.getIcon(0);
+  public Icon getIconFor(SmartStepTarget aValue) {
+    if (aValue instanceof MethodSmartStepTarget) {
+      return ((MethodSmartStepTarget)aValue).getMethod().getIcon(0);
+    }
+    if (aValue instanceof LambdaSmartStepTarget) {
+      return AllIcons.Nodes.Function;
     }
     return null;
   }
 
   @NotNull
-    public String getTextFor(Object value) {
-    if (value instanceof PsiMethod) {
-      return PsiFormatUtil.formatMethod(
-        (PsiMethod)value,
+    public String getTextFor(SmartStepTarget value) {
+    final String label = value.getLabel();
+    final String formatted;
+    if (value instanceof MethodSmartStepTarget) {
+      final PsiMethod method = ((MethodSmartStepTarget)value).getMethod();
+      formatted = PsiFormatUtil.formatMethod(
+        method,
         PsiSubstitutor.EMPTY,
         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
         PsiFormatUtil.SHOW_TYPE,
         999
       );
     }
-    return value.toString();
+    else if (value instanceof LambdaSmartStepTarget){
+      final PsiLambdaExpression lambda = ((LambdaSmartStepTarget)value).getLambda();
+      formatted = PsiFormatUtil.formatType(lambda.getType(), 0, PsiSubstitutor.EMPTY);
+    }
+    else {
+      formatted = "";
+    }
+    return label != null? label + formatted : formatted;
   }
 
-  public ListSeparator getSeparatorAbove(Object value) {
+  public ListSeparator getSeparatorAbove(SmartStepTarget value) {
     return null;
   }
 
@@ -86,9 +108,10 @@ class PsiMethodListPopupStep implements ListPopupStep {
     return DebuggerBundle.message("title.smart.step.popup");
   }
 
-  public PopupStep onChosen(Object selectedValue, final boolean finalChoice) {
+  public PopupStep onChosen(SmartStepTarget selectedValue, final boolean finalChoice) {
     if (finalChoice) {
-      myStepRunnable.execute((PsiMethod)selectedValue);
+      myScopeHighlighter.dropHighlight();
+      myStepRunnable.execute(selectedValue);
     }
     return FINAL_CHOICE;
   }
@@ -97,11 +120,12 @@ class PsiMethodListPopupStep implements ListPopupStep {
     return null;
   }
 
-  public boolean hasSubstep(Object selectedValue) {
+  public boolean hasSubstep(SmartStepTarget selectedValue) {
     return false;
   }
 
   public void canceled() {
+    myScopeHighlighter.dropHighlight();
   }
 
   public boolean isMnemonicsNavigationEnabled() {

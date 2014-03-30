@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.UITestUtil;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -575,7 +576,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     assertEquals(PoolOfTestIcons.NOT_RAN, myRenderer.getIcon());
     assertOneElement(myFragContainer.getFragments());
-    assertEquals("Unable to attach test reporter to test framework or test framework quit unexpectedly", myFragContainer.getTextAt(0));
+    assertEquals(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.reporter.not.attached"), myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.ERROR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
 
   }

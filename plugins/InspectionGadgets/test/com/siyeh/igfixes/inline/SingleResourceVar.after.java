@@ -1,7 +1,6 @@
 class C {
     void m() throws Exception {
-        AutoCloseable r1 = null;
-        try {
+        try (AutoCloseable r1 = null) {
             System.out.println(r1 + ", " + r1);
         }
     }

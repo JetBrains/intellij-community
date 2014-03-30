@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
@@ -71,8 +86,7 @@ public class ConfigFileImpl implements ConfigFile {
   @Override
   @Nullable
   public PsiFile getPsiFile() {
-    Reference<PsiFile> ref = myPsiFile;
-    PsiFile psiFile = ref == null ? null : ref.get();
+    PsiFile psiFile = com.intellij.reference.SoftReference.dereference(myPsiFile);
 
     if (psiFile != null && psiFile.isValid()) {
       return psiFile;

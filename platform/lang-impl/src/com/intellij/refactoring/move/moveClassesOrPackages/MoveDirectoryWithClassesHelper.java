@@ -128,6 +128,7 @@ public abstract class MoveDirectoryWithClassesHelper {
         myFile = file;
       }
 
+      @Override
       @Nullable
       public PsiReference getReference() {
         PsiElement element = getElement();

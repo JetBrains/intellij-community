@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
   }
 
   private static class DefaultHandler extends EditorActionHandler {
+    private DefaultHandler() {
+      super(true);
+    }
+
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
@@ -75,13 +79,18 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       int startWordOffset = Math.max(0, ranges.get(0).getStartOffset());
       int endWordOffset = Math.min(ranges.get(0).getEndOffset(), document.getTextLength());
 
-      if (camel && ranges.size() == 2 && editor.getSelectionModel().getSelectionStart() == startWordOffset &&
-          editor.getSelectionModel().getSelectionEnd() == endWordOffset) {
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (camel && ranges.size() == 2 && selectionModel.getSelectionStart() == startWordOffset &&
+          selectionModel.getSelectionEnd() == endWordOffset) {
         startWordOffset = Math.max(0, ranges.get(1).getStartOffset());
         endWordOffset = Math.min(ranges.get(1).getEndOffset(), document.getTextLength());
       }
 
-      editor.getSelectionModel().setSelection(startWordOffset, endWordOffset);
+      if (startWordOffset >= selectionModel.getSelectionStart() && selectionModel.getSelectionEnd() >= endWordOffset && ranges.size() == 1) {
+        startWordOffset = 0;
+        endWordOffset = document.getTextLength();
+      }
+      selectionModel.setSelection(startWordOffset, endWordOffset);
     }
   }
 
@@ -89,6 +98,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     private final EditorActionHandler myDefaultHandler;
 
     private Handler(EditorActionHandler defaultHandler) {
+      super(true);
       myDefaultHandler = defaultHandler;
     }
 

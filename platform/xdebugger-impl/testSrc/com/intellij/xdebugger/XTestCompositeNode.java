@@ -17,4 +17,8 @@ public class XTestCompositeNode extends XTestContainer<XValue> implements XCompo
     }
     addChildren(list, last);
   }
+
+  @Override
+  public void setAlreadySorted(boolean alreadySorted) {
+  }
 }

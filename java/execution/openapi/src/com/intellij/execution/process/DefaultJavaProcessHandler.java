@@ -39,6 +39,7 @@ public class DefaultJavaProcessHandler extends OSProcessHandler {
     myCharset = charset;
   }
 
+  @Override
   public Charset getCharset() {
     return myCharset;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -80,27 +80,24 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myDaemonCodeAnalyzer = project == null ? null : (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     myDocument = document;
     myFile = file;
-    mySeverityRegistrar = SeverityRegistrar.getInstance(myProject);
+    mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
     refresh();
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
-      model.addMarkupModelListener(this, new MarkupModelListener() {
+      model.addMarkupModelListener(this, new MarkupModelListener.Adapter() {
         @Override
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, 1);
         }
-  
+
         @Override
         public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, -1);
         }
-  
-        @Override
-        public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
-        }
       });
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
             incErrorCount(rangeHighlighter, 1);
@@ -186,10 +183,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     Set<Language> languages = provider.getLanguages();
     for (Language language : languages) {
       PsiFile root = provider.getPsi(language);
-      if (!HighlightLevelUtil.shouldHighlight(root)) {
+      if (!HighlightingLevelManager.getInstance(myProject).shouldHighlight(root)) {
         noHighlightingRoots.add(language.getID());
       }
-      else if (!HighlightLevelUtil.shouldInspect(root)) {
+      else if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(root)) {
         noInspectionRoots.add(language.getID());
       }
     }

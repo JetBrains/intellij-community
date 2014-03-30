@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class DefaultArrangementEntryMatcherSerializerTest {
     List children1 = expected.getChildren();
     List children2 = actual.getChildren();
     assertEquals(children1.size(), children2.size());
-    if (children1.size() == 0) {
+    if (children1.isEmpty()) {
       assertTrue(
         String.format("Content mismatch - expected: '%s', actual: '%s'", expected.getText(), actual.getText()),
         Comparing.equal(expected.getText(), actual.getText())

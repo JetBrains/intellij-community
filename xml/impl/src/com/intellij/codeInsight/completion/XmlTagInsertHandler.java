@@ -27,7 +27,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -198,11 +198,11 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     if (tag instanceof HtmlTag) {
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(tag.getProject()).getInspectionProfile();
-      RequiredAttributesInspection inspection = (RequiredAttributesInspection)profile.getUnwrappedTool(
-        RequiredAttributesInspection.SHORT_NAME, tag);
+      XmlEntitiesInspection inspection = (XmlEntitiesInspection)profile.getUnwrappedTool(
+        XmlEntitiesInspection.REQUIRED_ATTRIBUTES_SHORT_NAME, tag);
 
       if (inspection != null) {
-        StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries(0));
+        StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries());
         notRequiredAttributes = new HashSet<String>();
 
         while(tokenizer.hasMoreElements()) notRequiredAttributes.add(tokenizer.nextToken());
@@ -287,7 +287,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag.getName())) {
-        template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
+        template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : "/>");
       }
       else {
         if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0

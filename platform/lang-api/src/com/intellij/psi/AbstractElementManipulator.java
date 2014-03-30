@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,21 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public abstract class AbstractElementManipulator<T extends PsiElement> implements ElementManipulator<T> {
 
-  public T handleContentChange(final T element, final String newContent) throws IncorrectOperationException {
+  @Override
+  public T handleContentChange(@NotNull final T element, final String newContent) throws IncorrectOperationException {
     return handleContentChange(element, getRangeInElement(element), newContent);
   }
 
-  public TextRange getRangeInElement(final T element) {
+  @Override
+  @NotNull
+  public TextRange getRangeInElement(@NotNull final T element) {
     return new TextRange(0, element.getTextLength());
   }
 }

@@ -21,14 +21,17 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
 
-public interface ConsoleView extends ExecutionConsole{
-  void print(String s, ConsoleViewContentType contentType);
+public interface ConsoleView extends ExecutionConsole {
+  void print(@NotNull String s, @NotNull ConsoleViewContentType contentType);
+
   void clear();
+
   void scrollTo(int offset);
 
   void attachToProcess(ProcessHandler processHandler);
 
   void setOutputPaused(boolean value);
+
   boolean isOutputPaused();
 
   boolean hasDeferredOutput();

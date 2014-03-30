@@ -16,7 +16,7 @@
 package com.intellij.errorreport.itn;
 
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;

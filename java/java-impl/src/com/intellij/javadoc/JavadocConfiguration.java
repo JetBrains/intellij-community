@@ -21,8 +21,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -32,6 +30,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -45,20 +44,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -95,7 +93,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return new MyJavaCommandLineState(myProject, myGenerationScope);
+    return new MyJavaCommandLineState(myProject, myGenerationScope, env);
   }
 
   public String getName() {
@@ -134,14 +132,12 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final Project myProject;
     @NonNls private static final String INDEX_HTML = "index.html";
 
-    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions) {
-      super(null);
+    public MyJavaCommandLineState(Project project, AnalysisScope generationOptions, ExecutionEnvironment env) {
+      super(env);
       myGenerationOptions = generationOptions;
       myProject = project;
-      TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"));
-      builder.addFilter(new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
-      setConsoleBuilder(builder);
+      addConsoleFilters(new RegexpFilter(project, "$FILE_PATH$:$LINE$:[^\\^]+\\^"),
+                        new RegexpFilter(project, "$FILE_PATH$:$LINE$: warning - .+$"));
     }
 
     protected GeneralCommandLine createCommandLine() throws ExecutionException {
@@ -232,25 +228,7 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
       parameters.addParametersString(OTHER_OPTIONS);
 
-      final PathsList classPath;
-      if (jdk.getSdkType() instanceof JavaSdk) {
-        classPath = OrderEnumerator.orderEntries(myProject).withoutSdk().withoutModuleSourceEntries().getPathsList();
-      }
-      else {
-        //libraries are included into jdk
-        classPath = OrderEnumerator.orderEntries(myProject).withoutModuleSourceEntries().getPathsList();
-      }
-      final String classPathString = classPath.getPathsString();
-      if (classPathString.length() > 0) {
-        parameters.add("-classpath");
-        parameters.add(classPathString);
-      }
-
-      if (OUTPUT_DIRECTORY != null) {
-        parameters.add("-d");
-        parameters.add(OUTPUT_DIRECTORY.replace('/', File.separatorChar));
-      }
-
+      final Set<Module> modules = new LinkedHashSet<Module>();
       try {
         final File sourcePathTempFile = FileUtil.createTempFile("javadoc", "args.txt", true);
         parameters.add("@" + sourcePathTempFile.getCanonicalPath());
@@ -265,10 +243,10 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
                                                  scopeType == AnalysisScope.MODULES ||
                                                  scopeType == AnalysisScope.PROJECT ||
                                                  scopeType == AnalysisScope.DIRECTORY;
-              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, usePackageNotation));
+              myGenerationOptions.accept(new MyContentIterator(myProject, packages, sources, modules, usePackageNotation));
             }
           };
-          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", false, myProject)) {
+          if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRunnable, "Search for sources to generate javadoc in...", true, myProject)) {
             return;
           }
           if (packages.size() + sources.size() == 0) {
@@ -310,6 +288,27 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       catch (IOException e) {
         LOGGER.error(e);
       }
+
+      final PathsList classPath;
+      final OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
+      if (jdk.getSdkType() instanceof JavaSdk) {
+        classPath = orderEnumerator.withoutSdk().withoutModuleSourceEntries().getPathsList();
+      }
+      else {
+        //libraries are included into jdk
+        classPath = orderEnumerator.withoutModuleSourceEntries().getPathsList();
+      }
+      final String classPathString = classPath.getPathsString();
+      if (classPathString.length() > 0) {
+        parameters.add("-classpath");
+        parameters.add(classPathString);
+      }
+
+      if (OUTPUT_DIRECTORY != null) {
+        parameters.add("-d");
+        parameters.add(OUTPUT_DIRECTORY.replace('/', File.separatorChar));
+      }
+
     }
 
     @NotNull
@@ -334,9 +333,15 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
     private final PsiManager myPsiManager;
     private final Collection<String> myPackages;
     private final Collection<String> mySourceFiles;
+    private final Set<Module> myModules;
     private final boolean myUsePackageNotation;
 
-    public MyContentIterator(Project project, Collection<String> packages, Collection<String> sources, boolean canUsePackageNotation) {
+    public MyContentIterator(Project project,
+                             Collection<String> packages,
+                             Collection<String> sources,
+                             Set<Module> modules,
+                             boolean canUsePackageNotation) {
+      myModules = modules;
       myUsePackageNotation = canUsePackageNotation;
       myPsiManager = PsiManager.getInstance(project);
       myPackages = packages;
@@ -348,11 +353,14 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       final VirtualFile fileOrDir = file.getVirtualFile();
       if (fileOrDir == null) return;
       if (!fileOrDir.isInLocalFileSystem()) return;
-      final Module module = ModuleUtil.findModuleForFile(fileOrDir, myPsiManager.getProject());
+      final Module module = ModuleUtilCore.findModuleForFile(fileOrDir, myPsiManager.getProject());
+      if (module != null) {
+        myModules.add(module);
+      }
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
         final String packageName = javaFile.getPackageName();
-        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof JspFile)) || !myUsePackageNotation) {
+        if (containsPackagePrefix(module, packageName) || (packageName.length() == 0 && !(javaFile instanceof ServerPageFile)) || !myUsePackageNotation) {
           mySourceFiles.add(FileUtil.toSystemIndependentName(fileOrDir.getPath()));
         }
         else {
@@ -363,10 +371,8 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
 
     private static boolean containsPackagePrefix(Module module, String packageFQName) {
       if (module == null) return false;
-      final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-      for (ContentEntry contentEntry : contentEntries) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (SourceFolder sourceFolder : sourceFolders) {
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
           final int prefixLength = packagePrefix.length();
           if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {

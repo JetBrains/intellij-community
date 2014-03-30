@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class NegationBroadScopeTest extends LightQuickFixTestCase {
+public class NegationBroadScopeTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     return super.execute(element, state) || element instanceof PsiField;
   }
 
@@ -46,7 +47,11 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     final List<GroovyResolveResult> candidates = getCandidatesInternal();
     final int size = candidates.size();
     if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
-    final GroovyResolveResult last = candidates.get(size - 1);
+
+    GroovyResolveResult last = candidates.get(size - 1);
+    if (last.getElement() instanceof GrBindingVariable && size > 1) {
+      last = candidates.get(size - 2);
+    }
     if (isCorrectLocalVarOrParam(last)) {
       return new GroovyResolveResult[]{last};
     }

@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -56,7 +57,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
           }
 
           if (!isElementEnabled(project)) {
-            stringBuilder.append(" (project is ignored. See Settings -> Maven -> Ignored Files)");
+            stringBuilder.append(" (project is ignored. See ").append(CommonBundle.settingsActionPath()).append(" | Maven | Ignored Files)");
           }
 
           return stringBuilder.toString();

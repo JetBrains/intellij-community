@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
 public class GroovyElementPattern<T extends GroovyPsiElement,Self extends GroovyElementPattern<T,Self>> extends PsiJavaElementPattern<T,Self> {
   public GroovyElementPattern(final Class<T> aClass) {
@@ -89,6 +87,20 @@ public class GroovyElementPattern<T extends GroovyPsiElement,Self extends Groovy
       }
     });
   }
+
+  public Self regExpOperatorArgument() {
+    return with(new PatternCondition<T>("regExpOperatorArg") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        PsiElement parent = t.getParent();
+        return parent instanceof GrUnaryExpression && ((GrUnaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mBNOT ||
+               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_FIND ||
+               parent instanceof GrBinaryExpression && t == ((GrBinaryExpression)parent).getRightOperand() && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mREGEX_MATCH;
+      }
+    });
+  }
+
+
 
   public static class Capture<T extends GroovyPsiElement> extends GroovyElementPattern<T, Capture<T>> {
     public Capture(final Class<T> aClass) {

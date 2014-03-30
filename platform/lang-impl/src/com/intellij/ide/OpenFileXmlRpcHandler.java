@@ -57,6 +57,7 @@ public class OpenFileXmlRpcHandler {
 
   private static boolean doOpen(final String path, final int line, final int column) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Pair<VirtualFile, Project> data = new File(path).isAbsolute() ? findByAbsolutePath(path) : findByRelativePath(path);
         if (data == null) return;

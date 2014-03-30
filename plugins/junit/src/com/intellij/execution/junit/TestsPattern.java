@@ -29,17 +29,15 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TestsPattern extends TestPackage {
@@ -72,12 +71,8 @@ public class TestsPattern extends TestPackage {
     final Project project = myConfiguration.getProject();
     final Set<String> classNames = new HashSet<String>();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = JavaExecutionUtil.findMainClass(project,
-                                                                className.contains(",")
-                                                                ? className.substring(0, className.indexOf(','))
-                                                                : className,
-                                                                GlobalSearchScope.allScope(project));
-      if (psiClass != null && JUnitUtil.isTestClass(psiClass)) {
+      final PsiClass psiClass = getTestClass(project, className);
+      if (psiClass != null&& JUnitUtil.isTestClass(psiClass)) {
         classNames.add(className);
       }
     }
@@ -112,13 +107,20 @@ public class TestsPattern extends TestPackage {
         }
       };
       mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
       return task;
     }
 
     return super.findTests();
   }
 
+  private static PsiClass getTestClass(Project project, String className) {
+    return JavaExecutionUtil.findMainClass(project,
+                                           (className.contains(",")
+                                           ? className.substring(0, className.indexOf(','))
+                                           : className).trim(), GlobalSearchScope.allScope(project));
+  }
+  
   protected void configureClasspath() throws CantRunException {
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
 
@@ -135,23 +137,62 @@ public class TestsPattern extends TestPackage {
 
   @Override
   public String suggestActionName() {
-    final String configurationName = myConfiguration.getName();
-    if (!myConfiguration.isGeneratedName()) {
-    }
-    return "'" + configurationName + "'"; //todo
+    return null;
   }
 
   @Nullable
   @Override
   public RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration) {
-    return null;
+    final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
+    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    final Set<String> patterns = data.getPatterns();
+    for (final String pattern : patterns) {
+      final PsiClass testClass = getTestClass(configuration.getProject(), pattern.trim());
+      if (testClass != null && testClass.equals(element)) {
+        final RefactoringElementListener listeners =
+          RefactoringListeners.getListeners(testClass, new RefactoringListeners.Accessor<PsiClass>() {
+            private String myOldName = testClass.getQualifiedName();
+            @Override
+            public void setName(String qualifiedName) {
+              final Set<String> replaced = new LinkedHashSet<String>();
+              for (String currentPattern : patterns) {
+                if (myOldName.equals(currentPattern)) {
+                  replaced.add(qualifiedName);
+                  myOldName = qualifiedName;
+                } else {
+                  replaced.add(currentPattern);
+                }
+              }
+              patterns.clear();
+              patterns.addAll(replaced);
+            }
+
+            @Override
+            public PsiClass getPsiElement() {
+              return testClass;
+            }
+
+            @Override
+            public void setPsiElement(PsiClass psiElement) {
+              if (psiElement == testClass) {
+                setName(psiElement.getQualifiedName());
+              }
+            }
+          });
+        if (listeners != null) {
+          composite.addListener(listeners);
+        }
+      }
+    }
+    return composite;
   }
 
   @Override
   public boolean isConfiguredByElement(JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
+                                       PsiPackage testPackage,
+                                       PsiDirectory testDir) {
     /*if (testMethod != null && Comparing.strEqual(testMethod.getName(), configuration.getPersistentData().METHOD_NAME)) {
       return true;
     }*/

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -37,7 +38,6 @@ import java.util.Date;
 import java.util.List;
 
 public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
-  private static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.blue);
   private final IssueLinkRenderer myRenderer;
   private final List<CommittedChangeListDecorator> myDecorators;
   private final Project myProject;
@@ -93,6 +93,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     String date = ", " + getDateOfChangeList(changeList.getCommitDate());
     final FontMetrics fontMetrics = tree.getFontMetrics(tree.getFont());
     final FontMetrics boldMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.BOLD));
+    final FontMetrics italicMetrics = tree.getFontMetrics(tree.getFont().deriveFont(Font.ITALIC));
     if (myDateWidth <= 0 || (fontMetrics.getFont().getSize() != myFontSize)) {
       myDateWidth = Math.max(fontMetrics.stringWidth(", Yesterday 00:00 PM "), fontMetrics.stringWidth(", 00/00/00 00:00 PM "));
       myDateWidth = Math.max(myDateWidth, fontMetrics.stringWidth(getDateOfChangeList(new Date(2000, 11, 31))));
@@ -134,6 +135,15 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
       }
     }
 
+    int branchWidth = 0;
+    String branch = changeList.getBranch();
+    if (branch != null) {
+      branch += " ";
+      branchWidth = italicMetrics.stringWidth(branch);
+      descWidth += branchWidth;
+      append(branch, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    }
+
     if (description.isEmpty() && !truncated) {
       append(VcsBundle.message("committed.changes.empty.comment"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       appendFixedTextFragmentWidth(descMaxWidth);
@@ -148,14 +158,14 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     else {
       final String moreMarker = VcsBundle.message("changes.browser.details.marker");
       int moreWidth = fontMetrics.stringWidth(moreMarker);
-      int remainingWidth = descMaxWidth - moreWidth - numberWidth;
+      int remainingWidth = descMaxWidth - moreWidth - numberWidth - branchWidth;
       description = truncateDescription(description, fontMetrics, remainingWidth);
       myRenderer.appendTextWithLinks(description);
       if (!StringUtil.isEmpty(description)) {
         append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+        append(moreMarker, SimpleTextAttributes.LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       } else if (remainingWidth > 0) {
-        append(moreMarker, LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
+        append(moreMarker, SimpleTextAttributes.LINK_ATTRIBUTES, new CommittedChangesTreeBrowser.MoreLauncher(myProject, changeList));
       }
       // align value is for the latest added piece
       appendFixedTextFragmentWidth(descMaxWidth);
@@ -173,6 +183,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     return description.substring(0, description.length()-1);
   }
 
+  @NotNull
   public Dimension getPreferredSize() {
     return new Dimension(2000, super.getPreferredSize().height);
   }

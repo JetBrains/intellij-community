@@ -46,7 +46,9 @@ import org.codehaus.groovy.util.ListHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -114,7 +116,7 @@ public class MoveClassToModuleFix implements IntentionAction {
       list.setCellRenderer(new PsiElementListCellRenderer<PsiClass>() {
         @Override
         public String getElementText(PsiClass psiClass) {
-          return psiClass.getQualifiedName(); 
+          return psiClass.getQualifiedName();
         }
 
         @Nullable
@@ -134,6 +136,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof PsiClass) {
@@ -153,7 +156,7 @@ public class MoveClassToModuleFix implements IntentionAction {
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
     DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
-    
+
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.moduleScope(myCurrentModule));
@@ -183,9 +186,9 @@ public class MoveClassToModuleFix implements IntentionAction {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module currentModule = fileIndex.getModuleForFile(classVFile);
     if (currentModule == null) return;
-    VirtualFile[] sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots();
-    if (sourceRoots.length == 0) return;
-    final PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots[0]);
+    List<VirtualFile> sourceRoots = ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    if (sourceRoots.isEmpty()) return;
+    final PsiDirectory sourceDirectory = PsiManager.getInstance(project).findDirectory(sourceRoots.get(0));
     if (sourceDirectory == null) return;
 
     VirtualFile vsourceRoot = fileIndex.getSourceRootForFile(classVFile);

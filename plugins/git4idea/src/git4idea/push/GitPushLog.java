@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
@@ -31,10 +33,9 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitUtil;
-import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRepository;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,7 +96,8 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof GitCommit) {
           GitCommit commit = (GitCommit)userObject;
-          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor() + "\n\n" + commit.getDescription();
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor().getName() + "\n\n" +
+                 IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commit.getFullMessage());
         }
         return "";
       }
@@ -112,7 +114,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           Object nodeInfo = node.getUserObject();
           if (nodeInfo instanceof GitCommit) {
             myChangesBrowser.getViewer().setEmptyText("No differences");
-            myChangesBrowser.setChangesToDisplay(((GitCommit)nodeInfo).getChanges());
+            myChangesBrowser.setChangesToDisplay(new ArrayList<Change>(((GitCommit)nodeInfo).getChanges()));
             return;
           }
         }
@@ -334,12 +336,12 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
   @NotNull
   private static String getDateString(@NotNull GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime()) + " ";
+    return DateFormatUtil.formatPrettyDateTime(commit.getTime()) + " ";
   }
 
   @NotNull
   private static String getHashString(@NotNull GitCommit commit) {
-    return commit.getShortHash().toString();
+    return GitUtil.getShortHash(commit.getHash().toString());
   }
 
   private static class MyTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
@@ -362,7 +364,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         renderer.setToolTipText(getHashString(commit) + " " + getDateString(commit));
       }
       else if (userObject instanceof GitRepository) {
-        String repositoryPath = GitUIUtil.getShortRepositoryName((GitRepository)userObject);
+        String repositoryPath = DvcsUtil.getShortRepositoryName((GitRepository)userObject);
         renderer.append(repositoryPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       else if (userObject instanceof GitPushBranchInfo) {
@@ -371,6 +373,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         GitBranch dest = branchInfo.getDestBranch();
 
         GitPushBranchInfo.Type type = branchInfo.getType();
+        final String showingRecentCommits = ", showing " + GitPusher.RECENT_COMMITS_NUMBER + " recent commits";
         String text = fromBranch.getName();
         SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         String additionalText = "";
@@ -384,11 +387,11 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
           case NEW_BRANCH:
             text += " -> +" + dest.getName();
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " new branch will be created.";
+            additionalText = " new branch will be created" + showingRecentCommits;
             break;
           case NO_TRACKED_OR_TARGET:
             attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified.";
+            additionalText = " no tracked branch. Use checkbox below to push branch to manually specified" + showingRecentCommits;
             break;
         }
         renderer.append(text, attrs);

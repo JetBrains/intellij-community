@@ -37,6 +37,8 @@ public abstract class FileIncludeManager {
 
   public abstract VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly);
 
+  public abstract VirtualFile[] getIncludedFiles(@NotNull VirtualFile file, boolean compileTimeOnly, boolean recursively);
+
   public abstract VirtualFile[] getIncludingFiles(@NotNull VirtualFile file, boolean compileTimeOnly);
 
   public abstract void processIncludingFiles(PsiFile context, Processor<Pair<VirtualFile, FileIncludeInfo>> processor);

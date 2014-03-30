@@ -1,0 +1,243 @@
+diff -u mathml3-common.rnc mathml3-common.rnc
+--- mathml3-common.rnc.orig	2012-05-23 11:54:19.000000000 +0900
++++ mathml3-common.rnc	2012-05-24 11:24:13.000000000 +0900
+@@ -2,8 +2,12 @@
+ #     application for describing mathematical notation and capturing
+ #     both its structure and content.
+ #
++#     With additional changes for integration into the validator.nu
++#     service.
++#
+ #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
+-# 
++#     Copyright 2012 Mozilla Foundation
++#
+ #     Use and distribution of this code are permitted under the terms
+ #     W3C Software Notice and License
+ #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
+@@ -11,8 +15,8 @@
+ 
+ default namespace m = "http://www.w3.org/1998/Math/MathML"
+ namespace local = ""
+-
+-start = math
++# added namespace for HTML5 datatype library -- mike
++datatypes w = "http://whattf.org/datatype-draft"
+ 
+ math = element math {math.attributes,MathExpression*}
+ MathExpression = semantics
+@@ -21,7 +25,8 @@
+ 
+ CommonDeprecatedAtt = attribute other {text}?
+ 
+-CommonAtt = attribute id {xsd:ID}?,
++# changed datatype of id attr from ID to w:xml-name -- mike
++CommonAtt = attribute id {w:xml-name}?,
+             attribute xref {text}?,
+             attribute class {xsd:NMTOKENS}?,
+             attribute style {xsd:string}?,
+@@ -56,18 +61,58 @@
+ 
+ annotation = element annotation {annotation.attributes,text}
+                      
+-annotation-xml.model = (MathExpression|anyElement)*
++# changed content model of annotation-xml -- mike
++annotation-xml =
++    ( annotation-xml.xhtml
++    | annotation-xml.svg
++    | annotation-xml.mathml
++    )
++    annotation-xml.model = (MathExpression | anyElement)*
++    anyElement =
++      element * - m:* {
++        (attribute * { text }
++         | text
++         | anyElement)*
++      }
++    annotation-xml.xhtml =
++        element annotation-xml {
++            annotation-xml.model, annotation-xml.attributes, att-encoding.xhtml?
++        }
++        annotation-xml.model.xhtml = 
++          notAllowed
++        att-encoding.xhtml =
++          attribute encoding {
++            string "application/xhtml+xml" | string "text/html"
++          }
++    annotation-xml.svg =
++        element annotation-xml {
++            annotation-xml.model, annotation-xml.attributes, att-encoding.svg?
++        }
++        annotation-xml.model.svg = 
++          notAllowed
++        att-encoding.svg =
++          attribute encoding {
++            string "SVG1.1"
++          }
++    annotation-xml.mathml =
++        element annotation-xml {
++            annotation-xml.model, annotation-xml.attributes, att-encoding.mathml?
++        }
++        annotation-xml.model.mathml = 
++          math
++        att-encoding.mathml =
++          attribute encoding {
++            string "MathML" | string "MathML-Content" | string "MathML-Presentation"
++          }
+ 
+-anyElement =  element (* - m:*) {(attribute * {text}|text| anyElement)*}
+-
+-annotation-xml = element annotation-xml {annotation.attributes,
+-                                         annotation-xml.model}
+ annotation.attributes = CommonAtt,
+ 	                cd?,
+                         name?,
+                         DefEncAtt,
+                         src?
+ 
++annotation-xml.attributes = CommonAtt, cd?, name?, src?
++
+ DefEncAtt = attribute encoding {xsd:string}?,
+             attribute definitionURL {xsd:anyURI}?
+ 
+diff -u mathml3-content.rnc mathml3-content.rnc
+--- mathml3-content.rnc	2012-05-14 19:38:56.000000000 +0900
++++ mathml3-content.rnc	2012-05-14 19:47:57.000000000 +0900
+@@ -3,15 +3,19 @@
+ #     application for describing mathematical notation and capturing
+ #     both its structure and content.
+ #
++#     With additional changes for integration into the validator.nu
++#     service.
++#
+ #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
+-# 
++#     Copyright 2012 Mozilla Foundation
++#
+ #     Use and distribution of this code are permitted under the terms
+ #     W3C Software Notice and License
+ #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
+ 
+ include "mathml3-strict-content.rnc"{
+   cn.content = (text | mglyph | sep | PresentationExpression)* 
+-  cn.attributes = CommonAtt, DefEncAtt, attribute type {text}?, base?
++  cn.attributes = CommonAtt, DefEncAtt, attribute type {text}?, math-base?
+ 
+   ci.attributes = CommonAtt, DefEncAtt, ci.type?
+   ci.type = attribute type {text}
+@@ -31,7 +35,8 @@
+   bind.content = apply.content
+ }
+ 
+-base = attribute base {text}
++# changed pattern name to math-base to avoid name conflict - mike
++math-base = attribute base { text }
+ 
+ 
+ sep = element sep {empty}
+@@ -83,7 +88,7 @@
+ 
+ interval = element interval { CommonAtt, DefEncAtt,closure?, ContExp,ContExp}
+ 
+-unary-functional.class = inverse | ident | domain | codomain | image | ln | log | moment
++unary-functional.class = inverse | ident | domain | codomain | math-image | ln | log | moment
+ ContExp |= unary-functional.class
+ 
+ 
+@@ -91,7 +96,8 @@
+ ident = element ident { CommonAtt, DefEncAtt, empty}
+ domain = element domain { CommonAtt, DefEncAtt, empty}
+ codomain = element codomain { CommonAtt, DefEncAtt, empty}
+-image = element image { CommonAtt, DefEncAtt, empty}
++# changed pattern name to math-image to avoid name conflict - mike
++math-image = element image { CommonAtt, DefEncAtt, empty }
+ ln = element ln { CommonAtt, DefEncAtt, empty}
+ log = element log { CommonAtt, DefEncAtt, empty}
+ moment = element moment { CommonAtt, DefEncAtt, empty}
+@@ -223,11 +229,12 @@
+ curl = element curl { CommonAtt, DefEncAtt, empty}
+ laplacian = element laplacian { CommonAtt, DefEncAtt, empty}
+ 
+-nary-setlist-constructor.class = set | \list
++nary-setlist-constructor.class = math-set | \list
+ ContExp |= nary-setlist-constructor.class
+ 
+ 
+-set = element set { CommonAtt, DefEncAtt, type?, BvarQ*, DomainQ*, ContExp*}
++# changed pattern name to math-set to avoid name conflict - mike
++math-set = element set { CommonAtt, DefEncAtt, type?, BvarQ*, DomainQ*, ContExp*}
+ \list = element \list { CommonAtt, DefEncAtt, order?, BvarQ*, DomainQ*, ContExp*}
+ 
+ nary-set.class = union | intersect | cartesianproduct
+@@ -370,4 +377,4 @@
+ false = element false { CommonAtt, DefEncAtt, empty}
+ pi = element pi { CommonAtt, DefEncAtt, empty}
+ eulergamma = element eulergamma { CommonAtt, DefEncAtt, empty}
+-infinity = element infinity { CommonAtt, DefEncAtt, empty}
+\ No newline at end of file
++infinity = element infinity { CommonAtt, DefEncAtt, empty}
+diff -u mathml3-presentation.rnc mathml3-presentation.rnc
+--- mathml3-presentation.rnc	2012-05-14 19:38:57.000000000 +0900
++++ mathml3-presentation.rnc	2012-05-14 19:18:19.000000000 +0900
+@@ -3,7 +3,11 @@
+ #     application for describing mathematical notation and capturing
+ #     both its structure and content.
+ #
++#     With additional changes for integration into the validator.nu
++#     service.
++#
+ #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
++#     Copyright 2012 Mozilla Foundation
+ # 
+ #     Use and distribution of this code are permitted under the terms
+ #     W3C Software Notice and License
+@@ -123,12 +127,16 @@
+   attribute indentshiftlast {length | "indentshift"}?
+ 
+ 
+-mtext = element mtext {mtext.attributes, token.content*}
++# changed mtext content model to use mtext.content instead of generic
++# token.content, because we want to handle mtext differently than other
++# MathML "token elements" -- mike
++mtext = element mtext { mtext.attributes, mtext.content* }
+ mtext.attributes = 
+   CommonAtt,
+   CommonPresAtt,
+   TokenAtt
+ 
++mtext.content = mglyph | malignmark | text
+ 
+ mspace = element mspace {mspace.attributes, empty}
+ mspace.attributes = 
+diff -u mathml3.rnc mathml3.rnc
+--- mathml3.rnc	2012-05-14 19:38:58.000000000 +0900
++++ mathml3.rnc	2012-05-14 19:34:20.000000000 +0900
+@@ -2,20 +2,17 @@
+ #     application for describing mathematical notation and capturing
+ #     both its structure and content.
+ #
++#     With additional changes for integration into the validator.nu
++#     service.
++#
+ #     Copyright 1998-2010 W3C (MIT, ERCIM, Keio)
++#     Copyright 2012 Mozilla Foundation
+ # 
+ #     Use and distribution of this code are permitted under the terms
+ #     W3C Software Notice and License
+ #     http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
+ 
+-
+-default namespace m = "http://www.w3.org/1998/Math/MathML"
+-
+-## Content  MathML
+-include "mathml3-content.rnc" 
+-
+-## Presentation MathML
+-include "mathml3-presentation.rnc"
+-
+-## math and semantics common to both Content and Presentation
+-include "mathml3-common.rnc"
++# moved necessary includes into mathml3-inc.rnc file and we then just
++# include that here; also, set start = math -- mike
++include "mathml3-inc.rnc"
++start = math

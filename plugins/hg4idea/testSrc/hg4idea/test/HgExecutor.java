@@ -15,11 +15,11 @@
  */
 package hg4idea.test;
 
-import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.Executor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -32,17 +32,13 @@ public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
 
-  private static final String HG_EXECUTABLE = doFindExecutable();
+  @NotNull private static final String HG_EXECUTABLE = doFindExecutable();
 
   private static String doFindExecutable() {
     final String programName = "hg";
     final String unixExec = "hg";
     final String winExec = "hg.exe";
-    String exec = findInPathEnvs(programName, Arrays.asList(HG_EXECUTABLE_ENV));
-    if (exec != null) {
-      return exec;
-    }
-    exec = findInPath(programName, unixExec, winExec);
+    String exec = findEnvValue(programName, Arrays.asList(HG_EXECUTABLE_ENV));
     if (exec != null) {
       return exec;
     }
@@ -58,17 +54,27 @@ public class HgExecutor extends Executor {
     File bin = new File(pluginRoot, FileUtil.toSystemDependentName("testData/bin"));
     File exec = new File(bin, SystemInfo.isWindows ? winExec : unixExec);
     if (exec.exists() && exec.canExecute()) {
-      log("Using " + programName + " from test data");
+      debug("Using " + programName + " from test data");
       return exec.getPath();
     }
     return null;
   }
 
   public static String hg(String command) {
-    List<String> split = StringUtil.split(command, " ");
+    List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
-    log("hg " + command);
-    return run(split);
+    debug("hg " + command);
+    return run(split, true);
   }
 
+  public static void updateProject() {
+    hg("pull");
+    hg("update");
+    hg("merge");
+  }
+
+  @NotNull
+  public static String getHgExecutable() {
+    return HG_EXECUTABLE;
+  }
 }

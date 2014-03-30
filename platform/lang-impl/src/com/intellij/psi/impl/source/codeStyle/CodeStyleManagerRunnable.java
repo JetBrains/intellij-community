@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -34,15 +35,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author nik
-*/
+ * @author nik
+ */
 abstract class CodeStyleManagerRunnable<T> {
-  protected              CodeStyleSettings                     mySettings;
-  protected              CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  protected              FormattingModel                       myModel;
-  protected              TextRange                             mySignificantRange;
-  private final          CodeStyleManagerImpl                  myCodeStyleManager;
-  @NotNull private final FormattingMode                        myMode;
+  protected CodeStyleSettings mySettings;
+  protected CommonCodeStyleSettings.IndentOptions myIndentOptions;
+  protected FormattingModel myModel;
+  protected TextRange mySignificantRange;
+  private final CodeStyleManagerImpl myCodeStyleManager;
+  @NotNull private final FormattingMode myMode;
 
   CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager, @NotNull FormattingMode mode) {
     myCodeStyleManager = codeStyleManager;
@@ -58,7 +59,7 @@ abstract class CodeStyleManagerRunnable<T> {
     Document document = documentManager.getDocument(file);
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+      final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
           range = documentWindow.injectedToHost(range);
@@ -91,12 +92,21 @@ abstract class CodeStyleManagerRunnable<T> {
     FormattingModelBuilder elementBuilder = element != null ? LanguageFormatting.INSTANCE.forContext(element) : builder;
     if (builder != null && elementBuilder != null) {
       mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-      myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
+
+      if (builder instanceof FormattingModelBuilderEx) {
+        myIndentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, new FormatTextRanges(mySignificantRange, true), mySettings);
+      }
+      if (myIndentOptions == null) {
+        myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+      }
+
       myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
 
       if (document != null && useDocumentBaseFormattingModel()) {
-        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings, file.getFileType(), file);
+        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings,
+                                                   file.getFileType(), file);
       }
 
       final T result = doPerform(offset, range);
@@ -123,7 +133,7 @@ abstract class CodeStyleManagerRunnable<T> {
   protected abstract T doPerform(int offset, TextRange range);
 
   private static boolean isInsidePlainComment(int offset, @Nullable PsiElement element) {
-    if (!(element instanceof PsiComment) || !element.getTextRange().contains(offset)) {
+    if (!(element instanceof PsiComment) || element instanceof PsiDocCommentBase || !element.getTextRange().contains(offset)) {
       return false;
     }
 
@@ -135,7 +145,8 @@ abstract class CodeStyleManagerRunnable<T> {
   }
 
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
-    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
+    final ASTNode elementAtOffset =
+      SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
       int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
       return new TextRange(significantRangeStart, offset);

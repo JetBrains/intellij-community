@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
@@ -52,11 +53,14 @@ import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSuggester;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
@@ -107,6 +111,16 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     init();
   }
 
+  @Nullable
+  public static PsiClass getParentClass(PsiElement occurrence) {
+    PsiElement cur = occurrence;
+    while (true) {
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(cur, PsiClass.class, true);
+      if (parentClass == null || parentClass.hasModifierProperty(PsiModifier.STATIC)) return parentClass;
+      cur = parentClass;
+    }
+  }
+
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
@@ -122,7 +136,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     initializeName();
     initializeTargetClassEditor();
 
-    if (myContext.getVar() != null) {
+    if (GrIntroduceHandlerBase.resolveLocalVar(myContext) != null) {
       myReplaceAllOccurrences.setEnabled(false);
       myReplaceAllOccurrences.setSelected(true);
     }
@@ -161,7 +175,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myTargetClassPanel.add(myTargetClassEditor, BorderLayout.CENTER);
     Set<String> possibleClassNames = new LinkedHashSet<String>();
     for (final PsiElement occurrence : myContext.getOccurrences()) {
-      final PsiClass parentClass = GrIntroduceConstantHandler.getParentClass(occurrence);
+      final PsiClass parentClass = getParentClass(occurrence);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
         possibleClassNames.add(parentClass.getQualifiedName());
       }
@@ -222,6 +236,12 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return this;
   }
 
+  @NotNull
+  @Override
+  public LinkedHashSet<String> suggestNames() {
+    return new GrFieldNameSuggester(myContext, new GroovyVariableValidator(myContext), true).suggestNames();
+  }
+
   @Nullable
   @Override
   public String getName() {
@@ -242,21 +262,28 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   private void createUIComponents() {
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
-    if (myContext.getExpression() == null) {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.getVar().getDeclaredType()
-      );
+
+    final GrVariable var = myContext.getVar();
+    final GrExpression expression = myContext.getExpression();
+    final StringPartInfo stringPart = myContext.getStringPart();
+    if (expression != null) {
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
+    }
+    else if (stringPart != null) {
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(stringPart.getLiteral());
     }
     else {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.getExpression());
+      assert var != null;
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
     }
 
     List<String> names = new ArrayList<String>();
-    final GrVariable var = myContext.getVar();
     if (var != null) {
       names.add(var.getName());
     }
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), new GroovyVariableValidator(myContext), true);
-    ContainerUtil.addAll(names, possibleNames);
+    if (expression != null) {
+      ContainerUtil.addAll(names, suggestNames());
+    }
 
     myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
@@ -342,7 +369,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
       if (newClass == null &&
           Messages.showOkCancelDialog(myContext.getProject(), GroovyRefactoringBundle.message("class.does.not.exist.in.the.module"),
-                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != OK_EXIT_CODE) {
+                                      IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
         return;
       }
       myTargetClassInfo = new TargetClassInfo(targetClassName, myContext.getPlace().getContainingFile().getContainingDirectory(), module, myContext.getProject());
@@ -410,7 +437,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GrIntroduceConstantDialog.class);
       try {
         final GroovyFile file =
-          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS);
+          (GroovyFile)GroovyTemplatesFactory.createFromTemplate(psiDirectory, shortName, fileName, GroovyTemplates.GROOVY_CLASS, true);
         return file.getTypeDefinitions()[0];
       }
       finally {

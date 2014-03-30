@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.*;
@@ -51,7 +52,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && canShowDiff(changes));
   }
 
@@ -61,7 +62,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);

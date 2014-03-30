@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +23,6 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -140,7 +139,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myModifierList)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myModifierList)) return;
+    if (variable != null && !FileModificationService.getInstance().preparePsiElementForWrite(variable)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
@@ -180,17 +180,15 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         }));
     }
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
-
     if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,
                                    QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),
-                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            if (!CodeInsightUtilBase.preparePsiElementsForWrite(modifierLists)) {
+            if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
               return;
             }
 

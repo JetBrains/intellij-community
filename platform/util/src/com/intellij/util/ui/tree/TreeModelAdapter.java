@@ -15,22 +15,26 @@
  */
 package com.intellij.util.ui.tree;
 
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 
 /**
  * @author dyoma
  */
 public abstract class TreeModelAdapter implements TreeModelListener {
+  @Override
   public void treeNodesChanged(TreeModelEvent e) {
   }
 
+  @Override
   public void treeNodesInserted(TreeModelEvent e) {
   }
 
+  @Override
   public void treeNodesRemoved(TreeModelEvent e) {
   }
 
+  @Override
   public void treeStructureChanged(TreeModelEvent e) {
   }
 }

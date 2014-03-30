@@ -13,7 +13,7 @@ XmlFile:test.dtd
     PsiWhiteSpace(' ')
     PsiElement(XML_ENTITY_DECL)
       XmlToken:XML_ENTITY_DECL_START('<!ENTITY')
-      PsiErrorElement:xml name expected
+      PsiErrorElement:XML name expected
         <empty list>
     PsiWhiteSpace(' ')
     XmlToken:XML_TAG_END('>')

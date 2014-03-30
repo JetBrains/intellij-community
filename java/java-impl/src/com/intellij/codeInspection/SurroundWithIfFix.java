@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -37,6 +37,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
   private final String myText;
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.surround.if.quickfix", myText);
@@ -46,6 +47,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     myText = expressionToAssert.getText();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
@@ -55,10 +57,10 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiFile file = element.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
-    if (prev instanceof PsiComment && SuppressManager.getInstance().getSuppressedInspectionIdsIn(prev) != null) {
+    if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
     }
     try {
@@ -76,6 +78,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.surround.if.family");

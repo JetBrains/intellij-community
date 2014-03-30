@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -42,14 +42,14 @@ import java.util.Collection;
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project instanceof ProjectEx) {
       final IProjectStore projectStore = ((ProjectEx)project).getStateStore();
       if (StorageScheme.DIRECTORY_BASED != projectStore.getStorageScheme()) {
         final int result = Messages.showOkCancelDialog(project,
                                                        "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
                                                        "Save project to Directory-Based format", Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           final VirtualFile baseDir = project.getBaseDir();
           assert baseDir != null;
 
@@ -92,7 +92,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     boolean visible = project != null;
 
     if (project instanceof ProjectEx) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package org.jetbrains.jps.util;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Set;
@@ -42,11 +44,19 @@ public class JpsPathUtil {
   }
 
   public static File urlToFile(String url) {
-    return new File(FileUtilRt.toSystemDependentName(urlToPath(url)));
+    return new File(urlToOsPath(url));
   }
 
-  public static String urlToPath(String url) {
-    if (url == null) return null;
+  @NotNull
+  public static String urlToOsPath(@NotNull String url) {
+    return FileUtilRt.toSystemDependentName(urlToPath(url));
+  }
+
+  @Contract("null -> null; !null -> !null")
+  public static String urlToPath(@Nullable String url) {
+    if (url == null) {
+      return null;
+    }
     if (url.startsWith("file://")) {
       return url.substring("file://".length());
     }

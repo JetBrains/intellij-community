@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -126,8 +125,7 @@ public class XsltResolveTest extends TestBase {
     private PsiReference findInjectedReferenceAtCaret(String... moreFiles) throws Throwable {
         configure(moreFiles);
 
-        final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFixture.getProject());
-        final PsiElement e = manager.findInjectedElementAt(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset());
+        final PsiElement e = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
         assertNotNull(e);
 
         final PsiReference reference = e.getContainingFile().findReferenceAt(e.getTextOffset());

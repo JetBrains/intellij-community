@@ -83,7 +83,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     assertEquals(root, findContentEntry(url).getFile());
   }
 
-  public void testGettingMofifiableModelCorrectlySetsRootModelForContentEntries() throws Exception {
+  public void testGettingModifiableModelCorrectlySetsRootModelForContentEntries() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

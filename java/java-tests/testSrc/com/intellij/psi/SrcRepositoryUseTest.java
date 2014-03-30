@@ -584,11 +584,11 @@ public class SrcRepositoryUseTest extends PsiTestCase{
   }
 
   private void teardownLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
   }
 
   private void setupLoadingFilter() {
-    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
   }
 
   public void testAnonymousClass2() throws Exception {

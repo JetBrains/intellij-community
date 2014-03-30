@@ -79,6 +79,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
 
   public static Condition<Element> createAttributeValueFilter(@NonNls final String name, @NonNls final Collection<String> value) {
     return new Condition<Element>() {
+      @Override
       public boolean value(final Element element) {
         return value.contains(element.getAttributeValue(name));
       }
@@ -116,6 +117,7 @@ public class JDomConvertingUtil extends JDomSerializationUtil {
 
   public static Condition<Element> createElementNameFilter(@NonNls final String elementName) {
     return new Condition<Element>() {
+      @Override
       public boolean value(final Element element) {
         return elementName.equals(element.getName());
       }

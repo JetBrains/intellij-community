@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -42,7 +43,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
     }
     else {
       myDumb = true;
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
       CacheUpdater updater = new CacheUpdater() {
@@ -50,14 +51,15 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
           return 0;
         }
 
-        public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
+        @NotNull
+        public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
           while (myDumb) {
             TimeoutUtil.sleep(100);
           }
           return VirtualFile.EMPTY_ARRAY;
         }
 
-        public void processFile(FileContent fileContent) {
+        public void processFile(@NotNull FileContent fileContent) {
         }
 
         public void updatingDone() {
@@ -73,7 +75,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     presentation.setEnabled(project != null && myDumb == DumbServiceImpl.getInstance(project).isDumb());
     if (myDumb) {
       presentation.setText("Exit dumb mode");

@@ -24,7 +24,9 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.icons.AllIcons;
@@ -41,12 +43,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
@@ -57,7 +58,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -93,19 +93,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JButton myCopyButton;
   private JBScrollPane myJBScrollPane;
 
-  private final ArrayList<String> myDeletedProfiles = new ArrayList<String>();
+  private final List<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
   private Alarm mySelectionAlarm;
 
 
-  public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
-    InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
+  public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
+    ((InspectionManagerEx)InspectionManager.getInstance(projectProfileManager.getProject())).buildInspectionSearchIndexIfNecessary();
     myAddButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Set<String> existingProfileNames = myPanels.keySet();
-        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "", existingProfileNames);
+        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "", existingProfileNames,
+                                                                                    projectProfileManager.getProject());
         if (model != null) {
           addProfile((InspectionProfileImpl)model);
           myDeletedProfiles.remove(getProfilePrefix(model) + model.getName());
@@ -115,6 +117,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myDeleteButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl selectedProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         ((DefaultComboBoxModel)myProfiles.getModel()).removeElement(selectedProfile);
@@ -125,6 +128,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     final Project project = projectProfileManager.getProject();
     myImportButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
@@ -133,17 +137,16 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           }
         };
         descriptor.setDescription("Choose profile file");
-        FileChooser.chooseFiles(descriptor, project, myWholePanel, null, new Consumer<List<VirtualFile>>() {
+        FileChooser.chooseFile(descriptor, project, myWholePanel, null, new Consumer<VirtualFile>() {
           @Override
-          public void consume(List<VirtualFile> files) {
-            final VirtualFile file = ContainerUtil.getFirstItem(files);
+          public void consume(VirtualFile file) {
             if (file == null) return;
             InspectionProfileImpl profile =
               new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
             try {
-              Element rootElement = JDOMUtil.loadDocument(VfsUtil.virtualToIoFile(file)).getRootElement();
+              Element rootElement = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(file)).getRootElement();
               if (Comparing.strEqual(rootElement.getName(), "component")) {//import right from .idea/inspectProfiles/xxx.xml
-                rootElement = (Element)rootElement.getChildren().get(0);
+                rootElement = rootElement.getChildren().get(0);
               }
               final Set<String> levels = new HashSet<String>();
               for (Object o : rootElement.getChildren("inspection_tool")) {
@@ -163,7 +166,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
                 if (Messages.showYesNoDialog(myWholePanel, "Undefined severities detected: " +
                                                            StringUtil.join(levels, ", ") +
                                                            ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
-                    DialogWrapper.OK_EXIT_CODE) {
+                    Messages.YES) {
                   for (String level : levels) {
                     final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
                     HighlightInfoType.HighlightInfoTypeImpl info
@@ -177,12 +180,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
               }
               profile.readExternal(rootElement);
               profile.setLocal(true);
-              profile.initInspectionTools(null);
+              profile.initInspectionTools(project);
               if (getProfilePanel(profile) != null) {
                 if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" +
                                                               profile.getName() +
                                                               "\' already exists. Do you want to overwrite it?", "Warning",
-                                                Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+                                                Messages.getInformationIcon()) != Messages.OK) return;
               }
               final ModifiableModel model = profile.getModifiableModel();
               model.setModified(true);
@@ -205,14 +208,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myExportButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        FileChooser.chooseFiles(descriptor, project, myWholePanel, null, new Consumer<List<VirtualFile>>() {
+        FileChooser.chooseFile(descriptor, project, myWholePanel, null, new Consumer<VirtualFile>() {
           @Override
-          public void consume(List<VirtualFile> files) {
-            final VirtualFile file = ContainerUtil.getFirstItem(files);
-            if (file == null) return;
+          public void consume(VirtualFile file) {
             final Element element = new Element("inspections");
             try {
               final SingleInspectionProfilePanel panel = getSelectedPanel();
@@ -224,7 +226,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
               if (new File(filePath).isFile()) {
                 if (Messages
                       .showOkCancelDialog(myWholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning",
-                                          Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+                                          Messages.getQuestionIcon()) != Messages.OK) return;
               }
               JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
             }
@@ -241,10 +243,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myCopyButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Set<String> existingProfileNames = myPanels.keySet();
         final InspectionProfileImpl model = (InspectionProfileImpl)
-          SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "", existingProfileNames);
+          SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "", existingProfileNames, project);
         if (model != null) {
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)model.getModifiableModel();
           modifiableModel.setModified(true);
@@ -266,27 +269,33 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, modelName, model);
     myPanel.add(modelName, panel);
     if (!myPanels.containsKey(getProfilePrefix(model) + modelName)) {
+      //noinspection unchecked
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
     }
     putProfile(model, panel);
     myProfiles.setSelectedItem(model);
   }
 
+  @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.inspections";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return new Runnable(){
+      @Override
       public void run() {
         SingleInspectionProfilePanel panel = getSelectedPanel();
         if (panel != null) {
@@ -296,6 +305,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     };
   }
 
+  @Override
   public JComponent createComponent() {
     myProfiles.setRenderer(new ListCellRendererWrapper<Profile>() {
       @Override
@@ -307,17 +317,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     });
     myProfiles.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myDeleteButton.setEnabled(isDeleteEnabled(profile));
-        myLayout.show(myPanel, profile.getName());
-        SingleInspectionProfilePanel panel = getSelectedPanel();
-        if (panel != null) {
-          myShareProfileCheckBox.setSelected(panel.isProfileShared());
+        if (profile != null) {
+          myDeleteButton.setEnabled(isDeleteEnabled(profile));
+          myLayout.show(myPanel, profile.getName());
+          SingleInspectionProfilePanel panel = getSelectedPanel();
+          if (panel != null) {
+            myShareProfileCheckBox.setSelected(panel.isProfileShared());
+          }
         }
       }
     });
     myShareProfileCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final SingleInspectionProfilePanel panel = getSelectedPanel();
         LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
@@ -332,6 +346,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   protected abstract InspectionProfileImpl getCurrentProfile();
 
+  @Override
   public boolean isModified() {
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       if (panel.isModified()) return true;
@@ -340,6 +355,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return !myDeletedProfiles.isEmpty();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final Map<String, SingleInspectionProfilePanel> panels = new LinkedHashMap<String, SingleInspectionProfilePanel>();
     for (final String name : myPanels.keySet()) {
@@ -383,6 +399,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void reset() {
     myDeletedProfiles.clear();
     myPanels.clear();
@@ -404,9 +421,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.setVisible(true);//make sure that UI was initialized
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (mySelectionAlarm != null) {
             mySelectionAlarm.addRequest(new Runnable() {
+              @Override
               public void run() {
                 panel.updateSelection();
               }
@@ -419,7 +438,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
-  private boolean isDeleteEnabled(InspectionProfileImpl inspectionProfile) {
+  private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {
     final ProfileManager profileManager = inspectionProfile.getProfileManager();
 
     boolean projectProfileFound = false;
@@ -438,7 +457,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     return profileManager == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
-  
+
   protected Collection<Profile> getProfiles() {
     final Collection<Profile> result = new ArrayList<Profile>();
     result.addAll(new TreeSet<Profile>(myProfileManager.getProfiles()));
@@ -446,6 +465,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return result;
   }
 
+  @Override
   public void disposeUIResources() {
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       panel.disposeUI();
@@ -457,6 +477,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void selectProfile(String name) {
     for (int i = 0; i < myProfiles.getItemCount(); i++) {
       if (Comparing.strEqual(((InspectionProfileImpl)myProfiles.getItemAt(i)).getName(), name)) {
@@ -466,11 +487,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void selectInspectionTool(String selectedToolShortName) {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
     final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
-    LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile.getName() + "; " + configuredProfiles());
+    LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile  + "; " + configuredProfiles());
     panel.selectInspectionTool(selectedToolShortName);
   }
 
@@ -488,6 +510,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return myPanels.keySet();
   }
 
+  @Override
   public InspectionProfileImpl getSelectedObject() {
     return (InspectionProfileImpl)myProfiles.getSelectedItem();
   }

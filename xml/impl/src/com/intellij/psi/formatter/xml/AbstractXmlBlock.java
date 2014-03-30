@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
@@ -45,7 +44,7 @@ import java.util.List;
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected XmlFormattingPolicy myXmlFormattingPolicy;
   protected XmlInjectedLanguageBlockBuilder myInjectedBlockBuilder;
-  private boolean myPreserveSpace;
+  private final boolean myPreserveSpace;
 
   protected AbstractXmlBlock(final ASTNode node,
                             final Wrap wrap,
@@ -162,8 +161,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
-  protected
   @Nullable
+  protected
   ASTNode processChild(List<Block> result,
                        final ASTNode child,
                        final Wrap wrap,
@@ -265,7 +264,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private ASTNode processAllChildrenFrom(final List<Block> result,
-                                         final @NotNull ASTNode child,
+                                         @NotNull final ASTNode child,
                                          final Wrap wrap,
                                          final Alignment alignment,
                                          final Indent indent) {
@@ -336,10 +335,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected XmlFormattingPolicy createPolicyFor() {
     return myXmlFormattingPolicy;
-  }
-
-  private CodeStyleSettings getSettings() {
-    return myXmlFormattingPolicy.getSettings();
   }
 
   @Nullable

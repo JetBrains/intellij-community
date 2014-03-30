@@ -35,6 +35,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     super (title,description,icon);
   }
 
+  @Override
   public final void actionPerformed(AnActionEvent e){
     DataContext dataContext = e.getDataContext();
 
@@ -42,7 +43,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     if (view == null) {
       return;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     PsiDirectory dir = getTargetDirectory(dataContext, view);
     if (dir == null) return;

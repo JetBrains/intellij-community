@@ -16,7 +16,7 @@
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,7 @@ public class RunConfigurationTypeUsagesCollector extends AbstractRunConfiguratio
   }
 
   @Override
-  protected boolean isApplicable(@NotNull RunManager runManager, @NotNull RunConfiguration runConfiguration) {
-    return !runManager.isTemporary(runConfiguration);
+  protected boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings) {
+    return !settings.isTemporary();
   }
 }

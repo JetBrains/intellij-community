@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -86,7 +86,7 @@ public abstract class CachedProvider implements BunchProvider {
 
   @Nullable
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
-                                             final boolean includeYoungest, final boolean includeOldest) throws SVNException {
+                                             final boolean includeYoungest, final boolean includeOldest) throws VcsException {
     if ((earliestRevision > getEarliestRevision()) || (earliestRevision == -1)) {
       if (myAlreadyReaded == null) {
         return null;

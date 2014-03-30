@@ -40,7 +40,7 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * when <code>variant</code> function/method is reached
    * @param variant selected variant
    */
-  public abstract void startStepInto(Variant variant);
+  public abstract void startStepInto(@NotNull Variant variant);
 
   /**
    * @return title for popup which will be shown to select method/function

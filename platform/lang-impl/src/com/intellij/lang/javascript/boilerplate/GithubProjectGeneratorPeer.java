@@ -165,6 +165,12 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
         return v2.compareTo(v1);
       }
     });
+    for (GithubTagInfo tag : sortedTags) {
+      tag.setRecentTag(false);
+    }
+    if (!sortedTags.isEmpty()) {
+      sortedTags.get(0).setRecentTag(true);
+    }
     return sortedTags;
   }
 

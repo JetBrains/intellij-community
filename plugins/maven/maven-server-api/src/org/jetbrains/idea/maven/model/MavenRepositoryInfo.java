@@ -39,4 +39,15 @@ public class MavenRepositoryInfo implements Serializable {
   public String getUrl() {
     return myUrl;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+
+    MavenId.append(builder, myId);
+    MavenId.append(builder, myName);
+    MavenId.append(builder, myUrl);
+
+    return builder.toString();
+  }
 }

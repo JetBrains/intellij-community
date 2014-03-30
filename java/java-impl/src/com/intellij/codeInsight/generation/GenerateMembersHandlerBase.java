@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       final ClassMember[] members = chooseOriginalMembers(aClass, project, editor);
       if (members == null) return;
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
         @Override
         public void run() {
           doGenerate(project, editor, aClass, members);

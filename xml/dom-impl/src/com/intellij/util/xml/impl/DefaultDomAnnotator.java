@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public class DefaultDomAnnotator implements Annotator {
   }
 
 
-  public void annotate(final PsiElement psiElement, AnnotationHolder holder) {
+  public void annotate(@NotNull final PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final List<Annotation> list = (List<Annotation>)holder;
 
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());

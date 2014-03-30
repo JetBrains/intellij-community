@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Function;
-import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
@@ -421,8 +420,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
         else if (event instanceof VFileMoveEvent) {
           final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
+          VirtualFile eventFile = moveEvent.getFile();
+          addPointersUnder(moveEvent.getNewParent().getPath() + "/" + eventFile.getName(), toFireEvents);
+          
           List<FilePointerPartNode> nodes = new ArrayList<FilePointerPartNode>();
-          addPointersUnder(moveEvent.getFile().getPath(), nodes);
+          addPointersUnder(eventFile.getPath(), nodes);
           for (FilePointerPartNode pair : nodes) {
             VirtualFile file = pair.leaf.getFile();
             if (file != null) {
@@ -433,8 +435,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         else if (event instanceof VFilePropertyChangeEvent) {
           final VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
           if (VirtualFile.PROP_NAME.equals(change.getPropertyName())) {
+            VirtualFile eventFile = change.getFile();
+            VirtualFile parent = eventFile.getParent(); // e.g. for LightVirtualFiles
+            addPointersUnder((parent == null ? "" : parent.getPath()) + "/" + change.getNewValue(), toFireEvents);
+
             List<FilePointerPartNode> nodes = new ArrayList<FilePointerPartNode>();
-            addPointersUnder(change.getFile().getPath(), nodes);
+            addPointersUnder(eventFile.getPath(), nodes);
             for (FilePointerPartNode pair : nodes) {
               VirtualFile file = pair.leaf.getFile();
               if (file != null) {

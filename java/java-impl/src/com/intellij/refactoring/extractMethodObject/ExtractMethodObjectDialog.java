@@ -27,6 +27,7 @@ import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
@@ -78,7 +79,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   private JPanel myAnonymousClassPanel;
   private JCheckBox myFoldCb;
   private ButtonGroup myVisibilityGroup;
-  private ParameterTablePanel.VariableData[] myInputVariables;
+  private VariableData[] myInputVariables;
 
 
   public ExtractMethodObjectDialog(Project project, PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
@@ -96,7 +97,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myMultipleExitPoints = multipleExitPoints;
 
     boolean canBeVarargs = false;
-    for (ParameterTablePanel.VariableData data : inputVariables.getInputVariables()) {
+    for (VariableData data : inputVariables.getInputVariables()) {
       canBeVarargs |= data.type instanceof PsiArrayType;
     }
     canBeVarargs |= inputVariables.isFoldable()  && inputVariables.isFoldingSelectedByDefault();
@@ -136,7 +137,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
 
-  public ParameterTablePanel.VariableData[] getChosenParameters() {
+  public VariableData[] getChosenParameters() {
     return myInputVariables;
   }
 
@@ -167,7 +168,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
     final JCheckBox makeVarargsCb = myCreateInnerClassRb.isSelected() ? myCbMakeVarargs : myCbMakeVarargsAnonymous;
     if (makeVarargsCb != null && makeVarargsCb.isSelected()) {
-      final ParameterTablePanel.VariableData data = myInputVariables[myInputVariables.length - 1];
+      final VariableData data = myInputVariables[myInputVariables.length - 1];
       if (data.type instanceof PsiArrayType) {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
       }
@@ -212,7 +213,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   protected JComponent createCenterPanel() {
     mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
-   
+
     final ActionListener enableDisableListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         enable(myCreateInnerClassRb.isSelected());
@@ -225,11 +226,11 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-    myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
     myFoldCb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-        myInputVariables = myVariableData.getInputVariables().toArray(new ParameterTablePanel.VariableData[myVariableData.getInputVariables().size()]);
+        myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
         updateSignature();
@@ -359,8 +360,8 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
-      buffer.append(StringUtil.join(myInputVariables, new Function<ParameterTablePanel.VariableData, String>() {
-        public String fun(final ParameterTablePanel.VariableData variableData) {
+      buffer.append(StringUtil.join(myInputVariables, new Function<VariableData, String>() {
+        public String fun(final VariableData variableData) {
           return variableData.name;
         }
       }, ", "));
@@ -375,7 +376,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
     int count = 0;
     final String indent = "    ";
     for (int i = 0; i < myInputVariables.length; i++) {
-      ParameterTablePanel.VariableData data = myInputVariables[i];
+      VariableData data = myInputVariables[i];
       if (data.passAsParameter) {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);

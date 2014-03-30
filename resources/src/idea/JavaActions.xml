@@ -11,6 +11,7 @@
       <action id="GenerateSetter" class="com.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
       <action id="GenerateGetterAndSetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
+      <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.generate.tostring.GenerateToStringAction" text="to_String()" description="Generate toString() method"/>
       <action id="GenerateCreateUI" class="com.intellij.codeInsight.generation.actions.GenerateCreateUIAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
@@ -24,12 +25,16 @@
       <add-to-group group-id="NewGroup1" anchor="first"/>
     </action>
 
+    <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
+    </action>
+
     <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
       <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
     </action>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="RunInspection"/>
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
     <group id="AnalyzeJavaMenu">
@@ -109,7 +114,7 @@
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Take a thread dump" icon="AllIcons.Actions.Dump">
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
 
@@ -308,6 +313,12 @@
       <reference ref="Debugger.ViewText"/>
       <reference ref="Debugger.CompareValueWithClipboard"/>
       <reference ref="Debugger.CustomizeContextView"/>
+    </group>
+
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
     </group>
 
     <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction">

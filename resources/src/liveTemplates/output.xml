@@ -43,7 +43,7 @@
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
             name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
-    <variable alwaysStopAt="false" defaultValue="" expression="EXPR" name="EXPR_COPY" />
+    <variable alwaysStopAt="false" defaultValue="" expression="escapeString(EXPR)" name="EXPR_COPY" />
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />

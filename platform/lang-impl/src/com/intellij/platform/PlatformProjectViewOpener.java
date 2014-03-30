@@ -36,13 +36,17 @@ import javax.swing.*;
  * @author yole
  */
 public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
+  @Override
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, Ref<Module> moduleRef) {
     StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         // ensure the dialog is shown after all startup activities are done
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (project.isDisposed()) return;
                 final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);

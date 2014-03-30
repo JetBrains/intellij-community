@@ -33,6 +33,7 @@ public class TextResult implements Result{
     return myText;
   }
 
+  @Override
   public boolean equalsToText(String text, PsiElement context) {
     return text.equals(myText);
   }
@@ -41,6 +42,7 @@ public class TextResult implements Result{
     return myText;
   }
 
+  @Override
   public void handleFocused(final PsiFile psiFile, final Document document, final int segmentStart, final int segmentEnd) {
   }
 }

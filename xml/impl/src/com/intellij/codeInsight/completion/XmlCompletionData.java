@@ -32,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
@@ -71,11 +72,14 @@ public class XmlCompletionData extends CompletionData {
     }
 
     {
-      final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
-      variant.includeScopeClass(XmlAttributeValue.class);
-      variant.addCompletion(getAttributeValueGetter(), TailType.NONE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
-      registerVariant(variant);
+      XmlAttributeValueGetter getter = getAttributeValueGetter();
+      if (getter != null) {
+        final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
+        variant.includeScopeClass(XmlAttributeValue.class);
+        variant.addCompletion(getter, TailType.NONE);
+        variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
+        registerVariant(variant);
+      }
     }
 
     final ElementFilter entityCompletionFilter = createXmlEntityCompletionFilter();
@@ -183,7 +187,7 @@ public class XmlCompletionData extends CompletionData {
 
             try {
               final int unicodeChar = Integer.valueOf(s).intValue();
-              return LookupValueFactory.createLookupValueWithHint(name, null, new String(Character.toChars(unicodeChar)));
+              return LookupValueFactory.createLookupValueWithHint(name, null, String.valueOf((char)unicodeChar));
             }
             catch (NumberFormatException e) {
               return null;
@@ -205,17 +209,19 @@ public class XmlCompletionData extends CompletionData {
         descriptorFile = findDescriptorFile(tag, containingFile);
       }
 
-      boolean isHtml5 = false;
-      if (tag == null || (isHtml5 = HtmlUtil.isHtml5Context(tag))) {  // Html5 RNG does not have entities
+      if (HtmlUtil.isHtml5Context(tag)) {
+        descriptorFile = XmlUtil.findXmlFile(containingFile, Html5SchemaProvider.getCharsDtdLocation());
+      } else if (tag == null) {
         final XmlDocument document = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
 
         if (document != null) {
           containingFile = (XmlFile)document.getContainingFile();
 
           final FileType ft = containingFile.getFileType();
-
-          if(ft != StdFileTypes.XML) {
-            final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX || isHtml5? XmlUtil.XHTML_URI:XmlUtil.HTML_URI;
+          if (HtmlUtil.isHtml5Document(document)) {
+            descriptorFile = XmlUtil.findXmlFile(containingFile, Html5SchemaProvider.getCharsDtdLocation());
+          } else if(ft != StdFileTypes.XML) {
+            final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI : XmlUtil.HTML_URI;
             final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
 
             if (nsDescriptor != null) {

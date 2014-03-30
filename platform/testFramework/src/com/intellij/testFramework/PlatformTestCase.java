@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -119,7 +118,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
   static {
-    Logger.setFactory(TestLoggerFactory.getInstance());
+    Logger.setFactory(TestLoggerFactory.class);
   }
 
   protected static long getTimeRequired() {
@@ -142,18 +141,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  private static String[] PREFIX_CANDIDATES = new String[] { "AppCode", "CppIde", "Python", "PyCharmCore", "UltimateLangXml", "Idea" };
+
   public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
     }
     URL resource = PlatformTestCase.class.getClassLoader().getResource("idea/ApplicationInfo.xml");
     if (resource == null) {
-      resource = PlatformTestCase.class.getClassLoader().getResource("idea/IdeaApplicationInfo.xml");
-      if (resource == null) {
-        setPlatformPrefix("PlatformLangXml");
-      }
-      else {
-        setPlatformPrefix("Idea");
+      for (String candidate : PREFIX_CANDIDATES) {
+        resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/" + candidate + "Plugin.xml");
+        if (resource != null) {
+          setPlatformPrefix(candidate);
+          break;
+        }
       }
     }
   }
@@ -196,7 +197,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     DocumentCommitThread.getInstance().clearQueue();
-    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   public Project getProject() {
@@ -308,14 +308,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
     final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
-    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
-                                     moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    final File moduleFile = new File(FileUtil.toSystemDependentName(baseDir.getPath()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(Result<Module> result) throws Throwable {
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+      protected void run(@NotNull Result<Module> result) throws Throwable {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+        assertNotNull(virtualFile);
         Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
         module.getModuleFile();
         result.setResult(module);
@@ -402,7 +402,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
 
     try {
-      checkForSettingsDamage();
+      CompositeException damage = checkForSettingsDamage();
+      result.add(damage);
     }
     catch (Throwable e) {
       result.add(e);
@@ -629,12 +630,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             runTest();
             myAssertionsInTestDetected = false;
           }
+          catch (Throwable e) {
+            throwables[0] = e;
+            throw e;
+          }
           finally {
             tearDown();
           }
         }
         catch (Throwable throwable) {
-          throwables[0] = throwable;
+          if (throwables[0] == null) {  // report tearDown() problems if only no exceptions thrown from runTest()
+            throwables[0] = throwable;
+          }
         }
         finally {
           ourTestThread = null;
@@ -823,6 +830,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void setPlatformPrefix(String prefix) {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+    ourPlatformPrefixInitialized = true;
   }
 
   @Retention(RetentionPolicy.RUNTIME)

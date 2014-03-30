@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -103,5 +104,16 @@ public class JDOMExternalizer {
         map.put(name, value);
       }
     }
+  }
+
+  public static List<String> loadStringsList(Element element, String rootName, String attrName) {
+    final List<String> paths = new LinkedList<String>();
+    if (element != null) {
+      @NotNull final List list = element.getChildren(rootName);
+      for (Object o : list) {
+        paths.add(((Element)o).getAttribute(attrName).getValue());
+      }
+    }
+    return paths;
   }
 }

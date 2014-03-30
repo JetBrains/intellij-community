@@ -1,0 +1,11 @@
+0(1) element: null
+1(2) element: PyExpressionStatement
+2(3) element: PySetCompExpression
+3(4) element: PyCallExpression: range
+4(5,10) READ ACCESS: range
+5(6) element: PyTargetExpression: ii
+6(7) WRITE ACCESS: ii
+7(8) element: PyParenthesizedExpression
+8(9) element: PyLambdaExpression
+9(5,10) READ ACCESS: ii
+10() element: null

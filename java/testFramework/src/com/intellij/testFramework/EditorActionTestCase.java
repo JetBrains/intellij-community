@@ -79,7 +79,7 @@ public abstract class EditorActionTestCase extends LightCodeInsightTestCase {
    * @param ignoreTrailingSpaces  true if trailing spaces should be ignored.
    * @throws Exception
    */
-  protected void doFileTest(String filePathBefore, String filePathAfter, boolean ignoreTrailingSpaces) throws Exception {
+  protected void doFileTest(String filePathBefore, String filePathAfter, boolean ignoreTrailingSpaces) {
     configureByFile(filePathBefore);
     invokeAction();
     checkResultByFile(null, filePathAfter, ignoreTrailingSpaces);

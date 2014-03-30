@@ -47,6 +47,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
+import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -69,7 +70,7 @@ public class MavenExternalParameters {
   private static final Logger LOG = Logger.getInstance(MavenExternalParameters.class);
 
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
-  @NonNls private static final String JAVA_HOME = "JAVA_HOME";
+
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   @Deprecated // Use createJavaParameters(Project,MavenRunnerParameters, MavenGeneralSettings,MavenRunnerSettings,MavenRunConfiguration)
@@ -117,6 +118,8 @@ public class MavenExternalParameters {
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
 
+    params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
@@ -126,7 +129,7 @@ public class MavenExternalParameters {
 
     if (project != null && parameters.isResolveToWorkspace()) {
       try {
-        String resolverJar = getArtifactResolverJar(MavenUtil.isMaven3(mavenHome));
+        String resolverJar = getArtifactResolverJar(MavenUtil.getMavenVersion(mavenHome));
         confFile = patchConfFile(confFile, resolverJar);
 
         File modulesPathsFile = dumpModulesPaths(project);
@@ -143,6 +146,9 @@ public class MavenExternalParameters {
     for (String path : getMavenClasspathEntries(mavenHome)) {
       params.getClassPath().add(path);
     }
+
+    params.setEnv(new HashMap<String, String>(runnerSettings.getEnvironmentProperties()));
+    params.setPassParentEnvs(runnerSettings.isPassParentEnv());
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
     EncodingManager encodingManager = project == null
@@ -193,11 +199,24 @@ public class MavenExternalParameters {
     finally {
       sc.close();
     }
-
   }
 
-  private static String getArtifactResolverJar(boolean isMaven3) throws IOException {
-    Class marker = isMaven3 ? MavenArtifactResolvedM3RtMarker.class : MavenArtifactResolvedM2RtMarker.class;
+  private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
+    boolean isMaven3;
+    Class marker;
+
+    if (mavenVersion != null && mavenVersion.compareTo("3.1.0") >= 0) {
+      isMaven3 = true;
+      marker = MavenArtifactResolvedM31RtMarker.class;
+    }
+    else if (mavenVersion != null && mavenVersion.compareTo("3.0.0") >= 0) {
+      isMaven3 = true;
+      marker = MavenArtifactResolvedM3RtMarker.class;
+    }
+    else {
+      isMaven3 = false;
+      marker = MavenArtifactResolvedM2RtMarker.class;
+    }
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
 
@@ -242,6 +261,12 @@ public class MavenExternalParameters {
                           + ":pom"
                           + ':' + mavenProject.getMavenId().getVersion(),
                           mavenProject.getFile().getPath());
+
+          res.setProperty(mavenProject.getMavenId().getGroupId()
+                          + ':' + mavenProject.getMavenId().getArtifactId()
+                          + ":test-jar"
+                          + ':' + mavenProject.getMavenId().getVersion(),
+                          mavenProject.getTestOutputDirectory());
 
           res.setProperty(mavenProject.getMavenId().getGroupId()
                           + ':' + mavenProject.getMavenId().getArtifactId()
@@ -292,7 +317,7 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv(JAVA_HOME);
+      final String javaHome = System.getenv("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
@@ -435,16 +460,18 @@ public class MavenExternalParameters {
     if (!mavenHomeBootAsFile.exists()) {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
+
     List<String> classpathEntries = new ArrayList<String>();
-    if (mavenHomeBootAsFile.exists()) {
-      if (mavenHomeBootAsFile.isDirectory()) {
-        for (File file : mavenHomeBootAsFile.listFiles()) {
-          if (file.getName().contains("classworlds")) {
-            classpathEntries.add(file.getAbsolutePath());
-          }
+
+    File[] files = mavenHomeBootAsFile.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().contains("classworlds")) {
+          classpathEntries.add(file.getAbsolutePath());
         }
       }
     }
+
     return classpathEntries;
   }
 
@@ -478,6 +505,10 @@ public class MavenExternalParameters {
       cmdList.add("--update-snapshots");
     }
 
+    if (StringUtil.isNotEmpty(coreSettings.getThreads())) {
+      cmdList.add("-T", coreSettings.getThreads());
+    }
+
     addIfNotEmpty(cmdList, coreSettings.getFailureBehavior().getCommandLineOption());
     addIfNotEmpty(cmdList, coreSettings.getChecksumPolicy().getCommandLineOption());
 
@@ -500,7 +531,7 @@ public class MavenExternalParameters {
         stringBuilder.append(",");
       }
       if (!entry.getValue()) {
-        stringBuilder.append("-");
+        stringBuilder.append("!");
       }
       stringBuilder.append(entry.getKey());
     }

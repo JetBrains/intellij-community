@@ -35,4 +35,18 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
     <description>'catch' of &lt;code&gt;IOException&lt;/code&gt; is too broad, masking exception 'FileNotFoundException' #loc</description>
   </problem>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>72</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>'catch' of &lt;code&gt;Exception&lt;/code&gt; is too broad, masking exception 'RuntimeException' #loc</description>
+  </problem>
+
+  <problem>
+    <file>TooBroadCatchBlock.java</file>
+    <line>81</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly broad 'catch' block</problem_class>
+    <description>'catch' of &lt;code&gt;Exception&lt;/code&gt; is too broad, masking exception 'FileNotFoundException' #loc</description>
+  </problem>
 </problems>

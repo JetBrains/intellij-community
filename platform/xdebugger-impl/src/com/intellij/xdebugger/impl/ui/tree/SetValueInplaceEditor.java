@@ -18,12 +18,13 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -47,11 +48,10 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     SimpleColoredComponent nameLabel = new SimpleColoredComponent();
     nameLabel.setIcon(getNode().getIcon());
     nameLabel.append(nodeName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    final String separator = node.getSeparator();
-    if (separator != null) {
-      nameLabel.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    XValuePresentation presentation = node.getValuePresentation();
+    if (presentation != null) {
+      XValuePresentationUtil.appendSeparator(nameLabel, presentation.getSeparator());
     }
-
     myEditorPanel.add(nameLabel, BorderLayout.WEST);
 
     myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
@@ -60,10 +60,12 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myExpressionEditor.selectAll();
   }
 
+  @Override
   protected JComponent createInplaceEditorComponent() {
     return myEditorPanel;
   }
 
+  @Override
   public void doOKAction() {
     if (myModifier == null) return;
 
@@ -71,23 +73,28 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     final XDebuggerTreeState treeState = XDebuggerTreeState.saveState(myTree);
     myValueNode.setValueModificationStarted();
     myModifier.setValue(myExpressionEditor.getText(), new XValueModifier.XModificationCallback() {
+      @Override
       public void valueModified() {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        AppUIUtil.invokeOnEdt(new Runnable() {
+          @Override
           public void run() {
             myTree.rebuildAndRestore(treeState);
           }
         });
       }
 
+      @Override
       public void errorOccurred(@NotNull final String errorMessage) {
-        DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+        AppUIUtil.invokeOnEdt(new Runnable() {
+          @Override
           public void run() {
             myTree.rebuildAndRestore(treeState);
 
             Editor editor = myExpressionEditor.getEditor();
             if (editor != null) {
               HintManager.getInstance().showErrorHint(editor, errorMessage);
-            } else {
+            }
+            else {
               Messages.showErrorDialog(myTree, errorMessage);
             }
           }

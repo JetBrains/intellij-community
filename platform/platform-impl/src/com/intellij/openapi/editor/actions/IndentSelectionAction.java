@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,16 +52,22 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      indentSelection(editor, project);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (isEnabled(editor, dataContext)) {
+        indentSelection(editor, project);
+      }
     }
   }
 
   @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(originalIsEnabled(editor));
+    presentation.setEnabled(originalIsEnabled(editor, true));
   }
 
   @Override
@@ -69,19 +76,42 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   protected boolean isEnabled(Editor editor, DataContext dataContext) {
-    return originalIsEnabled(editor);
+    return originalIsEnabled(editor, true);
   }
 
-  private static boolean originalIsEnabled(Editor editor) {
-    return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
+  protected static boolean originalIsEnabled(Editor editor, boolean wantSelection) {
+    return (!wantSelection || hasSuitableSelection(editor)) && !editor.isOneLineMode();
+  }
+
+  /**
+   * Returns true if there is a selection in the editor and it spans multiple lines or the whole single line (potentially without leading and
+   * trailing whitespaces).
+   */
+  private static boolean hasSuitableSelection(Editor editor) {
+    if (!editor.getSelectionModel().hasSelection()) {
+      return false;
+    }
+    Document document = editor.getDocument();
+    int selectionStart = editor.getSelectionModel().getSelectionStart();
+    int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+    int selectionLineStart = document.getLineNumber(selectionStart);
+    int selectionLineEnd = document.getLineNumber(selectionEnd);
+    if (selectionLineStart != selectionLineEnd) {
+      return true;
+    }
+    int lineStart = document.getLineStartOffset(selectionLineStart);
+    int lineEnd = document.getLineEndOffset(selectionLineEnd);
+    return (selectionStart <= lineStart || CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(lineStart, selectionStart)))
+           && (selectionEnd >= lineEnd || CharArrayUtil.containsOnlyWhiteSpaces(document.getCharsSequence().subSequence(selectionEnd, lineEnd)));
   }
 
   private static void indentSelection(Editor editor, Project project) {
-    if(!editor.getSelectionModel().hasSelection())
-      return;
-
     int oldSelectionStart = editor.getSelectionModel().getSelectionStart();
     int oldSelectionEnd = editor.getSelectionModel().getSelectionEnd();
+    if(!editor.getSelectionModel().hasSelection()) {
+      oldSelectionStart = editor.getCaretModel().getOffset();
+      oldSelectionEnd = oldSelectionStart;
+    }
 
     Document document = editor.getDocument();
     int startIndex = document.getLineNumber(oldSelectionStart);
@@ -89,7 +119,7 @@ public class IndentSelectionAction extends EditorAction {
       startIndex = document.getLineCount() - 1;
     }
     int endIndex = document.getLineNumber(oldSelectionEnd);
-    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd) {
+    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd && editor.getSelectionModel().hasSelection()) {
       endIndex --;
     }
     if(endIndex == -1) {

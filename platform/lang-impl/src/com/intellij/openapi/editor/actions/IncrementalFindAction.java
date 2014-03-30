@@ -22,6 +22,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ public class IncrementalFindAction extends EditorAction {
 
     @Override
     public void execute(final Editor editor, DataContext dataContext) {
-      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
         final JComponent headerComponent = editor.getHeaderComponent();
         if (headerComponent instanceof EditorSearchComponent) {
@@ -72,7 +73,7 @@ public class IncrementalFindAction extends EditorAction {
       if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor)) {
         return false;
       }
-      Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       return project != null && !editor.isOneLineMode();
     }
   }

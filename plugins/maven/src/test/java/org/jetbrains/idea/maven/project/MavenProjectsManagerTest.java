@@ -371,8 +371,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     MavenProject parentNode = roots.get(0);
     MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
@@ -387,14 +387,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "</profiles>");
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
 
     deleteSettingsXml();
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
 
     updateSettingsXml("<profiles>" +
                       "  <profile>" +
@@ -409,8 +409,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                       "</profiles>");
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   public void testUpdatingProjectsWhenSettingsXmlLocationIsChanged() throws Exception {
@@ -461,20 +461,20 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     MavenProject parentNode = roots.get(0);
     MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     getMavenGeneralSettings().setUserSettingsFile("");
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
 
     getMavenGeneralSettings().setUserSettingsFile(new File(myDir, "settings.xml").getPath());
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
   }
 
   public void testUpdatingProjectsOnSettingsXmlCreationAndDeletion() throws Exception {
@@ -586,8 +586,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     MavenProject parentNode = roots.get(0);
     MavenProject childNode = myProjectsTree.getModules(roots.get(0)).get(0);
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -600,14 +600,14 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "</profile>");
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
 
     deleteProfilesXml();
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
 
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -620,8 +620,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "</profile>");
     waitForReadingCompletion();
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   public void testHandlingDirectoryWithPomFileDeletion() throws Exception {
@@ -691,9 +691,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     myProjectsManager.setIgnoredFilesPatterns(Arrays.asList("*.xxx"));
 
     state = myProjectsManager.getState();
-    assertUnorderedElementsAreEqual(state.originalFiles, p1.getPath(), p2.getPath());
+    assertUnorderedPathsAreEqual(state.originalFiles, Arrays.asList(p1.getPath(), p2.getPath()));
     assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).getState().enabledProfiles, "one", "two");
-    assertUnorderedElementsAreEqual(state.ignoredFiles, p1.getPath());
+    assertUnorderedPathsAreEqual(state.ignoredFiles, Arrays.asList(p1.getPath()));
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx");
 
     MavenProjectsManagerState newState = new MavenProjectsManagerState();
@@ -705,10 +705,10 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     myProjectsManager.loadState(newState);
 
-    assertUnorderedElementsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
-                                    p1.getPath(), p3.getPath());
+    assertUnorderedPathsAreEqual(myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths(),
+                                 Arrays.asList(p1.getPath(), p3.getPath()));
     assertUnorderedElementsAreEqual(myProjectsManager.getExplicitProfiles(), "three");
-    assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPaths(), p1.getPath());
+    assertUnorderedPathsAreEqual(myProjectsManager.getIgnoredFilesPaths(), Arrays.asList(p1.getPath()));
     assertUnorderedElementsAreEqual(myProjectsManager.getIgnoredFilesPatterns(), "*.zzz");
 
     waitForReadingCompletion();
@@ -919,11 +919,9 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    assertSources("project", "src/main/java", "src/main/resources");
 
-    resolveFoldersAndImport();
-
-    assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
+    assertSources("project", "src/main/java", "src1", "src2");
+    assertResources("project", "src/main/resources");
   }
 
   public void testForceReimport() throws Exception {

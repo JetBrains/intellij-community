@@ -16,6 +16,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,14 +46,16 @@ public class ExternalJavaDocAction extends AnAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    PsiElement element = getElement(dataContext, editor);
     if (element == null) {
       Messages.showMessageDialog(
         project,
@@ -63,16 +67,16 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
 
-    PsiFile context = LangDataKeys.PSI_FILE.getData(dataContext);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    PsiFile context = CommonDataKeys.PSI_FILE.getData(dataContext);
+
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    
+
     if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    
+
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) {
       showExternalJavadoc(urls);
@@ -89,14 +93,15 @@ public class ExternalJavaDocAction extends AnAction {
     final HashSet<String> set = new HashSet<String>(urls);
     if (set.size() > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
+        @Override
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-          BrowserUtil.launchBrowser(selectedValue);
+          BrowserUtil.browse(selectedValue);
           return FINAL_CHOICE;
         }
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
     else if (set.size() == 1) {
-      BrowserUtil.launchBrowser(urls.get(0));
+      BrowserUtil.browse(urls.get(0));
     }
   }
 
@@ -105,13 +110,14 @@ public class ExternalJavaDocAction extends AnAction {
     return (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
-    DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), originalElement, element);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    PsiElement element = getElement(dataContext, editor);
+    final PsiElement originalElement = getOriginalElement(CommonDataKeys.PSI_FILE.getData(dataContext), editor);
+    DocumentationManager.storeOriginalElement(CommonDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
     if (provider instanceof ExternalDocumentationProvider) {
@@ -135,5 +141,16 @@ public class ExternalJavaDocAction extends AnAction {
       presentation.setEnabled(enabled);
       presentation.setVisible(true);
     }
+  }
+
+  private static PsiElement getElement(DataContext dataContext, Editor editor) {
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element == null && editor != null) {
+      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      if (reference != null) {
+        element = reference.getElement();
+      }
+    }
+    return element;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,27 @@ package git4idea.branch;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import com.intellij.xml.util.XmlStringUtil;
+import git4idea.GitCommit;
+import git4idea.GitPlatformFacade;
+import git4idea.GitUtil;
+import git4idea.MessageManager;
 import git4idea.commands.Git;
-import git4idea.history.browser.GitCommit;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -46,43 +47,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.text.StringUtil.stripHtml;
-
-/**
- * @author Kirill Likhodedov
- */
-class GitBranchUiHandlerImpl implements GitBranchUiHandler {
+public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
-  GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myGit = git;
     myFacade = facade;
     myProgressIndicator = indicator;
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String message) {
-    notifySuccess("", message);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String message) {
-    notifySuccess(title, message, null);
-  }
-
-  @Override
-  public void notifySuccess(@NotNull String title, @NotNull String description, @Nullable NotificationListener listener) {
-    Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION, listener);
-  }
-
-  @Override
-  public void notifyError(@NotNull String title, @NotNull String message) {
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR);
   }
 
   @Override
@@ -92,12 +68,12 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        StringBuilder description = new StringBuilder("<html>");
+        StringBuilder description = new StringBuilder();
         if (!StringUtil.isEmptyOrSpaces(message)) {
           description.append(message).append("<br/>");
         }
-        description.append(rollbackProposal).append("</html>");
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description.toString(), title,
+        description.append(rollbackProposal);
+        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
                                                              "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
@@ -108,7 +84,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public void showUnmergedFilesNotification(@NotNull final String operationName, @NotNull final Collection<GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    Notificator.getInstance(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description, NotificationType.ERROR,
+    VcsNotifier.getInstance(myProject).notifyError(title, description,
       new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification,
@@ -135,7 +111,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                            operationName, rollbackProposal);
         // suppressing: this message looks ugly if capitalized by words
         //noinspection DialogTitleCapitalization
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
+        ok.set(Messages.YES == MessageManager.showYesNoDialog(myProject, description, unmergedFilesErrorTitle(operationName),
                                                              "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
@@ -144,17 +120,17 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @Override
   public void showUntrackedFilesNotification(@NotNull String operationName, @NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, GitPlatformFacade.class),
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
                                                              untrackedFiles, operationName, null);
   }
 
   @Override
   public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
                                                       @NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't " + operationName;
+    String title = "Could not " + StringUtil.capitalize(operationName);
     String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, stripHtml(description, true), rollbackProposal);
+    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, StringUtil.stripHtml(description, true), rollbackProposal);
     dialog.setTitle(title);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -211,13 +187,14 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       myRollbackProposal = rollbackProposal;
       setOKButtonText("Rollback");
       setCancelButtonText("Don't rollback");
+      init();
     }
 
     @Override
     protected JComponent createSouthPanel() {
       JComponent buttons = super.createSouthPanel();
       JPanel panel = new JPanel(new VerticalFlowLayout());
-      panel.add(new JBLabel("<html>" + myRollbackProposal + "</html>"));
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
       panel.add(buttons);
       return panel;
     }

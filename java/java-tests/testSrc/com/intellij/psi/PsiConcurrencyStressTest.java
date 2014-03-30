@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,28 +27,21 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@SkipSlowTestLocally
 public class PsiConcurrencyStressTest extends PsiTestCase {
-  private static final boolean SKIP = "true".equalsIgnoreCase(System.getProperty("skip.psi.concurrency.test"));
-
-  @Override
-  public void runBare() throws Throwable {
-    if (!SKIP) {
-      super.runBare();
-    }
-  }
+  private volatile PsiJavaFile myFile;
+  private volatile boolean writeActionInProgress;
 
   @Override
   protected void setUp() throws Exception {
@@ -60,8 +53,6 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
   }
 
-  private PsiJavaFile myFile;
-  private volatile boolean writeActionInProgress;
   public void testStress() throws Exception {
     int numOfThreads = 10;
     int iterations = Timings.adjustAccordingToMySpeed(20, true);
@@ -85,13 +76,18 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         public void run() {
           for (int i = 0; i < readIterations; i++) {
             if (myPsiManager == null) return;
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+            ProgressManager.getInstance().runProcess(new Runnable() {
               @Override
               public void run() {
-                assertFalse(writeActionInProgress);
-                readStep(random);
+                ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
+                  public void run() {
+                    assertFalse(writeActionInProgress);
+                    readStep(random);
+                  }
+                });
               }
-            });
+            }, new DaemonProgressIndicator());
           }
 
           reads.countDown();
@@ -130,7 +126,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
     assertTrue(psiClass.isValid());
     return psiClass;
   }
-  
+
   private synchronized void writeStep(final Random random) throws IncorrectOperationException {
     switch (random.nextInt(2)) {
       case 0 :
@@ -141,7 +137,7 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          WriteCommandAction.runWriteCommandAction(null, new Runnable() {
             @Override
             public void run() {
               psiMethods[random.nextInt(psiMethods.length)].delete();
@@ -175,9 +171,9 @@ public class PsiConcurrencyStressTest extends PsiTestCase {
           public void visitElement(final PsiElement element) {
             super.visitElement(element);
 
-            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile, HighlightInfoFilter.EMPTY_ARRAY);
+            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
             final HighlightVisitorImpl visitor = new HighlightVisitorImpl(PsiResolveHelper.SERVICE.getInstance(getProject()));
-            visitor.analyze(myFile, false, infoHolder, new Runnable() {
+            visitor.analyze(myFile, true, infoHolder, new Runnable() {
               @Override
               public void run() {
                 visitor.visit(element);

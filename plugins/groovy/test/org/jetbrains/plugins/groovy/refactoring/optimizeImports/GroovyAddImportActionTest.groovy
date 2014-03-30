@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
-
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 /**
  * @author peter
  */
@@ -27,20 +25,34 @@ public class GroovyAddImportActionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
     myFixture.addClass 'package bar; public class LogFactory { public static Log log(){} }'
-    myFixture.configureByText 'a.groovy', '''
+    doTest('''\
 public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }
-'''
-    myFixture.enableInspections(new GrUnresolvedAccessInspection())
+''', '''\
+import bar.Log
 
+public class Foo {
+    Lo<caret>g l = bar.LogFactory.log();
+}
+''')
+  }
+
+  void testReferenceWithErrors() {
+    myFixture.addClass 'package foo; public class Abc<X, Y> {}'
+    doTest('''\
+A<caret>bc<String, > foo = null
+''', '''\
+import foo.Abc
+
+A<caret>bc<String, > foo = null
+''')
+  }
+
+  private void doTest(String before, String after) {
+    myFixture.configureByText 'a.groovy', before
     importClass()
-    myFixture.checkResult '''import bar.Log
-
-public class Foo {
-    Lo<caret>g l = bar.LogFactory.log();
-}
-'''
+    myFixture.checkResult after
   }
 
   private def importClass() {

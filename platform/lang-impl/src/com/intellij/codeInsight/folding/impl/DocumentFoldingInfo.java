@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,12 +33,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
 class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
@@ -46,8 +48,8 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   @NotNull private final Project myProject;
   private final VirtualFile myFile;
 
-  @NotNull private final List<SmartPsiElementPointer<PsiElement>> myPsiElements = new ArrayList<SmartPsiElementPointer<PsiElement>>();
-  @NotNull private final List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
+  @NotNull private final List<SmartPsiElementPointer<PsiElement>> myPsiElements = ContainerUtil.createLockFreeCopyOnWriteList();
+  @NotNull private final List<RangeMarker> myRangeMarkers = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final String DEFAULT_PLACEHOLDER = "...";
   @NonNls private static final String ELEMENT_TAG = "element";
   @NonNls private static final String SIGNATURE_ATT = "signature";
@@ -62,7 +64,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   void loadFromEditor(@NotNull Editor editor) {
-    assertDispatchThread();
+    assertDispatchThread(editor);
     LOG.assertTrue(!editor.isDisposed());
     clear();
 
@@ -93,12 +95,12 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     }
   }
 
-  private static void assertDispatchThread() {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+  private static void assertDispatchThread(@NotNull Editor editor) {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
   }
 
   void setToEditor(@NotNull final Editor editor) {
-    assertDispatchThread();
+    assertDispatchThread(editor);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (psiManager.isDisposed()) return;
 
@@ -232,60 +234,65 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   }
 
   @Override
-  public void readExternal(Element element) {
-    clear();
+  public void readExternal(final Element element) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        clear();
 
-    if (!myFile.isValid()) return;
+        if (!myFile.isValid()) return;
 
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-    if (document == null) return;
+        final Document document = FileDocumentManager.getInstance().getDocument(myFile);
+        if (document == null) return;
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
 
-    String date = null;
-    for (final Object o : element.getChildren()) {
-      Element e = (Element)o;
-      Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
-      if (ELEMENT_TAG.equals(e.getName())) {
-        String signature = e.getAttributeValue(SIGNATURE_ATT);
-        if (signature == null) {
-          continue;
-        }
-        PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
-        if (restoredElement != null) {
-          myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
-          FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
-          restoredElement.putUserData(FOLDING_INFO_KEY, fi);
+        String date = null;
+        for (final Object o : element.getChildren()) {
+          Element e = (Element)o;
+          Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
+          if (ELEMENT_TAG.equals(e.getName())) {
+            String signature = e.getAttributeValue(SIGNATURE_ATT);
+            if (signature == null) {
+              continue;
+            }
+            PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
+            if (restoredElement != null && restoredElement.isValid()) {
+              myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
+              FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
+              restoredElement.putUserData(FOLDING_INFO_KEY, fi);
+            }
+          }
+          else if (MARKER_TAG.equals(e.getName())) {
+            if (date == null) {
+              date = getTimeStamp();
+            }
+            if (date.isEmpty()) continue;
+
+            if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
+            StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
+            try {
+              int start = Integer.valueOf(tokenizer.nextToken()).intValue();
+              int end = Integer.valueOf(tokenizer.nextToken()).intValue();
+              if (start < 0 || end >= document.getTextLength() || start > end) continue;
+              RangeMarker marker = document.createRangeMarker(start, end);
+              myRangeMarkers.add(marker);
+              String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
+              if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
+              FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
+              marker.putUserData(FOLDING_INFO_KEY, fi);
+            }
+            catch (NoSuchElementException exc) {
+              LOG.error(exc);
+            }
+          }
+          else {
+            throw new IllegalStateException("unknown tag: " + e.getName());
+          }
         }
       }
-      else if (MARKER_TAG.equals(e.getName())) {
-        if (date == null) {
-          date = getTimeStamp();
-        }
-        if (date.isEmpty()) continue;
-
-        if (!date.equals(e.getAttributeValue(DATE_ATT)) || FileDocumentManager.getInstance().isDocumentUnsaved(document)) continue;
-        StringTokenizer tokenizer = new StringTokenizer(e.getAttributeValue(SIGNATURE_ATT), ":");
-        try {
-          int start = Integer.valueOf(tokenizer.nextToken()).intValue();
-          int end = Integer.valueOf(tokenizer.nextToken()).intValue();
-          if (start < 0 || end >= document.getTextLength() || start > end) continue;
-          RangeMarker marker = document.createRangeMarker(start, end);
-          myRangeMarkers.add(marker);
-          String placeHolderText = e.getAttributeValue(PLACEHOLDER_ATT);
-          if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
-          FoldingInfo fi = new FoldingInfo(placeHolderText, expanded);
-          marker.putUserData(FOLDING_INFO_KEY, fi);
-        }
-        catch (NoSuchElementException exc) {
-          LOG.error(exc);
-        }
-      }
-      else {
-        throw new IllegalStateException("unknown tag: " + e.getName());
-      }
-    }
+    });
   }
 
   private String getTimeStamp() {

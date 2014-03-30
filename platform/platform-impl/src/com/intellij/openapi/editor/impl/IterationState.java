@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
@@ -25,14 +26,13 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public final class IterationState {
@@ -86,14 +86,20 @@ public final class IterationState {
   private int myEndOffset;
   private final int myEnd;
 
-  private final int mySelectionStart;
+  private final int[] mySelectionStarts;
+  private final int[] mySelectionEnds;
+  private final int[] myVirtualSelectionStarts;
+  private final int[] myVirtualSelectionEnds;
+  private int myCurrentSelectionIndex = 0;
+  private int myCurrentVirtualSelectionIndex = 0;
+  private boolean myCurrentLineHasVirtualSelection;
+  private int myCurrentPastLineEndBackgroundSegment; // 0 - before selection, 1 - in selection, 2 - after selection
+  private Color myCurrentBackgroundColor;
 
-  private final int mySelectionEnd;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
   private final FoldingModelEx myFoldingModel;
 
-  private final boolean hasSelection;
   private FoldRegion myCurrentFold = null;
   private final TextAttributes myFoldTextAttributes;
   private final TextAttributes mySelectionAttributes;
@@ -121,9 +127,33 @@ public final class IterationState {
     LOG.assertTrue(myStartOffset <= myEnd);
     myHighlighterIterator = editor.getHighlighter().createIterator(start);
 
-    hasSelection = useCaretAndSelection && editor.getSelectionModel().hasSelection();
-    mySelectionStart = hasSelection ? editor.getSelectionModel().getSelectionStart() : -1;
-    mySelectionEnd = hasSelection ? editor.getSelectionModel().getSelectionEnd() : -1;
+    boolean hasSelection = useCaretAndSelection && (editor.getCaretModel().supportsMultipleCarets() || editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection());
+    if (!hasSelection) {
+      mySelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
+      mySelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
+      myVirtualSelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
+      myVirtualSelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
+    }
+    else if (editor.getCaretModel().supportsMultipleCarets()) {
+      List<Caret> carets = editor.getCaretModel().getAllCarets();
+      mySelectionStarts = new int[carets.size()];
+      mySelectionEnds = new int[carets.size()];
+      myVirtualSelectionStarts = new int[carets.size()];
+      myVirtualSelectionEnds = new int[carets.size()];
+      for (int i = 0; i < carets.size(); i++) {
+        Caret caret = carets.get(i);
+        mySelectionStarts[i] = caret.getSelectionStart();
+        mySelectionEnds[i] = caret.getSelectionEnd();
+        myVirtualSelectionStarts[i] = caret.getSelectionStartPosition().column - editor.offsetToVisualPosition(mySelectionStarts[i]).column;
+        myVirtualSelectionEnds[i] = caret.getSelectionEndPosition().column - editor.offsetToVisualPosition(mySelectionEnds[i]).column;
+      }
+    }
+    else {
+      mySelectionStarts = editor.getSelectionModel().getBlockSelectionStarts();
+      mySelectionEnds = editor.getSelectionModel().getBlockSelectionEnds();
+      myVirtualSelectionStarts = new int[mySelectionStarts.length];
+      myVirtualSelectionEnds = new int[mySelectionEnds.length];
+    }
 
     myFoldingModel = editor.getFoldingModel();
     myFoldTextAttributes = myFoldingModel.getPlaceholderAttributes();
@@ -139,7 +169,7 @@ public final class IterationState {
     myCaretRowStart = caretModel.getVisualLineStart();
     myCaretRowEnd = caretModel.getVisualLineEnd();
 
-    MarkupModelEx editorMarkup = (MarkupModelEx)editor.getMarkupModel();
+    MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd);
 
     final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true);
@@ -180,31 +210,20 @@ public final class IterationState {
 
     private void advance() {
       if (myNextHighlighter != null) {
-        if (myNextHighlighter.getAffectedAreaStartOffset() <= myStartOffset) {
-          myCurrentHighlighters.add(myNextHighlighter);
-          myNextHighlighter = null;
+        if (myNextHighlighter.getAffectedAreaStartOffset() > myStartOffset) {
+          return;
         }
-        
-        // There is a possible case that there are two highlighters mapped to offset of the first non-white space symbol
-        // on a line. The second one may have HighlighterTargetArea.LINES_IN_RANGE area, so, we should use it for indent
-        // background processing (that is the case for the active debugger line that starts with highlighted brace/bracket).
-        // So, we check if it's worth to use next highlighter here.
-        else if (myIterator.hasNext()) {
-          final RangeHighlighterEx lookAhead = myIterator.next();
-          if (lookAhead.getAffectedAreaStartOffset() <= myStartOffset) {
-            myCurrentHighlighters.add(lookAhead);
-          }
-          else {
-            myIterator.pushBack(lookAhead);
-          }
-        }
+
+        myCurrentHighlighters.add(myNextHighlighter);
+        myNextHighlighter = null;
       }
 
-      while (myNextHighlighter == null && myIterator.hasNext()) {
+      while (myIterator.hasNext()) {
         RangeHighlighterEx highlighter = myIterator.next();
         if (!skipHighlighter(highlighter)) {
           if (highlighter.getAffectedAreaStartOffset() > myStartOffset) {
             myNextHighlighter = highlighter;
+            break;
           }
           else {
             myCurrentHighlighters.add(highlighter);
@@ -235,13 +254,15 @@ public final class IterationState {
   public void advance() {
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
+    advanceCurrentSelectionIndex();
+    advanceCurrentVirtualSelectionIndex();
 
     myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
     if (myCurrentFold != null) {
       myEndOffset = myCurrentFold.getEndOffset();
     }
     else {
-      myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd(myStartOffset));
+      myEndOffset = Math.min(getHighlighterEnd(myStartOffset), getSelectionEnd());
       myEndOffset = Math.min(myEndOffset, getMinSegmentHighlightersEnd());
       myEndOffset = Math.min(myEndOffset, getFoldRangesEnd(myStartOffset));
       myEndOffset = Math.min(myEndOffset, getCaretEnd(myStartOffset));
@@ -290,17 +311,33 @@ public final class IterationState {
     return min;
   }
 
-  private int getSelectionEnd(int start) {
-    if (!hasSelection) {
+  private void advanceCurrentSelectionIndex() {
+    while (myCurrentSelectionIndex < mySelectionEnds.length && myStartOffset >= mySelectionEnds[myCurrentSelectionIndex]) {
+      myCurrentSelectionIndex++;
+    }
+  }
+
+  private void advanceCurrentVirtualSelectionIndex() {
+    while (myCurrentVirtualSelectionIndex < mySelectionEnds.length
+           && (myStartOffset > mySelectionEnds[myCurrentVirtualSelectionIndex] || myVirtualSelectionEnds[myCurrentVirtualSelectionIndex] <= 0)) {
+      myCurrentVirtualSelectionIndex++;
+    }
+  }
+
+  private int getSelectionEnd() {
+    if (myCurrentSelectionIndex >= mySelectionStarts.length) {
       return myEnd;
     }
-    if (mySelectionStart > start) {
-      return mySelectionStart;
+    if (myStartOffset < mySelectionStarts[myCurrentSelectionIndex]) {
+      return mySelectionStarts[myCurrentSelectionIndex];
     }
-    if (mySelectionEnd > start) {
-      return mySelectionEnd;
+    else {
+      return mySelectionEnds[myCurrentSelectionIndex];
     }
-    return myEnd;
+  }
+
+  private boolean isInSelection() {
+    return myCurrentSelectionIndex < mySelectionStarts.length && myStartOffset >= mySelectionStarts[myCurrentSelectionIndex];
   }
 
   private void advanceSegmentHighlighters() {
@@ -362,7 +399,7 @@ public final class IterationState {
       return;
     }
 
-    boolean isInSelection = hasSelection && myStartOffset >= mySelectionStart && myStartOffset < mySelectionEnd;
+    boolean isInSelection = isInSelection();
     boolean isInCaretRow = myStartOffset >= myCaretRowStart && myStartOffset < myCaretRowEnd;
     boolean isInGuardedBlock = myDocument.getOffsetGuard(myStartOffset) != null;
 
@@ -391,12 +428,19 @@ public final class IterationState {
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
     cachedAttributes.clear();
 
+    int selectionAttributesIndex = -1; // a 'would-be' or real position of selection attributes in attributes list
+
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
-      if (selection != null && highlighter.getLayer() < HighlighterLayer.SELECTION) {
-        cachedAttributes.add(selection);
-        selection = null;
+      if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
+        if (selectionAttributesIndex < 0) {
+          selectionAttributesIndex = cachedAttributes.size();
+        }
+        if (selection != null) {
+          cachedAttributes.add(selection);
+          selection = null;
+        }
       }
 
       if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
@@ -425,6 +469,9 @@ public final class IterationState {
       }
     }
 
+    if (selectionAttributesIndex < 0) {
+      selectionAttributesIndex = cachedAttributes.size();
+    }
     if (selection != null) cachedAttributes.add(selection);
     if (fold != null) cachedAttributes.add(fold);
     if (guard != null) cachedAttributes.add(guard);
@@ -437,6 +484,8 @@ public final class IterationState {
     EffectType effectType = null;
     int fontType = 0;
 
+    boolean selectionBackgroundIsPotentiallyVisible = cachedAttributes.isEmpty();
+
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
@@ -446,6 +495,9 @@ public final class IterationState {
       }
 
       if (back == null) {
+        if (isInSelection && i == selectionAttributesIndex || !isInSelection && i >= selectionAttributesIndex) {
+          selectionBackgroundIsPotentiallyVisible = true;
+        }
         back = ifDiffers(attrs.getBackgroundColor(), myDefaultBackground);
       }
 
@@ -464,6 +516,16 @@ public final class IterationState {
     if (effectType == null) effectType = EffectType.BOXED;
 
     myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
+
+    myCurrentBackgroundColor = back;
+    if (selectionBackgroundIsPotentiallyVisible && myCurrentVirtualSelectionIndex < mySelectionStarts.length && myStartOffset == mySelectionEnds[myCurrentVirtualSelectionIndex]) {
+      myCurrentLineHasVirtualSelection = true;
+      myCurrentPastLineEndBackgroundSegment = myVirtualSelectionStarts[myCurrentVirtualSelectionIndex] > 0 ? 0 : 1;
+    }
+    else {
+      myCurrentLineHasVirtualSelection = false;
+      myCurrentPastLineEndBackgroundSegment = 0;
+    }
   }
 
   @Nullable
@@ -491,6 +553,41 @@ public final class IterationState {
 
   public FoldRegion getCurrentFold() {
     return myCurrentFold;
+  }
+
+  public boolean hasPastLineEndBackgroundSegment() {
+    return myCurrentLineHasVirtualSelection && myCurrentPastLineEndBackgroundSegment < 2;
+  }
+
+  public int getPastLineEndBackgroundSegmentWidth() {
+    switch (myCurrentPastLineEndBackgroundSegment) {
+      case 0: return myVirtualSelectionStarts[myCurrentVirtualSelectionIndex];
+      case 1: return myVirtualSelectionEnds[myCurrentVirtualSelectionIndex] - myVirtualSelectionStarts[myCurrentVirtualSelectionIndex];
+      default: return 0;
+    }
+  }
+
+  @NotNull
+  public TextAttributes getPastLineEndBackgroundAttributes() {
+    myMergedAttributes.setBackgroundColor(myCurrentPastLineEndBackgroundSegment == 1 ? mySelectionAttributes.getBackgroundColor() : myCurrentBackgroundColor);
+    return myMergedAttributes;
+  }
+
+  public void advanceToNextPastLineEndBackgroundSegment() {
+    myCurrentPastLineEndBackgroundSegment++;
+  }
+
+  public boolean hasPastFileEndBackgroundSegments() {
+    myCurrentLineHasVirtualSelection = myVirtualSelectionEnds.length > 0
+                && myVirtualSelectionEnds[myVirtualSelectionEnds.length - 1] > 0
+                && myEndOffset == myEnd
+                && mySelectionEnds[mySelectionStarts.length - 1] == myEndOffset;
+    if (myCurrentLineHasVirtualSelection) {
+      myCurrentVirtualSelectionIndex = myVirtualSelectionStarts.length - 1;
+      myCurrentPastLineEndBackgroundSegment = myVirtualSelectionStarts[myCurrentVirtualSelectionIndex] > 0 ? 0 : 1;
+      myCurrentBackgroundColor = myEndOffset >= myCaretRowStart ? myCaretRowAttributes.getBackgroundColor() : myDefaultBackground;
+    }
+    return myCurrentLineHasVirtualSelection;
   }
 
   @Nullable
@@ -532,8 +629,8 @@ public final class IterationState {
         return layerDiff;
       }
       // prefer more specific region
-      int o1Length = o1.getEndOffset() - o1.getStartOffset();
-      int o2Length = o2.getEndOffset() - o2.getStartOffset();
+      int o1Length = o1.getAffectedAreaEndOffset() - o1.getAffectedAreaStartOffset();
+      int o2Length = o2.getAffectedAreaEndOffset() - o2.getAffectedAreaStartOffset();
       return o1Length - o2Length;
     }
   }

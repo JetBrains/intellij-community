@@ -21,7 +21,10 @@ import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.smartTree.Group;
+import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -99,15 +102,21 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     if (model instanceof StructureViewModel.ExpandInfoProvider) {
       StructureViewModel.ExpandInfoProvider provider = (StructureViewModel.ExpandInfoProvider)model;
       Object element = nodeDescriptor.getElement();
-      StructureViewTreeElement value = null;
       if (element instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
         StructureViewComponent.StructureViewTreeElementWrapper wrapper = (StructureViewComponent.StructureViewTreeElementWrapper)element;
         if (wrapper.getValue() instanceof StructureViewTreeElement) {
-          value = (StructureViewTreeElement)wrapper.getValue();
+          final StructureViewTreeElement value = (StructureViewTreeElement)wrapper.getValue();
+          if (value != null) {
+            return provider.isAutoExpand(value);
+          }
         }
-      }
-      if (value != null) {
-        return provider.isAutoExpand(value);
+      } else if (element instanceof GroupWrapper) {
+        final Group group = ((GroupWrapper)element).getValue();
+        for (TreeElement treeElement : group.getChildren()) {
+          if (treeElement instanceof StructureViewTreeElement && !provider.isAutoExpand((StructureViewTreeElement)treeElement)) {
+            return false;
+          }
+        }
       }
     }
     // expand root node & its immediate children

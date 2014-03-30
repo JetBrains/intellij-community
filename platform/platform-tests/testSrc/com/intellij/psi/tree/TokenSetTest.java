@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,22 +93,11 @@ public class TokenSetTest {
     check(TokenSet.andSet(S12, S34));
   }
 
-  @SuppressWarnings("deprecation")
   @Test
   public void andNot() throws Exception {
     final TokenSet S123 = TokenSet.orSet(S12, S3);
-    check(S123.minus(S12), T3);
-    check(S123.minus(S5), T1, T2, T3);
     check(TokenSet.andNot(S123, S12), T3);
     check(TokenSet.andNot(S123, S5), T1, T2, T3);
-  }
-
-  @SuppressWarnings("deprecation")
-  @Test
-  public void not() throws Exception {
-    checkNot(TokenSet.not(S12), T1, T2);
-    checkNot(TokenSet.not(S34), T3, T4);
-    checkNot(TokenSet.not(S5), T5);
   }
 
   private static void fakeElements(int from, int to) {
@@ -121,18 +110,6 @@ public class TokenSetTest {
     final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
     for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
       if (expected.contains(t)) {
-        assertTrue("missed: " + t, set.contains(t));
-      }
-      else {
-        assertFalse("unexpected: " + t, set.contains(t));
-      }
-    }
-  }
-
-  private static void checkNot(@NotNull TokenSet set, @NotNull IElementType... elements) {
-    final Set<IElementType> expected = ContainerUtil.newHashSet(elements);
-    for (IElementType t : Arrays.asList(T1, T2, T3, T4, T5, T6)) {
-      if (!expected.contains(t)) {
         assertTrue("missed: " + t, set.contains(t));
       }
       else {

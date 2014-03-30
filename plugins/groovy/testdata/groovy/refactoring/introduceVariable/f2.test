@@ -4,5 +4,5 @@ for (i in 1..<all>boo<end>){
 -----
 def preved = boo
 for (i in 1..preved<caret>){
-    def foo = boo
+    def foo = preved
 }

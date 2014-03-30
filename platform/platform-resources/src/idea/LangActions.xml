@@ -43,6 +43,8 @@
 
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
 
+    <action id="EditorIndentLineOrSelection" class="com.intellij.openapi.editor.actions.IndentLineOrSelectionAction"/>
+
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
       <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
@@ -70,7 +72,7 @@
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.Graph.Print"/>
       <reference ref="AddToFavorites"/>
-      
+
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
 
@@ -160,7 +162,7 @@
 
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
-    
+
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
@@ -284,7 +286,7 @@
         <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
         <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       </group>
-      
+
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <separator/>
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
@@ -316,6 +318,10 @@
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+
+    <action id="NewScratchFile" class="com.intellij.ide.scratch.CreateScratchFileAction">
+      <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
+    </action>
 
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
@@ -351,8 +357,14 @@
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
+    <group id="NavBarToolBarOthers"/>
     <group id="NavBarToolBar">
       <reference ref="ToolbarRunGroup"/>
+      <separator/>
+      <reference ref="NavBarVcsGroup"/>
+      <separator/>
+      <reference id="NavBarToolBarOthers"/>
+      <separator/>
     </group>
 
     <group id="Bookmarks">
@@ -391,7 +403,6 @@
 
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="$Delete"/>
-      <action id="ExcludeFromProject" class="com.intellij.openapi.file.exclude.ui.ExcludeFromProjectAction"/>
       <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
@@ -422,7 +433,6 @@
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -433,6 +443,7 @@
       <separator/>
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
+      <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
@@ -459,7 +470,6 @@
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -487,12 +497,11 @@
       <separator/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
-      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.RenameFavoritesListAction"/>
+      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.RenameFavoritesListAction" use-shortcut-of="RenameElement"/>
       <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction"/>
       <action id="EditFavorites" class="com.intellij.ide.favoritesTreeView.actions.EditFavoritesAction"/>
       <reference ref="AddToFavorites"/>
       <reference ref="SendToFavoritesGroup"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -525,8 +534,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -544,7 +551,7 @@
       <reference ref="FoldingGroup"/>
       <separator/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="EditorToggleColumnMode" anchor="after"/>
     </group>
 
     <group id="EditorLangPopupMenu">
@@ -575,9 +582,9 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="AddAllToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
@@ -638,6 +645,7 @@
     </group>
 
     <action id="Debugger.AddToWatch" class="com.intellij.xdebugger.impl.actions.AddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+    <action id="Debugger.EvaluateInConsole" class="com.intellij.xdebugger.impl.actions.EvaluateInConsoleAction"/>
 
     <group id="EditorPopupMenuDebug">
       <separator/>
@@ -645,6 +653,7 @@
       <reference ref="RunToCursor"/>
       <reference ref="ForceRunToCursor"/>
       <reference ref="Debugger.AddToWatch"/>
+      <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
 
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
@@ -658,7 +667,11 @@
       <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"/>
-      <action id="XDebugger.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"/>
+
+      <action id="Debugger.Tree.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
+      <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
+
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
       <action id="XDebugger.EditWatch" class="com.intellij.xdebugger.impl.frame.actions.XEditWatchAction"/>
       <action id="XDebugger.RemoveWatch" class="com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction" icon="AllIcons.Actions.Delete"/>
@@ -707,7 +720,9 @@
     <group id="XDebugger.Variables.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.JumpToSource"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="XDebugger.JumpToTypeSource"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
@@ -728,11 +743,8 @@
 
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
-    </group>
-
-    <group id="XDebugger.Value.Hint.Tree.Popup">
-      <reference ref="XDebugger.ValueGroup"/>
-      <reference ref="XDebugger.AddToWatches"/>
+      <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.Tree.EvaluateInConsole"/>
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
@@ -744,13 +756,16 @@
         <action id="Runner.RestoreLayout" class="com.intellij.execution.ui.layout.actions.RestoreLayoutAction"
                 icon="AllIcons.Debugger.RestoreLayout"/>
       </group>
-
-      <group id="Runner.View.Popup">
-        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.Actions.Minimize"/>
-        <separator/>
+      <group id="Runner.View.Close.Group" popup="false">
         <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Cross"/>
         <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Cross"/>
         <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Cross"/>
+        <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Cross"/>
+      </group>
+      <group id="Runner.View.Popup">
+        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.Actions.Minimize"/>
+        <separator/>
+        <reference ref="Runner.View.Close.Group"/>
         <separator/>
         <group id="Runner.Focus">
           <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
@@ -807,10 +822,9 @@
       <add-to-group group-id="TestTreePopupMenu" anchor="last"/>
     </group>
 
-    <group text="Lang internal actions" internal="true">
-      <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
-      <add-to-group group-id="Internal" anchor="last"/>
-    </group>
+    <action id="DumpLookupElementWeights" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights to log">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
 
     <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
     <action id="Arrangement.Rule.Remove" class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"/>
@@ -829,24 +843,24 @@
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"
             icon="AllIcons.ToolbarDecorator.MoveDown"/>
-    
+
     <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Edit"/>
     </group>
-    
+
     <group id="Arrangement.Rule.Match.Control.ToolBar">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
     </group>
-    
+
     <group id="Arrangement.Rule.Group.Control.ToolBar">
       <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
-    
+
   </actions>
 </component>

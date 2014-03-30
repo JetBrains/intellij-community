@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.ide;
 
+import com.intellij.idea.Main;
 import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author max
@@ -28,26 +26,17 @@ import java.util.List;
 public class Bootstrap {
   private static final String PLUGIN_MANAGER = "com.intellij.ide.plugins.PluginManager";
 
-  private Bootstrap() {}
+  private Bootstrap() { }
 
-  public static void main(final String[] args, final String mainClass, final String methodName) {
-    main(args, mainClass, methodName, new ArrayList<URL>());
-  }
+  public static void main(String[] args, String mainClass, String methodName) throws Exception {
+    boolean updatePlugins = !Main.isCommandLine();
+    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(updatePlugins);
 
-  public static void main(final String[] args, final String mainClass, final String methodName, final List<URL> classpathElements) {
-    final UrlClassLoader newClassLoader = ClassloaderUtil.initClassloader(classpathElements);
-    try {
-      WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
+    WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
-      final Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
-
-      final Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class);
-      startMethod.setAccessible(true);
-      startMethod.invoke(null, mainClass, methodName, args);
-    }
-    catch (Exception e) {
-      //noinspection UseOfSystemOutOrSystemErr
-      e.printStackTrace(System.err);
-    }
+    Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);
+    Method startMethod = klass.getDeclaredMethod("start", String.class, String.class, String[].class);
+    startMethod.setAccessible(true);
+    startMethod.invoke(null, mainClass, methodName, args);
   }
 }

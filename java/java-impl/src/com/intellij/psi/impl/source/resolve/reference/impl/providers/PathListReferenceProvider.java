@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,18 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ElementManipulator;
-import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author davdeev
  */
-public class PathListReferenceProvider extends PsiReferenceProviderBase {
+public class PathListReferenceProvider extends PsiReferenceProvider {
 
   @Override
   @NotNull
@@ -79,7 +75,7 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     return ',';
   }
 
-  protected PsiReference[] createReferences(PsiElement element, String s, int offset, final boolean soft) {
+  protected PsiReference[] createReferences(@NotNull PsiElement element, String s, int offset, final boolean soft) {
     int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
     if (contentOffset >= 0) {
       offset += contentOffset;

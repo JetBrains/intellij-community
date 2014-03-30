@@ -38,10 +38,10 @@ class Primitives<T> {
 
 
 /////// calling super on generic bound class
-public class Generic<T> {
+class Generic<T> {
     Generic(T t){}
 }
-public class Bound extends Generic<String>{
+class Bound extends Generic<String>{
     public Bound(String s) {
         super(s);
     }

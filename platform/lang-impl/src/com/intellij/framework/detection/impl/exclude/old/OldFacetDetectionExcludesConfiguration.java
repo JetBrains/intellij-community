@@ -54,10 +54,12 @@ public class OldFacetDetectionExcludesConfiguration implements PersistentStateCo
     myProject = project;
   }
 
+  @Override
   public DisabledAutodetectionInfo getState() {
     return myDisabledAutodetectionInfo;
   }
 
+  @Override
   public void loadState(final DisabledAutodetectionInfo state) {
     myDisabledAutodetectionInfo = state;
   }

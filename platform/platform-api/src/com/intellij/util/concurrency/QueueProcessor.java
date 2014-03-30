@@ -19,7 +19,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +92,11 @@ public class QueueProcessor<T> {
   @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
     return new QueueProcessor<Runnable>(new RunnableConsumer());
+  }
+
+  @NotNull
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor(ThreadToUse threadToUse) {
+    return new QueueProcessor<Runnable>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.FALSE);
   }
 
   @NotNull
@@ -230,6 +237,9 @@ public class QueueProcessor<T> {
     try {
       run.run();
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (Throwable e) {
       try {
         LOG.error(e);
@@ -244,6 +254,23 @@ public class QueueProcessor<T> {
   public boolean isEmpty() {
     synchronized (myQueue) {
       return myQueue.isEmpty() && !isProcessing;
+    }
+  }
+
+  /**
+   * Removes several last tasks in the queue, leaving only {@code remaining} amount of them, counted from the head of the queue.
+   */
+  public void dismissLastTasks(int remaining) {
+    synchronized (myQueue) {
+      while (myQueue.size() > remaining) {
+        myQueue.pollLast();
+      }
+    }
+  }
+
+  public boolean hasPendingItemsToProcess() {
+    synchronized (myQueue) {
+      return !myQueue.isEmpty();
     }
   }
 

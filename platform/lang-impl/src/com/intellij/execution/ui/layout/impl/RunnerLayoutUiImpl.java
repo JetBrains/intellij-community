@@ -258,6 +258,13 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @NotNull
   @Override
+  public LayoutViewOptions setTabPopupActions(@NotNull ActionGroup group) {
+    myContentUI.setTabPopupActions(group);
+    return this;
+  }
+
+  @NotNull
+  @Override
   public LayoutViewOptions setLeftToolbar(@NotNull final ActionGroup leftToolbar, @NotNull final String place) {
     myContentUI.setLeftToolbar(leftToolbar, place);
     return this;

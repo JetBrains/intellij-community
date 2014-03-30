@@ -1,4 +1,4 @@
-public class Bar {
+class Bar {
   public static void main(String[] args) {
     for (String s : args) {
       try {

@@ -10,6 +10,7 @@ import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.util.FileTypeUtils;
 
 import java.util.*;
 
@@ -76,8 +77,8 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     if (!(file instanceof PsiClassOwner)) {
       return false;
     }
-    
-    if (!JspPsiUtil.isInJspFile(file)) {
+
+    if (!FileTypeUtils.isInServerPageFile(file)) {
       return false;
     }
 

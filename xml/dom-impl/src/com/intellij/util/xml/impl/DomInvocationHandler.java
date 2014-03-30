@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,12 +75,12 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private DomParentStrategy myParentStrategy;
   private volatile long myLastModCount;
 
-  private final DomElement myProxy;
+  private volatile DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable protected final Stub myStub;
+  @Nullable protected Stub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  @NotNull final EvaluatedXmlName tagName,
@@ -97,14 +97,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     myType = narrowType(type);
 
-    final Class<?> rawType = getRawType();
-    myInvocationCache = manager.getApplicationComponent().getInvocationCache(rawType);
-    Class<? extends DomElement> implementation = manager.getApplicationComponent().getImplementation(rawType);
-    final boolean isInterface = ReflectionCache.isInterface(rawType);
-    if (implementation == null && !isInterface) {
-      implementation = (Class<? extends DomElement>)rawType;
-    }
-    myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+    myInvocationCache = manager.getApplicationComponent().getInvocationCache(getRawType());
     refreshGenericInfo(dynamic);
     if (stub != null) {
       stub.setHandler(this);
@@ -163,7 +156,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (other == getProxy()) return;
     assert other.getDomElementType().equals(myType) : "Can't copy from " + other.getDomElementType() + " to " + myType;
 
-    if (!DomUtil.hasXml(other)) {
+    if (other.getXmlElement() == null) {
       undefine();
       return;
     }
@@ -206,7 +199,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     });
 
     if (!myManager.getSemService().isInsideAtomicChange()) {
-      myManager.fireEvent(new DomEvent(myProxy, false));
+      myManager.fireEvent(new DomEvent(getProxy(), false));
     }
   }
 
@@ -217,7 +210,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       assert existing != null : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText();
       assert getProxy().equals(existing) : existing + "\n---------\n" + tag.getParent().getText() + "\n-----------\n" + tag.getText() + "\n----\n" + this + " != " +
                                            DomManagerImpl.getDomInvocationHandler(existing);
-      final SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(myManager.getProject()).createLazyPointer(tag);
+      final SmartPsiElementPointer<XmlTag> pointer =
+        SmartPointerManager.getInstance(myManager.getProject()).createSmartPsiElementPointer(tag);
       return myManager.createStableValue(new StableCopyFactory<T>(pointer, myType, getClass()));
     }
     return (T)createPathStableCopy();
@@ -447,7 +441,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private Converter createConverter(final JavaMethod method) {
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
-    final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
+    final Class parameter = DomUtil.substituteGenericType(type, myType);
     if (parameter == null) {
       LOG.error(type + " " + myType);
     }
@@ -516,7 +510,18 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public final DomElement getProxy() {
-    return myProxy;
+    DomElement proxy = myProxy;
+    if (proxy == null) {
+      Class<?> rawType = getRawType();
+      Class<? extends DomElement> implementation = myManager.getApplicationComponent().getImplementation(rawType);
+      final boolean isInterface = rawType.isInterface();
+      if (implementation == null && !isInterface) {
+        //noinspection unchecked
+        implementation = (Class<? extends DomElement>)rawType;
+      }
+      myProxy = proxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+    }
+    return proxy;
   }
 
   @NotNull
@@ -685,13 +690,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public final String toString() {
-    if (ReflectionCache.isAssignable(GenericValue.class, getRawType())) {
+    if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
       return ((GenericValue)getProxy()).getStringValue();
     }
     return myType.toString() + " @" + hashCode();
   }
 
-  protected final Class<?> getRawType() {
+  public final Class<?> getRawType() {
     return ReflectionUtil.getRawType(myType);
   }
 
@@ -729,6 +734,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   protected final void setXmlElement(final XmlElement element) {
     refreshGenericInfo(element != null && !isAttribute());
+    myStub = null;
     myParentStrategy = element == null ? myParentStrategy.clearXmlElement() : myParentStrategy.setXmlElement(element);
   }
 

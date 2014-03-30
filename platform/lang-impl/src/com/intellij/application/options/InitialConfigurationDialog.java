@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.CommonBundle;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.NewColorAndFontPanel;
 import com.intellij.application.options.colors.SimpleEditorPreview;
@@ -28,7 +29,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -76,7 +77,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JCheckBox myGlobalEntryCheckBox;
   private JPanel myCreateEntryPanel;
   private ComboBox myAppearanceComboBox;
-  private String myColorSettingsPage;
+  private JLabel myPreferencesLabel;
+  private final String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
   private MyColorPreviewPanel myHidingPreviewPanel;
@@ -176,6 +178,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
     if (canCreateDesktopEntry) {
       myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
     }
+
+    myPreferencesLabel.setText("You can use "+ CommonBundle.settingsActionPath() + " to configure any of these settings later.");
 
     Disposer.register(myDisposable, new Disposable() {
       @Override
@@ -396,7 +400,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
 
     super.doOKAction();
 

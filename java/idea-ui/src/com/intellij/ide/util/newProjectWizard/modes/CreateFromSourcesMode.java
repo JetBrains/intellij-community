@@ -58,7 +58,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
   }
 
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     final StepSequence sequence = new StepSequence();
     addSteps(context, modulesProvider, sequence, null);
     return sequence;

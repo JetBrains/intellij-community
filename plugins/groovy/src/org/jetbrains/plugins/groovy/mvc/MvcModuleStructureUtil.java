@@ -25,9 +25,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
@@ -49,6 +49,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,10 +84,10 @@ public class MvcModuleStructureUtil {
                                                                              final MvcProjectStructure structure) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(structure.myModule);
 
-    Map<VirtualFile, Boolean> sourceRoots = new HashMap<VirtualFile, Boolean>();
+    Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots = new HashMap<VirtualFile, JpsModuleSourceRootType<?>>();
     for (ContentEntry entry : moduleRootManager.getContentEntries()) {
       for (SourceFolder folder : entry.getSourceFolders()) {
-        sourceRoots.put(folder.getFile(), folder.isTestSource());
+        sourceRoots.put(folder.getFile(), folder.getRootType());
       }
     }
 
@@ -93,23 +95,23 @@ public class MvcModuleStructureUtil {
 
     final List<Consumer<ContentEntry>> actions = ContainerUtil.newArrayList();
 
-    for (final String src : structure.getSourceFolders()) {
-      addSourceFolder(root, src, false, actions, sourceRoots);
+    for (Map.Entry<JpsModuleSourceRootType<?>, Collection<String>> entry : structure.getSourceFolders().entrySet()) {
+      JpsModuleSourceRootType<?> rootType = entry.getKey();
+
+      for (String src : entry.getValue()) {
+        addSourceFolder(root, src, rootType, actions, sourceRoots);
+      }
     }
-    for (final String src : structure.getTestFolders()) {
-      addSourceFolder(root, src, true, actions, sourceRoots);
-    }
+
     for (final String src : structure.getInvalidSourceFolders()) {
       removeSrcFolderFromRoots(root.findFileByRelativePath(src), actions, sourceRoots);
     }
 
-    for (final String excluded : structure.getExcludedFolders()) {
-      final VirtualFile src = root.findFileByRelativePath(excluded);
-
-      if (src != null && moduleRootManager.getFileIndex().isInContent(src)) {
+    for (final VirtualFile excluded : structure.getExcludedFolders(root)) {
+      if (moduleRootManager.getFileIndex().isInContent(excluded)) {
         actions.add(new Consumer<ContentEntry>() {
           public void consume(ContentEntry contentEntry) {
-            contentEntry.addExcludeFolder(src);
+            contentEntry.addExcludeFolder(excluded);
           }
         });
       }
@@ -140,7 +142,7 @@ public class MvcModuleStructureUtil {
 
   public static void removeSrcFolderFromRoots(final VirtualFile file,
                                               List<Consumer<ContentEntry>> actions,
-                                              Map<VirtualFile, Boolean> sourceRoots) {
+                                              Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
     if (sourceRoots.containsKey(file)) {
       actions.add(new Consumer<ContentEntry>() {
         public void consume(ContentEntry contentEntry) {
@@ -199,39 +201,37 @@ public class MvcModuleStructureUtil {
     return library.getModifiableModel();
   }
 
-  public static void addSourceFolder(@NotNull VirtualFile root,
-                                     @NotNull String relativePath,
-                                     final boolean isTest,
-                                     List<Consumer<ContentEntry>> actions,
-                                     Map<VirtualFile, Boolean> sourceRoots) {
+  private static void addSourceFolder(@NotNull VirtualFile root,
+                                      @NotNull String relativePath,
+                                      final JpsModuleSourceRootType<?> rootType,
+                                      List<Consumer<ContentEntry>> actions,
+                                      Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
     final VirtualFile src = root.findFileByRelativePath(relativePath);
     if (src == null) {
       return;
     }
 
-    Boolean existingFolderIsTest = sourceRoots.get(src);
+    JpsModuleSourceRootType<?> existingRootType = sourceRoots.get(src);
 
-    if (existingFolderIsTest != null) {
-      if (isTest && !existingFolderIsTest) { // see http://youtrack.jetbrains.net/issue/IDEA-70642
-        actions.add(new Consumer<ContentEntry>() {
-          @Override
-          public void consume(ContentEntry entry) {
-            for (SourceFolder folder : entry.getSourceFolders()) {
-              if (Comparing.equal(folder.getFile(), src)) {
-                entry.removeSourceFolder(folder);
-                entry.addSourceFolder(src, isTest, "");
-                break;
-              }
+    if (rootType == JavaSourceRootType.TEST_SOURCE && (existingRootType != null && existingRootType != JavaSourceRootType.TEST_SOURCE)) { // see http://youtrack.jetbrains.net/issue/IDEA-70642
+      actions.add(new Consumer<ContentEntry>() {
+        @Override
+        public void consume(ContentEntry entry) {
+          for (SourceFolder folder : entry.getSourceFolders()) {
+            if (Comparing.equal(folder.getFile(), src)) {
+              entry.removeSourceFolder(folder);
+              entry.addSourceFolder(src, rootType);
+              break;
             }
           }
-        });
-      }
+        }
+      });
       return;
     }
 
     actions.add(new Consumer<ContentEntry>() {
       public void consume(ContentEntry contentEntry) {
-        contentEntry.addSourceFolder(src, isTest, "");
+        contentEntry.addSourceFolder(src, rootType);
       }
     });
   }
@@ -257,13 +257,13 @@ public class MvcModuleStructureUtil {
     }
   }
 
-  public static boolean checkValidity(VirtualFile pluginDir) {
+  private static boolean checkValidity(VirtualFile pluginDir) {
     pluginDir.refresh(false, false);
     return pluginDir.isValid();
   }
 
-  public static List<Consumer<ModifiableRootModel>> getUpdateProjectStructureActions(Collection<VirtualFile> appRoots,
-                                                                                     MvcProjectStructure structure) {
+  private static List<Consumer<ModifiableRootModel>> getUpdateProjectStructureActions(Collection<VirtualFile> appRoots,
+                                                                                      MvcProjectStructure structure) {
     for (final VirtualFile appRoot : ModuleRootManager.getInstance(structure.myModule).getContentRoots()) {
       appRoot.refresh(false, false);
     }

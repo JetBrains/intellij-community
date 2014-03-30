@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.util.ActionCallback;
 
 public class KeyShortcutCommand extends TypeCommand {
 
-  public static String PREFIX = CMD_PREFIX + "[";
-  public static String POSTFIX = "]";
+  public static final String PREFIX = CMD_PREFIX + "[";
+  public static final String POSTFIX = "]";
 
   public KeyShortcutCommand(String text, int line) {
     super(text, line);

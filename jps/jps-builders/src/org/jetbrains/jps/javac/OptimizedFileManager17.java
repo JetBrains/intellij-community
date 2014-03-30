@@ -24,7 +24,7 @@ import com.sun.tools.javac.util.ListBuffer;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -46,6 +46,13 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
   private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
+
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final boolean isWindows = _OS_NAME.startsWith("windows");
+  private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
+  private static final boolean isMac = _OS_NAME.startsWith("mac");
+  private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
+  private static final boolean ourUseContentCache = Boolean.valueOf(System.getProperty("javac.use.content.cache", "false"));
 
   public OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
@@ -106,10 +113,10 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       else {
         final File dir = subdirectory.getFile(root);
         if (recurse) {
-          listDirectoryRecursively(dir, kinds, results, true, !location.isOutputLocation());
+          listDirectoryRecursively(dir, kinds, results, true);
         }
         else {
-          listDirectory(dir, kinds, results, !location.isOutputLocation());
+          listDirectory(dir, kinds, results);
         }
       }
       
@@ -140,8 +147,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
   
-  private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean canUseCache) {
-    final File[] files = listChildren(directory, canUseCache);
+  private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList) {
+    final File[] files = listChildren(directory);
     if (files != null) {
       if (sortFiles != null) {
         Arrays.sort(files, sortFiles);
@@ -160,8 +167,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
 
-  private void listDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean isRootCall, boolean canUseCache) {
-    final File[] children = listChildren(file, canUseCache);
+  private void listDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean isRootCall) {
+    final File[] children = listChildren(file);
     final String fileName = file.getName();
     if (children != null) { // is directory
       if (isRootCall || SourceVersion.isIdentifier(fileName)) {
@@ -169,7 +176,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
           Arrays.sort(children, sortFiles);
         }
         for (File child : children) {
-          listDirectoryRecursively(child, fileKinds, resultList, false, canUseCache);
+          listDirectoryRecursively(child, fileKinds, resultList, false);
         }
       }
     }
@@ -181,16 +188,21 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
   
-  private File[] listChildren(File file, boolean canUseCache) {
-    if (!canUseCache) {
-      return file.listFiles();
-    }
+  private File[] listChildren(File file) {
     File[] cached = myDirectoryCache.get(file);
     if (cached == null) {
       cached = file.listFiles();
       myDirectoryCache.put(file, cached != null? cached : NULL_FILE_ARRAY);
     }
     return cached == NULL_FILE_ARRAY ? null : cached;
+  }
+
+  // important! called via reflection, so avoid renaming or signature changing or rename carefully
+  public void fileGenerated(File file) {
+    final File parent = file.getParentFile();
+    if (parent != null) {
+      myDirectoryCache.remove(parent);
+    }
   }
 
   private boolean isFile(File root) {
@@ -213,8 +225,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   }
 
   private class InputFileObject extends BaseFileObject {
-    private String name;
-    final File file;
+    private final String name;
+    private final File file;
     private Reference<File> absFileRef;
 
     public InputFileObject(JavacFileManager fileManager, File f) {
@@ -250,7 +262,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     public JavaFileObject.Kind getKind() {
-      return getKind(name);
+      for (Kind kind : Kind.values()) {
+        if (kind != Kind.OTHER && name.endsWith(kind.extension)) {
+          return kind;
+        }
+      }
+      return Kind.OTHER;
     }
 
     @Override
@@ -285,20 +302,38 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     protected String inferBinaryName(Iterable<? extends File> path) {
-      String fPath = file.getPath();
-      //System.err.println("RegularFileObject " + file + " " +r.getPath());
+      final String fPath = file.getPath();
       for (File dir: path) {
-        //System.err.println("dir: " + dir);
-        String dPath = dir.getPath();
-        if (dPath.length() == 0)
-          dPath = System.getProperty("user.dir");
-        if (!dPath.endsWith(File.separator))
-          dPath += File.separator;
-        if (fPath.regionMatches(true, 0, dPath, 0, dPath.length())
-            && new File(fPath.substring(0, dPath.length())).equals(new File(dPath))) {
-          String relativeName = fPath.substring(dPath.length());
-          return removeExtension(relativeName).replace(File.separatorChar, '.');
+        String dirPath = dir.getPath();
+        if (dirPath.length() == 0) {
+          dirPath = System.getProperty("user.dir");
         }
+        if (!fPath.regionMatches(!isFileSystemCaseSensitive, 0, dirPath, 0, dirPath.length())) {
+          continue;
+        }
+        final int pathLength = fPath.length();
+        final boolean endsWithSeparator = dirPath.endsWith(File.separator);
+        if (!endsWithSeparator) {
+          // need to check if the next char in fPath is file separator
+          final int separatorIdx = dirPath.length();
+          if (pathLength <= separatorIdx || fPath.charAt(separatorIdx) != File.separatorChar) {
+            continue;
+          }
+        }
+        // fPath starts with dirPath
+        final int startIndex = endsWithSeparator ? dirPath.length() : dirPath.length() + 1;
+        int endIndex = fPath.lastIndexOf('.');
+        if (endIndex <= startIndex) {
+          endIndex = fPath.length();
+        }
+        final int length = endIndex - startIndex;
+        final StringBuilder buf = new StringBuilder(length).append(fPath, startIndex, endIndex);
+        for (int idx = 0; idx < length; idx++) {
+          if (buf.charAt(idx) == File.separatorChar) {
+            buf.setCharAt(idx, '.');
+          }
+        }
+        return buf.toString();
       }
       return null;
     }
@@ -352,22 +387,24 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
 
     public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
-      CharBuffer cb = fileManager.getCachedContent(this);
+      CharBuffer cb = ourUseContentCache? fileManager.getCachedContent(this) : null;
       if (cb == null) {
         InputStream in = new FileInputStream(file);
         try {
-          ByteBuffer bb = fileManager.makeByteBuffer(in);
-          JavaFileObject prev = fileManager.log.useSource(this);
+          final ByteBuffer bb = fileManager.makeByteBuffer(in);
+          final JavaFileObject prev = fileManager.log.useSource(this);
           try {
             cb = fileManager.decode(bb, ignoreEncodingErrors);
-          } finally {
+          }
+          finally {
             fileManager.log.useSource(prev);
           }
           fileManager.recycleByteBuffer(bb);
-          if (!ignoreEncodingErrors) {
+          if (ourUseContentCache && !ignoreEncodingErrors) {
             fileManager.cache(this, cb);
           }
-        } finally {
+        }
+        finally {
           in.close();
         }
       }
@@ -375,5 +412,14 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
 
-
+  public void close() {
+    try {
+      super.close();
+    }
+    finally {
+      // archives are cleared in super.close()
+      myDirectoryCache.clear();
+      myIsFile.clear();
+    }
+  }
 }

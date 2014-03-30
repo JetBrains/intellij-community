@@ -59,4 +59,8 @@ public class CharSequenceSubSequence implements CharSequence {
     if (myChars instanceof String) return ((String)myChars).substring(myStart, myEnd);
     return StringFactory.createShared(CharArrayUtil.fromSequence(myChars, myStart, myEnd));
   }
+
+  public CharSequence getBaseSequence() {
+    return myChars;
+  }
 }

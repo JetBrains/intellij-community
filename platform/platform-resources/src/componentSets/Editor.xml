@@ -30,9 +30,5 @@
       <interface-class>com.intellij.openapi.fileEditor.ex.IdeDocumentHistory</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.openapi.editor.LazyRangeMarkerFactory</implementation-class>
-      <loadForDefaultProject/>
-    </component>
   </project-components>
 </components>

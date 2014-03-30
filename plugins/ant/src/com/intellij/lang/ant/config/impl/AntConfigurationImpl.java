@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,8 +69,8 @@ import java.util.*;
 @State(
     name = "AntConfiguration",
     storages = {
-      @Storage( file = StoragePathMacros.PROJECT_FILE),
-      @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
+      @Storage(file = StoragePathMacros.PROJECT_FILE),
+      @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/ant.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, ModificationTracker {
@@ -157,7 +157,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       }
     });
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void beforeFileDeletion(final VirtualFileEvent event) {
+      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
         final VirtualFile vFile = event.getFile();
         // cleanup
         for (AntBuildFile file : getBuildFiles()) {
@@ -649,7 +649,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
         public void run() {
-          Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project == null || project.isDisposed()) {
             result[0] = false;
             return;
@@ -686,14 +686,13 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void loadBuildFileProjectProperties(final Element parentNode) {
-    final List<Pair<Element, VirtualFile>> files = new ArrayList<Pair<Element, VirtualFile>>();
+    final List<Pair<Element, String>> files = new ArrayList<Pair<Element, String>>();
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (final Object o : parentNode.getChildren(BUILD_FILE)) {
       final Element element = (Element)o;
       final String url = element.getAttributeValue(URL);
-      final VirtualFile file = vfManager.findFileByUrl(url);
-      if (file != null) {
-        files.add(new Pair<Element, VirtualFile>(element, file));
+      if (url != null) {
+        files.add(new Pair<Element, String>(element, url));
       }
     }
     
@@ -731,9 +730,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 }
                 // then fill the configuration with the files configured in xml
                 List<Pair<Element, AntBuildFileBase>> buildFiles = new ArrayList<Pair<Element, AntBuildFileBase>>(files.size());
-                for (Pair<Element, VirtualFile> pair : files) {
+                for (Pair<Element, String> pair : files) {
                   final Element element = pair.getFirst();
-                  final VirtualFile file = pair.getSecond();
+                  final VirtualFile file = vfManager.findFileByUrl(pair.getSecond());
+                  if (file == null) {
+                    continue;
+                  }
                   try {
                     final AntBuildFileBase buildFile = addBuildFileImpl(file);
                     buildFile.readProperties(element);
@@ -830,7 +832,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return;
     }
     if (configName != null) {
-      for (RunConfiguration configuration : runManager.getConfigurations(type)) {
+      for (RunConfiguration configuration : runManager.getConfigurationsList(type)) {
         if (configName.equals(configuration.getName())) {
           final List<AntBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, AntBeforeRunTaskProvider.ID);
           if (!tasks.isEmpty()) {

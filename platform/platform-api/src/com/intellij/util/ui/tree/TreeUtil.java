@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,9 +215,13 @@ public final class TreeUtil {
    * @param tree to remove selected node from.
    */
   public static void removeSelected(@NotNull final JTree tree) {
-    final TreePath selectionPath = tree.getSelectionPath();
-    if (selectionPath == null) return;
-    removeLastPathComponent((DefaultTreeModel) tree.getModel(), selectionPath).restoreSelection(tree);
+    TreePath[] paths = tree.getSelectionPaths();
+    if (paths == null) {
+      return;
+    }
+    for (TreePath path : paths) {
+      removeLastPathComponent((DefaultTreeModel) tree.getModel(), path).restoreSelection(tree);
+    }
   }
 
   public static void removeLastPathComponent(@NotNull final JTree tree, @NotNull final TreePath pathToBeRemoved){
@@ -604,7 +608,7 @@ public final class TreeUtil {
 
               Long ts = (Long)tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
               if (ts == null) {
-                ts = new Long(0);
+                ts = 0L;
               }
               ts = ts.longValue() + 1;
               tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, ts);
@@ -787,9 +791,9 @@ public final class TreeUtil {
       if (rowCount == oldRowCount) break;
       oldRowCount = rowCount;
       for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
+          tree.expandRow(i);
+        }
      }
-    }
     while (true);
   }
 

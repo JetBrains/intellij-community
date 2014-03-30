@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -134,6 +136,10 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
 
   public boolean isModified(CustomActionsSchema schema) {
     final ArrayList<ActionUrl> storedActions = schema.getActions();
+    if (ApplicationManager.getApplication().isUnitTestMode() && !storedActions.isEmpty()) {
+      System.err.println("stored: " + storedActions.toString());
+      System.err.println("actual: " + getActions().toString());
+    }
     if (storedActions.size() != getActions().size()) {
       return true;
     }
@@ -168,6 +174,9 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
       ActionUrl url = new ActionUrl();
       url.readExternal((Element)groupElement);
       myActions.add(url);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.err.println("read custom actions: " + myActions.toString());
     }
     readIcons(element);
   }
@@ -229,7 +238,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
 
     final String text = group.getTemplatePresentation().getText();
-    if (text != null) {
+    if (!StringUtil.isEmpty(text)) {
       for (ActionUrl url : myActions) {
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;

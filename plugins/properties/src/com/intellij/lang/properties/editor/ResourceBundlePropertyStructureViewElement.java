@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,24 +59,32 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     myPresentableName = presentableName;
   }
 
+  @Override
   public String getValue() {
     return myPropertyName;
   }
 
+  @Override
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @Override
+  @NotNull
   public ItemPresentation getPresentation() {
     return new ColoredItemPresentation() {
+      @Override
       public String getPresentableText() {
         return myPresentableName == null ? myPropertyName : myPresentableName;
       }
 
+      @Override
       public String getLocationString() {
         return null;
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return PlatformIcons.PROPERTY_ICON;
       }
@@ -92,14 +101,17 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     };
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     //todo
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }

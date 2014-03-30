@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.SoftKeySoftValueHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public class RecursionManager {
     return new RecursionGuard() {
       @Override
       public <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, @NotNull Computable<T> computation) {
-        MyKey realKey = new MyKey(id, key);
+        MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
         if (stack.checkReentrancy(realKey)) {
@@ -89,7 +89,7 @@ public class RecursionManager {
         if (memoize) {
           Object o = stack.getMemoizedValue(realKey);
           if (o != null) {
-            SoftHashMap<MyKey, SoftReference> map = stack.intermediateCache.get(realKey);
+            SoftKeySoftValueHashMap<MyKey, Object> map = stack.intermediateCache.get(realKey);
             if (map != null) {
               for (MyKey noCacheUntil : map.keySet()) {
                 stack.prohibitResultCaching(noCacheUntil);
@@ -100,6 +100,8 @@ public class RecursionManager {
             return o == NULL ? null : (T)o;
           }
         }
+
+        realKey = new MyKey(id, key, false);
 
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
@@ -146,8 +148,8 @@ public class RecursionManager {
         ArrayList<Object> result = new ArrayList<Object>();
         LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
         for (MyKey pair : map.keySet()) {
-          if (pair.first.equals(id)) {
-            result.add(pair.second);
+          if (pair.guardId.equals(id)) {
+            result.add(pair.userObject);
           }
         }
         return result;
@@ -155,7 +157,7 @@ public class RecursionManager {
 
       @Override
       public void prohibitResultCaching(Object since) {
-        MyKey realKey = new MyKey(id, since);
+        MyKey realKey = new MyKey(id, since, false);
         final CalculationStack stack = ourStack.get();
         stack.enableMemoization(realKey, stack.prohibitResultCaching(realKey));
         stack.memoizationStamp++;
@@ -164,13 +166,30 @@ public class RecursionManager {
     };
   }
 
-  private static class MyKey extends Pair<String, Object> {
-    private int myHashCode;
+  private static class MyKey {
+    final String guardId;
+    final Object userObject;
+    private final int myHashCode;
+    private final boolean myCallEquals;
 
-    public MyKey(String guardId, Object userObject) {
-      super(guardId, userObject);
+    public MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
+      this.guardId = guardId;
+      this.userObject = userObject;
       // remember user object hashCode to ensure our internal maps consistency
       myHashCode = guardId.hashCode() * 31 + userObject.hashCode();
+      myCallEquals = mayCallEquals;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof MyKey && guardId.equals(((MyKey)obj).guardId))) return false;
+      if (userObject == ((MyKey)obj).userObject) {
+        return true;
+      }
+      if (myCallEquals || ((MyKey)obj).myCallEquals) {
+        return userObject.equals(((MyKey)obj).userObject);
+      }
+      return false;
     }
 
     @Override
@@ -186,7 +205,7 @@ public class RecursionManager {
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
     private final Set<MyKey> toMemoize = new THashSet<MyKey>();
     private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
-    private final SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>> intermediateCache = new SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>>();
+    private final SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>> intermediateCache = new SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>>();
     private int enters = 0;
     private int exits = 0;
 
@@ -201,7 +220,7 @@ public class RecursionManager {
 
     @Nullable
     Object getMemoizedValue(MyKey realKey) {
-      SoftHashMap<MyKey, SoftReference> map = intermediateCache.get(realKey);
+      SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
       if (map == null) return null;
 
       if (depth == 0) {
@@ -209,12 +228,9 @@ public class RecursionManager {
       }
 
       for (MyKey key : map.keySet()) {
-        final SoftReference reference = map.get(key);
-        if (reference != null) {
-          final Object result = reference.get();
-          if (result != null) {
-            return result;
-          }
+        final Object result = map.get(key);
+        if (result != null) {
+          return result;
         }
       }
 
@@ -238,26 +254,26 @@ public class RecursionManager {
 
       int sizeAfter = progressMap.size();
       if (sizeAfter != sizeBefore + 1) {
-        LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + realKey.second);
+        LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + realKey.userObject);
       }
     }
 
     final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
       if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
-        SoftHashMap<MyKey, SoftReference> map = intermediateCache.get(realKey);
+        SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
         if (map == null) {
-          intermediateCache.put(realKey, map = new SoftHashMap<MyKey, SoftReference>());
+          intermediateCache.put(realKey, map = new SoftKeySoftValueHashMap<MyKey, Object>());
         }
         final MyKey reentered = key2ReentrancyDuringItsCalculation.get(realKey);
         assert reentered != null;
-        map.put(reentered, new SoftReference<Object>(result));
+        map.put(reentered, result);
       }
     }
 
     final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
       exits++;
       if (sizeAfter != progressMap.size()) {
-        LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.second);
+        LOG.error("Map size changed: " + progressMap.size() + " " + sizeAfter + " " + realKey.userObject);
       }
 
       if (depth != progressMap.size()) {
@@ -280,11 +296,7 @@ public class RecursionManager {
       }
 
       if (sizeBefore != progressMap.size()) {
-        LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.second);
-      }
-
-      if (value == null) {
-        LOG.error(realKey.second + " has changed its equals/hashCode");
+        LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.userObject);
       }
 
       reentrancyCount = value;

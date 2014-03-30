@@ -24,12 +24,13 @@ public class OutputListener extends ProcessAdapter {
     this.err = err;
   }
 
+  @Override
   public void onTextAvailable(ProcessEvent event, Key outputType) {
     if (outputType == ProcessOutputTypes.STDERR) {
       err.append(event.getText());
     }
     else if (outputType == ProcessOutputTypes.SYSTEM) {
-      // skip 
+      // skip
     }
     else {
       out.append(event.getText());

@@ -18,8 +18,10 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiUtilCore;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,14 +66,19 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   public static LookupElementBuilder create(@NotNull PsiNamedElement element) {
-    return new LookupElementBuilder(ObjectUtils.assertNotNull(element.getName()), element);
+    PsiUtilCore.ensureValid(element);
+    return new LookupElementBuilder(StringUtil.notNullize(element.getName()), element);
   }
 
   public static LookupElementBuilder createWithIcon(@NotNull PsiNamedElement element) {
+    PsiUtilCore.ensureValid(element);
     return create(element).withIcon(element.getIcon(0));
   }
 
   public static LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {
+    if (lookupObject instanceof PsiElement) {
+      PsiUtilCore.ensureValid((PsiElement)lookupObject);
+    }
     return new LookupElementBuilder(lookupString, lookupObject);
   }
 
@@ -142,6 +149,7 @@ public final class LookupElementBuilder extends LookupElement {
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return myCaseSensitive;
   }

@@ -40,9 +40,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -134,12 +132,19 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+    return addModule(moduleName, sourceRoot, null);
+  }
+
+  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
     return new WriteAction<Module>() {
       @Override
       protected void run(final Result<Module> result) {
         final Module module = createModule(moduleName);
         if (sourceRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
+          PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
+        }
+        if (testRoot != null) {
+          PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
         }
         ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
         result.setResult(module);
@@ -235,6 +240,13 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
+    final List<String> generatedFilePaths = new ArrayList<String>();
+    getCompilerManager().addCompilationStatusListener(new CompilationStatusAdapter() {
+      @Override
+      public void fileGenerated(String outputRoot, String relativePath) {
+        generatedFilePaths.add(relativePath);
+      }
+    }, myTestRootDisposable);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -250,6 +262,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
               ExitStatus status = CompileDriver.getExternalBuildExitStatus(compileContext);
               result.set(new CompilationLog(status == ExitStatus.UP_TO_DATE,
                                             CompilerManagerImpl.getPathsToRecompile(), CompilerManagerImpl.getPathsToDelete(),
+                                            generatedFilePaths,
                                             compileContext.getMessages(CompilerMessageCategory.ERROR),
                                             compileContext.getMessages(CompilerMessageCategory.WARNING)));
             }
@@ -365,8 +378,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
-    File outputDir = getOutputDir(module);
-    Assert.assertTrue("Output directory " + outputDir.getAbsolutePath() + " doesn't exist", outputDir.exists());
+    assertOutput(module, item, false);
+  }
+
+  protected static void assertOutput(Module module, TestFileSystemBuilder item, final boolean forTests) {
+    File outputDir = getOutputDir(module, forTests);
+    Assert.assertTrue((forTests? "Test output" : "Output") +" directory " + outputDir.getAbsolutePath() + " doesn't exist", outputDir.exists());
     item.build().assertDirectoryEqual(outputDir);
   }
 
@@ -376,10 +393,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected static File getOutputDir(Module module) {
+    return getOutputDir(module, false);
+  }
+
+  protected static File getOutputDir(Module module, boolean forTests) {
     CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     Assert.assertNotNull(extension);
-    String outputUrl = extension.getCompilerOutputUrl();
-    Assert.assertNotNull("Output directory for module '" + module.getName() + "' isn't specified", outputUrl);
+    String outputUrl = forTests? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
+    Assert.assertNotNull((forTests? "Test output" : "Output") +" directory for module '" + module.getName() + "' isn't specified", outputUrl);
     return JpsPathUtil.urlToFile(outputUrl);
   }
 
@@ -406,16 +427,19 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   protected class CompilationLog {
     private final Set<String> myRecompiledPaths;
     private final Set<String> myDeletedPaths;
+    private final Set<String> myGeneratedPaths;
     private final boolean myExternalBuildUpToDate;
     private final CompilerMessage[] myErrors;
     private final CompilerMessage[] myWarnings;
 
-    public CompilationLog(boolean externalBuildUpToDate, String[] recompiledPaths, String[] deletedPaths, CompilerMessage[] errors, CompilerMessage[] warnings) {
+    public CompilationLog(boolean externalBuildUpToDate, String[] recompiledPaths, String[] deletedPaths, List<String> generatedFilePaths,
+                          CompilerMessage[] errors, CompilerMessage[] warnings) {
       myExternalBuildUpToDate = externalBuildUpToDate;
       myErrors = errors;
       myWarnings = warnings;
       myRecompiledPaths = getRelativePaths(recompiledPaths);
       myDeletedPaths = getRelativePaths(deletedPaths);
+      myGeneratedPaths = new THashSet<String>(generatedFilePaths, FileUtil.PATH_HASHING_STRATEGY);
     }
 
     public void assertUpToDate() {
@@ -433,6 +457,10 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
       checkDeleted();
     }
 
+    public void assertGenerated(String... expected) {
+      assertSet("generated", myGeneratedPaths, expected);
+    }
+
     public void assertDeleted(String... expected) {
       checkRecompiled();
       checkDeleted(expected);
@@ -444,10 +472,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     private void checkRecompiled(String... expected) {
+      if (useExternalCompiler()) return;
       assertSet("recompiled", myRecompiledPaths, expected);
     }
 
     private void checkDeleted(String... expected) {
+      if (useExternalCompiler()) return;
       assertSet("deleted", myDeletedPaths, expected);
     }
 
@@ -460,7 +490,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }
 
     private void assertSet(String name, Set<String> actual, String[] expected) {
-      if (useExternalCompiler()) return;
       for (String path : expected) {
         if (!actual.remove(path)) {
           Assert.fail("'" + path + "' is not " + name + ". " + name + ": " + new HashSet<String>(actual));

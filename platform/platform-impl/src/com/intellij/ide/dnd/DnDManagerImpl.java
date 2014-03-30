@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.UIUtil;
@@ -741,6 +742,6 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
 
   @Nullable
   public Component getLastDropHandler() {
-    return myLastDropHandler != null ? myLastDropHandler.get() : null;
+    return SoftReference.dereference(myLastDropHandler);
   }
 }

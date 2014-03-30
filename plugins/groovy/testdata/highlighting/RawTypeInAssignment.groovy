@@ -15,4 +15,4 @@
  */
 Map<Integer, Double> map3
 map3 = [].collectEntries {}
-int map4 = <warning descr="Cannot assign 'Map' to 'int'">[].collectEntries {}</warning>
+int <warning descr="Cannot assign 'Map' to 'int'">map4</warning> = [].collectEntries {}

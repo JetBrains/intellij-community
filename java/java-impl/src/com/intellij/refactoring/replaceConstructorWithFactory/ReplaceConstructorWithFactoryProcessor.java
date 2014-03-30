@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -30,7 +31,6 @@ import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -250,15 +250,16 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     if (myConstructor != null) {
       factoryMethod.getParameterList().replace(myConstructor.getParameterList());
       factoryMethod.getThrowsList().replace(myConstructor.getThrowsList());
+    }
 
-      Collection<String> names = new HashSet<String>();
-      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor)) {
-        if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
-          names.add(typeParameter.getName());
-          factoryMethod.getTypeParameterList().addAfter(typeParameter, null);
-        }
+    Collection<String> names = new HashSet<String>();
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor != null ? myConstructor : containingClass)) {
+      if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
+        names.add(typeParameter.getName());
+        factoryMethod.getTypeParameterList().addAfter(typeParameter, null);
       }
     }
+
     PsiReturnStatement returnStatement =
       (PsiReturnStatement)myFactory.createStatementFromText("return new A();", null);
     PsiNewExpression newExpression = (PsiNewExpression)returnStatement.getReturnValue();
@@ -299,11 +300,11 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   protected String getCommandName() {
     if (myConstructor != null) {
       return RefactoringBundle.message("replace.constructor.0.with.a.factory.method",
-                                       UsageViewUtil.getDescriptiveName(myConstructor));
+                                       DescriptiveNameUtil.getDescriptiveName(myConstructor));
     }
     else {
       return RefactoringBundle.message("replace.default.constructor.of.0.with.a.factory.method",
-                                       UsageViewUtil.getDescriptiveName(myOriginalClass));
+                                       DescriptiveNameUtil.getDescriptiveName(myOriginalClass));
     }
   }
 

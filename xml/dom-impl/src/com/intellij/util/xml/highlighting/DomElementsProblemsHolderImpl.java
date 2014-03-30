@@ -129,7 +129,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren), new Condition<DomElementProblemDescriptor>() {
       public boolean value(final DomElementProblemDescriptor object) {
-        return SeverityRegistrar.getInstance(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
+        return SeverityRegistrar.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0;
       }
     });
 

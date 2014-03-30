@@ -1,0 +1,7 @@
+a0|-a1 a6 a3
+a1|-a6
+a2|-a3
+a3|-
+a4|-a5
+BRANCH NODES:
+0 2 5

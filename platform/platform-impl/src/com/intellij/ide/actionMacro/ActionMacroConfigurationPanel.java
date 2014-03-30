@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,7 +177,7 @@ public class ActionMacroConfigurationPanel implements Disposable {
                 if (macro.getName().equals(name)) {
                   if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
                                                IdeBundle.message("title.macro.name.already.used"),
-                                               Messages.getWarningIcon()) != 0) {
+                                               Messages.getWarningIcon()) != Messages.YES) {
                     return false;
                   }
                   myMacrosModel.removeElement(macro);

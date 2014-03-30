@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -143,6 +144,12 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       features.add(registry.getFeatureDescriptor(id));
     }
     final TableView table = new TableView<FeatureDescriptor>(new ListTableModel<FeatureDescriptor>(COLUMNS, features, 0));
+    new TableViewSpeedSearch<FeatureDescriptor>(table) {
+      @Override
+      protected String getItemText(@NotNull FeatureDescriptor element) {
+        return element.getDisplayName();
+      }
+    };
 
     JPanel controlsPanel = new JPanel(new VerticalFlowLayout());
 
@@ -174,7 +181,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
         " (~" + fstats.invocations / fstats.dayCount + " per working day)";
     }
 
-    controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
+    controlsPanel.add(new JLabel(XmlStringUtil.wrapInHtml(labelText)), BorderLayout.NORTH);
 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(controlsPanel, BorderLayout.NORTH);
@@ -182,8 +189,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
-    final JEditorPane browser = new JEditorPane(UIUtil.HTML_MIME, "");
-    browser.setEditable(false);
+    final JEditorPane browser = TipUIUtil.createTipBrowser();
     splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser));
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

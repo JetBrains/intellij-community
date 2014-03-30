@@ -118,7 +118,7 @@ public abstract class FormatterEx{
   public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
   
   public interface IndentInfoStorage {
-    void saveIndentInfo(IndentInfo info, int startOffset);
+    void saveIndentInfo(@Nullable IndentInfo info, int startOffset);
 
     IndentInfo getIndentInfo(int startOffset);
   }

@@ -26,18 +26,23 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.file.PsiDirectoryFactoryImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.messages.impl.MessageBusImpl;
+import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 public class CoreProjectEnvironment {
   private final Disposable myParentDisposable;
@@ -51,12 +56,12 @@ public class CoreProjectEnvironment {
   public CoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
     myEnvironment = applicationEnvironment;
-    myProject = new MockProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
+    myProject = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = new MessageBusImpl();
+    myMessageBus = new MessageBusImpl("CoreProjectEnvironment", null);
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
@@ -67,6 +72,10 @@ public class CoreProjectEnvironment {
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
+    myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
+    registerProjectComponent(PsiDocumentManager.class, new CorePsiDocumentManager(myProject, myPsiManager,
+                                                                                  SmartPointerManager.getInstance(myProject), myMessageBus,
+                                                                                  new MockDocumentCommitProcessor()));
 
     myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
@@ -75,6 +84,10 @@ public class CoreProjectEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+  }
+
+  protected MockProject createProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
+    return new MockProject(parent, parentDisposable);
   }
 
   protected ProjectScopeBuilder createProjectScopeBuilder() {

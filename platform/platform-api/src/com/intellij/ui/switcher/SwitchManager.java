@@ -17,17 +17,20 @@ package com.intellij.ui.switcher;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -229,8 +232,9 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
     final ActionCallback result = new ActionCallback();
     if (isSessionActive()) {
       final boolean showSpots = mySession.isShowspots();
-      mySession.finish(false).doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
-        public void run(final SwitchTarget switchTarget) {
+      mySession.finish(false).doWhenDone(new Consumer<SwitchTarget>() {
+        @Override
+        public void consume(final SwitchTarget switchTarget) {
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
             public void run() {

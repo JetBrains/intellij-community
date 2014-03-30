@@ -79,6 +79,9 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testStringInjectionWithParam() { doTest() }
   public void testUnaryExpressionInReturn() { doTest() }
   public void testBinaryExpressionInReturn() { doTest() }
+  public void testPendingFromIf() { doTest() }
+  public void testSwitchWithEmptyCaseBeforeDefault() { doTest() }
+  public void testUnfinishedAssignment() { doTest() }
 
   public void doTest() {
     final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ public class ImportReference implements GroovyElementTypes {
       return false;
     }
 
-    ReferenceElement.parseForImport(builder);
+    if (ReferenceElement.parseForImport(builder) == ReferenceElement.ReferenceElementResult.FAIL) {
+      return false;
+    }
 
     if (ParserUtils.getToken(builder, mDOT)) {
       ParserUtils.getToken(builder, mNLS);

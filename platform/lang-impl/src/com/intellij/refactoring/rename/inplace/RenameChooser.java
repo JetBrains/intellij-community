@@ -53,7 +53,7 @@ abstract class RenameChooser {
   }
 
   protected abstract void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages);
-  
+
   public void showChooser(final Collection<PsiReference> refs,
                           final Collection<Pair<PsiElement, TextRange>> stringUsages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -68,6 +68,7 @@ abstract class RenameChooser {
     final JList list = new JBList(model);
 
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final String selectedValue = (String)list.getSelectedValue();
         if (selectedValue == null) return;
@@ -102,6 +103,7 @@ abstract class RenameChooser {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
         }

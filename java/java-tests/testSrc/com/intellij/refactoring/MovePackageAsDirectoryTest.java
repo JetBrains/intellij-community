@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -40,6 +40,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/movePackageAsDir/";
@@ -57,7 +58,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     final boolean [] fileWasDeleted = new boolean[]{false};
     final VirtualFileAdapter fileAdapter = new VirtualFileAdapter() {
       @Override
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         fileWasDeleted[0] = !event.getFile().isDirectory();
       }
     };
@@ -80,15 +81,15 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
     doTest(createAction("pack1", "target"));
   }
 
+  private static final String EMPTY_TXT = "empty.txt";
   public void testXmlEmptyDirRefs() throws Exception {
     final String packageName = "pack1";
     doTest(new MyPerformAction(packageName, "target"){
-      private static final String EMPTY_TXT = "empty.txt";
       @Override
       protected void preprocessSrcDir(PsiDirectory srcDirectory) {
         final PsiFile empty = srcDirectory.findFile(EMPTY_TXT);
         assert empty != null;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           public void run() {
             empty.delete();
           }
@@ -102,6 +103,36 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             subdirectory.createFile(EMPTY_TXT);
+          }
+        });
+      }
+    });
+  }
+
+  public void testEmptySubDirs() throws Exception {
+    final String packageName = "pack1";
+    doTest(new MyPerformAction(packageName, "target"){
+      private static final String FOO = "pack1.subPack.Foo";
+      @Override
+      protected void preprocessSrcDir(PsiDirectory srcDirectory) {
+        final PsiClass empty = JavaPsiFacade.getInstance(getProject()).findClass(FOO, GlobalSearchScope.projectScope(getProject()));
+        assert empty != null;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            empty.delete();
+          }
+        });
+      }
+
+      @Override
+      protected void postProcessTargetDir(PsiDirectory targetDirectory) {
+       final PsiDirectory subdirectory = targetDirectory.findSubdirectory(packageName);
+        assert subdirectory != null;
+        final PsiDirectory emptyDir = subdirectory.findSubdirectory("subPack");
+        assert emptyDir != null;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            emptyDir.createFile(EMPTY_TXT);
           }
         });
       }

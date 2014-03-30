@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.java.lexer;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LexerTestCase;
@@ -158,7 +158,7 @@ public class JavaLexerTest extends LexerTestCase {
 
   @Override
   protected Lexer createLexer() {
-    return new JavaLexer(LanguageLevel.HIGHEST);
+    return JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
   }
 
   @Override

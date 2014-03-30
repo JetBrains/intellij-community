@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,29 +21,23 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
+ * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up.
+ * For "heavyweight" tests use AdvHighlightingTest.
  */
 public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting6";
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
-    setLanguageLevel(LanguageLevel.JDK_1_6); 
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_6, myTestRootDisposable);
+    setLanguageLevel(LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
     enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
-  }
-
-  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, Class<?>... classes) {
-    enableInspectionTools(classes);
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @NotNull
@@ -57,6 +51,18 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testJavacQuirks() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
-  public void testMethodReturnTypeSubstitutability() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testJavacQuirks() { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testMethodReturnTypeSubstitutability() { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testIDEADEV11877() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(false, false); }
+  public void testIDEA108285() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(false, false); }
+  public void testClassObjectAccessibility() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(false, false); }
+  public void testRedundantCastInConditionalExpression() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true, false); }
+  public void testUnhandledExceptions() { doTest(true, false); }
+  public void testUnhandledExceptionsValueOf() { doTest(true, false); }
+  public void testUnsupportedFeatures7() { doTest(false, false); }
+  public void testEnumInitializers() { doTest(false, false); }
+  public void testAgentPremain() {
+    doTest(false, false); 
+  }
 }

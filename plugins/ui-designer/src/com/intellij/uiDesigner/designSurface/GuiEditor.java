@@ -45,6 +45,7 @@ import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.componentTree.ComponentPtr;
 import com.intellij.uiDesigner.componentTree.ComponentSelectionListener;
+import com.intellij.uiDesigner.componentTree.ComponentTree;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -686,8 +687,10 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     if (!anythingModified.isNull()) {
       refresh();
       final UIDesignerToolWindowManager twm = UIDesignerToolWindowManager.getInstance(getProject());
-      twm.getComponentTree().repaint();
-      twm.getPropertyInspector().synchWithTree(true);
+      ComponentTree tree = twm.getComponentTree();
+      if (tree != null) tree.repaint();
+      PropertyInspector inspector = twm.getPropertyInspector();
+      if (inspector != null) inspector.synchWithTree(true);
     }
   }
 

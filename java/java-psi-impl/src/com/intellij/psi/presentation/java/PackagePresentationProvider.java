@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class PackagePresentationProvider implements ItemPresentationProvider<PsiPackage> {
   @Override
-  public ItemPresentation getPresentation(final PsiPackage aPackage) {
+  public ItemPresentation getPresentation(@NotNull final PsiPackage aPackage) {
     return new ColoredItemPresentation() {
       @Override
       public TextAttributesKey getTextAttributesKey() {

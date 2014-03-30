@@ -21,7 +21,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceStaticVariableAccess extends FixableUsageInfo {
@@ -45,33 +45,53 @@ public class ReplaceStaticVariableAccess extends FixableUsageInfo {
         return;
       }
     }
-    boolean replaceWithGetEnumValue = myEnumConstant;
-    if (replaceWithGetEnumValue) {
-      final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
-      if (callExpression != null) {
-        final PsiElement resolved = callExpression.getMethodExpression().resolve();
-        if (resolved instanceof PsiMethod) {
-          final PsiParameter[] parameters = ((PsiMethod)resolved).getParameterList().getParameters();
-          final PsiExpression[] args = callExpression.getArgumentList().getExpressions();
-          final int idx = ArrayUtil.find(args, expression);
-          if (idx != -1 && parameters[idx].getType().getCanonicalText().equals(delegateClass)) {
-            replaceWithGetEnumValue = false;
-          }
+    final boolean replaceWithGetEnumValue = myEnumConstant && !alreadyMigratedToEnum();
+    final String link = replaceWithGetEnumValue ? "." + PropertyUtil.suggestGetterName("value", expression.getType()) + "()" : "";
+    MutationUtils.replaceExpression(delegateClass + '.' + expression.getReferenceName() + link, expression);
+  }
+
+  private boolean alreadyMigratedToEnum() {
+    final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+    if (callExpression != null) {
+      final PsiElement resolved = callExpression.getMethodExpression().resolve();
+      if (resolved instanceof PsiMethod) {
+        final PsiParameter[] parameters = ((PsiMethod)resolved).getParameterList().getParameters();
+        final PsiExpression[] args = callExpression.getArgumentList().getExpressions();
+        final int idx = ArrayUtilRt.find(args, expression);
+        if (idx != -1 && parameters[idx].getType().equalsToText(delegateClass)) {
+          return true;
         }
       }
-      else {
-        final PsiReturnStatement returnStatement = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class);
-        if (returnStatement != null) {
-          final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-          LOGGER.assertTrue(psiMethod != null);
-          final PsiType returnType = psiMethod.getReturnType();
-          if (returnType != null && returnType.getCanonicalText().equals(delegateClass)) {
-            replaceWithGetEnumValue = false;
+    }
+    else {
+      final PsiReturnStatement returnStatement = PsiTreeUtil.getParentOfType(expression, PsiReturnStatement.class);
+      if (returnStatement != null) {
+        final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+        LOGGER.assertTrue(psiMethod != null);
+        final PsiType returnType = psiMethod.getReturnType();
+        if (returnType != null && returnType.getCanonicalText().equals(delegateClass)) {
+          return true;
+        }
+      } else {
+        final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(expression, PsiVariable.class);
+        if (psiVariable != null) {
+          if (psiVariable.getType().equalsToText(delegateClass)) {
+            return true;
+          }
+        } else {
+          final PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
+          if (assignmentExpression != null && assignmentExpression.getRExpression() == expression) {
+            final PsiExpression lExpression = assignmentExpression.getLExpression();
+            if (lExpression instanceof PsiReferenceExpression) {
+              final PsiElement resolve = ((PsiReferenceExpression)lExpression).resolve();
+              if (resolve instanceof PsiVariable && ((PsiVariable)resolve).getType().equalsToText(delegateClass)) {
+                return true;
+              }
+            }
           }
         }
       }
     }
-    final String link = replaceWithGetEnumValue ? "." + PropertyUtil.suggestGetterName("value", expression.getType()) + "()" : "";
-    MutationUtils.replaceExpression(delegateClass + '.' + expression.getReferenceName() + link, expression);
+    return false;
   }
 }

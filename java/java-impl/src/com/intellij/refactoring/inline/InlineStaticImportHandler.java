@@ -23,6 +23,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 
 import java.util.List;
 
@@ -36,6 +38,7 @@ import static com.intellij.psi.util.ImportsUtil.replaceAllAndDeleteImport;
 public class InlineStaticImportHandler extends JavaInlineActionHandler {
 
   private static final String REFACTORING_NAME = "Expand static import";
+  public static final String REFACTORING_ID = "refactoring.inline.import";
 
   @Override
   public boolean canInlineElement(PsiElement element) {
@@ -48,11 +51,18 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
     final PsiImportStaticStatement staticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
     final List<PsiJavaCodeReferenceElement> referenceElements =
       collectReferencesThrough(element.getContainingFile(), null, staticStatement);
+
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(element);
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
+    
+
     new WriteCommandAction(project, REFACTORING_NAME){
       @Override
       protected void run(Result result) throws Throwable {
         replaceAllAndDeleteImport(referenceElements, null, staticStatement);
       }
     }.execute();
+    project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 }

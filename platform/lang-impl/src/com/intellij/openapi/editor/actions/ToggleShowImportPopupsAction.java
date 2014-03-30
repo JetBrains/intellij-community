@@ -17,6 +17,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -54,12 +55,12 @@ public class ToggleShowImportPopupsAction extends ToggleAction {
   }
 
   private DaemonCodeAnalyzer getAnalyzer(AnActionEvent e) {
-    return DaemonCodeAnalyzer.getInstance(e.getData(PlatformDataKeys.PROJECT));
+    return DaemonCodeAnalyzer.getInstance(e.getData(CommonDataKeys.PROJECT));
   }
 
   @Nullable
   private static PsiFile getFile(AnActionEvent e) {
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    return editor == null ? null : e.getData(LangDataKeys.PSI_FILE);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    return editor == null ? null : e.getData(CommonDataKeys.PSI_FILE);
   }
 }

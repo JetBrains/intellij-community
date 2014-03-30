@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return "Groovy script";
   }
 
+  @NotNull
   public GrTypeDefinition[] getTypeDefinitions() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
@@ -100,11 +101,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
+  @NotNull
   public GrTopLevelDefinition[] getTopLevelDefinitions() {
     return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
-  public GrMethod[] getTopLevelMethods() {
+  @NotNull
+  public GrMethod[] getCodeMethods() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
@@ -113,12 +116,13 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
   }
 
+  @NotNull
   @Override
   public GrMethod[] getMethods() {
     if (myMethods == null) {
       List<GrMethod> result = new ArrayList<GrMethod>();
       
-      GrMethod[] methods = getTopLevelMethods();
+      GrMethod[] methods = getCodeMethods();
       for (GrMethod method : methods) {
         final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
         if (reflectedMethods.length > 0) {
@@ -134,6 +138,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return myMethods;
   }
 
+  @NotNull
   public GrTopStatement[] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }
@@ -142,19 +147,19 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return addImportForClass(aClass) != null;
   }
 
-  public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
+  public void removeImport(@NotNull GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement before = importStatement;
-    while (isWhiteSpace(before.getPrevSibling())) {
+    while (isWhiteSpaceOrNls(before.getPrevSibling())) {
       before = before.getPrevSibling();
     }
 
     if (hasElementType(before.getPrevSibling(), GroovyTokenTypes.mSEMI)) before = before.getPrevSibling();
-    if (isWhiteSpace(before.getPrevSibling())) before = before.getPrevSibling();
+    if (isWhiteSpaceOrNls(before.getPrevSibling())) before = before.getPrevSibling();
 
     PsiElement after = importStatement;
-    if (isWhiteSpace(after.getNextSibling())) after = after.getNextSibling();
+    if (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
     if (hasElementType(after.getNextSibling(), GroovyTokenTypes.mSEMI)) after = after.getNextSibling();
-    while (isWhiteSpace(after.getNextSibling())) after = after.getNextSibling();
+    while (isWhiteSpaceOrNls(after.getNextSibling())) after = after.getNextSibling();
 
 
     if (before == null) before = importStatement;
@@ -243,8 +248,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   public Instruction[] getControlFlow() {
     assert isValid();
-    SoftReference<Instruction[]> flow = myControlFlow;
-    Instruction[] result = flow != null ? flow.get() : null;
+    Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
       result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
       myControlFlow = new SoftReference<Instruction[]>(result);
@@ -272,11 +276,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement prev = result.getPrevSibling();
-    while (isWhiteSpace(prev)) {
+    while (isWhiteSpaceOrNls(prev)) {
       prev = prev.getPrevSibling();
     }
     if (hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
-    if (isWhiteSpace(prev)) prev = prev.getPrevSibling();
+    if (isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
     if (prev instanceof GrImportStatement) {
       final int idx_before = getPackageEntryIdx(entries, (GrImportStatement)prev);
@@ -284,9 +288,9 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
       final int spaceCount = getMaxSpaceCount(entries, idx_before, idx);
 
       //skip space and semicolon after import
-      if (isWhiteSpace(prev.getNextSibling()) && hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
+      if (isWhiteSpaceOrNls(prev.getNextSibling()) && hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
       final FileASTNode node = getNode();
-      while (isWhiteSpace(prev.getNextSibling())) {
+      while (isWhiteSpaceOrNls(prev.getNextSibling())) {
         node.removeChild(prev.getNextSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
@@ -299,9 +303,9 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     final PackageEntry[] entries = layoutTable.getEntries();
 
     PsiElement next = result.getNextSibling();
-    if (isWhiteSpace(next)) next = next.getNextSibling();
+    if (isWhiteSpaceOrNls(next)) next = next.getNextSibling();
     if (hasElementType(next, GroovyTokenTypes.mSEMI)) next = next.getNextSibling();
-    while (isWhiteSpace(next)) {
+    while (isWhiteSpaceOrNls(next)) {
       next = next.getNextSibling();
     }
     if (next instanceof GrImportStatement) {
@@ -311,14 +315,14 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
 
       final FileASTNode node = getNode();
-      while (isWhiteSpace(next.getPrevSibling())) {
+      while (isWhiteSpaceOrNls(next.getPrevSibling())) {
         node.removeChild(next.getPrevSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), next.getNode());
     }
   }
 
-  protected static int getPackageEntryIdx(PackageEntry[] entries, GrImportStatement statement) {
+  protected static int getPackageEntryIdx(@NotNull PackageEntry[] entries, @NotNull GrImportStatement statement) {
     final GrCodeReferenceElement reference = statement.getImportReference();
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());
@@ -350,6 +354,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private static int getMaxSpaceCount(PackageEntry[] entries, int b1, int b2) {
     int start = Math.min(b1, b2);
     int end = Math.max(b1, b2);
+
+    if (start == -1) return 0;
 
     int max = 0;
     int cur = 0;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -76,7 +77,7 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
       removeAll();
       if (myHelperAction.allAreIgnored()) {
         final DataContext dataContext = e.getDataContext();
-        final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
         SvnVcs vcs = SvnVcs.getInstance(project);
 
         final Ref<Boolean> filesOk = new Ref<Boolean>(Boolean.FALSE);

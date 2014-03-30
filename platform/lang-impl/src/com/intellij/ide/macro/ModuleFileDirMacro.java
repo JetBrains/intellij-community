@@ -24,14 +24,17 @@ import com.intellij.openapi.module.Module;
 import java.io.File;
 
 public final class ModuleFileDirMacro extends Macro {
+  @Override
   public String getName() {
     return "ModuleFileDir";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.module.file.directory");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     final String path = module != null ? module.getModuleFilePath() : null;

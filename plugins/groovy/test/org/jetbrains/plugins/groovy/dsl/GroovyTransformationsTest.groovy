@@ -40,7 +40,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   public void testSingletonTransform() throws Throwable { doVariantsTest('instance', 'newInstance', 'newInstance', 'isInstance', 'getInstance', 'setInstance') }
 
-  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName', 'FileNameByRegexFinder', 'FileNameFinder', 'FilenameFilter', 'IFileNameFinder') }
+  public void testCategoryTransform() throws Throwable { doVariantsTest('name', 'getName') }
 
   public void testMixinTransform() throws Throwable { doPlainTest() }
 
@@ -54,7 +54,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     assert myFixture.lookupElementStrings.containsAll(['newInstance', 'new', 'new', 'newInstance'])
   }
 
-  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf') }
+  public void testNewifyTransform2() throws Throwable { doVariantsTest('Leaf', 'Leaf', 'Leaf', 'Boolean') }
 
   public void testNewifyTransform3() throws Throwable { doVariantsTest('Bazz', 'Bazz') }
 

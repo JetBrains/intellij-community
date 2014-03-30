@@ -84,6 +84,10 @@ public class BackgroundTaskQueue {
   public boolean isEmpty() {
     return myProcessor.isEmpty();
   }
+  
+  public void waitForTasksToFinish() {
+    myProcessor.waitFor();
+  }
 
   public void run(Task.Backgroundable task) {
     run(task, null, null);

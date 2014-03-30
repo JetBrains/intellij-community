@@ -17,12 +17,8 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
@@ -30,23 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class ResourceFileUtil {
   private ResourceFileUtil() {
-  }
-
-  @Nullable
-  public static VirtualFile findResourceFile(final String name, final Module inModule) {
-    final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(inModule).getSourceRoots();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(inModule.getProject()).getFileIndex();
-    for (final VirtualFile sourceRoot : sourceRoots) {
-      final String packagePrefix = fileIndex.getPackageNameByDirectory(sourceRoot);
-      final String prefix = packagePrefix == null || packagePrefix.isEmpty() ? null : packagePrefix.replace('.', '/') + "/";
-      final String relPath = prefix != null && name.startsWith(prefix) && name.length() > prefix.length() ? name.substring(prefix.length()) : name;
-      final String fullPath = sourceRoot.getPath() + "/" + relPath;
-      final VirtualFile fileByPath = LocalFileSystem.getInstance().findFileByPath(fullPath);
-      if (fileByPath != null) {
-        return fileByPath;
-      }
-    }
-    return null;
   }
 
   @Nullable

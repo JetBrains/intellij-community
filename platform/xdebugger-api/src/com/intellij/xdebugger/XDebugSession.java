@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -38,8 +39,9 @@ import javax.swing.event.HyperlinkListener;
 /**
  * Instances of this class are created by the debugging subsystem when {@link XDebuggerManager#startSession} or
  * {@link XDebuggerManager#startSessionAndShowTab} method is called. It isn't supposed to be implemented by a plugin.
- *
+ * <p/>
  * Instance of this class can be obtained from {@link XDebugProcess#getSession()} method and used to control debugging process
+ *
  * @author nik
  */
 public interface XDebugSession extends AbstractDebuggerSession {
@@ -47,25 +49,31 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @NotNull
   Project getProject();
 
-  @NotNull XDebugProcess getDebugProcess();
+  @NotNull
+  XDebugProcess getDebugProcess();
 
   boolean isSuspended();
 
   @Nullable
   XStackFrame getCurrentStackFrame();
-  
+
   XSuspendContext getSuspendContext();
 
   @Nullable
   XSourcePosition getCurrentPosition();
 
   void stepOver(boolean ignoreBreakpoints);
+
   void stepInto();
+
   void stepOut();
+
   void forceStepInto();
+
   void runToPosition(@NotNull XSourcePosition position, final boolean ignoreBreakpoints);
 
   void pause();
+
   void resume();
 
   void showExecutionPoint();
@@ -75,27 +83,31 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * @deprecated use {@link #setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack, com.intellij.xdebugger.frame.XStackFrame)} instead
    */
+  @SuppressWarnings("UnusedDeclaration")
   void setCurrentStackFrame(@NotNull XStackFrame frame);
 
   /**
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
-   * @param breakpoint breakpoint
-   * @param icon icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
+   *
+   * @param breakpoint   breakpoint
+   * @param icon         icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
    * @param errorMessage an error message if breakpoint isn't successfully registered
    */
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 
   /**
    * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.
-   * <p>
+   * <p/>
    * <strong>The underlying debugging process should be suspended only if the method returns {@code true}. </strong>
    *
-   * @param breakpoint reached breakpoint
+   * @param breakpoint             reached breakpoint
    * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
-   * @param suspendContext context
+   * @param suspendContext         context
    * @return <code>true</code> if the debug process should be suspended
    */
-  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression, @NotNull XSuspendContext suspendContext);
+  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint,
+                            @Nullable String evaluatedLogExpression,
+                            @NotNull XSuspendContext suspendContext);
 
   /**
    * @deprecated use {@link #breakpointReached(com.intellij.xdebugger.breakpoints.XBreakpoint, String, com.intellij.xdebugger.frame.XSuspendContext)} instead
@@ -104,6 +116,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   /**
    * Call this method when position is reached (e.g. after "Run to cursor" or "Step over" command)
+   *
    * @param suspendContext context
    */
   void positionReached(@NotNull XSuspendContext suspendContext);
@@ -116,14 +129,20 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void stop();
 
   void setBreakpointMuted(boolean muted);
+
   boolean areBreakpointsMuted();
 
 
+  void addSessionListener(@NotNull XDebugSessionListener listener, @NotNull Disposable parentDisposable);
+
   void addSessionListener(@NotNull XDebugSessionListener listener);
+
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
   void reportError(@NotNull String message);
+
   void reportMessage(@NotNull String message, @NotNull MessageType type);
+
   void reportMessage(@NotNull String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
   @NotNull
@@ -132,16 +151,25 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
 
-  @Nullable  
+  @Nullable
   RunProfile getRunProfile();
 
   void setPauseActionSupported(boolean isSupported);
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 14
+   */
+  void setAutoInitBreakpoints(boolean value);
 
   void rebuildViews();
 
   <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant);
 
   void updateExecutionPosition();
+
+  void initBreakpoints();
 
   ConsoleView getConsoleView();
 

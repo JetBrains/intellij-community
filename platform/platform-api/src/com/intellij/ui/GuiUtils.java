@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -54,6 +53,7 @@ public class GuiUtils {
 
   public static final int lengthForFileField = 25;
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
+    @Override
     public boolean accept(char ch) {
       return ch != '&' && ch != UIUtil.MNEMONIC;
     }
@@ -80,6 +80,7 @@ public class GuiUtils {
 
   public static JPanel constructDirectoryBrowserField(final JTextField aTextField, final String aSearchedObjectName) {
     return constructFieldWithBrowseButton(aTextField, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getDirectoryChooserDescriptor(aSearchedObjectName);
         VirtualFile file = FileChooser.chooseFile(descriptor, aTextField, null, null);
@@ -94,6 +95,7 @@ public class GuiUtils {
   public static JPanel constructFileURLBrowserField(final TextFieldWithHistory aFieldWithHistory,
                                                     final String aSearchedObjectName) {
     return constructFieldWithBrowseButton(aFieldWithHistory, new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.getFileChooserDescriptor(aSearchedObjectName);
         VirtualFile file = FileChooser.chooseFile(descriptor, aFieldWithHistory, null, null);
@@ -237,6 +239,7 @@ public class GuiUtils {
       if (pane.getDividerLocation() > 0) {
 // let the component chance to resize itself
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             double proportion;
             if (pane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
@@ -308,6 +311,7 @@ public class GuiUtils {
 
   public static void enableChildren(Component container, final boolean enabled, JComponent... excludeComponents) {
     iterateChildren(container, new Consumer<Component>() {
+      @Override
       public void consume(final Component t) {
         enableComponent(t, enabled);
       }
@@ -331,10 +335,10 @@ public class GuiUtils {
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
       if (text != null && text.startsWith("<html>")) {
-        if (StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && enabled) {
+        if (StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && enabled) {
           text = "<html>"+text.substring(("<html>"+changeColorString).length());
         }
-        else if (!StringUtil.startsWithConcatenationOf(text, "<html>", changeColorString) && !enabled) {
+        else if (!StringUtil.startsWithConcatenation(text, "<html>", changeColorString) && !enabled) {
           text = "<html>"+changeColorString+text.substring("<html>".length());
         }
         label.setText(text);
@@ -384,9 +388,11 @@ public class GuiUtils {
     }
   }
 
-  /** @deprecated call {@link Application#invokeAndWait(Runnable, ModalityState)} directly (to remove in IDEA 13). */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
+  public static JTextField createUndoableTextField() {
+    JTextField field = new JTextField();
+    if (ApplicationManager.getApplication() != null) {
+      new TextComponentUndoProvider(field);
+    }
+    return field;
   }
 }

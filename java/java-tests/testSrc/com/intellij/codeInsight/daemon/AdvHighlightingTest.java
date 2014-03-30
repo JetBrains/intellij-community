@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.analysis.PackagesScopesProvider;
-import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ScopeAttributesUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -49,7 +49,7 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
+ * This class intended for "heavy-loaded" tests only, e.g. those need to setup separate project directory structure to run.
  * For "lightweight" tests use LightAdvHighlightingTest.
  */
 public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
@@ -103,6 +103,10 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testAccessibleMember() throws Exception {
     doTest(BASE_PATH + "/accessibleMember/com/red/C.java", BASE_PATH + "/accessibleMember", false, false);
+  }
+
+  public void testStaticPackageLocalMember() throws Exception {
+    doTest(BASE_PATH + "/staticPackageLocalMember/p1/C.java", BASE_PATH + "/staticPackageLocalMember", false, false);
   }
 
   public void testOnDemandImportConflict() throws Exception {
@@ -184,11 +188,11 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
@@ -211,16 +215,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ColorAndFontOptions.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, null, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ColorAndFontOptions.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
     NamedScope projectScope = PackagesScopesProvider.getInstance(myProject).getProjectProductionScope();
-    TextAttributesKey projectKey = ColorAndFontOptions.getScopeTextAttributeKey(projectScope.getName());
+    TextAttributesKey projectKey = ScopeAttributesUtil.getScopeTextAttributeKey(projectScope.getName());
     TextAttributes projectAttributes = new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(projectKey, projectAttributes);
 
@@ -302,11 +306,22 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/packageClassClash2/pkg/Sub.java", BASE_PATH + "/packageClassClash2", false, false);
   }
 
+  // todo[r.sh] IDEA-91596 (probably PJCRE.resolve() should be changed to qualifier-first model)
+  //public void testPackageAndClassConflict3() throws Exception {
+  //  doTest(BASE_PATH + "/packageClassClash3/test/Test.java", BASE_PATH + "/packageClassClash3", false, false);
+  //}
+
   public void testDefaultPackageAndClassConflict() throws Exception {
     doTest(BASE_PATH + "/lang.java", false, false);
   }
 
   public void testPackageObscuring() throws Exception {
     doTest(BASE_PATH + "/packageObscuring/main/Main.java", BASE_PATH + "/packageObscuring", false, false);
+  }
+  public void testPublicClassInRightFile() throws Exception {
+    doTest(BASE_PATH + "/publicClassInRightFile/x/X.java", BASE_PATH + "/publicClassInRightFile", false, false);
+  }
+  public void testPublicClassInRightFile2() throws Exception {
+    doTest(BASE_PATH + "/publicClassInRightFile/x/Y.java", BASE_PATH + "/publicClassInRightFile", false, false);
   }
 }

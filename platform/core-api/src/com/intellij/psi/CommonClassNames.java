@@ -33,16 +33,22 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_THROWABLE = "java.lang.Throwable";
   @NonNls String JAVA_LANG_EXCEPTION = "java.lang.Exception";
   @NonNls String JAVA_LANG_ERROR = "java.lang.Error";
+  @NonNls String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
   @NonNls String JAVA_LANG_RUNTIME_EXCEPTION = "java.lang.RuntimeException";
   @NonNls String JAVA_LANG_AUTO_CLOSEABLE = "java.lang.AutoCloseable";
 
   @NonNls String JAVA_LANG_ITERABLE = "java.lang.Iterable";
   @NonNls String JAVA_UTIL_ITERATOR = "java.util.Iterator";
 
+  @NonNls String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
+
   @NonNls String JAVA_LANG_DEPRECATED = "java.lang.Deprecated";
 
+  @NonNls String JAVA_LANG_ANNOTATION_TARGET = "java.lang.annotation.Target";
   @NonNls String JAVA_LANG_ANNOTATION_INHERITED = "java.lang.annotation.Inherited";
   @NonNls String JAVA_LANG_ANNOTATION_ANNOTATION = "java.lang.annotation.Annotation";
+  @NonNls String JAVA_LANG_ANNOTATION_RETENTION = "java.lang.annotation.Retention";
+  @NonNls String JAVA_LANG_ANNOTATION_REPEATABLE = "java.lang.annotation.Repeatable";
 
   @NonNls String JAVA_LANG_REFLECT_ARRAY = "java.lang.reflect.Array";
 
@@ -50,8 +56,12 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_COLLECTIONS = "java.util.Collections";
   @NonNls String JAVA_UTIL_COLLECTION = "java.util.Collection";
   @NonNls String JAVA_UTIL_MAP = "java.util.Map";
+  @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
+  @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
   @NonNls String JAVA_UTIL_LIST = "java.util.List";
+  @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
   @NonNls String JAVA_UTIL_SET = "java.util.Set";
+  @NonNls String JAVA_UTIL_HASH_SET = "java.util.HashSet";
   @NonNls String JAVA_UTIL_PROPERTIES = "java.util.Properties";
   @NonNls String JAVA_UTIL_PROPERTY_RESOURCE_BUNDLE = "java.util.PropertyResourceBundle";
   @NonNls String JAVA_UTIL_DATE = "java.util.Date";
@@ -59,11 +69,9 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_DICTIONARY = "java.util.Dictionary";
   @NonNls String JAVA_UTIL_COMPARATOR = "java.util.Comparator";
 
-  /** @deprecated not that common (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") @NonNls String JAVA_SQL_DATE = "java.sql.Date";
-
   @NonNls String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   @NonNls String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
+  @NonNls String JAVA_IO_FILE = "java.io.File";
 
   @NonNls String JAVA_LANG_STRING = "java.lang.String";
   @NonNls String JAVA_LANG_STRING_SHORT = "String";
@@ -83,17 +91,13 @@ public interface CommonClassNames {
 
   @NonNls String JAVA_LANG_CLONEABLE = "java.lang.Cloneable";
   @NonNls String JAVA_LANG_COMPARABLE = "java.lang.Comparable";
-  @NonNls String CLASS_FILE_EXTENSION = ".class";
+
+  @NonNls String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
   @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
-  @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
+  @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
 
   @NonNls String JAVA_LANG_INVOKE_MH_POLYMORPHIC = "java.lang.invoke.MethodHandle.PolymorphicSignature";
-  @NonNls String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
-  @NonNls String JAVA_LANG_RUNNABLE = "java.lang.Runnable";
-  @NonNls String JAVA_IO_FILE = "java.io.File";
-  @NonNls String JAVA_LANG_ASSERTION_ERROR = "java.lang.AssertionError";
-  @NonNls String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
-  @NonNls String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
-  @NonNls String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
+
+  @NonNls String CLASS_FILE_EXTENSION = ".class";
 }

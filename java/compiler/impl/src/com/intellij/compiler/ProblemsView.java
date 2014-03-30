@@ -39,7 +39,7 @@ import java.util.UUID;
  */
 public abstract class ProblemsView {
 
-  private final Project myProject;
+  protected final Project myProject;
 
   public static class SERVICE {
     private SERVICE() {

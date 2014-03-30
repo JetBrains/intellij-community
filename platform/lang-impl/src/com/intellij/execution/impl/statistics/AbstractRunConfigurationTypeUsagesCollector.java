@@ -16,6 +16,7 @@
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -35,7 +36,7 @@ import java.util.Set;
  */
 public abstract class AbstractRunConfigurationTypeUsagesCollector extends AbstractApplicationUsagesCollector {
 
-  protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunConfiguration runConfiguration);
+  protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   @Override
@@ -46,8 +47,9 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
       public void run() {
         if (project.isDisposed()) return;
         final RunManager runManager = RunManager.getInstance(project);
-        for (RunConfiguration runConfiguration : runManager.getAllConfigurations()) {
-          if (runConfiguration != null && isApplicable(runManager, runConfiguration)) {
+        for (RunnerAndConfigurationSettings settings : runManager.getAllSettings()) {
+          RunConfiguration runConfiguration = settings.getConfiguration();
+          if (runConfiguration != null && isApplicable(runManager, settings)) {
             final ConfigurationFactory configurationFactory = runConfiguration.getFactory();
             final ConfigurationType configurationType = configurationFactory.getType();
             final StringBuilder keyBuilder = new StringBuilder();

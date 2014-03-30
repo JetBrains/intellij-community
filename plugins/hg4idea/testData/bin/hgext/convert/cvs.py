@@ -5,12 +5,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import os, locale, re, socket, errno
+import os, re, socket, errno
 from cStringIO import StringIO
-from mercurial import util
+from mercurial import encoding, util
 from mercurial.i18n import _
 
 from common import NoRepo, commit, converter_source, checktool
+from common import makedatetimestamp
 import cvsps
 
 class convert_cvs(converter_source):
@@ -30,7 +31,7 @@ class convert_cvs(converter_source):
         self.socket = None
         self.cvsroot = open(os.path.join(cvs, "Root")).read()[:-1]
         self.cvsrepo = open(os.path.join(cvs, "Repository")).read()[:-1]
-        self.encoding = locale.getpreferredencoding()
+        self.encoding = encoding.encoding
 
         self._connect()
 
@@ -53,8 +54,6 @@ class convert_cvs(converter_source):
         try:
             os.chdir(self.path)
             id = None
-            state = 0
-            filerevids = {}
 
             cache = 'update'
             if not self.ui.configbool('convert', 'cvsps.cache', True):
@@ -72,7 +71,9 @@ class convert_cvs(converter_source):
                 cs.author = self.recode(cs.author)
                 self.lastbranch[cs.branch] = id
                 cs.comment = self.recode(cs.comment)
-                date = util.datestr(cs.date)
+                if self.ui.configbool('convert', 'localtimezone'):
+                    cs.date = makedatetimestamp(cs.date[0])
+                date = util.datestr(cs.date, '%Y-%m-%d %H:%M:%S %1%2')
                 self.tags.update(dict.fromkeys(cs.tags, id))
 
                 files = {}
@@ -123,12 +124,13 @@ class convert_cvs(converter_source):
                         pf = open(cvspass)
                         for line in pf.read().splitlines():
                             part1, part2 = line.split(' ', 1)
+                            # /1 :pserver:user@example.com:2401/cvsroot/foo
+                            # Ah<Z
                             if part1 == '/1':
-                                # /1 :pserver:user@example.com:2401/cvsroot/foo Ah<Z
                                 part1, part2 = part2.split(' ', 1)
                                 format = format1
+                            # :pserver:user@example.com:/cvsroot/foo Ah<Z
                             else:
-                                # :pserver:user@example.com:/cvsroot/foo Ah<Z
                                 format = format0
                             if part1 == format:
                                 passw = part2
@@ -200,10 +202,10 @@ class convert_cvs(converter_source):
         self._parse()
         return self.heads
 
-    def _getfile(self, name, rev):
+    def getfile(self, name, rev):
 
         def chunkedread(fp, count):
-            # file-objects returned by socked.makefile() do not handle
+            # file-objects returned by socket.makefile() do not handle
             # large read() requests very well.
             chunksize = 65536
             output = StringIO()
@@ -216,6 +218,7 @@ class convert_cvs(converter_source):
                 output.write(data)
             return output.getvalue()
 
+        self._parse()
         if rev.endswith("(DEAD)"):
             raise IOError
 
@@ -228,7 +231,7 @@ class convert_cvs(converter_source):
 
         data = ""
         mode = None
-        while 1:
+        while True:
             line = self.readp.readline()
             if line.startswith("Created ") or line.startswith("Updated "):
                 self.readp.readline() # path
@@ -255,18 +258,8 @@ class convert_cvs(converter_source):
                 else:
                     raise util.Abort(_("unknown CVS response: %s") % line)
 
-    def getfile(self, file, rev):
-        self._parse()
-        data, mode = self._getfile(file, rev)
-        self.modecache[(file, rev)] = mode
-        return data
-
-    def getmode(self, file, rev):
-        return self.modecache[(file, rev)]
-
     def getchanges(self, rev):
         self._parse()
-        self.modecache = {}
         return sorted(self.files[rev].iteritems()), {}
 
     def getcommit(self, rev):

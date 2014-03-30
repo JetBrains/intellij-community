@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,20 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   protected void doTest(String fileName) {
-    def (String input, String output) = TestUtils.readInput(testDataPath + "/" + fileName);
-    checkParsing(input, output);
+    String path = testDataPath + "/" + fileName
+    def (String input) = TestUtils.readInput(path);
+    checkParsing(input, fileName);
   }
 
-  protected void checkParsing(String input, String output) {
+  protected void checkParsing(String input, String path) {
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
+    final String psiTree = DebugUtil.psiToString(psiFile, false);
+    final String prefix = input + '\n-----\n';
+    myFixture.configureByText('test.txt', prefix + psiTree.trim())
+    myFixture.checkResultByFile(path, false)
+  }
+
+  protected checkParsingByText(String input, String output) {
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
     final String psiTree = DebugUtil.psiToString(psiFile, false);
     final String prefix = input.trim() + '\n-----\n';

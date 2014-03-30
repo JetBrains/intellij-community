@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
@@ -71,6 +72,10 @@ public class FrameWrapper implements Disposable, DataProvider {
   protected StatusBar myStatusBar;
   private boolean myShown;
   private boolean myIsDialog;
+  private boolean myImageWasChanged;
+
+  //Skip restoration of MAXIMIZED_BOTH_PROPERTY
+  private static final boolean WORKAROUND_FOR_JDK_8007219 = SystemInfo.isMac && SystemInfo.isOracleJvm;
 
   public FrameWrapper(Project project) {
     this(project, null);
@@ -96,7 +101,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   public void setProject(@NotNull final Project project) {
     myProject = project;
-    setData(PlatformDataKeys.PROJECT.getName(), project);
+    setData(CommonDataKeys.PROJECT.getName(), project);
     ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
     Disposer.register(this, new Disposable() {
       @Override
@@ -159,7 +164,12 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setTitle(myTitle);
     }
-    frame.setIconImage(myImage);
+    if (myImageWasChanged) {
+      frame.setIconImage(myImage);
+    }
+    else {
+      AppUIUtil.updateWindowIcon(myFrame);
+    }
 
     if (restoreBounds) {
       loadFrameState();
@@ -277,6 +287,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void setImage(Image image) {
+    myImageWasChanged = true;
     myImage = image;
   }
 
@@ -310,7 +321,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     }
 
-    if (extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
+    if (!WORKAROUND_FOR_JDK_8007219 && extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
       ((JFrame)frame).setExtendedState(extendedState);
     }
   }

@@ -60,6 +60,7 @@ public class FindDependencyUtil {
       }
 
       DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
+        @Override
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
           if (precomputedDeps.contains(dependencyFile)) {
@@ -95,6 +96,7 @@ public class FindDependencyUtil {
       count = updateIndicator(indicator, totalCount, count, psiFile);
 
       DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
+        @Override
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
           if (searchFor.contains(dependencyFile)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import java.util.TreeSet;
 
 public class ExtractEnumTest extends MultiFileTestCase {
 
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/extractEnum/";
@@ -56,6 +58,10 @@ public class ExtractEnumTest extends MultiFileTestCase {
   }
 
   public void testReferencesOnEnumConstantInOriginal() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
+  }
+
+  public void testUsageInVariableInitializer() throws Exception {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
@@ -120,6 +126,11 @@ public class ExtractEnumTest extends MultiFileTestCase {
            new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
   }
 
+  public void testNormalize() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
+           new RefactoringTestUtil.MemberDescriptor("BAR", PsiField.class, true));
+  }
+
   public void testUnknownSwitchLabel() throws Exception {
     doTest("Unable to migrate statement to enum constant. 8 can not be replaced with enum", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true),
@@ -149,6 +160,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
             if (member.hasModifierProperty(PsiModifier.STATIC) && member.hasModifierProperty(PsiModifier.FINAL) && ((PsiField)member).hasInitializer()) {
               if (memberInfo.isToAbstract()) {
                 enumConstants.add(memberInfo);
+                memberInfo.setChecked(true);
               }
             }
           }

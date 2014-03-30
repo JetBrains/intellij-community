@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnServerFileManager;
@@ -84,7 +85,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", Collections.<String, String>emptyMap());
+      group = new ProxyGroup(getNewName(), "", ContainerUtil.<String, String>newHashMap());
     } else {
       group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
     }

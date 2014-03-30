@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
 import com.intellij.openapi.Disposable;
@@ -23,8 +24,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
@@ -223,10 +228,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
         }
         finally {
-          myTree.setSource(mySrc);
-          myTree.setTarget(myTrg);
-          myTree.update(mySettings);
-          applySettings();
+          if (myTree != null) {
+            myTree.setSource(mySrc);
+            myTree.setTarget(myTrg);
+            myTree.update(mySettings);
+            applySettings();
+          }
         }
       }
     });
@@ -753,6 +760,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeSelected() {
+    if (!checkCanDelete()) {
+      return;
+    }
     rememberSelection();
     for (DirDiffElementImpl element : getSelectedElements()) {
       syncElement(element);
@@ -767,10 +777,60 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
+    if (!checkCanDelete()) {
+      return;
+    }
     for (DirDiffElementImpl element : myElements.toArray(new DirDiffElementImpl[myElements.size()])) {
       syncElement(element);
     }
     selectFirstRow();
+  }
+
+  private boolean checkCanDelete() {
+    if (WarnOnDeletion.isWarnWhenDeleteItems()) {
+      int count = 0;
+      for (DirDiffElementImpl element : myElements) {
+        if (element.getOperation() == DirDiffOperation.DELETE) {
+          count++;
+        }
+      }
+      if (count > 0) {
+        if (!confirmDeletion(count)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private boolean confirmDeletion(int count) {
+    return MessageDialogBuilder.yesNo("Confirm Delete", "Delete " + count + " items?").project(myProject).yesText("Delete").noText(CommonBundle.message("button.cancel")).doNotAsk(
+      new DialogWrapper.DoNotAskOption() {
+        @Override
+        public boolean isToBeShown() {
+          return WarnOnDeletion.isWarnWhenDeleteItems();
+        }
+
+        @Override
+        public void setToBeShown(boolean value, int exitCode) {
+          WarnOnDeletion.setWarnWhenDeleteItems(value);
+        }
+
+        @Override
+        public boolean canBeHidden() {
+          return true;
+        }
+
+        @Override
+        public boolean shouldSaveOptionsOnCancel() {
+          return true;
+        }
+
+        @Override
+        public String getDoNotShowMessage() {
+          return "Do not ask me again";
+        }
+      }).show() == Messages.YES;
   }
 
   private void syncElement(DirDiffElementImpl element) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.intellij.util.cls;
 
 public class ClsFormatException extends Exception {
-
-  public ClsFormatException() {
-  }
+  public ClsFormatException() { }
 
   public ClsFormatException(String message) {
     super(message);
   }
-}
 
+  public ClsFormatException(String message, Throwable cause) {
+    super(message, cause);
+  }
+}

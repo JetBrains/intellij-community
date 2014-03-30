@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,14 +47,18 @@ public class ListWrappingTableModel extends AbstractTableModel {
   }
 
   public void addRow(String... values) {
-    if (list.size() != values.length) {
+    if (list.size() < values.length) {
       throw new IllegalArgumentException("number of table columns: " +
                                          list.size() + " does not match number of argument " +
                                          "columns: " + values.length);
     }
-    for (int i = 0; i < values.length; i++) {
+    int i = 0;
+    for (; i < values.length; i++) {
       final String value = values[i];
       list.get(i).add(value);
+    }
+    for (int max = list.size();i < max; i++) {
+      list.get(i).add("");
     }
     final int index = list.get(0).size() - 1;
     fireTableRowsInserted(index, index);
@@ -72,6 +76,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return String.class;
   }
 
+  @Override
   public int getColumnCount() {
     return columnNames.size();
   }
@@ -84,6 +89,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return null;
   }
 
+  @Override
   public int getRowCount() {
     final List<String> column0 = list.get(0);
     if (column0 == null) {
@@ -92,6 +98,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return column0.size();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     return list.get(columnIndex).get(rowIndex);
   }
@@ -114,7 +121,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
 
   @Override
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
-    List<String> strings = list.get(columnIndex);
+    final List<String> strings = list.get(columnIndex);
     if (rowIndex >= 0 && rowIndex < strings.size()) {
       strings.set(rowIndex, String.valueOf(value));
       fireTableCellUpdated(rowIndex, columnIndex);

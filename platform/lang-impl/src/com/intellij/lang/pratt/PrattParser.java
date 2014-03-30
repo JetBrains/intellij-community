@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PrattParser implements PsiParser {
   protected abstract PrattRegistry getRegistry();
 
+  @Override
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PrattBuilder prattBuilder = PrattBuilderImpl.createBuilder(builder, getRegistry());

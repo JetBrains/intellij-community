@@ -34,9 +34,10 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
 
   public static final DeleteTypeDescriptionLocation SINGULAR = new DeleteTypeDescriptionLocation(false);
   public static final DeleteTypeDescriptionLocation PLURAL = new DeleteTypeDescriptionLocation(true);
-                                                  
+
   private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;
   }
@@ -46,6 +47,7 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
   }
 
   public static class DefaultProvider implements ElementDescriptionProvider {
+    @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();

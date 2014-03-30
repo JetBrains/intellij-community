@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +29,23 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
 
-public class EditorUtil {
-  
-  private static final Logger LOG = Logger.getInstance("#" + EditorUtil.class.getName());
-  
-  private EditorUtil() { }
+public final class EditorUtil {
+  private static final Logger LOG = Logger.getInstance(EditorUtil.class);
+
+  private EditorUtil() {
+  }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
     Document document = editor.getDocument();
@@ -135,14 +137,14 @@ public class EditorUtil {
       result += calcColumnNumber(editor, softWrap.getText(), softWrapStartOffset, softWrapEndOffset);
       return result;
     }
-    
+
     CharSequence editorInfo;
     if (editor instanceof EditorImpl) {
       editorInfo = ((EditorImpl)editor).dumpState();
     }
     else {
       editorInfo = "editor's class: " + editor.getClass()
-                   + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()) 
+                   + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
                    + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
     }
     LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
@@ -150,7 +152,7 @@ public class EditorUtil {
       + "the target logical line: %s. Editor info: %s",
       line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
     ));
-    
+
     return resVisEnd.column;
   }
 
@@ -190,7 +192,7 @@ public class EditorUtil {
     if (!filler.isEmpty()) {
       new WriteAction(){
         @Override
-        protected void run(final Result result) throws Throwable {
+        protected void run(@NotNull Result result) throws Throwable {
           editor.getDocument().insertString(offset, filler);
           editor.getCaretModel().moveToOffset(offset + filler.length());
         }
@@ -293,35 +295,43 @@ public class EditorUtil {
         "Starting calcSoftWrapUnawareOffset(). Target range: [%d; %d), target column number to map: %d, tab size: %d, "
         + "x: %d, current column: %d%n", start, end, columnNumber, tabSize, x, currentColumn[0]));
     }
-    
+
     // The main problem in a calculation is that target text may contain tabulation symbols and every such symbol may take different
     // number of logical columns to represent. E.g. it takes two columns if tab size is four and current column is two; three columns
     // if tab size is four and current column is one etc. So, first of all we check if there are tabulation symbols at the target
     // text fragment.
     boolean useOptimization = true;
-    boolean hasNonTabs = false;
-    boolean hasTabs = false;
-    for (int i = start; i < end; i++) {
-      char c = text.charAt(i);
-      if (debugBuffer != null) {
-        debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
-      }
-      if (c == '\t') {
-        hasTabs = true;
-        if (hasNonTabs) {
-          useOptimization = false;
-          break;
+    boolean hasTabs;
+    if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
+      hasTabs = false;
+      useOptimization = true;
+    }
+    else {
+      hasTabs = false;
+      int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
+      boolean hasNonTabs = false;
+      for (int i = start; i < scanEndOffset; i++) {
+        char c = text.charAt(i);
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
         }
-      }
-      else {
-        hasNonTabs = true;
+        if (c == '\t') {
+          hasTabs = true;
+          if (hasNonTabs) {
+            useOptimization = false;
+            break;
+          }
+        }
+        else {
+          hasNonTabs = true;
+        }
       }
     }
 
     if (debugBuffer != null) {
       debugBuffer.append(String.format("Has tabs: %b, use optimisation: %b%n", hasTabs, useOptimization));
     }
-    
+
     // Perform optimized processing if possible. 'Optimized' here means the processing when we exactly know how many logical
     // columns are occupied by tabulation symbols.
     if (useOptimization) {
@@ -452,16 +462,23 @@ public class EditorUtil {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
       useOptimization = softWrap == null;
     }
+    boolean hasTabs = true;
     if (useOptimization) {
-      boolean hasNonTabs = false;
-      for (int i = start; i < offset; i++) {
-        if (text.charAt(i) == '\t') {
-          if (hasNonTabs) {
-            useOptimization = false;
-            break;
+      if (editor instanceof EditorImpl && !((EditorImpl)editor).hasTabs()) {
+        hasTabs = false;
+      }
+      else {
+        boolean hasNonTabs = false;
+        for (int i = start; i < offset; i++) {
+          if (text.charAt(i) == '\t') {
+            if (hasNonTabs) {
+              useOptimization = false;
+              break;
+            }
           }
-        } else {
-          hasNonTabs = true;
+          else {
+            hasNonTabs = true;
+          }
         }
       }
     }
@@ -469,27 +486,26 @@ public class EditorUtil {
     if (editor == null || useOptimization) {
       int shift = 0;
 
-      for (int i = start; i < offset; i++) {
-        char c = text.charAt(i);
-        if (c == '\n' || c == '\r') {
-          String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
-          String documentInfo;
-          if (text instanceof Dumpable) {
-            documentInfo = ((Dumpable)text).dumpState();
-          }
-          else {
-            documentInfo = "Text holder class: " + text.getClass();
-          }
-          LogMessageEx.error(
-            LOG, "detected incorrect offset -> column number calculation",
-            String.format(
-              "Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d. %s%s",
-              c, i, start, offset, tabSize, documentInfo, editorInfo
-            )
-          );
+      Document document = editor == null ? null : editor.getDocument();
+      if (document != null && start < offset-1 && document.getLineNumber(start) != document.getLineNumber(offset-1)) {
+        String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
+        String documentInfo;
+        if (text instanceof Dumpable) {
+          documentInfo = ((Dumpable)text).dumpState();
         }
-        if (c == '\t') {
-          shift += getTabLength(i + shift - start, tabSize) - 1;
+        else {
+          documentInfo = "Text holder class: " + text.getClass();
+        }
+        LogMessageEx.error(
+          LOG, "detected incorrect offset -> column number calculation",
+          "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
+      }
+      if (hasTabs) {
+        for (int i = start; i < offset; i++) {
+          char c = text.charAt(i);
+          if (c == '\t') {
+            shift += getTabLength(i + shift - start, tabSize) - 1;
+          }
         }
       }
       return offset - start + shift;
@@ -578,7 +594,7 @@ public class EditorUtil {
       char c = text.charAt(i);
       int prevX = x;
       switch (c) {
-        case '\t': 
+        case '\t':
           x = nextTabStop(x, editor);
           result += columnsNumber(x - prevX, spaceSize);
           break;
@@ -664,10 +680,10 @@ public class EditorUtil {
   /**
    * Delegates to the {@link #calcSurroundingRange(Editor, VisualPosition, VisualPosition)} with the
    * {@link CaretModel#getVisualPosition() caret visual position} as an argument.
-   * 
+   *
    * @param editor  target editor
    * @return        surrounding logical positions
-   * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition) 
+   * @see #calcSurroundingRange(Editor, VisualPosition, VisualPosition)
    */
   public static Pair<LogicalPosition, LogicalPosition> calcCaretLineRange(@NotNull Editor editor) {
     return calcSurroundingRange(editor, editor.getCaretModel().getVisualPosition(), editor.getCaretModel().getVisualPosition());
@@ -702,7 +718,7 @@ public class EditorUtil {
     LogicalPosition first = editor.visualToLogicalPosition(new VisualPosition(start.line, 0));
     for (
       int line = first.line, offset = document.getLineStartOffset(line);
-      offset > 0;
+      offset >= 0;
       offset = document.getLineStartOffset(line))
     {
       final FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
@@ -717,7 +733,7 @@ public class EditorUtil {
       }
       line = foldEndLine;
     }
-    
+
 
     LogicalPosition second = editor.visualToLogicalPosition(new VisualPosition(end.line, 0));
     for (
@@ -737,7 +753,7 @@ public class EditorUtil {
       }
       line = foldEndLine;
     }
-    
+
     if (second.line >= document.getLineCount()) {
       second = editor.offsetToLogicalPosition(document.getTextLength());
     }
@@ -758,6 +774,42 @@ public class EditorUtil {
 
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
+  }
+
+  public static void reinitSettings() {
+    EditorFactory.getInstance().refreshAllEditors();
+  }
+
+  @NotNull
+  public static TextRange getSelectionInAnyMode(Editor editor) {
+    SelectionModel selection = editor.getSelectionModel();
+    int[] starts = selection.getBlockSelectionStarts();
+    int[] ends = selection.getBlockSelectionEnds();
+    int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
+    int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
+    return TextRange.create(start, end);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
+    return yPositionToLogicalLine(editor, event.getY());
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull Point point) {
+    return yPositionToLogicalLine(editor, point.y);
+  }
+
+  public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
+    int line = y / editor.getLineHeight();
+    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
+  }
+
+  public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
+    Document document = editor.getDocument();
+    if (offset < 0 || offset > document.getTextLength()) {
+      return false;
+    }
+    int line = document.getLineNumber(offset);
+    return offset == document.getLineEndOffset(line);
   }
 }
 

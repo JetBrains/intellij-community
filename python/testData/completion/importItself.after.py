@@ -1,0 +1,1 @@
+from package1.submodule2 import <caret>

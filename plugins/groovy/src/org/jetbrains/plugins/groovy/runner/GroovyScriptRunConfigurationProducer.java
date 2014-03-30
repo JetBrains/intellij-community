@@ -20,6 +20,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+
+import java.util.List;
 
 /**
  * @author ilyas
@@ -69,9 +72,9 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
     if (file.getText().contains("@Grab")) {
       ApplicationConfigurationProducer producer = new ApplicationConfigurationProducer();
-      RunnerAndConfigurationSettings settings = producer.createConfigurationByElement(location, context);
+      ConfigurationFromContext settings = producer.createConfigurationFromContext(context);
       if (settings != null) {
-        PsiElement src = producer.getSourceElement();
+        PsiElement src = settings.getSourceElement();
         mySourceElement = src;
         return createConfiguration(src instanceof PsiMethod ? ((PsiMethod)src).getContainingClass() : (PsiClass)src);
       }
@@ -85,7 +88,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();

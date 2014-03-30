@@ -23,10 +23,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -39,8 +41,10 @@ public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator;
 
+  private final static ThreadLocal<Boolean> ourReenterDefence = new ThreadLocal<Boolean>();
+
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
-  private final static long ourErrorInterval = 3 * 60 * 1000;
+  private final static long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static volatile int ourNotificationCount;
   private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
@@ -61,7 +65,7 @@ public class CommonProxy extends ProxySelector {
     return ourInstance;
   }
 
-  public CommonProxy() {
+  private CommonProxy() {
     myLock = new Object();
     myNoProxy = new HashSet<Pair<HostInfo, Thread>>();
     myCustom = new HashMap<String, ProxySelector>();
@@ -90,6 +94,7 @@ public class CommonProxy extends ProxySelector {
   private static boolean itsTime() {
     final boolean b = System.currentTimeMillis() - ourErrorTime > ourErrorInterval && ourNotificationCount < 5;
     if (b) {
+      ourErrorTime = System.currentTimeMillis();
       ++ ourNotificationCount;
     }
     return b;
@@ -104,13 +109,13 @@ public class CommonProxy extends ProxySelector {
 
     final String message = getMessageFromProps(props);
     if (message != null) {
-      /*if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
-      }*/
+      // we only intend to somehow report possible misconfiguration
+      // will not show to the user since on Mac OS this setting is typical
       LOG.info(message);
     }
   }
 
+  @Nullable
   public static String getMessageFromProps(Map<String, String> props) {
     String message = null;
     for (Map.Entry<String, String> entry : props.entrySet()) {
@@ -195,32 +200,56 @@ public class CommonProxy extends ProxySelector {
   }
 
   @Override
-  public List<Proxy> select(URI uri) {
+  public List<Proxy> select(@Nullable URI uri) {
     isInstalledAssertion();
-    if (uri == null) return NO_PROXY_LIST;
+    if (uri == null) {
+      return NO_PROXY_LIST;
+    }
     LOG.debug("CommonProxy.select called for " + uri.toString());
 
-    final String host = uri.getHost() == null ? "" : uri.getHost();
-    final int port = uri.getPort();
-    final String protocol = uri.getScheme();
-
-    final HostInfo info = new HostInfo(protocol, host, port);
-    final Map<String, ProxySelector> copy;
-    synchronized (myLock) {
-      if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
-        LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
+    if (Boolean.TRUE.equals(ourReenterDefence.get())) {
+      return NO_PROXY_LIST;
+    }
+    try {
+      ourReenterDefence.set(Boolean.TRUE);
+      final String host = uri.getHost() == null ? "" : uri.getHost();
+      final int port = correctPortByProtocol(uri);
+      final String protocol = uri.getScheme();
+      if ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host)) {
         return NO_PROXY_LIST;
       }
-      copy = new HashMap<String, ProxySelector>(myCustom);
+
+      final HostInfo info = new HostInfo(protocol, host, port);
+      final Map<String, ProxySelector> copy;
+      synchronized (myLock) {
+        if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
+          LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
+          return NO_PROXY_LIST;
+        }
+        copy = new HashMap<String, ProxySelector>(myCustom);
+      }
+      for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
+        final List<Proxy> proxies = entry.getValue().select(uri);
+        if (proxies != null && proxies.size() > 0) {
+          LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
+          return proxies;
+        }
+      }
+      return NO_PROXY_LIST;
+    } finally {
+      ourReenterDefence.remove();
     }
-    for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
-      final List<Proxy> proxies = entry.getValue().select(uri);
-      if (proxies != null && proxies.size() > 0) {
-        LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
-        return proxies;
+  }
+
+  private int correctPortByProtocol(@NotNull URI uri) {
+    if (uri.getPort() == -1) {
+      if ("http".equals(uri.getScheme())) {
+        return ProtocolDefaultPorts.HTTP;
+      } else if ("https".equals(uri.getScheme())) {
+        return ProtocolDefaultPorts.SSL;
       }
     }
-    return NO_PROXY_LIST;
+    return uri.getPort();
   }
 
   @Override

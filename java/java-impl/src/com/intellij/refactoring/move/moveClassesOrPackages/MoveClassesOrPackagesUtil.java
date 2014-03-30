@@ -20,6 +20,7 @@ import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -38,6 +39,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -231,7 +233,7 @@ public class MoveClassesOrPackagesUtil {
     if (!moveDestination.equals(file.getContainingDirectory())) {
       LOG.assertTrue(file.getVirtualFile() != null, aClass);
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
-      if (file instanceof PsiClassOwner && newPackage != null && !JspPsiUtil.isInJspFile(file)) {
+      if (file instanceof PsiClassOwner && newPackage != null && !FileTypeUtils.isInServerPageFile(file)) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
@@ -275,18 +277,19 @@ public class MoveClassesOrPackagesUtil {
 
     PsiDirectory[] directories = aPackage != null ? aPackage.getDirectories() : null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final boolean filterOutSources = baseDir != null && fileIndex.isInTestSourceContent(baseDir.getVirtualFile());
-    if (directories != null && directories.length == 1 && !(filterOutSources &&
-                                                            !fileIndex.isInTestSourceContent(directories[0].getVirtualFile()))) {
+    final VirtualFile baseDirVirtualFile = baseDir != null ? baseDir.getVirtualFile() : null;
+    final boolean isBaseDirInTestSources = baseDirVirtualFile != null && fileIndex.isInTestSourceContent(baseDirVirtualFile);
+    if (directories != null && directories.length == 1 && (baseDirVirtualFile == null ||
+                                                           fileIndex.isInTestSourceContent(directories[0].getVirtualFile()) == isBaseDirInTestSources)) {
       directory = directories[0];
     }
     else {
-      final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-      if (contentSourceRoots.length == 1 && !(filterOutSources && !fileIndex.isInTestSourceContent(contentSourceRoots[0]))) {
+      final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
+      if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
         directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
           @Override
           public PsiDirectory compute() {
-            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots[0]);
+            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0));
           }
         });
       }
@@ -303,9 +306,9 @@ public class MoveClassesOrPackagesUtil {
     }
     return directory;
   }
-  
+
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final VirtualFile[] contentSourceRoots,
+                                             final List<VirtualFile> contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
@@ -328,7 +331,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static void buildDirectoryList(PackageWrapper aPackage,
-                                        VirtualFile[] contentSourceRoots,
+                                        List<VirtualFile> contentSourceRoots,
                                         LinkedHashSet<PsiDirectory> targetDirectories,
                                         Map<PsiDirectory, String> relativePathsToCreate) {
 
@@ -370,7 +373,7 @@ public class MoveClassesOrPackagesUtil {
         }
       }
     }
-    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.length);
-    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.length);
+    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.size());
+    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.size());
   }
 }

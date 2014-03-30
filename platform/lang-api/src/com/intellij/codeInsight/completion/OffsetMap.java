@@ -114,6 +114,7 @@ public class OffsetMap implements Disposable {
     return myModified.contains(key);
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     for (RangeMarker rangeMarker : myMap.values()) {

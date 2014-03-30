@@ -28,7 +28,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
   @NotNull
   @Override
   protected Map<K, Object> createMap() {
-    return new ConcurrentHashMap<K, Object>();
+    return ContainerUtil.newConcurrentMap();
   }
 
   @Override
@@ -66,7 +66,7 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
     if (!oldCollection.equals(expectedValue)) return false;
 
     if (oldValue == null) {
-      return newValueToPut == null || map.putIfAbsent(key, newValueToPut) == newValueToPut;
+      return newValueToPut == null || map.putIfAbsent(key, newValueToPut) == null;
     }
     if (newValueToPut == null) {
       return map.remove(key, oldValue);

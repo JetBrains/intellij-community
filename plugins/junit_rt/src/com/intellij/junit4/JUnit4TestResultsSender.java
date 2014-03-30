@@ -131,7 +131,7 @@ public class JUnit4TestResultsSender extends RunListener {
         notification = createExceptionNotification(assertion, message, "\\s*expected same:<(.*)> was not:<(.*)>");
       }
       if (notification == null) {
-        notification = createExceptionNotification(assertion, message, "\\s*expected:<(.*)> but was:<(.*)>");
+        notification = createExceptionNotification(assertion, message, ".*\\s*expected:<(.*)> but was:<(.*)>");
       }
       if (notification == null) {
         notification = createExceptionNotification(assertion, message, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");

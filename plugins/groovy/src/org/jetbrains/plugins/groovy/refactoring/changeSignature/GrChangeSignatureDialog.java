@@ -141,7 +141,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).createPanel();
       //.addExtraAction(myPropExceptionsButton).createPanel();
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder());
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 

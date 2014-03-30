@@ -18,7 +18,6 @@ package com.intellij.tools;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -28,6 +27,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +44,9 @@ import java.util.List;
  *         Date: 06.08.12
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
+
+  public static final Object NONE_TOOL = new Object();
+
   @NotNull
   @Override
   public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
@@ -97,6 +100,10 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
         panel.add(listComponent, BorderLayout.CENTER);
         listComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
 
+        if (comboBox.getItemCount() == 0 || (comboBox.getItemCount() == 1 && comboBox.getItemAt(0) == NONE_TOOL)) {
+          return null;
+        }
+
         return new RefreshableOnComponent() {
           @Override
           public JComponent getComponent() {
@@ -139,9 +146,9 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
         if (id == null) {
           return;
         }
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
           @Override
-          public void run(final DataContext context) {
+          public void consume(final DataContext context) {
             UIUtil.invokeAndWaitIfNeeded(new Runnable() {
 
               @Override
@@ -158,7 +165,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
   private static List<Object> getComboBoxElements() {
     List<Object> result = new ArrayList<Object>();
     ToolManager manager = ToolManager.getInstance();
-    result.add(new Object());//for empty selection
+    result.add(NONE_TOOL);//for empty selection
     for (ToolsGroup group : manager.getGroups()) {
       result.add(group);
       Collections.addAll(result, manager.getTools(group.getName()));

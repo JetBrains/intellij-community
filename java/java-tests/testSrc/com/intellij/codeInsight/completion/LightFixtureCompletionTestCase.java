@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -33,6 +32,17 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   protected void configureByFile(String path) {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
     complete();
+  }
+
+  protected void configureByTestName() {
+    configureByFile("/" + getTestName(false) + ".java");
+  }
+
+  protected void doAntiTest() {
+    configureByTestName();
+    checkResultByFile(getTestName(false) + ".java");
+    assertEmpty(myItems);
+    assertNull(getLookup());
   }
 
   protected void complete() {

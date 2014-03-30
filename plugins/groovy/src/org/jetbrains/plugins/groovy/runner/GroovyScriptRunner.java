@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public abstract class GroovyScriptRunner {
     }
   }
 
-  protected static void setGroovyHome(JavaParameters params, @NotNull String groovyHome) {
+  public static void setGroovyHome(JavaParameters params, @NotNull String groovyHome) {
     params.getVMParametersList().add("-Dgroovy.home=" + groovyHome);
     if (groovyHome.contains("grails")) { //a bit of a hack
       params.getVMParametersList().add("-Dgrails.home=" + groovyHome);
@@ -103,9 +103,7 @@ public abstract class GroovyScriptRunner {
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
     final VirtualFile[] files = OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots();
     for (VirtualFile root : files) {
-      if (root.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN)
-          || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(root.getName()).matches())
-      {
+      if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(root.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(root.getName())) {
         return root;
       }
     }
@@ -118,8 +116,8 @@ public abstract class GroovyScriptRunner {
   }
 
   protected static void addClasspathFromRootModel(@Nullable Module module, boolean isTests, JavaParameters params, boolean allowDuplication) throws CantRunException {
-    PathsList nonCore = getClassPathFromRootModel(module, isTests, params, allowDuplication);
-    if (nonCore == null) return;
+    PathsList nonCore = new PathsList();
+    getClassPathFromRootModel(module, isTests, params, allowDuplication, nonCore);
 
     final String cp = nonCore.getPathsString();
     if (!StringUtil.isEmptyOrSpaces(cp)) {
@@ -129,11 +127,17 @@ public abstract class GroovyScriptRunner {
   }
 
   @Nullable
-  public static PathsList getClassPathFromRootModel(Module module, boolean isTests, JavaParameters params, boolean allowDuplication)
+  public static PathsList getClassPathFromRootModel(Module module,
+                                                    boolean isTests,
+                                                    JavaParameters params,
+                                                    boolean allowDuplication,
+                                                    PathsList pathList)
     throws CantRunException {
     if (module == null) {
       return null;
     }
+
+    pathList.add(".");
 
     final JavaParameters tmp = new JavaParameters();
     tmp.configureByModule(module, isTests ? JavaParameters.CLASSES_AND_TESTS : JavaParameters.CLASSES_ONLY);
@@ -143,12 +147,11 @@ public abstract class GroovyScriptRunner {
 
     Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
 
-    PathsList nonCore = new PathsList();
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
       if (allowDuplication || !core.contains(virtualFile)) {
-        nonCore.add(virtualFile);
+        pathList.add(virtualFile);
       }
     }
-    return nonCore;
+    return pathList;
   }
 }

@@ -40,10 +40,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class GotoTestOrCodeHandler extends GotoTargetHandler {
+  @Override
   protected String getFeatureUsedKey() {
     return "navigation.goto.testOrCode";
   }
 
+  @Override
   @Nullable
   protected GotoData getSourceAndTargetElements(final Editor editor, final PsiFile file) {
     PsiElement selectedElement = getSelectedElement(editor, file);
@@ -92,6 +94,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     return false;
   }
 
+  @Override
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     if (TestFinderHelper.isTest(sourceElement)) {
       return CodeInsightBundle.message("goto.test.chooserTitle.subject", name, length);

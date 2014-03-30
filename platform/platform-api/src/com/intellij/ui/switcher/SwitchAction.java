@@ -17,7 +17,7 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
@@ -65,7 +65,7 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
   }
 
   private static SwitchManager getManager(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     return SwitchManager.getInstance(project);
   }
 

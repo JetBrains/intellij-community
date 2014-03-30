@@ -25,14 +25,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
 final class HistoryEntry{
-  @NonNls public static final String TAG = "entry";
+  static final String TAG = "entry";
+  private static final String FILE_ATTR = "file";
+  private static final String PROVIDER_ELEMENT = "provider";
+  private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
+  private static final String SELECTED_ATTR_VALUE = "selected";
+  private static final String STATE_ELEMENT = "state";
 
   public final VirtualFile myFile;
   /**
@@ -40,11 +44,6 @@ final class HistoryEntry{
    */ 
   public FileEditorProvider mySelectedProvider;
   private final HashMap<FileEditorProvider, FileEditorState> myProvider2State;
-  @NonNls public static final String FILE_ATTR = "file";
-  @NonNls public static final String PROVIDER_ATTR = "provider";
-  @NonNls public static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
-  @NonNls public static final String SELECTED_ATTR_VALUE = "selected";
-  @NonNls public static final String STATE_ELEMENT = "state";
 
   public HistoryEntry(@NotNull VirtualFile file, @NotNull FileEditorProvider[] providers, @NotNull FileEditorState[] states, @NotNull FileEditorProvider selectedProvider){
     myFile = file;
@@ -67,7 +66,7 @@ final class HistoryEntry{
     String url = e.getAttributeValue(FILE_ATTR);
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file == null){
-      throw new InvalidDataException();
+      throw new InvalidDataException("No file exists: " + url);
     }
 
     myFile = file;
@@ -78,7 +77,7 @@ final class HistoryEntry{
       FileDocumentManager.getInstance().getDocument(myFile);
     } 
 
-    List providers = e.getChildren(PROVIDER_ATTR);
+    List providers = e.getChildren(PROVIDER_ELEMENT);
     for (final Object provider1 : providers) {
       Element _e = (Element)provider1;
 
@@ -121,7 +120,7 @@ final class HistoryEntry{
     for (final Map.Entry<FileEditorProvider, FileEditorState> entry : myProvider2State.entrySet()) {
       FileEditorProvider provider = entry.getKey();
 
-      Element providerElement = new Element(PROVIDER_ATTR);
+      Element providerElement = new Element(PROVIDER_ELEMENT);
       if (provider.equals(mySelectedProvider)) {
         providerElement.setAttribute(SELECTED_ATTR_VALUE, Boolean.TRUE.toString());
       }

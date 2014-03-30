@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.table.JBTable;
@@ -41,7 +40,7 @@ public abstract class JBTableWithHintProvider extends JBTable {
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
-        if (getClientProperty(PopupChooserBuilder.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
+        if (getClientProperty(ListUtil.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
 
           final int selected = ((ListSelectionModel)e.getSource()).getLeadSelectionIndex();
           int rowCount = getRowCount();

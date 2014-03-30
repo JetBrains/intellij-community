@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ImmutableUserMap;
 import com.intellij.util.containers.Queue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -73,6 +74,7 @@ public abstract class LookAheadLexer extends LexerBase{
     assert !myTypeCache.isEmpty();
   }
 
+  @NotNull
   public CharSequence getBufferSequence() {
     return myBaseLexer.getBufferSequence();
   }
@@ -109,11 +111,12 @@ public abstract class LookAheadLexer extends LexerBase{
     return myTokenStart;
   }
 
+  @NotNull
   public LookAheadLexerPosition getCurrentPosition() {
     return new LookAheadLexerPosition(this, ImmutableUserMap.EMPTY);
   }
 
-  public final void restore(final LexerPosition _position) {
+  public final void restore(@NotNull final LexerPosition _position) {
     restore((LookAheadLexerPosition) _position);
   }
 
@@ -129,7 +132,7 @@ public abstract class LookAheadLexer extends LexerBase{
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBaseLexer.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
     myTokenStart = startOffset;
     myTypeCache.clear();

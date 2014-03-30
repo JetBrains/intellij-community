@@ -29,13 +29,14 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 
 public class CodeInspectionOnEditorAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null){
       analyze(project, psiFile);
     }
@@ -50,13 +51,14 @@ public class CodeInspectionOnEditorAction extends AnAction {
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     inspectionContext.setExternalProfile(inspectionProfile);
-    inspectionContext.doInspections(scope, inspectionManagerEx);    
+    inspectionContext.doInspections(scope);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     e.getPresentation().setEnabled(project != null && psiFile != null  && DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile));
   }
 }

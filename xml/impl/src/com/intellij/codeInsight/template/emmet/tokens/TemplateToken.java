@@ -17,7 +17,6 @@ package com.intellij.codeInsight.template.emmet.tokens;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -76,21 +74,11 @@ public class TemplateToken extends ZenCodingToken {
 
   public boolean setTemplate(TemplateImpl template, CustomTemplateCallback callback) {
     myTemplate = template;
-    final XmlFile xmlFile = parseXmlFileInTemplate(template.getString(), callback, true);
+    final XmlFile xmlFile = parseXmlFileInTemplate(template, callback, getAttribute2Value());
     setFile(xmlFile);
-    XmlDocument document = xmlFile.getDocument();
-    final XmlTag tag = document != null ? document.getRootTag() : null;
+    final XmlTag tag = xmlFile.getRootTag();
     if (getAttribute2Value().size() > 0 && tag == null) {
       return false;
-    }
-    if (tag != null) {
-      if (!containsAttrsVar(template) && getAttribute2Value().size() > 0) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            addMissingAttributes(tag, getAttribute2Value());
-          }
-        });
-      }
     }
     return true;
   }
@@ -107,9 +95,22 @@ public class TemplateToken extends ZenCodingToken {
   }
 
   @NotNull
-  private static XmlFile parseXmlFileInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
-    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
-      .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
+  private static XmlFile parseXmlFileInTemplate(TemplateImpl template,
+                                                CustomTemplateCallback callback,
+                                                List<Pair<String, String>> attributes) {
+    XmlTag dummyRootTag = null;
+    String templateString = template.getString();
+    final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(callback.getProject());
+    if (!containsAttrsVar(template)) {
+      XmlFile dummyFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString);
+      dummyRootTag = dummyFile.getRootTag();
+      if (dummyRootTag != null) {
+        addMissingAttributes(dummyRootTag, attributes);
+      }
+    }
+
+    templateString = dummyRootTag != null ? dummyRootTag.getContainingFile().getText() : templateString;
+    XmlFile xmlFile = (XmlFile)psiFileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), true);
     VirtualFile vFile = xmlFile.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);

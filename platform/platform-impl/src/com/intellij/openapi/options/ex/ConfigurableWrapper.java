@@ -56,7 +56,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
   }
 
   public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(Extensions.getExtensions(name), new NullableFunction<ConfigurableEP<T>, T>() {
+    return ContainerUtil.mapNotNull(name.getExtensions(), new NullableFunction<ConfigurableEP<T>, T>() {
       @Override
       public T fun(ConfigurableEP<T> ep) {
         return wrapConfigurable(ep);
@@ -76,7 +76,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  public ConfigurableWrapper(ConfigurableEP ep) {
+  private ConfigurableWrapper(ConfigurableEP ep) {
     myEp = ep;
   }
 
@@ -162,7 +162,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     private Configurable[] myKids;
 
-    public CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
+    private CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
       super(ep);
       if (ep.dynamic) {
         kids = ((Composite)getConfigurable()).getConfigurables();

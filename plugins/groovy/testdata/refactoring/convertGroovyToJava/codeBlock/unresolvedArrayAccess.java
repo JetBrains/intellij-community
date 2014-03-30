@@ -1,2 +1,2 @@
 java.lang.Object foo;
-print(foo.getAt(1));
+print(org.codehaus.groovy.runtime.DefaultGroovyMethods.getAt(foo, 1));

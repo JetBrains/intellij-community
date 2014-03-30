@@ -34,6 +34,7 @@ public class RedundantCast18Test extends InspectionTestCase {
   public void testMethodRefContext() throws Exception { doTest(); }
   public void testExpectedSupertype() throws Exception { doTest(); }
 
+  @Override
   protected Sdk getTestProjectSdk() {
     Sdk sdk = IdeaTestUtil.getMockJdk17();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);

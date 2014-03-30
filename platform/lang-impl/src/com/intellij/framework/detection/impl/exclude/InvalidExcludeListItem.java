@@ -22,8 +22,8 @@ import com.intellij.ui.SimpleTextAttributes;
 * @author nik
 */
 class InvalidExcludeListItem extends ExcludeListItem {
-  private String myFileUrl;
-  private String myFrameworkTypeId;
+  private final String myFileUrl;
+  private final String myFrameworkTypeId;
 
   InvalidExcludeListItem(String frameworkTypeId, String fileUrl) {
     myFrameworkTypeId = frameworkTypeId;

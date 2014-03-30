@@ -1,5 +1,6 @@
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -24,7 +25,7 @@ public class HgCommittedChangeList extends CommittedChangeListImpl implements Vc
     super(revision.asString() + ": " + comment, comment, committerName, revision.getRevisionAsLong(), commitDate, changes);
     myVcs = vcs;
     myRevision = revision;
-    myBranch = branch;
+    myBranch = StringUtil.isEmpty(branch) ? "default" : branch;
   }
 
   @NotNull
@@ -47,7 +48,7 @@ public class HgCommittedChangeList extends CommittedChangeListImpl implements Vc
     return getComment();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;

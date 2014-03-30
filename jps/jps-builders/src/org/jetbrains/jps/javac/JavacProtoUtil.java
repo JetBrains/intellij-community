@@ -101,6 +101,17 @@ public class JavacProtoUtil {
     return builder.build();
   }
 
+  public static JavacRemoteProto.Message.Response createSourceFileLoadedResponse(File srcFile) {
+
+    final JavacRemoteProto.Message.Response.OutputObject outObjMsg = JavacRemoteProto.Message.Response.OutputObject.newBuilder()
+      .setKind(convertKind(JavaFileObject.Kind.SOURCE)).setFilePath(FileUtil.toSystemIndependentName(srcFile.getPath())).build();
+
+    final JavacRemoteProto.Message.Response.Builder builder = JavacRemoteProto.Message.Response.newBuilder();
+    builder.setResponseType(JavacRemoteProto.Message.Response.Type.SRC_FILE_LOADED).setOutputObject(outObjMsg);
+
+    return builder.build();
+  }
+
   public static JavacRemoteProto.Message.Response createClassDataResponse(String className, Collection<String> imports, Collection<String> staticImports) {
     final JavacRemoteProto.Message.Response.ClassData.Builder msgBuilder = JavacRemoteProto.Message.Response.ClassData.newBuilder();
     msgBuilder.setClassName(className);

@@ -374,6 +374,10 @@ public class SetValueAction extends DebuggerAction {
       }
 
       private void flushValue() {
+        if (comboBox.isPopupVisible()) {
+          comboBox.selectPopupValue();
+        }
+
         Editor editor = getEditor();
         if(editor == null) {
           return;
@@ -481,8 +485,10 @@ public class SetValueAction extends DebuggerAction {
 
     stateManager.addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
-        stateManager.removeListener(this);
-        editor.cancelEditing();
+        if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
+          stateManager.removeListener(this);
+          editor.cancelEditing();
+        }
       }
     });
 

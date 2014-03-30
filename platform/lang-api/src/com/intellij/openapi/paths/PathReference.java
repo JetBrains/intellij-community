@@ -39,6 +39,7 @@ public class PathReference {
   public PathReference(@NotNull String path, final @NotNull Function<PathReference, Icon> icon) {
     myPath = path;
     myIcon = new NullableLazyValue<Icon>() {
+      @Override
       protected Icon compute() {
         return icon.fun(PathReference.this);
       }
@@ -84,6 +85,7 @@ public class PathReference {
       myDefaultIcon = defaultValue;
     }
 
+    @Override
     public Icon fun(final PathReference pathReference) {
       final PsiElement element = pathReference.resolve();
       return element == null ? myDefaultIcon : element.getIcon(Iconable.ICON_FLAG_READ_STATUS);

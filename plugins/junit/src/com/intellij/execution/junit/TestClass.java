@@ -19,7 +19,6 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -27,10 +26,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
 class TestClass extends TestObject {
@@ -49,7 +45,11 @@ class TestClass extends TestObject {
   }
 
   public String suggestActionName() {
-    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(myConfiguration.getPersistentData().MAIN_CLASS_NAME), 0);
+    String name = myConfiguration.getPersistentData().MAIN_CLASS_NAME;
+    if (name != null && name.endsWith(".")) {
+      return name;
+    }
+    return JavaExecutionUtil.getShortClassName(name);
   }
 
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
@@ -59,7 +59,8 @@ class TestClass extends TestObject {
   public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
+                                       PsiPackage testPackage,
+                                       PsiDirectory testDir) {
 
     if (testClass == null) {
       return false;

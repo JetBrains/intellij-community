@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.action.ArrangementRemoveConditionAction;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -24,14 +23,13 @@ import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +38,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Set;
 
 /**
  * {@link ArrangementUiComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
@@ -56,6 +55,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
+    @NotNull
     @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
@@ -66,6 +66,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       return getPreferredSize();
     }
 
+    @NotNull
     @Override
     public Dimension getPreferredSize() {
       return myTextControlSize == null ? super.getPreferredSize() : myTextControlSize;
@@ -76,6 +77,8 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
       return "text component for " + myText;
     }
   };
+
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
 
   @NotNull private final BorderStrategy                myBorderStrategy;
   @NotNull private final String                        myText;
@@ -90,9 +93,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @NotNull private Color myBackgroundColor;
 
-  @Nullable private Dimension myTextControlSize;
-  @Nullable private Rectangle myScreenBounds;
-  @Nullable private Listener  myListener;
+  @Nullable private final Dimension myTextControlSize;
+  @Nullable private       Rectangle myScreenBounds;
+  @Nullable private       Listener  myListener;
 
   private boolean myEnabled = true;
   private boolean mySelected;
@@ -105,9 +108,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
+    myAvailableTokens.add(condition.getType());
     myCloseCallback = closeCallback;
     ArrangementSettingsToken type = condition.getType();
-    if (StdArrangementTokens.Regexp.is(type)) {
+    if (StdArrangementTokenType.REG_EXP.is(type)) {
       myBorderStrategy = TEXT_BORDER_STRATEGY;
     }
     else {
@@ -116,7 +120,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     if (type.equals(condition.getValue())) {
       myText = type.getRepresentationValue();
     }
-    else if (StdArrangementTokens.Regexp.is(type)) {
+    else if (StdArrangementTokenType.REG_EXP.is(type)) {
       myText = String.format("%s %s", type.getRepresentationValue().toLowerCase(), condition.getValue());
     }
     else {
@@ -126,7 +130,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(type, false)));
     myTextControl.setOpaque(false);
     int maxWidth = manager.getWidth(type);
-    if (!StdArrangementTokens.Regexp.is(type) && maxWidth > 0) {
+    if (!StdArrangementTokenType.REG_EXP.is(type) && maxWidth > 0) {
       myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
     }
     else {
@@ -176,7 +180,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
         }
-        
+
         Rectangle bounds = getBounds();
         g.setColor(myBackgroundColor);
         g.fillRoundRect(0, 0, bounds.width, bounds.height, ArrangementConstants.BORDER_ARC_SIZE, ArrangementConstants.BORDER_ARC_SIZE);
@@ -201,7 +205,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myBorder = myBorderStrategy.create();
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
-    
+
     myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel, false, true) {
       @Override
       public void paint(Graphics g) {
@@ -229,6 +233,11 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return myCondition;
   }
 
+  @Override
+  public void setData(@NotNull Object data) {
+    // Do nothing
+  }
+
   @NotNull
   @Override
   public JComponent getUiComponent() {
@@ -246,6 +255,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
    *
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
+  @Override
   public void setSelected(boolean selected) {
     boolean notifyListener = selected != mySelected;
     mySelected = selected;
@@ -259,6 +269,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     }
   }
 
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
@@ -268,6 +279,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
    *
    * @param enabled  flag that indicates if current component should be drawn as 'enabled'
    */
+  @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
     if (!enabled) {
@@ -346,6 +358,12 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return myCondition.getType();
   }
 
+  @NotNull
+  @Override
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
+    return myAvailableTokens;
+  }
+
   @Override
   public void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException {
     throw new UnsupportedOperationException();
@@ -358,7 +376,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @Override
   public void reset() {
-    setSelected(false); 
+    setSelected(false);
   }
 
   @Override
@@ -369,14 +387,14 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @SuppressWarnings("NullableProblems")
   @Override
   public void setListener(@NotNull Listener listener) {
-    myListener = listener; 
+    myListener = listener;
   }
 
   private interface BorderStrategy {
     RoundedLineBorder create();
     void setup(@NotNull Graphics2D g);
   }
-  
+
   private static class PredefinedConditionBorderStrategy implements BorderStrategy {
     @Override
     public RoundedLineBorder create() {
@@ -387,7 +405,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     public void setup(@NotNull Graphics2D g) {
     }
   }
-  
+
   private static class NameBorderStrategy implements BorderStrategy {
 
     @NotNull private final BasicStroke myStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);

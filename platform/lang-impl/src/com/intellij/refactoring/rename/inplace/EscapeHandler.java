@@ -35,6 +35,7 @@ public class EscapeHandler extends EditorActionHandler {
     myOriginalHandler = originalHandler;
   }
 
+  @Override
   public void execute(Editor editor, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {
@@ -52,6 +53,7 @@ public class EscapeHandler extends EditorActionHandler {
     myOriginalHandler.execute(editor, dataContext);
   }
 
+  @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {

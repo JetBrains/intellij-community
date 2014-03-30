@@ -44,7 +44,11 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
   }
 
   public void testCyclicInference() {
-    assertIntentionNotAvailable();
+    doTest();
+  }
+
+  public void testLocalClasses() {
+    doTest();
   }
 
   public void testNoFunctionalInterfaceFound() {
@@ -64,6 +68,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
   }
 
   public void testQualifyThis() {
+    doTest();
+  }
+
+  public void testQualifyThis1() {
     doTest();
   }
 

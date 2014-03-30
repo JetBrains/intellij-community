@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testFor$for10() throws Throwable { doTest(); }
   public void testFor$for11() throws Throwable { doTest(); }
   public void testFor$for12() throws Throwable { doTest(); }
+  public void testFor$for13() throws Throwable { doTest(); }
   public void testFor$for2() throws Throwable { doTest(); }
   public void testFor$for3() throws Throwable { doTest(); }
   public void testFor$for4() throws Throwable { doTest(); }
@@ -94,17 +95,18 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testImports$imp5() throws Throwable { doTest(); }
   public void testImports$imp6() throws Throwable { doTest(); }
   public void testImports$imp7() throws Throwable { doTest(); }
+  public void testImports$imp8() throws Throwable { doTest(); }
   public void testKing_regex$king1() throws Throwable { doTest(); }
   public void testKing_regex$king2() throws Throwable { doTest(); }
   public void testKing_regex$king3() throws Throwable { doTest(); }
   public void testKing_regex$king4() throws Throwable { doTest(); }
   public void testLabeled$label1() throws Throwable { doTest(); }
   public void testLabeled$label2() throws Throwable { doTest(); }
+  public void testLabeled$label3() throws Throwable { doTest(); }
   public void testLoop$while1() throws Throwable { doTest(); }
   public void testLoop$while2() throws Throwable { doTest(); }
   public void testLoop$while3() throws Throwable { doTest(); }
   public void testLoop$while4() throws Throwable { doTest(); }
-  public void testLoop$while5() throws Throwable { doTest(); }
   public void testLoop$while6() throws Throwable { doTest(); }
   public void testMethods$method1() throws Throwable { doTest(); }
   public void testMethods$method2() throws Throwable { doTest(); }
@@ -115,6 +117,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testMultiple_assign$grvy2086() throws Throwable { doTest("multiple_assign/grvy-2086.test"); }
   public void testMultiple_assign$mult_assign() throws Throwable { doTest(); }
   public void testMultiple_assign$mult_def() throws Throwable { doTest(); }
+  public void testMultiple_assign$without_assign() throws Throwable { doTest(); }
   public void testSwitch$laforge1() throws Throwable { doTest(); }
   public void testSwitch$swit1() throws Throwable { doTest(); }
   public void testSwitch$swit2() throws Throwable { doTest(); }
@@ -147,6 +150,8 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testTuples$tupleWithoutDef() throws Throwable { doTest(); }
   public void testTypedef$classes$abstr() throws Throwable { doTest(); }
   public void testTypedef$classes$class1() throws Throwable { doTest(); }
+  public void testTypedef$classes$class10() throws Throwable { doTest(); }
+  public void testTypedef$classes$class11() throws Throwable { doTest(); }
   public void testTypedef$classes$class2() throws Throwable { doTest(); }
   public void testTypedef$classes$class3() throws Throwable { doTest(); }
   public void testTypedef$classes$class4() throws Throwable { doTest(); }

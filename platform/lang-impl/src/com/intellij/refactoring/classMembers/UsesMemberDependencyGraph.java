@@ -54,6 +54,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
   }
 
 
+  @Override
   public Set<? extends T> getDependent() {
     if (myDependencies == null) {
       myDependencies = new HashSet<T>();
@@ -63,6 +64,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     return myDependencies;
   }
 
+  @Override
   public Set<? extends T> getDependenciesOf(T member) {
     final Set dependent = getDependent();
     if(!dependent.contains(member)) return null;
@@ -127,6 +129,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     }
   }
 
+  @Override
   public void memberChanged(M memberInfo) {
     final ClassMembersRefactoringSupport support =
       LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(memberInfo.getMember().getLanguage());

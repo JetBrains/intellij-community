@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -5,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +34,13 @@ import java.util.regex.Pattern;
 public class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
+
+  public static final Comparator<String> COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String s1, String s2) {
+      return VersionComparatorUtil.compare(s1, s2);
+    }
+  };
 
   private VersionComparatorUtil() {
   }
@@ -57,7 +80,7 @@ public class VersionComparatorUtil {
       }
 
       str = str.trim();
-      if (str.length() == 0) {
+      if (str.isEmpty()) {
         return _WS;
       }
 
@@ -146,27 +169,20 @@ public class VersionComparatorUtil {
   }
 
   private static int comparePriorities(VersionTokenType t1, VersionTokenType t2) {
-    final int p1 = t1.getPriority();
-    final int p2 = t2.getPriority();
-
-    if (p1 == p2) {
-      return 0;
-    } else {
-      return p1 > p2 ? 1 : -1;
-    }
+    return Integer.signum(t1.getPriority() - t2.getPriority());
   }
 
   private static int compareNumbers(String n1, String n2) {
     // trim leading zeros
-    while(n1.length() > 0 && n2.length() > 0 && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
+    while(!n1.isEmpty() && !n2.isEmpty() && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
       n1 = n1.substring(1);
       n2 = n2.substring(1);
     }
 
     // starts with zero => less
-    if (n1.length() > 0 && n1.charAt(0) == '0') {
+    if (!n1.isEmpty() && n1.charAt(0) == '0') {
       return -1;
-    } else if (n2.length() > 0 && n2.charAt(0) == '0') {
+    } else if (!n2.isEmpty() && n2.charAt(0) == '0') {
       return 1;
     }
 

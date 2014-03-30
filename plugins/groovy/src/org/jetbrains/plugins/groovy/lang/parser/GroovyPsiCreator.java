@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
@@ -46,10 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTradition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrBitwiseExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringInjectionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
@@ -98,7 +94,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
 
     //Identifiers & literal
     if (elem == LITERAL) return new GrLiteralImpl(node);
-    if (elem == LABEL) return new GrLabelImpl(node);
 //    if (elem.equals(IDENTIFIER)) return new GrIdentifierImpl(node);
     //Lists, maps etc...
     if (elem == LIST_OR_MAP) return new GrListOrMapImpl(node);
@@ -108,8 +103,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == ANNOTATION_ARGUMENTS) return new GrAnnotationArgumentListImpl(node);
     if (elem == ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrayInitializerImpl(node);
     if (elem == ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
-
-    if (elem == DEFAULT_ANNOTATION_VALUE) return new GrDefaultAnnotationValueImpl(node);
 
     //throws
     if (elem == THROW_CLAUSE) return new GrThrowsClauseImpl(node);
@@ -227,6 +220,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == GSTRING) return new GrStringImpl(node);
     if (elem == REGEX) return new GrRegexImpl(node);
     if (elem == GSTRING_INJECTION) return new GrStringInjectionImpl(node);
+    if (elem == GSTRING_CONTENT) return new GrStringContentImpl(node);
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
     if (elem == PARENTHESIZED_EXPRESSION) return new GrParenthesizedExpressionImpl(node);
     if (elem == NEW_EXPRESSION) return new GrNewExpressionImpl(node);

@@ -36,25 +36,26 @@
                       <text value="RegExp:"/>
                     </properties>
                   </component>
-                  <grid id="aab68" layout-manager="BorderLayout" hgap="0" vgap="0">
-                    <constraints border-constraint="South"/>
+                </children>
+              </grid>
+              <grid id="aab68" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="Center"/>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="47807" class="com.intellij.ui.EditorTextField" binding="mySampleText" custom-create="true">
+                    <constraints border-constraint="Center"/>
                     <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="47807" class="com.intellij.ui.EditorTextField" binding="mySampleText" custom-create="true">
-                        <constraints border-constraint="Center"/>
-                        <properties/>
-                      </component>
-                      <component id="ec7ec" class="javax.swing.JLabel">
-                        <constraints border-constraint="West"/>
-                        <properties>
-                          <alignmentX value="1.0"/>
-                          <preferredSize width="55" height="16"/>
-                          <text value="Sample:"/>
-                        </properties>
-                      </component>
-                    </children>
-                  </grid>
+                  </component>
+                  <component id="ec7ec" class="javax.swing.JLabel">
+                    <constraints border-constraint="West"/>
+                    <properties>
+                      <alignmentX value="1.0"/>
+                      <alignmentY value="0.0"/>
+                      <preferredSize width="55" height="16"/>
+                      <text value="Sample:"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>

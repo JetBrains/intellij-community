@@ -31,6 +31,7 @@ import org.apache.maven.archetype.source.ArchetypeDataSource;
 import org.apache.maven.archetype.source.ArchetypeDataSourceException;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,6 +162,7 @@ public class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenS
               request.setResourceFetcher(new Maven3ServerIndexFetcher(index.getRepositoryId(),
                                                                       index.getRepositoryUrl(),
                                                                       embedder.getComponent(WagonManager.class),
+                                                                      embedder.getComponent(RepositorySystem.class),
                                                                       new WagonTransferListenerAdapter(indicator) {
                                                                         @Override
                                                                         protected void downloadProgress(long downloaded, long total) {

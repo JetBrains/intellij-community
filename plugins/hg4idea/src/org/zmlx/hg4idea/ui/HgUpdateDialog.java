@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.ui.IdeBorderFactory;
+import net.miginfocom.swing.MigLayout;
 import org.zmlx.hg4idea.provider.update.HgUpdater;
 
 import javax.swing.*;
@@ -22,45 +24,62 @@ import java.awt.event.ItemListener;
  * Configuration dialog for the update process.
  */
 public class HgUpdateDialog {
-  private JPanel contentPane;
-  private JCheckBox pullCheckBox;
-  private JCheckBox updateCheckBox;
-  private JCheckBox mergeCheckBox;
-  private JCheckBox commitAfterMergeCheckBox;
+  private JCheckBox myCommitAfterMergeCheckBox;
+  private JRadioButton myMergeRadioButton;
+  private JRadioButton myRebaseRadioButton;
+
 
   public HgUpdateDialog() {
-    ItemListener enabledListener = new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        updateEnabledStates();
-      }
-    };
-    updateCheckBox.addItemListener(enabledListener);
-    mergeCheckBox.addItemListener(enabledListener);
-    updateEnabledStates();
+    createCenterPanel();
   }
 
   private void updateEnabledStates() {
-    //TODO this information is actually duplicated in the HgRegularUpdater (as a series of nested ifs)
-    mergeCheckBox.setEnabled(updateCheckBox.isSelected());
-    commitAfterMergeCheckBox.setEnabled(mergeCheckBox.isEnabled() && mergeCheckBox.isSelected());
+    myCommitAfterMergeCheckBox.setEnabled(myMergeRadioButton.isSelected());
   }
 
   public void applyTo(HgUpdater.UpdateConfiguration updateConfiguration) {
-    updateConfiguration.setShouldPull(pullCheckBox.isSelected());
-    updateConfiguration.setShouldUpdate(updateCheckBox.isSelected());
-    updateConfiguration.setShouldMerge(mergeCheckBox.isSelected());
-    updateConfiguration.setShouldCommitAfterMerge(commitAfterMergeCheckBox.isSelected());
+    updateConfiguration.setShouldMerge(myMergeRadioButton.isSelected());
+    updateConfiguration.setShouldCommitAfterMerge(myCommitAfterMergeCheckBox.isSelected());
+    updateConfiguration.setShouldRebase(myRebaseRadioButton.isSelected());
   }
 
   public JComponent createCenterPanel() {
+    MigLayout migLayout = new MigLayout("flowy,ins 0, fill");
+    JPanel contentPane = new JPanel(migLayout);
+
+
+
+    contentPane.setBorder(IdeBorderFactory.createTitledBorder("Update Type"));
+
+    myMergeRadioButton = new JRadioButton("Merge", true);
+    myMergeRadioButton.setMnemonic('m');
+    myMergeRadioButton.setToolTipText("Merge if pulling resulted in extra heads");
+    myCommitAfterMergeCheckBox = new JCheckBox("Commit after merge without conflicts", false);
+    myCommitAfterMergeCheckBox.setMnemonic('c');
+    myCommitAfterMergeCheckBox.setToolTipText("Commit automatically after the merge");
+    myRebaseRadioButton = new JRadioButton("Rebase", false);
+    myRebaseRadioButton.setToolTipText("Rebase changesets to a branch tip as destination");
+    myRebaseRadioButton.setMnemonic('r');
+    final ButtonGroup radioButtonGroup = new ButtonGroup();
+    radioButtonGroup.add(myMergeRadioButton);
+    radioButtonGroup.add(myRebaseRadioButton);
+
+    contentPane.add(myMergeRadioButton, "left");
+    contentPane.add(myCommitAfterMergeCheckBox, "gapx 5%");
+    contentPane.add(myRebaseRadioButton, "left");
+    myMergeRadioButton.addItemListener(new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        updateEnabledStates();
+      }
+    });
+
+    updateEnabledStates();
     return contentPane;
   }
 
   public void updateFrom(HgUpdater.UpdateConfiguration updateConfiguration) {
-    pullCheckBox.setSelected(updateConfiguration.shouldPull());
-    updateCheckBox.setSelected(updateConfiguration.shouldUpdate());
-    mergeCheckBox.setSelected(updateConfiguration.shouldMerge());
-    commitAfterMergeCheckBox.setSelected(updateConfiguration.shouldCommitAfterMerge());
+    myMergeRadioButton.setSelected(updateConfiguration.shouldMerge());
+    myCommitAfterMergeCheckBox.setSelected(updateConfiguration.shouldCommitAfterMerge());
+    myRebaseRadioButton.setSelected(updateConfiguration.shouldRebase());
   }
-
 }

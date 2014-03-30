@@ -33,7 +33,7 @@ import java.util.Collections;
 public class FieldSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
 
   public FieldSmartPointerNode(Project project, PsiField value, ViewSettings viewSettings) {
-    super(project, SmartPointerManager.getInstance(project).createLazyPointer(value), viewSettings);
+    super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 
   public FieldSmartPointerNode(final Project project, final Object value, final ViewSettings viewSettings) {

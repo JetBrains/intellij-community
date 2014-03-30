@@ -62,15 +62,16 @@ public class JavaTypeParameterListElementType extends JavaStubElementType<PsiTyp
   }
 
   @Override
-  public void serialize(final PsiTypeParameterListStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiTypeParameterListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public PsiTypeParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiTypeParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiTypeParameterListStubImpl(parentStub);
   }
 
   @Override
-  public void indexStub(final PsiTypeParameterListStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiTypeParameterListStub stub, @NotNull final IndexSink sink) {
   }
 }

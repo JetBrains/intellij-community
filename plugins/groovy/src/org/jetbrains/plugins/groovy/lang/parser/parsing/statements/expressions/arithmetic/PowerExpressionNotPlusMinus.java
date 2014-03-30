@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,43 +32,29 @@ public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
 
     if (UnaryExpressionNotPlusMinus.parse(builder, parser)) {
-      if (ParserUtils.getToken(builder, mSTAR_STAR)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (!UnaryExpression.parse(builder, parser)) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
-        PsiBuilder.Marker newMarker = marker.precede();
-        marker.done(POWER_EXPRESSION_SIMPLE);
-        if (mSTAR_STAR.equals(builder.getTokenType())) {
-          subParse(builder, newMarker, parser);
-        } else {
-          newMarker.drop();
-        }
-      } else {
-        marker.drop();
-      }
+      subParse(builder, parser, marker);
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
-    ParserUtils.getToken(builder, mSTAR_STAR);
+  private static void subParse(PsiBuilder builder, GroovyParser parser, PsiBuilder.Marker marker) {
+    if (!ParserUtils.getToken(builder, mSTAR_STAR)) {
+      marker.drop();
+      return;
+    }
+
     ParserUtils.getToken(builder, mNLS);
     if (!UnaryExpression.parse(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
+
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(POWER_EXPRESSION_SIMPLE);
-    if (mSTAR_STAR.equals(builder.getTokenType())) {
-      subParse(builder, newMarker, parser);
-    } else {
-      newMarker.drop();
-    }
+    subParse(builder, parser, newMarker);
   }
-
-
 }
 

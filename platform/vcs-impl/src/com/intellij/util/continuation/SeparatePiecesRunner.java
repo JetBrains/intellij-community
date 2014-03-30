@@ -15,11 +15,12 @@
  */
 package com.intellij.util.continuation;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author irengrig
@@ -34,14 +36,18 @@ import javax.swing.*;
  *         Time: 2:46 PM
  */
 public class SeparatePiecesRunner extends GeneralRunner {
+  private final AtomicReference<TaskWrapper> myCurrentWrapper;
+
   public SeparatePiecesRunner(Project project, boolean cancellable) {
     super(project, cancellable);
+    myCurrentWrapper = new AtomicReference<TaskWrapper>();
   }
 
   @CalledInAwt
   public void ping() {
     clearSuspend();
-    if (! ApplicationManager.getApplication().isDispatchThread()) {
+    final Application application = ApplicationManager.getApplication();
+    if (! application.isDispatchThread()) {
       Runnable command = new Runnable() {
         public void run() {
           pingImpl();
@@ -56,8 +62,9 @@ public class SeparatePiecesRunner extends GeneralRunner {
   @CalledInAwt
   private void pingImpl() {
     while (true) {
-    // stop if project is being disposed
-      if (! myProject.isDefault() && ! myProject.isOpen()) return;
+      myCurrentWrapper.set(null);
+      // stop if project is being disposed
+      if (!myProject.isDefault() && !myProject.isOpen()) return;
       if (getSuspendFlag()) return;
       final TaskDescriptor current = getNextMatching();
       if (current == null) {
@@ -65,36 +72,49 @@ public class SeparatePiecesRunner extends GeneralRunner {
       }
 
       if (Where.AWT.equals(current.getWhere())) {
-        myIndicator = null;
-        current.run(this);
-      } else {
-        final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current, this);
+        setIndicator(null);
+        try {
+          current.run(this);
+        }
+        catch (RuntimeException th) {
+          handleException(th, true);
+        }
+      }
+      else {
+        final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current);
+        myCurrentWrapper.set(task);
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          myIndicator = new EmptyProgressIndicator();
+          setIndicator(new EmptyProgressIndicator());
         }
         else {
-          myIndicator = new BackgroundableProcessIndicator(task);
-          // a hack to set current modality
-          //((BackgroundableProcessIndicator) myIndicator).setModalityProgress(null);
+          setIndicator(new BackgroundableProcessIndicator(task));
         }
-        ProgressManagerImpl.runProcessWithProgressAsynchronously(task, myIndicator);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, getIndicator());
         return;
       }
     }
   }
 
-  static class TaskWrapper extends ModalityIgnorantBackgroundableTask {
+  @Override
+  public void suspend() {
+    super.suspend();
+    final TaskWrapper wrapper = myCurrentWrapper.get();
+    if (wrapper != null){
+      wrapper.mySuspended = true;
+    }
+  }
+
+  class TaskWrapper extends ModalityIgnorantBackgroundableTask {
     private final TaskDescriptor myTaskDescriptor;
-    private final GeneralRunner myGeneralRunner;
+    private volatile boolean mySuspended;
 
     TaskWrapper(@Nullable Project project,
                        @NotNull String title,
                        boolean canBeCancelled,
-                       TaskDescriptor taskDescriptor,
-                       GeneralRunner generalRunner) {
+                       TaskDescriptor taskDescriptor) {
       super(project, title, canBeCancelled, BackgroundFromStartOption.getInstance());
       myTaskDescriptor = taskDescriptor;
-      myGeneralRunner = generalRunner;
+      mySuspended = false;
     }
 
     @Override
@@ -104,17 +124,19 @@ public class SeparatePiecesRunner extends GeneralRunner {
 
     @Override
     protected void doInAwtIfCancel() {
-      myGeneralRunner.onCancel();
+      onCancel();
     }
 
     @Override
     protected void doInAwtIfSuccess() {
-      myGeneralRunner.ping();
+      if (! mySuspended) {
+        ping();
+      }
     }
 
     @Override
     protected void runImpl(@NotNull ProgressIndicator indicator) {
-      myTaskDescriptor.run(myGeneralRunner);
+      myTaskDescriptor.run(SeparatePiecesRunner.this);
     }
   }
 }

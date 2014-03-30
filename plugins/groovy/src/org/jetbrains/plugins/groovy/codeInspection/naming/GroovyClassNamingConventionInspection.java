@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 public class GroovyClassNamingConventionInspection extends ConventionInspection {
 
@@ -32,7 +31,7 @@ public class GroovyClassNamingConventionInspection extends ConventionInspection 
     return "Class naming convention";
   }
 
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new RenameFix();
   }
 
@@ -63,26 +62,23 @@ public class GroovyClassNamingConventionInspection extends ConventionInspection 
     return DEFAULT_MAX_LENGTH;
   }
 
+  @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-    public void visitTypeDefinition(GrTypeDefinition grTypeDefinition) {
-      super.visitTypeDefinition(grTypeDefinition);
-      if (!(grTypeDefinition instanceof GrClassDefinition)) {
-        return;
-      }
-      GrClassDefinition aClass = (GrClassDefinition) grTypeDefinition;
-      final String name = aClass.getName();
+    @Override
+    public void visitClassDefinition(GrClassDefinition classDefinition) {
+      super.visitClassDefinition(classDefinition);
+      final String name = classDefinition.getName();
       if (name == null) {
         return;
       }
       if (isValid(name)) {
         return;
       }
-      registerClassError(aClass, name);
+      registerClassError(classDefinition, name);
     }
   }
 }

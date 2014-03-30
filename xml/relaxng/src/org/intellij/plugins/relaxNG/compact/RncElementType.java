@@ -16,14 +16,7 @@
 
 package org.intellij.plugins.relaxNG.compact;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.NotNullFunction;
-import org.intellij.plugins.relaxNG.compact.psi.RncElement;
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
 
 public class RncElementType extends IElementType {
   public RncElementType(String name) {
@@ -31,25 +24,4 @@ public class RncElementType extends IElementType {
   }
 }
 
-class RncElementTypeEx<C extends RncElement> extends RncElementType implements NotNullFunction<ASTNode, C> {
-  private final Constructor<? extends C> myConstructor;
 
-  RncElementTypeEx(String name, Class<? extends C> clazz) {
-    super(name);
-    assert !clazz.isInterface() && !Modifier.isAbstract(clazz.getModifiers());
-    try {
-      myConstructor = clazz.getConstructor(ASTNode.class);
-    } catch (NoSuchMethodException e) {
-      throw new Error(e);
-    }
-  }
-
-  @NotNull
-  public final C fun(ASTNode node) {
-    try {
-      return myConstructor.newInstance(node);
-    } catch (Exception e) {
-      throw new Error(e);
-    }
-  }
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+
+import java.lang.reflect.Method;
 
 /**
  * This must be the last test.
  * @author max
  */
+@SuppressWarnings("JUnitTestClassNamingConvention")
 public class _LastInSuiteTest extends TestCase {
   public void testProjectLeak() throws Exception {
     new WriteCommandAction.Simple(null) {
@@ -36,17 +40,32 @@ public class _LastInSuiteTest extends TestCase {
       }
     }.execute().throwException();
 
-    final Application application = ApplicationManager.getApplication();
-
     // disposes default project too
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        ((ApplicationImpl)ApplicationManager.getApplication()).setDisposeInProgress(true);
         LightPlatformTestCase.disposeApplication();
       }
     });
 
-    LeakHunter.checkProjectLeak(application);
-    Disposer.assertIsEmpty(true);
+    try {
+      LeakHunter.checkProjectLeak();
+      Disposer.assertIsEmpty(true);
+    }
+    catch (Exception e) {
+      captureMemorySnapshot();
+      throw e;
+    }
+  }
+
+  private static void captureMemorySnapshot() {
+    try {
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "forceCaptureMemorySnapshot");
+      if (snapshot != null) {
+        snapshot.invoke(null);
+      }
+    }
+    catch (Exception ignored) { }
   }
 }

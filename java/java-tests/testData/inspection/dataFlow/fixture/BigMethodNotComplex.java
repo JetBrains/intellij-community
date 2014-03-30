@@ -1,4 +1,4 @@
-public abstract class DDD {
+abstract class DDD {
   abstract boolean condition();
   abstract Object foo();
   abstract Object bar();

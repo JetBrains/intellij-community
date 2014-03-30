@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +24,12 @@ import java.util.Collection;
 import java.util.Set;
 
 public class AggregatedDictionary implements EditableDictionary {
-
-  private static final String DICTIONARY_NAME = "common";
+  @NonNls private static final String DICTIONARY_NAME = "common";
   private final EditableDictionary cachedDictionary;
   private final ProjectDictionary projectDictionary;
 
+  @NotNull
+  @Override
   public String getName() {
     return DICTIONARY_NAME;
   }
@@ -38,10 +40,12 @@ public class AggregatedDictionary implements EditableDictionary {
     this.cachedDictionary.addToDictionary(projectDictionary.getWords());
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "AggregatedDictionary{" +
@@ -50,25 +54,25 @@ public class AggregatedDictionary implements EditableDictionary {
            '}';
   }
 
+  @Override
   @Nullable
-  public Boolean contains(String word) {
-    if (word == null) {
-      return false;
-    }
+  public Boolean contains(@NotNull String word) {
     return cachedDictionary.contains(word);
   }
 
+  @Override
   public void addToDictionary(String word) {
     getProjectDictionary().addToDictionary(word);
     getCachedDictionary().addToDictionary(word);
   }
 
+  @Override
   public void removeFromDictionary(String word) {
     getProjectDictionary().removeFromDictionary(word);
     getCachedDictionary().removeFromDictionary(word);
   }
 
-
+  @Override
   public void replaceAll(@Nullable Collection<String> words) {
     Set<String> oldWords = getProjectDictionary().getWords();
     getProjectDictionary().replaceAll(words);
@@ -81,29 +85,33 @@ public class AggregatedDictionary implements EditableDictionary {
     }
   }
 
+  @Override
   public void clear() {
     getProjectDictionary().clear();
   }
 
+  @Override
   public void traverse(@NotNull final Consumer<String> consumer) {
     cachedDictionary.traverse(consumer);
   }
 
-
+  @Override
   public Set<String> getWords() {
     return cachedDictionary.getWords();
   }
 
+  @Override
   public int size() {
-    return (cachedDictionary.size());
+    return cachedDictionary.size();
   }
 
+  @Override
   @Nullable
   public Set<String> getEditableWords() {
     return getProjectDictionary().getEditableWords();
   }
 
-
+  @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     getProjectDictionary().addToDictionary(words);
     getCachedDictionary().addToDictionary(words);
@@ -116,6 +124,4 @@ public class AggregatedDictionary implements EditableDictionary {
   public ProjectDictionary getProjectDictionary() {
     return projectDictionary;
   }
-
-
 }

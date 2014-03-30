@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,15 +72,17 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
   @NonNls private static final String XML_EXTENSION = "xml";
 
+  @Override
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
-    presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isAppCode());
+    presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isCidr());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
 
     LOG.assertTrue(project != null);
 
@@ -104,6 +106,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final String [] profileName = new String[1];
     final Runnable process = new Runnable() {
+      @Override
       public void run() {
         final VirtualFile[] files = virtualFile.getChildren();
         try {
@@ -114,6 +117,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
             if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
               profileName[0] = ApplicationManager.getApplication().runReadAction(
                   new Computable<String>() {
+                    @Override
                     @Nullable
                     public String compute() {
                       return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
@@ -124,6 +128,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
             else if (XML_EXTENSION.equals(extension)) {
               resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
                   new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
+                    @Override
                     public Map<String, Set<OfflineProblemDescriptor>> compute() {
                       return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
                     }
@@ -134,6 +139,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
         }
         catch (final Exception e) {  //all parse exceptions
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
             }
@@ -143,8 +149,10 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       }
     };
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process, new Runnable() {
+      @Override
       public void run() {
         SwingUtilities.invokeLater(new Runnable(){
+          @Override
           public void run() {
             final String name = profileName[0];
             showOfflineView(project, name, resMap,
@@ -178,14 +186,17 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+        @Override
         public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
           return resMap.containsKey(key.toString());
         }
 
+        @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
 
+        @Override
         public boolean isEditable() {
           return false;
         }
@@ -200,23 +211,24 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     return showOfflineView(project, resMap, inspectionProfile, title);
   }
 
-  public static InspectionResultsView showOfflineView(final Project project,
-                                                      final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+  @NotNull
+  public static InspectionResultsView showOfflineView(@NotNull Project project,
+                                                      @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       final InspectionProfile inspectionProfile,
                                                       final String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    inspectionContext.setExternalProfile(inspectionProfile);
-    inspectionContext.setCurrentScope(scope);
-    inspectionContext.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
-    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, inspectionContext,
+    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+    context.setExternalProfile(inspectionProfile);
+    context.setCurrentScope(scope);
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    final InspectionResultsView view = new InspectionResultsView(project, inspectionProfile, scope, context,
                                                                  new OfflineInspectionRVContentProvider(resMap, project));
-    ((RefManagerImpl)inspectionContext.getRefManager()).inspectionReadActionStarted();
+    ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    if (inspectionContext.getContentManager() != null) { //test
-      inspectionContext.addView(view, title);
+    if (context.getContentManager() != null) { //test
+      context.addView(view, title);
     }
     return view;
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,7 +59,7 @@ public class CallCommand extends AbstractCommand {
 
 
     final String methodName = cmd.substring(0, open);
-    String [] args = cmd.substring(open + 1, close).split(",");
+    String[] args = cmd.substring(open + 1, close).split(",");
     final boolean noArgs = args.length == 1 && args[0].length() == 0;
     Class[] types = noArgs ? new Class[1] : new Class[args.length + 1];
     types[0] = PlaybackContext.class;
@@ -66,7 +67,7 @@ public class CallCommand extends AbstractCommand {
       types[i] = String.class;
     }
 
-    
+
     try {
       Pair<Method, Class> methodClass = findMethod(context, methodName, types);
       if (methodClass == null) {
@@ -77,64 +78,61 @@ public class CallCommand extends AbstractCommand {
       Method m = methodClass.getFirst();
 
       if (!m.getReturnType().isAssignableFrom(AsyncResult.class)) {
-       context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object", getLine());
-       return new ActionCallback.Rejected();
-     }
-     
-     Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
-     actualArgs[0] = context;
-      for (int i = 1; i < actualArgs.length; i++) {
-        actualArgs[i] = args[i - 1];
+        context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object", getLine());
+        return new ActionCallback.Rejected();
       }
 
+      Object[] actualArgs = noArgs ? new Object[1] : new Object[args.length + 1];
+      actualArgs[0] = context;
+      System.arraycopy(args, 0, actualArgs, 1, actualArgs.length - 1);
 
-     AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
-     if (result == null) {
-       context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object, but was null", getLine());
-       return new ActionCallback.Rejected();
-     }
-      
-     result.doWhenDone(new AsyncResult.Handler<String>() {
-       @Override
-       public void run(String s) {
-         if (s != null) {
-           context.message(s, getLine());
-         }
-         cmdResult.setDone();
-       }
-     }).doWhenRejected(new AsyncResult.Handler<String>() {
-       @Override
-       public void run(String s) {
-         context.error(s, getLine());
-         cmdResult.setRejected();
-       }
-     }); 
-      
+
+      AsyncResult result = (AsyncResult<String>)m.invoke(null, actualArgs);
+      if (result == null) {
+        context.error("Method " + methodClass.getSecond() + ":" + methodName + " must return AsyncResult object, but was null", getLine());
+        return new ActionCallback.Rejected();
+      }
+
+      result.doWhenDone(new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          if (s != null) {
+            context.message(s, getLine());
+          }
+          cmdResult.setDone();
+        }
+      }).doWhenRejected(new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          context.error(s, getLine());
+          cmdResult.setRejected();
+        }
+      });
     }
-    catch (InvocationTargetException e) {
+    catch (InvocationTargetException ignored) {
       context.error("InvocationTargetException while executing command: " + cmd, getLine());
     }
-    catch (IllegalAccessException e) {
+    catch (IllegalAccessException ignored) {
       context.error("IllegalAccessException while executing command: " + cmd, getLine());
     }
     return cmdResult;
   }
 
-  private Pair<Method, Class> findMethod(PlaybackContext context, String methodName, Class[] types) {
+  private static Pair<Method, Class> findMethod(PlaybackContext context, String methodName, Class[] types) {
     Set<Class> classes = context.getCallClasses();
     for (Class eachClass : classes) {
       try {
         Method method = eachClass.getMethod(methodName, types);
         return new Pair<Method, Class>(method, eachClass);
       }
-      catch (NoSuchMethodException e) {
+      catch (NoSuchMethodException ignored) {
         continue;
       }
     }
-    
+
     return null;
-  } 
-  
+  }
+
   @Override
   protected boolean isAwtThread() {
     return true;

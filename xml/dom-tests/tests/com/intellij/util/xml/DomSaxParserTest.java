@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
 /**
  * @author peter
  */
-public class DomSaxParserTest extends LightCodeInsightFixtureTestCase {
+public class DomSaxParserTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testGetRootTagNameWithoutNamespace() throws Throwable {
     assertData("<root>", "root", null, null, null);

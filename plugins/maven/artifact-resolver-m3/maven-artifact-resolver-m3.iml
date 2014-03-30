@@ -11,7 +11,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/aether-api-1.11.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/aether-api-1.13.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -20,7 +20,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-core-3.0.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-core-3.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -29,7 +29,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-artifact-3.0.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven3-server-impl/lib/maven3/lib/maven-artifact-3.0.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

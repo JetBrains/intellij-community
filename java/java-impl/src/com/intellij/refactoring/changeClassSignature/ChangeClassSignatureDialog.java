@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeClassSignature;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,7 +28,6 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +116,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   protected JComponent createNorthPanel() {
-    return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", UsageViewUtil.getDescriptiveName(myClass)));
+    return new JLabel(RefactoringBundle.message("changeClassSignature.class.label.text", DescriptiveNameUtil.getDescriptiveName(myClass)));
   }
 
   @Override

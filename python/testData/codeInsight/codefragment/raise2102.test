@@ -1,0 +1,17 @@
+foo()
+<begin>
+for i in range(l):
+    if foo:
+        if tag is None:
+            if bar:
+                do
+        else:
+            if baz:
+                raise ValueError(i)
+    else:
+        bzzzz
+<end>
+bar()
+<result>
+In:
+Out:

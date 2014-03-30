@@ -80,7 +80,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   public Icon getTaskIcon(RunConfigurableBeforeRunTask task) {
     if (task.getSettings() == null)
       return null;
-    return ProgramRunnerUtil.getConfigurationIcon(myProject, task.getSettings(), false);
+    return ProgramRunnerUtil.getConfigurationIcon(task.getSettings(), false);
   }
 
   @Override
@@ -179,7 +179,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
     if (runner == null)
       return false;
-    final ExecutionEnvironment environment = new ExecutionEnvironment(runner, settings, myProject);
+    final ExecutionEnvironment environment = new ExecutionEnvironment(executor, runner, settings, myProject);
     environment.setExecutionId(env.getExecutionId());
     if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
       return false;
@@ -195,10 +195,11 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       try {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
+          @Override
           public void run() {
             targetDone.down();
             try {
-              runner.execute(executor, environment, new ProgramRunner.Callback() {
+              runner.execute(environment, new ProgramRunner.Callback() {
                 @Override
                 public void processStarted(RunContentDescriptor descriptor) {
                   ProcessHandler processHandler = descriptor != null ? descriptor.getProcessHandler() : null;
@@ -365,7 +366,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
             RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
             setIcon(runManager.getConfigurationIcon(settings));
             RunConfiguration configuration = settings.getConfiguration();
-            append(configuration.getName(), runManager.isTemporary(configuration)
+            append(configuration.getName(), settings.isTemporary()
                                             ? SimpleTextAttributes.GRAY_ATTRIBUTES
                                             : SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 
 import javax.swing.*;
@@ -70,10 +71,12 @@ class PatternDialog extends DialogWrapper{
 
     myColorAndFontDescription = new TextAttributesDescription(null, null, attributes, null, EditorColorsManager.getInstance().getGlobalScheme(),
                                                               null, null) {
+      @Override
       public void apply(EditorColorsScheme scheme) {
 
       }
 
+      @Override
       public boolean isErrorStripeEnabled() {
         return true;
       }
@@ -83,6 +86,7 @@ class PatternDialog extends DialogWrapper{
 
     updateCustomColorsPanel();
     myUsedDefaultColorsCeckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateCustomColorsPanel();
       }
@@ -103,17 +107,19 @@ class PatternDialog extends DialogWrapper{
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myPatternStringField;
   }
 
+  @Override
   protected void doOKAction(){
     myPattern.setPatternString(myPatternStringField.getText().trim());
     myPattern.setCaseSensitive(myCaseSensitiveCheckBox.isSelected());
 
     final TodoAttributes attrs = myPattern.getAttributes();
     attrs.setIcon((Icon)myIconComboBox.getSelectedItem());
-    attrs.setUseCustomTodoColor(useCustomTodoColor());
+    attrs.setUseCustomTodoColor(useCustomTodoColor(), TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
 
     if (useCustomTodoColor()) {
       myColorAndFontDescriptionPanel.apply(myColorAndFontDescription, null);
@@ -126,6 +132,7 @@ class PatternDialog extends DialogWrapper{
     return !myUsedDefaultColorsCeckBox.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     JPanel panel=new JPanel(new GridBagLayout());
 

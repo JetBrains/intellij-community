@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,22 @@
  */
 package com.intellij.idea;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.ApplicationInfoProvider;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.DebugUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -43,7 +47,6 @@ public class IdeaLogger extends Logger {
 
   public static String ourLastActionId = "";
 
-  private final org.apache.log4j.Logger myLogger;
   /** If not null - it means that errors occurred and it is the first of them. */
   public static Exception ourErrorsOccurred;
 
@@ -58,24 +61,23 @@ public class IdeaLogger extends Logger {
   static {
     InputStream stream = Logger.class.getResourceAsStream(COMPILATION_TIMESTAMP_RESOURCE_NAME);
     if (stream != null) {
-      LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
       try {
-        String s = reader.readLine();
-        if (s != null) {
-          ourCompilationTimestamp = s.trim();
-        }
-      }
-      catch (IOException ignored) {
-      }
-      finally {
+        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
         try {
-          stream.close();
+          String s = reader.readLine();
+          if (s != null) {
+            ourCompilationTimestamp = s.trim();
+          }
         }
-        catch (IOException ignored) {
+        finally {
+          reader.close();
         }
       }
+      catch (IOException ignored) { }
     }
   }
+
+  private final org.apache.log4j.Logger myLogger;
 
   IdeaLogger(org.apache.log4j.Logger logger) {
     myLogger = logger;
@@ -89,6 +91,11 @@ public class IdeaLogger extends Logger {
     else {
       super.error(message);
     }
+  }
+
+  @Override
+  public void error(@NonNls String message, Attachment... attachments) {
+    myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
   }
 
   @Override
@@ -112,7 +119,7 @@ public class IdeaLogger extends Logger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ProcessCanceledException) {
       myLogger.error(new Throwable("Do not log ProcessCanceledException").initCause(t));
       throw (ProcessCanceledException)t;
@@ -133,9 +140,6 @@ public class IdeaLogger extends Logger {
 
     myLogger.error(message + (!detailString.isEmpty() ? "\nDetails: " + detailString : ""), t);
     logErrorHeader();
-    if (t != null && t.getCause() != null) {
-      myLogger.error("Original exception: ", t.getCause());
-    }
   }
 
   private void logErrorHeader() {

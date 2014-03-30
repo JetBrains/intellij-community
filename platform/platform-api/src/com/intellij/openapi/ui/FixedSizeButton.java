@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.awt.*;
  * same height and length.
  */
 public class FixedSizeButton extends JButton {
-  private final int mySize;
+  private int mySize;
   private JComponent myComponent;
 
   public FixedSizeButton() {
@@ -48,7 +48,7 @@ public class FixedSizeButton extends JButton {
     setMargin(new Insets(0, 0, 0, 0));
     setDefaultCapable(false);
     setFocusable(false);
-    if (UIUtil.isUnderAquaLookAndFeel() && size == -1) {
+    if (((UIUtil.isUnderAquaLookAndFeel())&& size == -1) || UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
       putClientProperty("JButton.buttonType", "square");
     }
   }
@@ -102,8 +102,11 @@ public class FixedSizeButton extends JButton {
   }
 
   public JComponent getAttachedComponent() {
-
     return myComponent;
+  }
+
+  public void setSize(int size) {
+    mySize = size;
   }
 }
 

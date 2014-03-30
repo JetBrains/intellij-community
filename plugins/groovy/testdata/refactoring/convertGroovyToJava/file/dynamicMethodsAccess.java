@@ -8,7 +8,7 @@ java.lang.String s = "a";
 org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod(s, "bar", new java.lang.Object[]{4});
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(this, org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod(s, "bar", new java.lang.Object[]{5}));
 
-return org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod(s, "anme", new java.util.ArrayList<java.lang.Object>());
+return org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod(s, "anme", new java.util.ArrayList());
 }
 
 }

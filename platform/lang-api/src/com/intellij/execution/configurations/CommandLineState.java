@@ -17,7 +17,9 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -28,19 +30,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CommandLineState implements RunnableState {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
-  private TextConsoleBuilder myConsoleBuilder;  
+/**
+ * Base implementation of {@link RunProfileState}. Takes care of putting together a process and a console and wrapping them into an
+ * {@link ExecutionResult}. Does not contain any logic for actually starting the process.
+ *
+ * @see com.intellij.execution.configurations.JavaCommandLineState
+ * @see GeneralCommandLine
+ */
+public abstract class CommandLineState implements RunProfileState {
+  private TextConsoleBuilder myConsoleBuilder;
 
   private final ExecutionEnvironment myEnvironment;
 
   protected CommandLineState(ExecutionEnvironment environment) {
     myEnvironment = environment;
+    myConsoleBuilder = myEnvironment != null ? TextConsoleBuilderFactory.getInstance().createBuilder(myEnvironment.getProject()) : null;
   }
 
   public ExecutionEnvironment getEnvironment() {
@@ -51,15 +59,16 @@ public abstract class CommandLineState implements RunnableState {
     return myEnvironment.getRunnerSettings();
   }
 
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
-  }
-
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return myEnvironment.getExecutionTarget();
   }
 
+  public void addConsoleFilters(Filter... filters) {
+    myConsoleBuilder.filters(filters);
+  }
+
+  @Override
   @NotNull
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
@@ -72,12 +81,18 @@ public abstract class CommandLineState implements RunnableState {
 
   @Nullable
   protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
-    final TextConsoleBuilder builder = getConsoleBuilder();
-    
-    return builder != null ? builder.getConsole() 
-                           : null;
+    TextConsoleBuilder builder = getConsoleBuilder();
+    return builder != null ? builder.getConsole() : null;
   }
 
+  /**
+   * Starts the process.
+   *
+   * @return the handler for the running process
+   * @throws ExecutionException if the execution failed.
+   * @see GeneralCommandLine
+   * @see com.intellij.execution.process.OSProcessHandler
+   */
   @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 
@@ -110,19 +125,23 @@ public abstract class CommandLineState implements RunnableState {
       myProcessHandler = processHandler;
     }
 
+    @Override
     public boolean isSelected(final AnActionEvent event) {
       return myConsole.isOutputPaused();
     }
 
+    @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
       myConsole.setOutputPaused(flag);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           update(event);
         }
       });
     }
 
+    @Override
     public void update(final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
@@ -141,6 +160,7 @@ public abstract class CommandLineState implements RunnableState {
         else {
           presentation.setEnabled(true);
           myConsole.performWhenNoDeferredOutput(new Runnable() {
+            @Override
             public void run() {
               update(event);
             }

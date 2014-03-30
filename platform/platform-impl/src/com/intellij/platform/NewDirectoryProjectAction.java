@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
@@ -40,8 +41,10 @@ import java.io.File;
  * @author yole
  */
 public class NewDirectoryProjectAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(NewDirectoryProjectAction.class);
+
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
@@ -67,6 +70,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
       }
     });
+    LOG.assertTrue(baseDir != null, "Couldn't find '" + location + "' in VFS");
     baseDir.refresh(false, true);
 
     if (baseDir.getChildren().length > 0) {
@@ -74,7 +78,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
                                         "The directory '" + location +
                                         "' is not empty. Would you like to create a project from existing sources instead?",
                                         "Create New Project", Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         return PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
       }
     }

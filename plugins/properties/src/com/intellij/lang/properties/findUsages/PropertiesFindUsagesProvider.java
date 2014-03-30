@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.LangBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.find.impl.HelpID;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +33,7 @@ public class PropertiesFindUsagesProvider implements FindUsagesProvider {
   }
 
   public String getHelpId(@NotNull PsiElement psiElement) {
-    return HelpID.FIND_OTHER_USAGES;
+    return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
   }
 
   @NotNull

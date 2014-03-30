@@ -16,27 +16,23 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class RevealFileAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    final Presentation presentation = e.getPresentation();
+    VirtualFile file = ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));
+    Presentation presentation = e.getPresentation();
     presentation.setText(getActionName());
-    presentation.setEnabled(isLocalFile(file));
-  }
-
-  public static boolean isLocalFile(@Nullable final VirtualFile file) {
-    return file != null && file.isInLocalFileSystem();
+    presentation.setEnabled(file != null);
   }
 
   @NotNull
@@ -46,12 +42,9 @@ public class RevealFileAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    assert file != null;
-    revealFile(file);
-  }
-
-  private static void revealFile(@NotNull final VirtualFile file) {
-    ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
+    VirtualFile file = ShowFilePathAction.findLocalFile(CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()));
+    if (file != null) {
+      ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
+    }
   }
 }

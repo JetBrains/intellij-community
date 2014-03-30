@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,10 +104,12 @@ public abstract class ActionPlaces {
 
   public static final String TFS_TREE_POPUP = "TfsTreePopup";
   public static final String ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION = "ActionPlace.VcsQuickListPopupAction";
+  public static final String ACTION_PLACE_QUICK_LIST_POPUP_ACTION = "ActionPlace.QuickListPopupAction";
 
   public static final String PHING_EXPLORER_POPUP = "PhingExplorerPopup";
   public static final String PHING_EXPLORER_TOOLBAR = "PhingExplorerToolbar";
-  public static String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
+  public static final String DOCK_MENU = "DockMenu";
+  public static final String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
 
   public static final String CHANGES_LOCAL_DIFF_SETTINGS = "CHANGES_LOCAL_DIFF_SETTINGS";
 

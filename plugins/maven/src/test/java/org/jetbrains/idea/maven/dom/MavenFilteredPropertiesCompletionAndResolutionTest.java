@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.idea.Bombed;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
-
-import java.util.Calendar;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomTestCase {
   public void testBasic() throws Exception {
@@ -560,8 +559,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
-  @Bombed(year = 2013, month = Calendar.APRIL, day = 17, user = "sergey.evdokimov")
-  public void testDontAddReferenceToDelimiterDefinition() throws Exception {
+  public void testDoNotAddReferenceToDelimiterDefinition() throws Exception {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +
@@ -605,4 +603,38 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     checkHighlighting();
   }
 
+  public void testReferencesInXml() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.xml",
+                                         "<root attr='${based<caret>ir}'>" +
+                                         "</root>");
+
+    myFixture.configureFromExistingVirtualFile(f);
+
+    XmlAttribute attribute = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), XmlAttribute.class);
+
+    PsiReference[] references = attribute.getReferences();
+
+    for (PsiReference ref : references) {
+      if (ref.resolve() instanceof PsiDirectory) {
+        return; // Maven references was added.
+      }
+    }
+
+    assertTrue("Maven filter reference was not added", false);
+  }
 }

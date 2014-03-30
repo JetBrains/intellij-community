@@ -55,4 +55,8 @@ public class UnclearBinaryExpression {
     String s;
     s = ":asdf" + "5s";
   }
+
+  int incomplete(String s) {
+    return s == null ?
+  }
 }

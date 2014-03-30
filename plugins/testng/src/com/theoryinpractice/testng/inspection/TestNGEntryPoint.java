@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ public class TestNGEntryPoint extends EntryPoint {
     return "Automatically add all TestNG classes/methods/etc. to entry points";
   }
 
-  public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+  public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     return isEntryPoint(psiElement);
   }
 
   @Override
-  public boolean isEntryPoint(PsiElement psiElement) {
+  public boolean isEntryPoint(@NotNull PsiElement psiElement) {
     if (ADD_TESTNG_TO_ENTRIES) {
       if (psiElement instanceof PsiModifierListOwner) {
         if (TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false, false, TestNGUtil.hasDocTagsSupport)) return true;

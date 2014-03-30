@@ -22,12 +22,14 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
@@ -54,8 +56,9 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     return true;
   }
 
-  protected String getRepositoryUrl(VirtualFile repo) {
-    return new HgShowConfigCommand(project).getDefaultPath(repo);
+  @Nullable
+  protected String getRepositoryUrl(VirtualFile root) {
+    return HgUtil.getRepositoryDefaultPath(project, root);
   }
 
   @Override
@@ -85,6 +88,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
       projectSettings.setCheckIncomingOutgoing(false);
+      project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).hide();
     }
     return result;
   }

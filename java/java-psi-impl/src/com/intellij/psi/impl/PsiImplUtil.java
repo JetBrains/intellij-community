@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -39,6 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -277,7 +276,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static PsiType[] typesByTypeElements(@NotNull PsiTypeElement[] typeElements) {
-    PsiType[] types = new PsiType[typeElements.length];
+    PsiType[] types = PsiType.createArray(typeElements.length);
     for (int i = 0; i < types.length; i++) {
       types[i] = typeElements[i].getType();
     }
@@ -319,11 +318,11 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+    if (annotationOwner == null) return null;
+
     PsiAnnotation[] annotations = annotationOwner.getAnnotations();
-    if (annotations.length == 0) {
-      return null;
-    }
+    if (annotations.length == 0) return null;
 
     String shortName = StringUtil.getShortName(qualifiedName);
     for (PsiAnnotation annotation : annotations) {
@@ -372,11 +371,11 @@ public class PsiImplUtil {
 
   // todo[r.sh] cache?
   @Nullable
-  private static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
+  public static Set<TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;
-    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
+    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 
     PsiAnnotationMemberValue value = target.findAttributeValue(null);
@@ -491,6 +490,10 @@ public class PsiImplUtil {
       toplevel = (PsiExpression)toplevel.getParent();
     }
 
+    if (toplevel instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(toplevel)) {
+      return PsiUtil.captureToplevelWildcards(type, expression);
+    }
+
     final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
     LOG.assertTrue(normalized.isValid(), type);
     if (normalized instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {
@@ -500,7 +503,7 @@ public class PsiImplUtil {
     return normalized;
   }
 
-  private static PsiType doNormalizeWildcardByPosition(final PsiType type, final PsiExpression expression, final PsiExpression toplevel) {
+  private static PsiType doNormalizeWildcardByPosition(final PsiType type, @NotNull PsiExpression expression, final PsiExpression toplevel) {
     if (type instanceof PsiCapturedWildcardType) {
       return doNormalizeWildcardByPosition(((PsiCapturedWildcardType)type).getWildcard(), expression, toplevel);
     }
@@ -700,10 +703,9 @@ public class PsiImplUtil {
     if (count == 0) return result;
     int idx = 0;
     for (ASTNode child = psiCodeBlock.getFirstChildNode(); child != null && idx < count; child = child.getTreeNext()) {
-      if (child.getPsi() instanceof PsiStatement) {
-        PsiStatement element = (PsiStatement)child.getPsi();
-        LOG.assertTrue(element != null, child);
-        result[idx++] = element;
+      PsiElement element = child.getPsi();
+      if (element instanceof PsiStatement) {
+        result[idx++] = (PsiStatement)element;
       }
     }
     return result;
@@ -722,12 +724,64 @@ public class PsiImplUtil {
   public static PsiModifierList findNeighbourModifierList(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(ref, PsiJavaCodeReferenceElement.class);
     if (parent instanceof PsiTypeElement) {
-      PsiElement prevElement = PsiTreeUtil.skipSiblingsBackward(parent, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
-      if (prevElement instanceof PsiModifierList) {
-        return (PsiModifierList)prevElement;
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiModifierListOwner) {
+        return ((PsiModifierListOwner)grandParent).getModifierList();
       }
     }
 
     return null;
   }
+
+  public static boolean isTypeAnnotation(@Nullable PsiElement element) {
+    return element instanceof PsiAnnotation &&
+           findApplicableTarget((PsiAnnotation)element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
+  }
+
+  @Nullable
+  public static List<PsiAnnotation> getTypeUseAnnotations(@NotNull PsiModifierList modifierList) {
+    SmartList<PsiAnnotation> result = null;
+
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (isTypeAnnotation(annotation)) {
+        if (result == null) result = new SmartList<PsiAnnotation>();
+        result.add(annotation);
+      }
+    }
+
+    return result;
+  }
+
+  private static final Key<Boolean> TYPE_ANNO_MARK = Key.create("type.annotation.mark");
+
+  public static void markTypeAnnotations(@NotNull PsiTypeElement typeElement) {
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+    if (left instanceof PsiModifierList) {
+      for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
+        if (isTypeAnnotation(annotation)) {
+          annotation.putUserData(TYPE_ANNO_MARK, Boolean.TRUE);
+        }
+      }
+    }
+  }
+
+  public static void deleteTypeAnnotations(@NotNull PsiTypeElement typeElement) {
+    PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+    if (left instanceof PsiModifierList) {
+      for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
+        if (TYPE_ANNO_MARK.get(annotation) == Boolean.TRUE) {
+          annotation.delete();
+        }
+      }
+    }
+  }
+
+  public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
+    return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
+  }
+
+  public static boolean isLeafElementOfType(PsiElement element, TokenSet tokenSet) {
+    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
+  }
+
 }

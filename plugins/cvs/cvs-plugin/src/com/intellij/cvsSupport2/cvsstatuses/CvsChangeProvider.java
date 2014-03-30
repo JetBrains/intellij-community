@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,8 +289,12 @@ public class CvsChangeProvider implements ChangeProvider {
     }
     final CvsInfo info = myEntriesManager.getCvsInfoFor(dir);
     if (info.getRepository() == null) {
-      // don't report unversioned directories as switched (IDEADEV-17178)
-      builder.processUnversionedFile(dir);
+      if (info.getIgnoreFilter().shouldBeIgnored(dir.getName())) {
+        builder.processIgnoredFile(dir);
+      }
+      else {
+        builder.processUnversionedFile(dir);
+      }
       return;
     }
     final String dirTag = info.getStickyTag();

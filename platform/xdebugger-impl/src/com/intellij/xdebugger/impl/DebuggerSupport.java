@@ -15,11 +15,15 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.AbstractDebuggerSession;
-import com.intellij.xdebugger.impl.actions.*;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
@@ -31,6 +35,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
+
+  protected static final class DisabledActionHandler extends DebuggerActionHandler {
+    public static final DisabledActionHandler INSTANCE = new DisabledActionHandler();
+
+    @Override
+    public void perform(@NotNull Project project, AnActionEvent event) {
+    }
+
+    @Override
+    public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+      return false;
+    }
+  }
 
   @NotNull
   public static DebuggerSupport[] getDebuggerSupports() {
@@ -95,6 +112,10 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract DebuggerActionHandler getAddToWatchesActionHandler();
 
+  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
   @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
 
@@ -116,6 +137,6 @@ public abstract class DebuggerSupport {
         return support;
       }
     }
-    return null;
+    throw new IllegalStateException();
   }
 }

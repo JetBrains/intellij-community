@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
@@ -53,7 +54,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final String THROWS = "throws";
-  private final List<Map> myDeclarations = ContainerUtil.newArrayList();
+  private FList<Map> myDeclarations = FList.emptyList();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
@@ -101,7 +102,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       addMemberHolder(new CustomMembersHolder() {
         @Override
         public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-          return NonCodeMembersHolder.generateMembers(myDeclarations, descriptor.justGetPlaceFile()).processMembers(descriptor, processor, state);
+          return NonCodeMembersHolder.generateMembers(ContainerUtil.reverse(myDeclarations), descriptor.justGetPlaceFile()).processMembers(
+            descriptor, processor, state);
         }
       });
     }
@@ -127,6 +129,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
    Methods to add new behavior
    *********************************************************** */
   public void property(Map<Object, Object> args) {
+    if (args == null) return;
+
     String name = (String)args.get("name");
     Object type = args.get("type");
     Object doc = args.get("doc");
@@ -154,6 +158,8 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   public void constructor(Map<Object, Object> args) {
+    if (args == null) return;
+
     args.put("constructor", true);
     method(args);
   }
@@ -164,9 +170,12 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   public void method(Map<Object, Object> args) {
+    if (args == null) return;
+
+    args = ContainerUtil.newLinkedHashMap(args);
     parseMethod(args);
     args.put("declarationType", DeclarationType.METHOD);
-    myDeclarations.add(args);
+    myDeclarations = myDeclarations.prepend(args);
   }
 
   public void methodCall(Closure<Map<Object, Object>> generator) {
@@ -176,19 +185,16 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     if (isMethodCall(place, parent)) {
       assert parent instanceof GrMethodCall && place instanceof GrReferenceExpression;
 
-      GrMethodCall call = (GrMethodCall)parent;
       GrReferenceExpression ref = (GrReferenceExpression)place;
 
-      PsiType[] argTypes =
-        PsiUtil.getArgumentTypes(call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), false, null, false);
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(ref, false);
       if (argTypes == null) return;
 
       String[] types = new String[argTypes.length];
       ContainerUtil.map(argTypes, new Function<PsiType, Object>() {
         @Override
         public Object fun(PsiType type) {
-          String canonical = type.getCanonicalText();
-          return canonical != null ? canonical : type.getPresentableText();
+          return type.getCanonicalText();
         }
       }, types);
 
@@ -251,21 +257,27 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   @SuppressWarnings("UnusedDeclaration")
   public void closureInMethod(Map<Object, Object> args) {
+    if (args == null) return;
+
+    args = ContainerUtil.newLinkedHashMap(args);
     parseMethod(args);
     final Object method = args.get("method");
     if (method instanceof Map) {
       parseMethod((Map)method);
     }
     args.put("declarationType", DeclarationType.CLOSURE);
-    myDeclarations.add(args);
+    myDeclarations = myDeclarations.prepend(args);
   }
 
   public void variable(Map<Object, Object> args) {
+    if (args == null) return;
+
+    args = ContainerUtil.newLinkedHashMap(args);
     parseVariable(args);
-    myDeclarations.add(args);
+    myDeclarations = myDeclarations.prepend(args);
   }
 
-  private void parseVariable(Map<Object, Object> args) {
+  private static void parseVariable(Map<Object, Object> args) {
     String type = stringifyType(args.get("type"));
     args.put("type", type);
     args.put("declarationType", DeclarationType.VARIABLE);

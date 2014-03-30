@@ -70,10 +70,12 @@ public class Wrapper extends JPanel implements NullableComponent {
     validate();
   }
 
+  @Override
   public boolean isNull() {
     return getComponentCount() == 0;
   }
 
+  @Override
   public void requestFocus() {
     if (getTargetComponent() == this) {
       super.requestFocus();
@@ -82,6 +84,7 @@ public class Wrapper extends JPanel implements NullableComponent {
     getTargetComponent().requestFocus();
   }
 
+  @Override
   public boolean requestFocusInWindow() {
     if (getTargetComponent() == this) {
       return super.requestFocusInWindow();
@@ -93,6 +96,7 @@ public class Wrapper extends JPanel implements NullableComponent {
     super.requestFocus();
   }
 
+  @Override
   public final boolean requestFocus(boolean temporary) {
     if (getTargetComponent() == this) {
       return super.requestFocus(temporary);
@@ -157,6 +161,7 @@ public class Wrapper extends JPanel implements NullableComponent {
       }
     }
 
+    @Override
     public void focusGained(final FocusEvent e) {
       processCallback();
     }
@@ -169,6 +174,7 @@ public class Wrapper extends JPanel implements NullableComponent {
       }
     }
 
+    @Override
     public void focusLost(final FocusEvent e) {
     }
   }

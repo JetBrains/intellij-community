@@ -354,4 +354,10 @@ public final class CheckoutCommand extends AbstractCommand implements IUpdatingC
     }
     return cvsArguments.toString();
   }
+
+  @Override
+  public void setUpdateByRevisionOrDate(String revision, String date) {
+    setUpdateByRevisionOrTag(revision);
+    setUpdateByDate(date);
+  }
 }

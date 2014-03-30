@@ -24,10 +24,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -186,7 +183,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         elementsToMakeWritable.add(element);
       }
     }
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilBase.toPsiElementArray(elementsToMakeWritable))) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(elementsToMakeWritable))) {
       return false;
     }
     return true;
@@ -301,6 +298,9 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       ReferencesSearch.search(member).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
           PsiElement element = psiReference.getElement();
+          for (PsiClass psiClass : myClassesToMove) {
+            if (PsiTreeUtil.isAncestor(psiClass, element, false)) return true;
+          }
           if (isInaccessibleFromTarget(element, PsiModifier.PACKAGE_LOCAL)) {
             collector.addConflict(psiReference.resolve(), element);
           }

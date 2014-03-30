@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -107,8 +107,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
-    PsiType myReturnType = myReturnTypePointer.getType();
+    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
+    final PsiType myReturnType = myReturnTypePointer.getType();
     if (myReturnType == null) return;
     if (myFixWholeHierarchy) {
       final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
@@ -202,12 +202,17 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Nullable
-  private PsiMethod[] getChangeRoots(final PsiMethod method) {
+  private PsiMethod[] getChangeRoots(final PsiMethod method, @NotNull PsiType returnType) {
     if (!myFixWholeHierarchy) return new PsiMethod[]{method};
 
     final PsiMethod[] methods = method.findDeepestSuperMethods();
 
     if (methods.length > 0) {
+      for (PsiMethod psiMethod : methods) {
+        if (returnType.equals(psiMethod.getReturnType())) {
+          return new PsiMethod[] {method};
+        }
+      }
       return methods;
     }
     // no - only base
@@ -215,8 +220,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @NotNull
-  private List<PsiMethod> changeReturnType(final PsiMethod method, final PsiType returnType) {
-    final PsiMethod[] methods = getChangeRoots(method);
+  private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull final PsiType returnType) {
+    final PsiMethod[] methods = getChangeRoots(method, returnType);
     if (methods == null) {
       // canceled
       return Collections.emptyList();
@@ -345,7 +350,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                                                            PsiUtil.getLanguageLevel(superClass));
 
     final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(derivedClass));
-    final PsiSubstitutor compoundSubstitutor = 
+    final PsiSubstitutor compoundSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, derivedClass, PsiSubstitutor.EMPTY).putAll(psiSubstitutor);
     rules.setMigrationRootType(JavaPsiFacade.getElementFactory(project).createType(baseClass, compoundSubstitutor));
     rules.setBoundScope(new LocalSearchScope(derivedClass));

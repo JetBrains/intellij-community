@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@ package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.generation.GenerationInfo;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -49,15 +54,53 @@ public class GroovyMethodImplementor implements MethodImplementor {
   }
 
   @Override
-  public boolean isBodyGenerated() {
-    return true;
-  }
-
-  @Override
   public GenerationInfo createGenerationInfo(PsiMethod method, boolean mergeIfExists) {
     if (method instanceof GrMethod) {
       return new GroovyGenerationInfo<GrMethod>((GrMethod)method, mergeIfExists);
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Consumer<PsiMethod> createDecorator(final PsiClass targetClass,
+                                             final PsiMethod baseMethod,
+                                             final boolean toCopyJavaDoc,
+                                             final boolean insertOverrideIfPossible) {
+    return new Consumer<PsiMethod>() {
+      @Override
+      public void consume(PsiMethod method) {
+        Project project = targetClass.getProject();
+
+        if (toCopyJavaDoc) {
+          PsiDocComment baseMethodDocComment = baseMethod.getDocComment();
+          if (baseMethodDocComment != null) {
+            GrDocComment docComment =
+              GroovyPsiElementFactory.getInstance(project).createDocCommentFromText(baseMethodDocComment.getText());
+            GrDocCommentUtil.setDocComment(((GrMethod)method), docComment);
+          }
+        }
+        else {
+          PsiDocComment docComment = method.getDocComment();
+          if (docComment != null) {
+            docComment.delete();
+          }
+        }
+
+        if (insertOverrideIfPossible) {
+          if (OverrideImplementUtil.canInsertOverride(method, targetClass) &&
+              JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OVERRIDE, targetClass.getResolveScope()) != null &&
+              method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) == null) {
+            method.getModifierList().addAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+          }
+        }
+        else {
+          PsiAnnotation annotation = method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+          if (annotation != null) {
+            annotation.delete();
+          }
+        }
+      }
+    };
   }
 }

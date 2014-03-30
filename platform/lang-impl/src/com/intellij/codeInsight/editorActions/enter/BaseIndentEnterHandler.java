@@ -17,8 +17,8 @@ package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -54,6 +54,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final IElementType myLineCommentType;
   private final String myLineCommentPrefix;
   private final TokenSet myWhitespaceTokens;
+  private final boolean myWorksWithFormatter;
 
   public BaseIndentEnterHandler(
     final Language language,
@@ -62,23 +63,28 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     final String lineCommentPrefix,
     final TokenSet whitespaceTokens)
   {
+    this(language, indentTokens, lineCommentType, lineCommentPrefix, whitespaceTokens, false);
+  }
+
+
+  public BaseIndentEnterHandler(
+    final Language language,
+    final TokenSet indentTokens,
+    final IElementType lineCommentType,
+    final String lineCommentPrefix,
+    final TokenSet whitespaceTokens,
+    final boolean worksWithFormatter)
+  {
     myLanguage = language;
     myIndentTokens = indentTokens;
     myLineCommentType = lineCommentType;
     myLineCommentPrefix = lineCommentPrefix;
     myWhitespaceTokens = whitespaceTokens;
+    myWorksWithFormatter = worksWithFormatter;
   }
 
-  @Override
-  public Result preprocessEnter(
-    @NotNull final PsiFile file,
-    @NotNull final Editor editor,
-    @NotNull final Ref<Integer> caretOffset,
-    @NotNull final Ref<Integer> caretAdvance,
-    @NotNull final DataContext dataContext,
-    final EditorActionHandler originalHandler)
-  {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  protected Result shouldSkipWithResult(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
     }
@@ -99,10 +105,31 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     int caret = editor.getCaretModel().getOffset();
+    if (caret == 0) {
+      return Result.DefaultSkipIndent;
+    }
     if (caret <= 0) {
       return Result.Continue;
     }
+    return null;
+  }
 
+  @Override
+  public Result preprocessEnter(
+    @NotNull final PsiFile file,
+    @NotNull final Editor editor,
+    @NotNull final Ref<Integer> caretOffset,
+    @NotNull final Ref<Integer> caretAdvance,
+    @NotNull final DataContext dataContext,
+    final EditorActionHandler originalHandler)
+  {
+    Result res = shouldSkipWithResult(file, editor, dataContext);
+    if (res != null) {
+      return res;
+    }
+
+    final Document document = editor.getDocument();
+    int caret = editor.getCaretModel().getOffset();
     final int lineNumber = document.getLineNumber(caret);
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
@@ -130,7 +157,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    if (LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
+    if (!myWorksWithFormatter && LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
       return Result.Continue;
     }
     else {
@@ -190,7 +217,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   @Nullable
-  private IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
+  protected IElementType getNonWhitespaceElementType(final HighlighterIterator iterator, int currentLineStartOffset, final int prevLineStartOffset) {
     while (!iterator.atEnd() && iterator.getEnd() >= currentLineStartOffset && iterator.getStart() >= prevLineStartOffset) {
       final IElementType tokenType = iterator.getTokenType();
       if (!myWhitespaceTokens.contains(tokenType)) {

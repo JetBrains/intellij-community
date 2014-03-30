@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dyoma
@@ -32,6 +33,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final GlobalSearchScope myScope;
   private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
   private boolean myViewer;
+  private boolean myUsePredefinedMessageFilter = true;
 
   public TextConsoleBuilderImpl(final Project project) {
     this(project, GlobalSearchScope.allScope(project));
@@ -52,12 +54,18 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   }
 
   protected ConsoleView createConsole() {
-    return new ConsoleViewImpl(myProject, myScope, myViewer, null);
+    return new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
   }
 
   @Override
   public void addFilter(final Filter filter) {
     myFilters.add(filter);
+  }
+
+  @Override
+  public TextConsoleBuilder filters(List<Filter> filters) {
+    myFilters.addAll(filters);
+    return this;
   }
 
   @Override
@@ -79,5 +87,13 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
 
   protected boolean isViewer() {
     return myViewer;
+  }
+
+  public void setUsePredefinedMessageFilter(boolean usePredefinedMessageFilter) {
+    myUsePredefinedMessageFilter = usePredefinedMessageFilter;
+  }
+
+  public boolean isUsePredefinedMessageFilter() {
+    return myUsePredefinedMessageFilter;
   }
 }

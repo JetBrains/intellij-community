@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,13 +53,13 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       this(elementToSearch, scope, ignoreAccessScope, null);
     }
 
+    @NotNull
     public PsiElement getElementToSearch() {
       return myElementToSearch;
     }
 
     /**
      * Use {@link #getEffectiveSearchScope} instead
-     * @return
      */
     @Deprecated()
     public SearchScope getScope() {
@@ -70,18 +70,18 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       return myIgnoreAccessScope;
     }
 
+    @NotNull
     public SearchRequestCollector getOptimizer() {
       return myOptimizer;
     }
 
+    @NotNull
     public SearchScope getEffectiveSearchScope () {
-      if (!myIgnoreAccessScope) {
-        SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
-        return myScope.intersectWith(accessScope);
-      }
-      else {
+      if (myIgnoreAccessScope) {
         return myScope;
       }
+      SearchScope accessScope = PsiSearchHelper.SERVICE.getInstance(myElementToSearch.getProject()).getUseScope(myElementToSearch);
+      return myScope.intersectWith(accessScope);
     }
   }
 
@@ -114,8 +114,11 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 
-  public static void searchOptimized(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope,
-                                     @NotNull SearchRequestCollector collector, final Processor<PsiReference> processor) {
+  public static void searchOptimized(@NotNull PsiElement element,
+                                     @NotNull SearchScope searchScope,
+                                     boolean ignoreAccessScope,
+                                     @NotNull SearchRequestCollector collector,
+                                     @NotNull final Processor<PsiReference> processor) {
     searchOptimized(element, searchScope, ignoreAccessScope, collector, false, new PairProcessor<PsiReference, SearchRequestCollector>() {
       @Override
       public boolean process(PsiReference psiReference, SearchRequestCollector collector) {
@@ -123,12 +126,15 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       }
     });
   }
-  public static void searchOptimized(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope,
-                                     @NotNull SearchRequestCollector collector, final boolean inReadAction, PairProcessor<PsiReference, SearchRequestCollector> processor) {
+
+  public static void searchOptimized(@NotNull PsiElement element,
+                                     @NotNull SearchScope searchScope,
+                                     boolean ignoreAccessScope,
+                                     @NotNull SearchRequestCollector collector,
+                                     final boolean inReadAction,
+                                     @NotNull PairProcessor<PsiReference, SearchRequestCollector> processor) {
     final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
-    collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(element, searchScope, ignoreAccessScope, nested)), nested,
-                                                 inReadAction, processor));
+    Query<PsiReference> query = search(new SearchParameters(element, searchScope, ignoreAccessScope, nested));
+    collector.searchQuery(new QuerySearchRequest(query, nested, inReadAction, processor));
   }
-
-
 }

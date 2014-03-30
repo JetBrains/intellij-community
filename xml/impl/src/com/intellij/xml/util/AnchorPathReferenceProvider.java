@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ import java.util.List;
  */
 public class AnchorPathReferenceProvider implements PathReferenceProvider {
 
-  public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
+  @Override
+  public boolean createReferences(@NotNull final PsiElement psiElement, @NotNull final List<PsiReference> references, final boolean soft) {
 
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     final String elementText = psiElement.getText();
@@ -66,7 +67,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
     catch (StringIndexOutOfBoundsException e) {      
       throw new RuntimeException(elementText, e);
     }
-    final AnchorReference anchorReference = new AnchorReference(anchor, fileReference, psiElement, anchorOffset + 1, soft);
+    final AnchorReferenceImpl anchorReference = new AnchorReferenceImpl(anchor, fileReference, psiElement, anchorOffset + 1, soft);
     references.add(anchorReference);
     return false;
   }
@@ -93,6 +94,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
     return fileReference;
   }
 
+  @Override
   public PathReference getPathReference(@NotNull final String path, @NotNull final PsiElement element) {
     return null;
   }

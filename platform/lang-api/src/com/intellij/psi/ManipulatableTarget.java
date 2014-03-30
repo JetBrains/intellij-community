@@ -29,20 +29,24 @@ public class ManipulatableTarget extends DelegatePsiTarget implements PsiDeclare
     super(element);
   }
 
+  @Override
   public TextRange getNameIdentifierRange() {
     return ElementManipulators.getValueTextRange(getNavigationElement());
   }
 
+  @Override
   public boolean isWritable() {
     return getNavigationElement().isWritable();
   }
 
+  @Override
   @Nullable
   public Object setName(@NotNull String newName) {
     ElementManipulators.getManipulator(getNavigationElement()).handleContentChange(getNavigationElement(), newName);
     return null;
   }
 
+  @Override
   public String getName() {
     return ElementManipulators.getValueText(getNavigationElement());
   }

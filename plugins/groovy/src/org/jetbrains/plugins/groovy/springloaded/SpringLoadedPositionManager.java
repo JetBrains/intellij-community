@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -48,63 +52,61 @@ public class SpringLoadedPositionManager implements PositionManager {
 
   @NotNull
   @Override
-  public List<ReferenceType> getAllClasses(final SourcePosition classPosition) throws NoDataException {
-    AccessToken accessToken = ReadAction.start();
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) throws NoDataException {
+    int line;
+    String className;
 
+    AccessToken accessToken = ReadAction.start();
     try {
-      String className = findEnclosingName(classPosition);
+      className = findEnclosingName(classPosition);
       if (className == null) throw new NoDataException();
 
-      List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
-      if (referenceTypes.isEmpty()) throw new NoDataException();
-
-      Set<ReferenceType> res = new HashSet<ReferenceType>();
-
-      for (ReferenceType referenceType : referenceTypes) {
-        findNested(res, referenceType, classPosition);
-      }
-
-      if (res.isEmpty()) {
-        throw new NoDataException();
-      }
-
-      return new ArrayList<ReferenceType>(res);
+      line = classPosition.getLine();
     }
     finally {
       accessToken.finish();
     }
+
+    List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
+    if (referenceTypes.isEmpty()) throw new NoDataException();
+
+    Set<ReferenceType> res = new HashSet<ReferenceType>();
+
+    for (ReferenceType referenceType : referenceTypes) {
+      findNested(res, referenceType, line);
+    }
+
+    if (res.isEmpty()) {
+      throw new NoDataException();
+    }
+
+    return new ArrayList<ReferenceType>(res);
   }
 
   @NotNull
   @Override
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     throw new NoDataException();
   }
 
   @Nullable
   private static String findEnclosingName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
-      PsiElement element = findElementAt(position);
-      while (true) {
-        element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
-        if (element == null
-            || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
-            || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
-          ) {
-          break;
-        }
+    PsiElement element = findElementAt(position);
+    while (true) {
+      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, PsiClassImpl.class);
+      if (element == null
+          || (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous())
+          || (element instanceof PsiClassImpl && ((PsiClassImpl)element).getName() != null)
+        ) {
+        break;
       }
+    }
 
-      if (element != null) {
-        return getClassNameForJvm((PsiClass)element);
-      }
-      return null;
+    if (element != null) {
+      return getClassNameForJvm((PsiClass)element);
     }
-    finally {
-      accessToken.finish();
-    }
+
+    return null;
   }
 
   @Nullable
@@ -144,7 +146,7 @@ public class SpringLoadedPositionManager implements PositionManager {
   }
 
   @Override
-  public ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException {
+  public ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException {
     String className = getOuterClassName(position);
     if (className == null) {
       throw new NoDataException();
@@ -163,7 +165,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       && GENERATED_CLASS_NAME.matcher(name.substring(ownerClassName.length())).matches();
   }
   
-  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, SourcePosition classPosition) {
+  private static void findNested(Set<ReferenceType> res, ReferenceType fromClass, int line) {
     if (!fromClass.isPrepared()) return;
 
     List<ReferenceType> nestedTypes = fromClass.nestedTypes();
@@ -179,18 +181,21 @@ public class SpringLoadedPositionManager implements PositionManager {
         }
       }
       else {
-        findNested(res, nested, classPosition);
+        findNested(res, nested, line);
       }
     }
 
     try {
-      final int lineNumber = classPosition.getLine() + 1;
+      final int lineNumber = line + 1;
 
       ReferenceType effectiveRef = springLoadedGeneratedClass == null ? fromClass : springLoadedGeneratedClass;
 
       if (effectiveRef.locationsOfLine(lineNumber).size() > 0) {
         res.add(effectiveRef);
       }
+    }
+    catch (ObjectCollectedException ignored) {
+
     }
     catch (AbsentInformationException ignored) {
     }

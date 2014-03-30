@@ -51,12 +51,12 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     }
 
     LocalTask task = manager.createLocalTask("test");
-    manager.activateTask(task, false, false);
+    manager.activateTask(task, false);
 
     presentation = doTest(combo);
     assertTrue(presentation.isVisible());
 
-    manager.activateTask(defaultTask, false, false);
+    manager.activateTask(defaultTask, false);
     task = manager.getActiveTask();
     assertTrue(task.isDefault());
 

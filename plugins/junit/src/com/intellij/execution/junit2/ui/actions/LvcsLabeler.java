@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit2.ui.actions;
 
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.StateEvent;
@@ -36,7 +36,7 @@ public class LvcsLabeler extends JUnitAdapter {
     }
     final boolean areTestsFailed = myModel.getRoot().isDefect();
     final CompletionEvent completion = (CompletionEvent)event;
-    final RuntimeConfiguration configuration = myModel.getProperties().getConfiguration();
+    final RunConfiguration configuration = myModel.getProperties().getConfiguration();
     if (configuration == null) {
       return;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.uiDesigner.make;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -374,10 +375,10 @@ public final class FormSourceCodeGenerator {
   }
 
   private static boolean lexemsEqual(final PsiClass classToBind, final PsiClass newClass) {
-    JavaLexer oldTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
-    JavaLexer newTextLexer = new JavaLexer(LanguageLevel.HIGHEST);
-    final String oldBuffer = classToBind.getText();
-    final String newBuffer = newClass.getText();
+    Lexer oldTextLexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+    Lexer newTextLexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
+    String oldBuffer = classToBind.getText();
+    String newBuffer = newClass.getText();
     oldTextLexer.start(oldBuffer);
     newTextLexer.start(newBuffer);
 

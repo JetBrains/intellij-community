@@ -1,0 +1,21 @@
+<html>
+<body>
+<span style="font-family: verdana,serif;">
+  Checks for cases when you rewrite loop variable with inner loop
+</span>
+<pre style="font-family: monospace">
+    for i in xrange(5):
+      for i in xrange(20, 25):
+          print("Inner", i)
+      print("Outer", i)
+  </pre>
+<span style="font-family: verdana,serif;">
+  It also warns you if variable declared in <code>with</code> statement is redeclared inside of statement body:
+</span>
+<pre style="font-family: monospace">
+    with open("file") as f:
+      f.read()
+      with open("file") as f:
+  </pre>
+</body>
+</html>

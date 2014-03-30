@@ -21,7 +21,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
-import com.intellij.util.ui.TextTransferrable;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 /**
@@ -45,7 +45,7 @@ public class CopyRevisionNumberFromAnnotateAction extends AnAction implements Li
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(corrected);
     if (revisionNumber != null) {
       final String revision = revisionNumber.asString();
-      CopyPasteManager.getInstance().setContents(new TextTransferrable(revision, revision));
+      CopyPasteManager.getInstance().setContents(new TextTransferable(revision));
     }
   }
 

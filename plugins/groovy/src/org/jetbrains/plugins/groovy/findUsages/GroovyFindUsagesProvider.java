@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.refactoring.rename.PropertyForRename;
 
 /**
@@ -59,7 +59,8 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         if (element instanceof PsiMethod) return "method";
         if (element instanceof PsiField) return "field";
         if (element instanceof PsiParameter) return "parameter";
-        if (element instanceof PsiVariable || element instanceof GrReferenceExpression) return "variable";
+        if (element instanceof GrBindingVariable) return "script binding variable";
+        if (element instanceof PsiVariable) return "variable";
         if (element instanceof GrLabeledStatement) return "label";
         if (element instanceof PropertyForRename) return "property";
         if (element instanceof GrClosableBlock) return "closure";
@@ -89,7 +90,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
                 return name;
             }
         } else if (element instanceof GrLabeledStatement) {
-            return ((GrLabeledStatement)element).getLabelName();
+            return ((GrLabeledStatement)element).getName();
         } else if (element instanceof PropertyForRename) {
           return ((PropertyForRename)element).getPropertyName();
         } else if (element instanceof GrClosableBlock) {

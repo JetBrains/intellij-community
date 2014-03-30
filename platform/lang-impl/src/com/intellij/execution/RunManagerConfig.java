@@ -28,6 +28,7 @@ public class RunManagerConfig {
   public static final int MIN_RECENT_LIMIT = 0;
   @NonNls private static final String RECENTS_LIMIT = "recentsLimit";
   @NonNls private static final String RESTART_REQUIRES_CONFIRMATION = "restartRequiresConfirmation";
+  @NonNls private static final String STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION = "stopIncompatibleRequiresConfirmation";
 
   public RunManagerConfig(PropertiesComponent propertiesComponent,
                           RunManagerImpl manager) {
@@ -52,7 +53,15 @@ public class RunManagerConfig {
     return myPropertiesComponent.getBoolean(RESTART_REQUIRES_CONFIRMATION, true);
   }
 
-  public void setRestartRequiresConfirmation (boolean restartRequiresConfirmation) {
+  public void setRestartRequiresConfirmation(boolean restartRequiresConfirmation) {
     myPropertiesComponent.setValue(RESTART_REQUIRES_CONFIRMATION, String.valueOf(restartRequiresConfirmation));
+  }
+
+  public boolean isStopIncompatibleRequiresConfirmation() {
+    return myPropertiesComponent.getBoolean(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, true);
+  }
+
+  public void setStopIncompatibleRequiresConfirmation(boolean stopIncompatibleRequiresConfirmation) {
+    myPropertiesComponent.setValue(STOP_INCOMPATIBLE_REQUIRES_CONFIRMATION, String.valueOf(stopIncompatibleRequiresConfirmation));
   }
 }

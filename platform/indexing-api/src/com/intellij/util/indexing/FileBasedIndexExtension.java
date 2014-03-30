@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,22 @@ public abstract class FileBasedIndexExtension<K, V> {
 
   @NotNull
   public abstract DataIndexer<K, V, FileContent> getIndexer();
-  
+
+  @NotNull
   public abstract KeyDescriptor<K> getKeyDescriptor();
-  
+
+  @NotNull
   public abstract DataExternalizer<V> getValueExternalizer();
-  
+
+  @NotNull
   public abstract FileBasedIndex.InputFilter getInputFilter();
   
   public abstract boolean dependsOnFileContent();
-  
+
+  public boolean indexDirectories() {
+    return false;
+  }
+
   public abstract int getVersion();
 
   /**
@@ -72,6 +79,10 @@ public abstract class FileBasedIndexExtension<K, V> {
   }
 
   public boolean isKeyHighlySelective() {
+    return false;
+  }
+
+  public boolean traceKeyHashToVirtualFileMapping() {
     return false;
   }
 }

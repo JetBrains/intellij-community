@@ -46,11 +46,13 @@ public abstract class TimedComputable<T>  extends Timed<T> {
     assert myAcquireCount >= 0;
   }
 
+  @Override
   public synchronized void dispose() {
     assert myAcquireCount == 0;
     super.dispose();
   }
 
+  @Override
   protected synchronized boolean isLocked() {
     return myAcquireCount != 0;
   }

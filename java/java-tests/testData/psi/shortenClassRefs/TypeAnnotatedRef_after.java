@@ -1,7 +1,4 @@
-import java.lang.annotation.*;
-import static java.lang.annotation.ElementType.*;
-
-@Target({TYPE_USE}) @interface TA { }
+import pkg.TA;
 
 class Outer {
   class Middle {

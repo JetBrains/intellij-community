@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -135,56 +135,37 @@ public class RefactoringUtil {
   }
 
   /**
-   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String,com.intellij.psi.PsiElement,boolean)
-   *      Cannot use method from code style manager: a collision with fieldToReplace is not a collision
+   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String, com.intellij.psi.PsiElement, boolean)
+   * Cannot use method from code style manager: a collision with fieldToReplace is not a collision
    */
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
-    int index = 0;
-    while (true) {
+    for(int index = 0;;index++) {
       final String name = index > 0 ? baseName + index : baseName;
-      index++;
       final PsiManager manager = place.getManager();
       PsiResolveHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper();
       PsiVariable refVar = helper.resolveAccessibleReferencedVariable(name, place);
       if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
-      class CancelException extends RuntimeException {
-      }
+      final boolean[] found = {false};
+      place.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitClass(PsiClass aClass) {
 
-      try {
-        place.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitClass(PsiClass aClass) {
+        }
 
+        @Override
+        public void visitVariable(PsiVariable variable) {
+          if (name.equals(variable.getName())) {
+            found[0] = true;
+            stopWalking();
           }
-
-          @Override public void visitVariable(PsiVariable variable) {
-            if (name.equals(variable.getName())) {
-              throw new CancelException();
-            }
-          }
-        });
-      }
-      catch (CancelException e) {
+        }
+      });
+      if (found[0]) {
         continue;
       }
 
       return name;
     }
-  }
-
-  //order of usages accross different files is irrelevant
-  public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
-    Arrays.sort(usages, new Comparator<UsageInfo>() {
-      public int compare(final UsageInfo usage1, final UsageInfo usage2) {
-        final PsiElement element1 = usage1.getElement();
-        final PsiElement element2 = usage2.getElement();
-        if (element1 == null) {
-          if (element2 == null) return 0;
-          return 1;
-        }
-        if (element2 == null) return -1;
-        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
-      }
-    });
   }
 
   @Nullable
@@ -373,22 +354,6 @@ public class RefactoringUtil {
     return null;
   }
 
-  public static PsiClass getThisClass(PsiElement place) {
-    PsiElement parent = place.getContext();
-    if (parent == null) return null;
-    PsiElement prev = null;
-    while (true) {
-      if (parent instanceof PsiClass) {
-        if (!(parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getArgumentList() == prev)) {
-          return (PsiClass)parent;
-        }
-      }
-      prev = parent;
-      parent = parent.getContext();
-      if (parent == null) return null;
-    }
-  }
-
   public static PsiClass getThisResolveClass(final PsiReferenceExpression place) {
     final JavaResolveResult resolveResult = place.advancedResolve(false);
     final PsiElement scope = resolveResult.getCurrentFileResolveScope();
@@ -433,29 +398,6 @@ public class RefactoringUtil {
       .isReassigned(variable, new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
     return !isReassigned;
   }
-
-  public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringUtil.<PsiThisExpression>createQualifiedExpression(manager, qualifierClass, "this");
-  }
-
-  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringUtil.<PsiSuperExpression>createQualifiedExpression(manager, qualifierClass, "super");
-  }
-
-  private static <T extends PsiQualifiedExpression> T createQualifiedExpression(PsiManager manager, PsiClass qualifierClass, String qName) throws IncorrectOperationException {
-     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-     if (qualifierClass != null) {
-       T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, null);
-       qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
-       PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-       LOG.assertTrue(thisQualifier != null);
-       thisQualifier.bindToElement(qualifierClass);
-       return qualifiedThis;
-     }
-     else {
-       return (T)factory.createExpressionFromText(qName, null);
-     }
-   }
 
   /**
    * removes a reference to the specified class from the reference list given
@@ -502,26 +444,7 @@ public class RefactoringUtil {
   }
 
   private static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
-    PsiType type = expr.getType();
-    if (type == null) {
-      if (expr instanceof PsiArrayInitializerExpression) {
-        PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
-        if (initializers.length > 0) {
-          PsiType initType = getTypeByExpression(initializers[0]);
-          if (initType == null) return null;
-          return initType.createArrayType();
-        }
-      }
-
-      if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
-        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
-      }
-      return null;
-    }
-    PsiClass refClass = PsiUtil.resolveClassInType(type);
-    if (refClass instanceof PsiAnonymousClass) {
-      type = ((PsiAnonymousClass)refClass).getBaseClassType();
-    }
+    PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiType.NULL.equals(type)) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
       if (infos.length == 1) {
@@ -532,7 +455,7 @@ public class RefactoringUtil {
       }
     }
 
-    return GenericsUtil.getVariableTypeByExpressionType(type);
+    return type;
   }
 
   public static boolean isAssignmentLHS(PsiElement element) {
@@ -574,7 +497,11 @@ public class RefactoringUtil {
         continue;
       }
       PsiElement anchor1 = getParentExpressionAnchorElement(occurrence);
-      if (anchor1 == null) return null;
+
+      if (anchor1 == null) {
+        if (occurrence.isPhysical()) return null;
+        continue;
+      }
 
       if (anchor == null) {
         anchor = anchor1;
@@ -607,6 +534,7 @@ public class RefactoringUtil {
       }
     }
 
+    if (anchor == null) return null;
     if (occurrences.length > 1 && anchor.getParent().getParent() instanceof PsiSwitchStatement) {
       PsiSwitchStatement switchStatement = (PsiSwitchStatement)anchor.getParent().getParent();
       if (switchStatement.getBody().equals(anchor.getParent())) {
@@ -801,12 +729,6 @@ public class RefactoringUtil {
     return result;
   }
 
-  /** @deprecated use {@linkplain #makeMethodAbstract(com.intellij.psi.PsiClass, com.intellij.psi.PsiMethod)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void abstractizeMethod(PsiClass targetClass, PsiMethod method) throws IncorrectOperationException {
-    makeMethodAbstract(targetClass, method);
-  }
-
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
     if (!method.hasModifierProperty(PsiModifier.DEFAULT)) {
       PsiCodeBlock body = method.getBody();
@@ -817,14 +739,25 @@ public class RefactoringUtil {
       PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
     }
 
-    PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
-    PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
-    PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
+    prepareForInterface(method);
 
     if (!targetClass.isInterface()) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.ABSTRACT, true);
     }
 
+  }
+
+  public static void makeMethodDefault(@NotNull PsiMethod method) throws IncorrectOperationException {
+    PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, !method.hasModifierProperty(PsiModifier.STATIC));
+    PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+
+    prepareForInterface(method);
+  }
+
+  private static void prepareForInterface(PsiMethod method) {
+    PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
     removeFinalParameters(method);
   }
 
@@ -861,21 +794,6 @@ public class RefactoringUtil {
     return buffer.toString();
   }
 
-  public static boolean isSuperOrThisCall(PsiStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof PsiExpressionStatement)) return false;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-    if (testForSuper) {
-      if ("super".equals(methodExpression.getText())) return true;
-    }
-    if (testForThis) {
-      if ("this".equals(methodExpression.getText())) return true;
-    }
-
-    return false;
-  }
-
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
                                                          final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
                                                          PsiClass superClass) {
@@ -884,7 +802,7 @@ public class RefactoringUtil {
     if (constructors.length > 0) {
       for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
-        if (statements.length < 1 || !isSuperOrThisCall(statements[0], true, true)) {
+        if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
           implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
         }
       }
@@ -1206,7 +1124,7 @@ public class RefactoringUtil {
       paramTag.delete();
     }
     for (PsiDocTag psiDocTag : newTags) {
-      anchor = docComment.addAfter(psiDocTag, anchor);
+      anchor = anchor != null && anchor.isValid() ? docComment.addAfter(psiDocTag, anchor) : docComment.add(psiDocTag);
     }
   }
 

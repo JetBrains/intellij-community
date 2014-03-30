@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 /**
  * @author ven
  */
-public class CreateFieldFromUsageTest extends LightQuickFixTestCase{
+public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
 
   public void testAnonymousClass() throws Exception { doSingleTest(); }
   public void testExpectedTypes() throws Exception { doSingleTest(); }

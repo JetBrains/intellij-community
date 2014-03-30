@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder> i
   private final boolean myVarArgs;
 
   public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
-    this(name, type, declarationScope, language, false);
+    this(name, type, declarationScope, language, type instanceof PsiEllipsisType);
   }
 
   public LightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language, boolean isVarArgs) {

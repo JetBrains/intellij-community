@@ -44,7 +44,6 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   private boolean myIsPrimitive;
 
   private boolean myIsNewLocal = true;
-  private boolean myIsVisible = true;
 
   public LocalVariableDescriptorImpl(Project project,
                                      @NotNull LocalVariableProxyImpl local) {
@@ -54,6 +53,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     myLocalVariable = local;
   }
 
+  @Override
   public LocalVariableProxyImpl getLocalVariable() {
     return myLocalVariable;
   }
@@ -83,13 +83,15 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     return myIsNewLocal;
   }
 
+  @Override
   public boolean isPrimitive() {
     return myIsPrimitive;
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    myIsVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
-    if (myIsVisible) {
+    boolean isVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
+    if (isVisible) {
       final String typeName = getLocalVariable().typeName();
       myTypeName = typeName;
       myIsPrimitive = DebuggerUtils.isPrimitiveType(typeName);
@@ -103,6 +105,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     myIsNewLocal = aNew;
   }
 
+  @Override
   public void displayAs(NodeDescriptor descriptor) {
     super.displayAs(descriptor);
     if(descriptor instanceof LocalVariableDescriptorImpl) {
@@ -110,10 +113,12 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     }
   }
 
+  @Override
   public String getName() {
     return myLocalVariable.name();
   }
 
+  @Override
   public String calcValueName() {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
@@ -130,6 +135,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     try {

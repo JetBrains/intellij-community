@@ -112,6 +112,18 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="control F3"/>
   </action>
+  <action id="SelectNextOccurrence">
+    <keyboard-shortcut first-keystroke="alt J"/>
+  </action>
+  <action id="UnselectPreviousOccurrence">
+    <keyboard-shortcut first-keystroke="alt shift J"/>
+  </action>
+  <action id="SelectAllOccurrences">
+    <keyboard-shortcut first-keystroke="control alt shift J"/>
+  </action>
+  <action id="EditorAddOrRemoveCaret">
+    <mouse-shortcut keystroke="alt shift button1"/>
+  </action>
   <action id="GotoDeclaration">
     <keyboard-shortcut first-keystroke="control B"/>
     <mouse-shortcut keystroke="ctrl button1"/>
@@ -122,7 +134,6 @@
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="ctrl shift button1"/>
-    <mouse-shortcut keystroke="shift button2"/>
   </action>
   
   <action id="GotoBookmark0">
@@ -296,10 +307,13 @@
     <keyboard-shortcut first-keystroke="shift F11"/>
   </action>
   <action id="HighlightUsagesInFile">
-    <keyboard-shortcut first-keystroke="control shift F7"/>
+    <keyboard-shortcut first-keystroke="control shift F7"/> 
   </action>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="control shift N"/>
+  </action>
+  <action id="ActivateTerminalToolWindow">
+    <keyboard-shortcut first-keystroke="alt F12"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="alt 0"/>
@@ -567,6 +581,9 @@
   </action>
   <action id="EditSource">
     <keyboard-shortcut first-keystroke="F4"/>
+  </action>
+  <action id="EditSourceInNewWindow">
+    <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE"/>
@@ -840,6 +857,9 @@
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="control F5"/>
   </action>
+  <action id="RerunTests">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
+  </action>
   <action id="CollapseSelection">
     <keyboard-shortcut first-keystroke="control PERIOD"/>
   </action>
@@ -916,6 +936,8 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
 
+  <action id="DatabaseView.PropertiesAction" />
+
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
@@ -929,12 +951,9 @@
   <action id="Console.History.Browse"><keyboard-shortcut first-keystroke="control alt E"/></action>
 
   <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jdbc.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
   <action id="Console.Jdbc.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
 
-
   <action id="Console.Jpa.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jpa.Properties"><keyboard-shortcut first-keystroke="control alt ENTER"/></action>
   <action id="Console.Jpa.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
   <action id="Console.Jpa.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
   <action id="Console.Jpa.GenerateDDL"><keyboard-shortcut first-keystroke="control alt shift ENTER"/></action>
@@ -942,8 +961,15 @@
   <action id="Jdbc.RunSqlScript"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
   <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
+  <action id="Console.SplitLine">
+    <keyboard-shortcut first-keystroke="control ENTER"/>
+  </action>
   <action id ="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="control alt shift T"/>
+  </action>
+
+  <action id="NewScratchFile">
+    <keyboard-shortcut first-keystroke="control alt shift INSERT"/>
   </action>
 </keymap>
 </component>

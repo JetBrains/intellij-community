@@ -80,7 +80,7 @@ public class SpellCheckerManager {
   public void updateBundledDictionaries(final List<String> removedDictionaries) {
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
-        boolean dictionaryShouldBeLoad = this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary);
+        boolean dictionaryShouldBeLoad = settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary);
         boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary);
         if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
           spellChecker.removeDictionary(dictionary);
@@ -97,10 +97,11 @@ public class SpellCheckerManager {
         }
       }
     }
-    if (this.settings != null && this.settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : this.settings.getDictionaryFoldersPaths()) {
+      for (String folder : settings.getDictionaryFoldersPaths()) {
         SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
+          @Override
           public void consume(final String s) {
             boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
             boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
@@ -116,13 +117,13 @@ public class SpellCheckerManager {
 
       }
     }
-    
-    if (removedDictionaries != null && removedDictionaries.size() > 0) {
+
+    if (removedDictionaries != null && !removedDictionaries.isEmpty()) {
       for (final String name : removedDictionaries) {
         spellChecker.removeDictionary(name);
       }
     }
-    
+
     restartInspections();
   }
 
@@ -138,6 +139,7 @@ public class SpellCheckerManager {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
     stateLoader.load(new Consumer<String>() {
+      @Override
       public void consume(String s) {
         //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
       }
@@ -146,7 +148,7 @@ public class SpellCheckerManager {
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
-        if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
+        if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
           final InputStream stream = loaderClass.getResourceAsStream(dictionary);
           if (stream != null) {
@@ -158,10 +160,11 @@ public class SpellCheckerManager {
         }
       }
     }
-    if (this.settings != null && this.settings.getDictionaryFoldersPaths() != null) {
+    if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String folder : this.settings.getDictionaryFoldersPaths()) {
+      for (String folder : settings.getDictionaryFoldersPaths()) {
         SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
+          @Override
           public void consume(final String s) {
             if (!disabledDictionaries.contains(s)) {
               loaders.add(new FileLoader(s, s));
@@ -225,7 +228,7 @@ public class SpellCheckerManager {
   protected List<String> getRawSuggestions(@NotNull String word) {
     if (!spellChecker.isCorrect(word)) {
       List<String> suggestions = spellChecker.getSuggestions(word, MAX_SUGGESTIONS_THRESHOLD, MAX_METRICS);
-      if (suggestions.size() != 0) {
+      if (!suggestions.isEmpty()) {
         boolean capitalized = Strings.isCapitalized(word);
         boolean upperCases = Strings.isUpperCase(word);
         if (capitalized) {
@@ -235,13 +238,7 @@ public class SpellCheckerManager {
           Strings.upperCase(suggestions);
         }
       }
-      List<String> result = new ArrayList<String>();
-      for (String s : suggestions) {
-        if (!result.contains(s)) {
-          result.add(s);
-        }
-      }
-      return result;
+      return new ArrayList<String>(new LinkedHashSet<String>(suggestions));
     }
     return Collections.emptyList();
   }
@@ -249,6 +246,7 @@ public class SpellCheckerManager {
 
   public static void restartInspections() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         for (Project project : projects) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends V> map) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> map) {
     w.lock();
     try {
       super.putAll(map);
@@ -168,6 +168,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @NotNull
   @Override
   public Set<K> keySet() {
     r.lock();
@@ -179,6 +180,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @NotNull
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
     r.lock();
@@ -190,6 +192,7 @@ public class LockPoolSynchronizedMap<K, V> extends THashMap<K, V> implements Con
     }
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
     r.lock();

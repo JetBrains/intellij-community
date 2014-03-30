@@ -36,6 +36,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
   
@@ -242,188 +244,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
 
 
-
-//----------------- EJB NAMING CONVENTIONS -------------
-/**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_EB_PREFIX = "";         //EntityBean EJB Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_EB_SUFFIX = "Bean";     //EntityBean EJB Class name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_HI_PREFIX = "";         //EntityBean Home interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_HI_SUFFIX = "Home";     //EntityBean Home interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_RI_PREFIX = "";         //EntityBean Remote interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_RI_SUFFIX = "";         //EntityBean Remote interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_LHI_PREFIX = "Local";   //EntityBean local Home interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_LHI_SUFFIX = "Home";    //EntityBean local Home interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_LI_PREFIX = "Local";    //EntityBean local interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_LI_SUFFIX = "";         //EntityBean local interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_DD_PREFIX = "";         //EntityBean deployment descriptor name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_DD_SUFFIX = "EJB";      //EntityBean deployment descriptor name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_VO_PREFIX = "";
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_VO_SUFFIX = "VO";
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String ENTITY_PK_CLASS = "java.lang.String";
-
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_EB_PREFIX = "";        //SessionBean EJB Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_EB_SUFFIX = "Bean";    //SessionBean EJB Class name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_HI_PREFIX = "";        //SessionBean Home interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_HI_SUFFIX = "Home";    //SessionBean Home interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_RI_PREFIX = "";        //SessionBean Remote interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_RI_SUFFIX = "";        //SessionBean Remote interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_LHI_PREFIX = "Local";  //SessionBean local Home interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_LHI_SUFFIX = "Home";   //SessionBean local Home interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_LI_PREFIX = "Local";   //SessionBean local interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_LI_SUFFIX = "";        //SessionBean local interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_SI_PREFIX = "";   //SessionBean service endpoint interface name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_SI_SUFFIX = "Service";        //SessionBean service endpoint interface name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_DD_PREFIX = "";        //SessionBean deployment descriptor name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SESSION_DD_SUFFIX = "EJB";     //SessionBean deployment descriptor name suffix
-
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String MESSAGE_EB_PREFIX = "";        //MessageBean EJB Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String MESSAGE_EB_SUFFIX = "Bean";    //MessageBean EJB Class name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String MESSAGE_DD_PREFIX = "";        //MessageBean deployment descriptor name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String MESSAGE_DD_SUFFIX = "EJB";     //MessageBean deployment descriptor name suffix
-//----------------- Servlet NAMING CONVENTIONS -------------
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SERVLET_CLASS_PREFIX = "";           //SERVLET Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SERVLET_CLASS_SUFFIX = "";           //SERVLET Class name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SERVLET_DD_PREFIX = "";              //SERVLET deployment descriptor name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String SERVLET_DD_SUFFIX = "";              //SERVLET deployment descriptor name suffix
-//----------------- Web Filter NAMING CONVENTIONS -------------
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String FILTER_CLASS_PREFIX = "";          //Filter Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String FILTER_CLASS_SUFFIX = "";          //Filter Class name suffix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String FILTER_DD_PREFIX = "";             //Filter deployment descriptor name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String FILTER_DD_SUFFIX = "";             //Filter deployment descriptor name suffix
-
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String LISTENER_CLASS_PREFIX = "";          //Listener Class name prefix
-  /**
- * @deprecated use com.intellij.javaee.JavaeeCodeStyleSettings class
- */
-  @NonNls public String LISTENER_CLASS_SUFFIX = "";          //Listener Class name suffix
-
-//------------------------------------------------------------------------
-
   // ---------------------------------- Javadoc formatting options -------------------------
   public boolean ENABLE_JAVADOC_FORMATTING = true;
 
@@ -431,15 +251,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    * Align parameter comments to longest parameter name
    */
   public boolean JD_ALIGN_PARAM_COMMENTS = true;
-  public int JD_MIN_PARM_NAME_LENGTH = 0;
-  public int JD_MAX_PARM_NAME_LENGTH = 30;
 
   /**
    * Align exception comments to longest exception name
    */
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
-  public int JD_MIN_EXCEPTION_NAME_LENGTH = 0;
-  public int JD_MAX_EXCEPTION_NAME_LENGTH = 30;
 
   public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS = false;
   public boolean JD_ADD_BLANK_AFTER_RETURN = false;
@@ -557,6 +373,55 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = false;
 
   //----------------------------------------------------------------------------------------
+
+  // region Formatter control
+
+  public boolean FORMATTER_TAGS_ENABLED = false;
+  public String FORMATTER_ON_TAG = "@formatter:on";
+  public String FORMATTER_OFF_TAG = "@formatter:off";
+
+  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP = false;
+  private volatile Pattern myFormatterOffPattern = null;
+  private volatile Pattern myFormatterOnPattern = null;
+
+  @Nullable
+  public Pattern getFormatterOffPattern() {
+    if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
+      myFormatterOffPattern = getPatternOrDisableRegexp(FORMATTER_OFF_TAG);
+    }
+    return myFormatterOffPattern;
+  }
+
+  public void setFormatterOffPattern(@Nullable Pattern formatterOffPattern) {
+    myFormatterOffPattern = formatterOffPattern;
+  }
+
+  @Nullable
+  public Pattern getFormatterOnPattern() {
+    if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
+      myFormatterOnPattern = getPatternOrDisableRegexp(FORMATTER_ON_TAG);
+    }
+    return myFormatterOnPattern;
+  }
+
+  public void setFormatterOnPattern(@Nullable Pattern formatterOnPattern) {
+    myFormatterOnPattern = formatterOnPattern;
+  }
+
+  @Nullable
+  private Pattern getPatternOrDisableRegexp(@NotNull String markerText) {
+    try {
+      return Pattern.compile(markerText);
+    }
+    catch (PatternSyntaxException pse) {
+      LOG.error("Loaded regexp pattern is invalid: '" + markerText + "', error message: " + pse.getMessage());
+      FORMATTER_TAGS_ACCEPT_REGEXP = false;
+      return null;
+    }
+  }
+
+
+  // endregion
 
   //----------------------------------------------------------------------------------------
 

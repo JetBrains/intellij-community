@@ -5,12 +5,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.template.SmartCompletionContextType;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
@@ -321,7 +317,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
-  public void testInsideCatch() throws Exception { doTest(); }
+  public void testInsideCatch() { doTest(); }
+  public void testInsideCatchFinal() { doTest(); }
 
   public void testGenerics6() throws Exception {
     String path = "/generics";
@@ -613,14 +610,20 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertStringItems("byte");
     assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+  }
 
+  public void testNewByteArray2() {
+    configureByTestName();
+    assertStringItems("byte", "byte");
+    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[]{...}", LookupElementPresentation.renderElement(myItems[1]).getTailText());
   }
 
   public void testInsideStringLiteral() throws Throwable { doAntiTest(); }
 
   public void testDefaultAnnoParam() throws Throwable { doTest(); }
 
-  public void testCastGenericQualifier() throws Throwable { doTest(); }
+  public void testNewWithTypeParameterErasure() throws Throwable { doTest(); }
 
   public void testEverythingDoubles() throws Throwable {
     configureByTestName();
@@ -635,6 +638,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   //todo 2nd completion
   public void _testDefaultAnnoParam2() throws Throwable { doTest(); }
+  
+  public void testAnnotationValue() throws Throwable {doTest(); }
 
   public void testLiveTemplate() throws Throwable {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");
@@ -642,13 +647,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     final SmartCompletionContextType completionContextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
-    TemplateSettings.getInstance().addTemplate(template);
-    try {
-      doTest();
-    }
-    finally {
-      TemplateSettings.getInstance().removeTemplate(template);
-    }
+    LiveTemplateTest.addTemplate(template, myTestRootDisposable);
+    doTest();
   }
 
   public void testInThisExpression() throws Throwable { doTest(); }
@@ -684,33 +684,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testSuggestInstanceofedValue() throws Throwable {
-    doTest();
-  }
-
-  public void testSuggestInstanceofedValueInTernary() throws Throwable {
-    doTest();
-  }
-
-  public void testSuggestInstanceofedValueInComplexIf() throws Throwable { doTest('\n'); }
-
-  public void testSuggestInstanceofedValueInElseNegated() throws Throwable { doTest('\n'); }
-
-  public void testSuggestInstanceofedValueAfterReturn() throws Throwable { doTest('\n'); }
-
-  public void testNoInstanceofedValueWhenBasicSuits() throws Throwable { doTest(); }
-
-  public void testSuggestCastedValueAfterCast() throws Throwable { doTest('\n'); }
-
-  public void testNoInstanceofedValueInElse() throws Throwable { doAntiTest(); }
-
-  public void testNoInstanceofedValueInThenNegated() throws Throwable { doAntiTest(); }
-
-  public void testNoInstanceofedValueInElseWithComplexIf() throws Throwable { doAntiTest(); }
-
   public void testReplaceWholeReferenceChain() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
-
-  public void testInstanceofedInsideAnonymous() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
   public void testDoubleTrueInOverloadedMethodCall() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
 
@@ -726,15 +700,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testOneElementArray() throws Throwable { doTest(); }
 
   public void testCastToArray() throws Throwable { doTest(); }
-
-  public void testDontAutoCastWhenAlreadyCasted() throws Throwable {
-    configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "s", "toString");
-    select();
-    checkResultByTestName();
-  }
-
-  public void testAutoCastWhenAlreadyCasted() throws Throwable { doTest('\n'); }
 
   public void testCommaDoublePenetration() throws Throwable {
     doFirstItemTest(',');
@@ -782,16 +747,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testSameSignatureWithGenerics() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
+  }
+
   public void testWrongAnonymous() throws Throwable {
     configureByTestName();
     select();
     checkResultByTestName();
-  }
-
-  private void doAntiTest() throws Exception {
-    configureByTestName();
-    assertEmpty(myItems);
-    checkResultByFile("/" + getTestName(false) + ".java");
   }
 
   public void testAfterNewWithGenerics() throws Exception {
@@ -810,7 +774,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
-    assertStringItems("Object.class", "forName", "forName", "getClass");
+    assertStringItems("Object.class", "getClass", "forName", "forName");
   }
 
   public void testClassLiteralInAnno2() throws Throwable {
@@ -931,10 +895,6 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testConstructorArgsSmartEnter() throws Exception { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR); }
 
-  private void configureByTestName() {
-    configureByFile("/" + getTestName(false) + ".java");
-  }
-
   public void testIDEADEV13148() throws Exception {
     configureByFile("/IDEADEV13148.java");
     assertStringItems("false", "true"); //todo don't suggest boolean literals in synchronized
@@ -1035,6 +995,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testCaseMissingEnumValue() throws Throwable { doTest(); }
   public void testCaseMissingEnumValue2() throws Throwable { doTest(); }
+  
+  public void testNoHiddenParameter() { doTest(); }
 
   public void testTypeVariableInstanceOf() throws Throwable {
     configureByTestName();
@@ -1059,6 +1021,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayInitializerBeforeVarargs() throws Throwable { doTest(); }
   public void testDuplicateMembersFromSuperClass() throws Throwable { doTest(); }
   public void testInnerAfterNew() throws Throwable { doTest(); }
+  public void testEverythingInStringConcatenation() throws Throwable { doTest(); }
 
   public void testMemberImportStatically() {
     configureByTestName();
@@ -1147,7 +1110,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     complete();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest(Lookup.NORMAL_SELECT_CHAR);
   }
 

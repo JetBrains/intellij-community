@@ -119,10 +119,11 @@ public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
     return (V)myComboBox.getSelectedItem();
   }
 
+  @Override
   public void addListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
   }
-  
+
   public final void registerUpDownActionsFor(JComponent input) {
     UpDownHandler.register(input, myComboBox);
   }

@@ -71,11 +71,13 @@ public class PredefinedLogFile implements JDOMExternalizable {
   }
 
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myId = element.getAttributeValue(ID_ATTRIBUTE);
     myEnabled = Boolean.parseBoolean(element.getAttributeValue(ENABLED_ATTRIBUTE));
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ID_ATTRIBUTE, myId);
     element.setAttribute(ENABLED_ATTRIBUTE, String.valueOf(myEnabled));

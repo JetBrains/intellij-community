@@ -41,8 +41,8 @@ public class CompoundNodeRenderer extends NodeRendererImpl{
   protected final NodeRendererSettings myRendererSettings;
 
   public CompoundNodeRenderer(NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
+    super(name);
     myRendererSettings = rendererSettings;
-    setName(name);
     myLabelRenderer = labelRenderer;
     myChildrenRenderer = childrenRenderer;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -39,17 +40,13 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.PopupHandler;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author cdr
@@ -69,10 +66,12 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     myNamedScopeManager = namedScopeManager;
     myScopeListener = new NamedScopesHolder.ScopeListener() {
       Alarm refreshProjectViewAlarm = new Alarm();
+      @Override
       public void scopesChanged() {
         // amortize batch scope changes
         refreshProjectViewAlarm.cancelAllRequests();
         refreshProjectViewAlarm.addRequest(new Runnable(){
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             final String subId = getSubId();
@@ -94,31 +93,38 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     myNamedScopeManager.addScopeListener(myScopeListener);
   }
 
+  @Override
   public String getTitle() {
     return IdeBundle.message("scope.view.title");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Ide.LocalScope;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @Override
   public JComponent createComponent() {
-    myViewPanel = new ScopeTreeViewPanel(myProject);
-    Disposer.register(this, myViewPanel);
-    myViewPanel.initListeners();
-    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
-    myTree = myViewPanel.getTree();
-    PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
-    enableDnD();
+    if (myViewPanel == null) {
+      myViewPanel = new ScopeTreeViewPanel(myProject);
+      Disposer.register(this, myViewPanel);
+      myViewPanel.initListeners();
+      myTree = myViewPanel.getTree();
+      CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
+      enableDnD();
+    }
 
+    myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
     return myViewPanel.getPanel();
   }
 
+  @Override
   public void dispose() {
     myViewPanel = null;
     myDependencyValidationManager.removeScopeListener(myScopeListener);
@@ -126,11 +132,10 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     super.dispose();
   }
 
+  @Override
   @NotNull
   public String[] getSubIds() {
-    NamedScope[] scopes = myDependencyValidationManager.getScopes();
-    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
-    scopes = NonProjectFilesScope.removeFromList(scopes);
+    NamedScope[] scopes = getShownScopes();
     String[] ids = new String[scopes.length];
     for (int i = 0; i < scopes.length; i++) {
       final NamedScope scope = scopes[i];
@@ -139,11 +144,21 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return ids;
   }
 
+  private NamedScope[] getShownScopes() {
+    NamedScope[] scopes = myDependencyValidationManager.getScopes();
+    scopes = ArrayUtil.mergeArrays(scopes, myNamedScopeManager.getScopes());
+    scopes = NonProjectFilesScope.removeFromList(scopes);
+    scopes = ArrayUtil.remove(scopes, CustomScopesProviderEx.getAllScope());
+    return scopes;
+  }
+
+  @Override
   @NotNull
   public String getPresentableSubIdName(@NotNull final String subId) {
     return subId;
   }
 
+  @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
     actionGroup.addAction(new ShowModulesAction(myProject){
@@ -154,6 +169,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     }).setAsSecondary(true);
   }
 
+  @Override
   public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     saveExpandedPaths();
     myViewPanel.selectScope(NamedScopesHolder.getScope(myProject, getSubId()));
@@ -161,6 +177,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return new ActionCallback.Done();
   }
 
+  @Override
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     if (file == null) return;
     PsiFileSystemItem psiFile = file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(file)
@@ -168,15 +185,13 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     if (psiFile == null) return;
     if (!(element instanceof PsiElement)) return;
 
-    List<NamedScope> allScopes = new ArrayList<NamedScope>();
-    ContainerUtil.addAll(allScopes, myDependencyValidationManager.getScopes());
-    ContainerUtil.addAll(allScopes, myNamedScopeManager.getScopes());
-    for (int i = 0; i < allScopes.size(); i++) {
-      final NamedScope scope = allScopes.get(i);
+    NamedScope[] allScopes = getShownScopes();
+    for (int i = 0; i < allScopes.length; i++) {
+      final NamedScope scope = allScopes[i];
       String name = scope.getName();
       if (name.equals(getSubId())) {
-        allScopes.set(i, allScopes.get(0));
-        allScopes.set(0, scope);
+        allScopes[i] = allScopes[0];
+        allScopes[0] = scope;
         break;
       }
     }
@@ -191,7 +206,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
   private boolean changeView(final PackageSet packageSet, final PsiElement element, final PsiFileSystemItem psiFileSystemItem, final String name, final NamedScopesHolder holder,
                              boolean requestFocus) {
-    if ((packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(psiFileSystemItem.getVirtualFile(), holder)) ||
+    if ((packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(psiFileSystemItem.getVirtualFile(), myProject, holder)) ||
         (psiFileSystemItem instanceof PsiFile && packageSet.contains((PsiFile)psiFileSystemItem, holder))) {
       if (!name.equals(getSubId())) {
         myProjectView.changeView(getId(), name);
@@ -204,18 +219,22 @@ public class ScopeViewPane extends AbstractProjectViewPane {
 
 
 
+  @Override
   public int getWeight() {
     return 3;
   }
 
+  @Override
   public void installComparator() {
     myViewPanel.setSortByType();
   }
 
+  @Override
   public SelectInTarget createSelectInTarget() {
     return new ScopePaneSelectInTarget(myProject);
   }
 
+  @Override
   protected Object exhumeElementFromNode(final DefaultMutableTreeNode node) {
     if (node instanceof PackageDependenciesNode) {
       return ((PackageDependenciesNode)node).getPsiElement();
@@ -223,6 +242,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return super.exhumeElementFromNode(node);
   }
 
+  @Override
   public Object getData(final String dataId) {
     final Object data = super.getData(dataId);
     if (data != null) {
@@ -231,6 +251,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     return myViewPanel != null ? myViewPanel.getData(dataId) : null;
   }
 
+  @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     final ActionCallback callback = myViewPanel.getActionCallback();

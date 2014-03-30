@@ -1,7 +1,7 @@
 /**
  * <warning>@foo</warning>
  */
-public class Foo {
+class Foo {
   /**
    * <warning>@foo</warning>
    */

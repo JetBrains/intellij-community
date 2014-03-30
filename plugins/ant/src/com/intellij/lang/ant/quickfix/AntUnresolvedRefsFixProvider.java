@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntUnresolvedRefsFixProvider extends UnresolvedReferenceQuickFixProvider<PsiReference> {
 
-  public void registerFixes(PsiReference ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull PsiReference ref, @NotNull QuickFixActionRegistrar registrar) {
     if (ref instanceof TagNameReference || ref instanceof AntDomReference) {
       registrar.register(new AntChangeContextFix());
     }

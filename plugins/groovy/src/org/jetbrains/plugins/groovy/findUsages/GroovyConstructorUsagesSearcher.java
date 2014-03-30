@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -84,11 +83,10 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   static void processConstructorUsages(final PsiMethod constructor, final SearchScope searchScope, final Processor<PsiReference> consumer, final SearchRequestCollector collector, final boolean searchGppCalls, final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
 
-    SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(searchScope);
-
     final PsiClass clazz = constructor.getContainingClass();
     if (clazz == null) return;
 
+    SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(searchScope, GroovyScopeUtil.getEffectiveScope(constructor));
     Set<PsiClass> processed = collector.getSearchSession().getUserData(LITERALLY_CONSTRUCTED_CLASSES);
     if (processed == null) {
       collector.getSearchSession().putUserData(LITERALLY_CONSTRUCTED_CLASSES, processed = new ConcurrentHashSet<PsiClass>());
@@ -336,7 +334,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     final GlobalSearchScope maximal = GlobalSearchScope.getScopeRestrictedByFileTypes(allScope, GroovyFileType.GROOVY_FILE_TYPE);
     GlobalSearchScope gppExtensions = new DelegatingGlobalSearchScope(maximal, "groovy.gpp") {
       @Override
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         return super.contains(file) && GppTypeConverter.isGppExtension(file.getExtension());
       }
     };
@@ -393,7 +391,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     return true;
   }
 
-  private static void processImplicitConstructorCall(final PsiMember usage,
+  private static void processImplicitConstructorCall(@NotNull final PsiMember usage,
                                                      final Processor<PsiReference> processor,
                                                      final PsiMethod constructor) {
     if (constructor instanceof GrMethod) {
@@ -406,10 +404,12 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {
           PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();

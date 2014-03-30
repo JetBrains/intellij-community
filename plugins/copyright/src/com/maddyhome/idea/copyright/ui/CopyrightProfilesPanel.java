@@ -33,9 +33,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,6 +82,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     return "Copyright.UI";
   }
 
+  @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
     final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
@@ -94,16 +96,19 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     }
   }
 
+  @Override
   protected boolean wasObjectStored(Object o) {
     return myManager.getCopyrights().contains((CopyrightProfile)o);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Copyright Profiles";
   }
 
-  @Nullable
+  @Override
+  @NotNull
   @NonNls
   public String getHelpTopic() {
     return "copyright.profiles";
@@ -115,6 +120,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final Set<String> profiles = new HashSet<String>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
@@ -152,6 +158,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     myInitialized.set(false);
   }
 
+  @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<AnAction>();
@@ -160,6 +167,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
       }
 
+      @Override
       public void actionPerformed(AnActionEvent event) {
         final String name = askForProfileName("Create Copyright Profile", "");
         if (name == null) return;
@@ -167,12 +175,13 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         addProfileNode(copyrightProfile);
       }
     });
-    result.add(new MyDeleteAction(forAll(Conditions.alwaysTrue())));
+    result.add(new MyDeleteAction());
     result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
       }
 
+      @Override
       public void actionPerformed(AnActionEvent event) {
         final String profileName = askForProfileName("Copy Copyright Profile", "");
         if (profileName == null) return;
@@ -182,12 +191,14 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         addProfileNode(clone);
       }
 
+      @Override
       public void update(AnActionEvent event) {
         super.update(event);
         event.getPresentation().setEnabled(getSelectedObject() != null);
       }
     });
     result.add(new AnAction("Import", "Import", PlatformIcons.IMPORT_ICON) {
+      @Override
       public void actionPerformed(AnActionEvent event) {
         final OpenProjectFileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
           @Override
@@ -205,38 +216,41 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
           }
         };
         descriptor.setTitle("Choose file containing copyright notice");
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
-        if (file == null) return;
-
-        final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(file));
-        if (copyrightProfiles == null) return;
-        if (!copyrightProfiles.isEmpty()) {
-          if (copyrightProfiles.size() == 1) {
-            importProfile(copyrightProfiles.get(0));
-          }
-          else {
-            JBPopupFactory.getInstance()
-              .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
-                @Override
-                public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
-                  return doFinalStep(new Runnable() {
-                    public void run() {
-                      importProfile(selectedValue);
+        FileChooser.chooseFile(descriptor, myProject, null, new Consumer<VirtualFile>() {
+          @Override
+          public void consume(VirtualFile file) {
+            final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
+            if (copyrightProfiles == null) return;
+            if (!copyrightProfiles.isEmpty()) {
+              if (copyrightProfiles.size() == 1) {
+                importProfile(copyrightProfiles.get(0));
+              }
+              else {
+                JBPopupFactory.getInstance()
+                  .createListPopup(new BaseListPopupStep<CopyrightProfile>("Choose profile to import", copyrightProfiles) {
+                    @Override
+                    public PopupStep onChosen(final CopyrightProfile selectedValue, boolean finalChoice) {
+                      return doFinalStep(new Runnable() {
+                        @Override
+                        public void run() {
+                          importProfile(selectedValue);
+                        }
+                      });
                     }
-                  });
-                }
 
-                @NotNull
-                @Override
-                public String getTextFor(CopyrightProfile value) {
-                  return value.getName();
-                }
-              }).showUnderneathOf(myNorthPanel);
+                    @NotNull
+                    @Override
+                    public String getTextFor(CopyrightProfile value) {
+                      return value.getName();
+                    }
+                  }).showUnderneathOf(myNorthPanel);
+              }
+            }
+            else {
+              Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
+            }
           }
-        }
-        else {
-          Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
-        }
+        });
       }
 
       private void importProfile(CopyrightProfile copyrightProfile) {
@@ -254,10 +268,12 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Nullable
   private String askForProfileName(String title, String initialName) {
     return Messages.showInputDialog("New copyright profile name:", title, Messages.getQuestionIcon(), initialName, new InputValidator() {
+      @Override
       public boolean checkInput(String s) {
         return !getAllProfiles().containsKey(s) && s.length() > 0;
       }
 
+      @Override
       public boolean canClose(String s) {
         return checkInput(s);
       }
@@ -290,6 +306,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     myInitialized.set(true);
   }
 
+  @Override
   public void reset() {
     reloadTree();
     super.reset();
@@ -302,21 +319,25 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   public void addItemsChangeListener(final Runnable runnable) {
     addItemsChangeListener(new ItemsChangeListener() {
+      @Override
       public void itemChanged(@Nullable Object deletedItem) {
         SwingUtilities.invokeLater(runnable);
       }
 
+      @Override
       public void itemsExternallyChanged() {
         SwingUtilities.invokeLater(runnable);
       }
     });
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }

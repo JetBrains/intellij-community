@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author nik
@@ -50,6 +51,7 @@ public abstract class XDebuggerUtil {
                                             @NotNull VirtualFile file,
                                             int line,
                                             boolean temporary);
+
   public abstract boolean canPutBreakpointAt(@NotNull Project project, @NotNull VirtualFile file, int line);
 
   public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull Project project, @NotNull XLineBreakpointType<P> type,
@@ -74,7 +76,7 @@ public abstract class XDebuggerUtil {
    * @return source position
    */
   @Nullable
-  public abstract XSourcePosition createPosition(@NotNull VirtualFile file, int line);
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
 
   /**
    * Create {@link XSourcePosition} instance by line number
@@ -83,9 +85,11 @@ public abstract class XDebuggerUtil {
    * @return source position
    */
   @Nullable
-  public abstract XSourcePosition createPositionByOffset(@NotNull VirtualFile file, int offset);
+  public abstract XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
 
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
+
+  public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
 
   public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
 
@@ -104,4 +108,7 @@ public abstract class XDebuggerUtil {
    * @param processor processor
    */
   public abstract void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor);
+
+  @Nullable
+  public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
 }

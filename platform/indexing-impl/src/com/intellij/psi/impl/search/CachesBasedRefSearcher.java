@@ -4,9 +4,10 @@ import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.SearchScope;
@@ -27,8 +28,8 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
     final PsiElement refElement = p.getElementToSearch();
 
     String text = null;
-    if (refElement instanceof PsiFile) {
-      final VirtualFile vFile = ((PsiFile)refElement).getVirtualFile();
+    if (refElement instanceof PsiFileSystemItem && !(refElement instanceof SyntheticFileSystemItem)) {
+      final VirtualFile vFile = ((PsiFileSystemItem)refElement).getVirtualFile();
       if (vFile != null) {
         text = vFile.getNameWithoutExtension();
       }
@@ -47,9 +48,7 @@ public class CachesBasedRefSearcher extends QueryExecutorBase<PsiReference, Refe
     }
     if (StringUtil.isNotEmpty(text)) {
       final SearchScope searchScope = p.getEffectiveSearchScope();
-      assert text != null;
       p.getOptimizer().searchWord(text, searchScope, refElement.getLanguage().isCaseSensitive(), refElement);
     }
   }
-
 }

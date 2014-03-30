@@ -18,4 +18,3 @@ Groovy script
         PsiElement(new line)('\n')
         Literal
           PsiElement(Integer)('3')
-

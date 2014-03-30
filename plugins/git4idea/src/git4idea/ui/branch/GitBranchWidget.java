@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,17 +70,17 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     update();
   }
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 
   @Override
-  public void fileClosed(FileEditorManager source, VirtualFile file) {
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 
@@ -99,6 +99,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     if (repo == null) {
       return null;
     }
+    update(); // update on click
     return GitBranchPopup.getInstance(project, repo).asListPopup();
   }
 
@@ -110,6 +111,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
 
   @NotNull
   @Override
+  @Deprecated
   public String getMaxValue() {
     return myMaxString;
   }
@@ -120,7 +122,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   }
 
   @Override
-  // Updates branch information on click
+  // have no effect since the click opens a list popup, and the consumer is not called for the MultipleTextValuesPresentation
   public Consumer<MouseEvent> getClickConsumer() {
     return new Consumer<MouseEvent>() {
       public void consume(MouseEvent mouseEvent) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
+  @Override
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (vFile == null || project == null){
       return;
     }
@@ -41,15 +42,20 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
         final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
         final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
         ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry, true);
-        window.closeFile(vFile);
+        closeOldFile(vFile, window);
       }
     }
   }
 
+  protected void closeOldFile(VirtualFile vFile, EditorWindow window) {
+    window.closeFile(vFile);
+  }
+
+  @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
-    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(isEnabled(vFile, window));

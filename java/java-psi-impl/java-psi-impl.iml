@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="java-psi-api" exported="" />
     <orderEntry type="module" module-name="core-impl" exported="" />
     <orderEntry type="module" module-name="resources-en" />
-    <orderEntry type="library" name="asm4" level="project" />
+    <orderEntry type="library" name="asm5" level="project" />
   </component>
 </module>
 

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="external-system-api" />
+    <orderEntry type="module" module-name="gradle-tooling-extension" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="gradle" scope="TEST" />
+    <orderEntry type="module-library">
+      <library name="Gradle">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.11-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.11-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.11-rc-1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-ide-1.11-rc-1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/buildSrc/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/buildSrc/src/test/resources" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ui/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ui/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ui/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/cli/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/cpp/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/cpp/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ear/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ide/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ide/src/main/resources" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ivy/src/main/java/org/gradle/api/publish/ivy/tasks" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ivy/src/main/java/org/gradle/api/publish/ivy/plugins" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/ivy/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/osgi/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/osgi/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/antlr/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/jetty/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/maven/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/maven/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/scala/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/scala/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/jacoco/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/plugins/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/plugins/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/plugins/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/publish/src/main/groovy/org/gradle/api/publish/plugins" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/publish/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/wrapper/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/announce/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/launcher/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/launcher/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/launcher/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/open-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/open-api/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core-impl/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/core-impl/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/messaging/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/reporting/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/resources/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/javascript/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/testjar/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/testjar/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-impl/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/multiModule/webinar-impl/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/singleModule/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/singleModule/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/enforcerplugin/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-impl/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-init/src/integTest/resources/org/gradle/buildinit/plugins/MavenConversionIntegrationTest/flatmultimodule/webinar-impl/src/test/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/diagnostics/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/diagnostics/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/diagnostics/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/performance/src/configPlugin" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/performance/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/tooling-api/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/tooling-api/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/code-quality/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/language-jvm/src/main/groovy/org/gradle/language/jvm/tasks" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/language-jvm/src/main/groovy/org/gradle/language/jvm/plugins" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/language-jvm/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/base-services/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/language-base/src/main/groovy/org/gradle/language/base/plugins" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/language-base/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-comparison/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-comparison/src/integTest/resources/org/gradle/api/plugins/buildcomparison/gradle/BuildComparisonIntegrationSpec/compareArchives/source/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/build-comparison/src/integTest/resources/org/gradle/api/plugins/buildcomparison/gradle/BuildComparisonIntegrationSpec/compareArchives/target/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/internal-testing/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/base-services-groovy/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.11-rc-1-src.zip!/gradle-1.11-rc-1/subprojects/base-services-groovy/src/test/groovy" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="GradleGuava">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/guava-jdk5-14.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="Groovy" level="project" />
+  </component>
+</module>
+

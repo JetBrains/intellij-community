@@ -76,6 +76,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
 
   private void registerDisposable() {
     Disposer.register(myFacet, new Disposable() {
+      @Override
       public void dispose() {
         myManager.dispose(FacetPointerImpl.this);
         myFacet = null;
@@ -89,11 +90,13 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     myFacetName = facet.getName();
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myManager.getProject();
   }
 
+  @Override
   public F getFacet() {
     findAndSetFacet();
     return myFacet;
@@ -110,6 +113,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return FacetManager.getInstance(module).findFacet(type.getId(), myFacetName);
   }
 
+  @Override
   @Nullable
   public F findFacet(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     final Module module = modulesProvider.getModule(myModuleName);
@@ -119,26 +123,31 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return facetsProvider.findFacet(module, type.getId(), myFacetName);
   }
 
+  @Override
   @NotNull
   public String getModuleName() {
     return myModuleName;
   }
 
+  @Override
   @NotNull
   public String getFacetName() {
     return myFacetName;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return FacetPointersManager.constructId(myModuleName, myFacetTypeId, myFacetName);
   }
 
+  @Override
   @NotNull
   public String getFacetTypeId() {
     return myFacetTypeId;
   }
 
+  @Override
   @NotNull
   public String getModuleName(@Nullable ModifiableModuleModel moduleModel) {
     if (moduleModel != null && myFacet != null) {
@@ -150,6 +159,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return myModuleName;
   }
 
+  @Override
   @NotNull
   public String getFacetName(@NotNull ModulesProvider modulesProvider, @NotNull FacetsProvider facetsProvider) {
     if (myFacet != null) {
@@ -158,6 +168,7 @@ public class FacetPointerImpl<F extends Facet> implements FacetPointer<F> {
     return myFacetName;
   }
 
+  @Override
   @Nullable
   public FacetType<F, ?> getFacetType() {
     //noinspection unchecked

@@ -17,14 +17,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -89,17 +89,15 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = viewProvider.getPsi(language);
-      if (!HighlightLevelUtil.shouldInspect(psiRoot)) continue;
+      if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
       final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
 
       if (!externalAnnotators.isEmpty()) {
-        boolean errorFound = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().wasErrorFound(myDocument);
-        if (errorFound) return;
+        DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+        boolean errorFound = daemonCodeAnalyzer.getFileStatusMap().wasErrorFound(myDocument);
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-          externalAnnotator.annotate(psiRoot, myAnnotationHolder);
-
-          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor);
+          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor, errorFound);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
           }
@@ -110,8 +108,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap().markFileUpToDate(myDocument, getId());
+    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
 
     myDocumentListener = new DocumentListener() {
       @Override
@@ -156,7 +154,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
                 UpdateHighlightersUtil
                   .setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
               }
-            });
+            }, ModalityState.stateForComponent(myEditor.getComponent()));
           }
         });
       }

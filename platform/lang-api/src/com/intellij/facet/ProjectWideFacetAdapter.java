@@ -20,21 +20,27 @@ package com.intellij.facet;
  * @author nik
  */
 public abstract class ProjectWideFacetAdapter<F extends Facet> implements ProjectWideFacetListener<F> {
+  @Override
   public void firstFacetAdded() {
   }
 
+  @Override
   public void facetAdded(final F facet) {
   }
 
+  @Override
   public void facetConfigurationChanged(final F facet) {
   }
 
+  @Override
   public void beforeFacetRemoved(final F facet) {
   }
 
+  @Override
   public void facetRemoved(final F facet) {
   }
 
+  @Override
   public void allFacetsRemoved() {
   }
 }

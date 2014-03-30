@@ -16,11 +16,13 @@
 
 package com.intellij.ide.macro;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -56,9 +58,7 @@ public abstract class Macro {
     return myCachedPreview;
   }
 
-  /**
-   * @return never null
-   */
+  @NotNull
   static String getPath(VirtualFile file) {
     return file.getPath().replace('/', File.separatorChar);
   }
@@ -69,7 +69,7 @@ public abstract class Macro {
 
   @Nullable
   protected static VirtualFile getVirtualDirOrParent(DataContext dataContext) {
-    VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (vFile != null && !vFile.isDirectory()) {
       vFile = vFile.getParent();
     }
@@ -85,14 +85,17 @@ public abstract class Macro {
       myValue = value;
     }
 
+    @Override
     public String expand(DataContext dataContext) throws ExecutionCancelledException {
       return myValue;
     }
 
+    @Override
     public String getDescription() {
       return myDelegate.getDescription();
     }
 
+    @Override
     public String getName() {
       return myDelegate.getName();
     }

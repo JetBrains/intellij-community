@@ -43,6 +43,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
       if (file instanceof VirtualFileWithId && !DumbService.isDumb(element.getProject())) {
         ImageInfoIndex.processValues(file, new FileBasedIndex.ValueProcessor<ImageInfoIndex.ImageInfo>() {
+          @Override
           public boolean process(VirtualFile file, ImageInfoIndex.ImageInfo value) {
             int imageWidth = value.width;
             int imageHeight = value.height;
@@ -62,7 +63,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
               result[0] = String.format("<html><body><img src=\"%s\" width=\"%s\" height=\"%s\"><p>%sx%s, %sbpp</p><body></html>", url, imageWidth,
                                    imageHeight, value.width, value.height, value.bpp);
             }
-            catch (URISyntaxException e) {
+            catch (URISyntaxException ignored) {
               // nothing
             }
             return true;

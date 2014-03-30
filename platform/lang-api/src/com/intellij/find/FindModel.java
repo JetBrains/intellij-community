@@ -211,7 +211,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (directoryName != null ? !directoryName.equals(findModel.directoryName) : findModel.directoryName != null) return false;
     if (fileFilter != null ? !fileFilter.equals(findModel.fileFilter) : findModel.fileFilter != null) return false;
     if (moduleName != null ? !moduleName.equals(findModel.moduleName) : findModel.moduleName != null) return false;
-    if (myPattern != null ? !myPattern.equals(findModel.myPattern) : findModel.myPattern != null) return false;
     if (myStringToFind != null ? !myStringToFind.equals(findModel.myStringToFind) : findModel.myStringToFind != null) return false;
     if (myStringToReplace != null ? !myStringToReplace.equals(findModel.myStringToReplace) : findModel.myStringToReplace != null) {
       return false;
@@ -658,6 +657,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
+  @Override
   public Object clone() {
     return super.clone();
   }

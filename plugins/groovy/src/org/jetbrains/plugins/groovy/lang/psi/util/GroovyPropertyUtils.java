@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -74,8 +73,7 @@ public class GroovyPropertyUtils {
   @Nullable
   public static PsiMethod findSetterForField(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
-    final Project project = field.getProject();
-    final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+    final String propertyName = field.getName();
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     return findPropertySetter(containingClass, propertyName, isStatic, true);
   }
@@ -83,8 +81,7 @@ public class GroovyPropertyUtils {
   @Nullable
   public static PsiMethod findGetterForField(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
-    final Project project = field.getProject();
-    final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+    final String propertyName = field.getName();
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     return findPropertyGetter(containingClass, propertyName, isStatic, true);
   }
@@ -254,7 +251,7 @@ public class GroovyPropertyUtils {
   }
 
   @Nullable
-  public static String getPropertyNameByGetterName(String methodName, boolean canBeBoolean) {
+  public static String getPropertyNameByGetterName(@NotNull String methodName, boolean canBeBoolean) {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
     }
@@ -275,7 +272,7 @@ public class GroovyPropertyUtils {
   }
 
   @Nullable
-  public static String getPropertyNameBySetterName(String methodName) {
+  public static String getPropertyNameBySetterName(@NotNull String methodName) {
     if (methodName.startsWith(SET_PREFIX) && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }

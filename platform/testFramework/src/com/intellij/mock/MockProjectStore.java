@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,17 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void setProjectFilePath(final String filePath) {
+  public void setProjectFilePath(@NotNull final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
+  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public boolean isReloadPossible(Set<String> componentNames) {
+  public boolean isReloadPossible(@NotNull Set<String> componentNames) {
     throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
   }
 
@@ -68,11 +68,6 @@ public class MockProjectStore implements IProjectStore {
   @Override
   public String getProjectBasePath() {
     throw new UnsupportedOperationException("Method getProjectBasePath is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public String getLocation() {
-    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
   @Override
@@ -105,14 +100,8 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void loadProjectFromTemplate(ProjectImpl project) {
+  public void loadProjectFromTemplate(@NotNull ProjectImpl project) {
     throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  @NotNull
-  public String getProjectFileName() {
-    throw new UnsupportedOperationException("Method getProjectFileName is not yet implemented in " + getClass().getName());
   }
 
   @Override
@@ -122,7 +111,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void initComponent(Object component, final boolean service) {
+  public void initComponent(@NotNull Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 
@@ -152,10 +141,11 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+  public boolean reload(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
+  @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {
     throw new UnsupportedOperationException("Method getStateStorageManager not implemented in " + getClass());

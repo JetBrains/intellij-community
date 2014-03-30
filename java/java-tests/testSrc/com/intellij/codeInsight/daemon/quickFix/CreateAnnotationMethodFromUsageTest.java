@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class CreateAnnotationMethodFromUsageTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class CreateAnnotationMethodFromUsageTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override
@@ -23,4 +25,8 @@ public class CreateAnnotationMethodFromUsageTest extends LightQuickFix15TestCase
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createAnnotationMethodFromUsage";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }

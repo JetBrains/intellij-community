@@ -59,6 +59,30 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
   }
 
+  public boolean remove(@NotNull K key, @NotNull V value) {
+    Object current = myMap.get(key);
+    if (current == null) {
+      return false;
+    }
+    if (current instanceof Object[]) {
+      Object[] curArr = (Object[])current;
+      Object[] newArr = ArrayUtil.remove(curArr, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
+      myMap.put(key, newArr);
+      return newArr.length == curArr.length-1;
+    }
+
+    if (value.equals(current)) {
+      myMap.remove(key);
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean removeAllValues(@NotNull K key) {
+    return myMap.remove(key) != null;
+  }
+
   @NotNull
   public Set<K> keySet() {
     return myMap.keySet();
@@ -95,6 +119,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
 
   public int size() {
     return myMap.size();
+  }
+
+  public boolean containsKey(@NotNull K key) {
+    return myMap.containsKey(key);
   }
 
   public int valuesForKey(@NotNull K key) {
@@ -146,9 +174,26 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     //noinspection unchecked
     return EMPTY;
   }
-  private static final MostlySingularMultiMap EMPTY = new MostlySingularMultiMap() {
+  private static final MostlySingularMultiMap EMPTY = new EmptyMap();
+
+  private static class EmptyMap extends MostlySingularMultiMap {
     @Override
     public void add(@NotNull Object key, @NotNull Object value) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean remove(@NotNull Object key, @NotNull Object value) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean removeAllValues(@NotNull Object key) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public void clear() {
       throw new IncorrectOperationException();
     }
 
@@ -186,7 +231,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     @NotNull
     @Override
     public Iterable get(@NotNull Object name) {
-      return EmptyIterable.getInstance();
+      return ContainerUtil.emptyList();
     }
-  };
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,19 +67,19 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
   private void installVirtualFileListener() {
 
     VirtualFileAdapter myVirtualFileListener = new VirtualFileAdapter() {
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
-      public void fileCreated(VirtualFileEvent event) {
+      public void fileCreated(@NotNull VirtualFileEvent event) {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
-      public void fileDeleted(VirtualFileEvent event) {
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
 
-      public void fileMoved(VirtualFileMoveEvent event) {
+      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
         getUpdater().addSubtreeToUpdate(getRootNode());
       }
     };

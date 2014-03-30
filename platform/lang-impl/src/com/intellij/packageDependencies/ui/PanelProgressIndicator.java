@@ -33,7 +33,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   private final MyProgressPanel myProgressPanel;
   private boolean myPaintInQueue;
   private final Consumer<JComponent> myComponentUpdater;
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public PanelProgressIndicator(Consumer<JComponent> componentUpdater) {
     myProgressPanel = new MyProgressPanel();
@@ -41,11 +41,13 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     myComponentUpdater = componentUpdater;
   }
 
+  @Override
   public void start() {
     super.start();
     myComponentUpdater.consume(myProgressPanel.myPanel);
   }
 
+  @Override
   public void stop() {
     super.stop();
     if (isCanceled()) {
@@ -55,12 +57,14 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     }
   }
 
+  @Override
   public void setText(String text) {
     if (!text.equals(getText())) {
       super.setText(text);
     }
   }
 
+  @Override
   public void setFraction(double fraction) {
     if (fraction != getFraction()) {
       super.setFraction(fraction);
@@ -68,6 +72,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
   }
 
 
+  @Override
   public void setIndeterminate(final boolean indeterminate) {
     if (isIndeterminate() == indeterminate) return;
     super.setIndeterminate(indeterminate);
@@ -78,9 +83,11 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     checkCanceled();
     myPaintInQueue = true;
     myAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         myAlarm.cancelAllRequests();
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             myPaintInQueue = false;
             myProgressPanel.myTextLabel.setText(scanningPackagesMessage);

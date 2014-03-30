@@ -17,6 +17,7 @@ package com.intellij.internal.psiView;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -32,13 +33,13 @@ import com.intellij.openapi.project.Project;
 public class PsiViewerAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     new PsiViewerDialog(project, false, null, null).show();
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     final Presentation p = e.getPresentation();
     if (project == null) {
       p.setVisible(false);

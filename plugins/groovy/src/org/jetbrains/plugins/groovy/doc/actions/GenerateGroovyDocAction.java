@@ -39,7 +39,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
 
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) return;

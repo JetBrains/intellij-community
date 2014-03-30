@@ -2,7 +2,6 @@
   <property name="project.home" value="${basedir}"/>
   <property name="out.dir" value="${project.home}/out"/>
   <property name="tmp.dir" value="${project.home}/out/tmp"/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
 
   <target name="cleanup">
     <delete dir="${out.dir}" failonerror="false"/>
@@ -17,12 +16,11 @@
     <attribute name="script" />
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx512m -XX:MaxPermSize=152m"/>
-
+        <jvmarg line="-Xmx612m -XX:MaxPermSize=152m"/>
+        <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
         <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
-        <arg line="-lib ${gant.home}/lib/"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>

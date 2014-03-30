@@ -19,7 +19,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -41,7 +44,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 public class MavenArtifactSearchPanel extends JPanel {
@@ -55,15 +58,18 @@ public class MavenArtifactSearchPanel extends JPanel {
 
   private final Alarm myAlarm;
 
+  private final Map<Pair<String, String>, String> myManagedDependenciesMap;
+
   public MavenArtifactSearchPanel(Project project,
                                   String initialText,
                                   boolean classMode,
                                   Listener listener,
-                                  MavenArtifactSearchDialog dialog) {
+                                  MavenArtifactSearchDialog dialog, Map<Pair<String, String>, String> managedDependenciesMap) {
     myProject = project;
     myDialog = dialog;
     myClassMode = classMode;
     myListener = listener;
+    myManagedDependenciesMap = managedDependenciesMap;
 
     initComponents(initialText);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, dialog.getDisposable());
@@ -74,7 +80,6 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   private void initComponents(String initialText) {
-    mySearchField = new JTextField(initialText);
     myResultList = new Tree();
     myResultList.getExpandableItemsHandler().setEnabled(false);
     myResultList.getEmptyText().setText("Loading...");
@@ -85,6 +90,30 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   : new MyArtifactCellRenderer(myResultList);
     myResultList.setCellRenderer(renderer);
     myResultList.setRowHeight(renderer.getPreferredSize().height);
+
+    mySearchField = new JTextField(initialText);
+    mySearchField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int d;
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          d = 1;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_UP) {
+          d = -1;
+        }
+        else {
+          return;
+        }
+
+        int row = myResultList.getSelectionModel().getLeadSelectionRow();
+        row += d;
+
+        if (row >=0 && row < myResultList.getRowCount()) {
+          myResultList.setSelectionRow(row);
+        }
+      }
+    });
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
@@ -97,14 +126,16 @@ public class MavenArtifactSearchPanel extends JPanel {
     add(pane, BorderLayout.CENTER);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         scheduleSearch();
       }
     });
 
     myResultList.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
-        if (myAlarm.getActiveRequestCount() > 0) return;
+        if (!myAlarm.isEmpty()) return;
 
         boolean hasSelection = !myResultList.isSelectionEmpty();
         myListener.canSelectStateChanged(MavenArtifactSearchPanel.this, hasSelection);
@@ -123,11 +154,14 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
-        Object sel = myResultList.getLastSelectedPathComponent();
-        if (sel != null && myResultList.getModel().isLeaf(sel)) {
-          myListener.itemSelected();
-          return true;
+      protected boolean onDoubleClick(MouseEvent e) {
+        final TreePath path = myResultList.getPathForLocation(e.getX(), e.getY());
+        if (path != null && myResultList.isPathSelected(path)) {
+          Object sel = path.getLastPathComponent();
+          if (sel != null && myResultList.getModel().isLeaf(sel)) {
+            myListener.itemSelected();
+            return true;
+          }
         }
         return false;
       }
@@ -143,6 +177,7 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           try {
             doSearch(text);
@@ -154,12 +189,38 @@ public class MavenArtifactSearchPanel extends JPanel {
       }, 500);
   }
 
+  private void resortUsingDependencyVersionMap(List<MavenArtifactSearchResult> result) {
+    for (MavenArtifactSearchResult searchResult : result) {
+      if (searchResult.versions.isEmpty()) continue;
+
+      MavenArtifactInfo artifactInfo = searchResult.versions.get(0);
+      final String managedVersion = myManagedDependenciesMap.get(Pair.create(artifactInfo.getGroupId(), artifactInfo.getArtifactId()));
+      if (managedVersion != null) {
+        Collections.sort(searchResult.versions, new Comparator<MavenArtifactInfo>() {
+          @Override
+          public int compare(MavenArtifactInfo o1, MavenArtifactInfo o2) {
+            String v1 = o1.getVersion();
+            String v2 = o2.getVersion();
+            if (Comparing.equal(v1, v2)) return 0;
+            if (managedVersion.equals(v1)) return -1;
+            if (managedVersion.equals(v2)) return 1;
+            return 0;
+          }
+        });
+      }
+    }
+  }
+
   private void doSearch(String searchText) {
     MavenSearcher searcher = myClassMode ? new MavenClassSearcher() : new MavenArtifactSearcher();
     List<MavenArtifactSearchResult> result = searcher.search(myProject, searchText, 200);
+
+    resortUsingDependencyVersionMap(result);
+
     final TreeModel model = new MyTreeModel(result);
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (!myDialog.isVisible()) return;
 
@@ -197,14 +258,17 @@ public class MavenArtifactSearchPanel extends JPanel {
       myItems = items;
     }
 
+    @Override
     public Object getRoot() {
       return myItems;
     }
 
+    @Override
     public Object getChild(Object parent, int index) {
       return getList(parent).get(index);
     }
 
+    @Override
     public int getChildCount(Object parent) {
       List list = getList(parent);
       assert list != null : parent;
@@ -217,25 +281,30 @@ public class MavenArtifactSearchPanel extends JPanel {
       return null;
     }
 
+    @Override
     public boolean isLeaf(Object node) {
       return node != myItems && (getList(node) == null || getChildCount(node) < 2);
     }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
       return getList(parent).indexOf(child);
     }
 
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
     }
 
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
     }
 
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
     }
   }
 
-  private static class MyArtifactCellRenderer extends JPanel implements TreeCellRenderer {
+  private class MyArtifactCellRenderer extends JPanel implements TreeCellRenderer {
     protected SimpleColoredComponent myLeftComponent = new SimpleColoredComponent();
     protected SimpleColoredComponent myRightComponent = new SimpleColoredComponent();
 
@@ -278,14 +347,11 @@ public class MavenArtifactSearchPanel extends JPanel {
           Insets insets = tree.getInsets();
           w -= insets.left + insets.right;
 
-          Container parent = tree.getParent();
-          if (parent != null) {
-            Container parentParent = parent.getParent();
-            if (parentParent instanceof JScrollPane) {
-              JScrollBar sb = ((JScrollPane)parentParent).getVerticalScrollBar();
-              if (sb != null) {
-                w -= sb.getWidth();
-              }
+          JScrollPane scrollPane = JBScrollPane.findScrollPane(tree);
+          if (scrollPane != null) {
+            JScrollBar sb = scrollPane.getVerticalScrollBar();
+            if (sb != null) {
+              w -= sb.getWidth();
             }
           }
           return w;
@@ -293,6 +359,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       });
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                                   boolean hasFocus) {
       myLeftComponent.clear();
@@ -311,7 +378,17 @@ public class MavenArtifactSearchPanel extends JPanel {
       }
       else if (value instanceof MavenArtifactInfo) {
         MavenArtifactInfo info = (MavenArtifactInfo)value;
-        myLeftComponent.append(info.getVersion(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        String version = info.getVersion();
+
+        String managedVersion = myManagedDependenciesMap.get(Pair.create(info.getGroupId(), info.getArtifactId()));
+
+        if (managedVersion != null && managedVersion.equals(version)) {
+          myLeftComponent.append(version, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          myLeftComponent.append(" (from <dependencyManagement>)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+        else {
+          myLeftComponent.append(version, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
       }
 
       return this;
@@ -334,7 +411,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     }
   }
 
-  private static class MyClassCellRenderer extends MyArtifactCellRenderer {
+  private class MyClassCellRenderer extends MyArtifactCellRenderer {
 
     private MyClassCellRenderer(Tree tree) {
       super(tree);

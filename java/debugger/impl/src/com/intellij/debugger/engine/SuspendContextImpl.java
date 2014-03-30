@@ -50,12 +50,12 @@ public abstract class SuspendContextImpl implements SuspendContext {
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
   private final EventSet myEventSet;
-  private volatile boolean  myIsResumed;
+  private volatile boolean myIsResumed;
 
   public ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
-  public volatile boolean  myInProgress;
-  private final HashSet<ObjectReference>       myKeptReferences = new HashSet<ObjectReference>();
-  private EvaluationContextImpl          myEvaluationContext = null;
+  public volatile boolean myInProgress;
+  private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
+  private EvaluationContextImpl myEvaluationContext = null;
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess, int suspendPolicy, int eventVotes, EventSet set) {
     myDebugProcess = debugProcess;
@@ -82,7 +82,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
           try {
             objectReference.enableCollection();
           }
-          catch (UnsupportedOperationException e) {
+          catch (UnsupportedOperationException ignored) {
             // ignore: some J2ME implementations does not provide this operation
           }
         }
@@ -115,25 +115,30 @@ public abstract class SuspendContextImpl implements SuspendContext {
     return myEventSet;
   }
 
+  @Override
+  @NotNull
   public DebugProcessImpl getDebugProcess() {
     assertNotResumed();
     return myDebugProcess;
   }
 
+  @Override
   public StackFrameProxyImpl getFrameProxy() {
     assertNotResumed();
     try {
       return myThread != null && myThread.frameCount() > 0 ? myThread.frame(0) : null;
     }
-    catch (EvaluateException e) {
+    catch (EvaluateException ignored) {
       return null;
     }
   }
 
+  @Override
   public ThreadReferenceProxyImpl getThread() {
     return myThread;
   }
 
+  @Override
   public int getSuspendPolicy() {
     assertNotResumed();
     return mySuspendPolicy;
@@ -145,7 +150,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
   }
 
   public boolean isExplicitlyResumed(ThreadReferenceProxyImpl thread) {
-    return myResumedThreads != null ? myResumedThreads.contains(thread) : false;
+    return myResumedThreads != null && myResumedThreads.contains(thread);
   }
 
   public boolean suspends(ThreadReferenceProxyImpl thread) {
@@ -194,7 +199,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
         try {
           reference.disableCollection();
         }
-        catch (UnsupportedOperationException e) {
+        catch (UnsupportedOperationException ignored) {
           // ignore: some J2ME implementations does not provide this operation
         }
       }

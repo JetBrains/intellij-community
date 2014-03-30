@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -30,20 +31,17 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/formatter/"
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-  }
-
   public void testAddign1() throws Throwable { doTest(); }
   public void testArg1() throws Throwable { doTest(); }
   public void testArg2() throws Throwable { doTest(); }
   public void testBin1() throws Throwable { doTest(); }
   public void testBin2() throws Throwable { doTest(); }
-  public void testBlockExpr1() throws Throwable { doTest(); }
+  public void testBin3() throws Throwable { doTest(); }
+  public void testBlockExpr1() throws Throwable {
+    //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    doTest();
+  }
   public void testClass1() throws Throwable { doTest(); }
   public void testClo1() throws Throwable { doTest(); }
   public void testClo2() throws Throwable { doTest(); }
@@ -109,13 +107,16 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testWhileCStyle() throws Throwable { doTest(); }
   public void testFields() throws Throwable { doTest(); }
 
-  public void testClosureAfterLineComment() throws Throwable { doTest(); }
+  public void testClosureAfterLineComment() throws Throwable {
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    doTest();
+  }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
   public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
-  public void testSpockTable() throws Throwable { doTest(); }
-  public void testSpockTableComments() throws Throwable { doTest(); }
-  public void testSpockTableWithStringComment() throws Throwable { doTest(); }
+  //public void testSpockTable() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  //public void testSpockTableComments() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
+  //public void testSpockTableWithStringComment() throws Throwable {myFixture.addClass('package spock.lang; public class Specification{}'); doTest(); }
 
   public void testElseIfs() throws Throwable {
     groovySettings.SPECIAL_ELSE_IF_TREATMENT = false;
@@ -204,8 +205,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
 
   public void doTest() {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
+    def (String before, String after) = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
+    checkFormatting(before, StringUtil.trimEnd(after, "\n"));
   }
 
   public void testJavadocLink() throws Throwable {
@@ -246,6 +247,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   void testNonIndentAfterClosureQualifier() { doTest() }
   void testNonIndentAfterClosureQualifier2() { doTest() }
+  void testNonIndentAfterClosureQualifier3() { doTest() }
 
   void testAssertDescriptionIndent() { doTest() }
 
@@ -257,15 +259,557 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   void testImplementsList() { doTest() }
 
-  private void doGeeseTest() {
-    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
-    boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
+  void testSimpleClassInOneLine() {
+    groovySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false
+    checkFormatting('''\
+class A {}
+class B {
+}
+''', '''\
+class A {
+}
+
+class B {
+}
+''')
+  }
+
+  void testSimpleMethodInOneLine() {
+    groovySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
+    checkFormatting('''\
+def foo() {2}
+''', '''\
+def foo() {
+  2
+}
+''')
+
+    groovySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    checkFormatting('''\
+def foo() {2}
+''', '''\
+def foo() { 2 }
+''')
+
+  }
+
+  void testSimpleBlocksInOneLine() {
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
+    checkFormatting('''\
+if (abc) {return 2}
+''', '''\
+if (abc) { return 2 }
+''')
+
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    checkFormatting('''\
+if (abc) {return 2}
+''', '''\
+if (abc) {
+  return 2
+}
+''')
+  }
+
+  void testControlStatementsInOneLine() {
+    groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
+    checkFormatting('''\
+if (abc) return 2
+''', '''\
+if (abc) return 2
+''')
+    checkFormatting('''\
+while (abc) return 2
+''', '''\
+while (abc) return 2
+''')
+    checkFormatting('''\
+for (abc) return 2
+''', '''\
+for (abc) return 2
+''')
+
+    groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    checkFormatting('''\
+if (abc) return 2
+''', '''\
+if (abc)
+  return 2
+''')
+    checkFormatting('''\
+while (abc) return 2
+''', '''\
+while (abc)
+  return 2
+''')
+
+    checkFormatting('''\
+for (;abc;) return 2
+''', '''\
+for (; abc;)
+  return 2
+''')
+
+  }
+
+  void testWrapThrows() {
+    groovySettings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+
+    checkFormatting('''\
+def foo() throws X {}
+''', '''\
+def foo()
+    throws X {}
+''')
+  }
+
+  void testSpacesWithinClosure0() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''def cl = {print 2}''', '''def cl = { print 2 }''')
+  }
+
+  void testSpacesWithinClosure1() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {
+print 2}
+''', '''\
+def cl = {
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure2() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {->
+print 2}
+''', '''\
+def cl = { ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure3() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {def a->
+print 2}
+''', '''\
+def cl = { def a ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure4() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {
+def a->
+print 2}
+''', '''\
+def cl = {
+  def a ->
+    print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure5() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''def cl = { print 2 }''', '''def cl = {print 2}''')
+  }
+
+  void testSpacesWithinClosure6() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = {
+print 2}
+''', '''\
+def cl = {
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure7() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = { ->
+print 2}
+''', '''\
+def cl = {->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure8() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = { def a->
+print 2}
+''', '''\
+def cl = {def a ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure9() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = {
+def a->
+print 2}
+''', '''\
+def cl = {
+  def a ->
+    print 2
+}
+''')
+  }
+
+  void testLineFeedsInMethodParams0() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams1() {
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(String s,
+        int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams2() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams3() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_PARENTHESES = true
+    checkFormatting('''\
+def foo(String s, int x) {}
+''', '''\
+def foo( String s, int x ) {}
+''')
+  }
+
+  void testLineFeedsInMethodCall0() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+    x)
+''', '''\
+foo(
+    s,
+    x)
+''')
+  }
+
+  void testLineFeedsInMethodCall1() {
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+x)
+''', '''\
+foo(s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall2() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+ x)
+''', '''\
+foo(
+    s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall3() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo(s, x)
+''', '''\
+foo( s, x )
+''')
+  }
+
+  void testLineFeedsInMethodCall4() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo()
+''', '''\
+foo( )
+''')
+  }
+
+  void testAlignMethodParentheses() {
+    groovySettings.ALIGN_MULTILINE_METHOD_BRACKETS = true
+    checkFormatting('''\
+def foooo(
+String s
+) {}
+''', '''\
+def foooo(
+    String s
+         ) {}
+''')
+  }
+
+  void testAlignFor() {
+    groovySettings.ALIGN_MULTILINE_FOR = true
+    checkFormatting('''\
+for (int i = 3;
+i<2;
+i++) print 2
+''', '''\
+for (int i = 3;
+     i < 2;
+     i++) print 2
+''')
+  }
+
+  void testBinaryOperationSingOnNewLine() {
+    groovySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true
+
+    checkFormatting('''\
+(1 +
+ 2) + 3
+''', '''\
+(1
+    +
+    2)
+    + 3
+''')
+  }
+
+  void testParenthesized0() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3)
+''')
+  }
+
+  void testParenthesized1() {
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(2 +
+    3
+)
+''')
+  }
+
+  void testParenthesized2() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3
+)
+''')
+  }
+
+  void testParenthesized3() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+    3
+)
+''')
+  }
+
+  void testAlignBinaryOperands() {
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3 +
+4)
+''', '''\
+(2 +
+ 3 +
+ 4)
+''')
+  }
+
+
+  void testConditional0() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?
+cde:
+xyz
+''', '''\
+print abc ?
+      cde :
+      xyz
+'''
+  }
+
+  void testConditional1() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?:
+xyz
+''', '''\
+print abc ?:
+      xyz
+'''
+  }
+
+  void testConditional2() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting('''\
+print abc ? cde
+:xyz''', '''\
+print abc ? cde
+          : xyz''')
+  }
+
+  void testLabelsInBasicMode() {
+    groovySettings.indentOptions.INDENT_SIZE = 4
+    groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
+
+    checkFormatting('''\
+def bar() {
+  abc:
+  foo()
+  bar()
+}
+''', '''\
+def bar() {
+  abc:
+    foo()
+    bar()
+}
+''')
+  }
+
+  void testLabels() {
+    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
+    checkFormatting('''\
+def foo() {
+abc:foo()
+bar()
+}
+''', '''\
+def foo() {
+  abc: foo()
+  bar()
+}
+''')
+  }
+
+  void testGdocAsterisks() {
+    checkFormatting('''\
+/*****
+*
+*****/
+''', '''\
+/*****
+ *
+ *****/
+''')
+  }
+
+  void testInKeyword() {
+    checkFormatting('foo in  bar', 'foo in bar')
+  }
+
+  void testGDocAfterImports() { doTest() }
+  void testGroovyDocAfterImports2() { doTest() }
+
+  void testRegexExpressions() { doTest() }
+
+  void testSpreadArg() { doTest() }
+
+  void testExtraLines() { doTest() }
+
+  void testLabelWithDescription() {
+    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
+
+    boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
+    int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE
     try {
-      customSettings.USE_FLYING_GEESE_BRACES = true;
-      doTest();
+      customSettings.INDENT_LABEL_BLOCKS = true
+      commonSettings.indentOptions.LABEL_INDENT_SIZE = 2
+      doTest()
     }
     finally {
-      customSettings.USE_FLYING_GEESE_BRACES = oldvalue;
+      customSettings.INDENT_LABEL_BLOCKS = indentLabelBlocks
+      commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
+    }
+  }
+
+  void testNoLineFeedsInGString() { doTest() }
+
+  private void doGeeseTest() {
+    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES
+    try {
+      customSettings.USE_FLYING_GEESE_BRACES = true
+      doTest()
+    }
+    finally {
+      customSettings.USE_FLYING_GEESE_BRACES = oldvalue
     }
   }
 }

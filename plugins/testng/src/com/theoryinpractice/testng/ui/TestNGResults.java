@@ -23,11 +23,13 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
@@ -41,6 +43,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.config.ToggleBooleanProperty;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -88,10 +91,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
                        final TestNGConsoleView console,
-                       final RunnerSettings runnerSettings,
-                       final ConfigurationPerRunnerSettings configurationSettings) {
+                       final ExecutionEnvironment environment) {
     super(component, console.getConsole().createConsoleActions(), console.getProperties(),
-          runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
+          environment, TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.project = configuration.getProject();
 
     model = new TestNGResultsTableModel(project);
@@ -148,7 +150,19 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   @Override
   protected ToolbarPanel createToolbarPanel() {
-    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myRunnerSettings, myConfigurationSettings, this);
+    final ToolbarPanel panel = new ToolbarPanel(getProperties(), myEnvironment, this){
+      @Override
+      protected void appendAdditionalActions(DefaultActionGroup actionGroup,
+                                             TestConsoleProperties properties,
+                                             ExecutionEnvironment environment, JComponent parent) {
+        super.appendAdditionalActions(actionGroup, properties, environment, parent);
+        actionGroup.addAction(new ToggleBooleanProperty(
+          ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name"),
+                                                    null,
+                                                    AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun,
+                                                    properties, TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED)).setAsSecondary(true);
+      }
+    };
     panel.setModel(this);
     return panel;
   }
@@ -191,6 +205,11 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       sb.append(" (").append(time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s").append(")  ");
     }
     return sb.toString();
+  }
+  
+  public String getTime() {
+    final long time = end - start;
+    return time == 0 ? "0.0 s" : NumberFormat.getInstance().format((double)time / 1000.0) + " s";
   }
 
   public TestProxy testStarted(TestResultMessage result) {
@@ -305,6 +324,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     myStatusLine.setFraction((double)count / total);
     updateStatusLine();
+    TestsUIUtil.showIconProgress(project, count, total, failed.size());
   }
 
   private TestProxy getPackageClassNodeFor(final TestResultMessage result) {
@@ -378,6 +398,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           myStatusLine.setStatusColor(ColorProgressBar.GREEN);
         }
         rootNode.setInProgress(false);
+        TestStatusListener.notifySuiteFinished(rootNode);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
           selectTest(rootNode.getFirstDefect());
         }
@@ -434,6 +455,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   public void dispose() {
     super.dispose();
     tree.getSelectionModel().removeTreeSelectionListener(openSourceListener);
+    TestsUIUtil.clearIconProgress(project);
   }
 
   public TestProxy getFailedToStart() {

@@ -23,7 +23,9 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -57,15 +59,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private Map<Change, LocalChangeList> myChangeListsMap;
 
   private final ChangesBrowserExtender myExtender;
+  private final Disposable myParentDisposable;
   private final Runnable myRebuildListListener;
 
   // todo terrible constructor
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
+                                   Disposable parentDisposable,
                                    final ChangeList initialListSelection,
                                    final boolean capableOfExcludingChanges,
                                    final boolean highlightProblems, final Runnable rebuildListListener, @Nullable final Runnable inclusionListener,
                                    final AnAction... additionalActions) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
+    myParentDisposable = parentDisposable;
     myRebuildListListener = rebuildListListener;
 
     myChangeListChooser = new ChangeListChooser(changeLists);
@@ -74,6 +79,18 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
     myExtender = new Extender(project, this, additionalActions);
+
+    ActionManager actionManager = ActionManager.getInstance();
+    final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
+    actionManager.addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (moveAction.equals(action)) {
+          rebuildList();
+        }
+      }
+    }, myParentDisposable);
+
   }
 
   @Override
@@ -205,13 +222,8 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        rebuildList();
-      }
-    };
-
+    ActionManager actionManager = ActionManager.getInstance();
+    final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(moveAction);
   }

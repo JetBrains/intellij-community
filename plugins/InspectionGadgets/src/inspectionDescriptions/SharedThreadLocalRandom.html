@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports <b>java.util.concurrent.ThreadLocalRandom</b> instances which might be shared between threads.
+A <b>ThreadLocalRandom</b> might be shared between threads and is reported when it is assigned to a field,
+used as a method argument or assigned to a local variable and used in anonymous or nested classes.
+A <b>ThreadLocalRandom</b> should not be shared between threads because that is not thread-safe.
+<p>
+Usages of <b>ThreadLocalRandom</b> should typically look like <b>ThreadLocalRandom.current().nextInt(...)</b>
+(or <b>nextDouble(...)</b> etc.).
+When all usages are in this form, <b>ThreadLocalRandom</b> instances can not be used accidentally by multiple threads.
+<!-- tooltip end -->
+<p>
+<small>New in 13.1</small>
+</body>
+</html>

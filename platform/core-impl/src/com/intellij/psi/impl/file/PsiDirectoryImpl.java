@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +323,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public boolean isPhysical() {
-    return !(myFile.getFileSystem() instanceof NonPhysicalFileSystem) && !(myFile.getFileSystem().getProtocol().equals("temp"));
+    return !(myFile.getFileSystem() instanceof NonPhysicalFileSystem) && !myFile.getFileSystem().getProtocol().equals("temp");
   }
 
   /**
@@ -415,7 +415,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
   }
 
-  private static void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+  private static void updateAddedFile(@NotNull PsiFile copyPsi) throws IncorrectOperationException {
     final UpdateAddedFileProcessor processor = UpdateAddedFileProcessor.forElement(copyPsi);
     if (processor != null) {
       final TreeElement tree = (TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi);

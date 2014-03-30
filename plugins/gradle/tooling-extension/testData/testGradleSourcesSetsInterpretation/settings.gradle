@@ -1,0 +1,9 @@
+//noinspection GrPackage
+
+include 'defaultJavaModule'
+include 'moduleWithSourceSetDirBothAsResourceAndJava'
+include 'moduleWithCustomSourceSet'
+include 'withIntegrationTests'
+include 'withIdeaPluginCustomization1'
+include 'withIdeaPluginCustomization2'
+include 'withIdeaPluginCustomization3'

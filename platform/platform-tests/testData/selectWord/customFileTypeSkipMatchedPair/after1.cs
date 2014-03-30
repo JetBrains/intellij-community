@@ -1,0 +1,1 @@
+if (!<selection>gets_s</selection>(buffer, sizeof(buffer)-1))

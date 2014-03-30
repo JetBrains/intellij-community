@@ -1,0 +1,6 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="xxx">
+  <packages>
+     <package name="p.*"/>
+  </packages>
+</suite>

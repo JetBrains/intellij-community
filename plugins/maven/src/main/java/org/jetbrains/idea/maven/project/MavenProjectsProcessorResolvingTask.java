@@ -24,19 +24,22 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 public class MavenProjectsProcessorResolvingTask extends MavenProjectsProcessorBasicTask {
   @NotNull private final MavenGeneralSettings myGeneralSettings;
   @Nullable private final Runnable myOnCompletion;
+  @NotNull private final ResolveContext myContext;
 
   public MavenProjectsProcessorResolvingTask(@NotNull MavenProject project,
                                              @NotNull MavenProjectsTree tree,
                                              @NotNull MavenGeneralSettings generalSettings,
-                                             @Nullable Runnable onCompletion) {
+                                             @Nullable Runnable onCompletion,
+                                             @NotNull ResolveContext context) {
     super(project, tree);
     myGeneralSettings = generalSettings;
     myOnCompletion = onCompletion;
+    myContext = context;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.resolve(project, myMavenProject, myGeneralSettings, embeddersManager, console, indicator);
+    myTree.resolve(project, myMavenProject, myGeneralSettings, embeddersManager, console, myContext, indicator);
     if (myOnCompletion != null) myOnCompletion.run();
   }
 }

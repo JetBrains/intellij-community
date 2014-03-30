@@ -21,21 +21,12 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 3:09 PM
- *
- *         just interface for checkin handlers creation
- */
 public interface BaseCheckinHandlerFactory {
   /**
    * Creates a handler for a single Checkin Project or Checkin File operation.
    *
-   *
    * @param panel the class which can be used to retrieve information about the files to be committed,
    *              and to get or set the commit message.
-   * @param commitContext
    * @return the handler instance.
    */
   @NotNull

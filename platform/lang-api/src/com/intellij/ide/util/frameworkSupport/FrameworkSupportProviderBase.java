@@ -46,6 +46,7 @@ public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvi
     return "Version:";
   }
 
+  @Override
   @NotNull
   public FrameworkSupportConfigurableBase createConfigurable(final @NotNull FrameworkSupportModel model) {
     return new FrameworkSupportConfigurableBase(this, model, getVersions(), getVersionLabelText());

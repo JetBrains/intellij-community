@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,11 +37,12 @@ import java.util.UUID;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
-  public static final int MEGABYTE = 1024 * 1024;
-  public static final int LARGE_FOR_CONTENT_LOADING = 20 * MEGABYTE;
+  private static final int KILOBYTE = 1024;
+  public static final int MEGABYTE = KILOBYTE * KILOBYTE;
+  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
 
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
-  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+  private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   public static final FileFilter ALL_FILES = new FileFilter() {
@@ -71,6 +74,13 @@ public class FileUtilRt {
     return fileName.substring(index + 1);
   }
 
+  @NotNull
+  public static CharSequence getExtension(@NotNull CharSequence fileName) {
+    int index = StringUtilRt.lastIndexOf(fileName, '.', 0, fileName.length());
+    if (index < 0) return "";
+    return fileName.subSequence(index + 1, fileName.length());
+  }
+
   public static boolean extensionEquals(@NotNull String fileName, @NotNull String extension) {
     int extLen = extension.length();
     if (extLen == 0) {
@@ -82,13 +92,18 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+  public static String toSystemDependentName(@NonNls @NotNull String fileName) {
+    return toSystemDependentName(fileName, File.separatorChar);
   }
 
   @NotNull
-  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('\\', '/');
+  public static String toSystemDependentName(@NonNls @NotNull String fileName, final char separatorChar) {
+    return fileName.replace('/', separatorChar).replace('\\', separatorChar);
+  }
+
+  @NotNull
+  public static String toSystemIndependentName(@NonNls @NotNull String fileName) {
+    return fileName.replace('\\', '/');
   }
 
   @Nullable
@@ -376,6 +391,50 @@ public class FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull File file) throws IOException {
+    return loadLines(file.getPath());
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return loadLines(file.getPath(), encoding);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path) throws IOException {
+    return loadLines(path, null);
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull String path, @Nullable @NonNls String encoding) throws IOException {
+    InputStream stream = new FileInputStream(path);
+    try {
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      InputStreamReader in = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
+      BufferedReader reader = new BufferedReader(in);
+      try {
+        return loadLines(reader);
+      }
+      finally {
+        reader.close();
+      }
+    }
+    finally {
+      stream.close();
+    }
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
+    List<String> lines = new ArrayList<String>();
+    String line;
+    while ((line = reader.readLine()) != null) {
+      lines.add(line);
+    }
+    return lines;
+  }
+
+  @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final byte[] bytes = BUFFER.get();
@@ -438,31 +497,45 @@ public class FileUtilRt {
 
   public static boolean delete(@NotNull File file) {
     if (file.isDirectory()) {
-      if (!deleteChildren(file)) return false;
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
+      }
     }
+
     return deleteFile(file);
   }
 
-  protected static boolean deleteChildren(@NotNull File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File child : files) {
-        if (!delete(child)) return false;
-      }
-    }
-    return true;
+  public interface RepeatableIOOperation<T, E extends Throwable> {
+    @Nullable T execute(boolean lastAttempt) throws E;
   }
 
-  protected static boolean deleteFile(@NotNull File file) {
-    for (int i = 0; i < MAX_FILE_DELETE_ATTEMPTS; i++) {
-      if (file.delete() || !file.exists()) return true;
+  public static @Nullable <T, E extends Throwable> T doIOOperation(@NotNull RepeatableIOOperation<T, E> ioTask) throws E {
+    for (int i = MAX_FILE_IO_ATTEMPTS; i > 0; i--) {
+      T result = ioTask.execute(i == 1);
+      if (result != null) return result;
+
       try {
         //noinspection BusyWait
         Thread.sleep(10);
       }
       catch (InterruptedException ignored) { }
     }
-    return false;
+    return null;
+  }
+
+  protected static boolean deleteFile(@NotNull final File file) {
+    Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
+      @Override
+      public Boolean execute(boolean lastAttempt) {
+        if (file.delete() || !file.exists()) return Boolean.TRUE;
+        else if (lastAttempt) return Boolean.FALSE;
+        else return null;
+      }
+    });
+    return Boolean.TRUE.equals(result);
   }
 
   public static boolean ensureCanCreateFile(@NotNull File file) {
@@ -551,6 +624,15 @@ public class FileUtilRt {
         if (read < 0) break;
         outputStream.write(buffer, 0, read);
       }
+    }
+  }
+
+  public static int getUserFileSizeLimit() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.intellisense.filesize")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return 2500 * KILOBYTE;
     }
   }
 }

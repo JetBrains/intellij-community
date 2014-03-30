@@ -32,13 +32,13 @@ class Test1 {
       }
     };
 
-    Extractor<String, Integer> e1 = <error descr="Incompatible return type Option<String> in lambda expression">s -> {
+    Extractor<String, Integer> e1 = s -> {
       if (s.equals("1")) {
         return Option.option(1);
       } else {
-        return Option.option("2");
+        return Option.option<error descr="'option(T)' in 'Test1.Option' cannot be applied to '(java.lang.String)'">("2")</error>;
       }
-    }</error>;
+    };
   }
 }
 
@@ -48,7 +48,7 @@ class Test2 {
   }
 
   {
-    X<?> x = <error descr="No instance of type X<?> exists so that lambda expression can be type-checked">() -> 123</error>;
+    X<?> x = () -> 123;
     X<? extends Number> x1 = () -> 123;
     
   }

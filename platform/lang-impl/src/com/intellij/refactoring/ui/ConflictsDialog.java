@@ -49,29 +49,32 @@ import java.util.regex.Pattern;
 public class ConflictsDialog extends DialogWrapper{
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
 
-  private String[] myConflictDescriptions;
+  private final String[] myConflictDescriptions;
   private MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
   private Runnable myDoRefactoringRunnable;
+  private final boolean myCanShowConflictsInView;
   private String myCommandName;
 
   public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
-    this(project, conflictDescriptions, null, true);
+    this(project, conflictDescriptions, null, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable) {
-    this(project, conflictDescriptions, doRefactoringRunnable, true);
+    this(project, conflictDescriptions, doRefactoringRunnable, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable,
-                         boolean alwaysShowOkButton) {
+                         boolean alwaysShowOkButton,
+                         boolean canShowConflictsInView) {
     super(project, true);
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
+    myCanShowConflictsInView = canShowConflictsInView;
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
 
     for (String conflict : conflictDescriptions.values()) {
@@ -81,7 +84,7 @@ public class ConflictsDialog extends DialogWrapper{
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
-    setOKActionEnabled(alwaysShowOkButton || myDoRefactoringRunnable != null);
+    setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
   }
 
@@ -96,18 +99,25 @@ public class ConflictsDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     myConflictDescriptions = conflictDescriptions;
+    myCanShowConflictsInView = true;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     final Action okAction = getOKAction();
-    if (myElementConflictDescription == null) {
+    boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
+
+    if (showUsagesButton || !okAction.isEnabled()) {
+      okAction.putValue(DEFAULT_ACTION, null);
+    }
+
+    if (!showUsagesButton) {
       return new Action[]{okAction,new CancelAction()};
     }
-    okAction.putValue(DEFAULT_ACTION, null);
     return new Action[]{okAction, new MyShowConflictsInUsageViewAction(), new CancelAction()};
   }
 
@@ -115,6 +125,7 @@ public class ConflictsDialog extends DialogWrapper{
     return getExitCode() == SHOW_CONFLICTS_EXIT_CODE;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(0, 2));
 
@@ -133,7 +144,9 @@ public class ConflictsDialog extends DialogWrapper{
     scrollPane.setPreferredSize(new Dimension(500, 400));
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+    if (getOKAction().isEnabled()) {
+      panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+    }
 
     return panel;
   }
@@ -148,9 +161,14 @@ public class ConflictsDialog extends DialogWrapper{
       putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doCancelAction();
     }
+  }
+
+  protected Runnable getDoRefactoringRunnable(@Nullable UsageView usageView) {
+    return myDoRefactoringRunnable;
   }
 
   private class MyShowConflictsInUsageViewAction extends AbstractAction {
@@ -160,6 +178,7 @@ public class ConflictsDialog extends DialogWrapper{
       super("Show conflicts in view");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final UsageViewPresentation presentation = new UsageViewPresentation();
       final String codeUsagesString = "Conflicts";
@@ -203,9 +222,10 @@ public class ConflictsDialog extends DialogWrapper{
         };
       }
       final UsageView usageView = UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, usages, presentation);
-      if (myDoRefactoringRunnable != null) {
+      Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
+      if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
-          myDoRefactoringRunnable,
+          doRefactoringRunnable,
           myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"), "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);
@@ -215,6 +235,7 @@ public class ConflictsDialog extends DialogWrapper{
       final Collection<String> elementConflicts = new LinkedHashSet<String>(myElementConflictDescription.get(element));
       final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(StringUtil.join(elementConflicts, "\n")).replaceAll("") + ")";
       return new UsagePresentation() {
+        @Override
         @NotNull
         public TextChunk[] getText() {
           final TextChunk[] chunks = usagePresentation.getText();
@@ -222,15 +243,18 @@ public class ConflictsDialog extends DialogWrapper{
             .append(chunks, new TextChunk(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.toTextAttributes(), conflictDescription));
         }
 
+        @Override
         @NotNull
         public String getPlainText() {
           return usagePresentation.getPlainText() + conflictDescription;
         }
 
+        @Override
         public Icon getIcon() {
           return usagePresentation.getIcon();
         }
 
+        @Override
         public String getTooltipText() {
           return usagePresentation.getTooltipText();
         }
@@ -240,23 +264,28 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<String>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
 
+      @Override
       @NotNull
       public UsagePresentation getPresentation() {
         return new UsagePresentation() {
+          @Override
           @NotNull
           public TextChunk[] getText() {
             return new TextChunk[0];
           }
 
+          @Override
           @Nullable
           public Icon getIcon() {
             return null;
           }
 
+          @Override
           public String getTooltipText() {
             return myConflictDescription;
           }
 
+          @Override
           @NotNull
           public String getPlainText() {
             return myConflictDescription;
@@ -264,28 +293,36 @@ public class ConflictsDialog extends DialogWrapper{
         };
       }
 
+      @Override
       public boolean canNavigateToSource() {
         return false;
       }
 
+      @Override
       public boolean canNavigate() {
         return false;
       }
+      @Override
       public void navigate(boolean requestFocus) {}
 
+      @Override
       public FileEditorLocation getLocation() {
         return null;
       }
 
+      @Override
       public boolean isReadOnly() {
         return false;
       }
 
+      @Override
       public boolean isValid() {
         return true;
       }
 
+      @Override
       public void selectInEditor() {}
+      @Override
       public void highlightInEditor() {}
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,19 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -34,6 +39,7 @@ import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +48,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,19 +97,11 @@ public abstract class EditorComposite implements Disposable {
    * @param editors <code>edittors</code> that should be placed into the composite
    *
    * @exception java.lang.IllegalArgumentException if <code>editors</code>
-   * is <code>null</code>
-   *
-   * @exception java.lang.IllegalArgumentException if <code>providers</code>
-   * is <code>null</code>
-   *
-   * @exception java.lang.IllegalArgumentException if <code>myEditor</code>
-   * arrays is empty
+   * is <code>null</code> or <code>providers</code> is <code>null</code> or <code>myEditor</code> arrays is empty
    */
-  EditorComposite(
-    @NotNull final VirtualFile file,
-    @NotNull final FileEditor[] editors,
-    @NotNull final FileEditorManagerEx fileEditorManager
-  ){
+  EditorComposite(@NotNull final VirtualFile file,
+                  @NotNull final FileEditor[] editors,
+                  @NotNull final FileEditorManagerEx fileEditorManager) {
     myFile = file;
     myEditors = editors;
     myFileEditorManager = fileEditorManager;
@@ -113,6 +113,7 @@ public abstract class EditorComposite implements Disposable {
       PrevNextActionsDescriptor descriptor = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB);
       final TabbedPaneWrapper.AsJBTabs wrapper = new TabbedPaneWrapper.AsJBTabs(fileEditorManager.getProject(), SwingConstants.BOTTOM, descriptor, this);
       wrapper.getTabs().getPresentation().setPaintBorder(0, 0, 0, 0).setTabSidePaintBorder(1).setGhostsAlwaysVisible(true).setUiDecorator(new UiDecorator() {
+        @Override
         @NotNull
         public UiDecoration getDecoration() {
           return new UiDecoration(null, new Insets(0, 8, 0, 8));
@@ -122,14 +123,17 @@ public abstract class EditorComposite implements Disposable {
 
       myTabbedPaneWrapper=wrapper;
       myComponent=new MyComponent(wrapper.getComponent()){
+        @Override
         public boolean requestFocusInWindow() {
           return wrapper.getComponent().requestFocusInWindow();
         }
 
+        @Override
         public void requestFocus() {
           wrapper.getComponent().requestFocus();
         }
 
+        @Override
         public boolean requestDefaultFocus() {
           return wrapper.getComponent().requestDefaultFocus();
         }
@@ -142,6 +146,7 @@ public abstract class EditorComposite implements Disposable {
     else if(editors.length==1){
       myTabbedPaneWrapper=null;
       myComponent = new MyComponent(createEditorComponent(editors[0])){
+        @Override
         public void requestFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -149,6 +154,7 @@ public abstract class EditorComposite implements Disposable {
           }
         }
 
+        @Override
         public boolean requestFocusInWindow() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -158,6 +164,7 @@ public abstract class EditorComposite implements Disposable {
           return false;
         }
 
+        @Override
         public boolean requestDefaultFocus() {
           JComponent component = editors[0].getPreferredFocusedComponent();
           if (component != null) {
@@ -177,14 +184,27 @@ public abstract class EditorComposite implements Disposable {
 
     myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(final FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();
         final VirtualFile newFile = event.getNewFile();
         if (Comparing.equal(oldFile, newFile) && Comparing.equal(getFile(), newFile)) {
-          final FileEditor oldEditor = event.getOldEditor();
-          if (oldEditor != null) oldEditor.deselectNotify();
-          final FileEditor newEditor = event.getNewEditor();
-          if (newEditor != null) newEditor.selectNotify();
+          Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              final FileEditor oldEditor = event.getOldEditor();
+              if (oldEditor != null) oldEditor.deselectNotify();
+              final FileEditor newEditor = event.getNewEditor();
+              if (newEditor != null) newEditor.selectNotify();
+              ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
+              ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
+            }
+          };
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            CommandProcessor.getInstance().executeCommand(myFileEditorManager.getProject(), runnable, "Switch Active Editor", null);
+          }
+          else {
+            runnable.run(); // not invoked by user
+          }
         }
       }
     }, this);
@@ -281,8 +301,31 @@ public abstract class EditorComposite implements Disposable {
    * @return editors which are opened in the composite. <b>Do not modify
    * this array</b>.
    */
+  @NotNull
   public FileEditor[] getEditors() {
     return myEditors;
+  }
+
+  @NotNull
+  public List<JComponent> getTopComponents(@NotNull FileEditor editor) {
+    return getTopBottomComponents(editor, true);
+  }
+
+  @NotNull
+  public List<JComponent> getBottomComponents(@NotNull FileEditor editor) {
+    return getTopBottomComponents(editor, false);
+  }
+
+  @NotNull
+  private List<JComponent> getTopBottomComponents(@NotNull FileEditor editor, boolean top) {
+    SmartList<JComponent> result = new SmartList<JComponent>();
+    JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
+    for (Component each : container.getComponents()) {
+      if (each instanceof TopBottomComponentWrapper) {
+        result.add(((TopBottomComponentWrapper)each).getWrappee());
+      }
+    }
+    return Collections.unmodifiableList(result);
   }
 
   public void addTopComponent(FileEditor editor, JComponent component) {
@@ -366,6 +409,7 @@ public abstract class EditorComposite implements Disposable {
    * Handles changes of selected myEditor
    */
   private final class MyChangeListener implements ChangeListener{
+    @Override
     public void stateChanged(ChangeEvent e) {
       FileEditor oldSelectedEditor = mySelectedEditor;
       LOG.assertTrue(oldSelectedEditor != null);
@@ -382,14 +426,15 @@ public abstract class EditorComposite implements Disposable {
       add(realComponent, BorderLayout.CENTER);
     }
 
+    @Override
     public final Object getData(String dataId){
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
-      else if(PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
+      else if(CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         return myFile.isValid() ? myFile : null;
       }
-      else if(PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
+      else if(CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
         return myFile.isValid() ? new VirtualFile[] {myFile} : null;
       }
       else{
@@ -404,12 +449,14 @@ public abstract class EditorComposite implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     for (FileEditor editor : myEditors) {
       if (!Disposer.isDisposed(editor)) {
         Disposer.dispose(editor);
       }
     }
+    myFocusWatcher.deinstall(myFocusWatcher.getTopComponent());
   }
 
   private static class TopBottomPanel extends JPanel {
@@ -425,8 +472,11 @@ public abstract class EditorComposite implements Disposable {
   }
 
   private static class TopBottomComponentWrapper extends JPanel {
+    private final JComponent myWrappee;
+
     public TopBottomComponentWrapper(JComponent component, boolean top) {
       super(new BorderLayout());
+      myWrappee = component;
       setOpaque(false);
 
       setBorder(new SideBorder(null, top ? SideBorder.BOTTOM : SideBorder.TOP, true) {
@@ -436,8 +486,13 @@ public abstract class EditorComposite implements Disposable {
           return result == null ? Color.black : result;
         }
       });
-      
+
       add(component);
+    }
+
+    @NotNull
+    public JComponent getWrappee() {
+      return myWrappee;
     }
   }
 }

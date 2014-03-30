@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.openapi.impl.RenameRefactoringImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -30,21 +32,32 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Maxim.Medvedev
  */
-public class RenameFileWithClassIntention extends Intention {
+public class RenameFileWithClassIntention extends Intention implements Consumer<GrTypeDefinition> {
+
+  private String myNewFileName = null;
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    final GrTypeDefinition psiClass = (GrTypeDefinition)element.getParent();
-    final String name = psiClass.getName();
+    final PsiFile file = element.getContainingFile();
+    new RenameRefactoringImpl(project, file, myNewFileName, true, true).run();
+  }
 
-    final PsiFile file = psiClass.getContainingFile();
-    final String newFileName = name + "." + FileUtilRt.getExtension(file.getName());
-    new RenameRefactoringImpl(project, file, newFileName, true, true).run();
+  @NotNull
+  @Override
+  public String getText() {
+    return GroovyIntentionsBundle.message("rename.file.to.0", myNewFileName);
   }
 
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new ClassNameDiffersFromFileNamePredicate();
+    return new ClassNameDiffersFromFileNamePredicate(this);
+  }
+
+  @Override
+  public void consume(GrTypeDefinition def) {
+    final String name = def.getName();
+    final PsiFile file = def.getContainingFile();
+    myNewFileName = name + "." + FileUtilRt.getExtension(file.getName());
   }
 }

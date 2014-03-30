@@ -16,6 +16,7 @@
 
 package com.intellij.ide.bookmarks;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -114,7 +115,7 @@ public class Bookmark implements Navigatable {
     markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(RangeHighlighterEx highlighter) {
-        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
           found[0] = highlighter;
           return false;
@@ -176,6 +177,7 @@ public class Bookmark implements Navigatable {
     return myTarget.canNavigateToSource();
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     myTarget.navigate(requestFocus);
   }
@@ -210,7 +212,7 @@ public class Bookmark implements Navigatable {
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(psiFile);
     if (builder instanceof TreeBasedStructureViewBuilder) {
-      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel();
+      StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(null);
       Object element;
       try {
         element = model.getCurrentEditorElement();
@@ -240,7 +242,7 @@ public class Bookmark implements Navigatable {
     }
     return result.toString();
   }
-  
+
   static class MnemonicIcon implements Icon {
     private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;
@@ -270,7 +272,7 @@ public class Bookmark implements Navigatable {
       g.setColor(JBColor.GRAY);
       g.drawRect(x, y, getIconWidth() - 2, getIconHeight());
 
-      g.setColor(JBColor.foreground);
+      g.setColor(JBColor.foreground());
       final Font oldFont = g.getFont();
       g.setFont(MNEMONIC_FONT);
 

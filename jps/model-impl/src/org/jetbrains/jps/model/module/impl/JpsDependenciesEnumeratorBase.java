@@ -20,11 +20,12 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -43,36 +44,42 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     myRootModules = rootModules;
   }
 
+  @NotNull
   @Override
   public Self withoutLibraries() {
     myWithoutLibraries = true;
     return self();
   }
 
+  @NotNull
   @Override
   public Self withoutDepModules() {
     myWithoutDepModules = true;
     return self();
   }
 
+  @NotNull
   @Override
   public Self withoutSdk() {
     myWithoutSdk = true;
     return self();
   }
 
+  @NotNull
   @Override
   public Self withoutModuleSourceEntries() {
     myWithoutModuleSourceEntries = true;
     return self();
   }
 
+  @NotNull
   @Override
-  public Self satisfying(Condition<JpsDependencyElement> condition) {
+  public Self satisfying(@NotNull Condition<JpsDependencyElement> condition) {
     myCondition = condition;
     return self();
   }
 
+  @NotNull
   @Override
   public Self recursively() {
     myRecursively = true;
@@ -81,15 +88,16 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
 
   protected abstract Self self();
 
+  @NotNull
   @Override
   public Set<JpsModule> getModules() {
-    Set<JpsModule> result = new HashSet<JpsModule>();
+    Set<JpsModule> result = new LinkedHashSet<JpsModule>();
     processModules(new CollectConsumer<JpsModule>(result));
     return result;
   }
 
   @Override
-  public void processModules(final Consumer<JpsModule> consumer) {
+  public void processModules(@NotNull final Consumer<JpsModule> consumer) {
     processDependencies(new Processor<JpsDependencyElement>() {
       @Override
       public boolean process(JpsDependencyElement dependencyElement) {
@@ -167,9 +175,10 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return myRootModules.contains(module);
   }
 
+  @NotNull
   @Override
   public Set<JpsLibrary> getLibraries() {
-    Set<JpsLibrary> libraries = new HashSet<JpsLibrary>();
+    Set<JpsLibrary> libraries = new LinkedHashSet<JpsLibrary>();
     processLibraries(new CollectConsumer<JpsLibrary>(libraries));
     return libraries;
   }

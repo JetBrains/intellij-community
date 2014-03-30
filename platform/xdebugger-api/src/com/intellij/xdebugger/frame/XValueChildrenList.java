@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +24,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Represents chunk of values which can be added to a {@link com.intellij.xdebugger.frame.XCompositeNode composite node}
+ * @see com.intellij.xdebugger.frame.XCompositeNode#addChildren(XValueChildrenList, boolean)
+ *
  * @author nik
  */
 public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
-  private List<String> myNames;
-  private List<XValue> myValues;
-  private boolean myAlreadySorted;
+  private final List<String> myNames;
+  private final List<XValue> myValues;
+  private List<XValueGroup> myTopGroups = new SmartList<XValueGroup>();
+  private List<XValueGroup> myBottomGroups = new SmartList<XValueGroup>();
 
   public XValueChildrenList(int initialCapacity) {
     myNames = new ArrayList<String>(initialCapacity);
@@ -37,12 +42,22 @@ public class XValueChildrenList {
   }
 
   public XValueChildrenList() {
-    myNames = new ArrayList<String>();
-    myValues = new ArrayList<XValue>();
+    myNames = new SmartList<String>();
+    myValues = new SmartList<XValue>();
   }
 
   public static XValueChildrenList singleton(String name, @NotNull XValue value) {
     return new XValueChildrenList(Collections.singletonList(name), Collections.singletonList(value));
+  }
+
+  public static XValueChildrenList singleton(@NotNull XNamedValue value) {
+    return new XValueChildrenList(Collections.singletonList(value.getName()), Collections.<XValue>singletonList(value));
+  }
+
+  public static XValueChildrenList bottomGroup(@NotNull XValueGroup group) {
+    XValueChildrenList list = new XValueChildrenList();
+    list.addBottomGroup(group);
+    return list;
   }
 
   private XValueChildrenList(List<String> names, List<XValue> values) {
@@ -53,6 +68,25 @@ public class XValueChildrenList {
   public void add(@NonNls String name, @NotNull XValue value) {
     myNames.add(name);
     myValues.add(value);
+  }
+
+  public void add(@NotNull XNamedValue value) {
+    myNames.add(value.getName());
+    myValues.add(value);
+  }
+
+  /**
+   * Adds a node representing group of values to the top of a node children list
+   */
+  public void addTopGroup(@NotNull XValueGroup group) {
+    myTopGroups.add(group);
+  }
+
+  /**
+   * Adds a node representing group of values to the bottom of a node children list
+   */
+  public void addBottomGroup(@NotNull XValueGroup group) {
+    myBottomGroups.add(group);
   }
 
   public int size() {
@@ -67,11 +101,11 @@ public class XValueChildrenList {
     return myValues.get(i);
   }
 
-  public boolean isAlreadySorted() {
-    return myAlreadySorted;
+  public List<XValueGroup> getTopGroups() {
+    return myTopGroups;
   }
 
-  public void setAlreadySorted(boolean alreadySorted) {
-    myAlreadySorted = alreadySorted;
+  public List<XValueGroup> getBottomGroups() {
+    return myBottomGroups;
   }
 }

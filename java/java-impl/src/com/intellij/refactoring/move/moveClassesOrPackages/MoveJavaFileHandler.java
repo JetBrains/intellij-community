@@ -21,14 +21,15 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.FileTypeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,8 +42,8 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public boolean canProcessElement(PsiFile element) {
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
-           !ProjectRootsUtil.isOutsideSourceRoot(element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot(element) &&
            !(element instanceof PsiCompiledElement);
   }
 
@@ -94,7 +95,8 @@ public class MoveJavaFileHandler extends MoveFileHandler {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
       if (aPackage != null) {
         final String qualifiedName = aPackage.getQualifiedName();
-        final PsiPackageStatement packageStatement = qualifiedName.length() > 0
+        final PsiNameHelper helper = JavaPsiFacade.getInstance(file.getProject()).getNameHelper();
+        final PsiPackageStatement packageStatement = !StringUtil.isEmptyOrSpaces(qualifiedName) && helper.isQualifiedName(qualifiedName)
                                                      ? JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(qualifiedName)
                                                      : null;
         if (file instanceof PsiJavaFile) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,20 @@ public class ColorChooser {
                                   String caption,
                                   @Nullable Color preselectedColor,
                                   boolean enableOpacity,
-                                  ColorPickerListener[] listeners) {
-    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, listeners);
+                                  ColorPickerListener[] listeners,
+                                  boolean opacityInPercent) {
+    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 
   @Nullable
   public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY);
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY, false);
+  }
+
+  @Nullable
+  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
+                                  boolean opacityInPercent) {
+    return chooseColor(parent, caption, preselectedColor, enableOpacity, ColorPickerListener.EMPTY_ARRAY, opacityInPercent);
   }
 
   @Nullable

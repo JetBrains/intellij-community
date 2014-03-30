@@ -7,7 +7,7 @@ class a {
             g();
         } catch (Error e) {
         } catch (Exception e) {
-            <caret><selection>e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+            <caret><selection>e.printStackTrace();</selection>
         }
     }
 }

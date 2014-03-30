@@ -19,13 +19,14 @@ public class RealPrefixMatchingWeigher extends LookupElementWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element) {
-    final PrefixMatcher matcher = CompletionServiceImpl.getItemMatcher(element, myLocation.getCompletionParameters().getLookup());
+    return getBestMatchingDegree(element, CompletionServiceImpl.getItemMatcher(element, myLocation.getCompletionParameters().getLookup()));
+  }
 
+  public static int getBestMatchingDegree(LookupElement element, PrefixMatcher matcher) {
     int max = Integer.MIN_VALUE;
     for (String lookupString : element.getAllLookupStrings()) {
       max = Math.max(max, matcher.matchingDegree(lookupString));
     }
     return -max;
   }
-
 }

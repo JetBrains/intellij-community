@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -47,13 +46,11 @@ public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
     String localPath = path.substring(0, separatorIndex);
     String pathInJar = path.substring(separatorIndex+2);
     CoreJarHandler handler = getHandler(localPath);
-    if (handler == null)
-      return null;
     return handler.findFileByPath(pathInJar);
   }
 
-  @Nullable
-  protected CoreJarHandler getHandler(String localPath) {
+  @NotNull
+  private CoreJarHandler getHandler(String localPath) {
     CoreJarHandler handler = myHandlers.get(localPath);
     if (handler == null) {
       handler = new CoreJarHandler(this, localPath);

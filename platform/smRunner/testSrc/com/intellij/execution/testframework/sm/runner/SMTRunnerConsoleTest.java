@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Printable;
@@ -44,9 +42,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
-    private MyConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
-                          final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
-      super(consoleProperties, runnerSettings, configurationPerRunnerSettings);
+    private MyConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+      super(consoleProperties, environment);
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
         @Override
@@ -70,7 +67,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     final ExecutionEnvironment environment = new ExecutionEnvironment();
 
     myMockResettablePrinter = new MockPrinter(true);
-    myConsole = new MyConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myConsole = new MyConsoleView(consoleProperties, environment);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();
@@ -397,11 +394,11 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg\n");
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -409,10 +406,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", null));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
-    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg\n");
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg");
   }
 
   public void testProcessor_OnIgnored_WithStacktrace() {

@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner.ui.statistics;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,7 +48,7 @@ public class SMTRunnerStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test2 = createTestProxy("test2", myRootSuite);
     myStatisticsTableModel.updateModelOnProxySelected(test1);
 
-    assertSameElements(getItems(), myRootSuite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnSelected_Suite() {
@@ -58,13 +59,13 @@ public class SMTRunnerStatisticsTableModelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy suite2 = createSuiteProxy("suite2", myRootSuite);
 
     myStatisticsTableModel.updateModelOnProxySelected(suite1);
-    assertSameElements(getItems(), suite1, test1, test2);
+    assertSameElements(getItems(), test1, test2);
 
     myStatisticsTableModel.updateModelOnProxySelected(suite2);
-    assertSameElements(getItems(), suite2);
+    assertSameElements(getItems());
 
     myStatisticsTableModel.updateModelOnProxySelected(myRootSuite);
-    assertSameElements(getItems(), myRootSuite, suite1, suite2);
+    assertSameElements(getItems(), suite1, suite2);
   }
 /*
   public void testSort_ColumnTest() {

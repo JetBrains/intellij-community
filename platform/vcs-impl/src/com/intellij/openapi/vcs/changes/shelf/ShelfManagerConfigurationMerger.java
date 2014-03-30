@@ -15,17 +15,19 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.XmlConfigurationMerger;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.options.StreamProvider;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
-
 
 public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
   private final String myConfigPath;
@@ -36,19 +38,21 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     myFileProcessor = new CompoundShelfFileProcessor("shelf");
   }
 
-  public ShelfManagerConfigurationMerger(final String configPath, final StreamProvider[] streamProviders) {
+  @TestOnly
+  public ShelfManagerConfigurationMerger(final String configPath, @Nullable StreamProvider streamProvider) {
     myConfigPath = configPath;
-    myFileProcessor = new CompoundShelfFileProcessor(streamProviders, configPath);
+    myFileProcessor = new CompoundShelfFileProcessor(streamProvider, configPath);
   }
 
+  @Override
+  @NotNull
   public Element merge(final Element serverElement, final Element localElement) {
-
     Map<Date, ShelvedChangeList> result = new LinkedHashMap<Date, ShelvedChangeList>();
 
     Map<String, ShelvedChangeList> serverFileToChangeList = collectChanges(serverElement);
     Map<String, ShelvedChangeList> localFileToChangeList = collectChanges(localElement);
 
-    List<String> serverFileNames = myFileProcessor.getServerFiles();
+    Collection<String> serverFileNames = myFileProcessor.getServerFiles();
     List<String> localFileNames = myFileProcessor.getLocalFiles();
 
     Collection<String> serverChangeListFiles = new HashSet<String>();
@@ -65,7 +69,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
           newFileName = myFileProcessor.copyFileFromServer(serverFileName, localFileNames);
         }
         else {
-          newFileName = myFileProcessor.renameFileOnServer(serverFileName, serverFileNames,localFileNames );
+          newFileName = myFileProcessor.renameFileOnServer(serverFileName, serverFileNames, localFileNames );
         }
       }
       changeList.PATH = new File(myFileProcessor.getBaseIODir(),newFileName).getAbsolutePath();
@@ -85,6 +89,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
       resultChange.PATH = myConfigPath + "/" + patchFileName;
       if (serverChangeListFiles.contains(patchFileName)) {
         for (ShelvedBinaryFile binaryFile : resultChange.getBinaryFiles()) {
+          assert binaryFile.SHELVED_PATH != null;
           String binFileName = new File(binaryFile.SHELVED_PATH).getName();
           final String newBinFileName;
           if (localFileNames.contains(binFileName)) {
@@ -117,7 +122,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
 
   }
 
-  private Collection<ShelvedChangeList> extractChanges(final Collection<ShelvedChangeList> changes, final boolean recycled) {
+  private static Collection<ShelvedChangeList> extractChanges(final Collection<ShelvedChangeList> changes, final boolean recycled) {
     ArrayList<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>();
     for (ShelvedChangeList change : changes) {
       if (change.isRecycled() == recycled) {
@@ -127,7 +132,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     return result;
   }
 
-  private Map<String, ShelvedChangeList> collectChanges(final Element original) {
+  private static Map<String, ShelvedChangeList> collectChanges(final Element original) {
     Map<String, ShelvedChangeList> result = new HashMap<String, ShelvedChangeList>();
     try {
       for (ShelvedChangeList shelvedChangeList : ShelvedChangeList.readChanges(original, true, false)) {
@@ -144,7 +149,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     return result;
   }
 
-
+  @Override
   public String getComponentName() {
     return "ShelveChangesManager";
   }

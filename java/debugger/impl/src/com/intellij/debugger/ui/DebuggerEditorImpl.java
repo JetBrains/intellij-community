@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,13 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +65,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   private final Project myProject;
   private PsiElement myContext;
+  private PsiType myThisType;
 
   private final String myRecentsId;
 
@@ -71,12 +75,15 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
   private WeakReference<ListPopup> myPopup;
 
   private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
+    @Override
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
+    @Override
     public void childMoved(@NotNull PsiTreeChangeEvent event) {
       checkContext();
     }
@@ -110,8 +117,8 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        ListPopup oldPopup = myPopup != null ? myPopup.get() : null;
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        ListPopup oldPopup = SoftReference.dereference(myPopup);
         if (oldPopup != null && !oldPopup.isDisposed()) {
           oldPopup.cancel();
           myPopup = null;
@@ -175,6 +182,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public abstract JComponent getPreferredFocusedComponent();
 
+  @Override
   public void setContext(@Nullable PsiElement context) {
     myContext = context;
 
@@ -201,6 +209,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   protected abstract void updateEditorUi();
 
+  @Override
   public PsiElement getContext() {
     return myContext;
   }
@@ -209,8 +218,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     return myProject;
   }
 
+  @Override
   public void requestFocus() {
     getPreferredFocusedComponent().requestFocus();
+  }
+
+  public void setThisType(PsiType thisType) {
+    myThisType = thisType;
   }
 
   @Nullable
@@ -222,7 +236,10 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     }
     JavaCodeFragment codeFragment = getCurrentFactory().createPresentationCodeFragment(item, myContext, getProject());
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-    if (myContext != null) {
+    if (myThisType != null) {
+      codeFragment.setThisType(myThisType);
+    }
+    else if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {
         final PsiClassType contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
@@ -239,6 +256,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
     if (myCurrentDocument != null) {
+      PsiDocumentManagerBase.cachePsi(myCurrentDocument, codeFragment);
       for (DocumentListener documentListener : myDocumentListeners) {
         myCurrentDocument.addDocumentListener(documentListener);
       }
@@ -247,13 +265,14 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     return myCurrentDocument;
   }
 
+  @Override
   public String getRecentsId() {
     return myRecentsId;
   }
 
   public void addRecent(TextWithImports text) {
-    if(getRecentsId() != null && text != null && !"".equals(text.getText())){
-      DebuggerRecents.getInstance(getProject()).addRecent(getRecentsId(), text);
+    if(getRecentsId() != null && text != null && !text.isEmpty()){
+      XDebuggerHistoryManager.getInstance(getProject()).addRecentExpression(getRecentsId(), text.getText());
     }
   }
 
@@ -271,6 +290,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     }
   }
 
+  @Override
   public void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
     myCurrentDocument = null;

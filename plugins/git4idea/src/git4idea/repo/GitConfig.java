@@ -15,27 +15,30 @@
  */
 package git4idea.repo;
 
-  import com.google.common.base.Function;
-  import com.google.common.base.Predicate;
-  import com.google.common.collect.Collections2;
-  import com.google.common.collect.Iterables;
-  import com.intellij.ide.plugins.IdeaPluginDescriptor;
-  import com.intellij.openapi.diagnostic.Logger;
-  import com.intellij.openapi.util.Pair;
-  import com.intellij.openapi.util.text.StringUtil;
-  import com.intellij.util.ArrayUtil;
-  import git4idea.*;
-  import git4idea.branch.GitBranchUtil;
-  import org.ini4j.Ini;
-  import org.ini4j.Profile;
-  import org.jetbrains.annotations.NotNull;
-  import org.jetbrains.annotations.Nullable;
+  import com.intellij.dvcs.repo.RepoStateException;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitLocalBranch;
+import git4idea.GitPlatformFacade;
+import git4idea.GitRemoteBranch;
+import git4idea.GitSvnRemoteBranch;
+import git4idea.branch.GitBranchUtil;
+import org.ini4j.Ini;
+import org.ini4j.Profile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-  import java.io.File;
-  import java.io.IOException;
-  import java.util.*;
-  import java.util.regex.Matcher;
-  import java.util.regex.Pattern;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>Reads information from the {@code .git/config} file, and parses it to actual objects.</p>
@@ -92,9 +95,9 @@ public class GitConfig {
   @NotNull
   Collection<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
-    return Collections2.transform(myRemotes, new Function<Remote, GitRemote>() {
+    return ContainerUtil.map(myRemotes, new Function<Remote, GitRemote>() {
       @Override
-      public GitRemote apply(@Nullable Remote remote) {
+      public GitRemote fun(@Nullable Remote remote) {
         assert remote != null;
         return convertRemoteToGitRemote(myUrls, remote);
       }
@@ -114,21 +117,20 @@ public class GitConfig {
   @NotNull
   Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitLocalBranch> localBranches,
                                                  @NotNull final Collection<GitRemoteBranch> remoteBranches) {
-    return Collections2.filter(Collections2.transform(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
-      @Nullable
+    return ContainerUtil.mapNotNull(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
       @Override
-      public GitBranchTrackInfo apply(@Nullable BranchConfig input) {
-        if (input != null) {
-          return convertBranchConfig(input, localBranches, remoteBranches);
+      public GitBranchTrackInfo fun(BranchConfig config) {
+        if (config != null) {
+          return convertBranchConfig(config, localBranches, remoteBranches);
         }
         return null;
       }
-    }), GitUtil.NOT_NULL_PREDICATE);
+    });
   }
 
   /**
    * Creates an instance of GitConfig by reading information from the specified {@code .git/config} file.
-   * @throws GitRepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
+   * @throws RepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
    *         If in general it has valid format, but some sections are invalid, it skips invalid sections, but reports an error.
    */
   @NotNull
@@ -140,7 +142,7 @@ public class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      LOG.error(new GitRepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      LOG.error(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
       return new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(), Collections.<BranchConfig>emptyList());
     }
 
@@ -207,9 +209,9 @@ public class GitConfig {
   private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
     try {
-      return Iterables.find(localBranches, new Predicate<GitLocalBranch>() {
+      return ContainerUtil.find(localBranches, new Condition<GitLocalBranch>() {
         @Override
-        public boolean apply(@Nullable GitLocalBranch input) {
+        public boolean value(@Nullable GitLocalBranch input) {
           assert input != null;
           return input.getName().equals(name);
         }

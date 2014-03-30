@@ -21,6 +21,8 @@ import com.intellij.platform.ProjectTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
 * @author Dmitry Avdeev
 *         Date: 11/9/12
@@ -42,6 +44,11 @@ public class BuilderBasedTemplate implements ProjectTemplate {
   @Override
   public String getDescription() {
     return myBuilder.getDescription();
+  }
+
+  @Override
+  public Icon getIcon() {
+    return myBuilder.getNodeIcon();
   }
 
   @NotNull

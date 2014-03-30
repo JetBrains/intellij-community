@@ -34,15 +34,18 @@ public class ShowModuleGroupsAction extends ToggleAction {
     myUpdate = update;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS;
   }
 
+  @Override
   public void setSelected(AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
     myUpdate.run();
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(DependencyUISettings.getInstance().UI_SHOW_MODULES);

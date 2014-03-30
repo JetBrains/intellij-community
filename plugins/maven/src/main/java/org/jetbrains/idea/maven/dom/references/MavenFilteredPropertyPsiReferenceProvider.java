@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ProcessingContext;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -98,11 +99,23 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
     }
     pattern.append(Pattern.quote(prefix)).append("(.+?)").append(Pattern.quote(suffix));
   }
-  
+
+  private static boolean shouldAddReference(@NotNull PsiElement element) {
+    if (element.getFirstChild() == element.getLastChild()) {
+      return true; // Add to all leaf elements
+    }
+
+    if (element instanceof XmlAttribute) {
+      return true;
+    }
+
+    return false; // Don't add references to all element to avoid performance problem.
+  }
+
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    if (element.getFirstChild() != element.getLastChild()) {
+    if (!shouldAddReference(element)) {
       // Add reference to element with one child or leaf element only to avoid performance problem.
       return PsiReference.EMPTY_ARRAY;
     }

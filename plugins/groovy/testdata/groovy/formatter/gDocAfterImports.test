@@ -1,0 +1,14 @@
+import javax.swing.*
+/**
+ * doc
+ */
+class MyFrame extends JFrame {
+}
+-----
+import javax.swing.*
+
+/**
+ * doc
+ */
+class MyFrame extends JFrame {
+}

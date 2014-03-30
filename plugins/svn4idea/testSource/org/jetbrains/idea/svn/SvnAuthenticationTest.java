@@ -730,7 +730,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory(getProject());
+                clearAuthCache();
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -778,6 +778,10 @@ public class SvnAuthenticationTest extends PlatformTestCase {
       throw exception[0];
     }
     SVNJNAUtil.setJNAEnabled(true);
+  }
+
+  private void clearAuthCache() {
+    SvnAuthenticationNotifier.clearAuthenticationDirectory(myConfiguration);
   }
 
   public void testPlaintextPromptAndSecondPrompt() throws Exception {
@@ -875,7 +879,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory(getProject());
+                clearAuthCache();
               }
               catch (Exception e) {
                 throw new RuntimeException(e);

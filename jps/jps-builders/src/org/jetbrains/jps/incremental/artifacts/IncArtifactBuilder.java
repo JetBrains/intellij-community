@@ -173,6 +173,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, outputConsumer, outSrcMapping);
       builder.buildJars();
+      runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.FINISHING_BUILD);
       runArtifactTasks(context, artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase.POST_PROCESSING);
     }
     catch (IOException e) {

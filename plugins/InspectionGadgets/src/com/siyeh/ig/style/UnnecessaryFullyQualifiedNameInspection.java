@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
@@ -35,30 +34,23 @@ import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention
+ * @see com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention
  */
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
-  public boolean m_ignoreJavadoc = false;
+  public boolean m_ignoreJavadoc = false; // left here to prevent changes to project files.
 
   @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.display.name");
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.ignore.option"),
-                                          this, "m_ignoreJavadoc");
   }
 
   @Override
@@ -82,6 +74,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
 
     public UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
       this.inSameFile = inSameFile;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace fully qualified name";
     }
 
     @Override
@@ -177,7 +175,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     return new UnnecessaryFullyQualifiedNameVisitor();
   }
 
-  private class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
+  private static class UnnecessaryFullyQualifiedNameVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -205,7 +203,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       if (element != null) {
         return;
       }
-      if (m_ignoreJavadoc) {
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      if (styleSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC) {
         final PsiElement containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
         if (containingComment != null) {
           return;
@@ -226,13 +225,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       }
       final List<PsiJavaCodeReferenceElement> references = new ArrayList(2);
       references.add(reference);
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);
-      for (int i = 0, size = references.size(); i < size; i++) {
-        final PsiJavaCodeReferenceElement aReference = references.get(i);
+      for (final PsiJavaCodeReferenceElement aReference : references) {
         final PsiElement referenceTarget = aReference.resolve();
         if (!(referenceTarget instanceof PsiClass)) {
           continue;
@@ -251,7 +248,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
       }
     }
 
-    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
+    private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;

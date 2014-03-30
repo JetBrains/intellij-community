@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -135,21 +136,21 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     return myProjectSettings.isCheckIncomingOutgoing();
   }
 
-  private final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
-    private final StringBuilder builder = new StringBuilder();
+  private static final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
+    private final String string;
 
     private ChangesetFormatter(HgChangesetStatus status, List<HgRevisionNumber> changesets) {
-      builder.append("<html>");
+      StringBuilder builder = new StringBuilder();
       builder.append("<b>").append(status.getStatusName()).append(" changesets</b>:<br>");
       for (HgRevisionNumber revisionNumber : changesets) {
         builder.append(revisionNumber.asString()).append(" ").append(revisionNumber.getCommitMessage()).append(" (")
           .append(revisionNumber.getAuthor()).append(")<br>");
       }
-      builder.append("</html>");
+      string = XmlStringUtil.wrapInHtml(builder);
     }
 
     public String asString() {
-      return builder.toString();
+      return string;
     }
   }
 }

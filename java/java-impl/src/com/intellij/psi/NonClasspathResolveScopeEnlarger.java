@@ -1,5 +1,6 @@
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -17,7 +18,8 @@ public class NonClasspathResolveScopeEnlarger extends ResolveScopeEnlarger {
 
   @Override
   public SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, Project project) {
-    if ("class".equals(file.getExtension())) {
+    String fileExtension = file.getExtension();
+    if ("class".equals(fileExtension) || JavaFileType.DEFAULT_EXTENSION.equals(fileExtension)) {
       for (PsiElementFinder finder : Extensions.getExtensions(PsiElementFinder.EP_NAME, project)) {
         if (finder instanceof NonClasspathClassFinder) {
           final List<VirtualFile> roots = ((NonClasspathClassFinder)finder).getClassRoots();

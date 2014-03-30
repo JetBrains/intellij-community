@@ -18,6 +18,9 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -27,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +38,6 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -66,6 +69,11 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
       final Document document = createDocument(twi);
       getEditorComponent().setNewDocumentAndFileType(getCurrentFactory().getFileType(), document);
       super.setItem(document);
+
+      // need to replace newlines with spaces, see IDEA-81789
+      if (document != null) {
+        document.addDocumentListener(REPLACE_NEWLINES_LISTENER);
+      }
       /* Causes PSI being modified from PSI events. See IDEADEV-22102
       final Editor editor = getEditor();
       if (editor != null) {
@@ -75,6 +83,17 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
   }
+
+  private static DocumentListener REPLACE_NEWLINES_LISTENER = new DocumentAdapter() {
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      final String text = e.getNewFragment().toString();
+      final String replaced = text.replace('\n', ' ');
+      if (replaced != text) {
+        e.getDocument().replaceString(e.getOffset(), e.getOffset() + e.getNewLength(), replaced);
+      }
+    }
+  };
 
   public DebuggerExpressionComboBox(Project project, @NonNls String recentsId) {
     this(project, null, recentsId, DefaultCodeFragmentFactory.getInstance());
@@ -161,10 +180,10 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     final String recentsId = getRecentsId();
     if (recentsId != null) {
       final List<TextWithImports> result = new ArrayList<TextWithImports>();
-      LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
-      for (final TextWithImports evaluationText : recents) {
-        if (evaluationText.getText().indexOf('\n') == -1) {
-          result.add(evaluationText);
+      List<String> recents = XDebuggerHistoryManager.getInstance(getProject()).getRecentExpressions(getRecentsId());
+      for (String evaluationText : recents) {
+        if (evaluationText.indexOf('\n') == -1) {
+          result.add(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, evaluationText));
         }
       }
 
@@ -229,6 +248,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
         final EditorTextField textField = (EditorTextField)editorComponent;
         final Editor editor = textField.getEditor();
         if (editor != null) {
+          int textLength = editor.getDocument().getTextLength();
+          offset = Math.min(offset, textLength);
           textField.getCaretModel().moveToOffset(offset);
           editor.getSelectionModel().setSelection(offset, offset);
         }

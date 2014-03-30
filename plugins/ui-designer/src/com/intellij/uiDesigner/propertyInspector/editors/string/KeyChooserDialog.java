@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -110,7 +111,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     });
 
     // Calculate width for "Key" columns
-    final Project projectGuess = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
+    final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
     final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey(), projectGuess);
     final FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
     int minWidth = 200;

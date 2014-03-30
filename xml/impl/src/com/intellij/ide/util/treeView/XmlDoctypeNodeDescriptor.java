@@ -17,12 +17,13 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
 public class XmlDoctypeNodeDescriptor  extends SmartElementDescriptor {
-  public XmlDoctypeNodeDescriptor(Project project, NodeDescriptor parentDescriptor, PsiElement element) {
+  public XmlDoctypeNodeDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, PsiElement element) {
     super(project, parentDescriptor, element);
     //noinspection HardCodedStringLiteral
     myName = "DOCTYPE";

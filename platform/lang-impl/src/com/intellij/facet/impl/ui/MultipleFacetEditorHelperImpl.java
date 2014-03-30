@@ -39,6 +39,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.MultipleFacetSettingsEditor");
   private final List<AbstractBinding> myBindings = new ArrayList<AbstractBinding>();
 
+  @Override
   public void bind(@NotNull ThreeStateCheckBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JCheckBox> fun) {
     List<JCheckBox> checkBoxesList = new ArrayList<JCheckBox>();
     for (FacetEditor editor : editors) {
@@ -49,6 +50,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     myBindings.add(checkBoxBinding);
   }
 
+  @Override
   public void bind(@NotNull JTextField common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JTextField> fun) {
     List<JTextField> componentsList = new ArrayList<JTextField>();
     for (FacetEditor editor : editors) {
@@ -59,6 +61,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     myBindings.add(binding);
   }
 
+  @Override
   public void bind(@NotNull JComboBox common, @NotNull FacetEditor[] editors, @NotNull NotNullFunction<FacetEditor, JComboBox> fun) {
     List<JComboBox> componentsList = new ArrayList<JComboBox>();
     for (FacetEditor editor : editors) {
@@ -69,6 +72,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     myBindings.add(binding);
   }
 
+  @Override
   public void unbind() {
     for (AbstractBinding binding : myBindings) {
       binding.unbind();
@@ -111,6 +115,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       myCommon.addActionListener(this);
     }
 
+    @Override
     public void actionPerformed(final ActionEvent e) {
       ThreeStateCheckBox.State state = myCommon.getState();
       for (int i = 0; i < myCheckBoxesList.size(); i++) {
@@ -127,6 +132,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       }
     }
 
+    @Override
     public void unbind() {
       myCommon.removeActionListener(this);
     }
@@ -154,6 +160,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       common.setText(initialValue != null ? initialValue : "");
 
       myListener = new DocumentAdapter() {
+        @Override
         protected void textChanged(final DocumentEvent e) {
           TextFieldBinding.this.textChanged();
         }
@@ -168,6 +175,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       }
     }
 
+    @Override
     public void unbind() {
       myCommon.getDocument().removeDocumentListener(myListener);
     }
@@ -199,10 +207,12 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       common.addItemListener(this);
     }
 
+    @Override
     public void unbind() {
       myCommon.removeItemListener(this);
     }
 
+    @Override
     public void itemStateChanged(final ItemEvent e) {
       Object item = myCommon.getSelectedItem();
       for (int i = 0; i < myComponentsList.size(); i++) {

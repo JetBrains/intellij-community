@@ -18,10 +18,12 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -30,10 +32,8 @@ import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ import java.util.List;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  protected final SVNDiffClient myDiffClient;
+  @Nullable private final ISVNEventHandler myHandler;
   protected int myCount;
   private final ProgressIndicator myProgressIndicator;
   protected CommittedChangeList myLatestProcessed;
@@ -52,6 +52,7 @@ public class Merger implements IMerger {
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
+  @NotNull private final SvnVcs myVcs;
   private final String myBranchName;
 
   public Merger(final SvnVcs vcs,
@@ -61,10 +62,10 @@ public class Merger implements IMerger {
                 final SVNURL currentBranchUrl,
                 String branchName) {
     myBranchName = branchName;
+    myVcs = vcs;
     myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
-    myDiffClient = vcs.createDiffClient();
     myChangeLists = changeLists;
 
     Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
@@ -72,9 +73,7 @@ public class Merger implements IMerger {
     myTarget = target;
     myCount = 0;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    myDiffClient.setEventHandler(handler);
-    myDiffClient.setMergeOptions(new SVNDiffOptions(mySvnConfig.IGNORE_SPACES_IN_MERGE, mySvnConfig.IGNORE_SPACES_IN_MERGE,
-                                                    mySvnConfig.IGNORE_SPACES_IN_MERGE));
+    myHandler = handler;
     myCommitMessage = new StringBuilder();
   }
 
@@ -94,7 +93,7 @@ public class Merger implements IMerger {
     return myCount < myChangeLists.size();
   }
 
-  public void mergeNext() throws SVNException {
+  public void mergeNext() throws SVNException, VcsException {
     myLatestProcessed = myChangeLists.get(myCount);
     ++ myCount;
 
@@ -125,9 +124,12 @@ public class Merger implements IMerger {
     return false;
   }
 
-  protected void doMerge() throws SVNException {
-    myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, Collections.singletonList(createRange()),
-      myTarget, SVNDepth.INFINITY, true, true, mySvnConfig.MERGE_DRY_RUN, isRecordOnly());
+  protected void doMerge() throws SVNException, VcsException {
+    SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
+    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+
+    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.isMergeDryRun(), isRecordOnly(), true,
+                 mySvnConfig.getMergeOptions(), myHandler);
   }
 
   @NonNls

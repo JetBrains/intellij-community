@@ -23,8 +23,7 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -43,24 +42,21 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   private int myExceptionalMark = -1;
   private final TestNGConfiguration myConfiguration;
-  private final RunnerSettings myRunnerSettings;
-  private final ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
+  private final ExecutionEnvironment myEnvironment;
   private final TreeRootNode myUnboundOutput;
 
   public TestNGConsoleView(TestNGConfiguration config,
-                           final RunnerSettings runnerSettings,
-                           final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
+                           ExecutionEnvironment environment,
                            final TreeRootNode unboundOutputRoot,
                            Executor executor) {
     super(new TestNGConsoleProperties(config, executor), unboundOutputRoot);
     myConfiguration = config;
-    myRunnerSettings = runnerSettings;
-    myConfigurationPerRunnerSettings = configurationPerRunnerSettings;
+    myEnvironment = environment;
     myUnboundOutput = unboundOutputRoot;
   }
 
   protected TestResultsPanel createTestResultsPanel() {
-    testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this, myRunnerSettings, myConfigurationPerRunnerSettings);
+    testNGResults = new TestNGResults(getConsole().getComponent(), myConfiguration, this, myEnvironment);
     return testNGResults;
   }
 

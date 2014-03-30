@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -69,15 +70,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   @Override
   public GrNamedArgument findNamedArgument(@NotNull String label) {
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrNamedArgument) {
-        if (label.equals(((GrNamedArgument)cur).getLabelName())) {
-          return (GrNamedArgument)cur;
-        }
-      }
-    }
-
-    return null;
+    return PsiImplUtil.findNamedArgument(this, label);
   }
 
   @NotNull
@@ -186,7 +179,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   @Override
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException {
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
       final boolean insertComma = getAllArguments().length != 0;
 
@@ -215,12 +208,20 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
       ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), TokenSets.WHITE_SPACES_OR_COMMENTS);
       if (prev != null && prev.getElementType() == mCOMMA) {
+        final ASTNode pprev = prev.getTreePrev();
+        if (pprev != null && PsiImplUtil.isWhiteSpaceOrNls(pprev)) {
+          super.deleteChildInternal(pprev);
+        }
         super.deleteChildInternal(prev);
       }
       else {
         ASTNode next = TreeUtil.skipElements(child.getTreeNext(), TokenSets.WHITE_SPACES_OR_COMMENTS);
         if (next != null && next.getElementType() == mCOMMA) {
-          deleteChildInternal(next);
+          final ASTNode nnext = next.getTreeNext();
+          if (nnext != null && PsiImplUtil.isWhiteSpaceOrNls(nnext)) {
+            super.deleteChildInternal(nnext);
+          }
+          super.deleteChildInternal(next);
         }
       }
     }

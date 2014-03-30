@@ -5,6 +5,6 @@ public class Test {
     }
 
     private boolean test() {
-        <caret><selection>return false;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return false;</selection>
     }
 }

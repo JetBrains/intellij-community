@@ -49,7 +49,4 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
   public JComponent createEditor() {
     throw new UnsupportedOperationException("This method should never be called!");
   }
-
-  public void disposeEditor() {
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (child != null) {
       if (document == null) {
-        final Element detachedStateCopy = (Element)child.clone();
+        final Element detachedStateCopy = child.clone();
         state.setDelayedFoldState(new Producer<CodeFoldingState>() {
           @Override
           public CodeFoldingState produce() {
@@ -107,7 +107,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     // type (caused by undo).
     if(FileEditorStateLevel.FULL == level){
       // Folding
-      if (project != null && !editor.isDisposed()) {
+      if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
@@ -142,15 +142,16 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
+  @NotNull
   @Override
-  protected EditorWrapper createWrapperForEditor(final Editor editor) {
+  protected EditorWrapper createWrapperForEditor(@NotNull final Editor editor) {
     return new PsiAwareEditorWrapper(editor);
   }
 
   private final class PsiAwareEditorWrapper extends EditorWrapper {
     private final TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
-    private PsiAwareEditorWrapper(final Editor editor) {
+    private PsiAwareEditorWrapper(@NotNull Editor editor) {
       super(editor);
       final Project project = editor.getProject();
       myBackgroundHighlighter = project == null

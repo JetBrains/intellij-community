@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,13 +50,13 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
             return v1 == null? NULL_OBJ : v1;
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       };
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -65,7 +66,7 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
       return myMap.containsMapping(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -82,7 +83,7 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
       myMap.put(key, value);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -104,7 +105,7 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
       myMap.remove(key);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -115,10 +116,11 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
       myMap.close();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
+  @Override
   public void flush(boolean memoryCachesOnly) {
     if (memoryCachesOnly) {
       if (myMap.isDirty()) {
@@ -138,16 +140,16 @@ public class IntObjectPersistentMaplet<V> extends IntObjectMaplet<V>{
         public boolean process(Integer key) {
           try {
             final V value = myMap.get(key);
-            return value == null? proc.execute(key, null) : proc.execute(key, value);
+            return proc.execute(key, value);
           }
           catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BuildDataCorruptedException(e);
           }
         }
       });
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 }

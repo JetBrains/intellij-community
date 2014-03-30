@@ -15,7 +15,7 @@
  */
 package git4idea.commands;
 
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Kirill Likhodedov
@@ -25,8 +25,11 @@ public enum GitRemoteProtocol {
   SSH,
   HTTP;
 
-  @NotNull
-  public static GitRemoteProtocol fromUrl(@NotNull String url) {
+  @Nullable
+  public static GitRemoteProtocol fromUrl(@Nullable String url) {
+    if (url == null) {
+      return null;
+    }
     url = url.toLowerCase();
     if (url.startsWith("http")) {
       return HTTP;

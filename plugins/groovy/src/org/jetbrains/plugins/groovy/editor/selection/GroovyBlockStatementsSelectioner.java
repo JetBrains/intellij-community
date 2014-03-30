@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandler
     PsiElement lbrace = block.getLBrace();
     if (lbrace == null) return block.getTextRange().getStartOffset();
 
-    while (PsiImplUtil.isWhiteSpace(lbrace.getNextSibling())) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(lbrace.getNextSibling())) {
       lbrace = lbrace.getNextSibling();
     }
     return lbrace.getTextRange().getEndOffset();
@@ -61,7 +61,7 @@ public class GroovyBlockStatementsSelectioner extends ExtendWordSelectionHandler
     PsiElement rbrace = block.getRBrace();
     if (rbrace == null) return block.getTextRange().getEndOffset();
 
-    while (PsiImplUtil.isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
+    while (PsiImplUtil.isWhiteSpaceOrNls(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
       rbrace = rbrace.getPrevSibling();
     }
 

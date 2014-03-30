@@ -16,22 +16,32 @@
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class Word {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Word");
-  private final String myText;
-  private final TextRange myRange;
+  @NotNull private final DiffString myBaseText;
+  @NotNull private final TextRange myRange;
+  @NotNull private final DiffString myText;
 
-  public Word(String text, TextRange range) {
-    myText = text;
+  @TestOnly
+  public Word(@NotNull String baseText, @NotNull TextRange range) {
+    this(DiffString.create(baseText), range);
+  }
+
+  public Word(@NotNull DiffString baseText, @NotNull TextRange range) {
+    myBaseText = baseText;
     myRange = range;
+    myText = myBaseText.substring(myRange.getStartOffset(), myRange.getEndOffset());
     LOG.assertTrue(myRange.getStartOffset() >= 0);
     LOG.assertTrue(myRange.getEndOffset() >= myRange.getStartOffset(), myRange);
   }
 
   public int hashCode() {
-    return getText().hashCode();
+    return myText.hashCode();
   }
 
   public boolean equals(Object obj) {
@@ -40,15 +50,17 @@ public class Word {
     return getText().equals(other.getText());
   }
 
-  public String getText() {
-    return myRange.substring(myText);
+  @NotNull
+  public DiffString getText() {
+    return myText;
   }
 
-  public String getPrefix(int fromPosition) {
-    LOG.assertTrue(fromPosition >= 0, "" + fromPosition);
+  @NotNull
+  public DiffString getPrefix(int fromPosition) {
+    LOG.assertTrue(fromPosition >= 0, fromPosition);
     int wordStart = myRange.getStartOffset();
-    LOG.assertTrue(fromPosition <= wordStart, "" + fromPosition + " " + wordStart);
-    return myText.substring(fromPosition, wordStart);
+    LOG.assertTrue(fromPosition <= wordStart, fromPosition + " " + wordStart);
+    return myBaseText.substring(fromPosition, wordStart);
   }
 
   public int getEnd() {
@@ -60,7 +72,7 @@ public class Word {
   }
 
   public String toString() {
-    return getText();
+    return myText.toString();
   }
 
   public boolean isWhitespace() {
@@ -70,10 +82,10 @@ public class Word {
   public boolean atEndOfLine() {
     int start = myRange.getStartOffset();
     if (start == 0) return true;
-    if (myText.charAt(start - 1) == '\n') return true;
+    if (myBaseText.charAt(start - 1) == '\n') return true;
     int end = myRange.getEndOffset();
-    if (end == myText.length()) return true;
-    if (myText.charAt(end) == '\n') return true;
+    if (end == myBaseText.length()) return true;
+    if (myBaseText.charAt(end) == '\n') return true;
     return false;
   }
 }

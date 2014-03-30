@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -17,7 +32,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.javaee.ExternalResourceManagerImpl;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
@@ -26,6 +41,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -35,7 +51,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -121,27 +137,24 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     final String url = "http://www.foo.org/schema";
     final String url2 = "http://www.bar.org/foo";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, getTestName(false) + ".xsd", getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily(url2, getTestName(false) + ".xsd", getTestRootDisposable());
-    try {
-      final Collection<HighlightInfo> infoCollection = doDoTest(true, false, true);
-      final TextRange startTagNameRange = XmlTagUtil.getStartTagNameElement(((XmlFile)myFile).getDocument().getRootTag()).getTextRange();
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, getTestName(false) + ".xsd", getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url2, getTestName(false) + ".xsd", getTestRootDisposable());
+    final Collection<HighlightInfo> infoCollection = doDoTest(true, false, true);
+    final TextRange startTagNameRange = XmlTagUtil.getStartTagNameElement(((XmlFile)myFile).getDocument().getRootTag()).getTextRange();
 
-      HighlightInfo infoAtTagName = null;
+    HighlightInfo infoAtTagName = null;
 
-      for(HighlightInfo info:infoCollection) {
-        if (info.startOffset == startTagNameRange.getStartOffset() && info.endOffset == startTagNameRange.getEndOffset()) {
-          if (info.description.equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
-            infoAtTagName = info;
-            break;
-          }
+    for(HighlightInfo info:infoCollection) {
+      if (info.startOffset == startTagNameRange.getStartOffset() && info.endOffset == startTagNameRange.getEndOffset()) {
+        if (info.getDescription()
+          .equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
+          infoAtTagName = info;
+          break;
         }
       }
+    }
 
-      assertNotNull( infoAtTagName );
-    }
-    finally {
-    }
+    assertNotNull( infoAtTagName );
   }
 
   // TODO: external validator should not be launched due to error detected after general highlighting pass!
@@ -242,8 +255,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     String url = "http://drools.org/rules";
     String url2 = "http://drools.org/semantics/groovy";
 
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily(url2, location2, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url2, location2, getTestRootDisposable());
     final String basePath = BASE_PATH + testName;
     configureByFiles(null, getVirtualFile(basePath + ".xml"), getVirtualFile(basePath + ".xsd"), getVirtualFile(basePath + "_2.xsd"));
     doDoTest(true,false);
@@ -326,8 +339,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     if (resources != null) {
       int curResource = 0;
       for(String[] resource:resources) {
-        ExternalResourceManagerImpl
-            .registerResourceTemporarily(resource[0], getTestDataPath() + BASE_PATH + resource[1], getTestRootDisposable());
+        ExternalResourceManagerExImpl
+          .registerResourceTemporarily(resource[0], getTestDataPath() + BASE_PATH + resource[1], getTestRootDisposable());
         testNames[++curResource] = BASE_PATH + resource[1];
       }
     }
@@ -375,7 +388,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       doDoTest(true,true);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+        @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n");
         }
@@ -483,8 +497,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     String url = "parent";
     String url2 = "child";
 
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily(url2, location2, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url2, location2, getTestRootDisposable());
 
     configureByFiles(null, getVirtualFile(BASE_PATH + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + location),
                      getVirtualFile(BASE_PATH + location2));
@@ -497,7 +511,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     configureByFiles(null, getVirtualFile(BASE_PATH + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + schemaLocation));
 
-    ExternalResourceManagerImpl.registerResourceTemporarily(schemaLocation, schemaLocation, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(schemaLocation, schemaLocation, getTestRootDisposable());
     doDoTest(true, false);
   }
 
@@ -534,8 +548,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       final XmlAttribute attribute = t.getAttribute("name", null);
       final XmlAttributeValue valueElement = attribute.getValueElement();
       final PsiReference nameReference = valueElement.getReferences()[0];
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           nameReference.handleElementRename("zzz");
         }
       });
@@ -548,8 +561,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/");
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/providers/java");
         instanceEx.addIgnoredResource("http://soapinterop.org/xsd2");
@@ -563,16 +575,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup2() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
     try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           instanceEx.addIgnoredResource("");
         }
       });
 
       doTest(getFullRelativeTestName(".xml"), true, false);
     } finally {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
           instanceEx.removeIgnoredResource("");
         }
       });
@@ -601,7 +611,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testXercesMessagesBinding2() throws Exception {
     final String url = getTestName(false) + ".xsd";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, url, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, url, getTestRootDisposable());
 
     doTest(
       new VirtualFile[] {
@@ -614,7 +624,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     final String url2 = getTestName(false) + "_2.xsd";
 
-    ExternalResourceManagerImpl.registerResourceTemporarily(url2, url2, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url2, url2, getTestRootDisposable());
 
     doTest(
       new VirtualFile[] {
@@ -681,14 +691,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testStackOverflow() throws Exception {
     String location = "relaxng.xsd";
     String url = "http://relaxng.org/ns/structure/fake/1.0";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     doTest(new VirtualFile[]{getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location)}, false, false);
   }
 
   public void testStackOverflow2() throws Exception {
     final String url = "urn:aaa";
     final String location = getTestName(false) + ".xsd";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     doTest(getFullRelativeTestName(".xsd"), false, false);
 
   }
@@ -706,7 +716,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testComplexDtdValidation() throws Exception {
     String location = "Tapestry_3_0.dtd";
     String url = "http://jakarta.apache.org/tapestry/dtd/Tapestry_3_0.dtd";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
 
     myTestJustJaxpValidation = true;
     doTest(new VirtualFile[] { getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location) }, false,false);
@@ -715,7 +725,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testComplexDtdValidation2() throws Exception {
     String location = getTestName(false)+".dtd";
-    ExternalResourceManagerImpl.registerResourceTemporarily(location, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(location, location, getTestRootDisposable());
 
     myTestJustJaxpValidation = true;
     doTest(new VirtualFile[] { getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location) }, false,false);
@@ -733,7 +743,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final VirtualFile virtualFile = getVirtualFile(BASE_PATH + "ComplexSchemaValidation3Schemas");
     ContainerUtil.addAll(files, virtualFile.getChildren());
 
-    doTest(VfsUtil.toVirtualFileArray(files), true, false);
+    doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
   }
 
   public void testComplexSchemaValidation4() throws Exception {
@@ -748,7 +758,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testComplexSchemaValidation5() throws Exception {
     String location = getTestName(false)+".xsd";
     String url = "http://www.etas.com/TELEGY/Test";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     doTest(new VirtualFile[] { getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location) }, false,false);
 
     final XmlTag[] subTags = ((XmlFile)myFile).getDocument().getRootTag().getSubTags();
@@ -770,7 +780,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testComplexSchemaValidation6() throws Exception {
     String location = getTestName(false)+".xsd";
     String url = "http://abcde/pg.html";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     doTest(new VirtualFile[]{getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location)}, true, false);
   }
 
@@ -791,7 +801,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         public boolean process(final List<VirtualFile> files) {
           try {
             files.set(0, getVirtualFile(BASE_PATH + getTestName(false) + "_2.xml"));
-            doTest(VfsUtil.toVirtualFileArray(files), true, false);
+            doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
             return true;
           }
           catch (Exception e) {
@@ -820,7 +830,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testErrorInDtd() throws Exception {
     String location = "def_xslt.dtd";
     String url = "http://www.w3.org/1999/XSL/Transform";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     doTest(new VirtualFile[]{getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location)}, false, false);
   }
 
@@ -864,7 +874,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testXsiSchemaLocation2() throws Exception {
     doTest(
-      new VirtualFile[] {
+      new VirtualFile[]{
         getVirtualFile(getFullRelativeTestName()),
         getVirtualFile(BASE_PATH + getTestName(false) + "_1.xsd"),
         getVirtualFile(BASE_PATH + getTestName(false) + "_2.xsd"),
@@ -944,7 +954,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
           return;
         }
       }
-      assertTrue("There should resolvable reference to "+ schemaAttrName + ", 2", true);              
+      assertTrue("There should resolvable reference to "+ schemaAttrName + ", 2", true);
     }
   }
 
@@ -1047,14 +1057,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIgnoredNamespaceHighlighting() throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("http://ignored/uri");
       }
     });
 
     doTest();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().removeIgnoredResource("http://ignored/uri");
       }
@@ -1063,7 +1073,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testNonEnumeratedValuesHighlighting() throws Exception {
     final String url = "http://www.w3.org/1999/XSL/Format";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, "fop.xsd", getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, "fop.xsd", getTestRootDisposable());
     configureByFiles(null, getVirtualFile(BASE_PATH + getTestName(false) + ".xml"), getVirtualFile(BASE_PATH + "fop.xsd"));
     doDoTest(true, false);
   }
@@ -1198,10 +1208,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
     final String actionName = XmlBundle.message(AddXsiSchemaLocationForExtResourceAction.KEY);
-    doTestWithQuickFix(BASE_PATH + testName, actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "2", actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "3", actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, true);
+    doTestWithQuickFix(BASE_PATH + testName, actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "2", actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "3", actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, false);
   }
 
   public void testHighlightingWithConditionalSectionsInDtd() throws Exception {
@@ -1223,7 +1233,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
 
     final String text = myEditor.getDocument().getText();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
       }
@@ -1236,7 +1246,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     Collection<HighlightInfo> infos = doHighlighting();
     assertEquals(0, infos.size());
-    
+
     action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
                                              ActionManager.getInstance(), 0));
     assertEquals(text,myEditor.getDocument().getText().trim());
@@ -1313,9 +1323,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final VirtualFile virtualFile = getVirtualFile(BASE_PATH + getTestName(false));
     ContainerUtil.addAll(files, virtualFile.getChildren());
 
-    ExternalResourceManagerImpl
-        .registerResourceTemporarily(url, UriUtil.findRelativeFile(mainDtdName, virtualFile).getPath(), getTestRootDisposable());
-    doTest(VfsUtil.toVirtualFileArray(files), true, false);
+    ExternalResourceManagerExImpl
+      .registerResourceTemporarily(url, UriUtil.findRelativeFile(mainDtdName, virtualFile).getPath(), getTestRootDisposable());
+    doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
 
     if (additionalTestAction != null) additionalTestAction.run();
 
@@ -1336,7 +1346,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         final VirtualFile virtualFile = getVirtualFile(base + filename);
         usedFiles.add(virtualFile);
 
-        if (url != null) ExternalResourceManagerImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
+        if (url != null) ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
         files.add( virtualFile );
       }
 
@@ -1346,7 +1356,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         }
       }
 
-      doTest(VfsUtil.toVirtualFileArray(files), true, false);
+      doTest(VfsUtilCore.toVirtualFileArray(files), true, false);
 
       if (additionalTestingProcessor != null) additionalTestingProcessor.process(files);
     }
@@ -1390,7 +1400,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSchemaUpdate() throws IOException {
     String location = getTestName(false)+".xsd";
     String url = "http://example.org/ns/books/";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     configureByFiles(null, getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location));
 
     doDoTest(true,false);
@@ -1399,8 +1409,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final Editor schemaEditor = allEditors[0] == myEditor ? allEditors[1]:allEditors[0];
     final String text = schemaEditor.getDocument().getText();
     final String newText = text.replaceAll("xsd","xs");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         schemaEditor.getDocument().replaceString(0, text.length(), newText);
       }
     });
@@ -1412,7 +1421,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     //                       10
     //             0123456789012
     String text = "<html></html>";
-    EditorHighlighter xhtmlHighlighter = HighlighterFactory.createHighlighter(StdFileTypes.XHTML,EditorColorsManager.getInstance().getGlobalScheme(),myProject);
+    EditorHighlighter xhtmlHighlighter = HighlighterFactory
+      .createHighlighter(StdFileTypes.XHTML, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     xhtmlHighlighter.setText(text);
     HighlighterIterator iterator = xhtmlHighlighter.createIterator(1);
     assertSame("Xml tag name", iterator.getTokenType(), XmlTokenType.XML_TAG_NAME);
@@ -1424,7 +1434,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSchemaValidation6() throws Exception {
     String location = getTestName(false)+".xsd";
     String url = "aaa";
-    ExternalResourceManagerImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
     configureByFiles(null, getVirtualFile(getFullRelativeTestName()), getVirtualFile(BASE_PATH + location));
 
     doDoTest(true,false);
@@ -1496,7 +1506,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals("Dtd comment content",XmlTokenType.XML_COMMENT_CHARACTERS,iterator.getTokenType());
     iterator = dtdHighlighter.createIterator(71);
     assertEquals("Dtd comment end",XmlTokenType.XML_COMMENT_END,iterator.getTokenType());
-    
+
     iterator = dtdHighlighter.createIterator(78);
     assertEquals("Dtd comment content",XmlTokenType.XML_COMMENT_CHARACTERS,iterator.getTokenType());
   }
@@ -1557,8 +1567,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infos = filterInfos(doHighlighting());
     assertEquals(2, infos.size());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
       }
     });
@@ -1567,7 +1576,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     assertEquals(11, infos.size());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         EditorModificationUtil.insertStringAtCaret(myEditor, "<");
       }
@@ -1638,6 +1647,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       BASE_PATH +testName +"TestSchema.xsd"
     );
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("oxf:/apps/somefile.xml");
       }
@@ -1793,8 +1803,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSubstitutionFromInclude() throws Exception {
-    ExternalResourceManagerImpl
-        .registerResourceTemporarily("http://www.omg.org/spec/BPMN/20100524/MODEL", "BPMN20.xsd", getTestRootDisposable());
+    ExternalResourceManagerExImpl
+      .registerResourceTemporarily("http://www.omg.org/spec/BPMN/20100524/MODEL", "BPMN20.xsd", getTestRootDisposable());
 
     doTest(
       new VirtualFile[] {
@@ -1818,7 +1828,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       {"http://www.w3.org/1999/xlink",path + "mylib.jar!/xlink.xsd"}
     };
 
-    for(String[] s:urls) ExternalResourceManagerImpl.registerResourceTemporarily(s[0], s[1], getTestRootDisposable());
+    for(String[] s:urls) ExternalResourceManagerExImpl.registerResourceTemporarily(s[0], s[1], getTestRootDisposable());
     doDoTest(true, false);
   }
 
@@ -1991,6 +2001,39 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(getFullRelativeTestName(".html"), true, true);
   }
 
+  public void testAnyAttribute() throws Exception {
+    configureByFiles(null, BASE_PATH + "anyAttribute.xml", BASE_PATH + "services-1.0.xsd");
+    doDoTest(true, false);
+  }
+
+  public void testSubstitution() throws Exception {
+    doTest(new VirtualFile[]{
+      getVirtualFile(BASE_PATH + "Substitute/test.xml"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-b.xsd"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-a.xsd")
+    }, true, false);
+  }
+
+  public void testPrefixedSubstitution() throws Exception {
+    doTest(new VirtualFile[]{
+      getVirtualFile(BASE_PATH + "Substitute/prefixed.xml"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-b.xsd"),
+      getVirtualFile(BASE_PATH + "Substitute/schema-a.xsd")
+    }, true, false);
+  }
+
+  public void testDtdWithXsd() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "DtdWithXsd/help.xml"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/helptopic.xsd"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/html-entities.dtd")
+      },
+      true,
+      false
+    );
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -1998,54 +2041,54 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     old = XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS;
     XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = false;
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://www.springframework.org/schema/beans/spring-beans-2.5.xsd",
-                                                            getTestDataPath() + BASE_PATH + "spring-beans-2.5.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
-                                                            getTestDataPath() + BASE_PATH + "web-app_2_4.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
-                                                            getTestDataPath() + BASE_PATH + "web-app_2_4.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/dtd/web-app_2_3.dtd",
-                                                            getTestDataPath() + BASE_PATH + "web-app_2_3.dtd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://struts.apache.org/dtds/struts-config_1_2.dtd",
-                                                            getTestDataPath() + BASE_PATH + "struts-config_1_2.dtd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/dtd/ejb-jar_2_0.dtd",
-                                                            getTestDataPath() + BASE_PATH + "ejb-jar_2_0.dtd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/",
-                                                            getTestDataPath() + BASE_PATH + "wsdl11.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/soap/",
-                                                            getTestDataPath() + BASE_PATH + "wsdl11_soapbinding.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/soap/encoding/",
-                                                            getTestDataPath() + BASE_PATH + "soap-encoding.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/application-client_1_4.xsd",
-                                                            getTestDataPath() + BASE_PATH + "application-client_1_4.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
-                                                            getTestDataPath() + BASE_PATH + "hibernate-mapping-3.0.dtd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://maven.apache.org/maven-v4_0_0.xsd",
-                                                            getTestDataPath() + BASE_PATH + "maven-4.0.0.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd",
-                                                            getTestDataPath() + BASE_PATH + "web-jsptaglibrary_1_2.dtd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/JSP/Page",
-                                                            getTestDataPath() + BASE_PATH + "jsp_2_0.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd",
-                                                            getTestDataPath() + BASE_PATH + "web-jsptaglibrary_2_0.xsd",
-                                                            getTestRootDisposable());
-    ExternalResourceManagerImpl.registerResourceTemporarily("http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd",
-                                                            getTestDataPath() + BASE_PATH + "hibernate-configuration-3.0.dtd",
-                                                            getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://www.springframework.org/schema/beans/spring-beans-2.5.xsd",
+                                                              getTestDataPath() + BASE_PATH + "spring-beans-2.5.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
+                                                              getTestDataPath() + BASE_PATH + "web-app_2_4.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd",
+                                                              getTestDataPath() + BASE_PATH + "web-app_2_4.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/dtd/web-app_2_3.dtd",
+                                                              getTestDataPath() + BASE_PATH + "web-app_2_3.dtd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://struts.apache.org/dtds/struts-config_1_2.dtd",
+                                                              getTestDataPath() + BASE_PATH + "struts-config_1_2.dtd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/dtd/ejb-jar_2_0.dtd",
+                                                              getTestDataPath() + BASE_PATH + "ejb-jar_2_0.dtd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/",
+                                                              getTestDataPath() + BASE_PATH + "wsdl11.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/wsdl/soap/",
+                                                              getTestDataPath() + BASE_PATH + "wsdl11_soapbinding.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://schemas.xmlsoap.org/soap/encoding/",
+                                                              getTestDataPath() + BASE_PATH + "soap-encoding.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/application-client_1_4.xsd",
+                                                              getTestDataPath() + BASE_PATH + "application-client_1_4.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd",
+                                                              getTestDataPath() + BASE_PATH + "hibernate-mapping-3.0.dtd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://maven.apache.org/maven-v4_0_0.xsd",
+                                                              getTestDataPath() + BASE_PATH + "maven-4.0.0.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd",
+                                                              getTestDataPath() + BASE_PATH + "web-jsptaglibrary_1_2.dtd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/JSP/Page",
+                                                              getTestDataPath() + BASE_PATH + "jsp_2_0.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd",
+                                                              getTestDataPath() + BASE_PATH + "web-jsptaglibrary_2_0.xsd",
+                                                              getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd",
+                                                              getTestDataPath() + BASE_PATH + "hibernate-configuration-3.0.dtd",
+                                                              getTestRootDisposable());
   }
 
   private void disableHtmlSupport() {

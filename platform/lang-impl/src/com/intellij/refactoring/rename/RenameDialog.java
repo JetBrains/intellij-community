@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -24,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -36,6 +38,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +66,7 @@ public class RenameDialog extends RefactoringDialog {
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private final Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
+  private String myOldName;
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
@@ -78,7 +82,7 @@ public class RenameDialog extends RefactoringDialog {
     createNewNameComponent();
     init();
 
-    myNameLabel.setText("<html>" + XmlTagUtilBase.escapeString(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()), false) + "</html>");
+    myNameLabel.setText(XmlStringUtil.wrapInHtml(XmlTagUtilBase.escapeString(getLabelText(), false)));
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
@@ -91,6 +95,11 @@ public class RenameDialog extends RefactoringDialog {
     myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 
+  @NotNull
+  protected String getLabelText() {
+    return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
+  }
+
   public PsiElement getPsiElement() {
     return myPsiElement;
   }
@@ -100,6 +109,7 @@ public class RenameDialog extends RefactoringDialog {
     return RenamePsiElementProcessor.forElement(myPsiElement).showRenamePreviewButton(myPsiElement);
   }
 
+  @Override
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
@@ -114,12 +124,13 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   private String getFullName() {
-    final String name = UsageViewUtil.getDescriptiveName(myPsiElement);
+    final String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
     return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
   }
 
   private void createNewNameComponent() {
     String[] suggestedNames = getSuggestedNames();
+    myOldName = suggestedNames.length > 0 ? suggestedNames[0] : null;
     myNameSuggestionsField = new NameSuggestionsField(suggestedNames, myProject, FileTypes.PLAIN_TEXT, myEditor) {
       @Override
       protected boolean shouldSelectAll() {
@@ -130,6 +141,7 @@ public class RenameDialog extends RefactoringDialog {
       myNameSuggestionsField.selectNameWithoutExtension();
     }
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
+      @Override
       public void dataChanged() {
         processNewNameChanged();
       }
@@ -169,14 +181,17 @@ public class RenameDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -254,10 +269,12 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
+  @Override
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
@@ -295,6 +312,7 @@ public class RenameDialog extends RefactoringDialog {
 
   @Override
   protected void canRun() throws ConfigurationException {
+    if (Comparing.strEqual(getNewName(), myOldName)) throw new ConfigurationException(null);
     if (!areButtonsValid()) {
       throw new ConfigurationException("\'" + getNewName() + "\' is not a valid identifier");
     }
@@ -304,6 +322,7 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);

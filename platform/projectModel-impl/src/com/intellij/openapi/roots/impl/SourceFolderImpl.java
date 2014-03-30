@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.SourceFolder;
@@ -25,78 +24,80 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  *  @author dsl
  */
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleSourceFolderImpl");
-  private final boolean myIsTestSource;
+  private JpsModuleSourceRoot myJpsElement;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
   @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
-  private String myPackagePrefix;
   static final String DEFAULT_PACKAGE_PREFIX = "";
 
-  SourceFolderImpl(@NotNull VirtualFile file, boolean isTestSource, @NotNull ContentEntryImpl contentEntry) {
-    this(file, isTestSource, DEFAULT_PACKAGE_PREFIX, contentEntry);
-  }
-
-  SourceFolderImpl(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix, @NotNull ContentEntryImpl contentEntry) {
+  SourceFolderImpl(@NotNull VirtualFile file, @NotNull JpsModuleSourceRoot jpsElement, @NotNull ContentEntryImpl contentEntry) {
     super(file, contentEntry);
-    myIsTestSource = isTestSource;
-    myPackagePrefix = packagePrefix;
+    myJpsElement = jpsElement;
   }
 
-  public SourceFolderImpl(@NotNull String url, boolean isTestSource, @NotNull ContentEntryImpl contentEntry) {
-    super(url, contentEntry);
-    myIsTestSource = isTestSource;
-    myPackagePrefix = DEFAULT_PACKAGE_PREFIX;
+  public SourceFolderImpl(@NotNull JpsModuleSourceRoot jpsElement, @NotNull ContentEntryImpl contentEntry) {
+    super(jpsElement.getUrl(), contentEntry);
+    myJpsElement = jpsElement;
   }
 
   SourceFolderImpl(Element element, ContentEntryImpl contentEntry) throws InvalidDataException {
     super(element, contentEntry);
-    LOG.assertTrue(element.getName().equals(ELEMENT_NAME));
-    final String testSource = element.getAttributeValue(TEST_SOURCE_ATTR);
-    if (testSource == null) throw new InvalidDataException();
-    myIsTestSource = Boolean.valueOf(testSource).booleanValue();
-    final String packagePrefix = element.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE);
-    if (packagePrefix != null) {
-      myPackagePrefix = packagePrefix;
-    }
-    else {
-      myPackagePrefix = DEFAULT_PACKAGE_PREFIX;
-    }
+    myJpsElement = JpsModuleRootModelSerializer.loadSourceRoot(element);
   }
 
   private SourceFolderImpl(SourceFolderImpl that, ContentEntryImpl contentEntry) {
     super(that, contentEntry);
-    myIsTestSource = that.myIsTestSource;
-    myPackagePrefix = that.myPackagePrefix;
+    myJpsElement = createCopy(that, that.myJpsElement.asTyped());
+  }
+
+  private static <P extends JpsElement> JpsModuleSourceRoot createCopy(SourceFolderImpl that, final JpsTypedModuleSourceRoot<P> jpsElement) {
+    return JpsElementFactory.getInstance().createModuleSourceRoot(that.getUrl(), jpsElement.getRootType(), (P)jpsElement.getProperties().getBulkModificationSupport().createCopy());
   }
 
   @Override
   public boolean isTestSource() {
-    return myIsTestSource;
+    return getRootType().equals(JavaSourceRootType.TEST_SOURCE) || getRootType().equals(JavaResourceRootType.TEST_RESOURCE);
   }
 
   @NotNull
   @Override
   public String getPackagePrefix() {
-    return myPackagePrefix;
+    JavaSourceRootProperties properties = getJavaProperties();
+    return properties != null ? properties.getPackagePrefix() : DEFAULT_PACKAGE_PREFIX;
+  }
+
+  @Nullable
+  private JavaSourceRootProperties getJavaProperties() {
+    return myJpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES);
   }
 
   @Override
   public void setPackagePrefix(@NotNull String packagePrefix) {
-    myPackagePrefix = packagePrefix;
+    JavaSourceRootProperties properties = getJavaProperties();
+    if (properties != null) {
+      properties.setPackagePrefix(packagePrefix);
+    }
   }
 
-  void writeExternal(Element element) {
-    writeFolder(element, ELEMENT_NAME);
-    element.setAttribute(TEST_SOURCE_ATTR, Boolean.toString(myIsTestSource));
-    if (!DEFAULT_PACKAGE_PREFIX.equals(myPackagePrefix)) {
-      element.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, myPackagePrefix);
-    }
+  @NotNull
+  @Override
+  public JpsModuleSourceRootType<?> getRootType() {
+    return myJpsElement.getRootType();
   }
 
   @Override
@@ -106,6 +107,11 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     return new SourceFolderImpl(this, (ContentEntryImpl)contentEntry);
   }
 
+  @NotNull
+  public JpsModuleSourceRoot getJpsElement() {
+    return myJpsElement;
+  }
+
   @Override
   public int compareTo(ContentFolderBaseImpl folder) {
     if (!(folder instanceof SourceFolderImpl)) return -1;
@@ -113,8 +119,18 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     int i = super.compareTo(folder);
     if (i!= 0) return i;
 
-    i = myPackagePrefix.compareTo(((SourceFolderImpl)folder).myPackagePrefix);
+    SourceFolderImpl sourceFolder = (SourceFolderImpl)folder;
+    i = getPackagePrefix().compareTo(sourceFolder.getPackagePrefix());
     if (i!= 0) return i;
-    return Boolean.valueOf(myIsTestSource).compareTo(((SourceFolderImpl)folder).myIsTestSource);
+    i = Boolean.valueOf(isTestSource()).compareTo(sourceFolder.isTestSource());
+    if (i != 0) return i;
+    JavaSourceRootProperties properties1 = getJavaProperties();
+    JavaSourceRootProperties properties2 = sourceFolder.getJavaProperties();
+    if (properties1 != null && properties2 != null) {
+      i = Boolean.valueOf(properties1.isForGeneratedSources()).compareTo(properties2.isForGeneratedSources());
+      if (i != 0) return i;
+    }
+    //todo[nik] perhaps we should use LinkedSet instead of SortedSet and get rid of this method
+    return myJpsElement.getRootType().getClass().getName().compareTo(sourceFolder.getRootType().getClass().getName());
   }
 }

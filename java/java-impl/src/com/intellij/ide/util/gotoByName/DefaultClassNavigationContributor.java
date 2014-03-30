@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
@@ -22,50 +23,77 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
-public class DefaultClassNavigationContributor implements GotoClassContributor {
+public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
+    if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
+      GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+      CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
+      processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
+
+      return ArrayUtil.toStringArray(processor.getResults());
+    }
+
     return PsiShortNamesCache.getInstance(project).getAllClassNames();
   }
 
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    return filterUnshowable(PsiShortNamesCache.getInstance(project).getClassesByName(name, scope), pattern);
-  }
+    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-  private static NavigationItem[] filterUnshowable(PsiClass[] items, final String pattern) {
-    boolean isAnnotation = pattern.startsWith("@");
-    ArrayList<NavigationItem> list = new ArrayList<NavigationItem>(items.length);
-    for (PsiClass item : items) {
-      if (item.getContainingFile().getVirtualFile() == null) continue;
-      if (isAnnotation && !item.isAnnotationType()) continue;
-      list.add(item);
-    }
-    return list.toArray(new NavigationItem[list.size()]);
+    return processor.toArray(new NavigationItem[processor.getResults().size()]);
   }
 
   @Override
   public String getQualifiedName(final NavigationItem item) {
     if (item instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)item;
-      final String qName = psiClass.getQualifiedName();
-      if (qName != null) return qName;
-
-      final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
-      return containerText + "." + psiClass.getName();
+      return getQualifiedNameForClass((PsiClass)item);
     }
     return null;
+  }
+
+  public static String getQualifiedNameForClass(PsiClass psiClass) {
+    final String qName = psiClass.getQualifiedName();
+    if (qName != null) return qName;
+
+    final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
+    return containerText + "." + psiClass.getName();
   }
 
   @Override
   public String getQualifiedNameSeparator() {
     return ".";
+  }
+
+  @Override
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    PsiShortNamesCache.getInstance(scope.getProject()).processAllClassNames(processor, scope, filter);
+  }
+
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull final FindSymbolParameters parameters) {
+    PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
+      final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
+      @Override
+      public boolean process(PsiClass aClass) {
+        if (aClass.getContainingFile().getVirtualFile() == null || !aClass.isPhysical()) return true;
+        if (isAnnotation && !aClass.isAnnotationType()) return true;
+        return processor.process(aClass);
+      }
+    }, parameters.getSearchScope(), parameters.getIdFilter());
   }
 }

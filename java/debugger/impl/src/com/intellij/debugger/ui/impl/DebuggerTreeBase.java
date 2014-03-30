@@ -295,6 +295,9 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
         else if (c == 'n') {
           buf.append('\n');
         }
+        else if (c == '\"') {
+          buf.append('\"');
+        }
         else {
           buf.append('\\');
           buf.append(c);

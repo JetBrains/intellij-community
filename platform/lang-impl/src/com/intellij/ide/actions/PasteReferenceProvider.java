@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.editorActions.PasteHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -40,9 +39,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.Transferable;
 
 public class PasteReferenceProvider implements PasteProvider {
+  @Override
   public void performPaste(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (project == null || editor == null) return;
 
     final String fqn = getCopiedFqn(dataContext);
@@ -62,14 +62,16 @@ public class PasteReferenceProvider implements PasteProvider {
     }
   }
 
+  @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     return project != null && editor != null && getCopiedFqn(dataContext) != null;
   }
 
+  @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
     if (project == null || fqn == null) {
       return false;
@@ -90,11 +92,13 @@ public class PasteReferenceProvider implements PasteProvider {
     documentManager.commitDocument(editor.getDocument());
 
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Document document = editor.getDocument();
             documentManager.doPostponedOperationsAndUnblockDocument(document);
@@ -108,30 +112,20 @@ public class PasteReferenceProvider implements PasteProvider {
   }
 
   @Nullable
-  private static String getCopiedFqn(final DataContext dataContext) {
-    @SuppressWarnings("unchecked")
-    final Producer<Transferable> transferableProducer = (Producer<Transferable>)dataContext.getData(PasteHandler.TRANSFERABLE_PROVIDER);
-    if (transferableProducer == null) return null;
+  private static String getCopiedFqn(final DataContext context) {
+    Producer<Transferable> producer = PasteAction.TRANSFERABLE_PROVIDER.getData(context);
 
-    final Transferable transferable = transferableProducer.produce();
-    if (transferable != null) {
-      try {
-        return (String)transferable.getTransferData(CopyReferenceAction.ourFlavor);
-      }
-      catch (Exception ignored) { }
-    }
-
-    final CopyPasteManager manager = CopyPasteManager.getInstance();
-    if (manager.isDataFlavorAvailable(CopyReferenceAction.ourFlavor)) {
-      final Transferable contents = manager.getContents();
-      if (contents != null) {
+    if (producer != null) {
+      Transferable transferable = producer.produce();
+      if (transferable != null) {
         try {
-          return (String)contents.getTransferData(CopyReferenceAction.ourFlavor);
+          return (String)transferable.getTransferData(CopyReferenceAction.ourFlavor);
         }
         catch (Exception ignored) { }
       }
+      return null;
     }
 
-    return null;
+    return CopyPasteManager.getInstance().getContents(CopyReferenceAction.ourFlavor);
   }
 }

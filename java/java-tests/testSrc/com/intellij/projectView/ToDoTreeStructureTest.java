@@ -4,11 +4,11 @@ import com.intellij.ide.todo.AllTodosTreeBuilder;
 import com.intellij.ide.todo.CurrentFileTodosTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -26,16 +26,18 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 
-    myStructure = all.getTreeStructure();
-    ((TodoTreeStructure)myStructure).setFlattenPackages(true);
-    assertStructureEqual("Root\n" +
-                         " Summary\n" +
-                         "  package2 toDoFileCount=1,toDoItemCount=2\n" +
-                         "   JavaClass.java\n" +
-                         "    Item: (62,78)\n" +
-                         "    Item: (145,162)\n", null);
+    AbstractTreeStructure structure = all.getTreeStructure();
+    ((TodoTreeStructure)structure).setFlattenPackages(true);
+    ProjectViewTestUtil.assertStructureEqual(structure,
+                                             "Root\n" +
+                                             " Summary\n" +
+                                             "  package2 toDoFileCount=1,toDoItemCount=2\n" +
+                                             "   JavaClass.java\n" +
+                                             "    Item: (62,78)\n" +
+                                             "    Item: (145,162)\n",
+                                             myPrintInfo);
 
-    checkOccurances(all, new String[]{"Item: (62,78)", "Item: (145,162)"});
+    checkOccurrences(all, new String[]{"Item: (62,78)", "Item: (145,162)"});
     Disposer.dispose(all);
  }
 
@@ -44,27 +46,28 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), new DefaultTreeModel(new DefaultMutableTreeNode()), myProject);
     all.init();
 
-    myStructure = all.getTreeStructure();
-    assertStructureEqual("Root\n" +
-                         " Summary\n" +
-                         "  toDo\n" +
-                         "   xmlFile.xml\n"+
-                         "    Item: (12,16)\n" +
-                         "  package1 toDoFileCount=2,toDoItemCount=4\n" +
-                         "   package2 toDoFileCount=1,toDoItemCount=2\n" +
-                         "    JavaClass.java\n" +
-                         "     Item: (62,78)\n" +
-                         "     Item: (145,162)\n" +
-                         "   JavaClass.java\n" +
-                         "    Item: (52,68)\n" +
-                         "    Item: (134,151)\n" +
-                         "  package3 toDoFileCount=1,toDoItemCount=2\n" +
-                         "   JavaClass.java\n" +
-                         "    Item: (53,69)\n" +
-                         "    Item: (136,153)\n", null);
+    AbstractTreeStructure structure = all.getTreeStructure();
+    ProjectViewTestUtil.assertStructureEqual(structure,
+                                             "Root\n" +
+                                             " Summary\n" +
+                                             "  toDo\n" +
+                                             "   xmlFile.xml\n" +
+                                             "    Item: (12,16)\n" +
+                                             "  package1 toDoFileCount=2,toDoItemCount=4\n" +
+                                             "   package2 toDoFileCount=1,toDoItemCount=2\n" +
+                                             "    JavaClass.java\n" +
+                                             "     Item: (62,78)\n" +
+                                             "     Item: (145,162)\n" +
+                                             "   JavaClass.java\n" +
+                                             "    Item: (52,68)\n" +
+                                             "    Item: (134,151)\n" +
+                                             "  package3 toDoFileCount=1,toDoItemCount=2\n" +
+                                             "   JavaClass.java\n" +
+                                             "    Item: (53,69)\n" +
+                                             "    Item: (136,153)\n", myPrintInfo);
 
-    checkOccurances(all, new String[]{"Item: (12,16)","Item: (62,78)", "Item: (145,162)", "Item: (52,68)", "Item: (134,151)",
-    "Item: (53,69)", "Item: (136,153)"});
+    checkOccurrences(all, new String[]{"Item: (12,16)", "Item: (62,78)", "Item: (145,162)", "Item: (52,68)", "Item: (134,151)",
+      "Item: (53,69)", "Item: (136,153)"});
 
 
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
@@ -76,29 +79,29 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     builder.init();
     builder.setFile(getSrcDirectory().findSubdirectory("package1").findFile("JavaClass.java"));
     builder.updateFromRoot();
-    myStructure = builder.getTreeStructure();
-    assertStructureEqual("JavaClass.java\n" +
-                         " JavaClass.java\n" +
-                         "  Item: (52,68)\n" +
-                         "  Item: (134,151)\n", null);
+    ProjectViewTestUtil.assertStructureEqual(builder.getTreeStructure(),
+                                             "JavaClass.java\n" +
+                                             " JavaClass.java\n" +
+                                             "  Item: (52,68)\n" +
+                                             "  Item: (134,151)\n", myPrintInfo);
 
 
     Disposer.dispose(builder);
     Disposer.dispose(all);
   }
 
-  private void checkOccurances(final AllTodosTreeBuilder all, final String[] strings) {
-    TodoItemNode current = all.getFirstPointerForElement(myStructure.getRootElement());
-    for (int i = 0; i < strings.length; i++) {
-      String string = strings[i];
+  private static void checkOccurrences(final AllTodosTreeBuilder all, final String[] strings) {
+    AbstractTreeStructure allTreeStructure = all.getTreeStructure();
+    TodoItemNode current = all.getFirstPointerForElement(allTreeStructure.getRootElement());
+    for (String string : strings) {
       assertNotNull(current);
-      assertEquals(string,  current.getTestPresentation());
+      assertEquals(string, current.getTestPresentation());
       current = all.getNextPointer(current);
     }
 
     assertNull(current);
 
-    current = all.getLastPointerForElement(myStructure.getRootElement());
+    current = all.getLastPointerForElement(allTreeStructure.getRootElement());
     for (int i = strings.length - 1; i >= 0; i--) {
       String string = strings[i];
       assertNotNull(current);

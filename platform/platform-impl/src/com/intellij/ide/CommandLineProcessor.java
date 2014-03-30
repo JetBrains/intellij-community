@@ -127,6 +127,7 @@ public class CommandLineProcessor {
   public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
     if (args.size() > 0) {
       LOG.info("External command line:");
+      LOG.info("Dir: " + currentDirectory);
       for (String arg : args) {
         LOG.info(arg);
       }
@@ -168,8 +169,8 @@ public class CommandLineProcessor {
         if (StringUtil.isQuotedString(arg)) {
           arg = StringUtil.stripQuotesAroundValue(arg);
         }
-        if (currentDirectory != null) {
-          arg = new File(currentDirectory, arg).getAbsolutePath();
+        if (!new File(arg).isAbsolute()) {
+          arg = currentDirectory != null ? new File(currentDirectory, arg).getAbsolutePath() : new File(arg).getAbsolutePath();
         }
         if (line != -1) {
           final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);

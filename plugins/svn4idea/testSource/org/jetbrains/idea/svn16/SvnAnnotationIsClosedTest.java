@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn16;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -68,13 +69,13 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testClosedByCommitFromIdea() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -84,7 +85,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
     Assert.assertFalse(myIsClosed); // not closed on typing
 
     myDirtyScopeManager.markEverythingDirty();
@@ -106,14 +107,14 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testClosedByUpdateInIdea() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();  //#1
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();  //#2
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -134,14 +135,14 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testClosedChangedByUpdateInIdea() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();  //#1
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();  //#2
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -150,7 +151,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
       }
     });
     listener.registerAnnotation(tree.myS1File, annotation);
-    editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -164,14 +165,14 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testClosedByExternalUpdate() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();  //#1
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();  //#2
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -180,7 +181,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
       }
     });
     listener.registerAnnotation(tree.myS1File, annotation);
-    editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -200,13 +201,13 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testNotClosedByRenaming() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -216,9 +217,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
     Assert.assertFalse(myIsClosed); // not closed on typing
-    renameFileInCommand(myProject, tree.myS1File, "5364536");
+    VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "5364536");
     Assert.assertFalse(myIsClosed); // not closed on typing
 
     myDirtyScopeManager.markEverythingDirty();
@@ -231,14 +232,14 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testAnnotateRenamed() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -260,13 +261,13 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   public void testClosedByExternalCommit() throws Exception {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();  //#1
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n");
     checkin();  //#2
-    editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -275,7 +276,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
       }
     });
     listener.registerAnnotation(tree.myS1File, annotation);
-    editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -305,8 +306,8 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     Assert.assertNotNull(vf1);
     Assert.assertNotNull(vf2);
 
-    editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
-    editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -321,7 +322,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());   // #3
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #4
 
-    editFileInCommand(myProject, vf2, "test externals 12344444" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 12344444" + System.currentTimeMillis());
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath()); // #5
 
     final SvnDiffProvider diffProvider = (SvnDiffProvider) myVcs.getDiffProvider();
@@ -337,7 +338,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     // then annotate both
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(vf1);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), vf1);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -347,7 +348,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     });
     listener.registerAnnotation(vf1, annotation);
 
-    final FileAnnotation annotation1 = myVcs.getAnnotationProvider().annotate(vf2);
+    final FileAnnotation annotation1 = createTestAnnotation(myVcs.getAnnotationProvider(), vf2);
     annotation1.setCloser(new Runnable() {
       @Override
       public void run() {

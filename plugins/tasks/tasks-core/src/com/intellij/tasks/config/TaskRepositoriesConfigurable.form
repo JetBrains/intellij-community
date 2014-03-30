@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="579" height="400"/>
+      <xy x="20" y="20" width="538" height="293"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -19,7 +19,7 @@
       <grid id="7efb3" binding="myServersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false">
-            <preferred-size width="0" height="100"/>
+            <preferred-size width="0" height="50"/>
           </grid>
         </constraints>
         <properties/>
@@ -32,7 +32,26 @@
         </constraints>
         <properties/>
         <border type="none"/>
-        <children/>
+        <children>
+          <grid id="602e0" binding="myEmptyPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <card name="Card1"/>
+            </constraints>
+            <properties/>
+            <border type="empty">
+              <size top="100" left="220" bottom="100" right="220"/>
+            </border>
+            <children>
+              <component id="76503" class="com.intellij.ui.components.JBLabel">
+                <constraints border-constraint="Center"/>
+                <properties>
+                  <horizontalAlignment value="0"/>
+                  <text value="No server selected"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
       </grid>
       <component id="4840c" class="com.intellij.openapi.ui.Splitter" binding="mySplitter">
         <constraints>

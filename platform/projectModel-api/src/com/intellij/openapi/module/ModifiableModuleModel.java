@@ -137,7 +137,7 @@ public interface ModifiableModuleModel {
 
   boolean hasModuleGroups();
 
-  void setModuleGroupPath(Module module, String[] groupPath);
+  void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath);
 
-  void setModuleFilePath(Module module, String oldPath, String newFilePath);
+  void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath);
 }

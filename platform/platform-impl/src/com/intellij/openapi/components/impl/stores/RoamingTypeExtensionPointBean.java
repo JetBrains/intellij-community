@@ -17,6 +17,10 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.components.RoamingType#DISABLED}
+ */
+@Deprecated
 public class RoamingTypeExtensionPointBean {
   @Attribute("component")
   public String componentName;

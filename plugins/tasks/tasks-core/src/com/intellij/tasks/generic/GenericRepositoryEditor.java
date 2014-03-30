@@ -1,51 +1,62 @@
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletionContributor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HTTPMethod;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 
-import static com.intellij.tasks.generic.GenericRepository.*;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.createPlaceholdersList;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.prettifyVariableName;
+import static com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 
 /**
- * User: Evgeny.Zakrevsky
- * Date: 10/4/12
+ * @author Evgeny.Zakrevsky
+ * @author Mikhail Golubev
  */
 public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRepositoryEditor<T> {
-  public static final String POST = "POST";
-  public static final String GET = "GET";
-  private EditorTextField myTasksListURLText;
-  private EditorTextField myTaskPatternText;
-  protected JBLabel myLoginURLLabel;
+
   protected EditorTextField myLoginURLText;
+  private EditorTextField myTasksListURLText;
+  private EditorTextField mySingleTaskURLText;
+  protected JBLabel myLoginURLLabel;
   protected ComboBox myLoginMethodTypeComboBox;
   private ComboBox myTasksListMethodTypeComboBox;
-  private JBLabel myLoginTooltip;
-  private JBLabel myTaskListTooltip;
-  private JBLabel myTaskPatternTooltip;
+  private ComboBox mySingleTaskMethodComboBox;
   private JPanel myPanel;
   private JRadioButton myXmlRadioButton;
-  private JRadioButton myHtmlRadioButton;
+  private JRadioButton myTextRadioButton;
   private JButton myTest2Button;
   private JRadioButton myJsonRadioButton;
   private JButton myManageTemplateVariablesButton;
   private JButton myResetToDefaultsButton;
+  private JPanel myCardPanel;
+  private JBLabel mySingleTaskURLLabel;
+  private JBCheckBox myDownloadTasksInSeparateRequests;
+
+  private Map<JTextField, TemplateVariable> myField2Variable;
+  private Map<JRadioButton, ResponseType> myRadio2ResponseType;
 
   public GenericRepositoryEditor(final Project project,
                                  final T repository,
@@ -64,7 +75,6 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
         loginUrlEnablingChanged();
       }
     });
-
     myUseHttpAuthenticationCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -72,63 +82,69 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
       }
     });
 
-    switch (myRepository.getResponseType()) {
-      case XML:
-        myXmlRadioButton.setSelected(true);
-        myHtmlRadioButton.setSelected(false);
-        myJsonRadioButton.setSelected(false);
-        break;
-      case HTML:
-        myXmlRadioButton.setSelected(false);
-        myHtmlRadioButton.setSelected(true);
-        myJsonRadioButton.setSelected(false);
-        break;
-      case JSON:
-        myXmlRadioButton.setSelected(false);
-        myHtmlRadioButton.setSelected(false);
-        myJsonRadioButton.setSelected(true);
-        break;
-    }
-
-    ActionListener listener = new ActionListener() {
+    ActionListener radioButtonListener = new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        responseTypeChanged();
+        singleTaskUrlEnablingChanged();
+        doApply();
+        selectCardByResponseType();
       }
     };
-    myXmlRadioButton.addActionListener(listener);
-    myHtmlRadioButton.addActionListener(listener);
-    myJsonRadioButton.addActionListener(listener);
+    myXmlRadioButton.addActionListener(radioButtonListener);
+    myTextRadioButton.addActionListener(radioButtonListener);
+    myJsonRadioButton.addActionListener(radioButtonListener);
 
-    myLoginMethodTypeComboBox.setSelectedItem(myRepository.getLoginMethodType());
-    myTasksListMethodTypeComboBox.setSelectedItem(myRepository.getTasksListMethodType());
+    myLoginMethodTypeComboBox.setSelectedItem(myRepository.getLoginMethodType().toString());
+    myTasksListMethodTypeComboBox.setSelectedItem(myRepository.getTasksListMethodType().toString());
+    mySingleTaskMethodComboBox.setSelectedItem(myRepository.getSingleTaskMethodType().toString());
 
+    // set default listener updating model fields
     installListener(myLoginMethodTypeComboBox);
     installListener(myTasksListMethodTypeComboBox);
-    installListener(myTasksListURLText.getDocument());
-    installListener(myLoginURLText.getDocument());
-    installListener(myTaskPatternText.getDocument());
+    installListener(mySingleTaskMethodComboBox);
+    installListener(myLoginURLText);
+    installListener(myTasksListURLText);
+    installListener(mySingleTaskURLText);
+    installListener(myDownloadTasksInSeparateRequests);
+    myTabbedPane.addTab("Server configuration", myPanel);
 
-    String useCompletionText = ". Use " +
-                               KeymapUtil
-                                 .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)) +
-                               " for completion.";
-    myLoginTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + USERNAME_PLACEHOLDER + ", " +
-                           PASSWORD_PLACEHOLDER + useCompletionText + "</html>");
-    myTaskListTooltip.setText("<html>Available placeholders: " + SERVER_URL_PLACEHOLDER + ", " + MAX_COUNT_PLACEHOLDER + ", " +
-                              QUERY_PLACEHOLDER + " (use for faster tasks search)" + useCompletionText + "</html>");
-    myTaskPatternTooltip.setText(
-      "<html>Task pattern should be a regexp with two matching groups: ({id}.+?) and ({summary}.+?)" + useCompletionText + "</html>");
+    // Put appropriate configuration components on the card panel
+    ResponseHandler xmlHandler = myRepository.getResponseHandler(ResponseType.XML);
+    ResponseHandler jsonHandler = myRepository.getResponseHandler(ResponseType.JSON);
+    ResponseHandler textHandler = myRepository.getResponseHandler(ResponseType.TEXT);
+    // Select appropriate card pane
+    myCardPanel.add(xmlHandler.getConfigurationComponent(myProject), ResponseType.XML.getMimeType());
+    myCardPanel.add(jsonHandler.getConfigurationComponent(myProject), ResponseType.JSON.getMimeType());
+    myCardPanel.add(textHandler.getConfigurationComponent(myProject), ResponseType.TEXT.getMimeType());
 
-    myTabbedPane.addTab("Additional", myPanel);
+    myRadio2ResponseType = new IdentityHashMap<JRadioButton, ResponseType>();
+    myRadio2ResponseType.put(myJsonRadioButton, ResponseType.JSON);
+    myRadio2ResponseType.put(myXmlRadioButton, ResponseType.XML);
+    myRadio2ResponseType.put(myTextRadioButton, ResponseType.TEXT);
 
     myManageTemplateVariablesButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         final ManageTemplateVariablesDialog dialog = new ManageTemplateVariablesDialog(myManageTemplateVariablesButton);
-        dialog.setTemplateVariables(myRepository.getTemplateVariables());
+        dialog.setTemplateVariables(myRepository.getAllTemplateVariables());
         if (dialog.showAndGet()) {
-          myRepository.setTemplateVariables(dialog.getTemplateVariables());
+          myRepository.setTemplateVariables(ContainerUtil.filter(dialog.getTemplateVariables(), new Condition<TemplateVariable>() {
+            @Override
+            public boolean value(TemplateVariable variable) {
+              return !variable.isReadOnly();
+            }
+          }));
+          myCustomPanel.removeAll();
+          myCustomPanel.add(createCustomPanel());
+          //myCustomPanel.repaint();
+          myTabbedPane.getComponentAt(0).repaint();
+
+          //myLoginURLText = createEditorFieldWithPlaceholderCompletion(myRepository.getLoginUrl());
+          List<String> placeholders = createPlaceholdersList(myRepository);
+          ((TextFieldWithAutoCompletion)myLoginURLText).setVariants(placeholders);
+          ((TextFieldWithAutoCompletion)myTasksListURLText).setVariants(concat(placeholders, "{max}", "{since}"));
+          ((TextFieldWithAutoCompletion)mySingleTaskURLText).setVariants(concat(placeholders, "{id}"));
+          myPanel.repaint();
         }
       }
     });
@@ -137,79 +153,131 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
       @Override
       public void actionPerformed(final ActionEvent e) {
         myRepository.resetToDefaults();
+        // TODO: look closely
         reset(myRepository.clone());
       }
     });
 
+    selectRadioButtonByResponseType();
+    selectCardByResponseType();
     loginUrlEnablingChanged();
+    singleTaskUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
   }
 
-  protected void reset(final GenericRepository clone) {
-    myLoginURLText.setText(clone.getLoginURL());
-    myTasksListURLText.setText(clone.getTasksListURL());
-    myTaskPatternText.setText(clone.getTaskPattern());
-    myLoginMethodTypeComboBox.setSelectedItem(clone.getLoginMethodType());
-    myTasksListMethodTypeComboBox.setSelectedItem(clone.getTasksListMethodType());
-    switch (clone.getResponseType()) {
-      case XML:
-        myXmlRadioButton.setSelected(true);
-        myHtmlRadioButton.setSelected(false);
-        myJsonRadioButton.setSelected(false);
-        break;
-      case HTML:
-        myXmlRadioButton.setSelected(false);
-        myHtmlRadioButton.setSelected(true);
-        myJsonRadioButton.setSelected(false);
-        break;
-      case JSON:
-        myXmlRadioButton.setSelected(false);
-        myHtmlRadioButton.setSelected(false);
-        myJsonRadioButton.setSelected(true);
-        break;
-    }
-    responseTypeChanged();
-    loginUrlEnablingChanged();
-  }
-
-  private void responseTypeChanged() {
-    doApply();
-    myTaskPatternText.setFileType(myRepository.getResponseType().getFileType());
+  private void singleTaskUrlEnablingChanged() {
+    boolean enabled = !myTextRadioButton.isSelected();
+    // single task URL doesn't make sense when legacy regex handler is used
+    mySingleTaskURLText.setEnabled(enabled);
+    mySingleTaskMethodComboBox.setEnabled(enabled);
+    mySingleTaskURLLabel.setEnabled(enabled);
   }
 
   protected void loginUrlEnablingChanged() {
-    final boolean enabled = !myLoginAnonymouslyJBCheckBox.isSelected() && !myUseHttpAuthenticationCheckBox.isSelected();
+    boolean enabled = !myLoginAnonymouslyJBCheckBox.isSelected() && !myUseHttpAuthenticationCheckBox.isSelected();
     myLoginURLLabel.setEnabled(enabled);
     myLoginURLText.setEnabled(enabled);
     myLoginMethodTypeComboBox.setEnabled(enabled);
-    myLoginTooltip.setEnabled(enabled);
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createCustomPanel() {
+    myField2Variable = new IdentityHashMap<JTextField, TemplateVariable>();
+    FormBuilder builder = FormBuilder.createFormBuilder();
+    for (final TemplateVariable variable : myRepository.getTemplateVariables()) {
+      if (variable.isShownOnFirstTab()) {
+        JTextField field = variable.isHidden() ? new JPasswordField(variable.getValue()) : new JTextField(variable.getValue());
+        myField2Variable.put(field, variable);
+        installListener(field);
+        JBLabel label = new JBLabel(prettifyVariableName(variable.getName()) + ":", SwingConstants.RIGHT);
+        label.setAnchor(getAnchor());
+        builder.addLabeledComponent(label, field);
+      }
+    }
+    return builder.getPanel();
+  }
+
+  protected void reset(final GenericRepository clone) {
+    myLoginURLText.setText(clone.getLoginUrl());
+    myTasksListURLText.setText(clone.getTasksListUrl());
+    mySingleTaskURLText.setText(clone.getSingleTaskUrl());
+    //myTaskPatternText.setText(clone.getTaskPattern());
+    myLoginMethodTypeComboBox.setSelectedItem(clone.getLoginMethodType());
+    myTasksListMethodTypeComboBox.setSelectedItem(clone.getTasksListMethodType());
+    mySingleTaskMethodComboBox.setSelectedItem(clone.getSingleTaskMethodType());
+    selectRadioButtonByResponseType();
+    selectCardByResponseType();
+    loginUrlEnablingChanged();
+    myDownloadTasksInSeparateRequests.setSelected(myRepository.getDownloadTasksInSeparateRequests());
+  }
+
+  private void selectRadioButtonByResponseType() {
+    for (Map.Entry<JRadioButton, ResponseType> entry : myRadio2ResponseType.entrySet()) {
+      if (entry.getValue() == myRepository.getResponseType()) {
+        entry.getKey().setSelected(true);
+      }
+    }
+  }
+
+  private void selectCardByResponseType() {
+    CardLayout cardLayout = (CardLayout) myCardPanel.getLayout();
+    cardLayout.show(myCardPanel, myRepository.getResponseType().getMimeType());
   }
 
   @Override
   public void apply() {
-    myRepository.setTasksListURL(myTasksListURLText.getText());
-    myRepository.setTaskPattern(myTaskPatternText.getDocument().getText());
-    myRepository.setLoginURL(myLoginURLText.getText());
-    myRepository.setLoginMethodType((String)myLoginMethodTypeComboBox.getModel().getSelectedItem());
-    myRepository.setTasksListMethodType((String)myTasksListMethodTypeComboBox.getModel().getSelectedItem());
-    myRepository.setResponseType(
-      myXmlRadioButton.isSelected() ? ResponseType.XML : myJsonRadioButton.isSelected() ? ResponseType.JSON : ResponseType.HTML);
+    myRepository.setLoginUrl(myLoginURLText.getText());
+    myRepository.setTasksListUrl(myTasksListURLText.getText());
+    myRepository.setSingleTaskUrl(mySingleTaskURLText.getText());
+
+    myRepository.setLoginMethodType(HTTPMethod.valueOf((String)myLoginMethodTypeComboBox.getSelectedItem()));
+    myRepository.setTasksListMethodType(HTTPMethod.valueOf((String)myTasksListMethodTypeComboBox.getSelectedItem()));
+    myRepository.setSingleTaskMethodType(HTTPMethod.valueOf((String)mySingleTaskMethodComboBox.getSelectedItem()));
+
+    myRepository.setDownloadTasksInSeparateRequests(myDownloadTasksInSeparateRequests.isSelected());
+   for (Map.Entry<JTextField, TemplateVariable> entry : myField2Variable.entrySet()) {
+      TemplateVariable variable = entry.getValue();
+      JTextField field = entry.getKey();
+      variable.setValue(field.getText());
+    }
+    for (Map.Entry<JRadioButton, ResponseType> entry : myRadio2ResponseType.entrySet()) {
+      if (entry.getKey().isSelected()) {
+        myRepository.setResponseType(entry.getValue());
+      }
+    }
     super.apply();
   }
 
   private void createUIComponents() {
-    //todo completion
-    //todo completion without whitespace before cursor
-    final ArrayList<String> completionList = ContainerUtil.newArrayList(SERVER_URL_PLACEHOLDER, USERNAME_PLACEHOLDER, PASSWORD_PLACEHOLDER);
-    myLoginURLText = TextFieldWithAutoCompletion.create(myProject, completionList, null, false, myRepository.getLoginURL());
+    List<String> placeholders = createPlaceholdersList(myRepository);
+    myLoginURLText = createTextFieldWithCompletion(myRepository.getLoginUrl(), placeholders);
+    myTasksListURLText = createTextFieldWithCompletion(myRepository.getTasksListUrl(), concat(placeholders, "{max}", "{since}"));
+    mySingleTaskURLText = createTextFieldWithCompletion(myRepository.getSingleTaskUrl(), concat(placeholders, "{id}"));
+  }
 
-    final ArrayList<String> completionList1 = ContainerUtil.newArrayList(SERVER_URL_PLACEHOLDER, QUERY_PLACEHOLDER, MAX_COUNT_PLACEHOLDER);
-    myTasksListURLText = TextFieldWithAutoCompletion.create(myProject, completionList1, null, false, myRepository.getTasksListURL());
+  private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
+    final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
+        @Nullable
+        @Override
+        public String getPrefix(@NotNull CompletionParameters parameters) {
+          final String text = parameters.getOriginalFile().getText();
+          final int i = text.lastIndexOf('{', parameters.getOffset() - 1);
+          if (i < 0) {
+            return "";
+          }
+          return text.substring(i, parameters.getOffset());
+        }
+      };
+    return new TextFieldWithAutoCompletion<String>(myProject, provider, true, text);
+  }
 
-    final Document document = EditorFactory.getInstance().createDocument(myRepository.getTaskPattern());
-    myTaskPatternText = new EditorTextField(document, myProject, myRepository.getResponseType().getFileType(), false, false);
-    final ArrayList<String> completionList2 = ContainerUtil.newArrayList("({id}.+?)", "({summary}.+?)");
-    TextFieldWithAutoCompletionContributor
-      .installCompletion(document, myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(completionList2, null), true);
-    myTaskPatternText.setFontInheritedFromLAF(false);
+  @Override
+  public void setAnchor(@Nullable JComponent anchor) {
+    super.setAnchor(anchor);
+    List<JBLabel> labels = UIUtil.findComponentsOfType(myCustomPanel, JBLabel.class);
+    for (JBLabel label : labels) {
+      label.setAnchor(anchor);
+    }
   }
 }

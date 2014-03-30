@@ -84,8 +84,9 @@ public class RootTypeConversionRule extends TypeConversionRule {
                 type = superClassSubstitutor.substitute(type);
               }
 
-              if (!originalType.equals(type)) {
-                labeler.migrateExpressionType(actualParams[i], methodTypeParamsSubstitutor.substitute(type), context, false, true);
+              final PsiType migrationType = methodTypeParamsSubstitutor.substitute(type);
+              if (!originalType.equals(migrationType) && !TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
+                labeler.migrateExpressionType(actualParams[i], migrationType, context, false, true);
               }
             }
           }

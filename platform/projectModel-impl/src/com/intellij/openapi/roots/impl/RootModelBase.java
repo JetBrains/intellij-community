@@ -24,10 +24,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -65,10 +64,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   public String[] getExcludeRootUrls() {
     final List<String> result = new SmartList<String>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        result.add(excludeFolder.getUrl());
-      }
+      result.addAll(contentEntry.getExcludeFolderUrls());
     }
     return ArrayUtil.toStringArray(result);
   }
@@ -78,13 +74,7 @@ public abstract class RootModelBase implements ModuleRootModel {
   public VirtualFile[] getExcludeRoots() {
     final List<VirtualFile> result = new SmartList<VirtualFile>();
     for (ContentEntry contentEntry : getContent()) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        final VirtualFile file = excludeFolder.getFile();
-        if (file != null) {
-          result.add(file);
-        }
-      }
+      Collections.addAll(result, contentEntry.getExcludeFolderFiles());
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }
@@ -132,6 +122,29 @@ public abstract class RootModelBase implements ModuleRootModel {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return getSourceRoots(Collections.singleton(rootType));
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    List<VirtualFile> result = new SmartList<VirtualFile>();
+    for (ContentEntry contentEntry : getContent()) {
+      final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(rootTypes);
+      for (SourceFolder sourceFolder : sourceFolders) {
+        final VirtualFile file = sourceFolder.getFile();
+        if (file != null) {
+          result.add(file);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
   @Override
   public ContentEntry[] getContentEntries() {
     final Collection<ContentEntry> content = getContent();

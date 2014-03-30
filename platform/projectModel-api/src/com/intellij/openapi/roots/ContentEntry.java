@@ -18,6 +18,11 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a module content root.
@@ -52,27 +57,52 @@ public interface ContentEntry extends Synthetic {
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.SourceFolder}s
    */
+  @NotNull
   SourceFolder[] getSourceFolders();
+
+  /**
+   * @param rootType type of accepted source roots
+   * @return list of source roots of the specified type containing in this content root
+   */
+  @NotNull
+  List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType);
+
+  /**
+   *
+   * @param rootTypes types of accepted source roots
+   * @return list of source roots of the specified types containing in this content root
+   */
+  @NotNull
+  List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns the list of directories for valid source roots under this content root.
    *
    * @return list of all valid source roots.
    */
+  @NotNull
   VirtualFile[] getSourceFolderFiles();
 
   /**
-   * Returns the list of excluded roots under this content root.
+   * Returns the list of excluded roots configured under this content root. The result doesn't include synthetic excludes like the module output.
    *
    * @return list of this <code>ContentEntry</code> {@link com.intellij.openapi.roots.ExcludeFolder}s
    */
+  @NotNull
   ExcludeFolder[] getExcludeFolders();
+
+  /**
+   * @return list of URLs for all excluded roots under this content root including synthetic excludes like the module output
+   */
+  @NotNull
+  List<String> getExcludeFolderUrls();
 
   /**
    * Returns the list of directories for valid excluded roots under this content root.
    *
-   * @return list of all valid exclude roots.
+   * @return list of all valid exclude roots including synthetic excludes like the module output
    */
+  @NotNull
   VirtualFile[] getExcludeFolderFiles();
 
   /**
@@ -82,6 +112,7 @@ public interface ContentEntry extends Synthetic {
    * @param isTestSource true if the directory is added as a test source root.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource);
 
   /**
@@ -93,7 +124,16 @@ public interface ContentEntry extends Synthetic {
    *                      package prefix is required.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix);
+
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
+
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type);
 
   /**
    * Adds a source or test source root under the content root.
@@ -102,7 +142,16 @@ public interface ContentEntry extends Synthetic {
    * @param isTestSource true if the directory is added as a test source root.
    * @return the object representing the added root.
    */
+  @NotNull
   SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource);
+
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type);
+
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull  P properties);
 
   /**
    * Removes a source or test source root from this content root.
@@ -135,6 +184,13 @@ public interface ContentEntry extends Synthetic {
    * @param excludeFolder the exclude root to remove (must belong to this content root).
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
+
+  /**
+   * Removes an exclude root from this content root.
+   * @param url url of the exclude root
+   * @return {@code true} if the exclude root was removed
+   */
+  boolean removeExcludeFolder(@NotNull String url);
 
   void clearExcludeFolders();
 }

@@ -44,12 +44,13 @@ public class GrPackageDefinitionElementType extends GrStubElementType<GrPackageD
   }
 
   @Override
-  public void serialize(GrPackageDefinitionStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrPackageDefinitionStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getPackageName());
   }
 
+  @NotNull
   @Override
-  public GrPackageDefinitionStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public GrPackageDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrPackageDefinitionStub(parentStub, GroovyElementTypes.PACKAGE_DEFINITION, dataStream.readName());
   }
 }

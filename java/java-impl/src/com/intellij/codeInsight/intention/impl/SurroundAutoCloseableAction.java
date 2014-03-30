@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -31,9 +32,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -64,6 +64,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+      return;
+    }
+
     final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
     if (variable == null) return;
     final PsiExpression initializer = variable.getInitializer();
@@ -113,76 +117,54 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
   }
 
-  @Nullable
-  private static List<PsiElement> moveStatements(@NotNull final PsiElement first, final PsiElement last, final PsiTryStatement statement) {
-    final PsiCodeBlock tryBlock = statement.getTryBlock();
+  private static List<PsiElement> moveStatements(@NotNull PsiElement first, PsiElement last, PsiTryStatement statement) {
+    PsiCodeBlock tryBlock = statement.getTryBlock();
     assert tryBlock != null : statement.getText();
-    final PsiJavaToken rBrace = tryBlock.getRBrace();
-    assert rBrace != null : statement.getText();
+    PsiElement parent = statement.getParent();
 
-    final PsiElement parent = statement.getParent();
-    final LocalSearchScope scope = new LocalSearchScope(parent);
-    List<PsiElement> toFormat = null, toDelete = null;
-
-    final PsiElement stopAt = last.getNextSibling();
+    List<PsiElement> toFormat = new SmartList<PsiElement>();
+    PsiElement stopAt = last.getNextSibling();
     for (PsiElement child = first; child != null && child != stopAt; child = child.getNextSibling()) {
       if (!(child instanceof PsiDeclarationStatement)) continue;
 
-      final PsiElement[] declaredElements = ((PsiDeclarationStatement)child).getDeclaredElements();
-      int varsProcessed = 0;
-      for (PsiElement declared : declaredElements) {
+      PsiElement anchor = child;
+      for (PsiElement declared : ((PsiDeclarationStatement)child).getDeclaredElements()) {
         if (!(declared instanceof PsiLocalVariable)) continue;
 
-        final boolean contained = ReferencesSearch.search(declared, scope).forEach(new Processor<PsiReference>() {
+        final int endOffset = last.getTextRange().getEndOffset();
+        boolean contained = ReferencesSearch.search(declared, new LocalSearchScope(parent)).forEach(new Processor<PsiReference>() {
           @Override
           public boolean process(PsiReference reference) {
-            return reference.getElement().getTextOffset() <= last.getTextRange().getEndOffset();
+            return reference.getElement().getTextOffset() <= endOffset;
           }
         });
 
         if (!contained) {
-          final PsiLocalVariable var = (PsiLocalVariable)declared;
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
-          final String name = var.getName();
+          PsiLocalVariable var = (PsiLocalVariable)declared;
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+
+          String name = var.getName();
           assert name != null : child.getText();
+          toFormat.add(parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
 
-          toFormat = plus(toFormat, parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
+          PsiExpression varInit = var.getInitializer();
+          assert varInit != null : child.getText();
+          String varAssignText = name + " = " + varInit.getText() + ";";
+          anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
 
-          final PsiExpression varInit = var.getInitializer();
-          if (varInit != null) {
-            final String varAssignText = name + " = " + varInit.getText() + ";";
-            parent.addBefore(factory.createStatementFromText(varAssignText, parent), child.getNextSibling());
-          }
-
-          ++varsProcessed;
-          toDelete = plus(toDelete, declared);
-          declared.delete();
+          var.delete();
         }
       }
 
-      if (varsProcessed == declaredElements.length) {
-        toDelete = plus(toDelete, child);
+      if (child == last && !child.isValid()) {
+        last = anchor;
       }
     }
 
-    if (toDelete != null) {
-      for (PsiElement element : toDelete) {
-        if (element.isValid()) {
-          element.delete();
-        }
-      }
-    }
-
-    tryBlock.addRangeBefore(first, last, rBrace);
+    tryBlock.addRangeBefore(first, last, tryBlock.getRBrace());
     parent.deleteChildRange(first, last);
 
     return toFormat;
-  }
-
-  private static List<PsiElement> plus(@Nullable List<PsiElement> list, PsiElement element) {
-    if (list == null) list = ContainerUtil.newArrayList();
-    list.add(element);
-    return list;
   }
 
   @NotNull

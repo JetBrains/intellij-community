@@ -23,5 +23,6 @@ import com.intellij.psi.statistics.StatisticsInfo;
  * @author peter
  */
 public abstract class CompletionStatistician extends Statistician<LookupElement,CompletionLocation> {
+  @Override
   public abstract StatisticsInfo serialize(final LookupElement element, final CompletionLocation location);
 }

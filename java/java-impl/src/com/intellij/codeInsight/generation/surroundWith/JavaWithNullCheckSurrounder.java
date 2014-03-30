@@ -16,7 +16,7 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
@@ -36,7 +37,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     PsiElement parent = PsiTreeUtil.getParentOfType(expr, PsiExpressionStatement.class);
     if (parent == null) return false;
     final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(JspPsiUtil.isInJspFile(element)  && element instanceof PsiFile)) return false;
+    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
     return true;
   }
 
@@ -56,7 +57,7 @@ class JavaWithNullCheckSurrounder extends JavaExpressionSurrounder{
     String oldText = statement.getText();
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    block = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(block);
+    block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
     PsiElement replace = block.getStatements()[0].replace(factory.createStatementFromText(oldText, block));
     int offset = replace.getTextRange().getEndOffset();
     return new TextRange(offset, offset);

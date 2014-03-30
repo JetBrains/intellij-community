@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListScrollingUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -49,27 +51,45 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext){
+  public void doExecute(Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser() || myRequireFocusedLookup && !lookup.isFocused()) {
       Project project = editor.getProject();
       if (project != null) {
         LookupManager.getInstance(project).hideActiveLookup();
       }
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 
     lookup.markSelectionTouched();
-    executeInLookup(lookup, dataContext);
+    executeInLookup(lookup, dataContext, caret);
   }
 
-  protected abstract void executeInLookup(LookupImpl lookup, DataContext context);
+  protected abstract void executeInLookup(LookupImpl lookup, DataContext context, @Nullable Caret caret);
 
   @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
+  }
+
+  private static void executeUpOrDown(LookupImpl lookup, boolean up) {
+    if (!lookup.isFocused()) {
+      boolean semiFocused = lookup.getFocusDegree() == LookupImpl.FocusDegree.SEMI_FOCUSED;
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
+      if (!up && !semiFocused) {
+        return;
+      }
+    }
+    if (up) {
+      ListScrollingUtil.moveUp(lookup.getList(), 0);
+    } else {
+      ListScrollingUtil.moveDown(lookup.getList(), 0);
+    }
+    lookup.markSelectionTouched();
+    lookup.refreshUi(false, true);
+
   }
 
   public static class DownHandler extends LookupActionHandler {
@@ -79,22 +99,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      executeDown(lookup);
+    protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
+      executeUpOrDown(lookup, false);
     }
 
-    static void executeDown(LookupImpl lookup) {
-      if (!lookup.isFocused()) {
-        boolean semiFocused = CompletionPreview.hasPreview(lookup);
-        lookup.setFocused(true);
-        lookup.getList().setSelectedIndex(0);
-        lookup.refreshUi(false, true);
-        if (!semiFocused) {
-          return;
-        }
-      }
-      ListScrollingUtil.moveDown(lookup.getList(), 0);
-    }
   }
 
   public static class UpAction extends DumbAwareAction {
@@ -102,7 +110,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
@@ -110,7 +118,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       e.getPresentation().setEnabled(lookup != null);
     }
   }
@@ -120,7 +128,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
@@ -128,7 +136,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       e.getPresentation().setEnabled(lookup != null);
     }
   }
@@ -139,26 +147,14 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      if (!executeUp(lookup)) {
-        myOriginalHandler.execute(lookup.getEditor(), context);
+    protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
+      if (!UISettings.getInstance().CYCLE_SCROLLING && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
+        myOriginalHandler.execute(lookup.getEditor(), caret, context);
+        return;
       }
+      executeUpOrDown(lookup, true);
     }
 
-    static boolean executeUp(final LookupImpl lookup) {
-      if (!lookup.isFocused()) {
-        if (!UISettings.getInstance().CYCLE_SCROLLING) {
-          return false;
-        }
-
-        lookup.setFocused(true);
-        lookup.getList().setSelectedIndex(0);
-      }
-      lookup.markSelectionTouched();
-      ListScrollingUtil.moveUp(lookup.getList(), 0);
-      lookup.refreshUi(false, true);
-      return true;
-    }
   }
 
   public static class PageDownHandler extends LookupActionHandler {
@@ -167,8 +163,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      lookup.setFocused(true);
+    protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       ListScrollingUtil.movePageDown(lookup.getList());
     }
   }
@@ -179,8 +175,8 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      lookup.setFocused(true);
+    protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
+      lookup.setFocusDegree(LookupImpl.FocusDegree.FOCUSED);
       ListScrollingUtil.movePageUp(lookup.getList());
     }
   }
@@ -191,9 +187,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(final LookupImpl lookup, DataContext context) {
+    protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
       if (!lookup.isCompletion()) {
-        myOriginalHandler.execute(lookup.getEditor(), context);
+        myOriginalHandler.execute(lookup.getEditor(), caret, context);
         return;
       }
 
@@ -206,7 +202,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
         return;
       }
 
-      BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1);
+      BackspaceHandler.truncatePrefix(context, lookup, myOriginalHandler, lookup.getLookupStart() - 1, caret);
     }
   }
   public static class RightHandler extends LookupActionHandler {
@@ -215,12 +211,12 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     }
 
     @Override
-    protected void executeInLookup(LookupImpl lookup, DataContext context) {
+    protected void executeInLookup(LookupImpl lookup, DataContext context, Caret caret) {
       final Editor editor = lookup.getEditor();
       final int offset = editor.getCaretModel().getOffset();
       CharSequence seq = editor.getDocument().getCharsSequence();
       if (seq.length() <= offset || !lookup.isCompletion()) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, caret, context);
         return;
       }
 
@@ -228,7 +224,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       CharFilter.Result lookupAction = LookupTypedHandler.getLookupAction(c, lookup);
 
       if (lookupAction != CharFilter.Result.ADD_TO_PREFIX || Character.isWhitespace(c)) {
-        myOriginalHandler.execute(editor, context);
+        myOriginalHandler.execute(editor, caret, context);
         return;
       }
 

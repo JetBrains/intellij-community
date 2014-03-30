@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Extend this class to contribute web project generator to IDEA (available via File -> 'Add Module...' -> 'Web Module')
@@ -45,6 +46,11 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   public abstract String getName();
 
   public abstract String getDescription();
+
+  @Nullable
+  public Integer getPreferredDescriptionWidth() {
+    return null;
+  }
 
   @Nullable
   public String getHelpId() {
@@ -92,6 +98,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
     @NotNull
     T getSettings();
 
+    // null if ok
     @Nullable
     ValidationInfo validate();
 
@@ -114,7 +121,22 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
       super(true);
       myPeer = peer;
       myCenterComponent = peer.getComponent();
-      myDescriptionPane = new JTextPane();
+      final Integer preferredDescriptionWidth = getPreferredDescriptionWidth();
+      if (preferredDescriptionWidth == null) {
+        myDescriptionPane = new JTextPane();
+      }
+      else {
+        myDescriptionPane = new JTextPane() {
+          @Override
+          public Dimension getPreferredSize() {
+            // This trick makes text component to carry text over to the next line
+            // iff the text line width exceeds parent's width
+            Dimension dimension = super.getPreferredSize();
+            dimension.width = preferredDescriptionWidth;
+            return dimension;
+          }
+        };
+      }
       myDescriptionPane.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 10, 0));
       Messages.configureMessagePaneUi(myDescriptionPane, getDescription());
 

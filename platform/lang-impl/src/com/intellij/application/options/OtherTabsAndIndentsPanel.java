@@ -52,7 +52,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   private JPanel myIndentPanel;
   private JPanel myPreviewPanel;
   private JPanel myPanel;
-  private int myRightMargin;
+  private final int myRightMargin;
   private int myLastSelectedTab = 0;
 
 

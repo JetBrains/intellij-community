@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -36,7 +37,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class InitializeFinalFieldInConstructorFix implements IntentionAction {
   private final PsiField myField;
@@ -74,7 +78,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiClass myClass = myField.getContainingClass();
     if (myClass == null) {
@@ -109,7 +113,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     T highest = null;
     int highestTextOffset = Integer.MAX_VALUE;
     for (T element : elements) {
-      final T forcedElem = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+      final T forcedElem = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
       final int startOffset = forcedElem.getTextOffset();
       if (startOffset < highestTextOffset) {
         highest = forcedElem;

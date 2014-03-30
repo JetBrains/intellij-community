@@ -41,16 +41,19 @@ import org.jetbrains.annotations.NotNull;
 public class JCiPOrderEntryFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + JCiPOrderEntryFix.class.getName());
 
+  @Override
   @NotNull
   public String getText() {
     return "Add jcip-annotations.jar to classpath";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
 
@@ -69,6 +72,7 @@ public class JCiPOrderEntryFix implements IntentionAction {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtil.findReference(editor);
     LOG.assertTrue(reference != null);
@@ -79,6 +83,7 @@ public class JCiPOrderEntryFix implements IntentionAction {
                                        "net.jcip.annotations." + reference.getReferenceName(), jarPath);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

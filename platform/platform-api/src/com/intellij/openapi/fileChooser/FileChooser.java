@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -30,57 +29,15 @@ import java.util.List;
 public class FileChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
 
+  /**
+   * Normally, callback isn't invoked if a chooser was cancelled.
+   * If the situation should be handled separately this interface may be used.
+   */
   public interface FileChooserConsumer extends Consumer<List<VirtualFile>> {
     void cancelled();
   }
 
   private FileChooser() { }
-
-  /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor) {
-    return chooseFiles(descriptor, null, project, null);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          java.awt.Component,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor) {
-    return chooseFiles(descriptor, parent, null, null);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    return chooseFiles(descriptor, null, project, toSelect);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          java.awt.Component,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    return chooseFiles(descriptor, parent, null, toSelect);
-  }
 
   @NotNull
   public static VirtualFile[] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
@@ -96,52 +53,6 @@ public class FileChooser {
                                           @Nullable final VirtualFile toSelect) {
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent);
     return chooser.choose(toSelect, project);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
-   *                                         com.intellij.openapi.project.Project,
-   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor) {
-    return chooseFile(descriptor, null, project, null);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
-   *                                         java.awt.Component,
-   *                                         com.intellij.openapi.project.Project,
-   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor) {
-    return chooseFile(descriptor, parent, null, null);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
-   *                                         com.intellij.openapi.project.Project,
-   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    return chooseFile(descriptor, null, project, toSelect);
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
-   *                                         java.awt.Component,
-   *                                         com.intellij.openapi.project.Project,
-   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    return chooseFile(descriptor, parent, null, toSelect);
   }
 
   @Nullable
@@ -161,53 +72,14 @@ public class FileChooser {
   }
 
   /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          com.intellij.openapi.vfs.VirtualFile,
-   *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
-                                                @Nullable final Project project,
-                                                @Nullable final VirtualFile toSelect,
-                                                @NotNull final Consumer<VirtualFile[]> callback) {
-    chooseFiles(descriptor, project, toSelect, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> files) {
-        callback.consume(VfsUtil.toVirtualFileArray(files));
-      }
-    });
-  }
-
-  /**
-   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
-   *                                          com.intellij.openapi.project.Project,
-   *                                          java.awt.Component,
-   *                                          com.intellij.openapi.vfs.VirtualFile,
-   *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
-                                                @Nullable final Project project,
-                                                @Nullable final Component parent,
-                                                @Nullable final VirtualFile toSelect,
-                                                @NotNull final Consumer<VirtualFile[]> callback) {
-    chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> files) {
-        callback.consume(VfsUtil.toVirtualFileArray(files));
-      }
-    });
-  }
-
-  /**
    * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
    * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
    *
    * @param descriptor file chooser descriptor
    * @param project    project
    * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog
+   * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
+   * @see FileChooserConsumer
    * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
@@ -225,7 +97,8 @@ public class FileChooser {
    * @param project    project
    * @param parent     parent component
    * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog
+   * @param callback   callback will be invoked after user have closed dialog and only if there are files selected
+   * @see FileChooserConsumer
    * @since 11.1
    */
   public static void chooseFiles(@NotNull final FileChooserDescriptor descriptor,
@@ -236,5 +109,47 @@ public class FileChooser {
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
     pathChooser.choose(toSelect, callback);
+  }
+
+  /**
+   * Shows file/folder open dialog, allows user to choose file/folder and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
+   * @since 13
+   */
+  public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
+                                @Nullable final Project project,
+                                @Nullable final VirtualFile toSelect,
+                                @NotNull final Consumer<VirtualFile> callback) {
+    chooseFile(descriptor, project, null, toSelect, callback);
+  }
+
+  /**
+   * Shows file/folder open dialog, allows user to choose file/folder and then passes result to callback in EDT.
+   * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
+   *
+   * @param descriptor file chooser descriptor
+   * @param project    project
+   * @param parent     parent component
+   * @param toSelect   file to preselect
+   * @param callback   callback will be invoked after user have closed dialog and only if there is file selected
+   * @since 13
+   */
+  public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
+                                @Nullable final Project project,
+                                @Nullable final Component parent,
+                                @Nullable final VirtualFile toSelect,
+                                @NotNull final Consumer<VirtualFile> callback) {
+    LOG.assertTrue(!descriptor.isChooseMultiple());
+    chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
+      @Override
+      public void consume(List<VirtualFile> files) {
+        callback.consume(files.get(0));
+      }
+    });
   }
 }

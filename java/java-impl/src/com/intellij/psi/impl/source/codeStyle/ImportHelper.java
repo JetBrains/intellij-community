@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -124,7 +125,7 @@ public class ImportHelper{
   }
 
   public static void collectOnDemandImports(List<Pair<String, Boolean>> resultList,
-                                            final Set<String> classesOrPackagesToImportOnDemand, 
+                                            final Set<String> classesOrPackagesToImportOnDemand,
                                             final CodeStyleSettings settings) {
     TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<String>();
     TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<String>();
@@ -132,7 +133,7 @@ public class ImportHelper{
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
-      if (packageOrClassName.length() == 0) continue;
+      if (packageOrClassName.isEmpty()) continue;
       if (isStatic) {
         int count = classToCountMap.get(packageOrClassName);
         classToCountMap.put(packageOrClassName, count + 1);
@@ -209,12 +210,12 @@ public class ImportHelper{
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String prefix = getPackageOrClassName(name);
-      if (prefix.length() == 0) continue;
+      if (prefix.isEmpty()) continue;
       final boolean isImplicitlyImported = implicitlyImportedPackages.contains(prefix);
       if (!onDemandImports.contains(prefix) && !isImplicitlyImported) continue;
       String shortName = PsiNameHelper.getShortClassName(name);
 
-      String thisPackageClass = thisPackageName.length() > 0 ? thisPackageName + "." + shortName : shortName;
+      String thisPackageClass = !thisPackageName.isEmpty() ? thisPackageName + "." + shortName : shortName;
       if (JavaPsiFacade.getInstance(manager.getProject()).findClass(thisPackageClass, resolveScope) != null) {
         namesToUseSingle.add(name);
         continue;
@@ -303,7 +304,7 @@ public class ImportHelper{
         conflicts.addAll(inter);
       }
     }
-    if (!conflicts.isEmpty()) {
+    if (!conflicts.isEmpty() && !(file instanceof PsiCompiledElement)) {
       file.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -368,6 +369,10 @@ public class ImportHelper{
 
     String className = refClass.getQualifiedName();
     if (className == null) return true;
+
+    if (!ImportFilter.shouldImport(file, className)) {
+      return false;
+    }
     String packageName = getPackageOrClassName(className);
     String shortName = PsiNameHelper.getShortClassName(className);
 
@@ -382,7 +387,7 @@ public class ImportHelper{
     }
 
     boolean useOnDemand = true;
-    if (packageName.length() == 0){
+    if (packageName.isEmpty()){
       useOnDemand = false;
     }
 
@@ -640,7 +645,7 @@ public class ImportHelper{
     int limitCount = isStaticImportNeeded ? settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND :
                      settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     if (classCount >= limitCount) return true;
-    if (packageName.length() == 0) return false;
+    if (packageName.isEmpty()) return false;
     PackageEntryTable table = settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
     return table != null && table.contains(packageName);
   }
@@ -839,21 +844,23 @@ public class ImportHelper{
     final boolean[] hasResolveProblem = {false};
     // do not visit imports
     for (PsiClass aClass : file.getClasses()) {
-      aClass.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          String name = reference.getReferenceName();
-          Pair<String, Boolean> pair = unresolvedNames.get(name);
-          if (reference.multiResolve(false).length == 0) {
-            hasResolveProblem[0] = true;
-            if (pair != null) {
-              namesToImport.add(pair);
-              unresolvedNames.remove(name);
+      if (!(aClass instanceof PsiCompiledElement)) {
+        aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+            String name = reference.getReferenceName();
+            Pair<String, Boolean> pair = unresolvedNames.get(name);
+            if (reference.multiResolve(false).length == 0) {
+              hasResolveProblem[0] = true;
+              if (pair != null) {
+                namesToImport.add(pair);
+                unresolvedNames.remove(name);
+              }
             }
+            super.visitReferenceElement(reference);
           }
-          super.visitReferenceElement(reference);
-        }
-      });
+        });
+      }
     }
     if (hasResolveProblem[0]) {
       namesToImport.addAll(unresolvedOnDemand);
@@ -872,7 +879,7 @@ public class ImportHelper{
   public static boolean hasPackage(@NotNull String className, @NotNull String packageName){
     if (!className.startsWith(packageName)) return false;
     if (className.length() == packageName.length()) return false;
-    if (packageName.length() > 0 && className.charAt(packageName.length()) != '.') return false;
+    if (!packageName.isEmpty() && className.charAt(packageName.length()) != '.') return false;
     return className.indexOf('.', packageName.length() + 1) < 0;
   }
 

@@ -44,11 +44,13 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     myModule = module;
   }
 
+  @Override
   @NotNull
   public E getPsiElement() {
     return myPsiElement;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
@@ -59,15 +61,18 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
     return myModule;
   }
 
+  @Override
   @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(@NotNull final Class<T> ancestorClass, final boolean strict) {
     final T first = strict || !ancestorClass.isInstance(myPsiElement) ? findNext(myPsiElement, ancestorClass) : (T)myPsiElement;
     return new Iterator<Location<T>>() {
       private T myCurrent = first;
+      @Override
       public boolean hasNext() {
         return myCurrent != null;
       }
 
+      @Override
       public Location<T> next() {
         if (myCurrent == null) throw new NoSuchElementException();
         final PsiLocation<T> psiLocation = new PsiLocation<T>(myProject, myCurrent);
@@ -75,12 +80,14 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
         return psiLocation;
       }
 
+      @Override
       public void remove() {
         LOG.assertTrue(false);
       }
     };
   }
 
+  @Override
   @NotNull
   public PsiLocation<E> toPsiLocation() {
     return this;

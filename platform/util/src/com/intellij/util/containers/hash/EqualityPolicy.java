@@ -16,6 +16,8 @@
 package com.intellij.util.containers.hash;
 
 
+import gnu.trove.TObjectHashingStrategy;
+
 public interface EqualityPolicy<T> {
   EqualityPolicy<?> IDENTITY = new EqualityPolicy() {
 
@@ -42,6 +44,24 @@ public interface EqualityPolicy<T> {
       return val1 != null ? val1.equals(val2) : val2 == null;
     }
   };
+  
+  class ByHashingStrategy<T> implements EqualityPolicy<T> {
+    private final TObjectHashingStrategy<T> myStrategy;
+
+    public ByHashingStrategy(TObjectHashingStrategy<T> strategy) {
+      myStrategy = strategy;
+    }
+
+    @Override
+    public int getHashCode(T value) {
+      return myStrategy.computeHashCode(value);
+    }
+
+    @Override
+    public boolean isEqual(T val1, T val2) {
+      return myStrategy.equals(val1, val2);
+    }
+  }
 
   int getHashCode(T value);
 

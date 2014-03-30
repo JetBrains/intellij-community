@@ -22,8 +22,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -31,6 +33,7 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 public class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
@@ -48,13 +51,22 @@ public class PluginConfigurationType implements ConfigurationType {
         return runConfiguration;
       }
 
+      @Override
+      public boolean isApplicable(@NotNull Project project) {
+        return ModuleUtil.hasModulesOfType(project, PluginModuleType.getInstance());
+      }
+
+      @Override
+      public boolean isConfigurationSingletonByDefault() {
+        return true;
+      }
+
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
         final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
-          final Module[] modules = PluginModuleType.getAllPluginModules(pluginRunConfiguration.getProject());
-          if (modules.length > 0){
-            pluginRunConfiguration.setModule(modules[0]);
-          }
+          final Collection<Module> modules = ModuleUtil
+            .getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
+          pluginRunConfiguration.setModule(ContainerUtil.getFirstItem(modules));
         }
         return super.createConfiguration(name, pluginRunConfiguration);
       }

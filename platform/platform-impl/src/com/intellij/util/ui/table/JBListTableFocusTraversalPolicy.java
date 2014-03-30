@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui.table;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +24,7 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-class JBListTableFocusTraversalPolicy extends FocusTraversalPolicy {
+class JBListTableFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
   private final JBTableRowEditor myEditor;
 
   public JBListTableFocusTraversalPolicy(JBTableRowEditor editor) {
@@ -30,47 +32,13 @@ class JBListTableFocusTraversalPolicy extends FocusTraversalPolicy {
   }
 
   @Override
-  public Component getComponentAfter(Container aContainer, Component aComponent) {
-    final List<Component> focusableComponents = Arrays.<Component>asList(myEditor.getFocusableComponents());
-    int i = focusableComponents.indexOf(aComponent);
-    if (i != -1) {
-      i++;
-      if (i >= focusableComponents.size()) {
-        i = 0;
-      }
-      return focusableComponents.get(i);
-    }
-    return null;
-  }
-
-  @Override
-  public Component getComponentBefore(Container aContainer, Component aComponent) {
-    final List<Component> focusableComponents = Arrays.<Component>asList(myEditor.getFocusableComponents());
-    int i = focusableComponents.indexOf(aComponent);
-    if (i != -1) {
-      i--;
-      if (i == -1) {
-        i = focusableComponents.size() - 1;
-      }
-      return focusableComponents.get(i);
-    }
-    return null;
-  }
-
-  @Override
-  public Component getFirstComponent(Container aContainer) {
-    final List<Component> focusableComponents = Arrays.<Component>asList(myEditor.getFocusableComponents());
-    return focusableComponents.isEmpty() ? null : focusableComponents.get(0);
-  }
-
-  @Override
-  public Component getLastComponent(Container aContainer) {
-    final List<Component> focusableComponents = Arrays.<Component>asList(myEditor.getFocusableComponents());
-    return focusableComponents.isEmpty() ? null : focusableComponents.get(focusableComponents.size() - 1);
-  }
-
-  @Override
   public Component getDefaultComponent(Container aContainer) {
     return myEditor.getPreferredFocusedComponent();
+  }
+
+  @NotNull
+  @Override
+  protected List<Component> getOrderedComponents() {
+    return Arrays.<Component>asList(myEditor.getFocusableComponents());
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.openapi.components.impl;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.mock.MockFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -46,7 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeNotNull;
 
 /**
  * @author mike
@@ -67,9 +65,6 @@ public class PathMacroManagerTest {
 
   @Before
   public final void setupApplication() throws Exception {
-    // in fact the test accesses extension points so it rather should be converted to a platform one
-    assumeNotNull(ApplicationManager.getApplication());
-
     context = new JUnit4Mockery();
     context.setImposteriser(ClassImposteriser.INSTANCE);
     myApplication = context.mock(ApplicationEx.class, "application");

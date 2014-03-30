@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
@@ -28,21 +29,20 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
  * @since 7/17/12 11:24 AM
  */
 public class ArrangementUtil {
-  
+  private static final Logger LOG = Logger.getInstance(ArrangementUtil.class);
+
   private ArrangementUtil() {
   }
 
@@ -51,20 +51,28 @@ public class ArrangementUtil {
   @Nullable
   public static ArrangementSettings readExternal(@NotNull Element element, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return null;
+    }
+
     return serializer.deserialize(element);
   }
 
   public static void writeExternal(@NotNull Element element, @NotNull ArrangementSettings settings, @NotNull Language language) {
     ArrangementSettingsSerializer serializer = getSerializer(language);
+    if (serializer == null) {
+      LOG.error("Can't find serializer for language: " + language.getDisplayName() + "(" + language.getID() + ")");
+      return;
+    }
+
     serializer.serialize(settings, element);
   }
 
+  @Nullable
   private static ArrangementSettingsSerializer getSerializer(@NotNull Language language) {
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
-    if (rearranger instanceof ArrangementSettingsSerializer) {
-      return (ArrangementSettingsSerializer)rearranger;
-    }
-    return DefaultArrangementSettingsSerializer.INSTANCE;
+    return rearranger == null ? null : rearranger.getSerializer();
   }
   
   //endregion
@@ -94,13 +102,8 @@ public class ArrangementUtil {
   //region ArrangementEntry
 
   /**
-   * Tries to build a text range on the given arguments basis. It should conform to the criteria below:
-   * <pre>
-   * <ul>
-   *   <li>it's start offset is located at the start of the same line where given range starts;</li>
-   *   <li>it's end offset is located at the end of the same line where given range ends;</li>
-   * </ul>
-   * </pre>
+   * Tries to build a text range on the given arguments basis. Expands to the line start/end if possible.
+   * <p/>
    * This method is expected to be used in a situation when we want to arrange complete rows.
    * Example:
    * <pre>
@@ -127,20 +130,34 @@ public class ArrangementUtil {
    *        }
    *   }
    * </pre>
+   * However, this method is expected to just return given range if there are multiple distinct elements at the same line:
+   * <pre>
+   *   class Test {
+   *     void test1(){} void test2() {} int i;
+   *   }
+   * </pre>
    * 
    * @param initialRange  anchor range
    * @param document      target document against which the ranges are built
    * @return              expanded range if possible; <code>null</code> otherwise
    */
   @NotNull
-  public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull Document document) {
+  public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
+    CharSequence text = document.getCharsSequence();
+    String ws = " \t";
+    
     int startLine = document.getLineNumber(initialRange.getStartOffset());
-    int startOffsetToUse = document.getLineStartOffset(startLine);
+    int lineStartOffset = document.getLineStartOffset(startLine);
+    int i = CharArrayUtil.shiftBackward(text, lineStartOffset + 1, initialRange.getStartOffset() - 1, ws);
+    if (i != lineStartOffset) {
+      return initialRange;
+    }
 
     int endLine = document.getLineNumber(initialRange.getEndOffset());
-    int endOffsetToUse = document.getLineEndOffset(endLine);
-
-    return TextRange.create(startOffsetToUse, endOffsetToUse);
+    int lineEndOffset = document.getLineEndOffset(endLine);
+    i = CharArrayUtil.shiftForward(text, initialRange.getEndOffset(), lineEndOffset, ws);
+    
+    return i == lineEndOffset ? TextRange.create(lineStartOffset, lineEndOffset) : initialRange;
   }
   //endregion
   
@@ -150,7 +167,7 @@ public class ArrangementUtil {
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        if (StdArrangementTokens.EntryType.is(condition.getType())) {
+        if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
           result.set(condition.getType());
         }
       }
@@ -180,12 +197,14 @@ public class ArrangementUtil {
   }
 
   @NotNull
-  public static Set<ArrangementSettingsToken> extractTokens(@NotNull ArrangementMatchCondition condition) {
-    final Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet();
+  public static Map<ArrangementSettingsToken, Object> extractTokens(@NotNull ArrangementMatchCondition condition) {
+    final Map<ArrangementSettingsToken, Object> result = ContainerUtilRt.newHashMap();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        result.add(condition.getType()); 
+        ArrangementSettingsToken type = condition.getType();
+        Object value = condition.getValue();
+        result.put(condition.getType(), type.equals(value) ? null : value); 
       }
 
       @Override
@@ -239,10 +258,10 @@ public class ArrangementUtil {
 
   @Nullable
   public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementAtomMatchCondition condition) {
-    if (StdArrangementTokens.EntryType.is(condition.getType())) {
+    if (StdArrangementTokenType.ENTRY_TYPE.is(condition.getType())) {
       return new ByTypeArrangementEntryMatcher(condition.getType());
     }
-    else if (StdArrangementTokens.Modifier.is(condition.getType())) {
+    else if (StdArrangementTokenType.MODIFIER.is(condition.getType())) {
       return new ByModifierArrangementEntryMatcher(condition.getType());
     }
     else if (StdArrangementTokens.Regexp.NAME.equals(condition.getType())) {
@@ -282,5 +301,12 @@ public class ArrangementUtil {
       toProcess.addAll(token.getChildren());
     }
     return result;
+  }
+
+  @NotNull
+  public static List<? extends ArrangementMatchRule> getRulesSortedByPriority(@NotNull ArrangementSettings arrangementSettings) {
+    return arrangementSettings instanceof RulePriorityAwareSettings ?
+           ((RulePriorityAwareSettings)arrangementSettings).getRulesSortedByPriority() :
+           arrangementSettings.getRules();
   }
 }

@@ -15,11 +15,12 @@
  */
 package com.intellij.util.diff;
 
+import java.util.BitSet;
+
 /**
  * @author dyoma
  */
 final class LinkedDiffPaths {
-  private static final int MAX_LEN = 10000000;
 
   private int[] mySteps = new int[10];
   private int[] myPrevSteps = new int[10];
@@ -31,10 +32,38 @@ final class LinkedDiffPaths {
   private static final int DISTANCE_MASK = ~VERTICAL_DIRECTION_FLAG;
 
   public LinkedDiffPaths(int maxX, int maxY) {
-    myMaxX = maxX-1;
-    myMaxY = maxY-1;
+    myMaxX = maxX;
+    myMaxY = maxY;
   }
 
+  public void applyChanges(final int start1, final int start2, final BitSet changes1, final BitSet changes2) {
+    decodePath(new LCSBuilder() {
+      int x = myMaxX;
+      int y = myMaxY;
+
+      @Override
+      public void addEqual(int length) {
+        x -= length;
+        y -= length;
+      }
+
+      @Override
+      public void addChange(int first, int second) {
+        if (first > 0) {
+          changes1.set(start1 + x - first, start1 + x);
+          x -= first;
+        }
+        if (second > 0) {
+          changes2.set(start2 + y - second, start2 + y);
+          y -= second;
+        }
+      }
+    });
+  }
+
+  /**
+   * Path is decoded in reverse order (from the last change to the first)
+   */
   public <Builder extends LCSBuilder> Builder decodePath(Builder builder) {
     Decoder decoder = new Decoder(getXSize(), getYSize(), builder);
     int index = myCornerIndex;
@@ -48,11 +77,11 @@ final class LinkedDiffPaths {
   }
 
   public int getXSize() {
-    return myMaxX + 1;
+    return myMaxX;
   }
 
   public int getYSize() {
-    return myMaxY + 1;
+    return myMaxY;
   }
 
   public int encodeStep(int x, int y, int diagLength, boolean afterVertical, int prevIndex) throws FilesTooBigForDiffException {
@@ -62,7 +91,7 @@ final class LinkedDiffPaths {
 
     myPrevSteps[position] = prevIndex;
     mySteps[position] = encodedPath;
-    if (x == myMaxX && y == myMaxY) myCornerIndex = position;
+    if (x == myMaxX - 1 && y == myMaxY - 1) myCornerIndex = position;
     return position;
   }
 
@@ -77,8 +106,8 @@ final class LinkedDiffPaths {
   }
 
   private int[] copy(int length, int[] prevArray) throws FilesTooBigForDiffException {
-    if (length * 2 >= MAX_LEN) {
-      throw new FilesTooBigForDiffException(MAX_LEN);
+    if (length * 2 >= FilesTooBigForDiffException.MAX_BUFFER_LEN) {
+      throw new FilesTooBigForDiffException(FilesTooBigForDiffException.MAX_BUFFER_LEN);
     }
     int[] array = new int[length * 2];
     System.arraycopy(prevArray, 0, array, 0, length);

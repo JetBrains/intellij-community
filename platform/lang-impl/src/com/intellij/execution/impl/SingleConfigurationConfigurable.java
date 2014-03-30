@@ -56,6 +56,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private boolean myStoreProjectConfiguration;
   private boolean mySingleton;
   private String myFolderName;
+  private boolean myChangingNameFromCode;
 
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
@@ -71,12 +72,20 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
     setNameText(configuration.getName());
     myNameDocument.addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         setModified(true);
+        if (!myChangingNameFromCode) {
+          RunConfiguration runConfiguration = getSettings().getConfiguration();
+          if (runConfiguration instanceof LocatableConfigurationBase) {
+            ((LocatableConfigurationBase) runConfiguration).setNameChangedByUser(true);
+          }
+        }
       }
     });
 
     getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
+      @Override
       public void stateChanged(SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
       }
@@ -90,11 +99,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return configurable;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
     RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
+    runManager.shareConfiguration(settings, myStoreProjectConfiguration);
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
@@ -102,6 +112,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     RunManagerImpl.getInstanceImpl(getConfiguration().getProject()).fireRunConfigurationChanged(settings);
   }
 
+  @Override
   public void reset() {
     RunnerAndConfigurationSettings configuration = getSettings();
     setNameText(configuration.getName());
@@ -112,9 +123,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myComponent.doReset(configuration);
   }
 
+  @Override
   public final JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     return myComponent.getWholePanel();
+  }
+
+  final JComponent getValidationComponent() {
+    return myComponent.myValidationPanel;
   }
 
   public boolean isStoreProjectConfiguration() {
@@ -169,6 +185,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
+  @Override
   public final void disposeUIResources() {
     super.disposeUIResources();
     myComponent = null;
@@ -193,13 +210,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public final void setNameText(final String name) {
+    myChangingNameFromCode = true;
     try {
-      if (!myNameDocument.getText(0, myNameDocument.getLength()).equals(name)) {
-        myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+      try {
+        if (!myNameDocument.getText(0, myNameDocument.getLength()).equals(name)) {
+          myNameDocument.replace(0, myNameDocument.getLength(), name, null);
+        }
+      }
+      catch (BadLocationException e) {
+        LOG.error(e);
       }
     }
-    catch (BadLocationException e) {
-      LOG.error(e);
+    finally {
+      myChangingNameFromCode = false;
     }
   }
 
@@ -211,10 +234,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myComponent.myNameText;
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public String getHelpTopic() {
     return myHelpTopic;
   }
@@ -255,6 +280,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JSeparator mySeparator;
     private JCheckBox myCbStoreProjectConfiguration;
     private JBCheckBox myCbSingleton;
+    private JPanel myValidationPanel;
 
     private Runnable myQuickFix = null;
 
@@ -263,6 +289,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myNameText.setDocument(myNameDocument);
 
       getEditor().addSettingsEditorListener(new SettingsEditorListener() {
+        @Override
         public void stateChanged(SettingsEditor settingsEditor) {
           updateWarning();
         }
@@ -278,6 +305,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myFixButton.setIcon(AllIcons.Actions.QuickfixBulb);
       updateWarning();
       myFixButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           if (myQuickFix == null) {
             return;
@@ -346,12 +374,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           myFixButton.setVisible(true);
           myQuickFix = quickFix;
         }
-
+        myValidationPanel.setVisible(true);
       }
       else {
         mySeparator.setVisible(false);
         myWarningLabel.setVisible(false);
         myFixButton.setVisible(false);
+        myValidationPanel.setVisible(false);
       }
     }
 

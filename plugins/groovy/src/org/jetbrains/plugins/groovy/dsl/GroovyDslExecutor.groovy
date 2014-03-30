@@ -23,6 +23,8 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiType
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ProcessingContext
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.CompositeContextFilter
@@ -42,6 +44,8 @@ import java.lang.reflect.Modifier
 public class GroovyDslExecutor {
   static final def cats = PsiEnhancerCategory.EP_NAME.extensions.collect { it.class }
   final List<Pair<ContextFilter, Closure>> enhancers = ObjectUtils.assertNotNull([])
+
+  private MultiMap staticInfo = null
 
   private final String myFileName;
   static final String ideaVersion
@@ -102,6 +106,11 @@ public class GroovyDslExecutor {
 
     mc.supportsVersion = { ver -> return supportsVersion(ver) }
     mc.assertVersion = { ver -> if (!supportsVersion(ver)) throw new InvalidVersionException() }
+
+    mc.scriptSuperClass = { Map args ->
+      if (staticInfo == null) staticInfo = MultiMap.create()
+      staticInfo.putValue('scriptSuperClass', args)
+    }
 
     oldStylePrimitives(mc)
 
@@ -194,4 +203,8 @@ public class GroovyDslExecutor {
     return "${super.toString()}; file = $myFileName";
   }
 
+  @Nullable
+  MultiMap getStaticInfo() {
+    staticInfo
+  }
 }

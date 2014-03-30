@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -62,7 +63,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
       panel.add(checkBox, constraints);
       constraints.anchor = GridBagConstraints.NORTHWEST;
       constraints.insets.top = 5;
-      panel.add(new JLabel("<html><body>" + StringUtil.replace(error.getDescription(), "\n", "<br>") + "</body></html>"), constraints);
+      panel.add(new JLabel(XmlStringUtil.wrapInHtml(StringUtil.replace(error.getDescription(), "\n", "<br>"))), constraints);
       constraints.weightx = 1;
       panel.add(new JPanel(), constraints);
       myContentPanel.add(panel);
@@ -85,7 +86,7 @@ public class RemoveInvalidElementsDialog extends DialogWrapper {
       ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getIgnoreConfirmationMessage();
       final int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
-      if (answer == 0) {
+      if (answer == Messages.YES) {
         error.ignoreInvalidElement();
       }
       return;

@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.IOException;
  */
 public class BuildNumber implements Comparable<BuildNumber> {
   private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
+  private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "999.SNAPSHOT";
 
@@ -124,7 +126,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   private static int parseBuildNumber(String version, String code, String name) {
-    if (SNAPSHOT.equals(code) || BUILD_NUMBER.equals(code)) {
+    if (SNAPSHOT.equals(code) || STAR.equals(code) || BUILD_NUMBER.equals(code)) {
       return Integer.MAX_VALUE;
     }
     try {
@@ -144,8 +146,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
         return fromString(text);
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
 
     return fallback();
   }
@@ -159,7 +160,8 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return asString();
   }
 
-  public int compareTo(BuildNumber o) {
+  @Override
+  public int compareTo(@NotNull BuildNumber o) {
     if (myBaselineVersion == o.myBaselineVersion) return myBuildNumber - o.myBuildNumber;
     return myBaselineVersion - o.myBaselineVersion;
   }

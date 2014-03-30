@@ -202,14 +202,4 @@ public class LoadController implements Loader {
       }
     });
   }
-
-  private List<String> filterNumbers(final String[] s) {
-    final List<String> result = new ArrayList<String>();
-    for (String part : s) {
-      if (s.length > 40) continue;
-      final AbstractHash abstractHash = AbstractHash.createStrict(part);
-      if (abstractHash != null) result.add(part);
-    }
-    return result;
-  }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>7</line>
+    <description>Casting &lt;code&gt;list&lt;/code&gt; to &lt;code&gt;ArrayList&lt;String&gt;&lt;/code&gt; is redundant</description>
+  </problem>
+</problems>

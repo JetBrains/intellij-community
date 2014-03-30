@@ -22,10 +22,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,7 +42,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   public LightTempDirTestFixtureImpl() {
     final VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    assertNotNull(fsRoot);
+    Assert.assertNotNull(fsRoot);
     mySourceRoot = new WriteAction<VirtualFile>() {
       @Override
       protected void run(final Result<VirtualFile> result) throws Throwable {
@@ -118,7 +120,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
         assert from != null: "Cannot find testdata directory " + dataDir;
         try {
-          refreshRecursively(from);
+          UsefulTestCase.refreshRecursively(from);
 
           VirtualFile tempDir = getSourceRoot();
           if (targetDir.length() > 0) {

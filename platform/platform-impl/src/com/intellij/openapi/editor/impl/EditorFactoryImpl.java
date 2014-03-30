@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,31 +34,34 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-  private final List<Editor> myEditors = new ArrayList<Editor>();
+  private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
-      public void projectClosed(final Project project) {
-        SwingUtilities.invokeLater(new Runnable() {
+      public void projectOpened(final Project project) {
+        // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
+        Disposer.register(project, new Disposable() {
           @Override
-          public void run() {
-            validateEditorsAreReleased(project);
+          public void dispose() {
+            final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+            final boolean isLastProjectClosed = openProjects.length == 0;
+            validateEditorsAreReleased(project, isLastProjectClosed);
           }
         });
       }
@@ -84,11 +87,9 @@ public class EditorFactoryImpl extends EditorFactory {
     LaterInvocator.addModalityStateListener(myModalityStateListener, ApplicationManager.getApplication());
   }
 
-  public void validateEditorsAreReleased(Project project) {
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < myEditors.size(); i++) {
-      final Editor editor = myEditors.get(i);
-      if (editor.getProject() == project || editor.getProject() == null) {
+  public void validateEditorsAreReleased(Project project, boolean isLastProjectClosed) {
+    for (final Editor editor : myEditors) {
+      if (editor.getProject() == project || editor.getProject() == null && isLastProjectClosed) {
         try {
           throwNotReleasedError(editor);
         }
@@ -131,7 +132,14 @@ public class EditorFactoryImpl extends EditorFactory {
 
   @NotNull
   public Document createDocument(boolean allowUpdatesWithoutWriteAction) {
-    DocumentImpl document = new DocumentImpl("",allowUpdatesWithoutWriteAction);
+    DocumentImpl document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
+    myEditorEventMulticaster.registerDocument(document);
+    return document;
+  }
+
+  @NotNull
+  public Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
+    DocumentImpl document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
@@ -202,7 +210,6 @@ public class EditorFactoryImpl extends EditorFactory {
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("number of Editor's:" + myEditors.size());
-        //Thread.dumpStack();
       }
     }
   }

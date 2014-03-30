@@ -30,7 +30,7 @@ import com.intellij.openapi.project.DumbAware;
 
 public class TechnicalSupportAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    BrowserUtil.launchBrowser(ApplicationInfoImpl.getShadowInstance().getSupportUrl());
+    BrowserUtil.browse(ApplicationInfoImpl.getShadowInstance().getSupportUrl());
   }
 
   @Override

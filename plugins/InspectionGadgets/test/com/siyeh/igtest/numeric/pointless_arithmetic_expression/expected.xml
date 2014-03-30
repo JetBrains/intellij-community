@@ -24,20 +24,6 @@
 
   <problem>
     <file>PointlessArithmeticExpression.java</file>
-    <line>19</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
-    <description>&lt;code&gt;j * ZERO_CONSTANT&lt;/code&gt; can be replaced with '0' #loc</description>
-  </problem>
-
-  <problem>
-    <file>PointlessArithmeticExpression.java</file>
-    <line>21</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
-    <description>&lt;code&gt;j * ONE_CONSTANT&lt;/code&gt; can be replaced with 'j' #loc</description>
-  </problem>
-
-  <problem>
-    <file>PointlessArithmeticExpression.java</file>
     <line>23</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
     <description>&lt;code&gt;j / 1&lt;/code&gt; can be replaced with 'j' #loc</description>
@@ -134,4 +120,38 @@
     <description>&lt;code&gt;i &lt; Integer.MIN_VALUE&lt;/code&gt; can be replaced with 'false' #loc</description>
   </problem>
 
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>93</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i / i&lt;/code&gt; can be replaced with '1' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>94</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i - i&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>95</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;i % i&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>111</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;(CONST + (new Main(5).i) * 8) - (Main.CONST + new Main(5).i * (8))&lt;/code&gt; can be replaced with '0' #loc</description>
+  </problem>
+
+  <problem>
+    <file>PointlessArithmeticExpression.java</file>
+    <line>114</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Pointless arithmetic expression</problem_class>
+    <description>&lt;code&gt;5/5&lt;/code&gt; can be replaced with '1' #loc</description>
+  </problem>
 </problems>

@@ -18,11 +18,12 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class RootNode extends PackageDependenciesNode {
-  public RootNode(Project project) {
+  public RootNode(@NotNull Project project) {
     super(project);
   }
 
@@ -39,6 +40,7 @@ public class RootNode extends PackageDependenciesNode {
     return "Root";
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();

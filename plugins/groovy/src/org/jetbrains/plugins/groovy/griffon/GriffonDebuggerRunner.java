@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.griffon;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -27,7 +26,6 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
 
   @Override
   protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         Executor executor,
                                                          RunProfileState state,
                                                          RunContentDescriptor contentToReuse,
                                                          ExecutionEnvironment env) throws ExecutionException {
@@ -53,11 +51,11 @@ public class GriffonDebuggerRunner extends GenericDebuggerRunner {
     }
 
     if (address == null) {
-      return super.createContentDescriptor(project, executor, state, contentToReuse, env);
+      return super.createContentDescriptor(project, state, contentToReuse, env);
     }
 
     RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", address, false);
-    return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
+    return attachVirtualMachine(project, state, contentToReuse, env, connection, true);
   }
 
 }

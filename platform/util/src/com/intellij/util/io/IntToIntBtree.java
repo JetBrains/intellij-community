@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,7 +32,7 @@ import java.util.Arrays;
 */
 class IntToIntBtree {
   public static int version() {
-    return 3;
+    return 3 + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0xFF : 0);
   }
 
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
@@ -58,7 +73,7 @@ class IntToIntBtree {
       FileUtil.delete(file);
     }
 
-    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true);
+    storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
     root = new BtreeIndexNodeView(this);
 
     if (initial) {
@@ -260,6 +275,9 @@ class IntToIntBtree {
 
   static class BtreePage {
     static final int RESERVED_META_PAGE_LEN = 8;
+    static final int FLAGS_SHIFT = 24;
+    static final int LENGTH_SHIFT = 8;
+    static final int LENGTH_MASK = 0xFFFF;
 
     protected final IntToIntBtree btree;
     protected int address = -1;
@@ -290,14 +308,16 @@ class IntToIntBtree {
     }
 
     protected void doInitFlags(int anInt) {
-      myChildrenCount = (short)((anInt >>> 8) & 0xFFFF);
+      myChildrenCount = (short)((anInt >>> LENGTH_SHIFT) & LENGTH_MASK);
     }
 
     protected final void setFlag(int mask, boolean flag) {
-      byte b = myBuffer.get(myAddressInBuffer);
-      if (flag) b |= mask;
-      else b &= ~mask;
-      myBuffer.put(myAddressInBuffer, b);
+      mask <<= FLAGS_SHIFT;
+      int anInt = myBuffer.getInt(myAddressInBuffer);
+
+      if (flag) anInt |= mask;
+      else anInt &= ~ mask;
+      myBuffer.putInt(myAddressInBuffer, anInt);
       if (!myIsDirty) markDirty();
     }
 
@@ -312,17 +332,19 @@ class IntToIntBtree {
 
     protected final void setChildrenCount(short value) {
       myChildrenCount = value;
-      myBuffer.putShort(myAddressInBuffer + 1, value);
+      int myValue = myBuffer.getInt(myAddressInBuffer);
+      myValue &= ~LENGTH_MASK  <<  LENGTH_SHIFT;
+      myValue |= value <<  LENGTH_SHIFT;
+      myBuffer.putInt(myAddressInBuffer, myValue);
       if (!myIsDirty) markDirty();
     }
 
     protected final void setNextPage(int nextPage) {
-      putInt(3, nextPage);
+      putInt(4, nextPage);
     }
 
-    // TODO: use it
     protected final int getNextPage() {
-      return getInt(3);
+      return getInt(4);
     }
 
     protected final int getInt(int address) {
@@ -335,6 +357,7 @@ class IntToIntBtree {
 
     protected final ByteBuffer getBytes(int address, int length) {
       ByteBuffer duplicate = myBuffer.duplicate();
+      duplicate.order(myBuffer.order());
 
       int newPosition = address + myAddressInBuffer;
       duplicate.position(newPosition);
@@ -457,9 +480,10 @@ class IntToIntBtree {
       return isIndexLeaf;
     }
 
+    @Override
     protected void doInitFlags(int flags) {
       super.doInitFlags(flags);
-      flags = (flags >> 24) & 0xFF;
+      flags = (flags >> FLAGS_SHIFT) & 0xFF;
       isHashedLeaf = (flags & HASHED_LEAF_MASK) == HASHED_LEAF_MASK;
       isIndexLeaf = (flags & INDEX_LEAF_MASK) == INDEX_LEAF_MASK;
     }
@@ -1088,7 +1112,7 @@ class IntToIntBtree {
     }
   }
 
-  public static abstract class KeyValueProcessor {
+  public abstract static class KeyValueProcessor {
     public abstract boolean process(int key, int value) throws IOException;
   }
 

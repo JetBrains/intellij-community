@@ -26,6 +26,7 @@ package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -337,7 +338,7 @@ public class PathManagerEx {
   }
 
   private static boolean isJUnitClass(Class<?> clazz) {
-    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtil.isJUnit4TestClass(clazz);
+    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtil.isJUnit4TestClass(clazz) || com.intellij.testFramework.Parameterized.class.isAssignableFrom(clazz);
   }
 
   @Nullable
@@ -357,6 +358,13 @@ public class PathManagerEx {
     return result;
   }
 
+  public static void replaceLookupStrategy(Class<?> substitutor, Class<?>... initial) {
+    CLASS_STRATEGY_CACHE.clear();
+    for (Class<?> aClass : initial) {
+      CLASS_STRATEGY_CACHE.put(aClass, determineLookupStrategy(substitutor));
+    }
+  }
+  
   private static FileSystemLocation computeClassLocation(Class<?> clazz) {
     String classRootPath = PathManager.getJarPathForClass(clazz);
     if (classRootPath == null) {
@@ -387,7 +395,7 @@ public class PathManagerEx {
     }
 
     ourCommunityModules = new THashSet<String>();
-    File modulesXml = findFileUnderCommunityHome(".idea/modules.xml");
+    File modulesXml = findFileUnderCommunityHome(Project.DIRECTORY_STORE_FOLDER + "/modules.xml");
     if (!modulesXml.exists()) {
       throw new IllegalStateException("Cannot obtain test data path: " + modulesXml.getAbsolutePath() + " not found");
     }

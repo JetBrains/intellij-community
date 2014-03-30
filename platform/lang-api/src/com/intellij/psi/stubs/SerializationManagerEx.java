@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -27,15 +29,14 @@ public abstract class SerializationManagerEx extends SerializationManager {
     return (SerializationManagerEx) SerializationManager.getInstance();
   }
 
-  public abstract void serialize(Stub rootStub, OutputStream stream);
+  public abstract void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream);
 
-  public abstract Stub deserialize(InputStream stream) throws SerializerNotFoundException;
+  @NotNull
+  public abstract Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException;
 
   public abstract boolean isNameStorageCorrupted();
 
   public abstract void repairNameStorage();
 
   public abstract void flushNameStorage();
-
-  public abstract String internString(String string);
 }

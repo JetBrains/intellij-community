@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class IDEA99970 {
+class IDEA99970 {
   public static <T, C> Collector<T, C> toCollection(Supplier<C> collectionFactory) {
     return null;
   }

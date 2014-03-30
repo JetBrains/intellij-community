@@ -40,7 +40,7 @@ public interface StatusBarEx extends StatusBar, Disposable {
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody);
   BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
 
-  void addProgress(ProgressIndicatorEx indicator, TaskInfo info);
+  void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info);
   List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses();
 
   void updateWidgets();

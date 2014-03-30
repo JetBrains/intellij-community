@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -43,7 +43,7 @@ public class RemoveAnnotationFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) {
+    if (FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) {
       try {
         descriptor.getPsiElement().delete();
       }

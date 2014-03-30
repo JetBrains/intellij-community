@@ -1,0 +1,40 @@
+def foo() throws java
+.lang.RuntimeException {
+}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      PsiElement(throws)('throws')
+      PsiWhiteSpace(' ')
+      Reference element
+        PsiElement(identifier)('java')
+  PsiElement(new line)('\n')
+  PsiErrorElement:Unexpected symbol
+    PsiElement(.)('.')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  Method call
+    Reference expression
+      Reference expression
+        PsiElement(identifier)('lang')
+      PsiElement(.)('.')
+      PsiElement(identifier)('RuntimeException')
+    PsiWhiteSpace(' ')
+    Arguments
+      <empty list>
+    Closable block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      Parameter list
+        <empty list>
+      PsiElement(})('}')

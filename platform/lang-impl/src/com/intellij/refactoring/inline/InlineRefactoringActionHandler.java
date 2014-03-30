@@ -24,6 +24,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -47,12 +48,13 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     if (dataContext == null) {
       dataContext = DataManager.getInstance().getDataContext();
     }
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
       if (handler.canInlineElement(elements[0])) {
         handler.inlineElement(project, editor, elements [0]);
@@ -63,10 +65,11 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
     invokeInliner(editor, elements[0]);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       element = BaseRefactoringAction.getElementAtCaret(editor, file);
     }

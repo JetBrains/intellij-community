@@ -15,32 +15,47 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TabbedPaneWrapper;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class MavenArtifactSearchDialog extends DialogWrapper {
   private List<MavenId> myResult = Collections.emptyList();
+
+  public static List<MavenId> ourResultForTest;
 
   private TabbedPaneWrapper myTabbedPane;
   private MavenArtifactSearchPanel myArtifactsPanel;
   private MavenArtifactSearchPanel myClassesPanel;
 
+  private final Map<Pair<String, String>, String> myManagedDependenciesMap = new HashMap<Pair<String, String>, String>();
+
   private final Map<MavenArtifactSearchPanel, Boolean> myOkButtonStates = new THashMap<MavenArtifactSearchPanel, Boolean>();
 
   @NotNull
   public static List<MavenId> searchForClass(Project project, String className) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      assert ourResultForTest != null;
+
+      List<MavenId> res = ourResultForTest;
+      ourResultForTest = null;
+      return res;
+    }
+
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, className, true);
     d.show();
     if (!d.isOK()) return Collections.emptyList();
@@ -49,12 +64,36 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
   }
 
   @NotNull
-  public static List<MavenId> searchForArtifact(Project project) {
+  public static List<MavenId> searchForArtifact(Project project, Collection<MavenDomDependency> managedDependencies) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      assert ourResultForTest != null;
+
+      List<MavenId> res = ourResultForTest;
+      ourResultForTest = null;
+      return res;
+    }
+
     MavenArtifactSearchDialog d = new MavenArtifactSearchDialog(project, "", false);
+    d.setManagedDependencies(managedDependencies);
+
     d.show();
     if (!d.isOK()) return Collections.emptyList();
 
     return d.getResult();
+  }
+
+  public void setManagedDependencies(Collection<MavenDomDependency> managedDependencies) {
+    myManagedDependenciesMap.clear();
+
+    for (MavenDomDependency dependency : managedDependencies) {
+      String groupId = dependency.getGroupId().getStringValue();
+      String artifactId = dependency.getArtifactId().getStringValue();
+      String version = dependency.getVersion().getStringValue();
+
+      if (StringUtil.isNotEmpty(groupId) && StringUtil.isNotEmpty(artifactId) && StringUtil.isNotEmpty(version)) {
+        myManagedDependenciesMap.put(Pair.create(groupId, artifactId), version);
+      }
+    }
   }
 
   private MavenArtifactSearchDialog(Project project, String initialText, boolean classMode) {
@@ -84,8 +123,8 @@ public class MavenArtifactSearchDialog extends DialogWrapper {
       }
     };
 
-    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, listener, this);
-    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, listener, this);
+    myArtifactsPanel = new MavenArtifactSearchPanel(project, !classMode ? initialText : "", false, listener, this, myManagedDependenciesMap);
+    myClassesPanel = new MavenArtifactSearchPanel(project, classMode ? initialText : "", true, listener, this, myManagedDependenciesMap);
 
     myTabbedPane.addTab("Search for artifact", myArtifactsPanel);
     myTabbedPane.addTab("Search for class", myClassesPanel);

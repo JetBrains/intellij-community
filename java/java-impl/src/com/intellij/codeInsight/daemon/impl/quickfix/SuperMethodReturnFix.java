@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,7 @@ public class SuperMethodReturnFix implements IntentionAction {
   private final PsiType mySuperMethodType;
   private final PsiMethod mySuperMethod;
 
-  public SuperMethodReturnFix(PsiMethod superMethod, PsiType superMethodType) {
+  public SuperMethodReturnFix(@NotNull PsiMethod superMethod, @NotNull PsiType superMethodType) {
     mySuperMethodType = superMethodType;
     mySuperMethod = superMethod;
   }
@@ -52,7 +52,7 @@ public class SuperMethodReturnFix implements IntentionAction {
     );
     return QuickFixBundle.message("fix.super.method.return.type.text",
                                   name,
-                                  HighlightUtil.formatType(mySuperMethodType));
+                                  JavaHighlightUtil.formatType(mySuperMethodType));
   }
 
   @Override
@@ -64,16 +64,12 @@ public class SuperMethodReturnFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-            mySuperMethod != null
-            && mySuperMethod.isValid()
-            && mySuperMethod.getManager().isInProject(mySuperMethod)
-            && mySuperMethodType != null
-            && mySuperMethodType.isValid();
+      mySuperMethod.isValid() && mySuperMethod.getManager().isInProject(mySuperMethod) && mySuperMethodType.isValid();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(mySuperMethod.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(mySuperMethod.getContainingFile())) return;
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
             project,
             mySuperMethod,

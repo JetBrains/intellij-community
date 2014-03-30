@@ -14,16 +14,22 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgPusher;
+import org.zmlx.hg4idea.repo.HgRepository;
 
-public class HgPushAction extends HgAction {
+import java.util.Collection;
+
+public class HgPushAction extends HgAbstractGlobalAction {
   public HgPushAction() {
     super(AllIcons.Actions.Commit);
   }
 
   @Override
-  public void execute(final Project project) {
-    new HgPusher(project).showDialogAndPush();
+  public void execute(@NotNull final Project project,
+                      @NotNull Collection<HgRepository> repositories,
+                      @Nullable final HgRepository selectedRepo) {
+    new HgPusher(project).showDialogAndPush(repositories, selectedRepo);
   }
-
 }

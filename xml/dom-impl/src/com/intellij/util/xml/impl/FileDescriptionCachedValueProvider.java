@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -91,6 +92,14 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
       sb.append("File is valid\n");
     }
 
+    if (!(myXmlFile.getFileType() instanceof DomSupportEnabled)) {
+      return null;
+    }
+
+    if (sb != null) {
+      sb.append("File is of dom file type\n");
+    }
+
     final DomFileDescription<T> description = findFileDescription(rootTagName, sb);
 
     final DomFileElementImpl oldValue = getLastValue();
@@ -117,7 +126,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     FileStub stub = null;
     if (description.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed()) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
-      if (!XmlUtil.isStubBuilding(myXmlFile)) {
+      if (!XmlUtil.isStubBuilding()) {
         ObjectStubTree stubTree = StubTreeLoader.getInstance().readOrBuild(myXmlFile.getProject(), file, myXmlFile);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();
@@ -153,7 +162,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     if (sb != null) {
       sb.append("original: " + originalFile + "\n");
     }
-    if (originalFile != myXmlFile) {
+    if (!originalFile.equals(myXmlFile)) {
       final FileDescriptionCachedValueProvider<T> provider = myDomManager.getOrCreateCachedValueProvider(originalFile);
       final DomFileElementImpl<T> element = provider.getFileElement();
       if (sb != null) {

@@ -104,7 +104,7 @@ public class CodeStyleSchemesModel {
     mySettingsToClone.clear();
     mySchemes.clear();
     ContainerUtil.addAll(mySchemes, allSchemes);
-    myGlobalSelected = CodeStyleSchemes.getInstance().getCurrentScheme();
+    myGlobalSelected = CodeStyleSchemes.getInstance().findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE);
 
     CodeStyleSettings perProjectSettings = getProjectSettings().PER_PROJECT_SETTINGS;
     if (perProjectSettings != null) {
@@ -150,17 +150,24 @@ public class CodeStyleSchemesModel {
   }
 
   public boolean isSchemeListModified() {
+    CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
     if (getProjectSettings().USE_PER_PROJECT_SETTINGS != myUsePerProjectSettings) return true;
-    if (!myUsePerProjectSettings && (getSelectedScheme() != CodeStyleSchemes.getInstance().getCurrentScheme())) return true;
+    if (!myUsePerProjectSettings &&
+        (getSelectedScheme() != schemes.findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE))) {
+      return true;
+    }
     Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getSchemes());
-    Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(CodeStyleSchemes.getInstance().getSchemes()));
+    Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(schemes.getSchemes()));
     if (!configuredSchemesSet.equals(savedSchemesSet)) return true;
     return false;
   }
-
+  
   public void apply() {
-    getProjectSettings().USE_PER_PROJECT_SETTINGS = myUsePerProjectSettings;
-    getProjectSettings().PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
+    CodeStyleSettingsManager projectSettingsManager = getProjectSettings();
+    projectSettingsManager.USE_PER_PROJECT_SETTINGS = myUsePerProjectSettings;
+    projectSettingsManager.PREFERRED_PROJECT_CODE_STYLE =
+      myUsePerProjectSettings || myGlobalSelected == null ? null : myGlobalSelected.getName();
+    projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
     final CodeStyleScheme[] savedSchemes = CodeStyleSchemes.getInstance().getSchemes();
     final Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(savedSchemes));
@@ -200,6 +207,10 @@ public class CodeStyleSchemesModel {
 
   public void fireCurrentSettingsChanged() {
     myDispatcher.getMulticaster().currentSettingsChanged();
+  }
+
+  public void fireSchemeChanged(CodeStyleScheme scheme) {
+    myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 
   public CodeStyleScheme getSelectedGlobalScheme() {
@@ -261,6 +272,7 @@ public class CodeStyleSchemesModel {
     return new CodeStyleSchemeImpl(name, false, parentScheme);
   }
 
+  @Nullable
   private CodeStyleScheme findSchemeByName(final String name) {
     for (CodeStyleScheme scheme : mySchemes) {
       if (name.equals(scheme.getName())) return scheme;

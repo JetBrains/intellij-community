@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.ide.IconProvider;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class GroovyIconProvider extends IconProvider implements DumbAware {
+public class GroovyIconProvider extends IconProvider {
 
   @Nullable
   public Icon getIcon(@NotNull PsiElement element, int flags) {

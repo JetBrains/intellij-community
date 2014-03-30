@@ -238,6 +238,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
           comp.setBackground(list.getBackground());
           comp.setForeground(list.getForeground());
         }
+        for (JLabel label : UIUtil.findComponentsOfType(comp, JLabel.class)) {
+          label.setForeground(UIUtil.getListForeground(isSelected));
+        }
         return comp;
       }
     });

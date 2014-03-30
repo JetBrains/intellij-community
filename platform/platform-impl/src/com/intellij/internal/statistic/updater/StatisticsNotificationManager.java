@@ -1,14 +1,12 @@
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
-import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
+import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
@@ -25,30 +23,18 @@ public class StatisticsNotificationManager {
   private StatisticsNotificationManager() {
   }
 
-  public static void showNotification(@NotNull RemotelyConfigurableStatisticsService statisticsService, Project project) {
+  public static void showNotification(@NotNull StatisticsService statisticsService, Project project) {
+    MyNotificationListener listener =
+      new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent.getInstance());
 
-    Notifications.Bus.notify(new Notification(GROUP_DISPLAY_ID, getTitle(),
-                                              getText(),
-                                              NotificationType.INFORMATION,
-                                              new MyNotificationListener(statisticsService, UsageStatisticsPersistenceComponent
-                                                .getInstance())), project);
-  }
-
-  private static String getText() {
-    return
-      "<html>Please click <a href='allow'>I agree</a> if you want to help make "+ ApplicationNamesInfo.getInstance().getFullProductName() +
-      " better or <a href='decline'>I don't agree</a> otherwise. <a href='settings'>more...</a></html>";
-  }
-
-  private static String getTitle() {
-    return "Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() +" by sending anonymous usage statistics to JetBrains";
+    Notifications.Bus.notify(statisticsService.createNotification(GROUP_DISPLAY_ID, listener), project);
   }
 
   private static class MyNotificationListener implements NotificationListener {
-    private RemotelyConfigurableStatisticsService myStatisticsService;
+    private StatisticsService myStatisticsService;
     private final UsageStatisticsPersistenceComponent mySettings;
 
-    public MyNotificationListener(@NotNull RemotelyConfigurableStatisticsService statisticsService,
+    public MyNotificationListener(@NotNull StatisticsService statisticsService,
                                   @NotNull UsageStatisticsPersistenceComponent settings) {
       myStatisticsService = statisticsService;
       mySettings = settings;

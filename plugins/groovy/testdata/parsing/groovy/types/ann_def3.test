@@ -31,14 +31,13 @@ Groovy script
           <empty list>
         PsiElement())(')')
         PsiWhiteSpace(' ')
-        Default annotation value
-          PsiElement(default)('default')
-          PsiWhiteSpace(' ')
-          Annotation array initializer
-            PsiElement([)('[')
-            Literal
-              PsiElement(Integer)('8')
-            PsiElement(])(']')
+        PsiElement(default)('default')
+        PsiWhiteSpace(' ')
+        Annotation array initializer
+          PsiElement([)('[')
+          Literal
+            PsiElement(Integer)('8')
+          PsiElement(])(']')
         Throw clause
           <empty list>
       PsiElement(;)(';')

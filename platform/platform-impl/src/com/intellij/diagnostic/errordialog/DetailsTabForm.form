@@ -34,7 +34,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="ef277" class="javax.swing.JTextPane" binding="myDetailsPane">
+              <component id="ef277" class="javax.swing.JTextArea" binding="myDetailsPane">
                 <constraints/>
                 <properties>
                   <editable value="false"/>

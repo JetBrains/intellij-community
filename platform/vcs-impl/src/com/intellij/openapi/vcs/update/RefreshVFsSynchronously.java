@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -35,7 +36,7 @@ public class RefreshVFsSynchronously {
   private RefreshVFsSynchronously() {
   }
 
-  public static void updateAllChanged(final UpdatedFiles updatedFiles) {
+  public static void updateAllChanged(@NotNull final UpdatedFiles updatedFiles) {
     FilesToRefreshCollector callback = new FilesToRefreshCollector();
     UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, callback);
 
@@ -43,6 +44,10 @@ public class RefreshVFsSynchronously {
       refreshDeletedOrReplaced(file);
     }
 
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LocalFileSystem.getInstance().refreshIoFiles(callback.getToRefresh(), false, false, null);
+      return;
+    }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     try {

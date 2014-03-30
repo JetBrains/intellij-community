@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
@@ -31,7 +32,7 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
   }
 
   public Object getData(String dataId) {
-    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
     }
     return super.getData(dataId);

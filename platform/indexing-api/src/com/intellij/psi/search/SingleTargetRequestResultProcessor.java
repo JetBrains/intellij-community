@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
@@ -36,21 +37,20 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
     myTarget = target;
   }
 
+  @Override
   public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<PsiReference> consumer) {
     final List<PsiReference> references = ourReferenceService.getReferences(element,
                                                                             new PsiReferenceService.Hints(myTarget, offsetInElement));
     for (PsiReference ref : references) {
-      if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-        if (ref.isReferenceTo(myTarget)) {
-          if (!consumer.process(ref)) {
-            return false;
-          }
-        }
+      ProgressManager.checkCanceled();
+      if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && ref.isReferenceTo(myTarget) && !consumer.process(ref)) {
+        return false;
       }
     }
     return true;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String toString() {
     return "SingleTarget: " + myTarget;

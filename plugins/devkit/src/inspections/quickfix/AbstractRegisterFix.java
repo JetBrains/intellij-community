@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
@@ -68,10 +68,11 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     final PsiFile psiFile = myClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
+    assert module != null;
 
     Runnable command = new Runnable() {
       public void run() {

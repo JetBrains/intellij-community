@@ -16,13 +16,14 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,14 +33,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -119,23 +122,16 @@ class Browser extends JPanel {
     void referenceClicked(ClickEvent e);
   }
 
-  private void showPageFromHistory(RefEntity newEntity) {
-    InspectionTool tool = getTool(newEntity);
+  private void showPageFromHistory(@NotNull RefEntity newEntity) {
+    InspectionToolWrapper toolWrapper = getToolWrapper(newEntity);
     try {
-      if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
-        showEmpty();
-      }
-      else {
-        try {
-          String html = generateHTML(newEntity, tool);
-          myHTMLViewer.read(new StringReader(html), null);
-          setupStyle();
-          myHTMLViewer.setCaretPosition(0);
-        }
-        catch (Exception e) {
-          showEmpty();
-        }
-      }
+      String html = generateHTML(newEntity, toolWrapper);
+      myHTMLViewer.read(new StringReader(html), null);
+      setupStyle();
+      myHTMLViewer.setCaretPosition(0);
+    }
+    catch (Exception e) {
+      showEmpty();
     }
     finally {
       myCurrentEntity = newEntity;
@@ -168,7 +164,7 @@ class Browser extends JPanel {
     showPageFromHistory(newEntity.getRefManager().getRefinedElement(newEntity));
   }
 
-  public Browser(InspectionResultsView view) {
+  public Browser(@NotNull InspectionResultsView view) {
     super(new BorderLayout());
     myView = view;
 
@@ -178,84 +174,9 @@ class Browser extends JPanel {
     myHTMLViewer = new JEditorPane(UIUtil.HTML_MIME, InspectionsBundle.message("inspection.offline.view.empty.browser.text"));
     myHTMLViewer.setEditable(false);
     myHyperLinkListener = new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          JEditorPane pane = (JEditorPane)e.getSource();
-          if (e instanceof HTMLFrameHyperlinkEvent) {
-            HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
-            HTMLDocument doc = (HTMLDocument)pane.getDocument();
-            doc.processHTMLFrameHyperlinkEvent(evt);
-          }
-          else {
-            try {
-              URL url = e.getURL();
-              @NonNls String ref = url.getRef();
-              if (ref.startsWith("pos:")) {
-                int delimeterPos = ref.indexOf(':', "pos:".length() + 1);
-                String startPosition = ref.substring("pos:".length(), delimeterPos);
-                String endPosition = ref.substring(delimeterPos + 1);
-                Integer textStartOffset = new Integer(startPosition);
-                Integer textEndOffset = new Integer(endPosition);
-                String fileURL = url.toExternalForm();
-                fileURL = fileURL.substring(0, fileURL.indexOf('#'));
-                VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileURL);
-                if (vFile != null) {
-                  fireClickEvent(vFile, textStartOffset.intValue(), textEndOffset.intValue());
-                }
-              }
-              else if (ref.startsWith("descr:")) {
-                if (myCurrentDescriptor instanceof ProblemDescriptor) {
-                  PsiElement psiElement = ((ProblemDescriptor)myCurrentDescriptor).getPsiElement();
-                  if (psiElement == null) return;
-                  VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
-                  if (vFile != null) {
-                    TextRange range = ((ProblemDescriptorImpl)myCurrentDescriptor).getTextRange();
-                    fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
-                  }
-                }
-              }
-              else if (ref.startsWith("invoke:")) {
-                int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
-                getTool().getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber]
-                  .doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView);
-              }
-              else if (ref.startsWith("invokelocal:")) {
-                int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
-                if (actionNumber > -1) {
-                  invokeLocalFix(actionNumber);
-                }
-              } else if (ref.startsWith("suppress:")){
-                final SuppressActionWrapper.SuppressTreeAction[] suppressTreeActions =
-                  new SuppressActionWrapper(myView.getProject(), getTool(), myView.getTree().getSelectionPaths()).getChildren(null);
-                final List<AnAction> activeActions = new ArrayList<AnAction>();
-                for (SuppressActionWrapper.SuppressTreeAction suppressTreeAction : suppressTreeActions) {
-                  if (suppressTreeAction.isAvailable()) activeActions.add(suppressTreeAction);
-                }
-                if (!activeActions.isEmpty()) {
-                  int actionNumber = Integer.parseInt(ref.substring("suppress:".length()));
-                  if (actionNumber > -1 && activeActions.size() > actionNumber) {
-                    activeActions.get(actionNumber).actionPerformed(null);
-                  }
-                }
-              }
-              else {
-                int offset = Integer.parseInt(ref);
-                String fileURL = url.toExternalForm();
-                fileURL = fileURL.substring(0, fileURL.indexOf('#'));
-                VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileURL);
-                if (vFile == null) {
-                  vFile = VfsUtil.findFileByURL(url);
-                }
-                if (vFile != null) {
-                  fireClickEvent(vFile, offset, offset);
-                }
-              }
-            }
-            catch (Throwable t) {
-              //???
-            }
-          }
-        }
+        Browser.this.hyperlinkUpdate(e);
       }
     };
     myHTMLViewer.addHyperlinkListener(myHyperLinkListener);
@@ -266,6 +187,91 @@ class Browser extends JPanel {
     setupStyle();
   }
 
+  private void hyperlinkUpdate(HyperlinkEvent e) {
+    if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+      return;
+    }
+    JEditorPane pane = (JEditorPane)e.getSource();
+    if (e instanceof HTMLFrameHyperlinkEvent) {
+      HTMLFrameHyperlinkEvent evt = (HTMLFrameHyperlinkEvent)e;
+      HTMLDocument doc = (HTMLDocument)pane.getDocument();
+      doc.processHTMLFrameHyperlinkEvent(evt);
+      return;
+    }
+    URL url = null;
+    try {
+      url = e.getURL();
+      @NonNls String ref = url.getRef();
+      if (ref.startsWith("pos:")) {
+        int delimeterPos = ref.indexOf(':', "pos:".length() + 1);
+        String startPosition = ref.substring("pos:".length(), delimeterPos);
+        String endPosition = ref.substring(delimeterPos + 1);
+        Integer textStartOffset = new Integer(startPosition);
+        Integer textEndOffset = new Integer(endPosition);
+        String fileURL = url.toExternalForm();
+        fileURL = fileURL.substring(0, fileURL.indexOf('#'));
+        VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+        if (vFile != null) {
+          fireClickEvent(vFile, textStartOffset.intValue(), textEndOffset.intValue());
+        }
+      }
+      else if (ref.startsWith("descr:")) {
+        if (myCurrentDescriptor instanceof ProblemDescriptor) {
+          PsiElement psiElement = ((ProblemDescriptor)myCurrentDescriptor).getPsiElement();
+          if (psiElement == null) return;
+          VirtualFile vFile = psiElement.getContainingFile().getVirtualFile();
+          if (vFile != null) {
+            TextRange range = ((ProblemDescriptorBase)myCurrentDescriptor).getTextRange();
+            fireClickEvent(vFile, range.getStartOffset(), range.getEndOffset());
+          }
+        }
+      }
+      else if (ref.startsWith("invoke:")) {
+        int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
+        InspectionToolWrapper toolWrapper = getToolWrapper();
+        InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+        QuickFixAction fixAction = presentation.getQuickFixes(new RefElement[]{(RefElement)myCurrentEntity})[actionNumber];
+        fixAction.doApplyFix(new RefElement[]{(RefElement)myCurrentEntity}, myView);
+      }
+      else if (ref.startsWith("invokelocal:")) {
+        int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
+        if (actionNumber > -1) {
+          invokeLocalFix(actionNumber);
+        }
+      } else if (ref.startsWith("suppress:")){
+        final SuppressActionWrapper.SuppressTreeAction[] suppressTreeActions =
+          new SuppressActionWrapper(myView.getProject(), getToolWrapper(), myView.getTree().getSelectionPaths()).getChildren(null);
+        final List<AnAction> activeActions = new ArrayList<AnAction>();
+        for (SuppressActionWrapper.SuppressTreeAction suppressTreeAction : suppressTreeActions) {
+          if (suppressTreeAction.isAvailable()) activeActions.add(suppressTreeAction);
+        }
+        if (!activeActions.isEmpty()) {
+          int actionNumber = Integer.parseInt(ref.substring("suppress:".length()));
+          if (actionNumber > -1 && activeActions.size() > actionNumber) {
+            activeActions.get(actionNumber).actionPerformed(null);
+          }
+        }
+      }
+      else {
+        int offset = Integer.parseInt(ref);
+        String fileURL = url.toExternalForm();
+        fileURL = fileURL.substring(0, fileURL.indexOf('#'));
+        VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(fileURL);
+        if (vFile == null) {
+          vFile = VfsUtil.findFileByURL(url);
+        }
+        if (vFile != null) {
+          fireClickEvent(vFile, offset, offset);
+        }
+      }
+    }
+    catch (Throwable t) {
+      if (url != null) {
+        BrowserUtil.browse(url);
+      }
+    }
+  }
+
   private void setupStyle() {
     Document document = myHTMLViewer.getDocument();
     if (!(document instanceof StyledDocument)) {
@@ -273,7 +279,7 @@ class Browser extends JPanel {
     }
 
     StyledDocument styledDocument = (StyledDocument)document;
-    
+
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
 
@@ -295,18 +301,19 @@ class Browser extends JPanel {
     }
   }
 
-  private String generateHTML(final RefEntity refEntity, final InspectionTool tool) {
+  private String generateHTML(final RefEntity refEntity, @NotNull final InspectionToolWrapper toolWrapper) {
     final StringBuffer buf = new StringBuffer();
+    final HTMLComposerImpl htmlComposer = getPresentation(toolWrapper).getComposer();
     if (refEntity instanceof RefElement) {
-      final Runnable action = new Runnable() {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
-          tool.getComposer().compose(buf, refEntity);
+          htmlComposer.compose(buf, refEntity);
         }
-      };
-      ApplicationManager.getApplication().runReadAction(action);
+      });
     }
     else {
-      tool.getComposer().compose(buf, refEntity);
+      htmlComposer.compose(buf, refEntity);
     }
 
     uppercaseFirstLetter(buf);
@@ -320,6 +327,10 @@ class Browser extends JPanel {
     return buf.toString();
   }
 
+  private InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
+    return myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void insertHeaderFooter(final StringBuffer buf) {
     buf.insert(0, "<HTML><BODY>");
@@ -329,9 +340,10 @@ class Browser extends JPanel {
   private String generateHTML(final RefEntity refEntity, final CommonProblemDescriptor descriptor) {
     final StringBuffer buf = new StringBuffer();
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
-        InspectionTool tool = getTool(refEntity);
-        tool.getComposer().compose(buf, refEntity, descriptor);
+        InspectionToolWrapper toolWrapper = getToolWrapper(refEntity);
+        getPresentation(toolWrapper).getComposer().compose(buf, refEntity, descriptor);
       }
     };
     ApplicationManager.getApplication().runReadAction(action);
@@ -346,27 +358,25 @@ class Browser extends JPanel {
     return buf.toString();
   }
 
-  private InspectionTool getTool(final RefEntity refEntity) {
-    InspectionTool tool = getTool();
-    assert tool != null;
-    final GlobalInspectionContextImpl manager = tool.getContext();
-    if (manager == null) return tool;
+  private InspectionToolWrapper getToolWrapper(final RefEntity refEntity) {
+    InspectionToolWrapper toolWrapper = getToolWrapper();
+    assert toolWrapper != null;
+    final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
     if (refEntity instanceof RefElement){
       PsiElement element = ((RefElement)refEntity).getElement();
-      if (element == null) return tool;
-      final InspectionProfileWrapper profileWrapper = InspectionProjectProfileManager.getInstance(manager.getProject()).getProfileWrapper();
-      if (profileWrapper == null) return tool;
-      tool = profileWrapper.getInspectionTool(tool.getShortName(), element);
+      if (element == null) return toolWrapper;
+      InspectionProfileWrapper profileWrapper = InspectionProjectProfileManagerImpl.getInstanceImpl(context.getProject()).getProfileWrapper();
+      toolWrapper = profileWrapper.getInspectionTool(toolWrapper.getShortName(), element);
     }
-    return tool;
+    return toolWrapper;
   }
 
   private void appendSuppressSection(final StringBuffer buf) {
-    final InspectionTool tool = getTool();
-    if (tool != null) {
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    final InspectionToolWrapper toolWrapper = getToolWrapper();
+    if (toolWrapper != null) {
+      final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
       if (key != null){//dummy entry points
-        final SuppressActionWrapper.SuppressTreeAction[] suppressActions = new SuppressActionWrapper(myView.getProject(), tool, myView.getTree().getSelectionPaths()).getChildren(null);
+        final SuppressActionWrapper.SuppressTreeAction[] suppressActions = new SuppressActionWrapper(myView.getProject(), toolWrapper, myView.getTree().getSelectionPaths()).getChildren(null);
         if (suppressActions.length > 0) {
           final List<AnAction> activeSuppressActions = new ArrayList<AnAction>();
           for (SuppressActionWrapper.SuppressTreeAction suppressAction : suppressActions) {
@@ -407,26 +417,26 @@ class Browser extends JPanel {
   public void showEmpty() {
     myCurrentEntity = null;
     try {
-      myHTMLViewer.read(new StringReader("<html><body></body></html>"), null);
+      myHTMLViewer.read(new StringReader(InspectionsBundle.message("inspection.offline.view.empty.browser.text")), null);
     }
     catch (IOException e) {
       //can't be
     }
   }
 
-  public void showDescription(InspectionTool tool){
-    if (tool.getShortName().length() == 0){
+  public void showDescription(@NotNull InspectionToolWrapper toolWrapper){
+    if (toolWrapper.getShortName().isEmpty()){
       showEmpty();
       return;
     }
-    @NonNls StringBuffer page = new StringBuffer("<html>");
+    @NonNls StringBuffer page = new StringBuffer();
     page.append("<table border='0' cellspacing='0' cellpadding='0' width='100%'>");
     page.append("<tr><td colspan='2'>");
     HTMLComposer.appendHeading(page, InspectionsBundle.message("inspection.tool.in.browser.id.title"));
     page.append("</td></tr>");
     page.append("<tr><td width='37'></td>" +
                 "<td>");
-    page.append(tool.getShortName());
+    page.append(toolWrapper.getShortName());
     page.append("</td></tr>");
     page.append("<tr height='10'></tr>");
     page.append("<tr><td colspan='2'>");
@@ -436,26 +446,24 @@ class Browser extends JPanel {
                 "<td>");
     @NonNls final String underConstruction = "<b>" + UNDER_CONSTRUCTION + "</b></html>";
     try {
-      @NonNls String description = tool.loadDescription();
+      @NonNls String description = toolWrapper.loadDescription();
       if (description == null) {
         description = underConstruction;
       }
-      page.append(UIUtil.getHtmlBody(description));
+      page.append(DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(UIUtil.getHtmlBody(description)));
 
       page.append("</td></tr></table>");
-      myHTMLViewer.setText(page.toString());
+      myHTMLViewer.setText(XmlStringUtil.wrapInHtml(page));
       setupStyle();
-    } finally {
+    }
+    finally {
       myCurrentEntity = null;
     }
   }
 
   @Nullable
-  private InspectionTool getTool() {
-    if (myView != null){
-      return myView.getTree().getSelectedTool();
-    }
-    return null;
+  private InspectionToolWrapper getToolWrapper() {
+    return myView.getTree().getSelectedToolWrapper();
   }
 
   public void invokeLocalFix(int idx) {
@@ -483,7 +491,7 @@ class Browser extends JPanel {
       if (element instanceof RefElement) {
         PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null && psiElement.isValid()) {
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(psiElement)) return;
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
           performFix(element, descriptor, idx, fixes[idx]);
         }
       }
@@ -498,6 +506,7 @@ class Browser extends JPanel {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             final PsiModificationTracker tracker = PsiManager.getInstance(myView.getProject()).getModificationTracker();
             final long startCount = tracker.getModificationCount();
@@ -505,9 +514,11 @@ class Browser extends JPanel {
             //CCE here means QuickFix was incorrectly inherited
             fix.applyFix(myView.getProject(), descriptor);
             if (startCount != tracker.getModificationCount()) {
-              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
-              if (tool != null) {
-                tool.ignoreProblem(element, descriptor, idx);
+              InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
+              if (toolWrapper != null) {
+                InspectionToolPresentation presentation =
+                  myView.getGlobalInspectionContext().getPresentation(toolWrapper);
+                presentation.ignoreProblem(element, descriptor, idx);
               }
               myView.updateView(false);
             }

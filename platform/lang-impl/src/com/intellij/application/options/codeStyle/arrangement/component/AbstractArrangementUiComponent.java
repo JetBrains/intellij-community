@@ -16,7 +16,9 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -79,10 +84,26 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
     }
   };
 
+  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
+
   @Nullable private Listener  myListener;
   @Nullable private Rectangle myScreenBounds;
 
   private boolean myEnabled = true;
+
+  protected AbstractArrangementUiComponent(@NotNull ArrangementSettingsToken ... availableTokens) {
+    myAvailableTokens.addAll(Arrays.asList(availableTokens));
+  }
+
+  protected AbstractArrangementUiComponent(@NotNull Collection<ArrangementSettingsToken> availableTokens) {
+    myAvailableTokens.addAll(availableTokens);
+  }
+
+  @NotNull
+  @Override
+  public Set<ArrangementSettingsToken> getAvailableTokens() {
+    return myAvailableTokens;
+  }
 
   @NotNull
   @Override
@@ -92,6 +113,12 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
 
   protected abstract JComponent doGetUiComponent();
 
+  @Override
+  public void setData(@NotNull Object data) {
+    // Do nothing
+  }
+
+  @Override
   public void setListener(@Nullable Listener listener) {
     myListener = listener;
   }

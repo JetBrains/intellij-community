@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
@@ -31,10 +32,12 @@ import java.awt.event.KeyEvent;
 
 public class MergeSourceDetailsAction extends AnAction implements DumbAware {
 
+  public MergeSourceDetailsAction() {
+    super("Show merge sources details", null, SvnIcons.MergeSourcesDetails);
+  }
+
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(SvnIcons.MergeSourcesDetails);
-    e.getPresentation().setText("Show merge sources details");
     e.getPresentation().setEnabled(enabled(e));
   }
 
@@ -43,7 +46,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   }
 
   private boolean enabled(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     if (revisionVirtualFile == null) return false;
@@ -56,7 +59,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     if (! enabled(e)) return;
 
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     SvnMergeSourceDetails.showMe(project, (SvnFileRevision) revision, revisionVirtualFile);

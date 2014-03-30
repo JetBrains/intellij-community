@@ -28,11 +28,11 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   protected DumbAwareAction() {
   }
 
-  protected DumbAwareAction(String text) {
+  protected DumbAwareAction(@Nullable String text) {
     super(text);
   }
 
-  protected DumbAwareAction(String text, @Nullable String description, @Nullable Icon icon) {
+  protected DumbAwareAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 }

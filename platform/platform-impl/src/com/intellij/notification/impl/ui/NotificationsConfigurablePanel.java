@@ -21,6 +21,8 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,6 +119,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
     private static final int LOG_COLUMN = 2;
+    private static final int READ_ALOUD_COLUMN = 3;
 
     public NotificationsTable() {
       super(new NotificationsTableModel());
@@ -174,7 +177,11 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
       final TableColumn logColumn = getColumnModel().getColumn(LOG_COLUMN);
       logColumn.setMaxWidth(logColumn.getPreferredWidth());
-
+      if (SystemInfo.isMac) {
+        final TableColumn readAloudColumn = getColumnModel().getColumn(READ_ALOUD_COLUMN);
+        readAloudColumn.setMaxWidth(readAloudColumn.getPreferredWidth());
+      }
+      new TableSpeedSearch(this);
       getEmptyText().setText("No notifications configured");
     }
 
@@ -229,17 +236,16 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
   }
 
-  private static class SettingsWrapper extends NotificationSettings {
-    private final NotificationSettings myOriginal;
+  private static class SettingsWrapper {
     private boolean myRemoved = false;
+    private NotificationSettings myVersion;
 
-    private SettingsWrapper(@NotNull final NotificationSettings original) {
-      super(original.getGroupId(), original.getDisplayType(), original.isShouldLog());
-      myOriginal = original;
+    private SettingsWrapper(NotificationSettings settings) {
+      myVersion = settings;
     }
 
     public boolean hasChanged() {
-      return !getDisplayType().equals(myOriginal.getDisplayType()) || isShouldLog() != myOriginal.isShouldLog() || myRemoved;
+      return myRemoved || !getOriginalSettings().equals(myVersion);
     }
 
     public void remove() {
@@ -250,23 +256,27 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       return myRemoved;
     }
 
+    @NotNull
+    private NotificationSettings getOriginalSettings() {
+      return NotificationsConfigurationImpl.getSettings(getGroupId());
+    }
+
     public void apply() {
       if (myRemoved) {
-        NotificationsConfigurationImpl.remove(myOriginal.getGroupId());
+        NotificationsConfigurationImpl.remove(getGroupId());
       }
       else {
-        if (hasChanged()) {
-          myOriginal.setDisplayType(getDisplayType());
-          myOriginal.setShouldLog(isShouldLog());
-        }
+        NotificationsConfigurationImpl.getNotificationsConfigurationImpl().changeSettings(myVersion);
       }
     }
 
     public void reset() {
-      if (hasChanged()) {
-        setDisplayType(myOriginal.getDisplayType());
-        myRemoved = false;
-      }
+      myVersion = getOriginalSettings();
+      myRemoved = false;
+    }
+
+    String getGroupId() {
+      return myVersion.getGroupId();
     }
   }
 
@@ -274,9 +284,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private final List<SettingsWrapper> mySettings;
 
     public NotificationsTableModel() {
-      final NotificationSettings[] settings = NotificationsConfigurationImpl.getAllSettings();
       final List<SettingsWrapper> list = new ArrayList<SettingsWrapper>();
-      for (NotificationSettings setting : settings) {
+      for (NotificationSettings setting : NotificationsConfigurationImpl.getAllSettings()) {
         list.add(new SettingsWrapper(setting));
       }
 
@@ -289,14 +298,17 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     @Override
     public void setValueAt(final Object value, final int rowIndex, final int columnIndex) {
-      final NotificationSettings settings = getSettings(rowIndex);
+      final SettingsWrapper wrapper = getSettings(rowIndex);
 
       switch (columnIndex) {
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
-          settings.setDisplayType((NotificationDisplayType)value);
+          wrapper.myVersion = wrapper.myVersion.withDisplayType((NotificationDisplayType)value);
           break;
         case NotificationsTable.LOG_COLUMN:
-          settings.setShouldLog((Boolean)value);
+          wrapper.myVersion = wrapper.myVersion.withShouldLog((Boolean)value);
+          break;
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          wrapper.myVersion = wrapper.myVersion.withShouldReadAloud((Boolean)value);
           break;
       }
     }
@@ -305,12 +317,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
       return getSettings().size();
     }
 
-    public NotificationSettings getSettings(int row) {
+    public SettingsWrapper getSettings(int row) {
       return getSettings().get(row);
     }
 
     public int getColumnCount() {
-      return 3;
+      return SystemInfo.isMac ? 4 : 3;
     }
 
     @Override
@@ -319,6 +331,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         return NotificationDisplayType.class;
       }
       if (NotificationsTable.LOG_COLUMN == columnIndex) {
+        return Boolean.class;
+      }
+      if (NotificationsTable.READ_ALOUD_COLUMN == columnIndex) {
         return Boolean.class;
       }
 
@@ -332,6 +347,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           return "Group";
         case NotificationsTable.LOG_COLUMN:
           return "Log";
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          return "Read aloud";
         default:
           return "Popup";
       }
@@ -347,10 +364,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         case NotificationsTable.ID_COLUMN:
           return getSettings().get(rowIndex).getGroupId();
         case NotificationsTable.LOG_COLUMN:
-          return getSettings().get(rowIndex).isShouldLog();
+          return getSettings().get(rowIndex).myVersion.isShouldLog();
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          return getSettings().get(rowIndex).myVersion.isShouldReadAloud();
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
         default:
-          return getSettings().get(rowIndex).getDisplayType();
+          return getSettings().get(rowIndex).myVersion.getDisplayType();
       }
     }
 

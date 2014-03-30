@@ -44,11 +44,12 @@ public class GrModifierListElementType extends GrStubElementType<GrModifierListS
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, GrModifierListStub.buildFlags(psi));
   }
 
-  public void serialize(GrModifierListStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrModifierListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeVarInt(stub.getModifiersFlags());
   }
 
-  public GrModifierListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrModifierListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrModifierListStub(parentStub, GroovyElementTypes.MODIFIERS, dataStream.readVarInt());
   }
 

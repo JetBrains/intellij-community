@@ -16,22 +16,18 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -67,6 +63,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     PlatformTestCase.initPlatformLangPrefix();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
@@ -85,7 +82,8 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.enableInspections(inspectionClasses);
 
     new WriteAction() {
-      protected void run(Result result) throws Throwable {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
         ResourceUtil.copyFiles(HighlightingTestBase.this);
         init();
       }
@@ -100,14 +98,11 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     return PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/";
   }
 
-  protected CodeInsightTestFixture createFixture(IdeaTestFixtureFactory factory) {
+  protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {
     final TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createLightFixtureBuilder();
     final IdeaProjectTestFixture fixture = builder.getFixture();
 
-    final CodeInsightTestFixture testFixture;
-    testFixture = factory.createCodeInsightFixture(fixture);
-
-    return testFixture;
+    return factory.createCodeInsightFixture(fixture);
   }
 
   protected CodeInsightTestFixture createContentFixture(IdeaTestFixtureFactory factory) {
@@ -115,8 +110,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     final EmptyModuleFixtureBuilder moduleBuilder = builder.addModule(EmptyModuleFixtureBuilder.class);
     final IdeaProjectTestFixture fixture = builder.getFixture();
 
-    final CodeInsightTestFixture testFixture;
-    testFixture = factory.createCodeInsightFixture(fixture);
+    final CodeInsightTestFixture testFixture = factory.createCodeInsightFixture(fixture);
 
     final String root = testFixture.getTempDirPath();
     moduleBuilder.addContentRoot(root);
@@ -125,20 +119,24 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     return testFixture;
   }
 
+  @Override
   public CodeInsightTestFixture getFixture() {
     return myTestFixture;
   }
 
+  @Override
   public abstract String getTestDataPath();
 
   protected void init() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined");
       }
     });
   }
 
+  @Override
   protected void tearDown() throws Exception {
     myTestFixture.tearDown();
     super.tearDown();
@@ -178,15 +176,15 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     final Editor editor = myTestFixture.getEditor();
 
     int[] ignore = externalToolPass == null || externalToolPass ? new int[]{
-      com.intellij.codeHighlighting.Pass.LINE_MARKERS,
-      com.intellij.codeHighlighting.Pass.LOCAL_INSPECTIONS,
-      com.intellij.codeHighlighting.Pass.POPUP_HINTS,
-      com.intellij.codeHighlighting.Pass.POST_UPDATE_ALL,
-      com.intellij.codeHighlighting.Pass.UPDATE_ALL,
-      com.intellij.codeHighlighting.Pass.UPDATE_FOLDING,
-      com.intellij.codeHighlighting.Pass.UPDATE_OVERRIDEN_MARKERS,
-      com.intellij.codeHighlighting.Pass.VISIBLE_LINE_MARKERS,
-    } : new int[]{com.intellij.codeHighlighting.Pass.EXTERNAL_TOOLS};
+      Pass.LINE_MARKERS,
+      Pass.LOCAL_INSPECTIONS,
+      Pass.POPUP_HINTS,
+      Pass.POST_UPDATE_ALL,
+      Pass.UPDATE_ALL,
+      Pass.UPDATE_FOLDING,
+      Pass.UPDATE_OVERRIDEN_MARKERS,
+      Pass.VISIBLE_LINE_MARKERS,
+    } : new int[]{Pass.EXTERNAL_TOOLS};
     return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);
   }
 
@@ -210,22 +208,28 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   protected void doTestQuickFix(String file, String ext) throws Throwable {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());
-    assertTrue("QuickFixProvider", psiReference instanceof QuickFixProvider);
+    assertTrue(psiReference.getClass().getName() + " is not a QuickFixProvider", psiReference instanceof LocalQuickFixProvider);
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(0, 0).descriptionAndTooltip("").create();
-    ((QuickFixProvider)psiReference).registerQuickfix(info, psiReference);
-    assertTrue("One action expected", info.quickFixActionRanges.size() == 1);
+    final LocalQuickFix[] fixes = ((LocalQuickFixProvider)psiReference).getQuickFixes();
 
-    final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> rangePair = info.quickFixActionRanges.get(0);
-    final IntentionAction action = rangePair.first.getAction();
+    assertTrue("One action expected", fixes != null && fixes.length == 1);
 
-    assertTrue("action is enabled", action.isAvailable(myTestFixture.getProject(), myTestFixture.getEditor(), myTestFixture.getFile()));
-    myTestFixture.launchAction(action);
-
+    final Project project = myTestFixture.getProject();
+    new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
+      @Override
+      protected void run() throws Throwable {
+        ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(), "foo",
+                                                                                               fixes,
+                                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                               true);
+        fixes[0].applyFix(project, problemDescriptor);
+      }
+    }.execute();
     myTestFixture.checkResultByFile(file + "_after." + ext);
   }
 
   private static class DefaultInspectionProvider implements InspectionToolProvider {
+    @Override
     public Class[] getInspectionClasses() {
       return new Class[]{
               RngDomInspection.class,

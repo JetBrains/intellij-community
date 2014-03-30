@@ -42,7 +42,7 @@ public class FormBuilder {
   private int myVerticalGap;
   private int myHorizontalGap;
 
-  private FormBuilder() {
+  public FormBuilder() {
     myPanel = new JPanel(new GridBagLayout());
     myVertical = false;
     myIndent = 0;
@@ -185,8 +185,8 @@ public class FormBuilder {
     return honorAlignment && myAlignLabelOnRight ? EAST : WEST;
   }
 
-  private static int getFill(JComponent component) {
-    if (component instanceof JComboBox) {
+  protected int getFill(JComponent component) {
+    if (component instanceof JComboBox || component instanceof JSpinner) {
       return NONE;
     }
     else if (component instanceof JScrollPane) {

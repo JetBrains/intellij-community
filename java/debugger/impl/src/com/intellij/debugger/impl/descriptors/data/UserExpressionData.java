@@ -20,6 +20,7 @@ import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>{
   private final ValueDescriptorImpl myParentDescriptor;
@@ -35,7 +36,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
     myText = text;
   }
 
-  protected UserExpressionDescriptorImpl createDescriptorImpl(Project project) {
+  protected UserExpressionDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new UserExpressionDescriptorImpl(project, myParentDescriptor, myTypeName, myName, myText);
   }
 

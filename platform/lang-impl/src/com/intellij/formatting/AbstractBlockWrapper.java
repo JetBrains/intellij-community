@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -38,7 +39,7 @@ public abstract class AbstractBlockWrapper {
     Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  protected WhiteSpace            myWhiteSpace;
+  protected WhiteSpace myWhiteSpaceBefore;
   protected CompositeBlockWrapper myParent;
   protected int                   myStart;
   protected int                   myEnd;
@@ -53,12 +54,13 @@ public abstract class AbstractBlockWrapper {
   private   IndentImpl myIndent           = null;
   private AlignmentImpl myAlignment;
   private WrapImpl      myWrap;
+  private final ASTNode myNode;
 
   public AbstractBlockWrapper(final Block block,
-                              final WhiteSpace whiteSpace,
+                              final WhiteSpace whiteSpaceBefore,
                               final CompositeBlockWrapper parent,
                               final TextRange textRange) {
-    myWhiteSpace = whiteSpace;
+    myWhiteSpaceBefore = whiteSpaceBefore;
     myParent = parent;
     myStart = textRange.getStartOffset();
     myEnd = textRange.getEndOffset();
@@ -67,6 +69,7 @@ public abstract class AbstractBlockWrapper {
     myAlignment = (AlignmentImpl)block.getAlignment();
     myWrap = (WrapImpl)block.getWrap();
     myLanguage = deriveLanguage(block);
+    myNode = block instanceof ASTBlock ? ((ASTBlock) block).getNode() : null;
   }
 
   @Nullable
@@ -76,11 +79,32 @@ public abstract class AbstractBlockWrapper {
     }
     return null;
   }
-  
+
+  /**
+   * Returns the whitespace preceding the block.
+   *
+   * @return the whitespace preceding the block
+   */
   public WhiteSpace getWhiteSpace() {
-    return myWhiteSpace;
+    return myWhiteSpaceBefore;
   }
 
+  /**
+   * Returns the AST node corresponding to the block, if known.
+   *
+   * @return the AST node or null
+   */
+  @Nullable
+  public ASTNode getNode() {
+    return myNode;
+  }
+
+  /**
+   * Returns the list of wraps for this block and its parent blocks that start at the same offset. The returned list is ordered from top
+   * to bottom (higher-level wraps go first). Stops if the wrap for a block is marked as "ignore parent wraps".
+   *
+   * @return the list of wraps.
+   */
   public ArrayList<WrapImpl> getWraps() {
     final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>(3);
     AbstractBlockWrapper current = this;
@@ -342,7 +366,7 @@ public abstract class AbstractBlockWrapper {
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (childIndent.isRelativeToDirectParent()) {
-      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getOffsetBefore(CoreFormatterUtil.getFirstLeaf(this)),
+      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getStartColumn(CoreFormatterUtil.getFirstLeaf(this)),
                             indent.getSpaces());
     }
     if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
@@ -505,7 +529,7 @@ public abstract class AbstractBlockWrapper {
     return myParent.findFirstIndentedParent();
   }
 
-  public void setIndent(final IndentImpl indent) {
+  public void setIndent(@Nullable final IndentImpl indent) {
     myIndent = indent;
   }
 
@@ -523,7 +547,7 @@ public abstract class AbstractBlockWrapper {
     myIndent = null;
     myIndentFromParent = null;
     myParent = null;
-    myWhiteSpace = null;
+    myWhiteSpaceBefore = null;
   }
 
   @Override

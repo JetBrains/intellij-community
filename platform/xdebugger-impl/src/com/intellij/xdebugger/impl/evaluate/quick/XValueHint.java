@@ -16,159 +16,157 @@
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author nik
  */
 public class XValueHint extends AbstractValueHint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.evaluate.quick.XValueHint");
+  private static final Logger LOG = Logger.getInstance(XValueHint.class);
 
   private final XDebuggerEvaluator myEvaluator;
   private final XDebugSession myDebugSession;
   private final String myExpression;
   private final @Nullable XSourcePosition myExpressionPosition;
 
-  public XValueHint(final Project project, final Editor editor, final Point point, final ValueHintType type, final TextRange textRange,
-                    final XDebuggerEvaluator evaluator, final XDebugSession session) {
-    super(project, editor, point, type, textRange);
+  public XValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type,
+                    @NotNull Pair<TextRange, String> expressionData, @NotNull XDebuggerEvaluator evaluator,
+                    @NotNull XDebugSession session) {
+    super(project, editor, point, type, expressionData.first);
+
     myEvaluator = evaluator;
     myDebugSession = session;
-    final Document document = editor.getDocument();
-    myExpression = document.getText(textRange);
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, textRange.getStartOffset()) : null;
+    myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionData, editor.getDocument());
+
+    VirtualFile file;
+    ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
+    if (consoleView instanceof LanguageConsoleView) {
+      LanguageConsoleImpl console = ((LanguageConsoleView)consoleView).getConsole();
+      file = console.getHistoryViewer() == editor ? console.getVirtualFile() : null;
+    }
+    else {
+      file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    }
+
+    myExpressionPosition = file != null ? XDebuggerUtil.getInstance().createPositionByOffset(file, expressionData.first.getStartOffset()) : null;
   }
 
-
+  @Override
   protected boolean canShowHint() {
     return true;
   }
 
+  @Override
   protected void evaluateAndShowHint() {
     myEvaluator.evaluate(myExpression, new XEvaluationCallbackBase() {
+      @Override
       public void evaluated(@NotNull final XValue result) {
-        result.computePresentation(new XValueNode() {
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
-            setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
-          }
+        result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
+          private XFullValueEvaluator myFullValueEvaluator;
 
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
-                                      boolean hasChildren) {
-            setPresentation(icon, type, separator, value, null, hasChildren);
-          }
+          public void applyPresentation(@Nullable Icon icon,
+                                        @NotNull XValuePresentation valuePresenter,
+                                        boolean hasChildren) {
+            if (isHintHidden()) {
+              return;
+            }
 
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
-                                      @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren) {
-            setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
-          }
+            SimpleColoredText text = new SimpleColoredText();
+            text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
+            XValueNodeImpl.buildText(valuePresenter, text);
 
-          @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
-            DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
-              public void run() {
-                doShowHint(result, separator, value, type, valuePresenter != null ? valuePresenter : XValueNodeImpl.DEFAULT_VALUE_PRESENTER, hasChildren);
+            if (!hasChildren) {
+              SimpleColoredComponent component = HintUtil.createInformationComponent();
+              text.appendToComponent(component);
+              if (myFullValueEvaluator != null) {
+                component.append(myFullValueEvaluator.getLinkText(), XDebuggerTreeNodeHyperlink.TEXT_ATTRIBUTES, new Consumer<MouseEvent>() {
+                  @Override
+                  public void consume(MouseEvent event) {
+                    DebuggerUIUtil.showValuePopup(myFullValueEvaluator, event, getProject(), getEditor());
+                  }
+                });
+                LinkMouseListenerBase.installSingleTagOn(component);
               }
-            });
+              showHint(component);
+            }
+            else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+              showTree(result, myExpression);
+            }
+            else {
+              JComponent component = createExpandableHintComponent(text, new Runnable() {
+                @Override
+                public void run() {
+                  showTree(result, myExpression);
+                }
+              });
+              showHint(component);
+            }
           }
 
-          public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String value,
-                                      final boolean hasChildren) {
-            setPresentation(icon, type, value, hasChildren);
-          }
-
-          public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                                      @NonNls @NotNull final String value,
-                                      final boolean hasChildren) {
-            setPresentation(icon, type, separator, value, hasChildren);
-          }
-
+          @Override
           public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
-            //todo[nik] implement?
+            myFullValueEvaluator = fullValueEvaluator;
           }
 
+          @Override
           public boolean isObsolete() {
-            //todo[nik]
-            return false;
+            return isHintHidden();
           }
         }, XValuePlace.TOOLTIP);
       }
 
+      @Override
       public void errorOccurred(@NotNull final String errorMessage) {
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);
   }
 
-  private void doShowHint(final XValue xValue, final String separator, final String value, String type,
-                          @NotNull NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
-    if (isHintHidden()) return;
-
-    SimpleColoredText text = new SimpleColoredText();
-    text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    if (type != null) {
-      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
-    }
-    text.append(valuePresenter.fun(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-
-    if (!hasChildren) {
-      showHint(HintUtil.createInformationLabel(text));
-    }
-    else if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
-      showTree(xValue, myExpression);
-    }
-    else {
-      JComponent component = createExpandableHintComponent(text, new Runnable() {
-        public void run() {
-          showTree(xValue, myExpression);
-        }
-      });
-      showHint(component);
-    }
-  }
-
   private void showTree(final XValue value, final String name) {
-    XDebuggerTree tree = new XDebuggerTree(myDebugSession, myDebugSession.getDebugProcess().getEditorsProvider(),
-                                           myDebugSession.getCurrentPosition(), XDebuggerActions.VALUE_HINT_TREE_POPUP_GROUP);
-    tree.getModel().addTreeModelListener(createTreeListener(tree));
-    XValueHintTreeComponent component = new XValueHintTreeComponent(this, tree, Pair.create(value, name));
-    showTreePopup(component, tree, name);
+    XValueMarkers<?,?> valueMarkers = ((XDebugSessionImpl)myDebugSession).getValueMarkers();
+    Pair<XValue, String> pair = Pair.create(value, name);
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
+                                                            myDebugSession.getCurrentPosition(), valueMarkers);
+    showTreePopup(creator, pair);
   }
 }

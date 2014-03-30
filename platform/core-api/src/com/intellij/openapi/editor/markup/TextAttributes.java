@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 
 /**
  * Defines the visual representation (colors and effects) of text.
@@ -32,7 +35,10 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
-  private boolean myEnforcedDefaults = false;
+  private boolean myEnforcedDefaults;
+
+  @NotNull
+  private AttributesFlyweight myAttrs;
 
   /**
    * Merges (layers) the two given text attributes.
@@ -41,6 +47,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
    * @param above Text attributes to merge "above", overriding settings from "under".
    * @return Merged attributes instance.
    */
+  @Contract("!null, !null -> !null")
   public static TextAttributes merge(TextAttributes under, TextAttributes above) {
     if (under == null) return above;
     if (above == null) return under;
@@ -61,106 +68,20 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     return attrs;
   }
 
-  private static class Externalizable implements Cloneable, JDOMExternalizable {
-    public Color FOREGROUND = null;
-    public Color BACKGROUND = null;
-
-    @JdkConstants.FontStyle
-    public int FONT_TYPE = Font.PLAIN;
-
-    public Color EFFECT_COLOR = null;
-    public int EFFECT_TYPE = EFFECT_BORDER;
-    public Color ERROR_STRIPE_COLOR = null;
-
-    private static final int EFFECT_BORDER = 0;
-    private static final int EFFECT_LINE = 1;
-    private static final int EFFECT_WAVE = 2;
-    private static final int EFFECT_STRIKEOUT = 3;
-    private static final int EFFECT_BOLD_LINE = 4;
-    private static final int EFFECT_BOLD_DOTTED_LINE = 5;
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-      return super.clone();
-    }
-
-    @Override
-    public void readExternal(Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
-      if (FONT_TYPE < 0 || FONT_TYPE > 3) {
-        LOG.info("Wrong font type: " + FONT_TYPE);
-        FONT_TYPE = 0;
-      }
-    }
-
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
-        @Override
-        public boolean isAccept(Field field) {
-          try {
-            if (field.getType().equals(Color.class) && field.get(Externalizable.this) == null) return false;
-            if (field.getType().equals(int.class) && field.getInt(Externalizable.this) == 0) return false;
-          }
-          catch (IllegalAccessException e) {
-            LOG.error("Can not access: " + field.getName());
-          }
-          return true;
-        }
-      });
-    }
-
-    private EffectType getEffectType() {
-      switch (EFFECT_TYPE) {
-        case EFFECT_BORDER:
-          return EffectType.BOXED;
-        case EFFECT_BOLD_LINE:
-          return EffectType.BOLD_LINE_UNDERSCORE;
-        case EFFECT_LINE:
-          return EffectType.LINE_UNDERSCORE;
-        case EFFECT_STRIKEOUT:
-          return EffectType.STRIKEOUT;
-        case EFFECT_WAVE:
-          return EffectType.WAVE_UNDERSCORE;
-        case EFFECT_BOLD_DOTTED_LINE:
-          return EffectType.BOLD_DOTTED_LINE;
-        default:
-          return null;
-      }
-    }
-
-    private void setEffectType(EffectType effectType) {
-      if (effectType == EffectType.BOXED) {
-        EFFECT_TYPE = EFFECT_BORDER;
-      }
-      else if (effectType == EffectType.LINE_UNDERSCORE) {
-        EFFECT_TYPE = EFFECT_LINE;
-      }
-      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        EFFECT_TYPE = EFFECT_BOLD_LINE;
-      }
-      else if (effectType == EffectType.STRIKEOUT) {
-        EFFECT_TYPE = EFFECT_STRIKEOUT;
-      }
-      else if (effectType == EffectType.WAVE_UNDERSCORE) {
-        EFFECT_TYPE = EFFECT_WAVE;
-      }
-      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        EFFECT_TYPE = EFFECT_BOLD_DOTTED_LINE;
-      }
-      else {
-        EFFECT_TYPE = -1;
-      }
-    }
-  }
-
-  private AttributesFlyweight myAttrs;
-
   public TextAttributes() {
     this(null, null, null, EffectType.BOXED, Font.PLAIN);
   }
 
-  public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
+  private TextAttributes(@NotNull AttributesFlyweight attributesFlyweight, boolean enforced) {
+    myAttrs = attributesFlyweight;
+    myEnforcedDefaults = enforced;
+  }
+
+  public TextAttributes(@NotNull Element element) throws InvalidDataException {
+    readExternal(element);
+  }
+
+  public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @Nullable Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
     setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
   }
 
@@ -194,7 +115,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   }
 
   @NotNull
-  public static TextAttributes fromFlyweight(AttributesFlyweight flyweight) {
+  public static TextAttributes fromFlyweight(@NotNull AttributesFlyweight flyweight) {
     TextAttributes f = new TextAttributes();
     f.myAttrs = flyweight;
     return f;
@@ -255,10 +176,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   @Override
   public TextAttributes clone() {
-    TextAttributes cloned = new TextAttributes();
-    cloned.myAttrs = myAttrs;
-    cloned.myEnforcedDefaults = myEnforcedDefaults;
-    return cloned;
+    return new TextAttributes(myAttrs, myEnforcedDefaults);
   }
 
   public boolean equals(Object obj) {
@@ -275,45 +193,18 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    Externalizable ext = new Externalizable();
-    ext.readExternal(element);
-    myAttrs = AttributesFlyweight.create(ext.FOREGROUND, 
-                                         ext.BACKGROUND,
-                                         ext.FONT_TYPE,
-                                         ext.EFFECT_COLOR,
-                                         ext.getEffectType(),
-                                         ext.ERROR_STRIPE_COLOR);
+    myAttrs = AttributesFlyweight.create(element);
     if (isEmpty()) myEnforcedDefaults = true;
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    Externalizable ext = new Externalizable();
-
-    ext.FOREGROUND = myAttrs.getForeground();
-    ext.BACKGROUND = myAttrs.getBackground();
-    ext.FONT_TYPE = myAttrs.getFontType();
-    ext.EFFECT_COLOR = myAttrs.getEffectColor();
-    ext.ERROR_STRIPE_COLOR = myAttrs.getErrorStripeColor();
-    ext.setEffectType(myAttrs.getEffectType());
-
-    ext.writeExternal(element);
+    myAttrs.writeExternal(element);
   }
 
   @Override
   public String toString() {
-    return "[" +
-           getForegroundColor() +
-           "," +
-           getBackgroundColor() +
-           "," +
-           getFontType() +
-           "," +
-           getEffectType() +
-           "," +
-           getEffectColor() +
-           "," +
-           getErrorStripeColor() +
-           "]";
+    return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," +
+           getEffectColor() + "," + getErrorStripeColor() + "]";
   }
 }

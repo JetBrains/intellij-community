@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,6 +110,6 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
         array.add(child);
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 }

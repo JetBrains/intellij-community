@@ -33,6 +33,7 @@ public interface DomElementProblemDescriptor extends CommonProblemDescriptor {
   DomElement getDomElement();
   @NotNull
   HighlightSeverity getHighlightSeverity();
+  @Override
   @NotNull
   LocalQuickFix[] getFixes();
   @NotNull

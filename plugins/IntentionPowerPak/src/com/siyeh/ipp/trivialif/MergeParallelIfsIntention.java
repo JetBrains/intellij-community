@@ -18,6 +18,7 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class MergeParallelIfsIntention extends Intention {
     final String statement =
       mergeIfStatements(firstStatement, secondStatement);
     assert firstStatement != null;
-    replaceStatement(statement, firstStatement);
+    PsiReplacementUtil.replaceStatement(firstStatement, statement);
     assert secondStatement != null;
     secondStatement.delete();
   }

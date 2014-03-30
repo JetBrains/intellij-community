@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,7 +77,7 @@ public class CheckBoxWithColorChooser extends JPanel {
 
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (myCheckbox.isSelected()) {
             final Color color = ColorChooser.chooseColor(myCheckbox, "Chose color", CheckBoxWithColorChooser.this.myColor);
             if (color != null) {

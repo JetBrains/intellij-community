@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,16 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -141,11 +139,11 @@ public class TestNGUtil
         if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
       }
 
-      for (PsiElement child : method.getChildren()) {
-        if (child instanceof PsiDocComment) {
-          PsiDocComment doc = (PsiDocComment) child;
+      if (hasDocTagsSupport) {
+        final PsiDocComment comment = method.getDocComment();
+        if (comment != null) {
           for (String javadocTag : CONFIG_JAVADOC_TAGS) {
-            if (doc.findTagByName(javadocTag) != null) return true;
+            if (comment.findTagByName(javadocTag) != null) return true;
           }
         }
       }
@@ -153,11 +151,26 @@ public class TestNGUtil
     return false;
   }
 
+  public static String getConfigAnnotation(PsiMethod method) {
+    if (method != null) {
+      for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+        if (AnnotationUtil.isAnnotated(method, fqn, false)) return fqn;
+      }
+    }
+    return null;
+  }
+
   public static boolean isTestNGAnnotation(PsiAnnotation annotation) {
     String qName = annotation.getQualifiedName();
-    if (qName.equals(TEST_ANNOTATION_FQN)) return true;
-    for (String qn : CONFIG_ANNOTATIONS_FQN) {
-      if (qName.equals(qn)) return true;
+    if (qName != null) {
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
     }
     return false;
   }
@@ -199,11 +212,12 @@ public class TestNGUtil
         if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
         if (hasTestJavaDoc(method, checkJavadoc)) return true;
       }
+      return AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, true, true);
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, checkHierarchy, true)) {
+        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate;
@@ -235,7 +249,7 @@ public class TestNGUtil
   private static boolean isBrokenPsiClass(PsiClass psiClass) {
     return (psiClass == null
         || psiClass instanceof PsiAnonymousClass
-        || psiClass instanceof JspClass);
+        || psiClass instanceof PsiSyntheticClass);
   }
 
   /**
@@ -300,14 +314,12 @@ public class TestNGUtil
   }
 
   public static boolean isAnnotatedWithParameter(PsiAnnotation annotation, String parameter, Set<String> values) {
-    PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-    for (PsiNameValuePair aPair : pair) {
-      if (parameter.equals(aPair.getName())) {
-        Collection<String> matches = extractValuesFromParameter(aPair);
-        for (String s : matches) {
-          if (values.contains(s)) {
-            return true;
-          }
+    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue(parameter);
+    if (attributeValue != null) {
+      Collection<String> matches = extractValuesFromParameter(attributeValue);
+      for (String s : matches) {
+        if (values.contains(s)) {
+          return true;
         }
       }
     }
@@ -362,11 +374,9 @@ public class TestNGUtil
                                                       final PsiAnnotation annotation,
                                                       final PsiDocCommentOwner commentOwner) {
     if (annotation != null) {
-      PsiNameValuePair[] pair = annotation.getParameterList().getAttributes();
-      for (PsiNameValuePair aPair : pair) {
-        if (parameter.equals(aPair.getName())) {
-          results.addAll(extractValuesFromParameter(aPair));
-        }
+      final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(parameter);
+      if (value != null) {
+        results.addAll(extractValuesFromParameter(value));
       }
     } else {
       results.addAll(extractAnnotationValuesFromJavaDoc(getTextJavaDoc(commentOwner), parameter));
@@ -389,9 +399,8 @@ public class TestNGUtil
     return results;
   }
 
-  private static Collection<String> extractValuesFromParameter(PsiNameValuePair aPair) {
+  private static Collection<String> extractValuesFromParameter(PsiAnnotationMemberValue value) {
     Collection<String> results = new ArrayList<String>();
-    PsiAnnotationMemberValue value = aPair.getValue();
     if (value instanceof PsiArrayInitializerMemberValue) {
       for (PsiElement child : value.getChildren()) {
         if (child instanceof PsiLiteralExpression) {
@@ -468,11 +477,11 @@ public class TestNGUtil
     if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.", Messages.getWarningIcon()) !=
-            DialogWrapper.OK_EXIT_CODE) {
+            Messages.OK) {
           return false;
         }
       }
-      final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module == null) return false;
       String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
       ModuleRootModificationUtil.addModuleLibrary(module, url);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ public class ProjectWizardUtil {
     if (!dir.exists()) {
       if (promptUser) {
         final int answer = Messages.showOkCancelDialog(IdeBundle.message("promot.projectwizard.directory.does.not.exist", promptPrefix,
-                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getProductName()),
+                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getFullProductName()),
                                                        IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
-        if (answer != 0) {
+        if (answer != Messages.OK) {
           return false;
         }
       }

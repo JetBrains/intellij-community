@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,11 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
   private final PsiField myField;
   private final String myPropertyName;
 
-  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, PsiField field) {
+  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
     myCreateGetter = createGetter;
     myCreateSetter = createSetter;
     myField = field;
-    Project project = field.getProject();
-    myPropertyName = PropertyUtil.suggestPropertyName(project, field);
+    myPropertyName = PropertyUtil.suggestPropertyName(field);
   }
 
   @Override
@@ -112,20 +111,16 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myField)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myField)) return;
     PsiClass aClass = myField.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     if (myCreateGetter) {
-      methods.add(PropertyUtil.generateGetterPrototype(myField));
+      methods.add(GenerateMembersUtil.generateGetterPrototype(myField));
     }
     if (myCreateSetter) {
-      methods.add(PropertyUtil.generateSetterPrototype(myField));
+      methods.add(GenerateMembersUtil.generateSetterPrototype(myField));
     }
     for (PsiMethod method : methods) {
-      String modifier = PsiUtil.getMaximumModifierForMember(aClass);
-      if (modifier != null) {
-        PsiUtil.setModifierProperty(method, modifier, true);
-      }
       aClass.add(method);
     }
   }

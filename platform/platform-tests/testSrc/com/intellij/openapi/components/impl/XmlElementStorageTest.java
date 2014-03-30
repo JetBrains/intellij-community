@@ -22,12 +22,13 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.ComponentRoamingManager;
 import com.intellij.openapi.components.impl.stores.ComponentVersionProvider;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,11 +43,13 @@ import static com.intellij.openapi.util.JDOMBuilder.*;
 public class XmlElementStorageTest extends LightPlatformLangTestCase {
   private Disposable myParentDisposable;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myParentDisposable = Disposer.newDisposable();
   }
 
+  @Override
   public void tearDown() throws Exception {
     Disposer.dispose(myParentDisposable);
     super.tearDown();
@@ -85,7 +88,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     private Document mySavedDocument;
 
     public MyXmlElementStorage(final Document document, final Disposable parentDisposable) throws StateStorageException {
-      super(new MyPathMacroManager(), parentDisposable, "root", StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance(), ComponentVersionProvider.EMPTY);
+      super(new MyPathMacroManager(), parentDisposable, "root", null, "", ComponentRoamingManager.getInstance(), ComponentVersionProvider.EMPTY);
       myDocument = document;
     }
 
@@ -99,14 +102,16 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
       return new MySaveSession(externalizationSession) {
         @Override
         protected void doSave() throws StateStorageException {
-          mySavedDocument = (Document)getDocumentToSave().clone();
+          mySavedDocument = getDocumentToSave().clone();
         }
 
+        @NotNull
         @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
         }
 
+        @NotNull
         @Override
         public List<IFile> getAllStorageFiles() {
           throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());
@@ -140,7 +145,7 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public String collapsePath(final String path) {
+    public String collapsePath(@Nullable String path) {
       throw new UnsupportedOperationException("Method collapsePath not implemented in " + getClass());
     }
 

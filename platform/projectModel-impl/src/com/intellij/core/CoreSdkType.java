@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,22 +30,23 @@ public class CoreSdkType implements SdkTypeId {
 
   public static CoreSdkType INSTANCE = new CoreSdkType();
 
+  @NotNull
   @Override
   public String getName() {
     return "";
   }
 
   @Override
-  public String getVersionString(Sdk sdk) {
+  public String getVersionString(@NotNull Sdk sdk) {
     return "";
   }
 
   @Override
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(Sdk currentSdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional) {
     return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.admin.Entry;
 
 import java.io.File;
 import java.io.IOException;
@@ -125,7 +126,11 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     if (ourDoNotAnnotateBinaryRoots.contains(environment.getCvsRootAsString())) {
       return false;
     }
-    return CvsEntriesManager.getInstance().getEntryFor(cvsVirtualFile).isBinary();
+    final Entry entry = CvsEntriesManager.getInstance().getEntryFor(cvsVirtualFile);
+    if (entry != null) {
+      return entry.isBinary();
+    }
+    return cvsVirtualFile.getFileType().isBinary();
   }
 
   private AnnotateOperation executeOperation(File file, String revision, CvsEnvironment root, boolean binary, boolean retryOnFailure)

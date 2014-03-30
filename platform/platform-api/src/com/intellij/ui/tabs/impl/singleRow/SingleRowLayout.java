@@ -48,10 +48,13 @@ public class SingleRowLayout extends TabLayout {
 
     @Override
     protected int getIconY(Rectangle iconRec) {
-      return super.getIconY(iconRec) +
-             (myTabs.getTabsPosition() == JBTabsPosition.bottom
-              ? TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT
-              : -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2));
+      final int shift;
+      switch (myTabs.getTabsPosition()) {
+        case bottom: shift = TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT; break;
+        case top: shift = -(TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT / 2); break;
+        default: shift = 0;
+      }
+      return super.getIconY(iconRec) + shift;
     }
   };
   public JPopupMenu myMorePopup;
@@ -115,6 +118,7 @@ public class SingleRowLayout extends TabLayout {
       for (TabInfo each : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
         if (!eachLabel.isValid()) {
+          layoutLabels = true;
           break;
         }
         if (myTabs.getSelectedInfo() == each) {
@@ -352,12 +356,16 @@ public class SingleRowLayout extends TabLayout {
   protected void calculateRequiredLength(SingleRowPassInfo data) {
     for (TabInfo eachInfo : data.myVisibleInfos) {
       data.requiredLength += getRequiredLength(eachInfo);
+      if (myTabs.getTabsPosition() == JBTabsPosition.left || myTabs.getTabsPosition() == JBTabsPosition.right) {
+        data.requiredLength -= 1;
+      }
       data.toLayout.add(eachInfo);
     }
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {
-    return getStrategy().getLengthIncrement(myTabs.myInfo2Label.get(eachInfo).getPreferredSize())
+    TabLabel label = myTabs.myInfo2Label.get(eachInfo);
+    return getStrategy().getLengthIncrement(label != null ? label.getPreferredSize() : new Dimension())
                                       + (myTabs.isEditorTabs() ? JBTabsImpl.getInterTabSpaceLength() : 0);
   }
 

@@ -1,24 +1,46 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 
 /**
  * @author Niels Harremoes
@@ -64,50 +86,77 @@ public class InvertIfIntention extends Intention {
 
 
     GrStatement thenBranch = parentIf.getThenBranch();
-    String newIfText = "if (" + negatedCondition.getText() + ") " + generateElseBranchTextAndRemoveTailStatements(parentIf);
+    final boolean thenIsNotEmpty = isNotEmpty(thenBranch);
 
-    boolean isThenEmpty = thenBranch == null ||
-                          (thenBranch instanceof GrBlockStatement) && ((GrBlockStatement)thenBranch).getBlock().getStatements().length == 0;
-    if (!isThenEmpty) {
-      newIfText += " else " + thenBranch.getText();
+    String newIfText = "if (" + negatedCondition.getText() + ") {}";
+    if (thenIsNotEmpty) {
+      newIfText += " else {}";
     }
 
     GrIfStatement newIf = (GrIfStatement)groovyPsiElementFactory.createStatementFromText(newIfText, parentIf.getContext());
-    parentIf.replace(CodeStyleManager.getInstance(project).reformat(newIf));
+    generateElseBranchTextAndRemoveTailStatements(parentIf, newIf);
+
+    if (thenIsNotEmpty) {
+      final GrStatement elseBranch = newIf.getElseBranch();
+      assert elseBranch != null;
+      elseBranch.replaceWithStatement(thenBranch);
+    }
+
+    parentIf.replace(newIf);
   }
 
-  private static String generateElseBranchTextAndRemoveTailStatements(GrIfStatement ifStatement) {
+  private static boolean isNotEmpty(@Nullable GrStatement thenBranch) {
+    return thenBranch != null &&
+           !(thenBranch instanceof GrBlockStatement && ((GrBlockStatement)thenBranch).getBlock().getStatements().length == 0);
+  }
+
+  private static void generateElseBranchTextAndRemoveTailStatements(@NotNull GrIfStatement ifStatement, @NotNull GrIfStatement newIf) {
+    final GrStatement thenBranch = newIf.getThenBranch();
+    assert thenBranch != null;
+
     GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch != null) {
-      return elseBranch.getText();
+      thenBranch.replaceWithStatement(elseBranch);
+      return;
     }
 
     PsiElement parent = ifStatement.getParent();
-    if (!(parent instanceof GrStatementOwner)) {
-      return "{}";
-    }
+    if (!(parent instanceof GrStatementOwner)) return;
 
-    String text = parent.getText();
-    int start = ifStatement.getTextRange().getEndOffset() - parent.getTextRange().getStartOffset();
-    PsiElement rbrace = parent instanceof GrCodeBlock ? ((GrCodeBlock)parent).getRBrace() : null;
-    int end = rbrace != null ? rbrace.getStartOffsetInParent() : text.length();
+    if (!isTailAfterIf(ifStatement, ((GrStatementOwner)parent))) return;
 
-    String lastStatements = text.substring(start, end);
+    final PsiElement start = ifStatement.getNextSibling();
+    PsiElement end = parent instanceof GrCodeBlock ? ((GrCodeBlock)parent).getRBrace().getPrevSibling() : parent.getLastChild();
 
-    deleteLastStatements((GrStatementOwner)parent, ifStatement, rbrace);
-    return "{\n" + lastStatements.trim() + "\n}";
+    final GrOpenBlock block = ((GrBlockStatement)thenBranch).getBlock();
+    block.addRangeAfter(start, end, block.getLBrace());
+    parent.deleteChildRange(start, end);
   }
 
-  private static void deleteLastStatements(GrStatementOwner statementOwner, GrIfStatement ifStatement, PsiElement rbrace) {
-    PsiElement next = ifStatement.getNextSibling();
-    if (next == null) return;
+  private static boolean isTailAfterIf(@NotNull GrIfStatement ifStatement, @NotNull GrStatementOwner owner) {
+    final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(ifStatement);
+    if (flowOwner == null) return false;
 
-    if (rbrace == null) {
-      statementOwner.getNode().removeRange(next.getNode(), null);
+    final Instruction[] flow = flowOwner.getControlFlow();
+
+    final GrStatement[] statements = owner.getStatements();
+    final int index = ArrayUtilRt.find(statements, ifStatement);
+    if (index == statements.length - 1) return false;
+
+    final GrStatement then = ifStatement.getThenBranch();
+
+    for (Instruction i : flow) {
+      final PsiElement element = i.getElement();
+      if (element == null || !PsiTreeUtil.isAncestor(then, element, true)) continue;
+
+      for (Instruction succ : i.allSuccessors()) {
+        if (succ instanceof IfEndInstruction) {
+          return false;
+        }
+      }
     }
-    else {
-      statementOwner.getNode().removeRange(next.getNode(), rbrace.getNode());
-    }
+
+    return true;
   }
 
   @NotNull

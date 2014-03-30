@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -29,14 +30,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.MethodSignature;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public ImplementMethodsFix(PsiElement aClass) {
@@ -52,7 +50,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("implement.methods.fix");
+    return getText();
   }
 
   @Override
@@ -72,9 +70,11 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement endElement) {
     final PsiElement myPsiElement = startElement;
 
-    if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(myPsiElement.getContainingFile())) return;
+    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
-      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, ((PsiEnumConstant)myPsiElement).getContainingClass());
+      final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
+      final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement,
+                                                                              ((PsiEnumConstant)myPsiElement).getContainingClass(), hasClassInitializer);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
@@ -102,24 +102,14 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
 
   @Nullable
-  protected static MemberChooser<PsiMethodMember> chooseMethodsToImplement(Editor editor, PsiElement startElement, PsiClass aClass) {
+  protected static MemberChooser<PsiMethodMember> chooseMethodsToImplement(Editor editor,
+                                                                           PsiElement startElement,
+                                                                           PsiClass aClass, 
+                                                                           boolean implemented) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
 
-    final TreeMap<MethodSignature, CandidateInfo> result =
-      new TreeMap<MethodSignature, CandidateInfo>(new OverrideImplementUtil.MethodSignatureComparator());
-    final HashMap<MethodSignature, PsiMethod> abstracts = new HashMap<MethodSignature, PsiMethod>();
-    final HashMap<MethodSignature, PsiMethod> finals = new HashMap<MethodSignature, PsiMethod>();
-    final HashMap<MethodSignature, PsiMethod> concretes = new HashMap<MethodSignature, PsiMethod>();
-
-    for (PsiMethod method : aClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        abstracts.put(method.getHierarchicalMethodSignature(), method);
-      }
-    }
-
-    OverrideImplementUtil.collectMethodsToImplement(null, abstracts, finals, concretes, result);
-
+    final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(aClass, true, implemented).values();
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, result.values(), Collections.<CandidateInfo>emptyList());
+      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.<CandidateInfo>newArrayList());
   }
 }

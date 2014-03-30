@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,64 +15,20 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
-import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import org.jetbrains.annotations.Nullable;
 
-public class SystemOutErrInspection extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class SystemOutErrInspection extends SystemOutErrInspectionBase {
 
-  @NotNull
-  public String getID() {
-    return "UseOfSystemOutOrSystemErr";
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.system.out.err.display.name");
-  }
-
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "use.system.out.err.problem.descriptor");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SystemOutErrVisitor();
-  }
-
-  private static class SystemOutErrVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitReferenceExpression(
-      @NotNull PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-      final String name = expression.getReferenceName();
-      if (!HardcodedMethodConstants.OUT.equals(name) &&
-          !HardcodedMethodConstants.ERR.equals(name)) {
-        return;
-      }
-      final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
-        return;
-      }
-      final PsiField field = (PsiField)referent;
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (!"java.lang.System".equals(className)) {
-        return;
-      }
-      registerError(expression);
-    }
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    return SuppressForTestsScopeFix.build(this, context);
   }
 }

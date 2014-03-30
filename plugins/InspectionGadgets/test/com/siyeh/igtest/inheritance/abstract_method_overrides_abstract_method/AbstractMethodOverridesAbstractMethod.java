@@ -60,3 +60,35 @@ class SuperclassSubst {
         public abstract String getList();
     }
 }
+
+class Java8DefaultMethods {
+  interface Super
+  {
+      default void method()
+      {
+          System.out.println("super");
+      }
+  }
+  
+  interface Sub extends Super
+  {
+      @Override
+      default void method()
+      {
+          System.out.println("sub");
+      }
+  }
+}
+
+class CovariantReturnTypes {
+  interface A<T> {}
+  interface Foo {
+    A<? extends Number> test();
+  }
+
+  interface Bar extends Foo {
+    @Override
+    A<Integer> test();
+  }
+}
+

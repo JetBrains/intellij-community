@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -67,6 +68,7 @@ import java.util.zip.ZipOutputStream;
 public class SaveProjectAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
+  private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -79,7 +81,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       return;
     }
 
-    final VirtualFile descriptionFile = getDescriptionFile(project);
+    final VirtualFile descriptionFile = getDescriptionFile(project, LocalArchivedTemplate.DESCRIPTION_PATH);
     final SaveProjectAsTemplateDialog dialog = new SaveProjectAsTemplateDialog(project, descriptionFile);
 
     if (dialog.showAndGet()) {
@@ -108,8 +110,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
   }
 
-  public static VirtualFile getDescriptionFile(Project project) {
-    return VfsUtil.findRelativeFile(LocalArchivedTemplate.DESCRIPTION_PATH, project.getBaseDir());
+  public static VirtualFile getDescriptionFile(Project project, String path) {
+    return VfsUtil.findRelativeFile(path, project.getBaseDir());
   }
 
   public static void saveProject(final Project project,
@@ -138,29 +140,10 @@ public class SaveProjectAsTemplateAction extends AnAction {
       stream = new ZipOutputStream(new FileOutputStream(zipFile));
 
       final VirtualFile dir = getDirectoryToSave(project, moduleToSave);
-      final VirtualFile descriptionFile = getDescriptionFile(project);
-      if (descriptionFile == null) {
-        stream.putNextEntry(new ZipEntry(dir.getName() + "/" + LocalArchivedTemplate.DESCRIPTION_PATH));
-        stream.write(description.getBytes());
-        stream.closeEntry();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          public void run() {
-            try {
-              VfsUtil.saveText(descriptionFile, description);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
+      writeFile(LocalArchivedTemplate.DESCRIPTION_PATH, description, project, dir, stream, true);
       if (replaceParameters) {
         String text = getInputFieldsText(parameters);
-        stream.putNextEntry(new ZipEntry(dir.getName() + "/" + LocalArchivedTemplate.IDEA_INPUT_FIELDS_XML));
-        stream.write(text.getBytes());
-        stream.closeEntry();
+        writeFile(LocalArchivedTemplate.TEMPLATE_DESCRIPTOR, text, project, dir, stream, false);
       }
 
       FileIndex index = moduleToSave == null
@@ -177,11 +160,12 @@ public class SaveProjectAsTemplateAction extends AnAction {
             try {
               String relativePath = VfsUtilCore.getRelativePath(virtualFile, dir, '/');
               if (relativePath == null) {
-                throw new RuntimeException("Can't find relative path for " + virtualFile);
+                throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + dir);
               }
-              final boolean system = ".idea".equals(virtualFile.getParent().getName());
+              final boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
               if (system) {
                 if (!fileName.equals("description.html") &&
+                    !fileName.equals(PROJECT_TEMPLATE_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
                     !fileName.equals("workspace.xml")) {
@@ -192,8 +176,13 @@ public class SaveProjectAsTemplateAction extends AnAction {
               ZipUtil.addFileToZip(finalStream, new File(virtualFile.getPath()), dir.getName() + "/" + relativePath, null, null, new ZipUtil.FileContentProcessor() {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
-                  if (virtualFile.getFileType().isBinary()) return STANDARD.getContent(file);
-                  String result = getEncodedContent(virtualFile, project, parameters);
+                  if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
+                  String result = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<String, IOException>() {
+                    @Override
+                    public String compute() throws IOException {
+                      return getEncodedContent(virtualFile, project, parameters);
+                    }
+                  });
                   return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
                 }
               });
@@ -217,6 +206,29 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
     finally {
       StreamUtil.closeStream(stream);
+    }
+  }
+
+  private static void writeFile(String path,
+                                final String text,
+                                Project project, VirtualFile dir, ZipOutputStream stream, boolean overwrite) throws IOException {
+    final VirtualFile descriptionFile = getDescriptionFile(project, path);
+    if (descriptionFile == null) {
+      stream.putNextEntry(new ZipEntry(dir.getName() + "/" + path));
+      stream.write(text.getBytes());
+      stream.closeEntry();
+    }
+    else if (overwrite) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        public void run() {
+          try {
+            VfsUtil.saveText(descriptionFile, text);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      });
     }
   }
 
@@ -287,7 +299,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   private static String getInputFieldsText(Map<String, String> parameters) {
     Element element = new Element(RemoteTemplatesFactory.TEMPLATE);
     for (Map.Entry<String, String> entry : parameters.entrySet()) {
-      Element field = new Element(RemoteTemplatesFactory.INPUT_FIELD);
+      Element field = new Element(ArchivedProjectTemplate.INPUT_FIELD);
       field.setText(entry.getValue());
       field.setAttribute(RemoteTemplatesFactory.INPUT_DEFAULT, entry.getKey());
       element.addContent(field);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,6 +63,16 @@ public class ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
+    Map<K, V> map = newHashMap();
+    map.put(first.getFirst(), first.getSecond());
+    for (Pair<K, V> entry : entries) {
+      map.put(entry.getFirst(), entry.getSecond());
+    }
+    return map;
+  }
+
+  @NotNull
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }
@@ -78,6 +90,16 @@ public class ContainerUtilRt {
   @NotNull
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return new com.intellij.util.containers.LinkedHashMap<K, V>(map);
+  }
+
+  @NotNull
+  public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<K, V> first, Pair<K, V>[] entries) {
+    LinkedHashMap<K, V> map = newLinkedHashMap();
+    map.put(first.getFirst(), first.getSecond());
+    for (Pair<K, V> entry : entries) {
+      map.put(entry.getFirst(), entry.getSecond());
+    }
+    return map;
   }
 
   @NotNull
@@ -118,18 +140,14 @@ public class ContainerUtilRt {
     return copy(ContainerUtilRt.<T>newArrayList(), elements);
   }
 
-  @NotNull
+  /** @deprecated Use {@link #newArrayListWithCapacity(int)} (to remove in IDEA 15) */
   public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return new ArrayList<T>(size);
+    return newArrayListWithCapacity(size);
   }
 
   @NotNull
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return new ArrayList<T>(computeArrayListCapacity(size));
-  }
-
-  private static int computeArrayListCapacity(int size) {
-    return 5 + size + size / 5;
+    return new ArrayList<T>(size);
   }
 
   @NotNull
@@ -143,6 +161,11 @@ public class ContainerUtilRt {
   @NotNull
   public static <T> HashSet<T> newHashSet() {
     return new com.intellij.util.containers.HashSet<T>();
+  }
+
+  @NotNull
+  public static <T> HashSet<T> newHashSet(int initialCapacity) {
+    return new com.intellij.util.containers.HashSet<T>(initialCapacity);
   }
 
   @NotNull
@@ -223,9 +246,12 @@ public class ContainerUtilRt {
   }
 
   /**
-   * Optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}.
+   * A variant of {@link java.util.Collections#emptyList()},
+   * except that {@link #toArray()} here does not create garbage <code>new Object[0]</code> constantly.
    */
-  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess {
+  private static class EmptyList<T> extends AbstractList<T> implements RandomAccess, Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final EmptyList INSTANCE = new EmptyList();
 
     @Override
@@ -289,28 +315,42 @@ public class ContainerUtilRt {
     }
   }
 
+  /**
+   * @return read-only list consisting of the elements from array converted by mapper
+   */
   @NotNull
   public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
     return map2List(Arrays.asList(array), mapper);
   }
 
+  /**
+   * @return read-only list consisting of the elements from collection converted by mapper
+   */
   @NotNull
   public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
-    final ArrayList<V> list = new ArrayList<V>(collection.size());
+    if (collection.isEmpty()) return emptyList();
+    List<V> list = new ArrayList<V>(collection.size());
     for (final T t : collection) {
       list.add(mapper.fun(t));
     }
     return list;
   }
 
+  /**
+   * @return read-only set consisting of the elements from collection converted by mapper
+   */
   @NotNull
   public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
     return map2Set(Arrays.asList(collection), mapper);
   }
 
+  /**
+   * @return read-only set consisting of the elements from collection converted by mapper
+   */
   @NotNull
   public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
-    final HashSet<V> set = new HashSet<V>(collection.size());
+    if (collection.isEmpty()) return Collections.emptySet();
+    Set <V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
       set.add(mapper.fun(t));
     }
@@ -326,9 +366,7 @@ public class ContainerUtilRt {
       }
       return array;
     }
-    else {
-      return collection.toArray(array);
-    }
+    return collection.toArray(array);
   }
 
   /**

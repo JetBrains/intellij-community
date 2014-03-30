@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
@@ -117,7 +116,7 @@ public class GroovyParser implements PsiParser {
     }
     else {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
+      builder.error(GroovyBundle.message("statement.expected"));
     }
     marker.done(FOR_STATEMENT);
     return true;
@@ -144,16 +143,9 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"));
 
-    PsiBuilder.Marker warn = builder.mark();
-    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-    if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
-      warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
+    if (!parseBranch(builder)) {
       ifStmtMarker.done(IF_STATEMENT);
       return true;
-    }
-    else {
-      warn.drop();
     }
 
     PsiBuilder.Marker rb = builder.mark();
@@ -162,16 +154,7 @@ public class GroovyParser implements PsiParser {
       rb.drop();
       ParserUtils.getToken(builder, GroovyTokenTypes.kELSE);
 
-      warn = builder.mark();
-      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-
-      if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
-        warn.rollbackTo();
-        builder.error(GroovyBundle.message("expression.expected"));
-      }
-      else {
-        warn.drop();
-      }
+      parseBranch(builder);
     }
     else {
       rb.rollbackTo();
@@ -208,7 +191,7 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
-    if (!StrictContextExpression.parse(builder, this)) {
+    if (!ExpressionStatement.argParse(builder, this)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 
@@ -219,18 +202,24 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
+    parseBranch(builder);
+    marker.done(WHILE_STATEMENT);
+    return true;
+  }
+
+  private boolean parseBranch(@NotNull PsiBuilder builder) {
     PsiBuilder.Marker warn = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
-      builder.error(GroovyBundle.message("expression.expected"));
-    } else {
-      warn.drop();
+      builder.error(GroovyBundle.message("statement.expected"));
+      return false;
     }
-
-    marker.done(WHILE_STATEMENT);
-    return true;
+    else {
+      warn.drop();
+      return true;
+    }
   }
 
   public void parseBlockBody(PsiBuilder builder) {
@@ -257,7 +246,8 @@ public class GroovyParser implements PsiParser {
       if (parseSeparatorsWithoutLastNls(builder, plainStatement, until)) {
         return false;
       }
-    } else {
+    }
+    else {
       builder.error(GroovyBundle.message("wrong.statement"));
       assert builder.getTokenType() != mLCURLY && builder.getTokenType() != mRCURLY;
       builder.advanceLexer();
@@ -282,7 +272,8 @@ public class GroovyParser implements PsiParser {
           return true;
         }
         beforeNls.drop();
-      } else {
+      }
+      else {
         break;
       }
     }
@@ -344,7 +335,8 @@ public class GroovyParser implements PsiParser {
       if (SynchronizedStatement.parse(builder, this)) {
         synMarker.drop();
         return true;
-      } else {
+      }
+      else {
         synMarker.rollbackTo();
       }
     }
@@ -383,24 +375,25 @@ public class GroovyParser implements PsiParser {
     if (BranchStatement.BRANCH_KEYWORDS.contains(builder.getTokenType())) {
       return BranchStatement.parse(builder, this);
     }
-    if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mCOLON)) {
-      return parseLabeledStatement(builder);
+    if (parseLabeledStatement(builder)) {
+      return true;
     }
 
     if (parseDeclaration(builder, false, false, null)) return true;
 
     return AssignmentExpression.parse(builder, this, true);
-
   }
 
   /**
    * parses imports (marks them as not allowed), type definitions, methods, variables or fields (if isInClass), initializers (if isInClass), constructors
    * with corresponding typeDefinitionName
-   *
+   * <p/>
    * If non of preceding elements was found rolls back and return false
-   *
    */
-  public boolean parseDeclaration(@NotNull PsiBuilder builder, boolean isInClass, boolean isInAnnotation, @Nullable String typeDefinitionName) {
+  public boolean parseDeclaration(@NotNull PsiBuilder builder,
+                                  boolean isInClass,
+                                  boolean isInAnnotation,
+                                  @Nullable String typeDefinitionName) {
     PsiBuilder.Marker declMarker = builder.mark();
     boolean modifiersParsed = Modifiers.parse(builder, this);
 
@@ -429,7 +422,8 @@ public class GroovyParser implements PsiParser {
       return true;
     }
 
-    final IElementType declType = Declaration.parseAfterModifiers(builder, isInClass, isInAnnotation, typeDefinitionName, this, modifiersParsed);
+    final IElementType declType =
+      Declaration.parseAfterModifiers(builder, isInClass, isInAnnotation, typeDefinitionName, this, modifiersParsed);
     if (declType != WRONGWAY) {
       if (declType != null) {
         declMarker.done(declType);
@@ -465,7 +459,8 @@ public class GroovyParser implements PsiParser {
   public boolean parseStatementWithImports(PsiBuilder builder) {
     if (ImportStatement.parse(builder, this)) {
       return true;
-    } else {
+    }
+    else {
       return parseStatement(builder, false);
     }
   }
@@ -473,12 +468,22 @@ public class GroovyParser implements PsiParser {
   private boolean parseLabeledStatement(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    ParserUtils.eatElement(builder, LABEL);
-    ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON);
+
+    if (!ParserUtils.getToken(builder, mIDENT) || !ParserUtils.getToken(builder, GroovyTokenTypes.mCOLON)) {
+      marker.rollbackTo();
+      return false;
+    }
+
+    final PsiBuilder.Marker nlsMarker = builder.mark();
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-
-    parseStatement(builder, true);
+    if (parseStatement(builder, true)) {
+      nlsMarker.drop();
+    }
+    else {
+      nlsMarker.rollbackTo();
+      builder.error(GroovyBundle.message("statement.expected"));
+    }
 
     marker.done(LABELED_STATEMENT);
     return true;

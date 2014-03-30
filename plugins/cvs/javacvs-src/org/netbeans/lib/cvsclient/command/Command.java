@@ -95,4 +95,8 @@ public abstract class Command {
                         globalOptions.reset();
                 }
         }
+
+        public void setUpdateByRevisionOrDate(String revision, final String date) {
+                throw new UnsupportedOperationException();
+        }
 }

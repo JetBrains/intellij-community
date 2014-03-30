@@ -1,0 +1,1 @@
+dict([(k, chr(k + 65)) for k in range(10)])

@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     }
 
     if (hasOneSupportedModule) {
-      myInteractiveRunAction = new DialogWrapperAction("&Run Interactive Console") {
+      myInteractiveRunAction = new DialogWrapperAction("&Start Grails Console in Interactive Mode") {
         @Override
         protected void doAction(ActionEvent e) {
           myFramework.runInteractiveConsole(getSelectedModule());
@@ -169,7 +168,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory(), -1);
+    myTargetField = new ComboBox(MvcRunTargetHistoryService.getInstance().getHistory());
     myTargetField.setLightWeightPopupEnabled(false);
 
     EditorComboBoxEditor editor = new StringComboboxEditor(myModule.getProject(), PlainTextFileType.INSTANCE, myTargetField);
@@ -178,7 +177,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     myTargetField.setEditable(true);
     myTargetField.setEditor(editor);
 
-    EditorTextField editorTextField = (EditorTextField)editor.getEditorComponent();
+    EditorTextField editorTextField = editor.getEditorComponent();
 
     myFakePanel = new JPanel(new BorderLayout());
     myFakePanel.add(myTargetField, BorderLayout.CENTER);

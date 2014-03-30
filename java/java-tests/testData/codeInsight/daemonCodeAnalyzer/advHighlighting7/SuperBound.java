@@ -15,7 +15,7 @@
  */
 import java.lang.Override;
 import java.util.List;
-public class Test
+class Test
 {
     public interface MyList<N extends Number> extends List<N>
     {

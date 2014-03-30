@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,10 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
+import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
@@ -48,6 +50,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
@@ -436,7 +439,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           AllIcons.Ant.ShortcutFilter) {
+                           AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null){
@@ -576,14 +579,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             mySelectedKeymap.removeShortcut(id, s);
           }
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }
@@ -609,7 +612,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return myQuickLists;
   }
 
-  private void addMouseShortcut(Shortcut shortcut){
+  private void addMouseShortcut(Shortcut shortcut, ShortcutRestrictions restrictions){
     String actionId = myActionsTree.getSelectedActionId();
     if (actionId == null) {
       return;
@@ -624,7 +627,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       mouseShortcut,
       mySelectedKeymap,
       actionId,
-      myActionsTree.getMainGroup()
+      myActionsTree.getMainGroup(),
+      restrictions
     );
     dialog.show();
     if (!dialog.isOK()){
@@ -648,12 +652,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
         Messages.getWarningIcon());
 
-      if(result == 0) {
+      if(result == Messages.YES) {
         for (String id : actionIds) {
           mySelectedKeymap.removeShortcut(id, mouseShortcut);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return;
       }
     }
@@ -777,7 +781,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
     int result = Messages.showYesNoDialog(this, KeyMapBundle.message("delete.keymap.dialog.message"),
                                           KeyMapBundle.message("delete.keymap.dialog.title"), Messages.getWarningIcon());
-    if (result != 0) {
+    if (result != Messages.YES) {
       return;
     }
     myKeymapListModel.removeElement(myKeymapList.getSelectedItem());
@@ -925,7 +929,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   public String getHelpTopic() {
-    return null;
+    return "preferences.keymap";
   }
 
   public JComponent createComponent() {
@@ -953,35 +957,62 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     DefaultActionGroup group = new DefaultActionGroup();
 
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
+    final Set<String> abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
 
-    group.add(new DumbAwareAction("Add Keyboard Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstKeyboard = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            firstKeyboard = shortcut;
-            break;
+    final ShortcutRestrictions restrictions = ActionShortcutRestrictions.getForActionId(actionId);
+
+    if (restrictions.allowKeyboardShortcut) {
+      group.add(new DumbAwareAction("Add Keyboard Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstKeyboard = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof KeyboardShortcut) {
+              firstKeyboard = shortcut;
+              break;
+            }
+          }
+
+          addKeyboardShortcut(firstKeyboard);
+        }
+      });
+    }
+
+    if (restrictions.allowMouseShortcut) {
+      group.add(new DumbAwareAction("Add Mouse Shortcut") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          Shortcut firstMouse = null;
+          for (Shortcut shortcut : shortcuts) {
+            if (shortcut instanceof MouseShortcut) {
+              firstMouse = shortcut;
+              break;
+            }
+          }
+          addMouseShortcut(firstMouse, restrictions);
+        }
+      });
+    }
+
+    if (Registry.is("actionSystem.enableAbbreviations") && restrictions.allowAbbreviation) {
+      group.add(new DumbAwareAction("Add Abbreviation") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          final String abbr = Messages.showInputDialog("Enter new abbreviation:", "Abbreviation", null);
+          if (abbr != null) {
+            String actionId = myActionsTree.getSelectedActionId();
+            AbbreviationManager.getInstance().register(abbr, actionId);
+            repaintLists();
           }
         }
 
-        addKeyboardShortcut(firstKeyboard);
-      }
-    });
-
-    group.add(new DumbAwareAction("Add Mouse Shortcut") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Shortcut firstMouse = null;
-        for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof MouseShortcut) {
-            firstMouse = shortcut;
-            break;
-          }
+        @Override
+        public void update(AnActionEvent e) {
+          final boolean enabled = myActionsTree.getSelectedActionId() != null;
+          e.getPresentation().setEnabledAndVisible(enabled);
         }
-        addMouseShortcut(firstMouse);
-      }
-    });
+      });
+    }
 
     group.addSeparator();
 
@@ -992,6 +1023,23 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           removeShortcut(shortcut);
         }
       });
+    }
+
+    if (Registry.is("actionSystem.enableAbbreviations")) {
+      for (final String abbreviation : abbreviations) {
+        group.addAction(new DumbAwareAction("Remove Abbreviation '" + abbreviation + "'") {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            AbbreviationManager.getInstance().remove(abbreviation, actionId);
+            repaintLists();
+          }
+
+          @Override
+          public void update(AnActionEvent e) {
+            super.update(e);
+          }
+        });
+      }
     }
 
     if (e instanceof MouseEvent && ((MouseEvent)e).isPopupTrigger()) {

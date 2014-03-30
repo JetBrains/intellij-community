@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,12 +31,12 @@ import org.jetbrains.annotations.Nullable;
 public abstract class UpdateAddedFileProcessor {
   private static final ExtensionPointName<UpdateAddedFileProcessor> EP_NAME = ExtensionPointName.create("com.intellij.updateAddedFileProcessor");
 
-  public abstract boolean canProcessElement(PsiFile element);
+  public abstract boolean canProcessElement(@NotNull PsiFile element);
 
   public abstract void update(PsiFile element, @Nullable PsiFile originalElement) throws IncorrectOperationException;
 
   @Nullable
-  public static UpdateAddedFileProcessor forElement(PsiFile element) {
+  public static UpdateAddedFileProcessor forElement(@NotNull PsiFile element) {
     for(UpdateAddedFileProcessor processor: Extensions.getExtensions(EP_NAME)) {
       if (processor.canProcessElement(element)) {
         return processor;

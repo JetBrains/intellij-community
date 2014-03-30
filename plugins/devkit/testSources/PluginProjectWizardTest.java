@@ -16,31 +16,29 @@
 package org.jetbrains.idea.devkit;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectWizard.ProjectWizardTestCase;
-import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/8/12
  */
-public class PluginProjectWizardTest extends ProjectWizardTestCase {
+public class PluginProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testPluginProject() throws Exception {
     createSdk("devkit", IdeaJdk.getInstance());
-    Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
+    Project project = createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
     VirtualFile baseDir = project.getBaseDir();
-    VirtualFile virtualFile = VfsUtil.findRelativeFile("META-INF/plugin.xml", baseDir);
+    VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);
   }
 
   public void testProjectWithoutSdk() throws Exception {
     try {
-      createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
+      createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
       fail("Exception should be thrown");
     }
     catch (Exception e) {

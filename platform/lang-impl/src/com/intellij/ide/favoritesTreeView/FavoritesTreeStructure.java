@@ -42,6 +42,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
     super(project, FavoritesProjectViewPane.ID);
   }
 
+  @Override
   protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
     return new FavoritesRootNode(project);
   }
@@ -51,6 +52,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   }
 
 
+  @Override
   public Object[] getChildElements(Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -100,17 +102,20 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   private AbstractTreeNode<String> getEmptyScreen() {
     return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")) {
+      @Override
       @NotNull
       public Collection<AbstractTreeNode> getChildren() {
         return Collections.emptyList();
       }
 
+      @Override
       public void update(final PresentationData presentation) {
         presentation.setPresentableText(getValue());
       }
     };
   }
 
+  @Override
   public Object getParentElement(Object element) {
     AbstractTreeNode parent = null;
     if (element == getRootElement()) {
@@ -125,6 +130,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
     return parent;
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return new FavoritesTreeNodeDescriptor(myProject, parentDescriptor, (AbstractTreeNode)element);

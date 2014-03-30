@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.SortByVcsRoots;
@@ -45,7 +46,7 @@ public class TriggerAdditionOrDeletion {
 
   public TriggerAdditionOrDeletion(final Project project, boolean silentAddDelete) {
     myProject = project;
-    mySilentAddDelete = silentAddDelete;
+    mySilentAddDelete = Registry.is("vcs.add.remove.silent"); // TODO there is no sense in making add/remove non-silent anywhen; wait for users feedback, then remove
     myExisting = new HashSet<FilePath>();
     myDeleted = new HashSet<FilePath>();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

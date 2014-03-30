@@ -107,8 +107,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     return super.getRequiredMemberName(reference);
   }
 
+  @NotNull
   @Override
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, PsiJavaCodeReferenceElement ref) {
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof PsiTypeElement) {
       PsiElement var = typeElement.getParent();
@@ -117,6 +118,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
         if (initializer != null) {
           return filterAssignableFrom(initializer.getType(), candidates);
         }
+      }
+      if (var instanceof PsiParameter) {
+        return filterBySuperMethods((PsiParameter)var, candidates);
       }
     }
 

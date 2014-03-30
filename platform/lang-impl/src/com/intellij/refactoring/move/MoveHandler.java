@@ -31,7 +31,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
@@ -48,6 +48,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
    */
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -90,6 +91,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * called by an Action in AtomicAction
    */
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();
@@ -111,7 +113,7 @@ public class MoveHandler implements RefactoringActionHandler {
         }
       }
       MoveFilesOrDirectoriesUtil
-        .doMove(project, PsiUtilBase.toPsiElementArray(filesOrDirs), new PsiElement[]{targetContainer}, null);
+        .doMove(project, PsiUtilCore.toPsiElementArray(filesOrDirs), new PsiElement[]{targetContainer}, null);
       return;
     }
     doMove(project, elements, targetContainer, dataContext, null);

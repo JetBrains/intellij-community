@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -29,7 +26,6 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,6 +34,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.FileTypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +43,9 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.Introspector;
 import java.util.*;
 
+/**
+ * @author max
+ */
 public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl");
 
@@ -74,23 +74,36 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
     final boolean incompleteCode = (flags & UNCOMPLETE_CODE) != 0;
-    final TreeElement reference = new ReferenceAdjuster(myProject).process((TreeElement)element.getNode(), addImports, incompleteCode);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), addImports, incompleteCode, myProject);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    else {
+      return element;
+    }
   }
 
   @Override
-  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset)
-    throws IncorrectOperationException {
+  public void shortenClassReferences(@NotNull PsiElement element, int startOffset, int endOffset) throws IncorrectOperationException {
     CheckUtil.checkWritable(element);
     if (SourceTreeToPsiMap.hasTreeElement(element)) {
-      new ReferenceAdjuster(myProject).processRange((TreeElement)element.getNode(), startOffset, endOffset);
+      final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+      if (adjuster != null) {
+        adjuster.processRange(element.getNode(), startOffset, endOffset, myProject);
+      }
     }
   }
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    final TreeElement reference = new ReferenceAdjuster(true, true).process((TreeElement)element.getNode(), false, false);
-    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    final ReferenceAdjuster adjuster = ReferenceAdjuster.Extension.getReferenceAdjuster(element.getLanguage());
+    if (adjuster != null) {
+      final ASTNode reference = adjuster.process(element.getNode(), false, false, true, true);
+      return SourceTreeToPsiMap.treeToPsiNotNull(reference);
+    }
+    return element;
   }
 
   @Override
@@ -143,13 +156,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final Collection<PsiImportStatementBase> redundant;
-    if (JspPsiUtil.isInJspFile(file)) {
+    if (FileTypeUtils.isInServerPageFile(file)) {
       // remove only duplicate imports
       redundant = ContainerUtil.newIdentityTroveSet();
       ContainerUtil.addAll(redundant, imports);
       redundant.removeAll(allImports);
       for (PsiImportStatementBase importStatement : imports) {
-        if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) {
+        if (importStatement instanceof JspxImportStatement && importStatement.isForeignFileImport()) {
           redundant.remove(importStatement);
         }
       }
@@ -191,6 +204,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
     return new ImportHelper(getSettings()).findEntryIndex(statement);
+  }
+
+  @Override
+  public SuggestedNameInfo suggestCompiledParameterName(@NotNull PsiType type) {
+    // avoid hang due to nice name evaluation that uses indices for resolve (IDEA-116803)
+    return new SuggestedNameInfo(suggestVariableNameByType(type, VariableKind.PARAMETER, true, true)) {
+    };
   }
 
   @Override
@@ -286,7 +306,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private String[] suggestVariableNameByType(PsiType type, final VariableKind variableKind, boolean correctKeywords) {
-    String longTypeName = getLongTypeName(type);
+    return suggestVariableNameByType(type, variableKind, correctKeywords, false);
+  }
+
+  private String[] suggestVariableNameByType(PsiType type, final VariableKind variableKind, boolean correctKeywords, boolean skipIndices) {
+    String longTypeName = skipIndices ? type.getCanonicalText():getLongTypeName(type);
     CodeStyleSettings.TypeToNameMap map = getMapByVariableKind(variableKind);
     if (map != null && longTypeName != null) {
       if (type.equals(PsiType.NULL)) {
@@ -300,11 +324,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     Collection<String> suggestions = new LinkedHashSet<String>();
 
-    suggestNamesForCollectionInheritors(type, variableKind, suggestions, correctKeywords);
-    suggestNamesFromGenericParameters(type, variableKind, suggestions, correctKeywords);
+    if (!skipIndices) {
+      suggestNamesForCollectionInheritors(type, variableKind, suggestions, correctKeywords);
+      suggestNamesFromGenericParameters(type, variableKind, suggestions, correctKeywords);
+    }
 
-    String typeName = normalizeTypeName(getTypeName(type));
+    String typeName = getTypeName(type, !skipIndices);
+
     if (typeName != null) {
+      typeName = normalizeTypeName(typeName);
       ContainerUtil.addAll(suggestions, getSuggestionsByName(typeName, variableKind, type instanceof PsiArrayType, correctKeywords));
     }
 
@@ -361,11 +389,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Nullable
   private static String getTypeName(PsiType type) {
+    return getTypeName(type, true);
+  }
+
+  @Nullable
+  private static String getTypeName(PsiType type, boolean withIndices) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final String className = classType.getClassName();
-      if (className != null) return className;
+      if (className != null || !withIndices) return className;
       final PsiClass aClass = classType.resolve();
       return aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassType().getClassName() : null;
     }
@@ -373,16 +406,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       return type.getPresentableText();
     }
     else if (type instanceof PsiWildcardType) {
-      return getTypeName(((PsiWildcardType)type).getExtendsBound());
+      return getTypeName(((PsiWildcardType)type).getExtendsBound(), withIndices);
     }
     else if (type instanceof PsiIntersectionType) {
-      return getTypeName(((PsiIntersectionType)type).getRepresentative());
+      return getTypeName(((PsiIntersectionType)type).getRepresentative(), withIndices);
     }
     else if (type instanceof PsiCapturedWildcardType) {
-      return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
+      return getTypeName(((PsiCapturedWildcardType)type).getWildcard(), withIndices);
     }
     else if (type instanceof PsiDisjunctionType) {
-      return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
+      return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound(), withIndices);
     }
     else {
       return null;
@@ -440,31 +473,24 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private NamesByExprInfo suggestVariableNameByExpression(PsiExpression expr, VariableKind variableKind, boolean correctKeywords) {
-    final NamesByExprInfo names1 = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords);
-    final NamesByExprInfo names2 = suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords);
-
-    PsiType type = expr.getType();
-    final String[] names3;
-    if (type != null) {
-      names3 = suggestVariableNameByType(type, variableKind, correctKeywords);
-    }
-    else {
-      names3 = null;
-    }
 
     final LinkedHashSet<String> names = new LinkedHashSet<String>();
     final String[] fromLiterals = suggestVariableNameFromLiterals(expr, variableKind, correctKeywords);
     if (fromLiterals != null) {
       ContainerUtil.addAll(names, fromLiterals);
     }
-    ContainerUtil.addAll(names, names1.names);
-    ContainerUtil.addAll(names, names2.names);
-    if (names3 != null) {
-      ContainerUtil.addAll(names, names3);
+
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).names);
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).names);
+
+    PsiType type = expr.getType();
+    if (type != null) {
+      ContainerUtil.addAll(names, suggestVariableNameByType(type, variableKind, correctKeywords));
     }
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, true).names);
 
     String[] namesArray = ArrayUtil.toStringArray(names);
-    String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
+    String propertyName = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName != null ? suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName : suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
   }
 
@@ -496,7 +522,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return null;
   }
 
-  private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind, boolean correctKeywords) {
+  private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind, boolean correctKeywords, boolean useAllMethodNames) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
       String methodName = methodExpr.getReferenceName();
@@ -518,7 +544,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               return new NamesByExprInfo(propertyName, names);
             }
           }
-          else if (words.length == 1) {
+          else if (words.length == 1 || useAllMethodNames) {
             return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false, correctKeywords));
           }
         }
@@ -566,9 +592,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     } else if (expr instanceof PsiParenthesizedExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind, correctKeywords);
+      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind, correctKeywords, useAllMethodNames);
     } else if (expr instanceof PsiTypeCastExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind, correctKeywords);
+      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind, correctKeywords, useAllMethodNames);
     } else if (expr instanceof PsiLiteralExpression) {
       final String text = StringUtil.stripQuotesAroundValue(expr.getText());
       if (isIdentifier(text)) {
@@ -734,18 +760,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     String suffix = getSuffixByVariableKind(variableKind);
     boolean doDecapitalize = false;
 
-    if (name.startsWith(prefix) && name.length() > prefix.length()) {
-      name = name.substring(prefix.length());
+    int pLength = prefix.length();
+    if (pLength > 0 && name.startsWith(prefix) && name.length() > pLength &&
+        // check it's not just a long camel word that happens to begin with the specified prefix
+        (!Character.isLetter(prefix.charAt(pLength - 1)) || Character.isUpperCase(name.charAt(pLength)))) {
+      name = name.substring(pLength);
       doDecapitalize = true;
     }
 
     if (name.endsWith(suffix) && name.length() > suffix.length()) {
       name = name.substring(0, name.length() - suffix.length());
-      doDecapitalize = true;
-    }
-
-    if (name.startsWith(IS_PREFIX) && name.length() > IS_PREFIX.length() && Character.isUpperCase(name.charAt(IS_PREFIX.length()))) {
-      name = name.substring(IS_PREFIX.length());
       doDecapitalize = true;
     }
 
@@ -773,7 +797,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     String prefix = getPrefixByVariableKind(variableKind);
     String name = propertyName;
-    if (name.length() > 0 && prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_')) {
+    if (!name.isEmpty() && !prefix.isEmpty() && !StringUtil.endsWithChar(prefix, '_')) {
       name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
     name = prefix + name + getSuffixByVariableKind(variableKind);
@@ -979,7 +1003,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private boolean isIdentifier(String name) {
-    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST);
+    return PsiNameHelper.getInstance(myProject).isIdentifier(name, LanguageLevel.HIGHEST);
   }
 
   private CodeStyleSettings getSettings() {

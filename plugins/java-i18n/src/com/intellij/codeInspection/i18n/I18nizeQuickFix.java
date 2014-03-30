@@ -20,7 +20,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -48,25 +48,30 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
   private TextRange mySelectionRange;
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     // do it later because the fix was called inside writeAction
     ApplicationManager.getApplication().invokeLater(new Runnable(){
+      @Override
       public void run() {
         doFix(descriptor, project);
       }
     });
   }
 
+  @Override
   @NotNull
   public String getName() {
     return CodeInsightBundle.message("inspection.i18n.quickfix");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();
   }
 
+  @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
     PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(psiFile, editor);
     if (literalExpression != null) {
@@ -84,6 +89,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     throw new IncorrectOperationException(message);
   }
 
+  @Override
   public void performI18nization(final PsiFile psiFile,
                                  final Editor editor,
                                  PsiLiteralExpression literalExpression,
@@ -103,6 +109,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     }
   }
 
+  @Override
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     final PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(psiFile, editor);
     return createDialog(project, psiFile, literalExpression);
@@ -119,14 +126,17 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
     if (!dialog.isOK()) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
 
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(literalExpression)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(literalExpression)) return;
     for (PropertiesFile file : propertiesFiles) {
-      if (file.findPropertyByKey(dialog.getKey()) == null && !CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
+      if (file.findPropertyByKey(dialog.getKey()) == null &&
+          !FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override
           public void run() {
             try {
               performI18nization(psiFile, PsiUtilBase.findEditor(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),

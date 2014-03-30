@@ -16,7 +16,7 @@ abstract class Foo<T extends Foo<T>> {
     }
 }
 
-public class Bug {
+class Bug {
   // Idea incorrectly analyses this code with JDK 7
   public <T extends Bug> void doit(T other) {
     // Oops, was legal with JDK 6, no longer legal with JDK 7

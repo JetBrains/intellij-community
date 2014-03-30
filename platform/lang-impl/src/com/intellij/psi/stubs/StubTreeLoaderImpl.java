@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
@@ -70,11 +72,13 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         }
       }
       if (element instanceof PsiFileStub) {
-        return new StubTree((PsiFileStub)element);
+        StubTree tree = new StubTree((PsiFileStub)element);
+        tree.setDebugInfo("created from file content");
+        return tree;
       }
     }
     catch (IOException e) {
-      throw new RuntimeException("Corrupted file '" + vFile.getPath() + "': " + e.getMessage(), e);
+      LOG.info(e); // content can be not cached yet, and the file can be deleted on disk already, without refresh
     }
 
     return null;
@@ -92,19 +96,37 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return null;
     }
 
+    boolean wasIndexedAlready = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isFileUpToDate(vFile);
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
+    boolean saved = document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document);
+
     final List<SerializedStubTree> datas = FileBasedIndex.getInstance().getValues(StubUpdatingIndex.INDEX_ID, id, GlobalSearchScope
         .fileScope(project, vFile));
     final int size = datas.size();
 
     if (size == 1) {
+      SerializedStubTree stubTree = datas.get(0);
+      
+      if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
+        //todo find another way of early stub-ast mismatch prevention
+        //return processError(vFile,
+        //                    "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+        //                    ", docSaved=" + saved +
+        //                    ", queried at " + vFile.getTimeStamp(),
+        //                    null);
+      }
+
       Stub stub;
       try {
-        stub = datas.get(0).getStub(false);
+        stub = stubTree.getStub(false);
       }
       catch (SerializerNotFoundException e) {
         return processError(vFile, "No stub serializer: " + vFile.getPresentableUrl() + ": " + e.getMessage(), e);
       }
-      return stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+      ObjectStubTree tree = stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
+      tree.setDebugInfo("created from index");
+      return tree;
     }
     else if (size != 0) {
       return processError(vFile, "Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id,
@@ -112,6 +134,21 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
 
     return null;
+  }
+
+  private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document) {
+    if (vFile.getFileType().isBinary()) {
+      return -1;
+    }
+    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().getCachedPsiFile(vFile);
+    if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
+      return psiFile.getTextLength();
+    }
+    
+    if (document != null) {
+      return document.getTextLength();
+    }
+    return -1;
   }
 
   private static ObjectStubTree processError(final VirtualFile vFile, String message, @Nullable Exception e) {

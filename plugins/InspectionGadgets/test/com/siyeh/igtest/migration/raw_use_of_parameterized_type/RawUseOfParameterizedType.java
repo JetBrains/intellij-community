@@ -12,9 +12,9 @@ import java.util.concurrent.Callable;
 }
 class RawUseOfParameterizedType {
   void array() {
-    final ArrayList[] array = new ArrayList[10];
+    final ArrayList[] array =
+      new ArrayList[10];
   }
-
   void anonymous() {
     new Callable() {
       @Override
@@ -26,5 +26,24 @@ class RawUseOfParameterizedType {
 
   void innerClass() {
     Map.Entry<String, String> entry;
+  }
+}
+interface X {
+  List foo(Map map);
+}
+class Y implements X {
+
+  @Override
+  public List foo(Map map) {
+    return null;
+  }
+
+  boolean m(Object o) {
+    final Class<List<String>[][]> aClass = (Class)List[][].class;
+    return o instanceof List[];
+  }
+
+  int f(Object o) {
+    return ((List[])o).length;
   }
 }

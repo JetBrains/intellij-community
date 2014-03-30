@@ -15,45 +15,27 @@
  */
 package com.intellij.projectView;
 
-import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.projectView.BaseProjectTreeBuilder;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.*;
+import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
+import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
-  protected AbstractTreeStructure myStructure;
-  protected boolean myShowMembers = false;
-  protected boolean myHideEmptyMiddlePackages;
-  protected boolean myFlattenPackages;
-
-  private List<AbstractProjectViewPSIPane> myPanes = new ArrayList<AbstractProjectViewPSIPane>();
+  protected TestProjectTreeStructure myStructure;
 
   protected Queryable.PrintInfo myPrintInfo;
 
@@ -61,39 +43,13 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myStructure = new TestProjectTreeStructure(myProject) {
-      @Override
-      public boolean isShowMembers() {
-        return myShowMembers;
-      }
-
-      @Override
-      public boolean isHideEmptyMiddlePackages() {
-        return myHideEmptyMiddlePackages;
-      }
-
-      @Override
-      public boolean isFlattenPackages() {
-        return myFlattenPackages;
-      }
-    };
+    myStructure = new TestProjectTreeStructure(myProject, myTestRootDisposable);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    for (final AbstractProjectViewPSIPane myPane : myPanes) {
-      Disposer.dispose(myPane);
-    }
-    myPanes = null;
     myStructure = null;
     super.tearDown();
-  }
-
-  protected AbstractProjectViewPSIPane createPane() {
-    final AbstractProjectViewPSIPane pane = new MyAbstractProjectViewPSIPane();
-    pane.createComponent();
-    myPanes.add(pane);
-    return pane;
   }
 
   protected void assertStructureEqual(PsiDirectory packageDirectory, @NonNls String expected) {
@@ -109,71 +65,13 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected AbstractProjectTreeStructure getProjectTreeStructure() {
-    return (AbstractProjectTreeStructure)myStructure;
-  }
-
-  protected void assertStructureEqual(String expected, Comparator comparator) {
-    assertStructureEqual(myStructure.getRootElement(), expected, 27, comparator);
+    return myStructure;
   }
 
   private void assertStructureEqual(PsiDirectory root, String expected, int maxRowCount, AbstractTreeStructure structure) {
     assertNotNull(root);
     PsiDirectoryNode rootNode = new PsiDirectoryNode(myProject, root, (ViewSettings)structure);
-    assertStructureEqual(rootNode, expected, maxRowCount, PlatformTestUtil.createComparator(myPrintInfo));
-  }
-
-  private void assertStructureEqual(Object rootNode, String expected, int maxRowCount, Comparator comparator) {
-    checkGetParentConsistency(rootNode);
-    String actual = PlatformTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo).toString();
-    assertEquals(expected, actual);
-  }
-
-  private void checkGetParentConsistency(Object from) {
-    Object[] childElements = myStructure.getChildElements(from);
-    for (Object childElement : childElements) {
-      assertSame(from, myStructure.getParentElement(childElement));
-      checkGetParentConsistency(childElement);
-    }
-  }
-
-  protected static boolean isExpanded(DefaultMutableTreeNode nodeForElement, AbstractProjectViewPSIPane pane) {
-    TreePath path = new TreePath(nodeForElement.getPath());
-    return pane.getTree().isExpanded(path.getParentPath());
-  }
-
-  protected static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
-    JTree tree = pane.getTree();
-    TreeModel model = tree.getModel();
-    Object root = model.getRoot();
-    return getNodeForElement(root, model, element);
-  }
-
-  private static DefaultMutableTreeNode getNodeForElement(Object root, TreeModel model, PsiElement element) {
-    if (root instanceof DefaultMutableTreeNode) {
-      Object userObject = ((DefaultMutableTreeNode)root).getUserObject();
-      if (userObject instanceof AbstractTreeNode) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)userObject;
-        if (element.equals(treeNode.getValue())) return (DefaultMutableTreeNode)root;
-        for (int i = 0; i < model.getChildCount(root); i++) {
-          DefaultMutableTreeNode nodeForChild = getNodeForElement(model.getChild(root, i), model, element);
-          if (nodeForChild != null) return nodeForChild;
-        }
-      }
-    }
-    return null;
-  }
-
-  public static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
-    Disposer.dispose(pane);
-    pane.createComponent();
-    assertNull(getNodeForElement(element, pane));
-    pane.select(element, virtualFile, true);
-    assertTrue(isExpanded(element, pane));
-  }
-
-  public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
-    DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
-    return nodeForElement != null && isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
+    ProjectViewTestUtil.assertStructureEqual(myStructure, expected, maxRowCount, PlatformTestUtil.createComparator(myPrintInfo), rootNode, myPrintInfo);
   }
 
   protected static void assertListsEqual(ListModel model, String expected) {
@@ -203,100 +101,6 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   protected PsiDirectory getPackageDirectory() {
     return getPackageDirectory(getPackageRelativePath());
-  }
-
-  private class MyAbstractProjectViewPSIPane extends AbstractProjectViewPSIPane {
-    public MyAbstractProjectViewPSIPane() {
-      super(BaseProjectViewTestCase.this.myProject);
-    }
-
-    @Override
-    public SelectInTarget createSelectInTarget() {
-      return null;
-    }
-
-    @NonNls
-    public String getComponentName() {
-      return "comp name";
-    }
-
-    @Override
-    protected AbstractTreeUpdater createTreeUpdater(AbstractTreeBuilder treeBuilder) {
-      return new AbstractTreeUpdater(treeBuilder);
-    }
-
-    @Override
-    @NotNull
-    protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-      return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
-                                    (ProjectAbstractTreeStructureBase)myTreeStructure) {
-        @Override
-        protected AbstractTreeUpdater createUpdater() {
-          return createTreeUpdater(this);
-        }
-
-        protected void addTaskToWorker(final Runnable runnable, boolean first, final Runnable postRunnable) {
-          runnable.run();
-          postRunnable.run();
-        }
-      };
-    }
-
-    @Override
-    protected ProjectAbstractTreeStructureBase createStructure() {
-      return (ProjectAbstractTreeStructureBase)myStructure;
-    }
-
-    @Override
-    protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-      return new ProjectViewTree(myProject, treeModel) {
-        @Override
-        public DefaultMutableTreeNode getSelectedNode() {
-          return null;
-        }
-      };
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    @NotNull
-    public String getId() {
-      return "";
-    }
-
-    @Override
-    public String getTitle() {
-      return null;
-    }
-
-    @Override
-    public int getWeight() {
-      return 0;
-    }
-
-    public void projectOpened() {
-      final Runnable runnable = new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          final ProjectView projectView = ProjectView.getInstance(myProject);
-          projectView.addProjectPane(MyAbstractProjectViewPSIPane.this);
-        }
-      };
-      StartupManager.getInstance(myProject).registerPostStartupActivity(runnable);
-    }
-
-    public void projectClosed() {
-    }
-
-    public void initComponent() { }
-
-    public void disposeComponent() {
-
-    }
   }
 
   @Override

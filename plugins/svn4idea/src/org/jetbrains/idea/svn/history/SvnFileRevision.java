@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -211,7 +212,7 @@ public class SvnFileRevision implements VcsFileRevision {
       }
 
       try {
-        myContents = SvnUtil.getFileContents(myVCS, myURL, true, myRevision, myPegRevision);
+        myContents = SvnUtil.getFileContents(myVCS, SvnTarget.fromURL(SvnUtil.parseUrl(myURL)), myRevision, myPegRevision);
       }
       catch (VcsException e) {
         myException = e;

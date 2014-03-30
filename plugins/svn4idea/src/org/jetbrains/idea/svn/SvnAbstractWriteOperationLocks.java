@@ -36,6 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Date: 10/19/12
  * Time: 12:09 PM
  */
+// TODO: Such locking functionality is not required anymore. Likely to be removed (together with SvnProxies).
 public abstract class SvnAbstractWriteOperationLocks {
   private final long myTimeout;
   private final static Map<String, Lock> myLockMap = new HashMap<String, Lock>();

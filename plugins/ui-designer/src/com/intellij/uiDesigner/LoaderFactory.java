@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -47,17 +48,17 @@ import java.util.*;
 public final class LoaderFactory {
   private final Project myProject;
 
-  private final WeakHashMap<Module, ClassLoader> myModule2ClassLoader;
+  private final ConcurrentWeakHashMap<Module, ClassLoader> myModule2ClassLoader;
   private ClassLoader myProjectClassLoader = null;
   private final MessageBusConnection myConnection;
 
   public static LoaderFactory getInstance(final Project project) {
     return ServiceManager.getService(project, LoaderFactory.class);
   }
-  
+
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = new WeakHashMap<Module, ClassLoader>();
+    myModule2ClassLoader = new ConcurrentWeakHashMap<Module, ClassLoader>();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(final ModuleRootEvent event) {
@@ -154,7 +155,7 @@ public final class LoaderFactory {
     private final String myModuleName;
 
     public DesignTimeClassLoader(final List<URL> urls, final ClassLoader parent, final String moduleName) {
-      super(urls, parent);
+      super(build().urls(urls).parent(parent));
       myModuleName = moduleName;
     }
 

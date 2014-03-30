@@ -16,14 +16,16 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,13 +43,15 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
   private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
 
-  @NonNls private static final String[] PROTOCOLS;
+  @NonNls public static final String[] PROTOCOLS;
   static {
     List<String> protocols = new ArrayList<String>();
     protocols.add("file");
     protocols.add("jar");
-    for (PathMacroExpendableProtocolBean bean : PathMacroExpendableProtocolBean.EP_NAME.getExtensions()) {
-      protocols.add(bean.protocol);
+    if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME.getName())) {
+      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getExtensions()) {
+        protocols.add(bean.protocol);
+      }
     }
     PROTOCOLS = ArrayUtil.toStringArray(protocols);
   }
@@ -73,7 +77,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   @Override
-  public String substitute(String text, boolean caseSensitive) {
+  public String substitute(@Nullable String text, boolean caseSensitive) {
     if (text == null) {
       //noinspection ConstantConditions
       return null;
@@ -85,7 +89,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return text;
   }
 
-  private String replacePathMacro(String text, final String path, boolean caseSensitive) {
+  private String replacePathMacro(@NotNull String text, @NotNull final String path, boolean caseSensitive) {
     if (text.length() < path.length() || path.isEmpty()) {
       return text;
     }
@@ -105,80 +109,67 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
-    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
-    try {
-      newText.append(myMacroMap.get(path));
-      newText.append(text.substring(endOfOccurrence));
-      return newText.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(newText);
-    }
+    return myMacroMap.get(path) + text.substring(endOfOccurrence);
   }
 
   @Override
-  public String substituteRecursively(String text, final boolean caseSensitive) {
+  public String substituteRecursively(@NotNull String text, final boolean caseSensitive) {
     for (final String path : getPathIndex()) {
       text = replacePathMacroRecursively(text, path, caseSensitive);
     }
     return text;
   }
 
-  private String replacePathMacroRecursively(String text, final String path, boolean caseSensitive) {
+  private String replacePathMacroRecursively(@NotNull final String text, @NotNull final String path, boolean caseSensitive) {
     if (text.length() < path.length()) {
       return text;
     }
 
     if (path.isEmpty()) return text;
 
-    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
-    try {
-      final boolean isWindowsRoot = path.endsWith(":/");
-      int i = 0;
-      while (i < text.length()) {
-        int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
-        if (occurrenceOfPath >= 0) {
-          int endOfOccurrence = occurrenceOfPath + path.length();
-          if (!isWindowsRoot &&
-              endOfOccurrence < text.length() &&
-              text.charAt(endOfOccurrence) != '/' &&
-              text.charAt(endOfOccurrence) != '\"' &&
-              text.charAt(endOfOccurrence) != ' ' &&
-              !text.substring(endOfOccurrence).startsWith("!/")) {
+    final StringBuilder newText = new StringBuilder();
+    final boolean isWindowsRoot = path.endsWith(":/");
+    int i = 0;
+    while (i < text.length()) {
+      int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
+      if (occurrenceOfPath >= 0) {
+        int endOfOccurrence = occurrenceOfPath + path.length();
+        if (!isWindowsRoot &&
+            endOfOccurrence < text.length() &&
+            text.charAt(endOfOccurrence) != '/' &&
+            text.charAt(endOfOccurrence) != '\"' &&
+            text.charAt(endOfOccurrence) != ' ' &&
+            !text.substring(endOfOccurrence).startsWith("!/")) {
+          newText.append(text.substring(i, endOfOccurrence));
+          i = endOfOccurrence;
+          continue;
+        }
+        if (occurrenceOfPath > 0) {
+          char prev = text.charAt(occurrenceOfPath - 1);
+          if (Character.isLetterOrDigit(prev) || prev == '_') {
             newText.append(text.substring(i, endOfOccurrence));
             i = endOfOccurrence;
             continue;
           }
-          if (occurrenceOfPath > 0) {
-            char prev = text.charAt(occurrenceOfPath - 1);
-            if (Character.isLetterOrDigit(prev) || prev == '_') {
-              newText.append(text.substring(i, endOfOccurrence));
-              i = endOfOccurrence;
-              continue;
-            }
-          }
-        }
-        if (occurrenceOfPath < 0) {
-          if (newText.length() == 0) {
-            return text;
-          }
-          newText.append(text.substring(i));
-          break;
-        }
-        else {
-          newText.append(text.substring(i, occurrenceOfPath));
-          newText.append(myMacroMap.get(path));
-          i = occurrenceOfPath + path.length();
         }
       }
-      return newText.toString();
+      if (occurrenceOfPath < 0) {
+        if (newText.length() == 0) {
+          return text;
+        }
+        newText.append(text.substring(i));
+        break;
+      }
+      else {
+        newText.append(text.substring(i, occurrenceOfPath));
+        newText.append(myMacroMap.get(path));
+        i = occurrenceOfPath + path.length();
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(newText);
-    }
+    return newText.toString();
   }
 
-  private static int getIndex(final Map.Entry<String, String> s) {
+  private static int getIndex(@NotNull final Map.Entry<String, String> s) {
     final String replacement = s.getValue();
     if (replacement.contains("..")) return 1;
     if (replacement.contains("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$")) return 1;
@@ -187,7 +178,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return 2;
   }
 
-  private static int stripPrefix(String key) {
+  private static int stripPrefix(@NotNull String key) {
     key = StringUtil.trimStart(key, "jar:");
     key = StringUtil.trimStart(key, "file:");
     while (key.startsWith("/")) {
@@ -196,6 +187,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return key.length();
   }
 
+  @NotNull
   public List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
       List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(myMacroMap.entrySet());

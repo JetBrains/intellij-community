@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class PlatformProjectCheckoutListener implements CheckoutListener {
     if (dir != null) {
       int rc = Messages.showYesNoDialog(project, VcsBundle.message("checkout.open.directory.prompt", directory.getAbsolutePath()),
                                         VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         PlatformProjectOpenProcessor.getInstance().doOpenProject(dir, null, false);
         return true;
       }

@@ -100,4 +100,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
 
   @NotNull
   FileViewProvider createCopy(@NotNull VirtualFile copy);
+
+  @NotNull
+  PsiFile getStubBindingRoot();
 }

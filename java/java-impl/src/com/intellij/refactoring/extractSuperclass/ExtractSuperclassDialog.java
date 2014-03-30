@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
-import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
@@ -39,7 +39,7 @@ import java.util.List;
 class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
   private final InterfaceContainmentVerifier myContainmentVerifier = new InterfaceContainmentVerifier() {
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-      return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);
+      return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
   };
 
@@ -87,7 +87,8 @@ class ExtractSuperclassDialog extends JavaExtractSuperBaseDialog {
                                                                                myMemberInfos, RefactoringBundle.message("make.abstract"));
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     final MemberInfoModel<PsiMember, MemberInfo> memberInfoModel =
-      new UsesAndInterfacesDependencyMemberInfoModel(mySourceClass, null, false, myContainmentVerifier) {
+      new UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo>(mySourceClass, null, false, myContainmentVerifier) {
+        @Override
         public Boolean isFixedAbstract(MemberInfo member) {
           return Boolean.TRUE;
         }

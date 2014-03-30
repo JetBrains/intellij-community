@@ -58,7 +58,7 @@ public abstract class ByteBufferWrapper {
     return new ReadWriteDirectBufferWrapper(file, offset, length);
   }
 
-  public static ByteBufferWrapper readWriteDirect(final File file, final int offset, final int length) {
+  public static ByteBufferWrapper readWriteDirect(final File file, final long offset, final int length) {
     return new ReadWriteDirectBufferWrapper(file, offset, length);
   }
 

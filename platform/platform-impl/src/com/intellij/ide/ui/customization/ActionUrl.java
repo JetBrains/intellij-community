@@ -276,4 +276,15 @@ public class ActionUrl implements JDOMExternalizable {
   public void setGroupPath(final ArrayList<String> groupPath) {
     myGroupPath = groupPath;
   }
+
+  @Override
+  public String toString() {
+    return "ActionUrl{" +
+           "myGroupPath=" + myGroupPath +
+           ", myComponent=" + myComponent +
+           ", myActionType=" + myActionType +
+           ", myAbsolutePosition=" + myAbsolutePosition +
+           ", myInitialPosition=" + myInitialPosition +
+           '}';
+  }
 }

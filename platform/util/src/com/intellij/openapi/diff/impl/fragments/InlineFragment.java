@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,26 +33,31 @@ public class InlineFragment implements Fragment {
     myRange2 = range2;
   }
 
+  @Override
   public TextDiffTypeEnum getType() {
     return myType;
   }
 
+  @Override
   public TextRange getRange(FragmentSide side) {
     if (side == FragmentSide.SIDE1) return myRange1;
     if (side == FragmentSide.SIDE2) return myRange2;
     throw new IllegalArgumentException(String.valueOf(side));
   }
 
+  @Override
   public Fragment shift(TextRange range1, TextRange range2, int startingLine1, int startingLine2) {
     return new InlineFragment(myType,
                               LineFragment.shiftRange(range1, myRange1),
                               LineFragment.shiftRange(range2, myRange2));
   }
 
+  @Override
   public void highlight(FragmentHighlighter fragmentHighlighter) {
     fragmentHighlighter.highlightInline(this);
   }
 
+  @Override
   public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
     LOG.assertTrue(getRange(side).getStartOffset() <= offset &&
                    offset < getRange(side).getEndOffset() &&

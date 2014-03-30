@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   @Override
-  public PsiLiteralExpression handleContentChange(PsiLiteralExpression expr, TextRange range, String newContent) throws IncorrectOperationException {
+  public PsiLiteralExpression handleContentChange(@NotNull PsiLiteralExpression expr, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = expr.getText();
     if (oldText.startsWith("\"")) {
       newContent = StringUtil.escapeStringCharacters(newContent);
@@ -42,8 +43,9 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(final PsiLiteralExpression element) {
+  public TextRange getRangeInElement(@NotNull final PsiLiteralExpression element) {
     return getValueRange(element);
   }
 

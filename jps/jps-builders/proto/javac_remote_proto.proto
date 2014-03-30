@@ -50,6 +50,7 @@ message Message {
       CLASS_DATA = 3;
       BUILD_COMPLETED = 4;
       REQUEST_ACK = 5;
+      SRC_FILE_LOADED = 6;
     }
 
     message CompileMessage {

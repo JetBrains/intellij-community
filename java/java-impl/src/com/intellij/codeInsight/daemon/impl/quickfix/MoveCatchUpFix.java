@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCatchSection;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -33,17 +35,17 @@ public class MoveCatchUpFix implements IntentionAction {
   private final PsiCatchSection myCatchSection;
   private final PsiCatchSection myMoveBeforeSection;
 
-    public MoveCatchUpFix(PsiCatchSection catchSection, PsiCatchSection moveBeforeSection) {
+  public MoveCatchUpFix(@NotNull PsiCatchSection catchSection, @NotNull PsiCatchSection moveBeforeSection) {
     this.myCatchSection = catchSection;
-        myMoveBeforeSection = moveBeforeSection;
-    }
+    myMoveBeforeSection = moveBeforeSection;
+  }
 
   @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("move.catch.up.text",
-                                  HighlightUtil.formatType(myCatchSection.getCatchType()),
-                                  HighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
+                                  JavaHighlightUtil.formatType(myCatchSection.getCatchType()),
+                                  JavaHighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
   }
 
   @Override
@@ -54,10 +56,8 @@ public class MoveCatchUpFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchSection != null
-           && myCatchSection.isValid()
+    return myCatchSection.isValid()
            && myCatchSection.getManager().isInProject(myCatchSection)
-           && myMoveBeforeSection != null
            && myMoveBeforeSection.isValid()
            && myCatchSection.getCatchType() != null
            && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null
@@ -70,7 +70,7 @@ public class MoveCatchUpFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myCatchSection.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myCatchSection.getContainingFile())) return;
     try {
       PsiTryStatement statement = myCatchSection.getTryStatement();
       statement.addBefore(myCatchSection, myMoveBeforeSection);

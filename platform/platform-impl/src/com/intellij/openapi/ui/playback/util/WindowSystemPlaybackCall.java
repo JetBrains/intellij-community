@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -144,9 +145,9 @@ public class WindowSystemPlaybackCall {
   public static AsyncResult<String> waitForToolWindow(final PlaybackContext context, final String id) {
     final AsyncResult<String> result = new AsyncResult<String>();
 
-    findProject().doWhenDone(new AsyncResult.Handler<Project>() {
+    findProject().doWhenDone(new Consumer<Project>() {
       @Override
-      public void run(Project project) {
+      public void consume(Project project) {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(id);
         if (toolWindow == null) {
           result.setRejected("Cannot find tool window with id: " + id);
@@ -256,9 +257,9 @@ public class WindowSystemPlaybackCall {
       if (each.getComponent() instanceof AbstractButton) {
         final AbstractButton eachButton = (AbstractButton)each.getComponent();
         if (eachButton.getText() != null && eachButton.getText().startsWith(target)) {
-          activateItem(context, each).doWhenDone(new AsyncResult.Handler<MenuElement[]>() {
+          activateItem(context, each).doWhenDone(new Consumer<MenuElement[]>() {
             @Override
-            public void run(MenuElement[] menuElements) {
+            public void consume(MenuElement[] menuElements) {
               selectNext(context, toSelect, toSelectIndex + 1, menuElements, result);
             }
           }).doWhenRejected(new Runnable() {

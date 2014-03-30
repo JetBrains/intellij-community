@@ -15,149 +15,205 @@
  */
 package com.intellij.execution;
 
+import com.google.common.collect.ImmutableSet;
+import com.intellij.AppTopics;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
-public class DelayedDocumentWatcher implements Runnable {
-  private final Project project;
-  private final Alarm alarm;
-  private final Consumer<VirtualFile[]> consumer;
-  private final int delay;
+public class DelayedDocumentWatcher {
 
-  private final MyDocumentAdapter listener;
+  private static final Key<CachedValue<Boolean>> CONTAINS_ERROR_ELEMENT = Key.create("CONTAINS_ERROR_ELEMENT");
 
-  private final Set<VirtualFile> changedFiles = new THashSet<VirtualFile>();
-  private boolean wasRequested;
+  // All instance fields are be accessed from EDT
+  private final Project myProject;
+  private final Alarm myAlarm;
+  private final int myDelayMillis;
+  private final Consumer<Set<VirtualFile>> myConsumer;
+  private final Condition<VirtualFile> myChangedFileFilter;
+  private final MyDocumentAdapter myListener;
+  private final Runnable myAlarmRunnable;
 
-  private final Condition<VirtualFile> documentChangedFilter;
+  private final Set<VirtualFile> myChangedFiles = new THashSet<VirtualFile>();
+  private boolean myDocumentSavingInProgress = false;
+  private MessageBusConnection myConnection;
+  private int myEventCount = 0;
 
-  private MessageBusConnection messageBusConnection;
-
-  public DelayedDocumentWatcher(Project project,
-                                Alarm alarm,
-                                int delay,
-                                Consumer<VirtualFile[]> consumer,
-                                Condition<VirtualFile> documentChangedFilter) {
-    this.project = project;
-    this.alarm = alarm;
-    this.delay = delay;
-    this.consumer = consumer;
-    this.documentChangedFilter = documentChangedFilter;
-
-    listener = new MyDocumentAdapter();
+  public DelayedDocumentWatcher(@NotNull Project project,
+                                int delayMillis,
+                                @NotNull Consumer<Set<VirtualFile>> consumer,
+                                @Nullable Condition<VirtualFile> changedFileFilter) {
+    myProject = project;
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject);
+    myDelayMillis = delayMillis;
+    myConsumer = consumer;
+    myChangedFileFilter = changedFileFilter;
+    myListener = new MyDocumentAdapter();
+    myAlarmRunnable = new MyRunnable();
   }
 
-  public DelayedDocumentWatcher(Project project,
-                                Alarm alarm,
-                                int delay,
-                                Consumer<VirtualFile[]> consumer) {
-    this(project, alarm, delay, consumer, Conditions.<VirtualFile>alwaysTrue());
-  }
-
-  @Override
-  public void run() {
-    final VirtualFile[] files;
-    synchronized (changedFiles) {
-      wasRequested = false;
-      files = changedFiles.toArray(new VirtualFile[changedFiles.size()]);
-      changedFiles.clear();
-    }
-
-    final WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(project);
-    for (VirtualFile file : files) {
-      if (problemSolver.hasSyntaxErrors(file)) {
-        // threat any other file in queue as dependency of this file — don't flush if some of the queued file is invalid
-        // Vladimir.Krivosheev AutoTestManager behavior behavior is preserved.
-        // LiveEdit version used another strategy (flush all valid files), but now we use AutoTestManager-inspired strategy
-        synchronized (changedFiles) {
-          Collections.addAll(changedFiles, files);
-        }
-
-        return;
-      }
-    }
-
-    consumer.consume(files);
-  }
-
+  @NotNull
   public Project getProject() {
-    return project;
+    return myProject;
   }
 
   public void activate() {
-    if (messageBusConnection != null) {
-      return;
-    }
-
-    messageBusConnection = project.getMessageBus().connect();
-    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent) {
-            synchronized (changedFiles) {
-              changedFiles.remove(event.getFile());
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
+    if (myConnection == null) {
+      myConnection = ApplicationManager.getApplication().getMessageBus().connect(myProject);
+      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+        @Override
+        public void beforeAllDocumentsSaving() {
+          myDocumentSavingInProgress = true;
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myDocumentSavingInProgress = false;
             }
-          }
+          }, ModalityState.any());
         }
-      }
-    });
-
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, project);
+      });
+    }
   }
 
   public void deactivate() {
-    if (messageBusConnection == null) {
-      return;
-    }
-
-    try {
-      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(listener);
-    }
-    finally {
-      messageBusConnection.disconnect();
-      messageBusConnection = null;
+    EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
+    if (myConnection != null) {
+      myConnection.disconnect();
+      myConnection = null;
     }
   }
 
   private class MyDocumentAdapter extends DocumentAdapter {
+    @Override
     public void documentChanged(DocumentEvent event) {
-      final Document document = event.getDocument();
-      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file == null || !documentChangedFilter.value(file)) {
+      if (myDocumentSavingInProgress) {
+        /** When {@link FileDocumentManager#saveAllDocuments} is called,
+         *  {@link com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper} can change a document.
+         *  These needless 'documentChanged' events should be filtered out.
+         */
         return;
       }
-
-      synchronized (changedFiles) {
-        // changedFiles contains is not enough, because it can contain not-flushed files from prev request (which are not flushed because some is invalid)
-        if (!changedFiles.add(file) && wasRequested) {
+      final Document document = event.getDocument();
+      final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file == null) {
+        return;
+      }
+      if (!myChangedFiles.contains(file)) {
+        // optimization: if possible, avoid possible expensive 'myChangedFileFilter.value(file)' call
+        if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {
           return;
         }
+
+        myChangedFiles.add(file);
       }
 
-      alarm.cancelRequest(DelayedDocumentWatcher.this);
-      alarm.addRequest(DelayedDocumentWatcher.this, delay);
+      myAlarm.cancelRequest(myAlarmRunnable);
+      myAlarm.addRequest(myAlarmRunnable, myDelayMillis);
+      myEventCount++;
     }
   }
+
+  private class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+      final int oldEventCount = myEventCount;
+      final Set<VirtualFile> copy = ImmutableSet.copyOf(myChangedFiles);
+      asyncCheckErrors(copy, new Consumer<Boolean>() {
+        @Override
+        public void consume(Boolean errorsFound) {
+          if (myEventCount != oldEventCount) {
+            // 'documentChanged' event was raised during async checking files for errors
+            // Do nothing in that case, this method will be invoked subsequently.
+            return;
+          }
+          if (errorsFound) {
+            // Do nothing, if some changed file has syntax errors.
+            // This method will be invoked subsequently, when syntax errors are fixed.
+            return;
+          }
+          myChangedFiles.clear();
+          myConsumer.consume(copy);
+        }
+      });
+    }
+  }
+
+  private void asyncCheckErrors(@NotNull final Collection<VirtualFile> files,
+                                @NotNull final Consumer<Boolean> errorsFoundConsumer) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final boolean errorsFound = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            for (VirtualFile file : files) {
+              if (hasErrors(file)) {
+                return true;
+              }
+            }
+            return false;
+          }
+        });
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            errorsFoundConsumer.consume(errorsFound);
+          }
+        }, ModalityState.any());
+      }
+    });
+  }
+
+  // This method is called in a background thread with a read lock acquired
+  private boolean hasErrors(@NotNull VirtualFile file) {
+    // don't use 'WolfTheProblemSolver.hasSyntaxErrors(file)' if possible
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document != null) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (psiFile != null) {
+        CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myProject);
+        return cachedValuesManager.getCachedValue(
+          psiFile,
+          CONTAINS_ERROR_ELEMENT,
+          new CachedValueProvider<Boolean>() {
+            @Override
+            public Result<Boolean> compute() {
+              boolean error = PsiTreeUtil.hasErrorElements(psiFile);
+              return Result.create(error, psiFile);
+            }
+          },
+          false
+        );
+      }
+    }
+    return WolfTheProblemSolver.getInstance(myProject).hasSyntaxErrors(file);
+  }
+
 }

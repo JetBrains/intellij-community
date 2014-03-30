@@ -18,130 +18,129 @@
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
   <vendor>JetBrains</vendor>
-  <description>Gradle integration</description>
+  <description>
+      <![CDATA[
+      <a href="http://www.gradle.org">Gradle</a> is a build and automation system. Gradle can automate the building, testing, publishing, deployment and etc.
+      of software packages or other types of projects. The Gradle versions 1.8 to 1.11 are supported.
+      This plugin provides Gradle integration.
+      The following features are available:
+      <ul>
+      <li>Ability to deduce Gradle home from the environment variables or configure Gradle home in a product.</li>
+      <li>Ability to create a new Gradle project or import the existing project with Gradle models.</li>
+      <li>Ability to edit .gradle files. The initial coding assistance is the same as for Groovy.</li>
+      <li>Dedicated Gradle tool window.</li>
+      <li>Ability to synchronize structures of Gradle and product's projects.</li>
+      <li>Running Gradle scripts with the Groovy run/debug configuration.</li>
+      <li>Ability to use Gradle wrapper and auto-import.</li>
+      </ul>
+
+      ]]>
+  </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
+  <depends>JUnit</depends>
+  <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
+
+  <extensionPoints>
+    <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
+    <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
+    <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRootContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleIdeaPluginScriptContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMavenArtifactRepositoryContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMavenDeployerContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
+
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <projectImportProvider implementation="org.jetbrains.plugins.gradle.manage.GradleProjectImportProvider"/>
-    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder"/>
-    <projectConfigurable instance="org.jetbrains.plugins.gradle.config.GradleConfigurable" id="reference.settingsdialog.project.gradle"
+    <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
+                              order="first"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
+                              order="first"/>
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
+                              order="first"/>
+    <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
+    <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
+    <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
+    <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
+    <internalFileTemplate name="Gradle Build Script"/>
+    <internalFileTemplate name="Gradle Build Script with wrapper"/>
+    <projectConfigurable id="reference.settingsdialog.project.gradle"
+                         instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
                          key="gradle.name" bundle="i18n.GradleBundle"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
-    <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.manage.GradleProjectOpenProcessor"/>
-    <colorAndFontPanelFactory implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontPanelFactory"/>
-    <colorAndFontDescriptorProvider implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>
+    <editorTabTitleProvider implementation="org.jetbrains.plugins.gradle.util.GradleEditorTabTitleProvider"/>
+    <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectOpenProcessor"/>
+    <configurationType implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType"/>
 
-    <!--Structure diff calculators-->
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
-    
-    <!--Project structure management services-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleProjectManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleModuleManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLibraryManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleJarManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleContentRootManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleDependencyManager"/>
-    
-    <!--Auto-import stuff-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter"/>
+    <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
+    <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
 
-    <!--Generic application services-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleInstallationManager"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
-                        serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.config.PlatformFacade"
-                        serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapper"
-                        serviceImplementation="org.jetbrains.plugins.gradle.util.GradleLibraryPathTypeMapperImpl"/>
-    
-    <!--Conflict UI components-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleOutdatedLibraryManager"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleProjectStructureContext"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.manage.GradleEntityManageHelper"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.internal.task.GradleTaskManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
 
-    <toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
-                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
+    <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
+
+    <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
+                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
+    <lang.documentationProvider language="Groovy"
+                                implementationClass="org.jetbrains.plugins.gradle.documentation.GradleDocumentationProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.plugins.gradle.codeInsight.UseDistributionWithSourcesNotificationProvider"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.resolve.dsl.GradleDslAnnotator"/>
+
+    <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
+                     bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"
+                     key="multiple.repository.urls" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
-    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
+    <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureAsAnonymousParameterEnhancer"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSettingsScriptContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsNonCodeMembersContributor"/>
+    <methodDescriptor class="org.gradle.api.Project" name="apply">
+      <namedArgument name="plugin" values="java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce,build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar"/>
+    </methodDescriptor>
+    <referenceTypeEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.NamedDomainObjectCollectionTypeEnhancer"/>
+    <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
   </extensions>
 
   <actions>
-    
-    <!-- Tool window toolbar actions -->
-    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction"/>
-    <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="AllIcons.Actions.Refresh"/>
-    <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="GradleIcons.GradleNavigate"/>
-    <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="AllIcons.Actions.Help"/>
-    <group id="Gradle.ChangeActionsToolbar">
-      <reference id="Gradle.RefreshProject"/>
-      <reference id="Gradle.OpenScript"/>
-      <reference id="Gradle.Help.ToolWindow"/>
+
+    <group id="Gradle.GenerateGroup">
+      <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
 
-    <!-- 'Sync project structure' tree nodes actions -->
-    <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="GradleIcons.GradleImport"/>
-    <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="AllIcons.Actions.Diff"/>
-    <action id="Gradle.RemoveEntity" class="org.jetbrains.plugins.gradle.action.GradleRemoveIdeEntityAction" icon="AllIcons.General.Remove"/>
-    <action id="Gradle.SyncOutdatedLibrary" class="org.jetbrains.plugins.gradle.action.GradleSyncAction" icon="GradleIcons.GradleSync"/>
-    <group id="Gradle.SyncTreeGroup">
-      <reference id="Gradle.ImportEntity"/>
-      <reference id="Gradle.RemoveEntity"/>
-      <reference id="Gradle.ShowConflict"/>
-      <reference id="Gradle.SyncOutdatedLibrary"/>
-    </group>
-
-    <!-- 'Sync project structure' tree filters -->
-    <action id="Gradle.SyncTreeFilter.None" class="org.jetbrains.plugins.gradle.action.GradleResetTreeFiltersAction"/>
-    <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
-    <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
-    <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
-    <action id="Gradle.SyncTreeFilter.Outdated" class="org.jetbrains.plugins.gradle.action.GradleOutdatedSyncTreeFilterAction"/>
-    <group id="Gradle.SyncTreeFilter">
-      <reference id="Gradle.SyncTreeFilter.GradleLocal"/>
-      <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
-      <reference id="Gradle.SyncTreeFilter.Conflict"/>
-      <reference id="Gradle.SyncTreeFilter.Outdated"/>
-      <reference id="Gradle.SyncTreeFilter.None"/>
-    </group>
-    
-    <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>
-    <group id="Gradle.TasksGroup">
-      <reference ref="RunContextGroup"/>
-    </group>
   </actions>
-  
 </idea-plugin>

@@ -22,14 +22,16 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.ObjectCollectedException;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class DebuggerContextCommandImpl extends SuspendContextCommandImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.events.DebuggerContextCommandImpl");
+  private static final Logger LOG = Logger.getInstance(DebuggerContextCommandImpl.class);
 
   private final DebuggerContextImpl myDebuggerContext;
 
-  protected DebuggerContextCommandImpl(DebuggerContextImpl debuggerContext) {
+  protected DebuggerContextCommandImpl(@NotNull DebuggerContextImpl debuggerContext) {
     super(debuggerContext.getSuspendContext());
+
     myDebuggerContext = debuggerContext;
   }
 
@@ -37,15 +39,15 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     return myDebuggerContext;
   }
 
+  @Override
   public final void contextAction() throws Exception {
     final SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
-
     final ThreadReferenceProxyImpl debuggerContextThread = myDebuggerContext.getThreadProxy();
     final boolean isSuspendedByContext;
     try {
       isSuspendedByContext = suspendManager.isSuspended(debuggerContextThread);
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       notifyCancelled();
       return;
     }
@@ -59,7 +61,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     else {
       // there are no suspend context currently registered
       SuspendContextImpl suspendContextForThread = SuspendManagerUtil.findContextByThread(suspendManager, debuggerContextThread);
-      if(suspendContextForThread != null) {
+      if (suspendContextForThread != null) {
         suspendContextForThread.postponeCommand(this);
       }
       else {
@@ -68,5 +70,5 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
   }
 
-  abstract public void threadAction ();
+  abstract public void threadAction();
 }

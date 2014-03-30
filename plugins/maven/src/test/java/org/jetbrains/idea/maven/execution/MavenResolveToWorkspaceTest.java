@@ -35,9 +35,9 @@ import java.util.Properties;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenResolveToWorkspaceTest extends MavenImportingTestCase {
+public abstract class MavenResolveToWorkspaceTest extends MavenImportingTestCase {
 
-  public void _testIgnoredProject() throws Exception {
+  public void testIgnoredProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

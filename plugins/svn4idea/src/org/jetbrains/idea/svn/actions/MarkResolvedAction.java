@@ -19,6 +19,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -32,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
+import org.jetbrains.idea.svn.portable.SvnStatusClientI;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.*;
@@ -42,6 +45,8 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 public class MarkResolvedAction extends BasicAction {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.MarkResolvedAction");
+
   protected String getActionName(AbstractVcs vcs) {
     return SvnBundle.message("action.name.mark.resolved");
   }
@@ -88,14 +93,13 @@ public class MarkResolvedAction extends BasicAction {
     }
     pathsArray = dialog.getSelectedPaths();
     try {
-      SVNWCClient wcClient = vcs.createWCClient();
       for (String path : pathsArray) {
         File ioFile = new File(path);
-        wcClient.doResolve(ioFile, SVNDepth.EMPTY, SVNConflictChoice.MERGED);
+        ConflictClient client = vcs.getFactory(ioFile).createConflictClient();
+
+        // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
+        client.resolve(ioFile, SVNDepth.EMPTY, true, true, true);
       }
-    }
-    catch (SVNException e) {
-      throw new VcsException(e);
     }
     finally {
       for (VirtualFile file : files) {
@@ -115,10 +119,12 @@ public class MarkResolvedAction extends BasicAction {
 
   private static Collection<String> collectResolvablePaths(final SvnVcs vcs, VirtualFile[] files) {
     final Collection<String> target = new TreeSet<String>();
-    SVNStatusClient stClient = vcs.createStatusClient();
     for (VirtualFile file : files) {
       try {
-        stClient.doStatus(new File(file.getPath()), true, false, false, false, new ISVNStatusHandler() {
+        File path = new File(file.getPath());
+        SvnStatusClientI client = vcs.getFactory(path).createStatusClient();
+
+        client.doStatus(path, true, false, false, false, new ISVNStatusHandler() {
           public void handleStatus(SVNStatus status) {
             if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
                 status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
@@ -128,7 +134,7 @@ public class MarkResolvedAction extends BasicAction {
         });
       }
       catch (SVNException e) {
-        //
+        LOG.warn(e);
       }
     }
     return target;

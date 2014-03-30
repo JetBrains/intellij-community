@@ -69,12 +69,13 @@ public abstract class DeleteScopeAction extends AnAction {
       parent = (InspectionConfigTreeNode)node.getParent();
       final HighlightDisplayKey key = descriptor.getKey();
       if (parent.getChildCount() <= 2) { //remove default with last non-default
-        getSelectedProfile().removeAllScopes(key.toString());
+        getSelectedProfile().removeAllScopes(key.toString(), e.getProject());
         parent.removeAllChildren();
         parent.setInspectionNode(true);
         parent.setByDefault(true);
-      } else {
-        getSelectedProfile().removeScope(key.toString(), parent.getIndex(node));
+      }
+      else {
+        getSelectedProfile().removeScope(key.toString(), parent.getIndex(node), e.getProject());
         node.removeFromParent();
       }
       ((DefaultTreeModel)myTree.getModel()).reload(parent);

@@ -1,0 +1,29 @@
+<idea-plugin version="2">
+  <extensions defaultExtensionNs="com.intellij">
+
+    <lang.fileViewProviderFactory language="ReST"
+                                  implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
+    <editorHighlighterProvider filetype="ReST" implementationClass="com.jetbrains.rest.RestEditorHighlighterProvider"/>
+
+    <localInspection language="ReST" shortName="RestRoleInspection" bundle="com.jetbrains.rest.RestBundle" key="INSP.role.not.defined"
+                     groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.jetbrains.rest.inspections.RestRoleInspection"/>
+
+    <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
+    <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
+    <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
+    <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
+
+    <languageInjector implementation="com.jetbrains.rest.PyRestDocstringLanguageInjector"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.SphinxDirectiveCompletionContributor"/>
+  </extensions>
+
+  <actions>
+    <action id="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
+            class="com.jetbrains.rest.sphinx.RunSphinxQuickStartAction"
+            text="Sphinx quickstart" description="Allows to run sphinx quick-start action">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
+  </actions>
+</idea-plugin>

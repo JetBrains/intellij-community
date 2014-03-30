@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,22 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -48,12 +57,24 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
+  private static final TObjectHashingStrategy<int[]> INT_ARRAY_STRATEGY = new TObjectHashingStrategy<int[]>() {
+    @Override
+    public int computeHashCode(int[] object) {
+      return Arrays.hashCode(object);
+    }
+
+    @Override
+    public boolean equals(int[] o1, int[] o2) {
+      return Arrays.equals(o1, o2);
+    }
+  };
 
   private final ManagingFS myPersistence;
   private final Project myProject;
@@ -64,22 +85,38 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private volatile boolean myInitialized = false;
   private volatile boolean myDisposed = false;
   private final PackageSink mySink = new PackageSink();
+  private static final boolean ourUseRootIndexOnly = Registry.is("directory.index.use.root.index");
+  private static final boolean ourCompareImplementations = Registry.is("directory.index.compare.implementations");
+  private volatile RootIndex myRootIndex = null;
 
   public DirectoryIndexImpl(@NotNull ManagingFS managingFS, @NotNull Project project, @NotNull StartupManager startupManager) {
     myPersistence = managingFS;
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
-    startupManager.registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        initialize();
-      }
-    });
+    if (ourUseRootIndexOnly) {
+      initialize();
+    } else {
+      startupManager.registerPreStartupActivity(new Runnable() {
+        @Override
+        public void run() {
+          initialize();
+        }
+      });
+    }
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         myDisposed = true;
+        myState.multiDirPackages.clear();
+        myState.myDirToInfoMap.clear();
+        myState.myDirToPackageName.clear();
+        myState.myExcludeRootsMap.clear();
+        myState.myPackageNameToDirsMap.clear();
+        myState.myProjectExcludeRoots.clear();
+        myState.myRootTypeId.clear();
+        myState.myRootTypes.clear();
+        myRootIndex = null;
       }
     });
   }
@@ -124,7 +161,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     });
 
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new MyVirtualFileListener()));
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new MyVirtualFileListener());
   }
 
   private void markContentRootsForRefresh() {
@@ -143,9 +180,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myConnection.deliverImmediately();
   }
 
-  private class MyVirtualFileListener extends VirtualFileAdapter {
+  private class MyVirtualFileListener extends VirtualFileAdapter implements BulkFileListener {
     @Override
-    public void fileCreated(VirtualFileEvent event) {
+    public void fileCreated(@NotNull VirtualFileEvent event) {
       VirtualFile file = event.getFile();
 
       if (!file.isDirectory()) return;
@@ -153,10 +190,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       VirtualFile parent = file.getParent();
       if (!(parent instanceof NewVirtualFile)) return;
       DirectoryInfo existing = myState.getInfo(((NewVirtualFile)file).getId());
-      assert existing == null : file+" -> "+existing;
-      myState = updateStateWithNewFile((NewVirtualFile)file, (NewVirtualFile)parent);
+      assert existing == null : file + " -> " + existing;
+      IndexState newState = updateStateWithNewFile((NewVirtualFile)file, (NewVirtualFile)parent);
+      replaceState(newState);
     }
-
 
     @NotNull
     private IndexState updateStateWithNewFile(@NotNull NewVirtualFile file, @NotNull NewVirtualFile parent) {
@@ -191,35 +228,42 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       }
 
-      if (parentInfo == null) return state;
-
-      Module module = parentInfo.getModule();
-
       for (DirectoryIndexExcludePolicy policy : myExcludePolicies) {
-        if (policy.isExcludeRoot(file)) return state;
+        if (policy.isExcludeRoot(file)) {
+          if (parentInfo == null || parentInfo.getContentRoot() == null) {
+            if (state == originalState) state = state.copy(null);
+            state.myProjectExcludeRoots.add(file.getId());
+          }
+          return state;
+        }
       }
+
+      if (parentInfo == null) return state;
+      Module module = parentInfo.getModule();
 
       if (state == originalState) state = state.copy(null);
       VirtualFile parentContentRoot = parentInfo.getContentRoot();
       state.fillMapWithModuleContent(file, module, (NewVirtualFile)parentContentRoot, null);
 
-      String parentPackage = state.myDirToPackageName.get(parentId);
+      String parentPackage = state.getPackageNameForDirectory(parent);
+      TObjectIntHashMap<String> interned = new TObjectIntHashMap<String>();
 
       if (module != null) {
         if (parentInfo.isInModuleSource()) {
           String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-          state.fillMapWithModuleSource(module, (NewVirtualFile)parentContentRoot, file, newDirPackageName, (NewVirtualFile)parentInfo.getSourceRoot(), parentInfo.isTestSource(), null);
+          state.fillMapWithModuleSource(module, (NewVirtualFile)parentContentRoot, file, newDirPackageName,
+                                        (NewVirtualFile)parentInfo.getSourceRoot(), parentInfo.getSourceRootTypeId(), null, interned);
         }
       }
 
       if (parentInfo.hasLibraryClassRoot()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibraryClasses(file, newDirPackageName, (NewVirtualFile)parentInfo.getLibraryClassRoot(), null);
+        state.fillMapWithLibraryClasses(file, newDirPackageName, (NewVirtualFile)parentInfo.getLibraryClassRoot(), null, interned, null);
       }
 
       if (parentInfo.isInLibrarySource()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibrarySources(file, newDirPackageName, (NewVirtualFile)parentInfo.getSourceRoot(), null);
+        state.fillMapWithLibrarySources(file, newDirPackageName, (NewVirtualFile)parentInfo.getSourceRoot(), null, interned, null);
       }
 
       OrderEntry[] entries = parentInfo.getOrderEntries();
@@ -232,7 +276,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private final Key<int[]> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
 
     @Override
-    public void beforeFileDeletion(VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       if (!file.isDirectory()) return;
       if (myState.getInfo(((NewVirtualFile)file).getId()) == null) return;
@@ -257,7 +301,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     @Override
-    public void fileDeleted(VirtualFileEvent event) {
+    public void fileDeleted(@NotNull VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       final int[] list = file.getUserData(FILES_TO_RELEASE_KEY);
       if (list == null) return;
@@ -265,12 +309,14 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       IndexState copy = null;
       for (int id : list) {
         if (myState.getInfo(id) != null) {
-          if (copy == null) copy = myState.copy(new TIntProcedure() {
-            @Override
-            public boolean execute(int fid) {
-              return ArrayUtil.indexOf(list, fid) == -1;
-            }
-          });
+          if (copy == null) {
+            copy = myState.copy(new TIntProcedure() {
+              @Override
+              public boolean execute(int fid) {
+                return ArrayUtil.indexOf(list, fid) == -1;
+              }
+            });
+          }
 
           copy.myDirToInfoMap.remove(id);
           copy.setPackageName(id, null);
@@ -278,18 +324,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       if (copy != null) {
-        myState = copy;
+        replaceState(copy);
       }
       myState.assertAncestorsConsistent();
     }
 
     @Override
-    public void beforeFileMovement(VirtualFileMoveEvent event) {
-      super.beforeFileMovement(event);
-    }
-
-    @Override
-    public void fileMoved(VirtualFileMoveEvent event) {
+    public void fileMoved(@NotNull VirtualFileMoveEvent event) {
       VirtualFile file = event.getFile();
       if (file.isDirectory()) {
         doInitialize();
@@ -298,7 +339,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     @Override
-    public void propertyChanged(VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         VirtualFile file = event.getFile();
         if (file.isDirectory()) {
@@ -307,6 +348,55 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
       myState.assertAncestorsConsistent();
     }
+
+    private boolean myBatchChangePlanned;
+
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) {
+      if (ourUseRootIndexOnly) {
+        return;
+      }
+
+      myBatchChangePlanned = false;
+      final boolean willDoBatchUpdate = isLargeVfsChange(events);
+      if (willDoBatchUpdate) {
+        myBatchChangePlanned = true;
+        LOG.info("will rebuild index state");
+      }
+      else {
+        for (VFileEvent event : events) {
+          BulkVirtualFileListenerAdapter.fireBefore(this, event);
+        }
+      }
+    }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      RootIndex rootIndex = myRootIndex;
+      if (rootIndex != null && rootIndex.resetOnEvents(events)) {
+        myRootIndex = null;
+      }
+      if (ourUseRootIndexOnly) {
+        return;
+      }
+
+      if (myBatchChangePlanned) {
+        myBatchChangePlanned = false;
+        long started = System.currentTimeMillis();
+        doInitialize();
+        LOG.info("Rebuilt indexstate for " + (System.currentTimeMillis() - started));
+      }
+      else {
+        for (VFileEvent event : events) {
+          BulkVirtualFileListenerAdapter.fireAfter(this, event);
+        }
+      }
+    }
+  }
+
+  private void replaceState(IndexState newState) {
+    newState.writable = false;
+    myState = newState;
   }
 
   private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
@@ -340,7 +430,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       dispatchPendingEvents();
 
       IndexState state = myState;
-      int[] allDirs = state.getDirsForPackage(packageName);
+      int[] allDirs = state.getDirsForPackage(internPackageName(packageName, null));
       if (allDirs == null) allDirs = ArrayUtil.EMPTY_INT_ARRAY;
 
       List<VirtualFile> files = new ArrayList<VirtualFile>(allDirs.length);
@@ -359,12 +449,53 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+      if (ourUseRootIndexOnly) {
+        return new CollectionQuery<VirtualFile>(riResult);
+      }
+
+      Query<VirtualFile> standardResult = mySink.search(packageName, includeLibrarySources);
+      Collection<VirtualFile> standard = standardResult.findAll();
+      if (!new HashSet<VirtualFile>(riResult).equals(new HashSet<VirtualFile>(standard))) {
+        for (VirtualFile file : standard) {
+          String path = file.getPath();
+          if (path.substring(path.length() - packageName.length()).contains(".")) {
+            return standardResult; // standard and rootIndex return different results for directories with dot in name
+          }
+        }
+        assertConsistentResult(packageName, riResult, standard);
+      }
+    }
+
     return mySink.search(packageName, includeLibrarySources);
+  }
+
+  @Nullable
+  private RootIndex getRootIndex() {
+    if (!ourUseRootIndexOnly && !ourCompareImplementations) {
+      return null;
+    }
+    RootIndex rootIndex = myRootIndex;
+    if (rootIndex == null) {
+      myRootIndex = rootIndex = new RootIndex(myProject);
+    }
+    return rootIndex;
   }
 
   @Override
   @TestOnly
   public void checkConsistency() {
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      rootIndex.checkConsistency();
+    }
+    if (ourUseRootIndexOnly) {
+      return;
+    }
+
     doCheckConsistency(false);
     doCheckConsistency(true);
   }
@@ -378,26 +509,30 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void doCheckConsistency(boolean reverseAllSets) {
     assert myInitialized;
     assert !myDisposed;
+    myState.assertNotWritable();
 
     final IndexState oldState = myState;
     myState.assertAncestorsConsistent();
-    myState = myState.copy(null);
+    replaceState(myState.copy(null));
+    myState.writable = true;
 
     myState.doInitialize(reverseAllSets);
+    myState.writable = false;
 
     int[] keySet = myState.myDirToInfoMap.keys();
     assert keySet.length == oldState.myDirToInfoMap.keys().length;
     for (int file : keySet) {
       DirectoryInfo info1 = myState.getInfo(file);
       DirectoryInfo info2 = oldState.getInfo(file);
+      assert info1 != null;
       assert info1.equals(info2);
       info1.assertConsistency();
     }
 
     assert myState.myPackageNameToDirsMap.size() == oldState.myPackageNameToDirsMap.size();
-    myState.myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<String>() {
+    myState.myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<int[]>() {
       @Override
-      public boolean execute(String packageName, int i) {
+      public boolean execute(int[] packageName, int i) {
         int[] dirs = oldState.getDirsForPackage(packageName);
         int[] dirs1 = myState.getDirsForPackage(packageName);
 
@@ -415,9 +550,14 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private void doInitialize() {
+    myRootIndex = null;
+    if (ourUseRootIndexOnly) {
+      return;
+    }
+
     IndexState newState = new IndexState();
     newState.doInitialize(false);
-    myState = newState;
+    replaceState(newState);
   }
 
   private boolean isExcludeRootForModule(@NotNull Module module, VirtualFile excludeRoot) {
@@ -447,13 +587,98 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     dispatchPendingEvents();
 
     if (!(dir instanceof NewVirtualFile)) return null;
-    return myState.getInfo(((NewVirtualFile)dir).getId());
+
+    RootIndex rootIndex = getRootIndex();
+    DirectoryInfo riInfo = rootIndex != null ? rootIndex.getInfoForDirectory(dir) : null;
+    if (ourUseRootIndexOnly) {
+      return riInfo;
+    }
+
+    DirectoryInfo standardResult = myState.getInfo(((NewVirtualFile)dir).getId());
+    assertConsistentResult(dir, riInfo, standardResult);
+    if (standardResult != riInfo && standardResult.equals(riInfo) && rootIndex != null) {
+      rootIndex.cacheInfos(dir, dir, standardResult);
+    }
+    return standardResult;
+  }
+
+  private <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
+    //noinspection ConstantConditions
+    if (ourCompareImplementations && !Comparing.equal(rootIndexResult, standardResult)) {
+      String msg = "DirectoryIndex differs from RootIndex at " + arg +
+                       "\nriInfo         =  " + rootIndexResult +
+                       "\nstandardResult =  " + standardResult + 
+                       "\nRoot model:";
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        msg += "\nModule " + module.getName();
+        for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+          msg += "\n  Content " + entry.getFile();
+          for (VirtualFile file : entry.getSourceFolderFiles()) {
+            msg += "\n    Source " + file;
+          }
+          for (VirtualFile file : entry.getExcludeFolderFiles()) {
+            msg += "\n    Excluded " + file;
+          }
+        }
+      }
+      for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject)) {
+        for (VirtualFile root : policy.getExcludeRootsForProject()) {
+          msg += "\nProject exclude " + root;
+        }
+      }
+
+      LOG.error(msg);
+    }
+    return standardResult;
+  }
+
+  @Override
+  @Nullable
+  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
+    if (info.isInModuleSource()) {
+      RootIndex rootIndex = getRootIndex();
+      JpsModuleSourceRootType<?> riType = rootIndex != null ? rootIndex.getSourceRootType(info) : null;
+      if (ourUseRootIndexOnly) {
+        return riType;
+      }
+
+      return assertConsistentResult(info, riType, myState.getRootTypeById(info.getSourceRootTypeId()));
+    }
+    return null;
   }
 
   @Override
   public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
     checkAvailability();
-    return dir instanceof NewVirtualFile && myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
+    if (!(dir instanceof NewVirtualFile)) return false;
+
+    if (ourUseRootIndexOnly) {
+      //noinspection ConstantConditions
+      return getRootIndex().isProjectExcludeRoot(dir);
+    }
+
+    //noinspection UnnecessaryLocalVariable
+    boolean standardResult = myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
+/*
+    RootIndex rootIndex = getRootIndex();
+    Boolean riResult = rootIndex != null ? rootIndex.isProjectExcludeRoot(dir) : null;
+    assertConsistentResult(dir, riResult, standardResult);
+*/
+    return standardResult;
+  }
+
+  @Override
+  public boolean isModuleExcludeRoot(@NotNull VirtualFile dir) {
+    checkAvailability();
+    if (!(dir instanceof NewVirtualFile)) return false;
+
+    if (ourUseRootIndexOnly) {
+      //noinspection ConstantConditions
+      return getRootIndex().isModuleExcludeRoot(dir);
+    }
+
+    // unsupported with old indexing
+    return false;
   }
 
   private VirtualFile findFileById(int dir) {
@@ -464,7 +689,62 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof NewVirtualFile)) return null;
-    return myState.myDirToPackageName.get(((NewVirtualFile)dir).getId());
+
+    RootIndex rootIndex = getRootIndex();
+    String riResult = rootIndex != null ? rootIndex.getPackageName(dir) : null;
+    if (ourUseRootIndexOnly) {
+      return riResult;
+    }
+
+    return assertConsistentResult(dir, riResult, myState.getPackageNameForDirectory((NewVirtualFile)dir));
+  }
+
+  private static String decodePackageName(@NotNull int[] interned) {
+    if (interned.length == 0) {
+      return "";
+    }
+
+    StringBuilder result = new StringBuilder(interned[0]);
+    for (int i = 1; i < interned.length; i++) {
+      if (i > 1) {
+        result.append('.');
+      }
+      result.append(FileNameCache.getVFileName(interned[i]));
+    }
+    return result.toString();
+  }
+
+  private static int[] internPackageName(@Nullable String packageName, @Nullable TObjectIntHashMap<String> alreadyEnumerated) {
+    if (packageName == null) {
+      return null;
+    }
+
+    if (packageName.isEmpty()) {
+      return ArrayUtil.EMPTY_INT_ARRAY;
+    }
+
+    int dotCount = StringUtil.countChars(packageName, '.');
+    int[] result = new int[dotCount + 2];
+    result[0] = packageName.length();
+
+    int tokenStart = 0;
+    int tokenIndex = 0;
+    while (tokenStart < packageName.length()) {
+      int tokenEnd = packageName.indexOf('.', tokenStart);
+      if (tokenEnd < 0) {
+        tokenEnd = packageName.length();
+      }
+      String nextName = packageName.substring(tokenStart, tokenEnd);
+      int internedId = alreadyEnumerated != null ? alreadyEnumerated.get(nextName) : 0;
+      if (internedId == 0) {
+        internedId = FileNameCache.storeName(nextName);
+        if (alreadyEnumerated != null) alreadyEnumerated.put(nextName, internedId);
+      }
+      result[tokenIndex + 1] = internedId;
+      tokenStart = tokenEnd + 1;
+      tokenIndex++;
+    }
+    return result;
   }
 
   private void checkAvailability() {
@@ -487,22 +767,28 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private final TIntObjectHashMap<Set<String>> myExcludeRootsMap = new TIntObjectHashMap<Set<String>>();
     private final TIntHashSet myProjectExcludeRoots = new TIntHashSet();
     private final TIntObjectHashMap<DirectoryInfo> myDirToInfoMap = new TIntObjectHashMap<DirectoryInfo>();
-    private final TObjectIntHashMap<String> myPackageNameToDirsMap = new TObjectIntHashMap<String>();
+    private final TObjectIntHashMap<int[]> myPackageNameToDirsMap = new TObjectIntHashMap<int[]>(INT_ARRAY_STRATEGY);
     private final List<int[]> multiDirPackages = new ArrayList<int[]>(Arrays.asList(new int[]{-1}));
-    private final TIntObjectHashMap<String> myDirToPackageName = new TIntObjectHashMap<String>();
+    private final TIntObjectHashMap<int[]> myDirToPackageName = new TIntObjectHashMap<int[]>();
+    private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
+    private final List<JpsModuleSourceRootType<?>> myRootTypes = new ArrayList<JpsModuleSourceRootType<?>>();
+    private volatile boolean writable = true;
 
     private IndexState() {
     }
 
     @Nullable
-    private int[] getDirsForPackage(@NotNull String packageName) {
+    private int[] getDirsForPackage(@NotNull int[] packageName) {
+      assertNotWritable();
       int i = myPackageNameToDirsMap.get(packageName);
       return i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
     }
 
-    private void removeDirFromPackage(@NotNull String packageName, int dirId) {
+    private void removeDirFromPackage(@NotNull int[] packageName, int dirId) {
+      assertWritable();
       int i = myPackageNameToDirsMap.get(packageName);
       int[] oldPackageDirs = i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
+      assert oldPackageDirs != null;
       int index = ArrayUtil.find(oldPackageDirs, dirId);
       assert index != -1;
       oldPackageDirs = ArrayUtil.remove(oldPackageDirs, index);
@@ -519,13 +805,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    private void addDirToPackage(@NotNull String packageName, int dirId) {
+    private void addDirToPackage(@NotNull int[] packageName, int dirId) {
+      assertWritable();
+      assert dirId > 0;
+
       int i = myPackageNameToDirsMap.get(packageName);
 
       if (i < 0) {
         // add another dir to the list of existing dirs
         int[] ids = multiDirPackages.get(-i);
-        int[] newIds = ArrayUtil.append(ids, dirId);
+        int[] newIds = ids == null ? new int[]{dirId} : ArrayUtil.append(ids, dirId);
         multiDirPackages.set(-i, newIds);
       }
       else if (i > 0) {
@@ -556,6 +845,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void storeInfo(@NotNull DirectoryInfo info, int id) {
+      assertWritable();
       if (CHECK) {
         VirtualFile file = findFileById(id);
         VirtualFile contentRoot = info.getContentRoot();
@@ -563,6 +853,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             assert VfsUtilCore.isAncestor(contentRoot, file, false) : "File: "+file+"; Content root: "+contentRoot;
         }
       }
+      assert id > 0 : id;
       myDirToInfoMap.put(id, info);
     }
 
@@ -597,6 +888,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                           final Module module,
                                           final NewVirtualFile contentRoot,
                                           @Nullable final ProgressIndicator progress) {
+      assertWritable();
+      if (!isValid(root)) return;
       final int contentRootId = contentRoot == null ? 0 : contentRoot.getId();
       if (contentRoot != null) {
         assert VfsUtilCore.isAncestor(contentRoot, root, false) : "Root: "+root+"; contentRoot: "+contentRoot;
@@ -635,7 +928,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                VirtualFile contentRoot,
                                VirtualFile sourceRoot,
                                VirtualFile libraryClassRoot,
-                               @DirectoryInfo.SourceFlag int sourceFlag,
+                               int sourceRootTypeData,
                                OrderEntry[] orderEntries) {
       if (contentRoot != null) {
         assertAncestor(info, contentRoot, id);
@@ -646,9 +939,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           assertAncestor(info, root, ((NewVirtualFile)sourceRoot).getId());
         }
       }
-      DirectoryInfo newInfo = info.with(module, contentRoot, sourceRoot, libraryClassRoot, (byte)sourceFlag, orderEntries);
+      DirectoryInfo newInfo = info.with(module, contentRoot, sourceRoot, libraryClassRoot, sourceRootTypeData, orderEntries);
       storeInfo(newInfo, id);
       return newInfo;
+    }
+
+    @Nullable
+    private String getPackageNameForDirectory(NewVirtualFile dir) {
+      int[] interned = myDirToPackageName.get(dir.getId());
+      return interned == null ? null : decodePackageName(interned);
     }
 
     private abstract class DirectoryVisitor extends VirtualFileVisitor {
@@ -683,6 +982,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initModuleContents(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
 
@@ -699,7 +999,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    private void initModuleSources(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress) {
+    private void initModuleSources(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress,
+                                   @Nullable TObjectIntHashMap<String> interned) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.module.sources.progress", module.getName()));
 
@@ -718,10 +1020,33 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         for (SourceFolder sourceFolder : sourceFolders) {
           VirtualFile dir = sourceFolder.getFile();
           if (dir instanceof NewVirtualFile && contentRoot instanceof NewVirtualFile) {
-            fillMapWithModuleSource(module, (NewVirtualFile)contentRoot, (NewVirtualFile)dir, sourceFolder.getPackagePrefix(), (NewVirtualFile)dir, sourceFolder.isTestSource(), progress);
+            int rootTypeId = getRootTypeId(sourceFolder);
+            fillMapWithModuleSource(module, (NewVirtualFile)contentRoot, (NewVirtualFile)dir, sourceFolder.getPackagePrefix(),
+                                    (NewVirtualFile)dir, rootTypeId, progress, interned);
           }
         }
       }
+    }
+
+    private int getRootTypeId(@NotNull SourceFolder sourceFolder) {
+      JpsModuleSourceRootType<?> rootType = sourceFolder.getRootType();
+      if (myRootTypeId.containsKey(rootType)) {
+        return myRootTypeId.get(rootType);
+      }
+
+      int id = myRootTypes.size();
+      if (id > DirectoryInfo.MAX_ROOT_TYPE_ID) {
+        LOG.error("Too many different types of module source roots (" + id  + ") registered: " + myRootTypes);
+      }
+      myRootTypes.add(rootType);
+      myRootTypeId.put(rootType, id);
+      return id;
+    }
+
+    @Nullable
+    private JpsModuleSourceRootType<?> getRootTypeById(int id) {
+      if (id >= myRootTypes.size()) return null;
+      return myRootTypes.get(id);
     }
 
     private void fillMapWithModuleSource(@NotNull final Module module,
@@ -729,9 +1054,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull final NewVirtualFile dir,
                                          @NotNull final String packageName,
                                          @NotNull final NewVirtualFile sourceRoot,
-                                         final boolean isTestSource,
-                                         @Nullable final ProgressIndicator progress) {
-      assert VfsUtilCore.isAncestor(sourceRoot, dir, false) : "SourceRoot: "+sourceRoot+" ("+sourceRoot.getFileSystem()+"); dir: "+dir+" ("+dir.getFileSystem()+")";
+                                         final int rootTypeId,
+                                         @Nullable final ProgressIndicator progress,
+                                         final @Nullable TObjectIntHashMap<String> interned) {
+      assertWritable();
+      if (!isValid(dir)) return;
+      assert VfsUtilCore.isAncestor(sourceRoot, dir, false) :
+        "SourceRoot: "+sourceRoot+" ("+sourceRoot.getFileSystem()+"); dir: "+dir+" ("+dir.getFileSystem()+")";
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
         private final Stack<String> myPackages = new Stack<String>();
 
@@ -747,20 +1076,18 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (!contentRoot.equals(info.getContentRoot())) return null;
 
           if (info.isInModuleSource()) { // module sources overlap
-            String definedPackage = myDirToPackageName.get(id);
-            if (definedPackage != null && definedPackage.isEmpty()) return null; // another source root starts here
+            if (isAnotherRoot(id)) return null; // another source root starts here
           }
 
+          assert VfsUtilCore.isAncestor(dir, file, false) :
+            "dir: " + dir + " (" + dir.getFileSystem() + "); file: " + file + " (" + file.getFileSystem() + ")";
 
-          assert VfsUtilCore.isAncestor(dir, file, false) : "dir: "+dir+" ("+dir.getFileSystem()+"); file: "+file+" ("+file.getFileSystem()+")";
-
-          int flag = info.getSourceFlag() | DirectoryInfo.MODULE_SOURCE_FLAG;
-          flag = BitUtil.set(flag, DirectoryInfo.TEST_SOURCE_FLAG, isTestSource);
-          info = with(id, info, null, null, sourceRoot, null, (byte)flag, null);
+          int flag = DirectoryInfo.createSourceRootTypeData(true, info.isInLibrarySource(), rootTypeId);
+          info = with(id, info, null, null, sourceRoot, null, flag, null);
 
           String currentPackage = myPackages.isEmpty() ? packageName : getPackageNameForSubdir(myPackages.peek(), file.getName());
           myPackages.push(currentPackage);
-          setPackageName(id, currentPackage);
+          setPackageName(id, internPackageName(currentPackage, interned));
           return info;
         }
 
@@ -772,16 +1099,25 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    private void initLibrarySources(@NotNull Module module, @NotNull ProgressIndicator progress) {
+    private boolean isAnotherRoot(int id) {
+      return myDirToPackageName.get(id) == ArrayUtil.EMPTY_INT_ARRAY;
+    }
+
+    private void initLibrarySources(@NotNull Module module,
+                                    @NotNull ProgressIndicator progress,
+                                    @Nullable TObjectIntHashMap<String> interned,
+                                    Map<Library, TIntHashSet> libraryExcludedRoots) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           VirtualFile[] sourceRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.SOURCES);
+          TIntHashSet excludedRoots = getExcludedRootsOfLibrary((LibraryOrSdkOrderEntry)orderEntry, libraryExcludedRoots);
           for (final VirtualFile sourceRoot : sourceRoots) {
             if (sourceRoot instanceof NewVirtualFile) {
-              fillMapWithLibrarySources((NewVirtualFile)sourceRoot, "", (NewVirtualFile)sourceRoot, progress);
+              fillMapWithLibrarySources((NewVirtualFile)sourceRoot, "", (NewVirtualFile)sourceRoot, progress, interned, excludedRoots);
             }
           }
         }
@@ -789,9 +1125,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void fillMapWithLibrarySources(@NotNull final NewVirtualFile dir,
-                                             @Nullable final String packageName,
-                                             @NotNull final NewVirtualFile sourceRoot,
-                                             @Nullable final ProgressIndicator progress) {
+                                           @Nullable final String packageName,
+                                           @NotNull final NewVirtualFile sourceRoot,
+                                           @Nullable final ProgressIndicator progress,
+                                           @Nullable final TObjectIntHashMap<String> interned,
+                                           @Nullable final TIntHashSet excludedRoots) {
+      assertWritable();
+      if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
@@ -800,19 +1140,19 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (progress != null) progress.checkCanceled();
           int dirId = ((NewVirtualFile)file).getId();
           if (!file.isDirectory() && dirId != dir.getId() || isIgnored(file)) return false;
+          if (excludedRoots != null && excludedRoots.contains(dirId)) return false;
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.isInLibrarySource()) { // library sources overlap
-            String definedPackage = myDirToPackageName.get(dirId);
-            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library source root starts here
+            if (isAnotherRoot(dirId)) return false; // another library source root starts here
           }
 
-          int flag = info.getSourceFlag() | DirectoryInfo.LIBRARY_SOURCE_FLAG;
-          with(dirId, info, null, null, sourceRoot, null, (byte)flag, null);
+          int data = DirectoryInfo.createSourceRootTypeData(info.isInModuleSource(), true, info.getSourceRootTypeId());
+          with(dirId, info, null, null, sourceRoot, null, data, null);
 
           final String packageName = getCurrentValue();
           final String newPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
-          setPackageName(dirId, newPackageName);
+          setPackageName(dirId, internPackageName(newPackageName, interned));
           setValueForChildren(newPackageName);
 
           return true;
@@ -820,16 +1160,21 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    private void initLibraryClasses(@NotNull Module module, @NotNull ProgressIndicator progress) {
+    private void initLibraryClasses(@NotNull Module module,
+                                    @NotNull ProgressIndicator progress,
+                                    @Nullable TObjectIntHashMap<String> interned,
+                                    @Nullable Map<Library, TIntHashSet> libraryExcludedRoots) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           VirtualFile[] classRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
+          TIntHashSet excludedRoots = getExcludedRootsOfLibrary((LibraryOrSdkOrderEntry)orderEntry, libraryExcludedRoots);
           for (final VirtualFile classRoot : classRoots) {
             if (classRoot instanceof NewVirtualFile) {
-              fillMapWithLibraryClasses((NewVirtualFile)classRoot, "", (NewVirtualFile)classRoot, progress);
+              fillMapWithLibraryClasses((NewVirtualFile)classRoot, "", (NewVirtualFile)classRoot, progress, interned, excludedRoots);
             }
           }
         }
@@ -837,9 +1182,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void fillMapWithLibraryClasses(@NotNull final NewVirtualFile dir,
-                                             @NotNull final String packageName,
-                                             @NotNull final NewVirtualFile classRoot,
-                                             @Nullable final ProgressIndicator progress) {
+                                           @NotNull final String packageName,
+                                           @NotNull final NewVirtualFile classRoot,
+                                           @Nullable final ProgressIndicator progress,
+                                           @Nullable final TObjectIntHashMap<String> interned,
+                                           final TIntHashSet excludedRoots) {
+      assertWritable();
+      if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
@@ -849,11 +1198,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (!file.isDirectory() && !Comparing.equal(file, dir) || isIgnored(file)) return false;
 
           int dirId = ((NewVirtualFile)file).getId();
+          if (excludedRoots != null && excludedRoots.contains(dirId)) return false;
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.hasLibraryClassRoot()) { // library classes overlap
-            String definedPackage = myDirToPackageName.get(dirId);
-            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library root starts here
+            if (isAnotherRoot(dirId)) return false; // another library root starts here
           }
 
           info = with(dirId, info, null, null, null, classRoot, 0, null);
@@ -861,7 +1210,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           final String packageName = getCurrentValue();
           final String childPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
           if (!info.isInModuleSource() && !info.isInLibrarySource()) {
-            setPackageName(dirId, childPackageName);
+            setPackageName(dirId, internPackageName(childPackageName, interned));
           }
           setValueForChildren(childPackageName);
 
@@ -870,11 +1219,36 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
+    @Nullable
+    private TIntHashSet getExcludedRootsOfLibrary(LibraryOrSdkOrderEntry orderEntry, Map<Library, TIntHashSet> libraryExcludedRoots) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+        if (library != null) {
+          TIntHashSet cached = libraryExcludedRoots.get(library);
+          if (cached != null) return cached;
+
+          VirtualFile[] files = ((LibraryEx)library).getExcludedRoots();
+          if (files.length > 0) {
+            TIntHashSet set = new TIntHashSet();
+            for (VirtualFile file : files) {
+              if (file instanceof NewVirtualFile) {
+                set.add(((NewVirtualFile)file).getId());
+              }
+            }
+            libraryExcludedRoots.put(library, set);
+            return set;
+          }
+        }
+      }
+      return null;
+    }
+
     private void initOrderEntries(@NotNull Module module,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> depEntries,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries,
                                   @NotNull ProgressIndicator progress) {
+      assertWritable();
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof ModuleOrderEntry) {
           final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
@@ -919,6 +1293,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
                                          @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries,
                                          @NotNull ProgressIndicator progress) {
+      assertWritable();
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         VirtualFile vRoot = mapEntry.getKey();
         Collection<OrderEntry> entries = mapEntry.getValue();
@@ -944,8 +1319,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    private void setPackageName(int dirId, @Nullable String newPackageName) {
-      String oldPackageName = myDirToPackageName.get(dirId);
+    private void setPackageName(int dirId, @Nullable int[] newPackageName) {
+      assertWritable();
+      int[] oldPackageName = myDirToPackageName.get(dirId);
       if (oldPackageName != null) {
         removeDirFromPackage(oldPackageName, dirId);
       }
@@ -961,39 +1337,39 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     // orderEntries must be sorted BY_OWNER_MODULE
-    private void fillMapWithOrderEntries(@NotNull NewVirtualFile root,
+    private void fillMapWithOrderEntries(@NotNull final NewVirtualFile root,
                                          @NotNull final OrderEntry[] orderEntries,
                                          @Nullable final Module module,
                                          @Nullable final NewVirtualFile libraryClassRoot,
                                          @Nullable final NewVirtualFile librarySourceRoot,
                                          @Nullable final DirectoryInfo parentInfo,
                                          @Nullable final ProgressIndicator progress) {
-      VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
+      assertWritable();
+      if (!isValid(root)) return;
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
 
         @Override
-        protected DirectoryInfo updateInfo(@NotNull VirtualFile dir) {
+        public boolean visitFile(@NotNull VirtualFile file) {
           if (progress != null) {
             progress.checkCanceled();
           }
-          if (isIgnored(dir)) return null;
+          if (!file.isDirectory() && !file.equals(root) || isIgnored(file)) return false;
 
-          int dirId = ((NewVirtualFile)dir).getId();
-          DirectoryInfo info = getInfo(dirId); // do not create it here!
-          if (info == null) return null;
+          int fileId = ((NewVirtualFile)file).getId();
+          DirectoryInfo info = getInfo(fileId); // do not create it here!
+          if (info == null) return false;
 
           if (module != null) {
-            if (info.getModule() != module) return null;
-            if (!info.isInModuleSource()) return null;
+            if (info.getModule() != module || !info.isInModuleSource()) return false;
           }
           else if (libraryClassRoot != null) {
-            if (!libraryClassRoot.equals(info.getLibraryClassRoot())) return null;
-            if (info.isInModuleSource()) return null;
+            if (!libraryClassRoot.equals(info.getLibraryClassRoot()) || info.isInModuleSource()) return false;
           }
           else if (librarySourceRoot != null) {
-            if (!info.isInLibrarySource()) return null;
-            if (!librarySourceRoot.equals(info.getSourceRoot())) return null;
-            if (info.hasLibraryClassRoot()) return null;
+            if (!info.isInLibrarySource()
+                || !librarySourceRoot.equals(info.getSourceRoot())
+                || info.hasLibraryClassRoot()) return false;
           }
 
           OrderEntry[] oldParentEntries = myEntries.isEmpty() ? null : myEntries.peek();
@@ -1001,19 +1377,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           myEntries.push(oldEntries);
 
           OrderEntry[] newOrderEntries = info.calcNewOrderEntries(orderEntries, parentInfo, oldParentEntries);
-          info = with(dirId, info, null, null, null, null, 0, newOrderEntries);
+          with(fileId, info, null, null, null, null, 0, newOrderEntries);
 
-          return info;
+          return true;
         }
 
         @Override
-        protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+        public void afterChildrenVisited(@NotNull VirtualFile file) {
           myEntries.pop();
         }
       });
     }
 
     private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
+      assertWritable();
       assertAncestorsConsistent();
       ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (progress == null) progress = new EmptyProgressIndicator();
@@ -1031,13 +1408,17 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       for (Module module : modules) {
         initModuleContents(module, reverseAllSets, progress);
       }
+
+      TObjectIntHashMap<String> interned = new TObjectIntHashMap<String>(100);
+
       // Important! Because module's contents may overlap,
       // first modules should be marked and only after that sources markup
       // should be added. (src markup depends on module markup)
+      IdentityHashMap<Library, TIntHashSet> libraryExcludedRoots = new IdentityHashMap<Library, TIntHashSet>();
       for (Module module : modules) {
-        initModuleSources(module, reverseAllSets, progress);
-        initLibrarySources(module, progress);
-        initLibraryClasses(module, progress);
+        initModuleSources(module, reverseAllSets, progress, interned);
+        initLibrarySources(module, progress, interned, libraryExcludedRoots);
+        initLibraryClasses(module, progress , interned, libraryExcludedRoots);
       }
 
       progress.checkCanceled();
@@ -1053,9 +1434,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries, progress);
 
       internDirectoryInfos();
+      progress.popState();
     }
 
     private void internDirectoryInfos() {
+      assertWritable();
       final Map<DirectoryInfo, DirectoryInfo> diInterner = new THashMap<DirectoryInfo, DirectoryInfo>();
       final Map<OrderEntry[], OrderEntry[]> oeInterner = new THashMap<OrderEntry[], OrderEntry[]>(new TObjectHashingStrategy<OrderEntry[]>() {
         @Override
@@ -1092,6 +1475,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initExcludedDirMap(@NotNull Module[] modules, ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
 
@@ -1103,20 +1487,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           VirtualFile contentRoot = contentEntry.getFile();
           if (!(contentRoot instanceof NewVirtualFile)) continue;
 
-          ExcludeFolder[] excludeRoots = contentEntry.getExcludeFolders();
-          for (ExcludeFolder excludeRoot : excludeRoots) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
             // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
-            VirtualFile excludeRootFile = excludeRoot.getFile();
-            if (excludeRootFile instanceof NewVirtualFile) {
-              if (!FileUtil.startsWith(contentRoot.getUrl(), excludeRoot.getUrl())) {
-                if (isExcludeRootForModule(module, excludeRootFile)) {
-                  putForFileAndAllAncestors((NewVirtualFile)excludeRootFile, excludeRoot.getUrl());
+            if (excludeRoot instanceof NewVirtualFile) {
+              if (!FileUtil.startsWith(excludeRoot.getUrl(), contentRoot.getUrl())) {
+                if (isExcludeRootForModule(module, excludeRoot)) {
+                  putForFileAndAllAncestors((NewVirtualFile)excludeRoot, excludeRoot.getUrl());
                 }
-                myProjectExcludeRoots.add(((NewVirtualFile)excludeRootFile).getId());
+                myProjectExcludeRoots.add(((NewVirtualFile)excludeRoot).getId());
               }
             }
 
-            putForFileAndAllAncestors((NewVirtualFile)contentRoot, excludeRoot.getUrl());
+          }
+          for (String url : contentEntry.getExcludeFolderUrls()) {
+            putForFileAndAllAncestors((NewVirtualFile)contentRoot, url);
           }
         }
       }
@@ -1132,7 +1516,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void putForFileAndAllAncestors(NewVirtualFile file, String value) {
-      TIntObjectHashMap<Set<String>> map = myExcludeRootsMap;
+      assertWritable();
+      TIntObjectHashMap <Set<String>> map = myExcludeRootsMap;
       while (file != null) {
         int id = file.getId();
         Set<String> set = map.get(id);
@@ -1146,8 +1531,17 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
+    private void assertWritable() {
+      assert writable;
+    }
+
+    private void assertNotWritable() {
+      assert !writable;
+    }
+
     @NotNull
     private IndexState copy(@Nullable final TIntProcedure idFilter) {
+      assertNotWritable();
       final IndexState copy = new IndexState();
 
       myExcludeRootsMap.forEachEntry(new TIntObjectProcedure<Set<String>>() {
@@ -1174,6 +1568,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       copy.multiDirPackages.clear();
       for (int[] dirs : multiDirPackages) {
+        if (dirs == null) {
+          dirs = ArrayUtil.EMPTY_INT_ARRAY;
+        }
         int[] filtered = ContainerUtil.filter(dirs, new TIntProcedure() {
           @Override
           public boolean execute(int id) {
@@ -1182,9 +1579,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         });
         copy.multiDirPackages.add(filtered);
       }
-      myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<String>() {
+      myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<int[]>() {
         @Override
-        public boolean execute(String name, int id) {
+        public boolean execute(int[] name, int id) {
           if (id > 0) {
             if (copy.getInfo(id) == null) id = 0;
           }
@@ -1198,9 +1595,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       });
 
-      myDirToPackageName.forEachEntry(new TIntObjectProcedure<String>() {
+      myDirToPackageName.forEachEntry(new TIntObjectProcedure<int[]>() {
         @Override
-        public boolean execute(int id, String name) {
+        public boolean execute(int id, int[] name) {
           if (idFilter == null || idFilter.execute(id)) {
             copy.myDirToPackageName.put(id, name);
           }
@@ -1208,8 +1605,21 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       });
 
+      copy.myRootTypes.addAll(myRootTypes);
+      myRootTypeId.forEachEntry(new TObjectIntProcedure<JpsModuleSourceRootType<?>>() {
+        @Override
+        public boolean execute(JpsModuleSourceRootType<?> root, int id) {
+          copy.myRootTypeId.put(root, id);
+          return true;
+        }
+      });
+
       return copy;
     }
+  }
+
+  private static boolean isValid(@NotNull NewVirtualFile root) {
+    return root.getId() > 0;
   }
 
   @NotNull
@@ -1224,15 +1634,59 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   private void assertAncestor(@NotNull DirectoryInfo info, @NotNull VirtualFile root, int myId) {
     VirtualFile myFile = findFileById(myId);
-    assert myFile.getFileSystem() == root.getFileSystem() : myFile.getFileSystem() +", "+ root.getFileSystem() +"; my file: "+myFile+"; root: "+root + "; "+
-                                                            myFile.getParent().getPath().equals(root.getPath());
-    assert VfsUtilCore.isAncestor(root, myFile, false) : "my file: "+myFile+" ("+
-                                                         ((NewVirtualFile)myFile).getId() +")" + myFile.getClass() + " - " +System.identityHashCode(myFile) +
-                                                         "; root: "+root +" ("+
-                                                         ((NewVirtualFile)root).getId() +")" + root.getClass() + " - " +System.identityHashCode(root) +
-                                                         "; equalsToParent:"+ (myFile.getParent() == null ? "" : myFile.getParent().getPath()).equals(root.getPath()) +
-                                                         "; equalsToRoot:"+ myFile.equals(root) +
-                                                         "; equalsToRootPath:"+ myFile.getPath().equals(root.getPath()) +
-                                                         "; my contentRoot: "+info.getContentRoot()+"; my sourceRoot: "+info.getSourceRoot()+"; my classRoot: "+info.getLibraryClassRoot();
+    assert myFile.getFileSystem() == root.getFileSystem() :
+      myFile.getFileSystem() + ", " + root.getFileSystem() + "; my file: " + myFile + "; root: " + root + "; " +
+      myFile.getParent().getPath().equals(root.getPath());
+    assert VfsUtilCore.isAncestor(root, myFile, false) :
+      "my file: " + myFile + " (" + ((NewVirtualFile)myFile).getId() + ")" + myFile.getClass() + " - " + System.identityHashCode(myFile) +
+      "; root: " + root + " (" + ((NewVirtualFile)root).getId() + ")" + root.getClass() + " - " + System.identityHashCode(root) +
+      "; equalsToParent:" + (myFile.getParent() == null ? "" : myFile.getParent().getPath()).equals(root.getPath()) +
+      "; equalsToRoot:" + myFile.equals(root) +
+      "; equalsToRootPath:" + myFile.getPath().equals(root.getPath()) +
+      "; my contentRoot: " + info.getContentRoot() +
+      "; my sourceRoot: " + info.getSourceRoot() +
+      "; my classRoot: " + info.getLibraryClassRoot() +
+      "; path is substring: " + FileUtil.isAncestor(root.getPath(), myFile.getPath(), false)
+      ;
+  }
+
+  private static final int MAX_DEPTH_TO_COUNT = 20;
+  private static final int DIRECTORIES_CHANGED_THRESHOLD = 50;
+
+  public static boolean isLargeVfsChange(List<? extends VFileEvent> events) {
+    int directoriesRemoved = 0;
+    int directoriesCreated = 0;
+
+    for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null && file.isDirectory()) {
+          directoriesRemoved += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+        }
+      }
+      else if (event instanceof VFileCreateEvent) {
+        VirtualFile file = event.getFile();
+        if (file != null && file.isDirectory() ||
+            file == null && ((VFileCreateEvent)event).isDirectory()) {
+          directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+        }
+      }
+    }
+
+    boolean largeChange = directoriesCreated + directoriesRemoved > DIRECTORIES_CHANGED_THRESHOLD;
+    if (largeChange) {
+      LOG.info("Too many directories created / deleted: " + directoriesCreated + "," + directoriesRemoved);
+    }
+    return largeChange;
+  }
+
+  private static int countDirectories(@Nullable VirtualFile file, int depth) {
+    if (!(file instanceof NewVirtualFile)) return 0;
+
+    int counter = 0;
+    for (VirtualFile child : ((NewVirtualFile)file).iterInDbChildren()) {
+      if (child.isDirectory()) counter += 1 + (depth > 0 ? countDirectories(child, depth - 1) : 0);
+    }
+    return counter;
   }
 }

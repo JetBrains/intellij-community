@@ -28,7 +28,7 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class WhatsNewAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
+    BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWhatsNewUrl());
   }
 
   @Override

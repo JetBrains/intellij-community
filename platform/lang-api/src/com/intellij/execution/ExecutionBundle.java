@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,23 @@
  */
 package com.intellij.execution;
 
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.AbstractBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
 
 /**
  * @author lesya
  */
-public class ExecutionBundle {
-  private static Reference<ResourceBundle> ourBundle;
+public class ExecutionBundle extends AbstractBundle {
 
-  @NonNls
-  protected static final String PATH_TO_BUNDLE = "messages.ExecutionBundle";
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return ourInstance.getMessage(key, params);
+  }
+
+  public static final String PATH_TO_BUNDLE = "messages.ExecutionBundle";
+  private static final AbstractBundle ourInstance = new ExecutionBundle();
 
   private ExecutionBundle() {
-  }
-
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
-    }
-    return bundle;
+    super(PATH_TO_BUNDLE);
   }
 }

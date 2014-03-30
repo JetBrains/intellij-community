@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaVariableProcessor");
@@ -146,11 +144,13 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     Project project = field.getProject();
     final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
 
-    final String propertyName = manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-    String newPropertyName = manager.variableNameToPropertyName(newName, VariableKind.FIELD);
+    final String propertyName = PropertyUtil.suggestPropertyName(field, field.getName());
+    String newPropertyName = PropertyUtil.suggestPropertyName(field, newName);
 
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
+
+    PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(aClass, propertyName, isStatic);
+
     PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
 
     boolean shouldRenameSetterParameter = false;
@@ -161,22 +161,31 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       shouldRenameSetterParameter = parameterName.equals(setterParameter.getName());
     }
 
-    String newGetterName = "";
-
-    if (getter != null) {
-      String getterId = getter.getName();
-      newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getterId);
-      if (newGetterName.equals(getterId)) {
-        getter = null;
-        newGetterName = null;
-      } else {
-        for (PsiMethod method : getter.findDeepestSuperMethods()) {
-          if (method instanceof PsiCompiledElement) {
-            getter = null;
-            break;
-          }
+    if (getters != null) {
+      List<PsiMethod> validGetters = new ArrayList<PsiMethod>();
+      for (PsiMethod getter : getters) {
+        String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
+        String getterId = null;
+        if (newGetterName == null) {
+          getterId = getter.getName();
+          newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getterId);
         }
+        if (newGetterName.equals(getterId)) {
+          continue;
+        }
+        else {
+          boolean valid = true;
+          for (PsiMethod method : getter.findDeepestSuperMethods()) {
+            if (method instanceof PsiCompiledElement) {
+              valid = false;
+              break;
+            }
+          }
+          if (!valid) continue;
+        }
+        validGetters.add(getter);
       }
+      getters = validGetters.isEmpty() ? null : validGetters.toArray(new PsiMethod[validGetters.size()]);
     }
 
     String newSetterName = "";
@@ -201,14 +210,20 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       }
     }
 
-    if ((getter != null || setter != null) && askToRenameAccesors(getter, setter, newName, project)) {
-      getter = null;
+    if ((getters != null || setter != null) && askToRenameAccesors(getters != null ? getters[0] : null, setter, newName, project)) {
+      getters = null;
       setter = null;
       shouldRenameSetterParameter = false;
     }
 
-    if (getter != null) {
-      addOverriddenAndImplemented(getter, newGetterName, allRenames);
+    if (getters != null) {
+      for (PsiMethod getter : getters) {
+        String newGetterName = GetterSetterPrototypeProvider.suggestNewGetterName(propertyName, newPropertyName, getter);
+        if (newGetterName == null) {
+          newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getter.getName());
+        }
+        addOverriddenAndImplemented(getter, newGetterName, allRenames);
+      }
     }
 
     if (setter != null) {
@@ -224,7 +239,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName, final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return false;
     String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
-    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
+    return Messages.showYesNoDialog(project, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != Messages.YES;
   }
 
   private static void addOverriddenAndImplemented(PsiMethod methodPrototype, final String newName, final Map<PsiElement, String> allRenames) {
@@ -256,6 +271,16 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
       JavaUnresolvableLocalCollisionDetector.findCollisions(element, newName, result);
       findLocalHidesFieldCollisions(element, newName, allRenames, result);
+    }
+  }
+
+  @Override
+  public void findExistingNameConflicts(PsiElement element,
+                                        String newName,
+                                        MultiMap<PsiElement, String> conflicts,
+                                        Map<PsiElement, String> allRenames) {
+    for (PsiElement psiElement : allRenames.keySet()) {
+      RenamePsiElementProcessor.forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
     }
   }
 

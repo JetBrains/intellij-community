@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,9 @@ public abstract class XmlContentDFA {
 
   @Nullable
   public static XmlContentDFA getContentDFA(@NotNull XmlTag parentTag) {
+
+    if (TemplateLanguageUtil.isInsideTemplateFile(parentTag)) return null;
+
     XmlContentDFA contentDFA = XsContentDFA.createContentDFA(parentTag);
     if (contentDFA != null) return contentDFA;
     return XmlContentDFAImpl.createContentDFA(parentTag);

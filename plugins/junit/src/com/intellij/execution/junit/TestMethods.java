@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 
 import java.util.Collection;
@@ -68,8 +69,9 @@ public class TestMethods extends TestMethod {
     });
     if (exception[0] != null) throw exception[0];
     final LinkedHashSet<TestInfo> methods = new LinkedHashSet<TestInfo>();
+    final GlobalSearchScope searchScope = myConfiguration.getConfigurationModule().getSearchScope();
     for (AbstractTestProxy failedTest : myFailedTests) {
-      Location location = failedTest.getLocation(project);
+      Location location = failedTest.getLocation(project, searchScope);
       if (!(location instanceof MethodLocation)) continue;
       PsiElement psiElement = location.getPsiElement();
       LOG.assertTrue(psiElement instanceof PsiMethod);
@@ -79,7 +81,7 @@ public class TestMethods extends TestMethod {
     addClassesListToJavaParameters(methods, new Function<TestInfo, String>() {
       public String fun(TestInfo testInfo) {
         if (testInfo != null) {
-          final MethodLocation location = (MethodLocation)testInfo.getLocation(project);
+          final MethodLocation location = (MethodLocation)testInfo.getLocation(project, searchScope);
           LOG.assertTrue(location != null);
           return JavaExecutionUtil.getRuntimeQualifiedName(location.getContainingClass()) + "," + testInfo.getName();
         }

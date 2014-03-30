@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +31,7 @@ public interface PsiImportStatementBase extends PsiElement {
   PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
 
   ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
+    @NotNull
     @Override
     public PsiImportStatementBase[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
@@ -59,4 +61,6 @@ public interface PsiImportStatementBase extends PsiElement {
    */
   @Nullable
   PsiElement resolve();
+
+  boolean isForeignFileImport();
 }

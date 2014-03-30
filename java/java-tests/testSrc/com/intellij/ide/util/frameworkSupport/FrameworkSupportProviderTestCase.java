@@ -4,7 +4,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
-import com.intellij.framework.FrameworkType;
+import com.intellij.framework.*;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
@@ -62,7 +62,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
           final IdeaModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
           for (FrameworkSupportNode node : myNodes.values()) {
             if (node.isChecked()) {
-              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getProvider());
+              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getUserObject());
               configurable.addSupport(myModule, model, modelsProvider);
               if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
                 selectedConfigurables.add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
@@ -112,6 +112,11 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     return configurable;
   }
 
+  protected void selectVersion(FrameworkType frameworkType, com.intellij.framework.FrameworkVersion version) {
+    myFrameworkSupportModel.setSelectedVersion(frameworkType.getId(), version);
+  }
+
+  @NotNull
   protected <F extends Facet> F getFacet(FacetTypeId<F> id) {
     final F facet = FacetManager.getInstance(myModule).getFacetByType(id);
     assertNotNull(id + " facet not found", facet);

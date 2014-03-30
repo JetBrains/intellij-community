@@ -154,7 +154,7 @@ class MyTest5 {
     }
 }
 
-public class MyTest6 {
+class MyTest6 {
     interface I {
        void _(Integer i);
     }
@@ -169,7 +169,7 @@ public class MyTest6 {
     }
 }
 
-public class MyTest7 {
+class MyTest7 {
     interface I {
        void _(Number i);
     }

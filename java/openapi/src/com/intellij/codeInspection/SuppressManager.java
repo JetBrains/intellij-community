@@ -22,48 +22,30 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
-public abstract class SuppressManager {
-  public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
+public abstract class SuppressManager implements BatchSuppressManager {
 
   public static SuppressManager getInstance() {
     return ServiceManager.getService(SuppressManager.class);
   }
 
-  @NotNull
-  public abstract SuppressIntentionAction[] createSuppressActions(@NotNull HighlightDisplayKey key);
-
-  public abstract boolean isSuppressedFor(@NotNull PsiElement element, final String toolId);
-
-  public abstract PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, final String inspectionToolID);
-
-  @Nullable
-  public abstract PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, String inspectionToolID);
-
-  @Nullable
-  public abstract PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID);
-
-  @NotNull
-  public abstract Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner);
-
-  @Nullable
-  public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
-
-  @Nullable
-  public abstract PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, String toolId);
-
-  public abstract boolean canHave15Suppressions(@NotNull PsiElement file);
-
-  public abstract boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner);
-
   public static boolean isSuppressedInspectionName(PsiLiteralExpression expression) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(expression, PsiAnnotation.class, true, PsiCodeBlock.class, PsiField.class);
     return annotation != null && SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(annotation.getQualifiedName());
   }
+
+  @NotNull
+  @Override
+  public SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey key) {
+    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(key);
+  }
+
+  @NotNull
+  public abstract SuppressIntentionAction[] createSuppressActions(@NotNull HighlightDisplayKey key);
 }

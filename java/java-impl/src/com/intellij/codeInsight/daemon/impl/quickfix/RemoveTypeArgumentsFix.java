@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOGGER = Logger.getInstance("#" + RemoveTypeArgumentsFix.class.getName());
 
-  public RemoveTypeArgumentsFix(@Nullable PsiElement element) {
+  public RemoveTypeArgumentsFix(@NotNull PsiElement element) {
     super(element);
   }
 

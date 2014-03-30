@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.components.impl;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
+import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,12 +33,15 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
+  private static final CompositePathMacroFilter ourFilter = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
+
   private PathMacrosImpl myPathMacros;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
@@ -106,27 +112,27 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   @Override
-  public String collapsePath(final String path) {
+  public String collapsePath(@Nullable String path) {
     return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   @Override
-  public void collapsePathsRecursively(final Element element) {
+  public void collapsePathsRecursively(@NotNull final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
   @Override
-  public String collapsePathsRecursively(final String text) {
+  public String collapsePathsRecursively(@NotNull final String text) {
     return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);
   }
 
   @Override
-  public void expandPaths(final Element element) {
+  public void expandPaths(@NotNull final Element element) {
     getExpandMacroMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
   @Override
-  public void collapsePaths(final Element element) {
+  public void collapsePaths(@NotNull final Element element) {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
@@ -139,6 +145,7 @@ public class BasePathMacroManager extends PathMacroManager {
   }
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
+    private final String myLock = new String("MyTrackingPathMacroSubstitutor.lock");
     private final Map<String, Set<String>> myMacroToComponentNames = new FactoryMap<String, Set<String>>() {
       @Override
       protected Set<String> create(String key) {
@@ -158,8 +165,10 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @Override
     public void reset() {
-      myMacroToComponentNames.clear();
-      myComponentNameToMacros.clear();
+      synchronized (myLock) {
+        myMacroToComponentNames.clear();
+        myComponentNameToMacros.clear();
+      }
     }
 
     @Override
@@ -168,7 +177,7 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     @Override
-    public String collapsePath(final String path) {
+    public String collapsePath(@Nullable String path) {
       return getReplacePathMap().substitute(path, SystemInfo.isFileSystemCaseSensitive);
     }
 
@@ -179,7 +188,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @Override
     public void collapsePaths(final Element element) {
-      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
+      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, ourFilter);
     }
 
     public int hashCode() {
@@ -188,45 +197,52 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @Override
     public void invalidateUnknownMacros(final Set<String> macros) {
-      for (final String macro : macros) {
-        final Set<String> components = myMacroToComponentNames.get(macro);
-        for (final String component : components) {
-          myComponentNameToMacros.remove(component);
-        }
+      synchronized (myLock) {
+        for (final String macro : macros) {
+          final Set<String> components = myMacroToComponentNames.get(macro);
+          for (final String component : components) {
+            myComponentNameToMacros.remove(component);
+          }
 
-        myMacroToComponentNames.remove(macro);
+          myMacroToComponentNames.remove(macro);
+        }
       }
     }
 
     @Override
     public Collection<String> getComponents(final Collection<String> macros) {
-      final Set<String> result = new HashSet<String>();
-      for (String macro : myMacroToComponentNames.keySet()) {
-        if (macros.contains(macro)) {
-          result.addAll(myMacroToComponentNames.get(macro));
+      synchronized (myLock) {
+        final Set<String> result = new HashSet<String>();
+        for (String macro : myMacroToComponentNames.keySet()) {
+          if (macros.contains(macro)) {
+            result.addAll(myMacroToComponentNames.get(macro));
+          }
         }
-      }
 
-      return result;
+        return result;
+      }
     }
 
     @Override
     public Collection<String> getUnknownMacros(final String componentName) {
-      final Set<String> result = new HashSet<String>();
-      result.addAll(componentName == null ? myMacroToComponentNames.keySet() : myComponentNameToMacros.get(componentName));
-      return Collections.unmodifiableCollection(result);
+      synchronized (myLock) {
+        final Set<String> result = new HashSet<String>();
+        result.addAll(componentName == null ? myMacroToComponentNames.keySet() : myComponentNameToMacros.get(componentName));
+        return Collections.unmodifiableCollection(result);
+      }
     }
 
     @Override
     public void addUnknownMacros(final String componentName, final Collection<String> unknownMacros) {
       if (unknownMacros.isEmpty()) return;
-      
-      for (String unknownMacro : unknownMacros) {
-        final Set<String> stringList = myMacroToComponentNames.get(unknownMacro);
-        stringList.add(componentName);
-      }
 
-      myComponentNameToMacros.get(componentName).addAll(unknownMacros);
+      synchronized (myLock) {
+        for (String unknownMacro : unknownMacros) {
+          myMacroToComponentNames.get(unknownMacro).add(componentName);
+        }
+
+        myComponentNameToMacros.get(componentName).addAll(unknownMacros);
+      }
     }
   }
 

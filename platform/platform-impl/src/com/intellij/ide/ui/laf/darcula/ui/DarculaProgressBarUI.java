@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import sun.swing.SwingUtilities2;
 
@@ -53,14 +54,15 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       return;
     }
     //boxRect = getBox(boxRect);
-    g.setColor(Gray._128);
+    g.setColor(new JBColor(Gray._240, Gray._128));
     int w = c.getWidth();
-    int h = c.getHeight();
-    g.fillRect(0, 0, w, h);
-    g.setColor(Gray._88);
+    int h = c.getPreferredSize().height;
+    g.fillRect(0, (c.getHeight() - h)/2, w, h);
+    g.setColor(new JBColor(Gray._165, Gray._88));
     GraphicsUtil.setupAAPainting(g);
     Path2D.Double path = new Path2D.Double();
     int ww = getPeriodLength() / 2;
+    g.translate(0, (c.getHeight() - h)/2);
     path.moveTo(0, 0);
     path.lineTo(ww, 0);
     path.lineTo(ww - h / 2, h);
@@ -83,6 +85,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     ((Graphics2D)g).setPaint(c.getParent().getBackground());
     ((Graphics2D)g).fill(area);
     g.drawRoundRect(1,1, w-3, h-3, 8,8);
+    g.translate(0, -(c.getHeight() - h)/2);
 
     // Deal with possible text painting
     if (progressBar.isStringPainted()) {
@@ -108,7 +111,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     GraphicsUtil.setupAAPainting(g);
     Insets b = progressBar.getInsets(); // area for border
     final int w = progressBar.getWidth();
-    final int h = progressBar.getHeight();
+    final int h = progressBar.getPreferredSize().height;
     int barRectWidth = w - (b.right + b.left);
     int barRectHeight = h - (b.top + b.bottom);
 
@@ -122,13 +125,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     Graphics2D g2 = (Graphics2D)g;
     g.fillRect(0, 0, w, h);
 
+    g2.translate(0, (c.getHeight() - h)/2);
     g2.setColor(progressBar.getForeground());
     g2.fill(new RoundRectangle2D.Double(0, 0, w - 1, h - 1, 9, 9));
     g2.setColor(c.getParent().getBackground());
     g2.fill(new RoundRectangle2D.Double(1,1,w-3,h-3,8,8));
     g2.setColor(progressBar.getForeground());
     g2.fill(new RoundRectangle2D.Double(2,2,amountFull-5,h-5,7,7));
-
+    g2.translate(0, -(c.getHeight() - h)/2);
 
     // Deal with possible text painting
     if (progressBar.isStringPainted()) {
@@ -151,7 +155,7 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
                                               x, y, w, h);
     Rectangle oldClip = g2.getClipBounds();
 
-    if (progressBar.getOrientation() == JProgressBar.HORIZONTAL) {
+    if (progressBar.getOrientation() == SwingConstants.HORIZONTAL) {
       g2.setColor(getSelectionBackground());
       SwingUtilities2.drawString(progressBar, g2, progressString,
                                  renderLocation.x, renderLocation.y);

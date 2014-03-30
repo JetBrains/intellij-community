@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,25 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
 /**
  * @author Sergey Evdokimov
  */
 public class GrMethodWrapper extends GrLightMethodBuilder {
-
-  private static PsiType TYPE_MARKER = new PsiPrimitiveType("xxx", PsiAnnotation.EMPTY_ARRAY);
-
-  private volatile boolean myNavigationElementInit;
+  private static final PsiType TYPE_MARKER = new GrPsiTypeStub() {
+    @Override
+    public boolean isValid() {
+      return false;
+    }
+  };
 
   private final PsiMethod myWrappedMethod;
+  private volatile boolean myNavigationElementInit;
 
   private GrMethodWrapper(PsiMethod method) {
     super(method.getManager(), method.getName());
@@ -41,15 +45,7 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
 
     getModifierList().copyModifiers(method);
 
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      GrLightParameter p = new GrLightParameter(StringUtil.notNullize(parameter.getName()), parameter.getType(), this);
-
-      if (parameter instanceof GrParameter) {
-        p.setOptional(((GrParameter)parameter).isOptional());
-      }
-
-      addParameter(p);
-    }
+    getParameterList().copyParameters(method);
 
     if (method instanceof OriginInfoAwareElement) {
       setOriginInfo(((OriginInfoAwareElement)method).getOriginInfo());

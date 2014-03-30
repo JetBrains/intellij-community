@@ -20,21 +20,23 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -55,34 +58,82 @@ import java.util.List;
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
+    @Override
     public String convert(TreePath o) {
       String text = null;
       if (o != null) {
         final Object node = o.getLastPathComponent();
-        if (node instanceof XValueNodeImpl) {
-          text = ((XValueNodeImpl)node).getName();
+        if (node instanceof RestorableStateNode) {
+          text = ((RestorableStateNode)node).getName();
         }
         else if (node instanceof XDebuggerTreeNode) {
           text = ((XDebuggerTreeNode)node).getText().toString();
         }
       }
-      return text != null ? text : "";
+      return StringUtil.notNullize(text);
     }
   };
+
+  private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
+    @Override
+    protected Transferable createTransferable(JComponent c) {
+      if (!(c instanceof XDebuggerTree)) {
+        return null;
+      }
+      XDebuggerTree tree = (XDebuggerTree)c;
+      //noinspection deprecation
+      TreePath[] selectedPaths = tree.getSelectionPaths();
+      if (selectedPaths == null || selectedPaths.length == 0) {
+        return null;
+      }
+
+      StringBuilder plainBuf = new StringBuilder();
+      StringBuilder htmlBuf = new StringBuilder();
+      htmlBuf.append("<html>\n<body>\n<ul>\n");
+      TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
+      for (TreePath path : selectedPaths) {
+        htmlBuf.append("  <li>");
+        Object node = path.getLastPathComponent();
+        if (node != null) {
+          if (node instanceof XDebuggerTreeNode) {
+            ((XDebuggerTreeNode)node).appendToComponent(coloredTextContainer);
+            coloredTextContainer.appendTo(plainBuf, htmlBuf);
+          }
+          else {
+            String text = node.toString();
+            plainBuf.append(text);
+            htmlBuf.append(text);
+          }
+        }
+        plainBuf.append('\n');
+        htmlBuf.append("</li>\n");
+      }
+
+      // remove the last newline
+      plainBuf.setLength(plainBuf.length() - 1);
+      htmlBuf.append("</ul>\n</body>\n</html>");
+      return new TextTransferable(htmlBuf.toString(), plainBuf.toString());
+    }
+
+    @Override
+    public int getSourceActions(JComponent c) {
+      return COPY;
+    }
+  };
+
   private final DefaultTreeModel myTreeModel;
   private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final XDebugSession mySession;
-  private final PopupHandler myPopupHandler;
+  private final XValueMarkers<?,?> myValueMarkers;
 
-  public XDebuggerTree(final @NotNull XDebugSession session,
+  public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
                        final @Nullable XSourcePosition sourcePosition,
-                       final @NotNull String popupActionGroupId) {
-    mySession = session;
-    myProject = session.getProject();
+                       final @NotNull String popupActionGroupId, @Nullable XValueMarkers<?, ?> valueMarkers) {
+    myValueMarkers = valueMarkers;
+    myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = new DefaultTreeModel(null);
@@ -90,7 +141,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
-      protected void handleTagClick(Object tag, MouseEvent event) {
+      protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
         if (tag instanceof XDebuggerTreeNodeHyperlink) {
           ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
         }
@@ -116,18 +167,25 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     });
-    new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+
+    if (Boolean.valueOf(System.getProperty("xdebugger.variablesView.rss"))) {
+      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
+    else {
+      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
 
     final ActionManager actionManager = ActionManager.getInstance();
-    myPopupHandler = new PopupHandler() {
+    addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
-        final ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(comp, x, y);
+        ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
+        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
-    };
-    addMouseListener(myPopupHandler);
+    });
     registerShortcuts();
+
+    setTransferHandler(DEFAULT_TRANSFER_HANDLER);
   }
 
   private void expandIfEllipsis() {
@@ -179,15 +237,16 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myProject;
   }
 
-  @NotNull
-  public XDebugSession getSession() {
-    return mySession;
+  @Nullable
+  public XValueMarkers<?, ?> getValueMarkers() {
+    return myValueMarkers;
   }
 
   public DefaultTreeModel getTreeModel() {
     return myTreeModel;
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (XDEBUGGER_TREE_KEY.is(dataId)) {
@@ -213,9 +272,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
-  public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @NotNull String value) {
+  public void nodeLoaded(final @NotNull RestorableStateNode node, final @NotNull String name) {
     for (XDebuggerTreeListener listener : myListeners) {
-      listener.nodeLoaded(node, name, value);
+      listener.nodeLoaded(node, name);
     }
   }
 
@@ -226,11 +285,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
+  @Override
   public void dispose() {
     ActionManager actionManager = ActionManager.getInstance();
     actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.MARK_OBJECT).unregisterCustomShortcutSet(this);
   }
 
@@ -240,6 +301,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    Shortcut[] editTypeShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(XDebuggerActions.EDIT_TYPE_SOURCE);
+    actionManager.getAction(XDebuggerActions.JUMP_TO_TYPE_SOURCE).registerCustomShortcutSet(new CustomShortcutSet(editTypeShortcuts), this);
     actionManager.getAction(XDebuggerActions.MARK_OBJECT)
       .registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
   }

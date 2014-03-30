@@ -25,9 +25,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.CommonInspectionToolWrapper;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,14 +56,15 @@ import java.util.*;
 
 public class InspectionTree extends Tree {
   private final HashSet<Object> myExpandedUserObjects;
+  @NotNull private final GlobalInspectionContextImpl myContext;
   private SelectionPath mySelectionPath;
-  private static final RefEntity[] EMPTY_ELEMENTS_ARRAY = new RefEntity[0];
   private static final ProblemDescriptor[] EMPTY_DESCRIPTORS = new ProblemDescriptor[0];
 
-  public InspectionTree(final Project project) {
+  public InspectionTree(@NotNull Project project, @NotNull GlobalInspectionContextImpl context) {
     super(new InspectionRootNode(project));
+    myContext = context;
 
-    setCellRenderer(new CellRenderer());//project));
+    setCellRenderer(new CellRenderer());
     setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(this);
     addTreeWillExpandListener(new ExpandListener());
@@ -75,12 +74,14 @@ public class InspectionTree extends Tree {
 
     TreeUtil.installActions(this);
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
+      @Override
       public String convert(TreePath o) {
         return InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString());
       }
     });
 
     addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         TreePath newSelection = e.getNewLeadSelectionPath();
         if (newSelection != null) {
@@ -100,19 +101,20 @@ public class InspectionTree extends Tree {
   }
 
   @Nullable
-  public InspectionTool getSelectedTool() {
+  public InspectionToolWrapper getSelectedToolWrapper() {
     final TreePath[] paths = getSelectionPaths();
     if (paths == null) return null;
-    InspectionTool tool = null;
+    InspectionToolWrapper toolWrapper = null;
     for (TreePath path : paths) {
       Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
         if (node instanceof InspectionNode) {
-          if (tool == null) {
-            tool = ((InspectionNode)node).getTool();
+          InspectionToolWrapper wrapper = ((InspectionNode)node).getToolWrapper();
+          if (toolWrapper == null) {
+            toolWrapper = wrapper;
           }
-          else if (tool != ((InspectionNode)node).getTool()) {
+          else if (toolWrapper != wrapper) {
             return null;
           }
           break;
@@ -120,15 +122,15 @@ public class InspectionTree extends Tree {
       }
     }
 
-    return tool;
+    return toolWrapper;
   }
 
   @NotNull
   public RefEntity[] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
     if (selectionPaths != null) {
-      final InspectionTool selectedTool = getSelectedTool();
-      if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
+      InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+      if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
 
       List<RefEntity> result = new ArrayList<RefEntity>();
       for (TreePath selectionPath : selectionPaths) {
@@ -137,7 +139,7 @@ public class InspectionTree extends Tree {
       }
       return result.toArray(new RefEntity[result.size()]);
     }
-    return EMPTY_ELEMENTS_ARRAY;
+    return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
   private static void addElementsInNode(InspectionTreeNode node, List<RefEntity> out) {
@@ -158,12 +160,12 @@ public class InspectionTree extends Tree {
     while (children.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
       addElementsInNode(child, out);
-    }    
+    }
   }
 
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    final InspectionTool tool = getSelectedTool();
-    if (getSelectionCount() == 0 || !(tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper))) return EMPTY_DESCRIPTORS;
+    final InspectionToolWrapper toolWrapper = getSelectedToolWrapper();
+    if (getSelectionCount() == 0) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = getSelectionPaths();
     final LinkedHashSet<CommonProblemDescriptor> descriptors = new LinkedHashSet<CommonProblemDescriptor>();
     for (TreePath path : paths) {
@@ -187,6 +189,7 @@ public class InspectionTree extends Tree {
   }
 
   private class ExpandListener implements TreeWillExpandListener {
+    @Override
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       final Object userObject = node.getUserObject();
@@ -199,6 +202,7 @@ public class InspectionTree extends Tree {
       // Smart expand
       if (node.getChildCount() == 1) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             expandPath(new TreePath(node.getPath()));
           }
@@ -206,6 +210,7 @@ public class InspectionTree extends Tree {
       }
     }
 
+    @Override
     public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
       InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myExpandedUserObjects.remove(node.getUserObject());
@@ -240,6 +245,7 @@ public class InspectionTree extends Tree {
         myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
       }*/
 
+    @Override
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -371,5 +377,10 @@ public class InspectionTree extends Tree {
         }
       }
     }
+  }
+
+  @NotNull
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
   }
 }

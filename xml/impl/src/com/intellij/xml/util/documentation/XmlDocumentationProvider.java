@@ -34,10 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlBundle;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -94,7 +91,8 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       if (curElement!=null) {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
-    } else if (element instanceof XmlTag) {
+    }
+    else if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
@@ -274,7 +272,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     return generateDoc(text, name,null, null);
   }
 
-  private XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
+  private static XmlTag getComplexOrSimpleTypeDefinition(PsiElement element, PsiElement originalElement) {
     XmlElementDescriptor descriptor = element.getUserData(DESCRIPTOR_KEY);
 
     XmlTag contextTag = null;
@@ -334,6 +332,11 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+
+    if (object instanceof XmlExtension.TagInfo) {
+      return ((XmlExtension.TagInfo)object).getDeclaration();
+    }
+
     final PsiElement originalElement = element;
     boolean isAttrCompletion = element instanceof XmlAttribute;
 
@@ -419,14 +422,13 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (object instanceof String && originalElement != null) {
       PsiElement result = findDeclWithName((String)object, originalElement);
 
-      PsiElement originalElementParent;
-      if (result == null && element instanceof XmlTag && (originalElementParent = originalElement.getParent()) instanceof XmlAttributeValue) {
-        PsiElement originalElementGrandParent = originalElementParent.getParent();
-        XmlAttributeDescriptor descriptor = originalElementGrandParent instanceof XmlAttribute ?
-                                            ((XmlAttribute)originalElementGrandParent).getDescriptor():null;
-
-        if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
-          result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+      if (result == null && element instanceof XmlTag) {
+        XmlAttribute attribute = PsiTreeUtil.getParentOfType(originalElement, XmlAttribute.class, false);
+        if (attribute != null) {
+          XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+          if (descriptor != null && descriptor.getDeclaration() instanceof XmlTag) {
+            result = findEnumerationValue((String)object, (XmlTag)descriptor.getDeclaration());
+          }
         }
       }
       return result;

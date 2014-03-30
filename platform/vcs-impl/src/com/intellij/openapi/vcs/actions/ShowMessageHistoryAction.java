@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.actions.ContentChooser;
@@ -46,7 +47,7 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
     super.update(e);
 
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     Object panel = CheckinProjectPanel.PANEL_KEY.getData(dc);
     if (! (panel instanceof CommitMessageI)) {
       panel = VcsDataKeys.COMMIT_MESSAGE_CONTROL.getData(dc);
@@ -66,7 +67,7 @@ public class ShowMessageHistoryAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     CommitMessageI commitMessageI;
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     final Refreshable panel = CheckinProjectPanel.PANEL_KEY.getData(dc);
     commitMessageI = (panel instanceof CommitMessageI) ? (CommitMessageI)panel : VcsDataKeys.COMMIT_MESSAGE_CONTROL.getData(dc);
 

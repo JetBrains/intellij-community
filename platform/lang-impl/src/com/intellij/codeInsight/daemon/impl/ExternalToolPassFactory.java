@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
     return new ExternalToolPass(this, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
-  private static boolean externalAnnotatorsDefined(PsiFile file) {
+  private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
     for (Language language : file.getViewProvider().getLanguages()) {
       final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.allForFile(language, file);
       if (!externalAnnotators.isEmpty()) {

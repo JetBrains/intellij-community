@@ -22,7 +22,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.TestErrorReporter;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
 import org.apache.xerces.impl.xs.XSElementDecl;
@@ -102,7 +103,7 @@ public class XmlConstraintsTest extends CodeInsightFixtureTestCase {
         return parser;
       }
     };
-    handler.setErrorReporter(handler.new TestErrorReporter());
+    handler.setErrorReporter(new TestErrorReporter(handler));
     handler.doValidate(file);
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
     assert grammarPool != null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -74,6 +74,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -145,7 +146,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
     }
 
-    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
+    return (GrTypeElement)findChildByType(TokenSets.TYPE_ELEMENTS);
   }
 
   public PsiType getInferredReturnType() {
@@ -162,14 +163,20 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (final GrTypeParameter typeParameter : getTypeParameters()) {
-      if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+    ClassHint classHint = processor.getHint(ClassHint.KEY);
+
+    if (ResolveUtil.shouldProcessClasses(classHint)) {
+      for (final GrTypeParameter typeParameter : getTypeParameters()) {
+        if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
+      }
     }
 
-    for (final GrParameter parameter : getParameters()) {
-      if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+    if (ResolveUtil.shouldProcessProperties(classHint)) {
+      for (final GrParameter parameter : getParameters()) {
+        if (!ResolveUtil.processElement(processor, parameter, state)) return false;
+      }
     }
 
     return true;
@@ -261,18 +268,20 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
     GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (newReturnType == null) {
+    if (newReturnType == null || newReturnType == PsiType.NULL) {
       if (typeElement != null) typeElement.delete();
+      insertPlaceHolderToModifierList();
       return null;
     }
-    GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    final GrTypeElement stub = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    GrTypeElement newTypeElement;
     if (typeElement == null) {
-      PsiElement anchor = getTypeParameterList();
-      if (anchor == null) anchor = getModifierList();
-      newTypeElement = (GrTypeElement)addAfter(newTypeElement, anchor);
+      final GrTypeParameterList typeParemeterList = getTypeParameterList();
+      PsiElement anchor = typeParemeterList != null ? typeParemeterList : getModifierList();
+      newTypeElement = (GrTypeElement)addAfter(stub, anchor);
     }
     else {
-      newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
+      newTypeElement = (GrTypeElement)typeElement.replace(stub);
     }
 
     newTypeElement.accept(new GroovyRecursiveElementVisitor() {
@@ -285,13 +294,19 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return newTypeElement;
   }
 
+  private void insertPlaceHolderToModifierList() {
+    final GrModifierList list = getModifierList();
+    PsiImplUtil.insertPlaceHolderToModifierListAtEndIfNeeded(list);
+  }
+
   @Override
   protected boolean isVisibilitySupported() {
     return true;
   }
 
+  @Nullable
   @Override
-  public Icon getIcon(int flags) {
+  protected Icon getElementIcon(@IconFlags int flags) {
     RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(JetgroovyIcons.Groovy.Method, this, false);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
@@ -539,28 +554,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return visitor.getResult();
   }
 
-  public PsiType getReturnTypeNoResolve() {
-    if (isConstructor()) return null;
-
-    final GrMethodStub stub = getStub();
-    if (stub != null) {
-      final String typeText = stub.getTypeText();
-      if (typeText == null) return null;
-
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (typeElement == null) return null;
-    return typeElement.getTypeNoResolve(this);
-  }
-
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
@@ -569,7 +562,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
       @Override
       public Result<GrReflectedMethod[]> compute() {
         return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrMethodBaseImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);

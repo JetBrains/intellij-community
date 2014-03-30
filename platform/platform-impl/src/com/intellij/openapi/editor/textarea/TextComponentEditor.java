@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
   private final TextComponentFoldingModel myFoldingModel;
   private EditorSettings mySettings;
 
-  public TextComponentEditor(final Project project, final JTextComponent textComponent) {
+  public TextComponentEditor(final Project project, @NotNull JTextComponent textComponent) {
     myProject = project;
     myTextComponent = textComponent;
     if (textComponent instanceof JTextArea) {
@@ -98,7 +98,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
 
   @Override
   @NotNull
-  public SelectionModel getSelectionModel() {
+  public TextComponentSelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 

@@ -16,10 +16,13 @@
 
 package com.maddyhome.idea.copyright.options;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class LanguageOptions implements JDOMExternalizable, Cloneable {
+public class LanguageOptions implements Cloneable {
   public static final int NO_COPYRIGHT = 1;
   public static final int USE_TEMPLATE = 2;
   public static final int USE_TEXT = 3;

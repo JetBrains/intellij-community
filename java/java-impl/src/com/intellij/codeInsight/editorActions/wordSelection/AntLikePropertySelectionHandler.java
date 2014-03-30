@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -28,11 +29,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AntLikePropertySelectionHandler implements ExtendWordSelectionHandler {
+public class AntLikePropertySelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     Language l = e.getLanguage();
-    if (!(l.equals(StdLanguages.JAVA)
+    if (!(l.equals(JavaLanguage.INSTANCE)
           || l.equals(StdLanguages.XML)
           || l.equals(StdLanguages.ANT))) {
       return false;

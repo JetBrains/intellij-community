@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -43,16 +43,12 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
@@ -152,7 +148,7 @@ public class StaticImportMethodFix implements IntentionAction {
     }
     return null;
   }
-  
+
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
@@ -163,12 +159,36 @@ public class StaticImportMethodFix implements IntentionAction {
     final List<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
-
+    final Map<PsiClass, Boolean> possibleClasses = new HashMap<PsiClass, Boolean>();
     final PsiType expectedType = getExpectedType();
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+
+    final Map<PsiClass, PsiMethod> deprecated = new HashMap<PsiClass, PsiMethod>();
+    class RegisterMethodsProcessor {
+      private void registerMethod(PsiClass containingClass, PsiMethod method) {
+        final Boolean alreadyMentioned = possibleClasses.get(containingClass);
+        if (alreadyMentioned == Boolean.TRUE) return;
+        if (alreadyMentioned == null) {
+          list.add(method);
+          possibleClasses.put(containingClass, false);
+        }
+        PsiSubstitutor substitutorForMethod = resolveHelper
+          .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
+                              argumentList.getExpressions(),
+                              PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
+        if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
+          final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
+          if (expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType)) {
+            applicableList.add(method);
+            possibleClasses.put(containingClass, true);
+          }
+        }
+      }
+    }
+
+    final RegisterMethodsProcessor registrar = new RegisterMethodsProcessor();
     cache.processMethodsWithName(name, scope, new Processor<PsiMethod>() {
-      private final Set<PsiClass> myPossibleClasses = new HashSet<PsiClass>();
       @Override
       public boolean process(PsiMethod method) {
         ProgressManager.checkCanceled();
@@ -179,22 +199,39 @@ public class StaticImportMethodFix implements IntentionAction {
         if (file instanceof PsiJavaFile
             //do not show methods from default package
             && !((PsiJavaFile)file).getPackageName().isEmpty()
-            && PsiUtil.isAccessible(method, element, containingClass)) {
-          if (!myPossibleClasses.add(containingClass)) return true;
-          list.add(method);
-          PsiSubstitutor substitutorForMethod = resolveHelper
-            .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(), argumentList.getExpressions(),
-                                PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
-          if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-            final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-            if (expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType)) {
-              applicableList.add(method);
-            }
+            && PsiUtil.isAccessible(file.getProject(), method, element, containingClass)) {
+          if (isEffectivelyDeprecated(method)) {
+            deprecated.put(containingClass, method);
+            return processCondition();
           }
+          registrar.registerMethod(containingClass, method);
         }
-        return (applicableList.isEmpty() ? list : applicableList).size() < 50;
+        return processCondition();
+      }
+
+      private boolean isEffectivelyDeprecated(PsiMethod method) {
+        if (method.isDeprecated()) {
+          return true;
+        }
+        PsiClass aClass = method.getContainingClass();
+        while (aClass != null) {
+          if (aClass.isDeprecated()) {
+            return true;
+          }
+          aClass = aClass.getContainingClass();
+        }
+        return false;
+      }
+
+      private boolean processCondition() {
+        return (applicableList.isEmpty() ? list : applicableList).size() + deprecated.size() < 50;
       }
     });
+
+    for (Map.Entry<PsiClass, PsiMethod> deprecatedMethod : deprecated.entrySet()) {
+      registrar.registerMethod(deprecatedMethod.getKey(), deprecatedMethod.getValue());
+    }
+
     List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
     for (int i = result.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
@@ -209,7 +246,7 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   public static boolean isExcluded(PsiMember method) {
-    String name = getMemberQualifiedName(method);
+    String name = PsiUtil.getMemberQualifiedName(method);
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
@@ -222,7 +259,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (candidates.size() == 1) {
       final PsiMethod toImport = candidates.get(0);
       doImport(toImport);
@@ -277,7 +314,7 @@ public class StaticImportMethodFix implements IntentionAction {
             return FINAL_CHOICE;
           }
 
-          String qname = getMemberQualifiedName(selectedValue);
+          String qname = PsiUtil.getMemberQualifiedName(selectedValue);
           if (qname == null) return FINAL_CHOICE;
           List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
           return new BaseListPopupStep<String>(null, excludableStrings) {
@@ -329,6 +366,9 @@ public class StaticImportMethodFix implements IntentionAction {
                 JPanel panel = new JPanel(new BorderLayout());
                 if (moduleRenderer != null) {
                   Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  if (!isSelected) {
+                    moduleComponent.setBackground(getBackgroundColor(value));
+                  }
                   panel.add(moduleComponent, BorderLayout.CENTER);
                 }
                 rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -342,19 +382,6 @@ public class StaticImportMethodFix implements IntentionAction {
       }
     };
     popup.showInBestPositionFor(editor);
-  }
-
-  @Nullable
-  public static String getMemberQualifiedName(PsiMember member) {
-    if (member instanceof PsiClass) {
-      return ((PsiClass)member).getQualifiedName();
-    }
-
-    PsiClass containingClass = member.getContainingClass();
-    if (containingClass == null) return null;
-    String className = containingClass.getQualifiedName();
-    if (className == null) return null;
-    return className + "." + member.getName();
   }
 
   @Override

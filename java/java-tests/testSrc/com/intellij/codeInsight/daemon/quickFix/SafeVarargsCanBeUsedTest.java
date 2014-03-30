@@ -20,7 +20,7 @@ import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SafeVarargsCanBeUsedTest extends LightQuickFixTestCase {
+public class SafeVarargsCanBeUsedTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

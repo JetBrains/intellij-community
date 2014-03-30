@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dyoma
  */
 public class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory {
+  @Override
   public TextConsoleBuilder createBuilder(@NotNull final Project project) {
     return new TextConsoleBuilderImpl(project);
   }

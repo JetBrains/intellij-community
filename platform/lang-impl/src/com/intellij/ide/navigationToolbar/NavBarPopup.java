@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
@@ -48,7 +47,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private static final String JBLIST_KEY = "OriginalList";
   private static final String NAV_BAR_POPUP = "NAV_BAR_POPUP";
   private final NavBarPanel myPanel;
-  private int myIndex;
+  private final int myIndex;
   private static final String DISPOSED_OBJECTS = "DISPOSED_OBJECTS";
 
   public NavBarPopup(final NavBarPanel panel, Object[] siblings, final int selectedIndex) {
@@ -58,12 +57,14 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     ListenerUtil.addMouseListener(getComponent(), new MouseAdapter() {
+      @Override
       public void mouseReleased(final MouseEvent e) {
         if (SystemInfo.isWindows) {
           click(e);
         }
       }
 
+      @Override
       public void mousePressed(final MouseEvent e) {
         if (!SystemInfo.isWindows) {
           click(e);
@@ -111,10 +112,18 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     final RelativePoint point = new RelativePoint(item, new Point(0, item.getHeight()));
     final Point p = point.getPoint(myPanel);
     if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          show(item, false); // end-less loop protection
+          myPanel.getUpdateQueue().rebuildUi();
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              show(item, false); // end-less loop protection
+            }
+          });
         }
       });
     } else {
@@ -204,7 +213,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public Object getSelectedValue() {
     return getList().getSelectedValue();
   }
-  
+
   public Object[] getSelectedValues() {
     return getList().getSelectedValues();
   }
@@ -226,7 +235,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   }
 
   private static class NavbarPopupList extends JBListWithHintProvider implements Queryable {
-    private NavBarPanel myPanel;
+    private final NavBarPanel myPanel;
 
     public NavbarPopupList(NavBarPanel panel, Object[] siblings) {
       super(siblings);

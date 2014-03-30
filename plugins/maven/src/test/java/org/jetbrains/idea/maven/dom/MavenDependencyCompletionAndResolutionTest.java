@@ -20,15 +20,24 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +61,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
+    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
   }
 
   public void testArtifactIdCompletion() throws Exception {
@@ -83,20 +92,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom);
-  }
-
-  public void testDoNotCompleteArtifactIdIfNoGroupId() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom); // should not throw
   }
 
   public void testVersionCompletion() throws Exception {
@@ -414,6 +409,120 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
+  public void testResolveManagedDependency() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencyManagement>" +
+                  "  <dependencies>" +
+                  "    <dependency>" +
+                  "      <groupId>junit</groupId>" +
+                  "      <artifactId>junit</artifactId>" +
+                  "      <version>4.0</version>" +
+                  "    </dependency>" +
+                  "  </dependencies>" +
+                  "</dependencyManagement>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit<caret></artifactId>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
+  public void testResolveSystemManagedDependency() throws Exception {
+    String someJarPath = PathUtil.getJarPathForClass(ArrayList.class).replace('\\', '/');
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencyManagement>" +
+                  "  <dependencies>" +
+                  "    <dependency>" +
+                  "      <groupId>direct-system-dependency</groupId>" +
+                  "      <artifactId>direct-system-dependency</artifactId>" +
+                  "      <version>1.0</version>" +
+                  "      <scope>system</scope>" +
+                  "      <systemPath>" + someJarPath + "</systemPath>" +
+                  "    </dependency>" +
+                  "  </dependencies>" +
+                  "</dependencyManagement>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>direct-system-dependency</groupId>" +
+                  "    <artifactId>direct-system-dependency</artifactId>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                      "<artifactId>project</artifactId>" +
+                      "<version>1</version>" +
+
+                      "<dependencyManagement>" +
+                      "  <dependencies>" +
+                      "    <dependency>" +
+                      "      <groupId>direct-system-dependency</groupId>" +
+                      "      <artifactId>direct-system-dependency</artifactId>" +
+                      "      <version>1.0</version>" +
+                      "      <scope>system</scope>" +
+                      "      <systemPath>" + someJarPath + "</systemPath>" +
+                      "    </dependency>" +
+                      "  </dependencies>" +
+                      "</dependencyManagement>" +
+
+                      "<dependencies>" +
+                      "  <dependency>" +
+                      "    <groupId>direct-system-dependency</groupId>" +
+                      "    <artifactId>direct-system-dependency</artifactId>" +
+                      "  </dependency>" +
+                      "</dependencies>");
+
+    checkHighlighting(myProjectPom, true, false, true);
+  }
+
+  public void testResolveLATESTDependency() throws Exception {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>[1,4.0]</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                      "<artifactId>project</artifactId>" +
+                      "<version>1</version>" +
+
+                      "<dependencies>" +
+                      "  <dependency>" +
+                      "    <groupId>junit</groupId>" +
+                      "    <artifactId>junit<caret></artifactId>" +
+                      "    <version>[1,4.0]</version>" +
+                      "  </dependency>" +
+                      "</dependencies>");
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
   public void testResolutionIsTypeBased() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -544,6 +653,30 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     checkHighlighting();
   }
 
+  public void testCompletionSystemScopeDependenciesWithProperties() throws Throwable {
+    String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>" +
+                     "  <depDir>" + new File(libPath).getParent() + "</depDir>" +
+                     "</properties>" +
+
+                     "<dependencies>" +
+                     "  <dependency>" +
+                     "    <groupId>xxx</groupId>" +
+                     "    <artifactId>xxx</artifactId>" +
+                     "    <version>xxx</version>" +
+                     "    <scope>system</scope>" +
+                     "    <systemPath>${depDir}/<caret></systemPath>" +
+                     "  </dependency>" +
+                     "</dependencies>");
+
+    assertCompletionVariants(myProjectPom, "junit-4.0.jar");
+  }
+
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
@@ -640,7 +773,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle", "jboss-har", "jboss-sar");
+    assertCompletionVariants(myProjectPom, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle", "jboss-har", "jboss-sar", "maven-plugin");
   }
 
   public void testDoNotHighlightUnknownType() throws Throwable {
@@ -945,7 +1078,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                     "</properties>");
 
     importProject();
-
     checkHighlighting(m, true, false, true);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import git4idea.GitRevisionNumber;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.SHAHash;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.*;
@@ -120,12 +121,12 @@ public class GitCommitsSequentialIndex implements GitCommitsSequentially {
   private DataExternalizer<String> createExternalizer() {
     return new DataExternalizer<String>() {
       @Override
-      public void save(DataOutput out, String value) throws IOException {
+      public void save(@NotNull DataOutput out, String value) throws IOException {
         out.writeUTF(value);
       }
 
       @Override
-      public String read(DataInput in) throws IOException {
+      public String read(@NotNull DataInput in) throws IOException {
         return in.readUTF();
       }
     };

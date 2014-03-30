@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,16 +30,19 @@ public class WatermarkIcon implements Icon {
     myAlpha = alpha;
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics graphics = g.create();
     ((Graphics2D)graphics).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, myAlpha));
     myIcon.paintIcon(c, graphics, x, y);
   }
 
+  @Override
   public int getIconWidth() {
     return myIcon.getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return myIcon.getIconHeight();
   }

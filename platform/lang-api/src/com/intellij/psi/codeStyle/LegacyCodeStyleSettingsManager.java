@@ -26,9 +26,9 @@ import org.jdom.Element;
 @State(
   name = "CodeStyleSettingsManager",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/projectCodeStyle.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class LegacyCodeStyleSettingsManager implements PersistentStateComponent<Element> {
   

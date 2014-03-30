@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  public final EditorActionHandler setupHandler(EditorActionHandler newHandler) {
+  public final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     ensureHandlersLoaded();
     EditorActionHandler tmp = myHandler;
     myHandler = newHandler;
@@ -51,8 +51,9 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (!myHandlersLoaded) {
       myHandlersLoaded = true;
       final String id = ActionManager.getInstance().getId(this);
-      for (int i = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME).length - 1; i >= 0; i--) {
-        final EditorActionHandlerBean handlerBean = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME)[i];
+      EditorActionHandlerBean[] extensions = Extensions.getExtensions(EditorActionHandlerBean.EP_NAME);
+      for (int i = extensions.length - 1; i >= 0; i--) {
+        final EditorActionHandlerBean handlerBean = extensions[i];
         if (handlerBean.action.equals(id)) {
           myHandler = handlerBean.getHandler(myHandler);
         }
@@ -68,8 +69,8 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  protected Editor getEditor(final DataContext dataContext) {
-    return PlatformDataKeys.EDITOR.getData(dataContext);
+  protected Editor getEditor(@NotNull DataContext dataContext) {
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
   public final void actionPerformed(final Editor editor, @NotNull final DataContext dataContext) {
@@ -79,7 +80,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     Runnable command = new Runnable() {
       @Override
       public void run() {
-        handler.execute(editor, getProjectAwareDataContext(editor, dataContext));
+        handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
       }
     };
 
@@ -125,14 +126,14 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   }
 
   private static DataContext getProjectAwareDataContext(final Editor editor, @NotNull final DataContext original) {
-    if (PlatformDataKeys.PROJECT.getData(original) == editor.getProject()) {
+    if (CommonDataKeys.PROJECT.getData(original) == editor.getProject()) {
       return original;
     }
 
     return new DataContext() {
       @Override
       public Object getData(String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return editor.getProject();
         }
         return original.getData(dataId);

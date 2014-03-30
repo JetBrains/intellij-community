@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,15 +153,13 @@ public class LinkLabel extends JLabel {
         if (lineY >= getSize().height) {
           lineY = getSize().height - 1;
         }
+
         if (getHorizontalAlignment() == LEFT) {
           UIUtil.drawLine(g, x + shiftX, lineY, x + getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY);
-        }
-        else {
+        } else {
           UIUtil.drawLine(g, getWidth() - 1 - getFontMetrics(getFont()).stringWidth(getText()) + shiftX, lineY,
                           getWidth() - 1 + shiftX, lineY);
         }
-      }
-      else {
       }
 
       if (myPaintDefaultIcon) {

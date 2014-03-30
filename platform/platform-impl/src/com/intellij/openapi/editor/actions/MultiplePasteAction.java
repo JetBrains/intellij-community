@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,9 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (!(focusedComponent instanceof JComponent)) return;
 
@@ -92,7 +92,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     if (chooser.isOK()) {
       final int[] selectedIndices = chooser.getSelectedIndices();
       if (selectedIndices.length == 1) {
-        copyPasteManager.moveContentTopStackTop(chooser.getAllContents().get(selectedIndices[0]));
+        copyPasteManager.moveContentToStackTop(chooser.getAllContents().get(selectedIndices[0]));
       }
       else {
         copyPasteManager.setContents(new StringSelection(chooser.getSelectedText()));
@@ -135,7 +135,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   private static boolean isEnabled(AnActionEvent e) {
     Object component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) return false;
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return !editor.isViewer();
     Action pasteAction = ((JComponent)component).getActionMap().get(DefaultEditorKit.pasteAction);
     return pasteAction != null;

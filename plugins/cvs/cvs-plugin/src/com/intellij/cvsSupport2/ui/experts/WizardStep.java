@@ -55,11 +55,6 @@ public abstract class WizardStep extends StepAdapter{
     return myComponent;
   }
 
-  @Override
-  public Icon getIcon() {
-    return null;
-  }
-
   protected void setStepTitle(String title){
     final IdeaTitledBorder border = IdeBorderFactory.createTitledBorder(title, false);
     getComponent().setBorder(border);

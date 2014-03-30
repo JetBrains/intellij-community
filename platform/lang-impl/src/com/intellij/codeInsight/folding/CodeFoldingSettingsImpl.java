@@ -36,19 +36,23 @@ import java.io.File;
 )
 public class CodeFoldingSettingsImpl extends CodeFoldingSettings implements PersistentStateComponent<CodeFoldingSettings>, ExportableComponent {
 
+  @Override
   public CodeFoldingSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final CodeFoldingSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[] { PathManager.getOptionsFile("editor.codeinsight") };
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return IdeBundle.message("code.folding.settings");

@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class AddNewArrayExpressionTest extends LightQuickFixTestCase {
+public class AddNewArrayExpressionTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 package com.intellij.psi
-
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.reference.SoftReference
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 import java.util.concurrent.CountDownLatch
-
 /**
  * @author peter
  */
@@ -64,7 +66,9 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     int count = 100
     List<PsiClass> classList = (0..<count).collect {
       myFixture.addClass("class Foo$it { " +
-                         (0..<100).collect { "void foo$it(int i, boolean b, Object o) {}" }.join("\n") +
+                         "void foo$it(" +
+                         (0..250).collect { "int i$it"}.join(", ") +
+                         ") {}" +
                          " }")
     }
     CountDownLatch latch = new CountDownLatch(count)
@@ -78,5 +82,52 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
       }
     }
     latch.await()
+  }
+
+  public void "test external modification of a stubbed file with smart pointer switches the file to AST"() {
+    PsiFile file = myFixture.addFileToProject("A.java", "class A {}")
+    def oldClass = JavaPsiFacade.getInstance(project).findClass("A", GlobalSearchScope.allScope(project))
+    def pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(oldClass)
+    
+    def document = FileDocumentManager.instance.getDocument(file.virtualFile)
+    assert document
+    assert file == PsiDocumentManager.getInstance(project).getCachedPsiFile(document)
+    assert document == PsiDocumentManager.getInstance(project).getCachedDocument(file)
+
+    assert ((PsiFileImpl)file).stub
+
+    ApplicationManager.application.runWriteAction { VfsUtil.saveText(file.virtualFile, "import java.util.*; class A {}; class B {}") }
+    assert pointer.element == oldClass
+    assert ((PsiFileImpl)file).treeElement
+  }
+
+  public void "test do not parse when resolving references inside an anonymous class"() {
+    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """
+class A {
+    Object field = new B() {
+      void foo(Object o) {
+      }
+    };
+}
+
+class B {
+  void foo(Object o) {}
+}
+""")
+    assert !file.contentsLoaded
+    PsiClass bClass = ((PsiJavaFile) file).classes[1]
+    assert !file.contentsLoaded
+
+    def fooMethod = bClass.methods[0]
+    assert !file.contentsLoaded
+
+    def override = OverridingMethodsSearch.search(fooMethod).findAll().first()
+    assert override
+    assert !file.contentsLoaded
+
+    assert override.containingClass instanceof PsiAnonymousClass
+    assert !file.contentsLoaded
+
+    assert bClass == override.containingClass.superClass
   }
 }

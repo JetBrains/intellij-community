@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -48,10 +49,12 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
     return myProperty.canNavigateToSource();
   }
 
+  @NotNull
   public StructureViewTreeElement[] getChildren() {
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {

@@ -17,8 +17,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +35,7 @@ public class SelectAllAction extends TextComponentEditorAction implements DumbAw
     @Override
     public void execute(final Editor editor, DataContext dataContext) {
       CommandProcessor processor = CommandProcessor.getInstance();
-      processor.executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
+      processor.executeCommand(CommonDataKeys.PROJECT.getData(dataContext), new Runnable() {
         public void run() {
           editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
         }

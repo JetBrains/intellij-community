@@ -15,15 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,7 @@ public class ReplaceInaccessibleFieldWithGetterSetterFix extends LocalQuickFixAn
   private final String myMethodName;
   private final boolean myIsSetter;
 
-  protected ReplaceInaccessibleFieldWithGetterSetterFix(@Nullable PsiElement element, PsiMethod getter, boolean isSetter) {
+  public ReplaceInaccessibleFieldWithGetterSetterFix(@NotNull PsiElement element, @NotNull PsiMethod getter, boolean isSetter) {
     super(element);
     myMethodName = getter.getName();
     myIsSetter = isSetter;
@@ -44,6 +42,7 @@ public class ReplaceInaccessibleFieldWithGetterSetterFix extends LocalQuickFixAn
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiReferenceExpression place = (PsiReferenceExpression)startElement;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(place)) return;
     String qualifier = null;
     final PsiExpression qualifierExpression = place.getQualifierExpression();
     if (qualifierExpression != null) {
@@ -78,31 +77,5 @@ public class ReplaceInaccessibleFieldWithGetterSetterFix extends LocalQuickFixAn
   @Override
   public String getFamilyName() {
     return "Replace with getter/setter";
-  }
-
-  public static void registerQuickFix(PsiMember refElement,
-                                      PsiJavaCodeReferenceElement place,
-                                      PsiClass accessObjectClass,
-                                      HighlightInfo error) {
-    if (refElement instanceof PsiField && place instanceof PsiReferenceExpression) {
-      final PsiField psiField = (PsiField)refElement;
-      final PsiClass containingClass = psiField.getContainingClass();
-      if (containingClass != null) {
-        if (PsiUtil.isOnAssignmentLeftHand((PsiExpression)place)) {
-          final PsiMethod setterPrototype = PropertyUtil.generateSetterPrototype(psiField);
-          final PsiMethod setter = containingClass.findMethodBySignature(setterPrototype, true);
-          if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
-            QuickFixAction.registerQuickFixAction(error, new ReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
-          }
-        }
-        else if (PsiUtil.isAccessedForReading((PsiExpression)place)) {
-          final PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(psiField);
-          final PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
-          if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
-            QuickFixAction.registerQuickFixAction(error, new ReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));
-          }
-        }
-      }
-    }
   }
 }

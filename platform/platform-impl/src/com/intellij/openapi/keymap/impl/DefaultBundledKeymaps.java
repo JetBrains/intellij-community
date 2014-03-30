@@ -34,6 +34,7 @@ public class DefaultBundledKeymaps implements BundledKeymapProvider {
       "Keymap_GNOME.xml",
       "Keymap_KDE.xml",
       "Keymap_Eclipse.xml",
+      "Keymap_EclipseMac.xml",
       "Keymap_Netbeans.xml"
     );
   }

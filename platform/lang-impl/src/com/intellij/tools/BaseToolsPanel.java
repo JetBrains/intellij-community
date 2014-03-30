@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return index != 0;
       }
 
+      @Override
       public int newIndex(final int index) {
         return index - 1;
       }
@@ -53,6 +54,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return index < childCount - 1;
       }
 
+      @Override
       public int newIndex(final int index) {
         return index + 1;
       }
@@ -74,9 +76,9 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   private boolean myIsModified = false;
 
   protected BaseToolsPanel() {
-
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
+        @Override
         public void customizeRenderer(final JTree tree,
                                       final Object value,
                                       final boolean selected,
@@ -178,8 +180,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           myTree.requestFocus();
         }
       }
-    }).setButtonComparator("Add", "Copy", "Edit", "Remove", "Up", "Down")
-          .createPanel(), BorderLayout.CENTER);
+    }).createPanel(), BorderLayout.CENTER);
 
     myAddButton = ToolbarDecorator.findAddButton(this);
     myEditButton = ToolbarDecorator.findEditButton(this);
@@ -190,6 +191,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     //TODO check edit and delete
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         update();
       }
@@ -411,7 +413,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         CommonBundle.getWarningTitle(),
         Messages.getWarningIcon()
       );
-      if (result != 0) {
+      if (result != Messages.YES) {
         return;
       }
       myIsModified = true;

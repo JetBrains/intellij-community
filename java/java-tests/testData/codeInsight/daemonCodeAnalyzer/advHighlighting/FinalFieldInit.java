@@ -3,7 +3,7 @@ import java.io.*;
 import java.net.*;
 import java.awt.event.*;
 
-public class a  {
+class a  {
   /**
    * javadoc should not be highlighted
    */ 
@@ -133,8 +133,8 @@ class c2 {
     public c2() {
         c = "";
     }
-    // its ok
-    int k3 = c.length();
+
+    int k3 = <error descr="Variable 'c' might not have been initialized">c</error>.length();
 
     c2(int i) {
       this();
@@ -177,7 +177,7 @@ class a20Exotic {
     int n2 = k==0 ? (k2=9) : (k2=0);
 }
 
-public class cX {
+class cX {
     final int i;
     cX() {
         this(1);
@@ -208,7 +208,7 @@ class correct {
     }
 }
 
-public class X {
+class X {
     final int i;
     X() {
         try {
@@ -219,5 +219,34 @@ public class X {
         }
     }
 }
+class Y {
+  private final int mayBeFinal;
 
+  Y() {
+    (mayBeFinal) = 1;
+  }
+}
 
+class IDEA100237 {
+    static class Foo {
+        final int bar;
+    
+        Foo() {
+            bar = 1;
+        }
+    
+        final Object baz = new Object() {
+            final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
+        };
+    }
+}
+
+class StaticInitializerUsedInAnotherStaticField {
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+
+  private static final int ourEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+}

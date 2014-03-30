@@ -30,11 +30,11 @@ for i, arg in enumerate(sys.argv[1:]):
         skip_next = False
     else:
         if ':' in arg:
-            filepath, line_number = arg.rsplit(':', 1)
+            file_path, line_number = arg.rsplit(':', 1)
             if line_number.isdigit():
               args.append('-l')
               args.append(line_number)
-              args.append(os.path.abspath(filepath))
+              args.append(os.path.abspath(file_path))
             else:
               args.append(os.path.abspath(arg))
         else:
@@ -49,7 +49,7 @@ def launch_with_port(port):
         s.connect(('127.0.0.1', port))
     except:
         return False
-   
+
     while True:
         try:
             path_len = struct.unpack(">h", s.recv(2))[0]
@@ -60,10 +60,10 @@ def launch_with_port(port):
                 break
         except:
             break
-    
+
     if found:
         if args:
-            cmd = "activate " + "\0".join(args)
+            cmd = "activate " + os.getcwd() + "\0" + "\0".join(args)
             encoded = struct.pack(">h", len(cmd)) + cmd
             s.send(encoded)
             time.sleep(0.5)   # don't close socket immediately

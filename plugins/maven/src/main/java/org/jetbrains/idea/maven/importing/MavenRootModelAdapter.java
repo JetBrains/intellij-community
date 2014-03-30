@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -38,14 +39,21 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.util.Set;
 
 public class MavenRootModelAdapter {
 
   private final MavenProject myMavenProject;
   private final ModifiableModuleModel myModuleModel;
   private final ModifiableRootModel myRootModel;
+
+  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<String>();
 
   public MavenRootModelAdapter(@NotNull MavenProject p, @NotNull Module module, final MavenModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
@@ -76,14 +84,20 @@ public class MavenRootModelAdapter {
 
   private ContentEntry getContentRootFor(Url url) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
-      if (isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
+      if (VfsUtilCore.isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
     }
     return null;
   }
 
   private void initOrderEntries() {
+    boolean jdkProcessed = false;
+
     for (OrderEntry e : myRootModel.getOrderEntries()) {
-      if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) continue;
+      if (e instanceof ModuleSourceOrderEntry || e instanceof JdkOrderEntry) {
+        jdkProcessed = true;
+        continue;
+      }
+
       if (e instanceof LibraryOrderEntry) {
         if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
       }
@@ -91,6 +105,16 @@ public class MavenRootModelAdapter {
         Module m = ((ModuleOrderEntry)e).getModule();
         if (m != null && !MavenProjectsManager.getInstance(myRootModel.getProject()).isMavenizedModule(m)) continue;
       }
+
+      if (!jdkProcessed) {
+        if (e instanceof ModuleOrderEntry) {
+          myOrderEntriesBeforeJdk.add(((ModuleOrderEntry)e).getModuleName());
+        }
+        else if (e instanceof LibraryOrderEntry) {
+          myOrderEntriesBeforeJdk.add(((LibraryOrderEntry)e).getLibraryName());
+        }
+      }
+
       myRootModel.removeOrderEntry(e);
     }
   }
@@ -109,11 +133,16 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void addSourceFolder(String path, boolean testSource) {
-    addSourceFolder(path, testSource, false);
+  public <P extends JpsElement> void addSourceFolder(String path, final JpsModuleSourceRootType<P> rootType) {
+    addSourceFolder(path, rootType, false, rootType.createDefaultProperties());
   }
 
-  public void addSourceFolder(String path, boolean testSource, boolean ifNotEmpty) {
+  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
+    addSourceFolder(path, rootType, true, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+  }
+
+  private  <P extends JpsElement> void addSourceFolder(@NotNull String path, final @NotNull JpsModuleSourceRootType<P> rootType, boolean ifNotEmpty,
+                                                       final @NotNull P properties) {
     if (ifNotEmpty) {
       String[] childs = new File(toPath(path).getPath()).list();
       if (childs == null || childs.length == 0) return;
@@ -127,43 +156,38 @@ public class MavenRootModelAdapter {
     if (e == null) return;
     unregisterAll(path, true, true);
     unregisterAll(path, false, true);
-    e.addSourceFolder(url.getUrl(), testSource);
-  }
-
-  public void addSourceFolderSoft(String path, boolean testSource) {
-    if (!exists(path)) return;
-
-    Url url = toUrl(path);
-    ContentEntry e = getContentRootFor(url);
-    if (e == null) return;
-
-    if (!hasCollision(path)) {
-      e.addSourceFolder(url.getUrl(), testSource);
-    }
+    e.addSourceFolder(url.getUrl(), rootType, properties);
   }
 
   public boolean hasRegisteredSourceSubfolder(File f) {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
-        if (isEqualOrAncestor(url, eachFolder.getUrl())) return true;
+        if (VfsUtilCore.isEqualOrAncestor(url, eachFolder.getUrl())) return true;
       }
     }
     return false;
+  }
+
+  @Nullable
+  public SourceFolder getSourceFolder(File folder) {
+    String url = toUrl(folder.getPath()).getUrl();
+    for (ContentEntry entry : myRootModel.getContentEntries()) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+        if (sourceFolder.getUrl().equals(url)) {
+          return sourceFolder;
+        }
+      }
+    }
+    return null;
   }
 
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
-    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
-      }
+    for (String excludedUrl : myRootModel.getExcludeRootUrls()) {
+      if (VfsUtilCore.isEqualOrAncestor(excludedUrl, url)) return true;
     }
     return false;
-  }
-
-  public static boolean isEqualOrAncestor(String ancestor, String child) {
-    return ancestor.equals(child) || StringUtil.startsWithConcatenationOf(child, ancestor, "/");
   }
 
   private boolean exists(String path) {
@@ -187,23 +211,25 @@ public class MavenRootModelAdapter {
         for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
           String ancestor = under ? url.getUrl() : eachFolder.getUrl();
           String child = under ? eachFolder.getUrl() : url.getUrl();
-          if (isEqualOrAncestor(ancestor, child)) {
+          if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
             eachEntry.removeSourceFolder(eachFolder);
           }
         }
       }
 
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        String ancestor = under ? url.getUrl() : eachFolder.getUrl();
-        String child = under ? eachFolder.getUrl() : url.getUrl();
+      for (String excludedUrl : eachEntry.getExcludeFolderUrls()) {
+        String ancestor = under ? url.getUrl() : excludedUrl;
+        String child = under ? excludedUrl : url.getUrl();
 
-        if (isEqualOrAncestor(ancestor, child)) {
-          if (eachFolder.isSynthetic()) {
-            getCompilerExtension().setExcludeOutput(false);
-          }
-          else {
-            eachEntry.removeExcludeFolder(eachFolder);
-          }
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
+          eachEntry.removeExcludeFolder(excludedUrl);
+        }
+      }
+      for (String outputUrl : getCompilerExtension().getOutputRootUrls(true)) {
+        String ancestor = under ? url.getUrl() : outputUrl;
+        String child = under ? outputUrl : url.getUrl();
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
+          getCompilerExtension().setExcludeOutput(false);
         }
       }
     }
@@ -216,16 +242,14 @@ public class MavenRootModelAdapter {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
         String ancestor = url.getUrl();
         String child = eachFolder.getUrl();
-        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child) || VfsUtilCore.isEqualOrAncestor(child, ancestor)) {
           return true;
         }
       }
 
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+      for (String excludeUrl : eachEntry.getExcludeFolderUrls()) {
         String ancestor = url.getUrl();
-        String child = eachFolder.getUrl();
-
-        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, excludeUrl) || VfsUtilCore.isEqualOrAncestor(excludeUrl, ancestor)) {
           return true;
         }
       }
@@ -278,6 +302,10 @@ public class MavenRootModelAdapter {
     if (testJar) {
       ((ModuleOrderEntryImpl)e).setProductionOnTestDependency(true);
     }
+
+    if (myOrderEntriesBeforeJdk.contains(moduleName)) {
+      moveLastOrderEntryBeforeJdk();
+    }
   }
 
   @Nullable
@@ -285,10 +313,35 @@ public class MavenRootModelAdapter {
     return myModuleModel.findModuleByName(moduleName);
   }
 
+  public void addSystemDependency(MavenArtifact artifact, DependencyScope scope) {
+    assert MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope());
+
+    String libraryName = artifact.getLibraryName();
+
+    Library library = myRootModel.getModuleLibraryTable().getLibraryByName(libraryName);
+    if (library == null) {
+      library = myRootModel.getModuleLibraryTable().createLibrary(libraryName);
+    }
+
+    LibraryOrderEntry orderEntry = myRootModel.findLibraryOrderEntry(library);
+    assert orderEntry != null;
+    orderEntry.setScope(scope);
+
+    Library.ModifiableModel modifiableModel = library.getModifiableModel();
+    updateUrl(modifiableModel, OrderRootType.CLASSES, artifact, null, null, true);
+    modifiableModel.commit();
+
+    if (myOrderEntriesBeforeJdk.contains(libraryName)) {
+      moveLastOrderEntryBeforeJdk();
+    }
+  }
+
   public void addLibraryDependency(MavenArtifact artifact,
                                    DependencyScope scope,
                                    MavenModifiableModelsProvider provider,
                                    MavenProject project) {
+    assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
+
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
@@ -298,13 +351,31 @@ public class MavenRootModelAdapter {
     Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
 
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
-    if (!MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope())) {
-      updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
-      updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
-    }
+    updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
+    updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);
+
+    if (myOrderEntriesBeforeJdk.contains(libraryName)) {
+      moveLastOrderEntryBeforeJdk();
+    }
+  }
+
+  private void moveLastOrderEntryBeforeJdk() {
+    OrderEntry[] entries = myRootModel.getOrderEntries().clone();
+
+    int i = entries.length - 1;
+    while (i > 0 && (entries[i - 1] instanceof ModuleSourceOrderEntry || entries[i - 1] instanceof JdkOrderEntry)) {
+      OrderEntry e = entries[i - 1];
+      entries[i - 1] = entries[i];
+      entries[i] = e;
+      i--;
+    }
+
+    if (i < entries.length) {
+      myRootModel.rearrangeOrderEntries(entries);
+    }
   }
 
   private static void updateUrl(Library.ModifiableModel library,
@@ -333,7 +404,7 @@ public class MavenRootModelAdapter {
         urlExists = true;
         continue;
       }
-      if (clearAll || isRepositoryUrl(artifact, url)) {
+      if (clearAll || (isRepositoryUrl(artifact, url) && !url.startsWith(newUrl))) {
         library.removeRoot(url, type);
       }
     }

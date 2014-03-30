@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class StringSearcher {
                        Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
   }
 
+  @NotNull
   public String getPattern(){
     return myPattern;
   }
@@ -85,9 +86,13 @@ public class StringSearcher {
   }
 
   public int scan(@NotNull CharSequence text, @Nullable char[] textArray, int _start, int _end) {
-    LOG.assertTrue(_start <= _end, _start - _end);
+    if (_start > _end) {
+      throw new AssertionError("start > end, " + _start + ">" + _end);
+    }
     final int textLength = text.length();
-    LOG.assertTrue(_end <= textLength, textLength - _end);
+    if (_end > textLength) {
+      throw new AssertionError("end > length, " + _end + ">" + textLength);
+    }
     if (myForwardDirection) {
       if (myPatternLength == 1) {
         // optimization
@@ -98,14 +103,14 @@ public class StringSearcher {
 
       while (start <= end) {
         int i = myPatternLength - 1;
-        char lastChar = textArray != null ? textArray[start + i]:text.charAt(start + i);
+        char lastChar = textArray != null ? textArray[start + i] : text.charAt(start + i);
         if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[i] == lastChar) {
           i--;
           while (i >= 0) {
-            char c = textArray != null ? textArray[start + i]:text.charAt(start + i);
+            char c = textArray != null ? textArray[start + i] : text.charAt(start + i);
             if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
@@ -134,17 +139,17 @@ public class StringSearcher {
     }
     else {
       int start = 1;
-      int end = _end+1;
+      int end = _end + 1;
       while (start <= end - myPatternLength + 1) {
         int i = myPatternLength - 1;
-        char lastChar = textArray != null ? textArray[end - (start + i)]:text.charAt(end - (start + i));
+        char lastChar = textArray != null ? textArray[end - (start + i)] : text.charAt(end - (start + i));
         if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[myPatternLength - 1 - i] == lastChar) {
           i--;
           while (i >= 0) {
-            char c = textArray != null ? textArray[end - (start + i)]:text.charAt(end - (start + i));
+            char c = textArray != null ? textArray[end - (start + i)] : text.charAt(end - (start + i));
             if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
@@ -169,18 +174,18 @@ public class StringSearcher {
       }
       return -1;
     }
-
   }
 
   /**
    * @deprecated Use {@link #scan(CharSequence)} instead
-   * @param text
-   * @param startOffset
-   * @param endOffset
-   * @return
    */
   public int scan(char[] text, int startOffset, int endOffset){
     final int res = scan(new CharArrayCharSequence(text),text, startOffset, endOffset);
     return res >= 0 ? res: -1;
+  }
+
+  @Override
+  public String toString() {
+    return "pattern " + myPattern;
   }
 }

@@ -33,6 +33,7 @@ import javax.swing.*;
 public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
   public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon(2);
+  public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
   static {
     ENFORCED_PLAIN_TEXT_ICON.setIcon(AllIcons.FileTypes.Text, 0);
@@ -59,13 +60,13 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
       @NotNull
       @Override
       public String getName() {
-        return "Enforced Plain Text";
+        return ENFORCED_PLAIN_TEXT;
       }
 
       @NotNull
       @Override
       public String getDescription() {
-        return "Enforced Plain Text";
+        return ENFORCED_PLAIN_TEXT;
       }
 
       @NotNull

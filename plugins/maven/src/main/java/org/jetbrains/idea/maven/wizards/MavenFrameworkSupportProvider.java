@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -66,7 +67,7 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
 
         VirtualFile existingPom = root.findChild(MavenConstants.POM_XML);
         if (existingPom != null) {
-          MavenProjectsManager.getInstance(module.getProject()).addManagedFiles(Collections.singletonList(existingPom));
+          MavenProjectsManager.getInstance(module.getProject()).addManagedFilesOrUnignore(Collections.singletonList(existingPom));
         }
         else {
           prepareProjectStructure(model, root);
@@ -116,6 +117,6 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
 
   @Override
   public Icon getIcon() {
-    return icons.MavenIcons.MavenLogo;
+    return MavenIcons.MavenLogo;
   }
 }

@@ -65,17 +65,18 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
   }
 
   @Override
-  public void serialize(PsiAnnotationStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiAnnotationStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeUTFFast(stub.getText());
   }
 
+  @NotNull
   @Override
-  public PsiAnnotationStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiAnnotationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 
   @Override
-  public void indexStub(PsiAnnotationStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiAnnotationStub stub, @NotNull IndexSink sink) {
     String shortName = getReferenceShortName(stub.getText());
     if (!StringUtil.isEmptyOrSpaces(shortName)) {
       sink.occurrence(JavaStubIndexKeys.ANNOTATIONS, shortName);

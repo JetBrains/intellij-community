@@ -29,10 +29,12 @@ class PrimitiveValueBinding implements Binding {
     this.myType = myType;
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     return new Text(String.valueOf(o));
   }
 
+  @Override
   @Nullable
   public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes != null;
@@ -58,14 +60,17 @@ class PrimitiveValueBinding implements Binding {
     return XmlSerializerImpl.convert(value, myType);
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     throw new UnsupportedOperationException("Method isBoundTo is not supported in " + getClass());
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Text.class;
   }
 
+  @Override
   public void init() {
   }
 }

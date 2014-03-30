@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,46 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.Nullable;
 
 public class PageUpWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.moveCaretPageUp(editor, true);
+    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (!editor.getCaretModel().supportsMultipleCarets()) {
+        EditorActionUtil.moveCaretPageUp(editor, true);
+        return;
+      }
+      if (editor.isColumnMode()) {
+        int lines = editor.getScrollingModel().getVisibleArea().height / editor.getLineHeight();
+        Caret currentCaret = caret == null ? editor.getCaretModel().getPrimaryCaret() : caret;
+        for (int i = 0; i < lines; i++) {
+          if (!EditorActionUtil.cloneOrRemoveCaret(editor, currentCaret, true)) {
+            break;
+          }
+          currentCaret = editor.getCaretModel().getPrimaryCaret();
+        }
+      }
+      else {
+        if (caret == null) {
+          editor.getCaretModel().runForEachCaret(new CaretAction() {
+            @Override
+            public void perform(Caret caret) {
+              EditorActionUtil.moveCaretPageUp(editor, true);
+            }
+          });
+        }
+        else {
+          // assuming caret is equal to CaretModel.getCurrentCaret()
+          EditorActionUtil.moveCaretPageUp(editor, true);
+        }
+      }
     }
   }
 

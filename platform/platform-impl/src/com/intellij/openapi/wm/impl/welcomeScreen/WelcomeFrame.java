@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
@@ -80,6 +82,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
     setupCloseAction();
     new MnemonicHelper().register(this);
     myScreen.setupFrame(this);
+    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
+      @Override
+      public void dispose() {
+        WelcomeFrame.this.dispose();
+      }
+    });
   }
 
   public static IdeFrame getInstance() {
@@ -132,11 +140,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   public static void clearRecents() {
     if (ourInstance != null) {
       if (ourInstance instanceof WelcomeFrame) {
-      WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
-      if (screen instanceof DefaultWelcomeScreen) {
-        ((DefaultWelcomeScreen)screen).hideRecentProjectsPanel();
+        WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
+        // todo clear recent projects
       }
-    }
     }
   }
 
@@ -148,7 +154,6 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
       if (screen != null) break;
     }
     if (screen == null) {
-      //screen = new DefaultWelcomeScreen(rootPane);
       screen = new NewWelcomeScreen();
     }
     return screen;
@@ -157,8 +162,8 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
 
   public static void showNow() {
     if (ourInstance == null) {
-      IdeFrame frame = EP.getExtensions().length == 0
-                           ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      IdeFrame frame = EP.getExtensions().length == 0 ? new WelcomeFrame() : EP.getExtensions()[0].createFrame();
+      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
       ((JFrame)frame).setVisible(true);
       ourInstance = frame;
     }

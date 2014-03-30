@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -122,7 +123,7 @@ class MockFileTypeManager extends FileTypeManager {
     return MockLanguageFileType.INSTANCE;
   }
 
-  public boolean isFileOfType(VirtualFile file, FileType type) {
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
     return false;
   }
 
@@ -130,5 +131,11 @@ class MockFileTypeManager extends FileTypeManager {
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
     return UnknownFileType.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public FileType findFileTypeByName(String fileTypeName) {
+    return null;
   }
 }

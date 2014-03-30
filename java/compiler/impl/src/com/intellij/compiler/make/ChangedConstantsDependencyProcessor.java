@@ -24,7 +24,6 @@ import com.intellij.compiler.classParsing.FieldInfo;
 import com.intellij.compiler.impl.ExitException;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -73,9 +72,7 @@ public class ChangedConstantsDependencyProcessor {
   public void run() throws CacheCorruptedException, ExitException {
     final Ref<CacheCorruptedException> _ex = new Ref<CacheCorruptedException>();
     final Ref<ExitException> exitException = new Ref<ExitException>(null);
-    DumbService.getInstance(myProject).waitForSmartMode(); // ensure running in smart mode
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
       public void run() {
         try {
           final String qName = myDependencyCache.resolve(myQName);

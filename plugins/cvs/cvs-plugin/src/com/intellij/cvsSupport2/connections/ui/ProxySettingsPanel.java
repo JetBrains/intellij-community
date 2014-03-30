@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class ProxySettingsPanel {
+
   private JPanel myPanel;
   private JTextField myProxyPort;
   private JTextField myProxyHost;
@@ -124,7 +125,7 @@ public class ProxySettingsPanel {
     }
     return myUseProxy.isSelected() == proxySettings.USE_PROXY
            && myProxyHost.getText().equals(proxySettings.PROXY_HOST)
-           && FormUtils.getPositiveIntFieldValue(myProxyPort, false, false) == proxySettings.PROXY_PORT
+           && FormUtils.getPositiveIntFieldValue(myProxyPort, false, false, 0xFFFF) == proxySettings.PROXY_PORT
            && getSelectedType() == proxySettings.getType()
            && myLogin.getText().equals(proxySettings.getLogin())
            && new String(myPassword.getPassword()).equals(proxySettings.getPassword());
@@ -145,7 +146,7 @@ public class ProxySettingsPanel {
   public void saveTo(ProxySettings proxySettings) {
     proxySettings.USE_PROXY = myUseProxy.isSelected();
     proxySettings.PROXY_HOST = FormUtils.getFieldValue(myProxyHost, proxySettings.USE_PROXY);
-    proxySettings.PROXY_PORT = FormUtils.getPositiveIntFieldValue(myProxyPort, true, false);
+    proxySettings.PROXY_PORT = FormUtils.getPositiveIntFieldValue(myProxyPort, true, false, 0xFFFF);
     proxySettings.TYPE = getSelectedType();
     proxySettings.LOGIN = myLogin.getText();
     proxySettings.PASSWORD = new String(myPassword.getPassword());

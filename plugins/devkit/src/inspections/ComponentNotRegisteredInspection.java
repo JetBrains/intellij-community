@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -165,7 +165,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
-    final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
-    return module != null && PluginModuleType.isPluginModuleOrDependency(module);
+    final Module module = ModuleUtilCore.findModuleForFile(psiFile.getVirtualFile(), project);
+    return PluginModuleType.isPluginModuleOrDependency(module);
   }
 }

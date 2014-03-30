@@ -22,7 +22,7 @@ package com.pme.exe;
  * Time: 6:01:16 PM
  */
 public class ImageOptionalHeader extends Bin.Structure {
-  public ImageOptionalHeader() {
+  public ImageOptionalHeader(ExeFormat format) {
     super("Image Optional Header");
     addMember( new Word( "Magic" ) );
     addMember( new Byte( "MajorLinkerVersion"));
@@ -32,8 +32,13 @@ public class ImageOptionalHeader extends Bin.Structure {
     addMember( new DWord( "SizeOfUninitializedData" ) );
     addMember( new DWord( "AddressOfEntryPoint" ) );
     addMember( new DWord( "BaseOfCode" ) );
-    addMember( new DWord( "BaseOfData" ) );
-    addMember( new DWord( "ImageBase" ) );
+    if (format == ExeFormat.X86) {
+      addMember( new DWord( "BaseOfData" ) );
+      addMember( new DWord( "ImageBase" ) );
+    }
+    else {
+      addMember(new LongLong("ImageBase"));
+    }
     addMember( new DWord( "SectionAlignment" ) );
     addMember( new DWord( "FileAlignment" ) );
     addMember( new Word( "MajorOperatingSystemVersion" ) );
@@ -48,10 +53,18 @@ public class ImageOptionalHeader extends Bin.Structure {
     addMember( new DWord( "CheckSum" ) );
     addMember( new Word( "Subsystem" ) );
     addMember( new Word( "DllCharacteristics" ) );
-    addMember( new DWord( "SizeOfStackReserve" ) );
-    addMember( new DWord( "SizeOfStackCommit" ) );
-    addMember( new DWord( "SizeOfHeapReserve" ) );
-    addMember( new DWord( "SizeOfHeapCommit" ) );
+    if (format == ExeFormat.X86) {
+      addMember( new DWord( "SizeOfStackReserve" ) );
+      addMember( new DWord( "SizeOfStackCommit" ) );
+      addMember( new DWord( "SizeOfHeapReserve" ) );
+      addMember( new DWord( "SizeOfHeapCommit" ) );
+    }
+    else {
+      addMember( new LongLong( "SizeOfStackReserve" ) );
+      addMember( new LongLong( "SizeOfStackCommit" ) );
+      addMember( new LongLong( "SizeOfHeapReserve" ) );
+      addMember( new LongLong( "SizeOfHeapCommit" ) );
+    }
     addMember( new DWord( "LoaderFlags" ) );
     DWord numberOfRvaAndSizes = (DWord)addMember( new DWord( "NumberOfRvaAndSizes") );
     ArrayOfBins<ImageDataDirectory> imageDataDirectories = new ArrayOfBins<ImageDataDirectory>("ImageDataDirectories", ImageDataDirectory.class, numberOfRvaAndSizes);

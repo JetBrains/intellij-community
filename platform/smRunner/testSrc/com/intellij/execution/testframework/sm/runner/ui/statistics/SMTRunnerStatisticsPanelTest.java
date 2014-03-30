@@ -51,9 +51,9 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myResultsForm = new SMTestRunnerResultsForm(consoleProperties.getConfiguration(),
                                                 new JLabel(),
                                                 consoleProperties,
-                                                environment.getRunnerSettings(),
-                                                environment.getConfigurationSettings());
-    myStatisticsPanel = new StatisticsPanel(getProject(), myResultsForm);
+                                                environment);
+    myResultsForm.initUI();
+    myStatisticsPanel = myResultsForm.getStatisticsPane();
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }
 
@@ -72,7 +72,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     // show suite in table
     myStatisticsPanel.selectProxy(suite1);
     // selects row that corresponds to test1
-    myStatisticsPanel.selectRow(1);
+    myStatisticsPanel.selectRow(0);
 
     // Check that necessary row is selected
     assertEquals(test1, myStatisticsPanel.getSelectedItem());
@@ -83,7 +83,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     // Check that current suite in table wasn't changed.
     // For it let's select Total row and check selected object
     myStatisticsPanel.selectRow(0);
-    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
+    assertEquals(test1, myStatisticsPanel.getSelectedItem());
   }
 
   public void testGotoSuite_OnSuite() {
@@ -94,18 +94,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     // show root suite in table
     myStatisticsPanel.selectProxy(rootSuite);
     // selects row that corresponds to suite1
-    myStatisticsPanel.selectRow(1);
+    myStatisticsPanel.selectRow(0);
 
     // Check that necessary row is selected
     assertEquals(suite1, myStatisticsPanel.getSelectedItem());
 
-    // Perform action on suite
-    myStatisticsPanel.createGotoSuiteOrParentAction().run();
-
-    // Check that current suite in table was changed.
-    // For it let's select Total row and check selected object
-    myStatisticsPanel.selectRow(0);
-    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
   }
 
   public void testGotoParentSuite_Total() {
@@ -116,24 +109,14 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     // show suite in table
     myStatisticsPanel.selectProxy(suite1);
     // selects Total row
-    myStatisticsPanel.selectRow(0);
+    assertEmpty(myStatisticsPanel.getTableItems());
 
-    // Check that necessary row is selected
-    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
-
-    // Perform action on suite
-    myStatisticsPanel.createGotoSuiteOrParentAction().run();
-
-    // Check that current suite in table was changed.
-    // For it let's select Total row and check selected object
-    myStatisticsPanel.selectRow(0);
-    assertEquals(rootSuite, myStatisticsPanel.getSelectedItem());
   }
 
   public void testGotoParentSuite_TotalRoot() {
     // create test sturcure
     final SMTestProxy rootSuite = createSuiteProxy("rootSuite");
-    createSuiteProxy("suite1", rootSuite);
+    final SMTestProxy suite1 = createSuiteProxy("suite1", rootSuite);
 
     // show root suite in table
     myStatisticsPanel.selectProxy(rootSuite);
@@ -141,15 +124,8 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     myStatisticsPanel.selectRow(0);
 
     // Check that necessary row is selected
-    assertEquals(rootSuite, myStatisticsPanel.getSelectedItem());
+    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
 
-    // Perform action on suite
-    myStatisticsPanel.createGotoSuiteOrParentAction().run();
-
-    // Check that current suite in table wasn't changed.
-    // For it let's select Total row and check selected object
-    myStatisticsPanel.selectRow(0);
-    assertEquals(rootSuite, myStatisticsPanel.getSelectedItem());
   }
 
   public void testChangeSelectionListener() {
@@ -164,7 +140,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     //suite
     myStatisticsPanel.selectProxy(suite1);
-    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
+    assertEquals(null, myStatisticsPanel.getSelectedItem());
   }
 
   public void testChangeSelectionAction() {
@@ -189,7 +165,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     //on test
     myStatisticsPanel.selectProxy(suite1);
-    myStatisticsPanel.selectRow(1);
+    myStatisticsPanel.selectRow(0);
     assertEquals(test1, myStatisticsPanel.getSelectedItem());
 
     myStatisticsPanel.showSelectedProxyInTestsTree();
@@ -204,7 +180,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     focusRequestedRef.set(null);
 
     myStatisticsPanel.selectProxy(rootSuite);
-    myStatisticsPanel.selectRow(1);
+    myStatisticsPanel.selectRow(0);
     assertEquals(suite1, myStatisticsPanel.getSelectedItem());
 
     myStatisticsPanel.showSelectedProxyInTestsTree();
@@ -220,11 +196,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
 
     myStatisticsPanel.selectProxy(rootSuite);
     myStatisticsPanel.selectRow(0);
-    assertEquals(rootSuite, myStatisticsPanel.getSelectedItem());
+    assertEquals(suite1, myStatisticsPanel.getSelectedItem());
 
     myStatisticsPanel.showSelectedProxyInTestsTree();
     assertTrue(onSelectedHappend.isSet());
-    assertEquals(rootSuite, proxyRef.get());
+    assertEquals(suite1, proxyRef.get());
     assertTrue(focusRequestedRef.get());
   }
 
@@ -243,24 +219,24 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     final SMTestProxy test1 = createTestProxy("test1", suite);
     final SMTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(suite);
-    assertSameElements(getItems(), suite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnSuiteStarted_Child() {
     final SMTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     final SMTestProxy test1 = createTestProxy("test1", suite);
     final SMTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(test1);
-    assertSameElements(getItems(), suite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnSuiteStarted_Other() {
@@ -268,12 +244,12 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy other_suite = createSuiteProxy("other_suite", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     createTestProxy("test1", suite);
     createTestProxy("test2", suite);
     myTestEventsListener.onSuiteStarted(other_suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
   }
 
   public void testOnSuiteFinished_NoCurrent() {
@@ -291,24 +267,24 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     final SMTestProxy test1 = createTestProxy("test1", suite);
     final SMTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(suite);
-    assertSameElements(getItems(), suite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnSuiteFinished_Child() {
     final SMTestProxy suite = createSuiteProxy("suite1", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     final SMTestProxy test1 = createTestProxy("test1", suite);
     final SMTestProxy test2 = createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(test1);
-    assertSameElements(getItems(), suite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnSuiteFinished_Other() {
@@ -316,12 +292,12 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy other_suite = createSuiteProxy("other_suite", myRootSuite);
 
     myStatisticsPanel.selectProxy(suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
 
     createTestProxy("test1", suite);
     createTestProxy("test2", suite);
     myTestEventsListener.onSuiteFinished(other_suite);
-    assertSameElements(getItems(), suite);
+    assertSameElements(getItems());
   }
 
   public void testOnTestStarted_NoCurrent() {
@@ -339,11 +315,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test1 = createTestProxy("test1", myRootSuite);
 
     myStatisticsPanel.selectProxy(test1);
-    assertSameElements(getItems(), myRootSuite, test1);
+    assertSameElements(getItems(),test1);
 
     final SMTestProxy test2 = createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestStarted(test1);
-    assertSameElements(getItems(), myRootSuite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnTestStarted_Other() {
@@ -353,11 +329,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy other_test = createTestProxy("other_test", suite);
 
     myStatisticsPanel.selectProxy(test1);
-    assertSameElements(getItems(), myRootSuite, test1, suite);
+    assertSameElements(getItems(), test1, suite);
 
     createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestStarted(other_test);
-    assertSameElements(getItems(), myRootSuite, test1, suite);
+    assertSameElements(getItems(), test1, suite);
   }
 
   public void testOnTestFinished_NoCurrent() {
@@ -376,11 +352,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test1 = createTestProxy("test1", myRootSuite);
 
     myStatisticsPanel.selectProxy(test1);
-    assertSameElements(getItems(), myRootSuite, test1);
+    assertSameElements(getItems(), test1);
 
     final SMTestProxy test2 = createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestFinished(test1);
-    assertSameElements(getItems(), myRootSuite, test1, test2);
+    assertSameElements(getItems(), test1, test2);
   }
 
   public void testOnTestFinished_Other() {
@@ -390,11 +366,11 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy other_test = createTestProxy("other_test", suite);
 
     myStatisticsPanel.selectProxy(test1);
-    assertSameElements(getItems(), myRootSuite, test1, suite);
+    assertSameElements(getItems(), test1, suite);
 
     createTestProxy("test2", myRootSuite);
     myTestEventsListener.onTestFinished(other_test);
-    assertSameElements(getItems(), myRootSuite, test1, suite);
+    assertSameElements(getItems(), test1, suite);
   }
 
   public void testSelectionRestoring_ForTest() {
@@ -416,7 +392,7 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
     final SMTestProxy suite = createSuiteProxy("suite1", myRootSuite);
     myTestEventsListener.onSuiteStarted(suite);
 
-    assertEquals(myRootSuite, myStatisticsPanel.getSelectedItem());
+    assertEquals(null, myStatisticsPanel.getSelectedItem());
   }
 
   private List<SMTestProxy> getItems() {

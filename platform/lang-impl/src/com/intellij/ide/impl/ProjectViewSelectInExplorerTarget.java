@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTarget;
+import com.intellij.ide.SelectInTargetBase;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -28,27 +28,19 @@ import java.io.File;
 /**
  * @author Roman.Chernyatchik
  */
-public class ProjectViewSelectInExplorerTarget implements SelectInTarget, DumbAware {
+public class ProjectViewSelectInExplorerTarget extends SelectInTargetBase implements DumbAware {
   @Override
-  public boolean canSelect(final SelectInContext context) {
-    final VirtualFile file = context.getVirtualFile();
-    return RevealFileAction.isLocalFile(file);
+  public boolean canSelect(SelectInContext context) {
+    VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());
+    return file != null;
   }
 
   @Override
-  public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    final VirtualFile file = context.getVirtualFile();
-    ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
-  }
-
-  @Override
-  public String getToolWindowId() {
-    return null;
-  }
-
-  @Override
-  public String getMinorViewId() {
-    return null;
+  public void selectIn(SelectInContext context, boolean requestFocus) {
+    VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());
+    if (file != null) {
+      ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
+    }
   }
 
   @Override

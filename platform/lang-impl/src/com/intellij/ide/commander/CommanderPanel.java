@@ -279,7 +279,7 @@ public class CommanderPanel extends JPanel {
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
     myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myParentTitle.setForeground(JBColor.foreground);
+    myParentTitle.setForeground(JBColor.foreground());
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());
     panel1.setOpaque(false);
@@ -392,7 +392,7 @@ public class CommanderPanel extends JPanel {
       LOG.assertTrue(color != null);
       myTitlePanel.setBackground(color);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
-      myParentTitle.setForeground(JBColor.foreground);
+      myParentTitle.setForeground(JBColor.foreground());
     }
     final int[] selectedIndices = myList.getSelectedIndices();
     if (selectedIndices.length == 0 && myList.getModel().getSize() > 0) {
@@ -442,7 +442,7 @@ public class CommanderPanel extends JPanel {
   public final Object getDataImpl(final String dataId) {
     if (myBuilder == null) return null;
     final Object selectedValue = getSelectedValue();
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement selectedElement = getSelectedElement();
       return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
     }
@@ -454,7 +454,7 @@ public class CommanderPanel extends JPanel {
       final Object element = parentNode != null ? parentNode.getValue() : null;
       return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {

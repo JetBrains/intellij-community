@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"); 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler");
 
   @Override
   @Nullable
-  public PsiElement getGotoDeclarationTarget(final PsiElement elementAt, Editor editor) {
+  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement elementAt, Editor editor) {
     if (elementAt instanceof PsiKeyword) {
       IElementType type = ((PsiKeyword)elementAt).getTokenType();
       if (type == JavaTokenType.CONTINUE_KEYWORD) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -32,10 +33,11 @@ import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -55,13 +57,11 @@ import java.util.concurrent.ConcurrentMap;
  * @author max
  */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
-  private PsiElementFinder[] myElementFinders; //benign data race
-  private final PsiNameHelper myNameHelper;
+  private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private final ConcurrentMap<String, PsiPackage> myPackageCache = new ConcurrentHashMap<String, PsiPackage>();
+  private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
   private final Project myProject;
   private final JavaFileManager myFileManager;
-
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
@@ -69,7 +69,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
                            MessageBus bus) {
     myProject = project;
     myFileManager = javaFileManager;
-    myNameHelper = new PsiNameHelperImpl(this);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
@@ -83,14 +82,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
-            myPackageCache.clear();
+            myPackageCache = null;
           }
         }
       });
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    JavaElementType.ANNOTATION.getIndex(); // Initialize stubs.
   }
 
   @Override
@@ -177,7 +175,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    PsiPackage aPackage = myPackageCache.get(qualifiedName);
+    ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
+    if (cache == null) {
+      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = new ConcurrentHashMap<String, PsiPackage>());
+    }
+
+    PsiPackage aPackage = cache.get(qualifiedName);
     if (aPackage != null) {
       return aPackage;
     }
@@ -185,7 +188,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : filteredFinders()) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
+        return ConcurrencyUtil.cacheOrGet(cache, qualifiedName, aPackage);
       }
     }
 
@@ -218,7 +221,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiNameHelper getNameHelper() {
-    return myNameHelper;
+    return PsiNameHelper.getInstance(myProject);
   }
 
   @NotNull
@@ -243,9 +246,12 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
   }
 
-  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiDirectory> consumer) {
+  public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                           @NotNull GlobalSearchScope scope,
+                                           @NotNull Processor<PsiDirectory> consumer,
+                                           boolean includeLibrarySources) {
     for (PsiElementFinder finder : filteredFinders()) {
-      if (!finder.processPackageDirectories(psiPackage, scope, consumer)) {
+      if (!finder.processPackageDirectories(psiPackage, scope, consumer, includeLibrarySources)) {
         return false;
       }
     }
@@ -346,9 +352,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         ContainerUtil.quickSort(list, new Comparator<PsiClass>() {
           @Override
           public int compare(PsiClass o1, PsiClass o2) {
-            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
             VirtualFile file1 = PsiUtilCore.getVirtualFile(o1);
-            return scope.compare(file2, file1);
+            VirtualFile file2 = PsiUtilCore.getVirtualFile(o2);
+            return file1 == null ? file2 == null ? 0 : -1 : file2 == null ? 1 : scope.compare(file2, file1);
           }
         });
       }
@@ -365,7 +371,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         for (PsiFile file : dir.getFiles()) {
           if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
             VirtualFile vFile = file.getVirtualFile();
-            if (vFile != null && !facade.isInSourceContent(vFile) && !(file instanceof PsiCompiledElement)) {
+            if (vFile != null &&
+                !(file instanceof PsiCompiledElement) &&
+                !facade.isInSourceContent(vFile) &&
+                (!scope.isForceSearchingInLibrarySources() ||
+                 !StubTreeLoader.getInstance().canHaveStub(vFile))) {
               continue;
             }
 
@@ -382,32 +392,30 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     @Override
-    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope, @NotNull final Processor<PsiDirectory> consumer) {
+    public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
+                                             @NotNull final GlobalSearchScope scope,
+                                             @NotNull final Processor<PsiDirectory> consumer,
+                                             boolean includeLibrarySources) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
-      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), false).forEach(new ReadActionProcessor<VirtualFile>() {
-        @Override
-        public boolean processInReadAction(final VirtualFile dir) {
-          if (!scope.contains(dir)) return true;
-          PsiDirectory psiDir = psiManager.findDirectory(dir);
-          return psiDir == null || consumer.process(psiDir);
-        }
-      });
+      return PackageIndex.getInstance(getProject()).getDirsByPackageName(psiPackage.getQualifiedName(), includeLibrarySources)
+        .forEach(new ReadActionProcessor<VirtualFile>() {
+          @Override
+          public boolean processInReadAction(final VirtualFile dir) {
+            if (!scope.contains(dir)) return true;
+            PsiDirectory psiDir = psiManager.findDirectory(dir);
+            return psiDir == null || consumer.process(psiDir);
+          }
+        });
     }
   }
-
 
   @Override
   public boolean isPartOfPackagePrefix(@NotNull String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
     for (final String subpackageName : packagePrefixes) {
-      if (isSubpackageOf(subpackageName, packageName)) return true;
+      if (PsiNameHelper.isSubpackageOf(subpackageName, packageName)) return true;
     }
     return false;
-  }
-
-  private static boolean isSubpackageOf(@NotNull String subpackageName, @NotNull String packageName) {
-    return subpackageName.equals(packageName) ||
-           subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
 
   @Override
@@ -455,7 +463,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @TestOnly
   @Override
-  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter) {
-    ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter);
+  public void setAssertOnFileLoadingFilter(@NotNull final VirtualFileFilter filter, Disposable parentDisposable) {
+    ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter, parentDisposable);
   }
 }

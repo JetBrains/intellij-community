@@ -197,9 +197,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
     
     private void switchInfo(Component c) {
-      myInspectorTable = new InspectorTable(c);
       myWrapperPanel.removeAll();
-      myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
+      if (c != null) {
+        myInspectorTable = new InspectorTable(c);
+        myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
+      }
       myWrapperPanel.revalidate();
       myWrapperPanel.repaint();
     }
@@ -261,9 +263,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
         Component component = componentNode.getOwnComponent();
-        String name = component.getClass().getSimpleName();
-        if (name.length() == 0) {
-          name = component.getClass().getSuperclass().getSimpleName();
+        String name = component.getName();
+        if (StringUtil.isEmpty(name)) {
+          name = component.getClass().getSimpleName();
+          if (name.isEmpty()) {
+            name = component.getClass().getSuperclass().getSimpleName();
+          }
         }
         
         if (!selected) {
@@ -319,6 +324,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     public void valueChanged(TreeSelectionEvent e) {
       TreePath path = e.getNewLeadSelectionPath();
+      if (path == null) {
+        onComponentChanged(null);
+        return;
+      }
       Object component = path.getLastPathComponent();
       if (component instanceof ComponentNode) {
         Component c = ((ComponentNode)component).getOwnComponent();
@@ -411,12 +420,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class InspectorTable extends JPanel {
+    private JLabel myTitleLabel;
     private InspectorTableModel myModel;
     private DimensionsComponent myDimensionComponent;
 
     private InspectorTable(@NotNull final Component component) {
       setLayout(new BorderLayout());
 
+      myTitleLabel = new JLabel(component.getClass().getCanonicalName(), SwingConstants.CENTER);
       myModel = new InspectorTableModel(component);
       final StripeTable table = new StripeTable(myModel);
 
@@ -433,6 +444,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
+      add(myTitleLabel, BorderLayout.NORTH);
       add(new JBScrollPane(table), BorderLayout.CENTER);
       myDimensionComponent = new DimensionsComponent(component);
       add(myDimensionComponent, BorderLayout.SOUTH);

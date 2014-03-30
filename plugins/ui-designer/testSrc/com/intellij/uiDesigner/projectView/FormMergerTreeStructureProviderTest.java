@@ -32,7 +32,7 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
   }
 
   public void testStandardProviders() {
-    final AbstractProjectViewPSIPane pane = createPane();
+    final AbstractProjectViewPSIPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders(new ClassesTreeStructureProvider(myProject),
                                            new FormMergerTreeStructureProvider(myProject));
 
@@ -48,11 +48,11 @@ public class FormMergerTreeStructureProviderTest extends BaseProjectViewTestCase
                                                 "  PsiFile(plain text):Form1.form\n");
 
     PsiClass psiClass = ((PsiJavaFile)getPackageDirectory().findFile("Form1.java")).getClasses()[0];
-    checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
+    myStructure.checkNavigateFromSourceBehaviour(psiClass, psiClass.getContainingFile().getVirtualFile(), pane);
 
     PsiFile psiFile = getPackageDirectory().findFile("Form1.form");
     VirtualFile virtualFile = psiFile.getContainingFile().getVirtualFile();
-    checkNavigateFromSourceBehaviour(psiFile, virtualFile, pane);
+    myStructure.checkNavigateFromSourceBehaviour(psiFile, virtualFile, pane);
   }
 
 }

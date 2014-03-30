@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -29,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * Allows to compare some text not associated with file or document.
@@ -89,6 +90,7 @@ public class SimpleContent extends DiffContent {
     return myLineSeparators.restoreText(myDocument.getText());
   }
 
+  @Override
   public Document getDocument() {
     return myDocument;
   }
@@ -96,6 +98,7 @@ public class SimpleContent extends DiffContent {
   /**
    * @return null
    */
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return null;
   }
@@ -103,10 +106,12 @@ public class SimpleContent extends DiffContent {
   /**
    * @return null
    */
+  @Override
   public VirtualFile getFile() {
     return null;
   }
 
+  @Override
   @Nullable
   public FileType getContentType() {
     return myType;
@@ -115,6 +120,7 @@ public class SimpleContent extends DiffContent {
   /**
    * @return Encodes using default encoding
    */
+  @Override
   public byte[] getBytes() {
     String currentText = getText();
     if (myOriginalText.equals(myDocument.getText()) && myCharset == null) {
@@ -132,9 +138,7 @@ public class SimpleContent extends DiffContent {
       buffer.get(result, bomLength, encodedLength);
       return result;
     }
-    else {
-      return currentText.getBytes();
-    }
+    return currentText.getBytes();
   }
 
   @NotNull
@@ -154,7 +158,6 @@ public class SimpleContent extends DiffContent {
   /**
    * @param text     text of content
    * @param fileName used to determine content type
-   * @return
    */
   public static SimpleContent forFileContent(String text, String fileName) {
     FileType fileType;
@@ -208,16 +211,18 @@ public class SimpleContent extends DiffContent {
   private static class LineSeparators {
     private String mySeparator;
 
-    public String correctText(String text) {
-      LineTokenizer lineTokenizer = new LineTokenizer(text);
-      String[] lines = lineTokenizer.execute();
+    @NotNull
+    public String correctText(@NotNull String text) {
+      DiffString.LineTokenizer lineTokenizer = new DiffString.LineTokenizer(DiffString.create(text));
+      DiffString[] lines = lineTokenizer.execute();
       mySeparator = lineTokenizer.getLineSeparator();
-      LOG.assertTrue(mySeparator == null || mySeparator.length() > 0);
+      LOG.assertTrue(mySeparator == null || !mySeparator.isEmpty());
       if (mySeparator == null) mySeparator = SystemProperties.getLineSeparator();
-      return LineTokenizer.concatLines(lines);
+      return DiffString.concatenate(lines).toString();
     }
 
-    public String restoreText(String text) {
+    @NotNull
+    public String restoreText(@NotNull String text) {
       if (mySeparator == null) throw new NullPointerException();
       return text.replaceAll("\n", mySeparator);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -79,7 +79,7 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     final GrTypeDefinition foo = ConvertMapToClassIntention.createClass(getProject(), map.getNamedArguments(), "", "Foo");
     myFixture.addFileToProject(getTestName(true) + "/Foo.groovy", foo.getContainingFile().getText());
     final PsiClass psiClass = myFixture.findClass("Foo");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       public void run() {
         ConvertMapToClassIntention
           .replaceMapWithClass(getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),

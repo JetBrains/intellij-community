@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.removemiddleman;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -48,8 +49,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super(field.getProject());
     this.field = field;
     containingClass = field.getContainingClass();
-    final Project project = field.getProject();
-    final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+    final String propertyName = PropertyUtil.suggestPropertyName(field);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
     myDelegateMethodInfos = memberInfos;
@@ -66,7 +66,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       if (!memberInfo.isChecked()) continue;
       final PsiMethod method = (PsiMethod)memberInfo.getMember();
       final Project project = method.getProject();
-      final String getterName = PropertyUtil.suggestGetterName(project, field);
+      final String getterName = PropertyUtil.suggestGetterName(field);
       final int[] paramPermutation = DelegationUtils.getParameterPermutation(method);
       final PsiMethod delegatedMethod = DelegationUtils.getDelegatedMethod(method);
       LOG.assertTrue(!DelegationUtils.isAbstract(method));
@@ -99,7 +99,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       } else {
         access = getterName + "()";
         if (getter == null) {
-          getter = PropertyUtil.generateGetterPrototype(field);
+          getter = GenerateMembersUtil.generateGetterPrototype(field);
         }
       }
       usages.add(new InlineDelegatingCall(call, paramPermutation, access, delegatedMethod.getName()));

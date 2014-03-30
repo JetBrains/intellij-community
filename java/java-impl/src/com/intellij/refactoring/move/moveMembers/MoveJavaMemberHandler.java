@@ -58,7 +58,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         else {
           if (qualifier instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
-            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // change qualifier
+            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference);  // change qualifier
           }
         }
       }
@@ -112,6 +112,12 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
         }
       }
+    } else if (member instanceof PsiField &&
+               usageInfo.reference instanceof PsiExpression &&
+               member.hasModifierProperty(PsiModifier.FINAL) &&
+               PsiUtil.isAccessedForWriting((PsiExpression)usageInfo.reference) &&
+               !RefactoringHierarchyUtil.willBeInTargetClass(usageInfo.reference, membersToMove, targetClass, true)) {
+      conflicts.putValue(usageInfo.member, "final variable initializer won't be available after move.");
     }
 
     final PsiReference reference = usageInfo.getReference();
@@ -187,7 +193,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         }
       }
       else { // no qualifier
-        if (usage.qualifierClass != null && PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null) {
+        if (usage.qualifierClass != null && (!usage.qualifierClass.isEnum() || PsiTreeUtil.getParentOfType(refExpr, PsiSwitchLabelStatement.class) == null)) {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }
@@ -276,7 +282,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       final List<PsiField> beforeFields = new ArrayList<PsiField>();
       for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
         final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
-        if (fieldWithReference != null && !afterFields.contains(fieldWithReference)) {
+        if (fieldWithReference != null && !afterFields.contains(fieldWithReference) && fieldWithReference.getContainingClass() == targetClass) {
           beforeFields.add(fieldWithReference);
         }
       }

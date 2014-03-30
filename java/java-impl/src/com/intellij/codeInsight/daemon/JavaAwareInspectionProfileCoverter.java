@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -53,8 +53,8 @@ public class JavaAwareInspectionProfileCoverter extends InspectionProfileConvert
     super.fillErrorLevels(profile);
 
     //javadoc attributes
-    final InspectionProfileEntry inspectionTool = profile.getInspectionTool(JavaDocLocalInspection.SHORT_NAME, null);
-    JavaDocLocalInspection inspection = (JavaDocLocalInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+    final InspectionToolWrapper toolWrapper = profile.getInspectionTool(JavaDocLocalInspectionBase.SHORT_NAME, null);
+    JavaDocLocalInspection inspection = (JavaDocLocalInspection)toolWrapper.getTool();
     inspection.myAdditionalJavadocTags = myAdditionalJavadocTags;
   }
 }

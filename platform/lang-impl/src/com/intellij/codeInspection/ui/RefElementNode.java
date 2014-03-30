@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Computable;
@@ -36,8 +35,8 @@ import javax.swing.tree.MutableTreeNode;
 public class RefElementNode extends InspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
-  protected InspectionTool myTool;
-  private ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
+  protected final InspectionToolPresentation myToolPresentation;
+  private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
     @Override
     public Icon compute() {
       final RefEntity refEntity = getElement();
@@ -48,28 +47,31 @@ public class RefElementNode extends InspectionTreeNode {
     }
   });
 
-  public RefElementNode(final Object userObject, final InspectionTool tool) {
+  public RefElementNode(@NotNull Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
-    myTool = tool;
+    myToolPresentation = presentation;
   }
 
-  public RefElementNode(@NotNull RefElement element, final InspectionTool inspectionTool) {
-    super(element);
-    myTool = inspectionTool;
+  public RefElementNode(@NotNull RefElement element, @NotNull InspectionToolPresentation presentation) {
+    this((Object)element, presentation);
   }
 
-  public boolean hasDescriptorsUnder() { return myHasDescriptorsUnder; }
+  public boolean hasDescriptorsUnder() {
+    return myHasDescriptorsUnder;
+  }
 
   @Nullable
   public RefEntity getElement() {
     return (RefEntity)getUserObject();
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
     return myIcon.getIcon();
   }
 
+  @Override
   public int getProblemCount() {
     return Math.max(1, super.getProblemCount());
   }
@@ -82,30 +84,36 @@ public class RefElementNode extends InspectionTreeNode {
     return element.getRefManager().getRefinedElement(element).getQualifiedName();
   }
 
+  @Override
   public boolean isValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
+  @Override
   public boolean isResolved() {
-    return myTool.isElementIgnored(getElement());
+    return myToolPresentation.isElementIgnored(getElement());
   }
 
 
+  @Override
   public void ignoreElement() {
-    myTool.ignoreCurrentElement(getElement());
+    myToolPresentation.ignoreCurrentElement(getElement());
     super.ignoreElement();
   }
 
+  @Override
   public void amnesty() {
-    myTool.amnesty(getElement());
+    myToolPresentation.amnesty(getElement());
     super.amnesty();
   }
 
+  @Override
   public FileStatus getNodeStatus() {
-    return  myTool.getElementStatus(getElement());    
+    return  myToolPresentation.getElementStatus(getElement());
   }
 
+  @Override
   public void add(MutableTreeNode newChild) {
     super.add(newChild);
     if (newChild instanceof ProblemDescriptionNode) {
@@ -113,7 +121,7 @@ public class RefElementNode extends InspectionTreeNode {
     }
   }
 
-  public void setProblem(CommonProblemDescriptor descriptor) {
+  public void setProblem(@NotNull CommonProblemDescriptor descriptor) {
     mySingleDescriptor = descriptor;
   }
 

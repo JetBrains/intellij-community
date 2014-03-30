@@ -578,7 +578,7 @@ public class CustomAntElementsRegistry {
           loader = getClassLoader(typedef, antProject);
         }
         for (final IProperty property : propFile.getProperties()) {
-          addCustomDefinition(typedef, property.getUnescapedKey(), uri, ClassProvider.create(property.getValue(), loader));
+          addCustomDefinition(typedef, property.getUnescapedKey(), uri, ClassProvider.create(property.getUnescapedValue(), loader));
         }
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,7 +64,17 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     return result;
   }
 
-  public static FoldingDescriptor[] buildFoldingDescriptors(FoldingBuilder builder, PsiElement root, Document document, boolean quick) {
+  @NotNull
+  @Override
+  public List<FoldingBuilder> allForLanguage(@NotNull Language l) {
+    FoldingBuilder result = forLanguage(l);
+    if (result == null) return Collections.emptyList();
+    return result instanceof CompositeFoldingBuilder ? ((CompositeFoldingBuilder)result).getAllBuilders()
+                                                     : Collections.singletonList(result);
+  }
+
+  @NotNull
+  public static FoldingDescriptor[] buildFoldingDescriptors(@Nullable FoldingBuilder builder, @NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!DumbService.isDumbAware(builder) && DumbService.getInstance(root.getProject()).isDumb()) {
       return FoldingDescriptor.EMPTY;
     }

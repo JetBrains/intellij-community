@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -28,6 +29,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
 class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
+  private static final Logger LOG = Logger.getInstance("#" + JavaWithTryFinallySurrounder.class.getName());
+
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.try.finally.template");
@@ -67,7 +70,9 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     editor.getSelectionModel().removeSelection();
-    final PsiStatement firstTryStmt = tryBlock.getStatements()[0];
+    final PsiStatement[] tryBlockStatements = tryBlock.getStatements();
+    LOG.assertTrue(tryBlockStatements.length > 0, tryBlock.getText());
+    final PsiStatement firstTryStmt = tryBlockStatements[0];
     final int indent = firstTryStmt.getTextOffset() - document.getLineStartOffset(document.getLineNumber(firstTryStmt.getTextOffset()));
     EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeat(" ", indent), false, true);
     return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());

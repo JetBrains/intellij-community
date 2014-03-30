@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 public class PatternUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.PatternUtil");
@@ -50,17 +49,17 @@ public class PatternUtil {
   }
 
   private static void escape2(char symbol) {
-    ourEscapeRules.put(""+symbol, "\\" + symbol);
+    ourEscapeRules.put(String.valueOf(symbol), "\\" + symbol);
   }
 
   public static String convertToRegex(String mask) {
-    List<String> strings = StringUtil.split(mask,"\\");
-    StringBuffer pattern = new StringBuffer();
+    List<String> strings = StringUtil.split(mask, "\\");
+    StringBuilder pattern = new StringBuilder();
     String separator = "";
 
-    for (String string:strings) {
+    for (String string : strings) {
       string = StringUtil.replace(string, ".", "\\.");
-      for (Map.Entry<String, String> e: ourEscapeRules.entrySet()) {
+      for (Map.Entry<String, String> e : ourEscapeRules.entrySet()) {
         string = StringUtil.replace(string, e.getKey(), e.getValue());
       }
       pattern.append(separator);
@@ -74,7 +73,8 @@ public class PatternUtil {
 //    String pattern = mask.replaceAll("\\.", "\\.").replaceAll("\\*", ".*").replaceAll("\\?", ".");
     try {
       return Pattern.compile(convertToRegex(mask));
-    } catch (PatternSyntaxException e) {
+    }
+    catch (PatternSyntaxException e) {
       LOG.error(mask, e);
       return Pattern.compile("");
     }

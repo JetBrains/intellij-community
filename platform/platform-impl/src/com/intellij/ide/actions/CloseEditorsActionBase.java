@@ -35,7 +35,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final EditorWindow[] windows;
@@ -63,7 +63,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
@@ -84,7 +84,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final boolean inSplitter = editorWindow != null && editorWindow.inSplitter();
     presentation.setText(getPresentationText(inSplitter));
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = (project != null && isActionEnabled(project, event));
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       presentation.setVisible(enabled);

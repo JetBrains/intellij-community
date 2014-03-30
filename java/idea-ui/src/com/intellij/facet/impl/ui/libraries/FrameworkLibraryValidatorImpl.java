@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDia
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 
 import javax.swing.*;
@@ -67,14 +66,14 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
     });
     if (found.get()) return ValidationResult.OK;
 
-    return new ValidationResult(StringUtil.capitalize(myLibraryCategoryName) + " library not found in the module dependencies list", new LibrariesQuickFix(myLibraryDescription));
+    return new ValidationResult(IdeBundle.message("label.missed.libraries.text", myLibraryCategoryName), new LibrariesQuickFix(myLibraryDescription));
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
     private CustomLibraryDescription myDescription;
 
     public LibrariesQuickFix(CustomLibraryDescription description) {
-      super(IdeBundle.message("missing.libraries.fix.button"));
+      super(IdeBundle.message("button.fix"));
       myDescription = description;
     }
 

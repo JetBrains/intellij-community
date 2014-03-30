@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.util.registry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -105,7 +106,7 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return !getBundleValue(myKey, true).equals(asString());
+    return !asString().equals(getBundleValue(myKey, false));
   }
 
   private String get(String key, String defaultValue, boolean isValue) {
@@ -145,7 +146,7 @@ public class RegistryValue {
 
   private String getBundleValue(String key, boolean mustExist) {
     try {
-      return myRegistry.getBundle().getString(key);
+      return Registry.getBundle().getString(key);
     }
     catch (MissingResourceException e) {
       if (mustExist) {
@@ -192,9 +193,10 @@ public class RegistryValue {
     setValue(getBundleValue(myKey, true));
   }
 
-  public void addListener(final RegistryValueListener listener, Disposable parent) {
+  public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         myListeners.remove(listener);
       }

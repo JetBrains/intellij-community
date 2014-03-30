@@ -73,10 +73,12 @@ public class ExtractIncludeDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new VerticalFlowLayout());
 
@@ -86,6 +88,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     myNameField = new JTextField();
     nameLabel.setLabelFor(myNameField);
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
@@ -106,6 +109,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     panel.add(myTargetDirectoryField);
 
     myTargetDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         validateOKButton();
       }
@@ -131,6 +135,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     return LocalFileSystem.getInstance().findFileByIoFile(new File(directory, fileName)) != null;
   }
 
+  @Override
   protected void doOKAction() {
     final Project project = myCurrentDirectory.getProject();
 
@@ -148,8 +153,10 @@ public class ExtractIncludeDialog extends DialogWrapper {
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         final Runnable action = new Runnable() {
+          @Override
           public void run() {
             try {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
@@ -169,6 +176,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(getHelpTopic());
   }
@@ -177,6 +185,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     return ExtractIncludeFileBase.HELP_ID;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};

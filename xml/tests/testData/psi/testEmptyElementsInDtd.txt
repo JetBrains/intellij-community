@@ -4,7 +4,7 @@ XmlFile:test.dtd
       <empty list>
     PsiElement(XML_ELEMENT_DECL)
       XmlToken:XML_ELEMENT_DECL_START('<!ELEMENT')
-      PsiErrorElement:xml name expected
+      PsiErrorElement:XML name expected
         <empty list>
     PsiWhiteSpace(' ')
     XmlToken:XML_TAG_END('>')
@@ -17,14 +17,14 @@ XmlFile:test.dtd
       PsiElement(XML_ELEMENT_CONTENT_SPEC)
         PsiElement(XML_ELEMENT_CONTENT_GROUP)
           XmlToken:XML_LEFT_PAREN('(')
-          PsiErrorElement:Xml name or entity ref expected
+          PsiErrorElement:XML name or entity ref expected
             <empty list>
       XmlToken:XML_COMMA(',')
       XmlToken:XML_RIGHT_PAREN(')')
     PsiWhiteSpace('\n')
     PsiElement(XML_ATTLIST_DECL)
       XmlToken:XML_ATTLIST_DECL_START('<!ATTLIST')
-      PsiErrorElement:xml name expected
+      PsiErrorElement:XML name expected
         <empty list>
     PsiWhiteSpace(' ')
     XmlToken:XML_TAG_END('>')
@@ -57,7 +57,7 @@ XmlFile:test.dtd
           XmlToken:XML_LEFT_PAREN('(')
           XmlToken:XML_NAME('aaa')
           XmlToken:XML_COMMA(',')
-          PsiErrorElement:Xml name or entity ref expected
+          PsiErrorElement:XML name or entity ref expected
             <empty list>
           XmlToken:XML_RIGHT_PAREN(')')
       XmlToken:XML_TAG_END('>')

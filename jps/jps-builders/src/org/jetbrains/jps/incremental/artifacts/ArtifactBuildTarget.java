@@ -121,7 +121,7 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
                                                              ModuleExcludeIndex index,
                                                              IgnoredFileIndex ignoredFileIndex,
                                                              BuildDataPaths dataPaths) {
-    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this);
+    ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this, model, dataPaths);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, dataPaths);
     String outputPath = StringUtil.notNullize(myArtifact.getOutputPath());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(builder, outputPath);

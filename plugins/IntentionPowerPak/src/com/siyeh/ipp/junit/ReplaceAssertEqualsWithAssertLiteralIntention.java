@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +97,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention extends MutablyNamedI
       newExpression.append(qualifier.getText()).append('.');
     }
     newExpression.append(assertString).append('(').append(actualArgumentText).append(')');
-    replaceExpression(newExpression.toString(), call);
+    PsiReplacementUtil.replaceExpression(call, newExpression.toString());
   }
 
   @NonNls

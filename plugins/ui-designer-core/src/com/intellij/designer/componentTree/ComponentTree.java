@@ -39,10 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -73,6 +75,19 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeUtil.installActions(this);
 
     myInplaceEditingAction = DesignerActionPanel.createInplaceEditingAction(this);
+  }
+
+  @Override
+  public void setUI(TreeUI ui) {
+    super.setUI(ui);
+    getActionMap().put("selectAll", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myDesigner != null) {
+          myDesigner.getActionPanel().createSelectAllAction(myDesigner.getSurfaceArea()).actionPerformed(null);
+        }
+      }
+    });
   }
 
   public void newModel() {
@@ -158,7 +173,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   @Nullable
   private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (ErrorInfo errorInfo : RadComponent.getError(component)) {
       if (displayLevel == null || severityRegistrar.compare(errorInfo.getLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
         displayLevel = errorInfo.getLevel();
@@ -173,7 +188,8 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     if (level != null) {
       TextAttributesKey attributesKey =
-        SeverityRegistrar.getInstance(myDesigner.getProject()).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+        SeverityRegistrar.getSeverityRegistrar(myDesigner.getProject()).getHighlightInfoTypeBySeverity(level.getSeverity())
+          .getAttributesKey();
       final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
       wrapper = new AttributeWrapper() {

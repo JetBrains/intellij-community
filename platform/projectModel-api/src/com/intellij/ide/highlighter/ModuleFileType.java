@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,33 +29,40 @@ public class ModuleFileType implements InternalFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
 
+  @Override
   @NotNull
   public String getName() {
     return "IDEA_MODULE";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.idea.module");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.IdeaModule;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return true;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {
     return CharsetToolkit.UTF8;
   }

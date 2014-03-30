@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -62,7 +64,7 @@ public class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
   private static Set<String> getReassignedNames(final PsiElement scope) {
-    return CachedValuesManager.getManager(scope.getProject()).getCachedValue(scope, new CachedValueProvider<Set<String>>() {
+    return CachedValuesManager.getCachedValue(scope, new CachedValueProvider<Set<String>>() {
       @Nullable
       @Override
       public Result<Set<String>> compute() {
@@ -180,6 +182,9 @@ public class GrHighlightUtil {
       boolean reassigned = isReassigned((GrVariable)resolved);
       return reassigned ? REASSIGNED_LOCAL_VARIABLE : LOCAL_VARIABLE;
     }
+    else if (resolved instanceof GrLabeledStatement) {
+      return LABEL;
+    }
     return null;
   }
 
@@ -292,5 +297,15 @@ public class GrHighlightUtil {
 
     return new TextRange(startOffset, endOffset);
 
+  }
+
+  @Nullable
+  public static GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
+    for (PsiElement parent = ref.getParent(); parent != null && parent != aClass; parent = parent.getParent()) {
+      if (parent instanceof GrMember && ((GrMember)parent).getContainingClass() == aClass) {
+        return (GrMember)parent;
+      }
+    }
+    return null;
   }
 }

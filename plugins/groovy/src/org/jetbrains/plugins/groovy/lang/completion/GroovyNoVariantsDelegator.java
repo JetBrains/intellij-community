@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
@@ -47,9 +49,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(result.runRemainingContributors(parameters, true)) ||
-                          suggestMetaAnnotations(parameters);
+  public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
+    LinkedHashSet<CompletionResult> plainResults = result.runRemainingContributors(parameters, true);
+    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(plainResults) || suggestMetaAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
@@ -57,6 +59,16 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     if (empty) {
       delegate(parameters, result);
+    } else if (Registry.is("ide.completion.show.better.matching.classes")) {
+      if (parameters.getCompletionType() == CompletionType.BASIC &&
+          parameters.getInvocationCount() <= 1 &&
+          JavaCompletionContributor.mayStartClassName(result) &&
+          GroovyCompletionContributor.isClassNamePossible(parameters.getPosition()) &&
+          !MapArgumentCompletionProvider.isMapKeyCompletion(parameters) &&
+          !GroovySmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
+        result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
+        suggestNonImportedClasses(parameters, result);
+      }
     }
   }
 
@@ -73,9 +85,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
   }
 
-  private static void suggestNonImportedClasses(CompletionParameters parameters, CompletionResultSet result) {
-    final ClassByNameMerger merger = new ClassByNameMerger(parameters, result);
-
+  private static void suggestNonImportedClasses(CompletionParameters parameters, final CompletionResultSet result) {
     GroovyCompletionContributor.addAllClasses(parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
@@ -84,11 +94,9 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         if (classElement != null) {
           classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
-        merger.consume(classElement);
+        result.addElement(element);
       }
     }, new InheritorsHolder(parameters.getPosition(), result), result.getPrefixMatcher());
-
-    merger.finishedClassProcessing();
   }
 
   private static void suggestChainedCalls(CompletionParameters parameters, CompletionResultSet result) {

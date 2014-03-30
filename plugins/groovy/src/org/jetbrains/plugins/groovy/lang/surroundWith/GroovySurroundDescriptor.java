@@ -34,6 +34,7 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     new WhileSurrounder(),
     //there's no do-while in Groovy
     new SurrounderByClosure(),
+    new GrBracesSurrounder(),
     //like in Java
     new ForSurrounder(),
     new TryCatchSurrounder(),

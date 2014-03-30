@@ -81,11 +81,7 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
         evaluationContext.createEvaluationContext(value), parentDescriptor
       );
 
-      NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
-      if (renderer == null || childrenValue == null || !renderer.isApplicable(childrenValue.type())) {
-        renderer = DebugProcessImpl.getDefaultRenderer(childrenValue != null ? childrenValue.type() : null);
-        parentDescriptor.putUserData(LAST_CHILDREN_RENDERER, renderer);
-      }
+      NodeRenderer renderer = getChildrenRenderer(childrenValue, parentDescriptor);
       renderer.buildChildren(childrenValue, builder, evaluationContext);
     }
     catch (final EvaluateException e) {
@@ -141,12 +137,21 @@ public class ExpressionChildrenRenderer extends ReferenceRenderer implements Chi
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.unable.to.evaluate.expression"));
     }
 
-    ChildrenRenderer defaultChildrenRenderer = ((DebugProcessImpl)context.getDebugProcess()).getDefaultRenderer(expressionValue.type());
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue, descriptor);
 
     return DebuggerUtils.getInstance().substituteThis(
-            defaultChildrenRenderer.getChildValueExpression(node, context),
-            (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
-            expressionValue, context);
+      childrenRenderer.getChildValueExpression(node, context),
+      (PsiExpression)myChildrenExpression.getPsiExpression(node.getProject()).copy(),
+      expressionValue, context);
+  }
+
+  private NodeRenderer getChildrenRenderer(Value childrenValue, ValueDescriptor parentDescriptor) {
+    NodeRenderer renderer = getLastChildrenRenderer(parentDescriptor);
+    if (renderer == null || childrenValue == null || !renderer.isApplicable(childrenValue.type())) {
+      renderer = DebugProcessImpl.getDefaultRenderer(childrenValue != null ? childrenValue.type() : null);
+      setPreferableChildrenRenderer(parentDescriptor, renderer);
+    }
+    return renderer;
   }
 
   public boolean isExpandable(Value value, final EvaluationContext context, NodeDescriptor parentDescriptor) {

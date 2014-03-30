@@ -32,7 +32,7 @@ public interface LowLevelAccess {
   void loadCommits(final Collection<String> startingPoints,
                    final Collection<String> endPoints,
                    final Collection<ChangesFilter.Filter> filters,
-                   final AsynchConsumer<GitCommit> consumer,
+                   final AsynchConsumer<GitHeavyCommit> consumer,
                    int useMaxCnt,
                    Getter<Boolean> isCanceled, SymbolicRefsI refs, final boolean topoOrder) throws VcsException;
 
@@ -42,5 +42,5 @@ public interface LowLevelAccess {
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                              final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt,
                              final boolean topoOrder) throws VcsException;
-  List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefsI refs) throws VcsException;
+  List<GitHeavyCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefsI refs) throws VcsException;
 }

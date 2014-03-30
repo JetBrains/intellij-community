@@ -56,11 +56,11 @@ public interface DetailView extends UserDataHolder {
     public static PreviewEditorState EMPTY = new PreviewEditorState(null, null, null);
 
     public static PreviewEditorState create(VirtualFile file, int line) {
-      return new PreviewEditorState(file, new LogicalPosition(line, 0), null);
+      return new PreviewEditorState(file, line < 0 ? null : new LogicalPosition(line, 0), null);
     }
 
     public static PreviewEditorState create(VirtualFile file, int line, TextAttributes attributes) {
-      return new PreviewEditorState(file, new LogicalPosition(line, 0), attributes);
+      return new PreviewEditorState(file, line < 0 ? null : new LogicalPosition(line, 0), attributes);
     }
 
     @Override
@@ -89,6 +89,7 @@ public interface DetailView extends UserDataHolder {
       return myFile;
     }
 
+    @Nullable
     public LogicalPosition getNavigate() {
       return myNavigate;
     }
@@ -101,7 +102,7 @@ public interface DetailView extends UserDataHolder {
     private final LogicalPosition myNavigate;
     private final TextAttributes myAttributes;
 
-    public PreviewEditorState(VirtualFile file, LogicalPosition navigate, TextAttributes attributes) {
+    public PreviewEditorState(VirtualFile file, @Nullable LogicalPosition navigate, TextAttributes attributes) {
 
       myFile = file;
       myNavigate = navigate;

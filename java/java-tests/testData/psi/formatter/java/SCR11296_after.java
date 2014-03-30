@@ -1,9 +1,10 @@
 class A {
     /**
      * The <code>String</code> class represents
-     * character strings. All string literals in Java
-     * programs, such as <code>"abc"</code>, are
-     * implemented as instances of this class.
+     * character strings. All string literals in
+     * Java programs, such as <code>"abc"</code>,
+     * are implemented as instances of this
+     * class.
      * Some text after empty line
      *
      * @author Lee Boynton

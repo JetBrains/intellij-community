@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,6 +20,7 @@ import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -39,6 +41,10 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     myStatic = isStatic;
   }
 
+  public boolean isStatic() {
+    return myStatic;
+  }
+
   @Override
   public String getQualifiedName() {
     return getName();
@@ -55,7 +61,7 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     if (declaration instanceof PsiField) {
       final PsiType psiType = ((PsiField)declaration).getType();
       final ArrayList<XmlElementDescriptor> descriptors = new ArrayList<XmlElementDescriptor>();
-      collectDescriptorsByCollection(psiType, declaration.getResolveScope(), descriptors);
+      collectDescriptorsByCollection(psiType, declaration.getResolveScope(), descriptors, declaration.getProject());
       for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
         descriptors.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
       }
@@ -66,8 +72,9 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
 
   public static void collectDescriptorsByCollection(PsiType psiType,
                                                     GlobalSearchScope resolveScope,
-                                                    final List<XmlElementDescriptor> descriptors) {
-    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(psiType, resolveScope);
+                                                    final List<XmlElementDescriptor> descriptors,
+                                                    final Project project) {
+    final PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(psiType, resolveScope);
     if (collectionItemType != null) {
       final PsiClass aClass = PsiUtil.resolveClassInType(collectionItemType);
       if (aClass != null) {
@@ -78,6 +85,13 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
             return true;
           }
         });
+        descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
+      }
+    } else if (InheritanceUtil.isInheritor(psiType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY)) {
+      final PsiType propertyType = JavaFxPsiUtil.getPropertyType(psiType, project);
+      final PsiClass aClass = PsiUtil.resolveClassInType(propertyType);
+      if (aClass != null) {
+        descriptors.add(new JavaFxClassBackedElementDescriptor(aClass.getName(), aClass));
       }
     }
   }

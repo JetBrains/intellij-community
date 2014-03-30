@@ -51,6 +51,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
           myTableView.stopEditing();
           setModified();
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               myElements.add(createElement());
               myTableView.getTableViewModel().setItems(myElements);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,65 +26,61 @@ import java.util.List;
  * User: cdr
  */
 public class PsiConcatenationUtil {
-  public static void buildFormatString(
-    PsiExpression expression, StringBuilder formatString,
-    List<PsiExpression> formatParameters, boolean printfFormat) {
-      if (expression instanceof PsiLiteralExpression) {
-          final PsiLiteralExpression literalExpression =
-                  (PsiLiteralExpression) expression;
-          final String text = String.valueOf(literalExpression.getValue());
-          final String formatText;
-        if (printfFormat) {
-          formatText = StringUtil.escapeStringCharacters(text)
-            .replace("%", "%%").replace("\\'", "'");
+
+  public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
+                                       List<PsiExpression> formatParameters, boolean printfFormat) {
+    if (expression instanceof PsiLiteralExpression) {
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
+      final String text = String.valueOf(literalExpression.getValue());
+      final String formatText;
+      if (printfFormat) {
+        formatText = StringUtil.escapeStringCharacters(text).replace("%", "%%").replace("\\'", "'");
+      }
+      else {
+        formatText = StringUtil.escapeStringCharacters(text).replace("'", "''").replaceAll("((\\{|})+)", "'$1'");
+      }
+      formatString.append(formatText);
+    } else if (expression instanceof PsiPolyadicExpression) {
+      final PsiType type = expression.getType();
+      if (type != null && type.equalsToText("java.lang.String")) {
+        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression) expression;
+        PsiExpression[] operands = binaryExpression.getOperands();
+        PsiType left = operands[0].getType();
+        boolean stringStarted = left != null && left.equalsToText("java.lang.String");
+        if (stringStarted) {
+          buildFormatString(operands[0], formatString, formatParameters, printfFormat);
         }
-        else {
-          formatText = StringUtil.escapeStringCharacters(text)
-            .replace("'", "''").replace("{", "'{").replace("}", "'}");
-        }
-        formatString.append(formatText);
-      } else if (expression instanceof PsiPolyadicExpression) {
-          final PsiType type = expression.getType();
-          if (type != null && type.equalsToText("java.lang.String")) {
-              final PsiPolyadicExpression binaryExpression =
-                  (PsiPolyadicExpression) expression;
-            PsiExpression[] operands = binaryExpression.getOperands();
-            PsiType left = operands[0].getType();
-            boolean stringStarted = left != null && left.equalsToText("java.lang.String");
-            if (stringStarted) {
-              buildFormatString(operands[0], formatString, formatParameters, printfFormat);
+        for (int i = 1; i < operands.length; i++) {
+          PsiExpression op = operands[i];
+          PsiType optype = op.getType();
+          PsiType r = TypeConversionUtil.calcTypeForBinaryExpression(left, optype, binaryExpression.getOperationTokenType(), true);
+          if (r != null && r.equalsToText("java.lang.String") && !stringStarted) {
+            stringStarted = true;
+            PsiElement element = binaryExpression.getTokenBeforeOperand(op);
+            if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
+            String text = binaryExpression.getText().substring(0, element.getStartOffsetInParent());
+            PsiExpression subExpression = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
+              .createExpressionFromText(text, binaryExpression);
+            addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
+          }
+          if (stringStarted) {
+            if (optype != null && (optype.equalsToText("java.lang.String") || optype == PsiType.CHAR)) {
+              buildFormatString(op, formatString, formatParameters, printfFormat);
             }
-            for (int i = 1; i < operands.length; i++) {
-              PsiExpression op = operands[i];
-              PsiType optype = op.getType();
-              PsiType r = TypeConversionUtil.calcTypeForBinaryExpression(left, optype, binaryExpression.getOperationTokenType(), true);
-              if (r != null && r.equalsToText("java.lang.String") && !stringStarted) {
-                stringStarted = true;
-                PsiElement element = binaryExpression.getTokenBeforeOperand(op);
-                if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
-                String text = binaryExpression.getText().substring(0, element.getStartOffsetInParent());
-                PsiExpression subExpression = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
-                  .createExpressionFromText(text, binaryExpression);
-                addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
-              }
-              if (stringStarted) {
-                if (optype != null && (optype.equalsToText("java.lang.String") || optype == PsiType.CHAR)) {
-                  buildFormatString(op, formatString, formatParameters, printfFormat);
-                }
-                else {
-                  addFormatParameter(op, formatString, formatParameters, printfFormat);
-                }
-              }
-              left = r;
+            else {
+              addFormatParameter(op, formatString, formatParameters, printfFormat);
             }
           }
-          else {
-              addFormatParameter(expression, formatString, formatParameters, printfFormat);
-          }
+          left = r;
+        }
       }
       else {
         addFormatParameter(expression, formatString, formatParameters, printfFormat);
       }
+    }
+    else {
+      addFormatParameter(expression, formatString, formatParameters, printfFormat);
+    }
   }
 
   private static void addFormatParameter(PsiExpression expression,
@@ -92,13 +88,13 @@ public class PsiConcatenationUtil {
                                          List<PsiExpression> formatParameters, boolean printfFormat) {
     final PsiType type = expression.getType();
     if (!printfFormat) {
-      formatString.append("{" + formatParameters.size() + "}");
+      formatString.append("{").append(formatParameters.size()).append("}");
     }
     else if (type != null &&
-        (type.equalsToText("long") ||
-           type.equalsToText("int") ||
-           type.equalsToText("java.lang.Long") ||
-           type.equalsToText("java.lang.Integer"))) {
+             (type.equalsToText("long") ||
+              type.equalsToText("int") ||
+              type.equalsToText("java.lang.Long") ||
+              type.equalsToText("java.lang.Integer"))) {
       formatString.append("%d");
     }
     else {

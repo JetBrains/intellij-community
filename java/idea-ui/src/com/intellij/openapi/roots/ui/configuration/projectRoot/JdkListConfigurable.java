@@ -196,6 +196,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public AbstractAddGroup createAddAction() {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
+      @NotNull
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);

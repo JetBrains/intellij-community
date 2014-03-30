@@ -19,6 +19,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Gregory.Shrago
@@ -29,14 +30,15 @@ public class InjectionPlace {
   public static final InjectionPlace[] EMPTY_ARRAY = new InjectionPlace[0];
 
   public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = new ArrayFactory<InjectionPlace>() {
+    @NotNull
     @Override
     public InjectionPlace[] create(int count) {
       return count == 0? EMPTY_ARRAY : new InjectionPlace[count];
     }
   };
 
-  private final ElementPattern<PsiElement> myElementPattern;
   private final boolean myEnabled;
+  private final ElementPattern<PsiElement> myElementPattern;
 
 
   public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
@@ -75,5 +77,13 @@ public class InjectionPlace {
   @Override
   public int hashCode() {
     return myElementPattern.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "InjectionPlace{" +
+           (myEnabled ? "+ " : "- ") +
+           myElementPattern +
+           '}';
   }
 }

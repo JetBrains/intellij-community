@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 import java.util.Set;
@@ -33,7 +34,6 @@ import java.util.Set;
  * User: Eugene.Kudelevsky
  * Date: 25.03.2010
  * Time: 1:50:53
- * To change this template use File | Settings | File Templates.
  */
 public class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
@@ -59,10 +59,11 @@ public class WrapWithCustomTemplateAction extends AnAction {
       ReadonlyStatusHandler.getInstance(myFile.getProject()).ensureFilesWritable(file);
     }
 
-    String selection = myEditor.getSelectionModel().getSelectedText();
+    String selection = myEditor.getSelectionModel().getSelectedText(true);
 
     if (selection != null) {
       selection = selection.trim();
+      PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
       myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile, true));
     }
   }

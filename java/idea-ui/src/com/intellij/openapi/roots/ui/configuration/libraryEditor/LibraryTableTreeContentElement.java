@@ -16,8 +16,28 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class LibraryTableTreeContentElement {
+import java.awt.*;
 
-  public abstract NodeDescriptor createDescriptor(NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor);
+public abstract class LibraryTableTreeContentElement<E> extends NodeDescriptor<E> {
+  protected LibraryTableTreeContentElement(@Nullable NodeDescriptor parentDescriptor) {
+    super(null, parentDescriptor);
+  }
+
+  protected static Color getForegroundColor(boolean isValid) {
+    return isValid ? UIUtil.getListForeground() : JBColor.RED;
+  }
+
+  @Override
+  public boolean update() {
+    return false;
+  }
+
+  @Override
+  public E getElement() {
+    return (E)this;
+  }
 }

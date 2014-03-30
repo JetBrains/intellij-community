@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +62,7 @@ public class CreatePackageTestAction extends AnAction
     }
 
     PsiPackage getSelectedPackage(DataContext context) {
-        final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+        final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
         if (element == null) {
             return null;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -43,12 +44,13 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
                                                                  ProjectCheckoutListener.getProductNameWithArticle(),
                                                                  directory.getAbsolutePath()),
                                       VcsBundle.message("checkout.title"), Messages.getQuestionIcon());
-    if (rc == 0) {
+    if (rc == Messages.YES) {
       final ProjectManager pm = ProjectManager.getInstance();
       final Project[] projects = pm.getOpenProjects();
       final Set<VirtualFile> files = projectsLocationSet(projects);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(directory);
-      AddModuleWizard wizard = ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
+      AddModuleWizard wizard = createImportWizard(file);
+      if (wizard == null) return false;
       if (wizard.showAndGet()) {
         ImportModuleAction.createFromWizard(null, wizard);
       }
@@ -66,7 +68,12 @@ public class NewProjectCheckoutListener implements VcsAwareCheckoutListener {
     return false;
   }
 
-  private Set<VirtualFile> projectsLocationSet(Project[] projects) {
+  @Nullable
+  protected AddModuleWizard createImportWizard(VirtualFile file) {
+    return ImportModuleAction.createImportWizard(null, null, file, ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensions());
+  }
+
+  private static Set<VirtualFile> projectsLocationSet(Project[] projects) {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (Project project1 : projects) {
       if (project1.getBaseDir() != null) {

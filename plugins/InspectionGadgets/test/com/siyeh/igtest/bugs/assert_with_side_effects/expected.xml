@@ -14,4 +14,11 @@
     <description>&lt;code&gt;assert&lt;/code&gt; has side effects #loc</description>
   </problem>
 
+  <problem>
+    <file>AssertWithSideEffects.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'assert' statement with side effects</problem_class>
+    <description>&lt;code&gt;assert&lt;/code&gt; has side effects #loc</description>
+  </problem>
+
 </problems>

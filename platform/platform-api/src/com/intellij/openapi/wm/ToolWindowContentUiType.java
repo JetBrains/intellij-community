@@ -21,8 +21,8 @@ public class ToolWindowContentUiType {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ToolWindowContentUiType");
 
-  public static ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
-  public static ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");
+  public static final ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
+  public static final ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");
 
   private final String myName;
 
@@ -37,11 +37,20 @@ public class ToolWindowContentUiType {
   public static ToolWindowContentUiType getInstance(String name) {
     if (TABBED.getName().equals(name)) {
       return TABBED;
-    } else if (COMBO.getName().equals(name)) {
+    }
+    else if (COMBO.getName().equals(name)) {
       return COMBO;
-    } else {
+    }
+    else {
       LOG.debug("Unknown content type=" + name);
       return TABBED;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "ToolWindowContentUiType{" +
+           "myName='" + myName + '\'' +
+           '}';
   }
 }

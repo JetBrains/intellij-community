@@ -32,7 +32,7 @@ class Multicatch {
   }
 
   private InputStream build() throws SQLException {
-    return <warning descr="'null' is returned by the method which isn't declared as @Nullable">null</warning>;
+    return <warning descr="'null' is returned by the method which is not declared as @Nullable">null</warning>;
   }
 
 }

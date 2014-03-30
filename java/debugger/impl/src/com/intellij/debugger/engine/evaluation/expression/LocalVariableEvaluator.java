@@ -53,6 +53,7 @@ class LocalVariableEvaluator implements Evaluator {
     myParameterIndex = parameterIndex;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
@@ -109,37 +110,45 @@ class LocalVariableEvaluator implements Evaluator {
     }
   }
 
+  @Override
   public Modifier getModifier() {
     Modifier modifier = null;
     if (myEvaluatedVariable != null && myContext != null) {
       modifier = new Modifier() {
+        @Override
         public boolean canInspect() {
           return true;
         }
 
+        @Override
         public boolean canSetValue() {
           return true;
         }
 
+        @Override
         public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
           StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
           try {
+            assert frameProxy != null;
             frameProxy.setValue(myEvaluatedVariable, value);
           }
           catch (EvaluateException e) {
-            LOG.error(e);  
+            LOG.error(e);
           }
         }
 
+        @Override
         public Type getExpectedType() throws ClassNotLoadedException {
           try {
             return myEvaluatedVariable.getType();
-          } catch (EvaluateException e) {
+          }
+          catch (EvaluateException e) {
             LOG.error(e);
             return null;
           }
         }
 
+        @Override
         public NodeDescriptorImpl getInspectItem(Project project) {
           return new LocalVariableDescriptorImpl(project, myEvaluatedVariable);
         }

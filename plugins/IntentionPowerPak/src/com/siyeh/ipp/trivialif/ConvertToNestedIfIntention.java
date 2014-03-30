@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,8 +63,14 @@ public class ConvertToNestedIfIntention extends Intention {
       return;
     }
     final String newStatementText = buildIf(returnValue, new StringBuilder()).toString();
-    addStatementBefore(newStatementText, returnStatement);
-    replaceStatement("return false;", returnStatement);
+    final Project project = returnStatement.getProject();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
+    final PsiElement parent = returnStatement.getParent();
+    for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
+      CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+    }
+    PsiReplacementUtil.replaceStatement(returnStatement, "return false;");
   }
 
   private static StringBuilder buildIf(@Nullable PsiExpression expression, StringBuilder out) {
@@ -79,14 +88,7 @@ public class ConvertToNestedIfIntention extends Intention {
         return out;
       }
       else if (JavaTokenType.OROR.equals(tokenType)) {
-        boolean insertElse = false;
         for (PsiExpression operand : operands) {
-          if (insertElse) {
-            out.append("else ");
-          }
-          else {
-            insertElse = true;
-          }
           buildIf(operand, out);
           if (!StringUtil.endsWith(out, "return true;")) {
             out.append("return true;");

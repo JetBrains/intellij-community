@@ -25,6 +25,8 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.ui.PortField;
 import com.intellij.xdebugger.impl.settings.DebuggerConfigurable;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +40,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   private JTextField myAddressField;
   private JPanel myShMemPanel;
   private JPanel myPortPanel;
-  private JTextField myPortField;
+  private PortField myPortField;
   private boolean myIsLocal = false;
   private JButton myDebuggerSettings;
   private JRadioButton mySocketTransport;
@@ -47,6 +49,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   public GenericDebuggerParametersRunnerConfigurable(final Project project) {
     myDebuggerSettings.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, DebuggerConfigurable.DISPLAY_NAME);
         if (myIsLocal) {
@@ -58,6 +61,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     });
 
     final ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         suggestAvailablePortIfNotSpecified();
         updateUI();
@@ -80,6 +84,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     return getTransport() == DebuggerSettings.SOCKET_TRANSPORT;
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     return myPanel;
@@ -94,9 +99,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
     myShmemTransport.setEnabled(!myIsLocal);
   }
 
-  public void disposeEditor() {
-  }
-
+  @Override
   public void resetEditorFrom(GenericDebuggerRunnerSettings runnerSettings) {
     setIsLocal(runnerSettings.LOCAL);
     setTransport(runnerSettings.getTransport());
@@ -113,7 +116,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       try {
         Integer.parseInt(port);
       }
-      catch (NumberFormatException e) {
+      catch (NumberFormatException ignored) {
         portSpecified = false;
       }
     }
@@ -139,7 +142,7 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private String getPort() {
     if (isSocket()) {
-      return myPortField.getText();
+      return String.valueOf(myPortField.getNumber());
     }
     else {
       return myAddressField.getText();
@@ -147,16 +150,8 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
   }
 
   private void checkPort() throws ConfigurationException {
-    if (isSocket() && myPortField.getText().length() > 0) {
-      try {
-        final int port = Integer.parseInt(myPortField.getText());
-        if (port < 0 || port > 0xffff) {
-          throw new NumberFormatException();
-        }
-      }
-      catch (NumberFormatException e) {
-        throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port.0", myPortField.getText()));
-      }
+    if (isSocket() && !myPortField.isSpecified()) {
+      throw new ConfigurationException(DebuggerBundle.message("error.text.invalid.port"));
     }
   }
 
@@ -173,13 +168,14 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
 
   private void setPort(String port) {
     if (isSocket()) {
-      myPortField.setText(port);
+      myPortField.setNumber(StringUtilRt.parseInt(port, 0));
     }
     else {
       myAddressField.setText(port);
     }
   }
 
+  @Override
   public void applyEditorTo(GenericDebuggerRunnerSettings runnerSettings) throws ConfigurationException {
     runnerSettings.LOCAL = myIsLocal;
     checkPort();
@@ -188,5 +184,4 @@ public class GenericDebuggerParametersRunnerConfigurable extends SettingsEditor<
       runnerSettings.setTransport(getTransport());
     }
   }
-
 }

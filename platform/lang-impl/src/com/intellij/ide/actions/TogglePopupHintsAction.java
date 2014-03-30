@@ -20,15 +20,16 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
@@ -36,7 +37,7 @@ public class TogglePopupHintsAction extends AnAction{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.actions.TogglePopupHintsAction");
 
   private static PsiFile getTargetFile(DataContext dataContext){
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if(project==null){
       return null;
     }
@@ -49,18 +50,20 @@ public class TogglePopupHintsAction extends AnAction{
     return psiFile;
   }
 
+  @Override
   public void update(AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     e.getPresentation().setEnabled(psiFile!=null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     LOG.assertTrue(psiFile!=null);
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     LOG.assertTrue(project!=null);
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     codeAnalyzer.setImportHintsEnabled(psiFile,!codeAnalyzer.isImportHintsEnabled(psiFile));
-    InspectionProjectProfileManager.getInstance(project).updateStatusBar();
+    DaemonListeners.getInstance(project).updateStatusBar();
   }
 }

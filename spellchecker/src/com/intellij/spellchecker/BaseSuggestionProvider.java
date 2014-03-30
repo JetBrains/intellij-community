@@ -31,6 +31,7 @@ public class BaseSuggestionProvider implements SuggestionProvider {
     this.manager = manager;
   }
 
+  @Override
   @NotNull
   public List<String> getSuggestions(@NotNull String text) {
 
@@ -42,25 +43,24 @@ public class BaseSuggestionProvider implements SuggestionProvider {
     for (String word : words) {
       int start = text.indexOf(word, index);
       int end = start + word.length();
-      if (!manager.hasProblem(word)) {
-        List<String> variants = new ArrayList<String>();
-        variants.add(word);
+      if (manager.hasProblem(word)) {
+        List<String> variants = manager.getRawSuggestions(word);
         res[i++] = variants;
       }
       else {
-        List<String> variants = manager.getRawSuggestions(word);
+        List<String> variants = new ArrayList<String>();
+        variants.add(word);
         res[i++] = variants;
       }
       index = end;
     }
 
-    String[] all;
     int[] counter = new int[i];
     int size = 1;
     for (int j = 0; j < i; j++) {
       size *= res[j].size();
     }
-    all = new String[size];
+    String[] all = new String[size];
 
     for (int k = 0; k < size; k++) {
       for (int j = 0; j < i; j++) {

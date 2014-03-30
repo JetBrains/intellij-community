@@ -20,6 +20,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -40,6 +41,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,6 +112,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //include test option
     myInspectTestSource.setSelected(myAnalysisOptions.ANALYZE_TEST_SOURCES);
+    myInspectTestSource.setVisible(ModuleUtil.isSupportedRootType(myProject, JavaSourceRootType.TEST_SOURCE));
 
     //module scope if applicable
     myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));

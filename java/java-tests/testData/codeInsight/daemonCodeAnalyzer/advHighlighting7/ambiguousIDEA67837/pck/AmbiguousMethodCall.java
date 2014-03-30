@@ -3,7 +3,7 @@ package pck;
 import static pck.D.foo;
 import static pck.C.foo;
 
-public class C {
+class C {
      public static <T> void foo(Comparable<? extends Comparable<T>> x){}
 }
 

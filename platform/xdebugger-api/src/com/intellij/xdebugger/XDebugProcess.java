@@ -16,7 +16,6 @@
 
 package com.intellij.xdebugger;
 
-import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -24,8 +23,11 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,7 @@ public abstract class XDebugProcess {
   /**
    * @return breakpoint handlers which will be used to set/clear breakpoints in the underlying debugging process
    */
+  @NotNull
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
@@ -142,6 +145,13 @@ public abstract class XDebugProcess {
     return true;
   }
 
+  /**
+   * Check is it is possible to init breakpoints. Otherwise you should call {@link XDebugSession#initBreakpoints()} at the appropriate time
+   */
+  public boolean checkCanInitBreakpoints() {
+    return true;
+  }
+
   @Nullable
   protected ProcessHandler doGetProcessHandler() {
     return null;
@@ -160,8 +170,7 @@ public abstract class XDebugProcess {
 
   @NotNull
   public ExecutionConsole createConsole() {
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
-    return consoleBuilder.getConsole();
+    return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
   /**
@@ -174,8 +183,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to provide additional tabs for 'Debug' tool window
+   * @deprecated override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
    */
+  @Deprecated
   public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
   }
 
@@ -195,5 +205,32 @@ public abstract class XDebugProcess {
   @Nullable
   public HyperlinkListener getCurrentStateHyperlinkListener() {
     return null;
+  }
+
+  /**
+   * Override this method to customize content of tab in 'Debug' tool window
+   */
+  @NotNull
+  public XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        XDebugProcess.this.registerAdditionalContent(ui);
+      }
+    };
+  }
+
+  /**
+   * Add or not SortValuesAction (alphabetically sort)
+   * @todo this action should be moved to "Variables" as gear action
+   */
+  public boolean isValuesCustomSorted() {
+    return false;
+  }
+
+  @Nullable
+  public XDebuggerEvaluator getEvaluator() {
+    XStackFrame frame = getSession().getCurrentStackFrame();
+    return frame == null ? null : frame.getEvaluator();
   }
 }

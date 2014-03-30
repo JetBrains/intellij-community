@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -61,7 +60,7 @@ public abstract class FileTemplateManager{
   public abstract Properties getDefaultProperties();
 
   @NotNull
-  public Properties getDefaultProperties(Project project) {
+  public Properties getDefaultProperties(@NotNull Project project) {
     Properties properties = getDefaultProperties();
     properties.setProperty("PROJECT_NAME", project.getName());
     return properties;
@@ -69,14 +68,12 @@ public abstract class FileTemplateManager{
 
   /**
    * Creates a new template with specified name.
-   * @param name
    * @return created template
    */
   @NotNull 
   public abstract FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
 
   public abstract void removeTemplate(@NotNull FileTemplate template);
-  //public abstract void removeInternal(@NotNull FileTemplate template);
 
   @NotNull 
   public abstract Collection<String> getRecentNames();
@@ -84,6 +81,7 @@ public abstract class FileTemplateManager{
   public abstract void addRecentName(@NotNull @NonNls String name);
 
   public abstract FileTemplate getInternalTemplate(@NotNull @NonNls String templateName);
+
   @NotNull 
   public abstract FileTemplate[] getInternalTemplates();
 
@@ -99,18 +97,17 @@ public abstract class FileTemplateManager{
   @NotNull 
   public abstract FileTemplate[] getAllJ2eeTemplates();
 
-  @TestOnly
-  public abstract FileTemplate addInternal(@NotNull @NonNls String name, @NotNull @NonNls String extension);
+  @NotNull
+  public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
 
-  @NotNull public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
-
-  @NotNull public abstract String localizeInternalTemplateName(final FileTemplate template);
+  @NotNull
+  public abstract String localizeInternalTemplateName(@NotNull FileTemplate template);
 
   public abstract FileTemplate getPattern(@NotNull @NonNls String name);
 
   @NotNull
   public abstract FileTemplate getDefaultTemplate(@NotNull @NonNls String name);
 
-  public abstract void setTemplates(@NotNull String templatesCategory, Collection<FileTemplate> templates);
+  public abstract void setTemplates(@NotNull String templatesCategory, @NotNull Collection<FileTemplate> templates);
   
 }

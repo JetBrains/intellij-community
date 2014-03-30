@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,50 +15,76 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class PsiCapturedWildcardType extends PsiType {
-  private final PsiWildcardType myExistential;
-  private final PsiElement myContext;
+public class PsiCapturedWildcardType extends PsiType.Stub {
+  @NotNull private final PsiWildcardType myExistential;
+  @NotNull private final PsiElement myContext;
+  @Nullable private final PsiTypeParameter myParameter;
 
-  public boolean equals(final Object o) {
-    if (!(o instanceof PsiCapturedWildcardType)) return false;
-    final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
-    return myContext.equals(captured.myContext) &&
-           myExistential.equals(captured.myExistential);
+  @NotNull
+  public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential, @NotNull PsiElement context) {
+    return create(existential, context, null);
   }
 
+  @NotNull
+  public static PsiCapturedWildcardType create(@NotNull PsiWildcardType existential,
+                                               @NotNull PsiElement context,
+                                               @Nullable PsiTypeParameter parameter) {
+    return new PsiCapturedWildcardType(existential, context, parameter);
+  }
+
+  private PsiCapturedWildcardType(@NotNull PsiWildcardType existential, @NotNull PsiElement context, @Nullable PsiTypeParameter parameter) {
+    super(PsiAnnotation.EMPTY_ARRAY);
+    myExistential = existential;
+    myContext = context;
+    myParameter = parameter;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PsiCapturedWildcardType)) {
+      return false;
+    }
+
+    final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)o;
+    if (!myContext.equals(captured.myContext) || !myExistential.equals(captured.myExistential)) {
+      return false;
+    }
+
+    if (myContext instanceof PsiReferenceExpression && !Comparing.equal(myParameter, captured.myParameter)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
   public int hashCode() {
     return myExistential.hashCode() + 31 * myContext.hashCode();
   }
 
-  private PsiCapturedWildcardType(PsiWildcardType existential, final PsiElement context) {
-    super(PsiAnnotation.EMPTY_ARRAY);//todo
-    myExistential = existential;
-    myContext = context;
-  }
-
-  public static PsiCapturedWildcardType create(PsiWildcardType existential, final PsiElement context) {
-    return new PsiCapturedWildcardType(existential, context);
-  }
-
+  @NotNull
   @Override
   public String getPresentableText() {
     return myExistential.getPresentableText();
   }
 
+  @NotNull
   @Override
-  public String getCanonicalText() {
-    return myExistential.getCanonicalText();
+  public String getCanonicalText(boolean annotated) {
+    return myExistential.getCanonicalText(annotated);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    //noinspection HardCodedStringLiteral
     return "capture<" + myExistential.getInternalCanonicalText() + '>';
   }
 
@@ -68,7 +94,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 
@@ -77,6 +103,7 @@ public class PsiCapturedWildcardType extends PsiType {
     return visitor.visitCapturedWildcardType(this);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope getResolveScope() {
     return myExistential.getResolveScope();
@@ -93,13 +120,24 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   public PsiType getUpperBound () {
-    return myExistential.isExtends() ? myExistential.getBound() : PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    final PsiType bound = myExistential.getBound();
+    if (myExistential.isExtends()) {
+      return bound;
+    }
+    else if (bound instanceof PsiCapturedWildcardType) {
+      return PsiWildcardType.createSuper(myContext.getManager(), ((PsiCapturedWildcardType)bound).getUpperBound());
+    }
+    else {
+      return PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    }
   }
 
+  @NotNull
   public PsiWildcardType getWildcard() {
     return myExistential;
   }
 
+  @NotNull
   public PsiElement getContext() {
     return myContext;
   }

@@ -148,7 +148,8 @@ public class ComplementaryFontsRegistry {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     FontInfo result;
-    for (String fontFamily : fontFamilies) {
+    for (int i = 0, len = fontFamilies.size(); i < len; ++i) {
+      final String fontFamily = fontFamilies.get(i);
       result = doGetFontAbleToDisplay(c, preferences.getSize(fontFamily), style, fontFamily);
       if (result != null) {
         return result;

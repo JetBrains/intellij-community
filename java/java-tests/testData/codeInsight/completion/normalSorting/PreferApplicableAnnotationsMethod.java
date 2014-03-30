@@ -1,5 +1,5 @@
 class Foo {
-  @T<caret>
+  @Tx<caret>
   public static void main(String[] args) {
     
   }

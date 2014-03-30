@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class RemoveUnnecessarySemicolonTest extends LightCodeInsightFixtureTestCase {
   private static final String hint = GroovyIntentionsBundle.message('remove.unnecessary.semicolons.name');
 
-  final String basePath = TestUtils.testDataPath + 'intentions/removeUnnecessaryBraces/'
+  final String basePath = TestUtils.testDataPath + 'intentions/removeUnnecessarySemicolon/'
 
   void testSimpleCase1() {
     doTest('print 2;<caret>\nprint 3', 'print 2\nprint 3')
@@ -544,5 +544,23 @@ public class CommonRefactoringUtil {
   }
 }
 </selection>''')
+  }
+
+  void testTraditionalFor() {
+    doTest('<selection>for(int i = 0; i < 5; i++);</selection>', '<selection>for(int i = 0; i < 5; i++)</selection>')
+  }
+
+  void testClassMembers() {
+    doTest('''\
+<selection>class A {
+    def x;
+    def y;
+}</selection>
+''', '''\
+<selection>class A {
+    def x
+    def y
+}</selection>
+''')
   }
 }

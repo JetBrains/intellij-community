@@ -22,6 +22,7 @@ import com.intellij.openapi.options.Scheme;
  * Date: Jul 19, 2002
  */
 public interface CodeStyleScheme extends Scheme {
+  @Override
   String getName();
   boolean isDefault();
   CodeStyleSettings getCodeStyleSettings();

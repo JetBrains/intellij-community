@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
@@ -40,7 +41,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass == null) return;
 
-    if (OverrideImplementUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
+    if (OverrideImplementExploreUtil.getMethodSignaturesToOverride(aClass).isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, "No methods to override have been found");
       return;
     }

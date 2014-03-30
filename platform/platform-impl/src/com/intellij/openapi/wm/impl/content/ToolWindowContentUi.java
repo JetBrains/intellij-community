@@ -121,7 +121,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return this;
   }
 
-  public void setManager(final ContentManager manager) {
+  public void setManager(@NotNull final ContentManager manager) {
     if (myManager != null) {
       getCurrentLayout().reset();
     }
@@ -256,25 +256,29 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public void beforeDispose() {
   }
 
-  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+  public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }
 
+  @NotNull
   @Override
   public String getCloseActionName() {
     return getCurrentLayout().getCloseActionName();
   }
 
+  @NotNull
   @Override
   public String getCloseAllButThisActionName() {
     return getCurrentLayout().getCloseAllButThisActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousContentActionName() {
     return getCurrentLayout().getPreviousContentActionName();
   }
 
+  @NotNull
   @Override
   public String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();

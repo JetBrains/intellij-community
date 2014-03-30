@@ -33,7 +33,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -42,10 +41,12 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -167,6 +168,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] getContentSourceRoots() {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -175,6 +177,16 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       ContainerUtil.addAll(result, sourceRoots);
     }
     return VfsUtilCore.toVirtualFileArray(result);
+  }
+
+  @NotNull
+  @Override
+  public List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
+      roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
+    }
+    return roots;
   }
 
   @NotNull
@@ -306,8 +318,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
     if (getBatchSession(false).myBatchLevel == 0 && !myMergedCallStarted) {
-      LOG.assertTrue(myRootsChangesDepth == 0,
-                     "Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + myRootsChangesDepth);
+      if (myRootsChangesDepth != 0) {
+        int depth = myRootsChangesDepth;
+        myRootsChangesDepth = 0;
+        LOG.error("Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + depth);
+      }
       myMergedCallStarted = true;
       myMergedCallHasRootChange = false;
       try {
@@ -396,6 +411,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myRootsChangesDepth--;
     if (myRootsChangesDepth > 0) return false;
+    if (myRootsChangesDepth < 0) {
+      LOG.info("Restoring from roots change start/finish mismatch: ", new Throwable());
+      myRootsChangesDepth = 0;
+    }
 
     clearScopesCaches();
 
@@ -429,7 +448,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public static String extractLocalPath(final String url) {
     final String path = VfsUtilCore.urlToPath(url);
-    final int jarSeparatorIndex = path.indexOf(StandardFileSystems.JAR_SEPARATOR);
+    final int jarSeparatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
     if (jarSeparatorIndex > 0) {
       return path.substring(0, jarSeparatorIndex);
     }

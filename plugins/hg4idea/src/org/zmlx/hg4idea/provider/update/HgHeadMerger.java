@@ -15,8 +15,6 @@ package org.zmlx.hg4idea.provider.update;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgMergeCommand;
@@ -38,11 +36,9 @@ public final class HgHeadMerger {
     this.hgMergeCommand = hgMergeCommand;
   }
 
-  public HgCommandResult merge(VirtualFile repo, UpdatedFiles updatedFiles,
-    VcsRevisionNumber revisionNumber) throws VcsException {
+  public HgCommandResult merge(VirtualFile repo) throws VcsException {
 
     HgCommandResult commandResult = ensureSuccess(hgMergeCommand.execute());
-
     try {
       HgUtil.markDirectoryDirty(project, repo);
     }
@@ -61,5 +57,4 @@ public final class HgHeadMerger {
     LOG.info(msg, e);
     throw new VcsException(msg);
   }
-
 }

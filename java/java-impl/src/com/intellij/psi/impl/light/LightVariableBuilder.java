@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.psi.impl.light;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
@@ -33,7 +48,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     this(navigationElement.getManager(), name, type, JavaLanguage.INSTANCE);
     setNavigationElement(navigationElement);
   }
-  
+
   public LightVariableBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type, Language language) {
     super(manager, language);
     myName = name;
@@ -60,6 +75,11 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
 
   public T setModifiers(String... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
+    return (T)this;
+  }
+
+  public T setModifierList(LightModifierList modifierList) {
+    myModifierList = modifierList;
     return (T)this;
   }
 
@@ -108,10 +128,6 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
     throw new UnsupportedOperationException("setName is not implemented yet in com.intellij.psi.impl.light.LightVariableBuilder");
   }
 
-  @Override
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
   @Override
   protected boolean isVisibilitySupported() {
     return true;

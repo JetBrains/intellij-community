@@ -28,13 +28,12 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
-import com.intellij.debugger.ui.impl.MainWatchPanel;
-import com.intellij.debugger.ui.impl.VariablesPanel;
-import com.intellij.debugger.ui.impl.WatchDebuggerTree;
+import com.intellij.debugger.ui.impl.*;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -45,10 +44,13 @@ import org.jetbrains.annotations.NotNull;
 public class AddToWatchActionHandler extends DebuggerActionHandler {
   @Override
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-    DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(event.getDataContext());
+    DataContext context = event.getDataContext();
+    DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(context);
     boolean enabled = false;
     if (selectedNodes != null && selectedNodes.length > 0) {
-      if (DebuggerAction.getPanel(event.getDataContext()) instanceof VariablesPanel) {
+      DebuggerTreePanel panel = DebuggerAction.getPanel(context);
+      if (panel instanceof VariablesPanel || panel instanceof WatchPanel
+          || (panel == null && DebuggerAction.getTree(context) instanceof InspectDebuggerTree)) {
         enabled = true;
         for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();
@@ -60,7 +62,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       }
     }
     else {
-      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
     return enabled;
@@ -88,7 +90,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
         if (editorText != null) {
@@ -124,6 +126,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       myWatchPanel = watchPanel;
     }
 
+    @Override
     public void threadAction() {
       final DebuggerSession session = myDebuggerContext.getDebuggerSession();
       if (session == null) {
@@ -136,6 +139,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
           final TextWithImports expression = DebuggerTreeNodeExpression.createEvaluationText(node, myDebuggerContext);
           if (expression != null) {
             DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+              @Override
               public void run() {
                 doAddWatch(myWatchPanel, expression, descriptor);
               }
@@ -144,6 +148,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
         }
         catch (final EvaluateException e) {
           DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+            @Override
             public void run() {
               Messages.showErrorDialog(project, e.getMessage(), ActionsBundle.actionText(XDebuggerActions.ADD_TO_WATCH));
             }
@@ -152,8 +157,10 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       }
     }
 
+    @Override
     protected void commandCancelled() {
       DebuggerInvocationUtil.swingInvokeLater(myDebuggerContext.getProject(), new Runnable() {
+        @Override
         public void run() {
           for (DebuggerTreeNodeImpl node : mySelectedNodes) {
             final NodeDescriptorImpl descriptor = node.getDescriptor();

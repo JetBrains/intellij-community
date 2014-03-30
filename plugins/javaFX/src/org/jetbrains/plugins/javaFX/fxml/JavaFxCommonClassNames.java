@@ -27,6 +27,7 @@ import java.util.Map;
  */
 public class JavaFxCommonClassNames {
   @NonNls public static final String JAVAFX_BEANS_PROPERTY = "javafx.beans.property.Property";
+  @NonNls public static final String JAVAFX_OBSERVABLE_LIST_PROPERTY = "javafx.collections.ObservableList";
   @NonNls public static final String JAVAFX_ANCHOR_PANE = "javafx.scene.layout.AnchorPane";
   @NonNls public static final String JAVAFX_EVENT = "javafx.event.Event";
   @NonNls public static final String JAVAFX_BEANS_DEFAULT_PROPERTY = "javafx.beans.DefaultProperty";
@@ -61,4 +62,8 @@ public class JavaFxCommonClassNames {
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyLongProperty", PsiType.LONG);
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyDoubleProperty", PsiType.DOUBLE);
   }
+
+  @NonNls public static final String JAVA_FX_PARENT = "javafx.scene.Parent";
+  @NonNls public static final String JAVA_FX_SCENE = "javafx.scene.Scene";
+  @NonNls public static final String JAVAFX_APPLICATION_APPLICATION = "javafx.application.Application";
 }

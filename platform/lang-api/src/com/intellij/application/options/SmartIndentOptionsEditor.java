@@ -31,6 +31,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   private JTextField myContinuationIndentField;
   private JLabel myContinuationIndentLabel;
 
+  @Override
   protected void addTabOptions() {
     super.addTabOptions();
 
@@ -38,6 +39,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     add(myCbSmartTabs, true);
   }
 
+  @Override
   protected void addComponents() {
     super.addComponents();
 
@@ -46,6 +48,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     add(myContinuationIndentLabel, myContinuationIndentField);
   }
 
+  @Override
   public boolean isModified(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     boolean isModified = super.isModified(settings, options);
     isModified |= isFieldModified(myCbSmartTabs, options.SMART_TABS);
@@ -53,18 +56,21 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     return isModified;
   }
 
+  @Override
   public void apply(final CodeStyleSettings settings, final CommonCodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
     options.CONTINUATION_INDENT_SIZE = getFieldValue(myContinuationIndentField, 0, options.CONTINUATION_INDENT_SIZE);
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
   }
 
+  @Override
   public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myContinuationIndentField.setText(String.valueOf(options.CONTINUATION_INDENT_SIZE));
     myCbSmartTabs.setSelected(options.SMART_TABS);
   }
 
+  @Override
   public void setEnabled(final boolean enabled) {
     super.setEnabled(enabled);
 

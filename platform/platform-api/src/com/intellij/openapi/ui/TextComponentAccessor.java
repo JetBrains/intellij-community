@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithStoredHistory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,11 +34,13 @@ public interface TextComponentAccessor<T extends Component> {
    * The accessor that gets and changes whole text
    */
   TextComponentAccessor<JTextField> TEXT_FIELD_WHOLE_TEXT = new TextComponentAccessor<JTextField>() {
+    @Override
     public String getText(JTextField textField) {
       return textField.getText();
     }
 
-    public void setText(JTextField textField, String text) {
+    @Override
+    public void setText(JTextField textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -46,12 +49,14 @@ public interface TextComponentAccessor<T extends Component> {
    * The accessor that replaces selection or whole text if there is no selection
    */
   TextComponentAccessor<JTextField> TEXT_FIELD_SELECTED_TEXT = new TextComponentAccessor<JTextField>() {
+    @Override
     public String getText(JTextField textField) {
       String selectedText = textField.getSelectedText();
       return selectedText != null ? selectedText : textField.getText();
     }
 
-    public void setText(JTextField textField, String text) {
+    @Override
+    public void setText(JTextField textField, @NotNull String text) {
       if (textField.getSelectedText() != null) textField.replaceSelection(text);
       else textField.setText(text);
     }
@@ -61,12 +66,14 @@ public interface TextComponentAccessor<T extends Component> {
    * The accessor that gets and changes whole text
    */
   TextComponentAccessor<JComboBox> STRING_COMBOBOX_WHOLE_TEXT = new TextComponentAccessor<JComboBox>() {
+    @Override
     public String getText(JComboBox comboBox) {
       Object item = comboBox.getEditor().getItem();
       return item.toString();
     }
 
-    public void setText(JComboBox comboBox, String text) {
+    @Override
+    public void setText(JComboBox comboBox, @NotNull String text) {
       comboBox.getEditor().setItem(text);
     }
   };
@@ -74,11 +81,13 @@ public interface TextComponentAccessor<T extends Component> {
    * The accessor that gets and changes whole text
    */
   TextComponentAccessor<TextFieldWithHistory> TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithHistory>() {
+    @Override
     public String getText(TextFieldWithHistory textField) {
       return textField.getText();
     }
 
-    public void setText(TextFieldWithHistory textField, String text) {
+    @Override
+    public void setText(TextFieldWithHistory textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -87,11 +96,13 @@ public interface TextComponentAccessor<T extends Component> {
    * The accessor that gets and changes whole text
    */
   TextComponentAccessor<TextFieldWithStoredHistory> TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT = new TextComponentAccessor<TextFieldWithStoredHistory>() {
+    @Override
     public String getText(TextFieldWithStoredHistory textField) {
       return textField.getText();
     }
 
-    public void setText(TextFieldWithStoredHistory textField, String text) {
+    @Override
+    public void setText(TextFieldWithStoredHistory textField, @NotNull String text) {
       textField.setText(text);
     }
   };
@@ -108,5 +119,5 @@ public interface TextComponentAccessor<T extends Component> {
    * @param component the component
    * @param text the text to set
    */
-  void setText(T component, String text);
+  void setText(T component, @NotNull String text);
 }

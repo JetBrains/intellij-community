@@ -88,7 +88,16 @@ public class ImageComponentUI extends ComponentUI {
     private void paintImage(Graphics g, ImageComponent ic) {
         ImageDocument document = ic.getDocument();
         Dimension size = ic.getCanvasSize();
+
+        Graphics2D g2d = (Graphics2D)g;
+        RenderingHints oldHints = g2d.getRenderingHints();
+  
+        // disable any kind of source image manipulation when resizing
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(document.getRenderer(), 0, 0, size.width, size.height, ic);
+      
+        g2d.setRenderingHints(oldHints);
     }
 
     private void paintGrid(Graphics g, ImageComponent ic) {

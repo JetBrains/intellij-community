@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,11 @@ public class UsageInfoToUsageConverter {
   public static Usage convert(@NotNull TargetElementsDescriptor descriptor, @NotNull UsageInfo usageInfo) {
     PsiElement[] primaryElements = descriptor.getPrimaryElements();
 
+    return convert(primaryElements, usageInfo);
+  }
+
+  @NotNull
+  public static Usage convert(@NotNull PsiElement[] primaryElements, @NotNull UsageInfo usageInfo) {
     PsiElement usageElement = usageInfo.getElement();
     for(ReadWriteAccessDetector detector: Extensions.getExtensions(ReadWriteAccessDetector.EP_NAME)) {
       if (isReadWriteAccessibleElements(primaryElements, detector)) {
@@ -146,6 +151,17 @@ public class UsageInfoToUsageConverter {
     for (int i = 0; i < usages.length; i++) {
       usages[i] = convert(descriptor, usageInfos[i]);
     }
+    return usages;
+  }
+
+  @NotNull
+  public static Usage[] convert(@NotNull final PsiElement[] primaryElements, @NotNull UsageInfo[] usageInfos) {
+    Usage[] usages = ContainerUtil.map(usageInfos, new Function<UsageInfo, Usage>() {
+      @Override
+      public Usage fun(UsageInfo info) {
+        return convert(primaryElements, info);
+      }
+    }, new Usage[usageInfos.length]);
     return usages;
   }
 

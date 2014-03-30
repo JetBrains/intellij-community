@@ -26,14 +26,20 @@
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
 
     <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+    <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.java.InjectionCache"
+                    serviceImplementation="org.intellij.plugins.intelliLang.inject.java.InjectionCache"/>
+  </extensions>
 
-    <daemon.highlightInfoFilter implementation="org.intellij.plugins.intelliLang.inject.CustomErrorElementFilter"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <tipAndTrick file="InjectSQLLanguage.html" feature-id="db.console.run.intention"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
     <injectionConfig config="resources/xmlInjections-java.xml"/>
+
+
   </extensions>
 
 </idea-plugin>

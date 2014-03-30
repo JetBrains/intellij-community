@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.todo.ToDoSummary;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,11 +35,13 @@ public final class ToDoRootNode extends BaseToDoNode{
     mySummaryNode = new SummaryNode(getProject(), summary, myBuilder);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));
   }
 
+  @Override
   public void update(PresentationData presentation) {
   }
 
@@ -48,14 +49,17 @@ public final class ToDoRootNode extends BaseToDoNode{
     return mySummaryNode;
   }
 
+  @Override
   public String getTestPresentation() {
     return "Root";
   }
 
+  @Override
   public int getFileCount(final Object val) {
     return mySummaryNode.getFileCount(null);
   }
 
+  @Override
   public int getTodoItemCount(final Object val) {
     return mySummaryNode.getTodoItemCount(null);
   }

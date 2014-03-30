@@ -34,7 +34,7 @@ public class MavenEnvironmentRegistrar implements ApplicationComponent {
     registerPathVariable();
   }
 
-  private void registerPathVariable() {
+  private static void registerPathVariable() {
     File repository = MavenUtil.resolveLocalRepository(null, null, null);
     PathMacros macros = PathMacros.getInstance();
 

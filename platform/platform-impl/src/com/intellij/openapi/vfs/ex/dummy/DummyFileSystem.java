@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
 
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
     VirtualFileImpl child = new VirtualFileDataImpl(this, dir, fileName);
     dir.addChild(child);
     fireFileCreated(requestor, child);
@@ -138,7 +138,7 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    final VirtualFileDirectoryImpl dir = ((VirtualFileDirectoryImpl)vDir);
+    final VirtualFileDirectoryImpl dir = (VirtualFileDirectoryImpl)vDir;
     VirtualFileImpl child = new VirtualFileDirectoryImpl(this, dir, dirName);
     dir.addChild(child);
     fireFileCreated(requestor, child);

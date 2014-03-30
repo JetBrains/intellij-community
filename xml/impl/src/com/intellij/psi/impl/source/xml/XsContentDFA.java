@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.actions.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ErrorReporter;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.xs.SubstitutionGroupHandler;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
@@ -45,6 +46,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -129,7 +131,7 @@ class XsContentDFA extends XmlContentDFA {
     return new QName(tag.getNamespacePrefix().intern(),
                      tag.getLocalName().intern(),
                      tag.getName().intern(),
-                     namespace.length() == 0 ? null : namespace.intern());
+                     namespace.isEmpty() ? null : namespace.intern());
   }
 
   @Nullable
@@ -182,7 +184,22 @@ class XsContentDFA extends XmlContentDFA {
         return parser;
       }
     };
-    handler.setErrorReporter(handler.new TestErrorReporter());
+    handler.setErrorReporter(new ErrorReporter(handler) {
+
+      int count;
+      @Override
+      public void processError(SAXParseException ex, ValidateXmlActionHandler.ProblemType warning) throws SAXException {
+        if (warning != ValidateXmlActionHandler.ProblemType.WARNING && count++ > 100) {
+          throw new SAXException(ex);
+        }
+      }
+
+      @Override
+      public boolean isUniqueProblem(SAXParseException e) {
+        return true;
+      }
+    });
+
     handler.doValidate(file);
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
     if (grammarPool == null) {

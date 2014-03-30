@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -49,14 +53,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
@@ -79,7 +84,7 @@ public class GroovyExpectedTypesProvider {
           }
           final TypeConstraint[] result = calculator.getResult();
 
-          List<TypeConstraint> custom = new ArrayList<TypeConstraint>();
+          List<TypeConstraint> custom = ContainerUtil.newArrayList();
           for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
             custom.addAll(contributor.calculateTypeConstraints(expression));
           }
@@ -94,39 +99,15 @@ public class GroovyExpectedTypesProvider {
       });
   }
 
-  public static Set<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
-    final LinkedHashSet<PsiType> result = new LinkedHashSet<PsiType>();
-    for (TypeConstraint constraint : calculateTypeConstraints(element)) {
-      result.add(constraint.getDefaultType());
-    }
-    return result;
+  public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
+    TypeConstraint[] constraints = calculateTypeConstraints(element);
+    return ContainerUtil.map(constraints, new Function<TypeConstraint, PsiType>() {
+      @Override
+      public PsiType fun(TypeConstraint constraint) {
+        return constraint.getDefaultType();
+      }
+    });
   }
-
-  @Nullable
-  public static PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
-  final Set<PsiType> expectedTypes = getDefaultExpectedTypes(closure);
-
-  List<PsiType> expectedReturnTypes = new ArrayList<PsiType>();
-  for (PsiType expectedType : expectedTypes) {
-    if (!(expectedType instanceof PsiClassType)) return null;
-
-    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)expectedType).resolveGenerics();
-    final PsiClass resolved = resolveResult.getElement();
-    if (resolved == null || !(GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(resolved.getQualifiedName()))) return null;
-
-    final PsiTypeParameter[] typeParameters = resolved.getTypeParameters();
-    if (typeParameters.length != 1) return null;
-
-    final PsiTypeParameter expected = typeParameters[0];
-    final PsiType expectedReturnType = resolveResult.getSubstitutor().substitute(expected);
-    if (expectedReturnType == PsiType.VOID || expectedReturnType == null) return null;
-
-    expectedReturnTypes.add(expectedReturnType);
-  }
-
-  return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
-}
-
 
   private static class MyCalculator extends GroovyElementVisitor {
     private TypeConstraint[] myResult;
@@ -163,19 +144,15 @@ public class GroovyExpectedTypesProvider {
         if (pparent instanceof GrCall && resolvesToDefaultConstructor(((GrCall)pparent))) {
           final GroovyResolveResult resolveResult = label.advancedResolve();
           PsiElement resolved = resolveResult.getElement();
-          PsiType type;
-          if (resolved instanceof PsiField) {
-            type = ((PsiField)resolved).getType();
-          }
-          else if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)resolved)) {
-            type = ((PsiMethod)resolved).getParameterList().getParameters()[0].getType();
-          }
-          else {
-            type = null;
-          }
-          type = resolveResult.getSubstitutor().substitute(type);
-          if (type != null) {
-            myResult = createSimpleSubTypeResult(type);
+          PsiType type = resolved instanceof PsiField ?
+                            ((PsiField)resolved).getType() :
+                         resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)resolved) ?
+                            ((PsiMethod)resolved).getParameterList().getParameters()[0].getType()
+                         : null;
+
+          PsiType substituted = resolveResult.getSubstitutor().substitute(type);
+          if (substituted != null) {
+            myResult = createSimpleSubTypeResult(substituted);
           }
         }
       }
@@ -201,20 +178,12 @@ public class GroovyExpectedTypesProvider {
       }
 
       final GrClosableBlock[] closureArgs = methodCall.getClosureArguments();
-      //noinspection SuspiciousMethodCalls
-      final int closureIndex = Arrays.asList(closureArgs).indexOf(myExpression);
-      if (closureIndex >= 0) {
-        List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
-        for (GroovyResolveResult variant : ResolveUtil.getCallVariants(myExpression)) {
-          final GrArgumentList argumentList = methodCall.getArgumentList();
-          final GrNamedArgument[] namedArgs = argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
-          final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
-          addConstraintsFromMap(constraints, GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, true, namedArgs, expressionArgs, closureArgs));
-        }
-        if (!constraints.isEmpty()) {
-          myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
-        }
-
+      if (ArrayUtil.contains(myExpression, closureArgs)) {
+        final GrArgumentList argumentList = methodCall.getArgumentList();
+        final GrNamedArgument[] namedArgs = argumentList.getNamedArguments();
+        final GrExpression[] expressionArgs = argumentList.getExpressionArguments();
+        final GroovyResolveResult[] callVariants = ResolveUtil.getCallVariants(myExpression);
+        processCallVariants(methodCall, callVariants, namedArgs, expressionArgs, closureArgs);
       }
     }
 
@@ -236,9 +205,7 @@ public class GroovyExpectedTypesProvider {
     }
 
     @Override
-    public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-      final GrAnnotationMethod method = ((GrAnnotationMethod)defaultAnnotationValue.getParent());
-
+    public void visitAnnotationMethod(GrAnnotationMethod method) {
       PsiType type = method.getReturnType();
       if (type != null && isAcceptableAnnotationValueType(type)) {
         myResult = createSimpleSubTypeResult(type);
@@ -247,7 +214,7 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
-      final GrAnnotationNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationNameValuePair.class, true, GrDefaultAnnotationValue.class);
+      final GrAnnotationNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationNameValuePair.class, true, GrAnnotationMethod.class);
       if (nameValuePair != null) {
 
         final PsiClass annot = ResolveUtil.resolveAnnotation(arrayInitializer);
@@ -256,14 +223,7 @@ public class GroovyExpectedTypesProvider {
         final String name = nameValuePair.getName();
         if (name == null) return;
 
-        final PsiMethod[] attrs = annot.findMethodsByName(name, false);
-        if (attrs.length > 0) {
-          PsiType type = attrs[0].getReturnType();
-          while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-          if (type != null && isAcceptableAnnotationValueType(type)) {
-            myResult = createSimpleSubTypeResult(type);
-          }
-        }
+        createResultFromAttrName(annot, name);
       }
       else {
         final GrAnnotationMethod method = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationMethod.class);
@@ -295,34 +255,40 @@ public class GroovyExpectedTypesProvider {
         if (annot != null) {
           final String name = nameValuePair.getName();
           if (name != null) {
-            final PsiMethod[] attrs = annot.findMethodsByName(name, false);
-            if (attrs.length > 0) {
-              PsiType type = attrs[0].getReturnType();
-              while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-              if (type != null && isAcceptableAnnotationValueType(type)) {
-                myResult = createSimpleSubTypeResult(type);
-              }
-            }
+            createResultFromAttrName(annot, name);
           }
           else {
             final PsiMethod[] valueAttr = annot.findMethodsByName("value", false);
-            boolean canHaveSimpleExpr = valueAttr.length > 0;
-            final PsiMethod[] methods = annot.getMethods();
-            for (PsiMethod method : methods) {
-              if (!("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null)) {
-                canHaveSimpleExpr = false;
-              }
-            }
+            if (valueAttr.length > 0) {
+              boolean canHaveSimpleExpr = ContainerUtil.find(annot.getMethods(), new Condition<PsiMethod>() {
+                @Override
+                public boolean value(PsiMethod method) {
+                  return !("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null);
+                }
+              }) == null;
 
-            if (canHaveSimpleExpr) {
-              PsiType type = valueAttr[0].getReturnType();
-              while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
-              if (type != null && isAcceptableAnnotationValueType(type)) {
-                myResult = createSimpleSubTypeResult(type);
+
+              if (canHaveSimpleExpr) {
+                createResultFromAnnotationAttribute(valueAttr[0]);
               }
             }
           }
         }
+      }
+    }
+
+    private void createResultFromAttrName(PsiClass annotation, String attrName) {
+      final PsiMethod[] attrs = annotation.findMethodsByName(attrName, false);
+      if (attrs.length > 0) {
+        createResultFromAnnotationAttribute(attrs[0]);
+      }
+    }
+
+    private void createResultFromAnnotationAttribute(PsiMethod attr) {
+      PsiType type = attr.getReturnType();
+      while (type instanceof PsiArrayType) type = ((PsiArrayType)type).getComponentType();
+      if (type != null && isAcceptableAnnotationValueType(type)) {
+        myResult = createSimpleSubTypeResult(type);
       }
     }
 
@@ -372,17 +338,39 @@ public class GroovyExpectedTypesProvider {
     }
 
     public void visitArgumentList(GrArgumentList list) {
-      List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
-      for (GroovyResolveResult variant : ResolveUtil.getCallVariants(list)) {
-        final Map<GrExpression, Pair<PsiParameter, PsiType>> map = GrClosureSignatureUtil.mapArgumentsToParameters(
-          variant, list, true, true, list.getNamedArguments(), list.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY
-        );
-        addConstraintsFromMap(constraints, map);
+      processCallVariants(list, ResolveUtil.getCallVariants(list), list.getNamedArguments(), list.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY);
+    }
+
+    private void processCallVariants(@NotNull PsiElement place,
+                                     @NotNull GroovyResolveResult[] variants,
+                                     @NotNull GrNamedArgument[] namedArguments,
+                                     @NotNull GrExpression[] expressionArguments,
+                                     @NotNull GrClosableBlock[] closureArguments) {
+
+      List<Pair<PsiParameter, PsiType>> expectedParams =
+        ResolveUtil.collectExpectedParamsByArg(place, variants, namedArguments, expressionArguments, closureArguments, myExpression);
+
+      collectExpectedTypeFromPossibleParams(expectedParams);
+    }
+
+    private void collectExpectedTypeFromPossibleParams(List<Pair<PsiParameter, PsiType>> expectedParams) {
+      List<TypeConstraint> constraints = ContainerUtil.newArrayList();
+      for (Pair<PsiParameter, PsiType> pair : expectedParams) {
+        final PsiType type = pair.second;
+        if (type != null) {
+
+          constraints.add(SubtypeConstraint.create(type));
+
+          if (type instanceof PsiArrayType && pair.first.isVarArgs()) {
+            constraints.add(SubtypeConstraint.create(((PsiArrayType)type).getComponentType()));
+          }
+        }
       }
       if (!constraints.isEmpty()) {
         myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
       }
     }
+
 
     @Override
     public void visitBinaryExpression(GrBinaryExpression expression) {
@@ -390,25 +378,29 @@ public class GroovyExpectedTypesProvider {
       final GrExpression left = expression.getLeftOperand();
       final GrExpression right = expression.getRightOperand();
 
-
-      if (type == mREGEX_FIND || type == mREGEX_MATCH) {
-        final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
-        myResult = createSimpleSubTypeResult(string);
-        return;
-      }
-
       final GrExpression other = myExpression == left ? right : left;
       final PsiType otherType = other != null ? other.getType() : null;
 
       if (otherType == null) return;
 
-      if (type== mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
-        myResult = createSimpleSubTypeResult(obj);
-        return;
+      final GroovyResolveResult[] callVariants = expression.multiResolve(true);
+      if (myExpression == left || callVariants.length == 0) {
+        if (type == mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
+          myResult = createSimpleSubTypeResult(obj);
+        }
+        else if (type == mREGEX_FIND || type == mREGEX_MATCH) {
+          final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
+          myResult = createSimpleSubTypeResult(string);
+        }
+        else {
+          myResult = createSimpleSubTypeResult(otherType);
+        }
       }
-
-      myResult = createSimpleSubTypeResult(otherType);
+      else { //myExpression == right
+        processCallVariants(expression, callVariants, GrNamedArgument.EMPTY_ARRAY, new GrExpression[]{myExpression},
+                            GrClosableBlock.EMPTY_ARRAY);
+      }
     }
 
     @Override
@@ -420,22 +412,6 @@ public class GroovyExpectedTypesProvider {
       if (myExpression == operand) {
         final PsiType type = typeElement.getType();
         myResult = new TypeConstraint[]{new SupertypeConstraint(type, type)};
-      }
-    }
-
-    private void addConstraintsFromMap(List<TypeConstraint> constraints, Map<GrExpression, Pair<PsiParameter, PsiType>> map) {
-      if (map == null) return;
-
-      final Pair<PsiParameter, PsiType> pair = map.get(myExpression);
-      if (pair == null) return;
-
-      final PsiType type = pair.second;
-      if (type == null) return;
-
-      constraints.add(SubtypeConstraint.create(type));
-
-      if (type instanceof PsiArrayType && pair.first.isVarArgs()) {
-        constraints.add(SubtypeConstraint.create(((PsiArrayType)type).getComponentType()));
       }
     }
 
@@ -538,7 +514,8 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitCaseLabel(GrCaseLabel caseLabel) {
       final PsiElement parent = caseLabel.getParent().getParent();
-      assert parent instanceof GrSwitchStatement : parent + " of class " + parent.getClass();
+      if (!(parent instanceof GrSwitchStatement)) return;
+
       final GrExpression condition = ((GrSwitchStatement)parent).getCondition();
       if (condition == null) return;
 
@@ -553,9 +530,15 @@ public class GroovyExpectedTypesProvider {
       final GrCaseSection[] sections = switchStatement.getCaseSections();
       List<PsiType> types = new ArrayList<PsiType>(sections.length);
       for (GrCaseSection section : sections) {
-        final GrExpression value = section.getCaseLabel().getValue();
-        final PsiType type = value != null ? value.getType() : null;
-        if (type != null) types.add(type);
+        for (GrCaseLabel label : section.getCaseLabels()) {
+          final GrExpression value = label.getValue();
+          if (value != null) {
+            final PsiType type = value.getType();
+            if (type != null) {
+              types.add(type);
+            }
+          }
+        }
       }
 
       final PsiType upperBoundNullable = TypesUtil.getLeastUpperBoundNullable(types, switchStatement.getManager());

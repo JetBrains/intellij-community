@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,16 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,15 +114,37 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return nodeIcon;
   }
 
+  @NotNull
+  public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    if (component != null && ColorUtil.isDark(component.getBackground()) != ColorUtil.isDark(globalScheme.getDefaultBackground())) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+      if (scheme != null) {
+        return scheme;
+      }
+    }
+    return globalScheme;
+  }
+
+  public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
+                                                    NodeDescriptorImpl descriptor,
+                                                    EditorColorsScheme colorsScheme,
+                                                    boolean multiline) {
+    return getDescriptorText(debuggerContext, descriptor, colorsScheme, multiline, true);
+  }
+
   public static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor, boolean multiline) {
-    return getDescriptorText(debuggerContext, descriptor, multiline, true);
+    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), multiline, true);
   }
 
   public static SimpleColoredText getDescriptorTitle(final DebuggerContextImpl debuggerContext, NodeDescriptorImpl descriptor) {
-    return getDescriptorText(debuggerContext, descriptor, false, false);
+    return getDescriptorText(debuggerContext, descriptor, getColorScheme(null), false, false);
   }
 
-  private static SimpleColoredText getDescriptorText(final DebuggerContextImpl debuggerContext, final NodeDescriptorImpl descriptor, boolean multiline,
+  private static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
+                                                     NodeDescriptorImpl descriptor,
+                                                     EditorColorsScheme colorScheme,
+                                                     boolean multiline,
                                                      boolean appendValue) {
     SimpleColoredText descriptorText = new SimpleColoredText();
 
@@ -193,25 +217,25 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             valueLabelAttribs = XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES;
           }
           else {
-            TextAttributes highlightingAttribs = null;
+            TextAttributes attributes = null;
             if (valueDescriptor.isNull()){
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.KEYWORD);
+              attributes = colorScheme.getAttributes(JavaHighlightingColors.KEYWORD);
             }
             else if (valueDescriptor.isString()) {
-              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.STRING);
+              attributes = colorScheme.getAttributes(JavaHighlightingColors.STRING);
             }
-            valueLabelAttribs = highlightingAttribs != null? SimpleTextAttributes.fromTextAttributes(highlightingAttribs) : DEFAULT_ATTRIBUTES;
+            valueLabelAttribs = attributes != null? SimpleTextAttributes.fromTextAttributes(attributes) : DEFAULT_ATTRIBUTES;
           }
 
           final EvaluateException exception = descriptor.getEvaluateException();
           if(exception != null) {
             final String errorMessage = exception.getMessage();
             if(valueLabel.endsWith(errorMessage)) {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs, colorScheme);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
@@ -220,7 +244,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs, colorScheme);
             }
           }
         }
@@ -233,7 +257,10 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return descriptorText;
   }
 
-  private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText, String valueText, final SimpleTextAttributes attribs) {
+  private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText,
+                                                          String valueText,
+                                                          SimpleTextAttributes attribs,
+                                                          EditorColorsScheme colorScheme) {
     SimpleTextAttributes escapeAttribs = null;
     final StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
@@ -248,7 +275,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
           }
 
           if (escapeAttribs == null) { // lazy init
-            final TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+            TextAttributes fromHighlighter = colorScheme.getAttributes(JavaHighlightingColors.VALID_STRING_ESCAPE);
             if (fromHighlighter != null) {
               escapeAttribs = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
             }

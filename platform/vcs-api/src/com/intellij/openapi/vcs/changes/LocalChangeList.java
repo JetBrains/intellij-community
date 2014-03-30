@@ -17,10 +17,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -30,7 +30,7 @@ import java.util.Collection;
  */
 public abstract class LocalChangeList implements Cloneable, ChangeList {
   
-  @NonNls public static final String DEFAULT_NAME = VcsBundle.message("changes.default.changlist.name");
+  @NonNls public static final String DEFAULT_NAME = VcsBundle.message("changes.default.changelist.name");
 
   public static LocalChangeList createEmptyChangeList(Project project, @NotNull String name) {
     return VcsContextFactory.SERVICE.getInstance().createLocalChangeList(project, name);

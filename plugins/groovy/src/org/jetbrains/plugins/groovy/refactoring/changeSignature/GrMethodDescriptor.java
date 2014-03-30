@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.changeSignature.MethodDescriptor;
 import com.intellij.util.VisibilityUtil;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -47,9 +46,7 @@ public class GrMethodDescriptor implements MethodDescriptor<GrParameterInfo, Str
     final GrParameter[] parameters = myMethod.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];
-      GrExpression initializer = parameter.getInitializerGroovy();
-      String initializerText = initializer != null ? initializer.getText() : null;
-      GrParameterInfo info = new GrParameterInfo(parameter.getName(), "", initializerText, parameter.getType(), i, false);
+      GrParameterInfo info = new GrParameterInfo(parameter, i);
       result.add(info);
     }
     return result;

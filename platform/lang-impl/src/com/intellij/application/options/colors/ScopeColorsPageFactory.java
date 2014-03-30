@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
@@ -56,7 +57,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     if (projects.length == 0) return panel;
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                    new Insets(0, 0, 0, 0), 0, 0);
-    final Project contextProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project contextProject = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final Project project = contextProject != null ? contextProject : projects[0];
 
     JButton button = new JButton(ApplicationBundle.message("button.edit.scopes"));

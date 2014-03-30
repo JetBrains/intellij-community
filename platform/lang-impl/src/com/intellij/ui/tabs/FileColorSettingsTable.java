@@ -78,6 +78,7 @@ public abstract class FileColorSettingsTable extends JBTable {
 
   protected abstract void apply(@NotNull final List<FileColorConfiguration> configurations);
 
+  @Override
   public ModelAdapter getModel() {
     return (ModelAdapter) super.getModel();
   }
@@ -181,14 +182,17 @@ public abstract class FileColorSettingsTable extends JBTable {
       return column == NAME_COLUMN ? "Scope" : "Color";
     }
 
+    @Override
     public int getRowCount() {
       return myConfigurations.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       return myConfigurations.get(rowIndex);
     }
@@ -272,6 +276,7 @@ public abstract class FileColorSettingsTable extends JBTable {
       setOpaque(true);
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (!(value instanceof FileColorConfiguration)) {
         return this;
@@ -309,6 +314,7 @@ public abstract class FileColorSettingsTable extends JBTable {
       myColor = color;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (!(value instanceof FileColorConfiguration)) {
         return this;

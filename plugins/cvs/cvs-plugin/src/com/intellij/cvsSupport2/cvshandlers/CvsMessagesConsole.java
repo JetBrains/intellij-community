@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvshandlers;
 
+import com.intellij.CvsBundle;
 import com.intellij.util.ui.EditorAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.CvsMessagesAdapter;
 import com.intellij.cvsSupport2.cvsoperations.cvsMessages.MessageEvent;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -35,10 +37,11 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
   public static final TextAttributes PROGRESS_MESSAGES_ATTRIBUTES = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.ITALIC);
   public static final TextAttributes COMMAND = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.BOLD);
 
-  public void connectToOutputView(Editor editor, Project project) {
+  public void connectToOutputView(@NotNull Editor editor, Project project) {
     myOutput = new EditorAdapter(editor, project, true);
   }
 
+  @Override
   public void addMessage(final MessageEvent event) {
     if (hasNotEmptyMessage(event)) {
       appendString(event.getMessage(), getAttributesFor(event));
@@ -50,24 +53,23 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
     myOutput.appendString(message, attributes);
   }
 
-  private TextAttributes getAttributesFor(MessageEvent event) {
-    if (event.isError() || event.isTagged())
-      return USER_MESSAGES_ATTRIBUTES;
-    else
-      return PROGRESS_MESSAGES_ATTRIBUTES;
+  private static TextAttributes getAttributesFor(MessageEvent event) {
+    return event.isError() || event.isTagged() ? USER_MESSAGES_ATTRIBUTES : PROGRESS_MESSAGES_ATTRIBUTES;
 
   }
 
-  private boolean hasNotEmptyMessage(final MessageEvent event) {
-    return event.getMessage().length() > 0;
+  private static boolean hasNotEmptyMessage(final MessageEvent event) {
+    return !event.getMessage().isEmpty();
   }
 
+  @Override
   public void commandStarted(String command) {
     appendString(command, COMMAND);
   }
 
+  @Override
   public void commandFinished(String commandName, long time) {
-    appendString(com.intellij.CvsBundle.message("message.command.finished", time / 1000), COMMAND);
+    appendString(CvsBundle.message("message.command.finished", time / 1000), COMMAND);
   }
 
 }

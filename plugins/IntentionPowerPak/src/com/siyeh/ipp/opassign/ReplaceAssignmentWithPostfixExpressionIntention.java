@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.opassign;
 
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.IntentionPowerPackBundle;
@@ -73,10 +74,10 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
     final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (JavaTokenType.PLUS.equals(tokenType)) {
-      replaceExpression(lhsText + "++", assignmentExpression);
+      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "++");
     }
     else if (JavaTokenType.MINUS.equals(tokenType)) {
-      replaceExpression(lhsText + "--", assignmentExpression);
+      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "--");
     }
   }
 }

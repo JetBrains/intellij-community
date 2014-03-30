@@ -1,4 +1,4 @@
-// "Replace with one line expression" "false"
+// "Replace with expression lambda" "true"
 class Test {
   {
     Runnable c = () -> <caret>{foo();};

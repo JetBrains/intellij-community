@@ -26,21 +26,35 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -57,7 +71,15 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myPanel;
   private JCheckBox myCbWrapWhenTypingReachesRightMargin;
   private JPanel myDefaultIndentOptionsPanel;
-  private SmartIndentOptionsEditor myIndentOptionsEditor;
+  private JCheckBox myEnableFormatterTags;
+  private JTextField myFormatterOnTagField;
+  private JTextField myFormatterOffTagField;
+  private JCheckBox myAcceptRegularExpressionsCheckBox;
+  private JPanel myMarkersPanel;
+  private JBLabel myFormatterOffLabel;
+  private JBLabel myFormatterOnLabel;
+  private JPanel myMarkerOptionsPanel;
+  private final SmartIndentOptionsEditor myIndentOptionsEditor;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -91,6 +113,19 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myIndentOptionsEditor = new SmartIndentOptionsEditor();
     myDefaultIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
+
+    myEnableFormatterTags.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean tagsEnabled = myEnableFormatterTags.isSelected();
+        setFormatterTagControlsEnabled(tagsEnabled);
+      }
+    });
+
+    myMarkersPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
+    myMarkerOptionsPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
   }
 
   @Nullable
@@ -130,6 +165,36 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myCbWrapWhenTypingReachesRightMargin.isSelected();
     myIndentOptionsEditor.setEnabled(true);
     myIndentOptionsEditor.apply(settings, settings.OTHER_INDENT_OPTIONS);
+
+    settings.FORMATTER_TAGS_ENABLED = myEnableFormatterTags.isSelected();
+    settings.FORMATTER_TAGS_ACCEPT_REGEXP = myAcceptRegularExpressionsCheckBox.isSelected();
+
+    settings.FORMATTER_OFF_TAG = getTagText(myFormatterOffTagField, settings.FORMATTER_OFF_TAG);
+    settings.setFormatterOffPattern(compilePattern(settings, myFormatterOffTagField, settings.FORMATTER_OFF_TAG));
+
+    settings.FORMATTER_ON_TAG = getTagText(myFormatterOnTagField, settings.FORMATTER_ON_TAG);
+    settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
+  }
+
+  @Nullable
+  private static Pattern compilePattern(CodeStyleSettings settings, JTextField field, String patternText) {
+    try {
+      return Pattern.compile(patternText);
+    }
+    catch (PatternSyntaxException pse) {
+      settings.FORMATTER_TAGS_ACCEPT_REGEXP = false;
+      showError(field, ApplicationBundle.message("settings.code.style.general.formatter.marker.invalid.regexp"));
+      return null;
+    }
+  }
+
+  private static String getTagText(JTextField field, String defualtValue) {
+    String fieldText = field.getText();
+    if (StringUtil.isEmpty(field.getText())) {
+      field.setText(defualtValue);
+      return defualtValue;
+    }
+    return fieldText;
   }
 
   @Nullable
@@ -159,6 +224,18 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     if (!Comparing.equal(myRightMarginSpinner.getValue(), settings.RIGHT_MARGIN)) return true;
     myIndentOptionsEditor.setEnabled(true);
+
+    if (myEnableFormatterTags.isSelected()) {
+      if (
+        !settings.FORMATTER_TAGS_ENABLED ||
+        settings.FORMATTER_TAGS_ACCEPT_REGEXP != myAcceptRegularExpressionsCheckBox.isSelected() ||
+        !StringUtil.equals(myFormatterOffTagField.getText(), settings.FORMATTER_OFF_TAG) ||
+        !StringUtil.equals(myFormatterOnTagField.getText(), settings.FORMATTER_ON_TAG)) return true;
+    }
+    else {
+      if (settings.FORMATTER_TAGS_ENABLED) return true;
+    }
+
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
@@ -188,6 +265,24 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myCbWrapWhenTypingReachesRightMargin.setSelected(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN);
     myIndentOptionsEditor.reset(settings, settings.OTHER_INDENT_OPTIONS);
     myIndentOptionsEditor.setEnabled(true);
+
+    myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
+    myEnableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);
+
+    myFormatterOnTagField.setText(settings.FORMATTER_ON_TAG);
+    myFormatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
+
+    setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
+  }
+
+  private void setFormatterTagControlsEnabled(boolean isEnabled) {
+    myFormatterOffTagField.setEnabled(isEnabled);
+    myFormatterOnTagField.setEnabled(isEnabled);
+    myMarkersPanel.setEnabled(isEnabled);
+    myAcceptRegularExpressionsCheckBox.setEnabled(isEnabled);
+    myFormatterOffLabel.setEnabled(isEnabled);
+    myFormatterOnLabel.setEnabled(isEnabled);
+    myMarkerOptionsPanel.setEnabled(isEnabled);
   }
 
   @Override
@@ -204,5 +299,17 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   public Language getDefaultLanguage() {
     return null;
+  }
+
+  private static void showError(final JTextField field, final String message) {
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(message, MessageType.ERROR.getDefaultIcon(), MessageType.ERROR.getPopupBackground(), null);
+    balloonBuilder.setFadeoutTime(1500);
+    final Balloon balloon = balloonBuilder.createBalloon();
+    final Rectangle rect = field.getBounds();
+    final Point p = new Point(0, rect.height);
+    final RelativePoint point = new RelativePoint(field, p);
+    balloon.show(point, Balloon.Position.below);
+    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 }

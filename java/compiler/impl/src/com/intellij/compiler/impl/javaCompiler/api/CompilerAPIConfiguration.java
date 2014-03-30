@@ -25,9 +25,9 @@ import com.intellij.openapi.project.Project;
 @State(
   name = "CompilerAPISettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class CompilerAPIConfiguration extends JavacConfiguration {
   public CompilerAPIConfiguration(Project project) {

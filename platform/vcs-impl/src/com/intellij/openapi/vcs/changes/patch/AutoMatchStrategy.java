@@ -20,10 +20,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 abstract class AutoMatchStrategy {
   protected final VirtualFile myBaseDir;
@@ -33,7 +34,7 @@ abstract class AutoMatchStrategy {
   AutoMatchStrategy(final VirtualFile baseDir) {
     myBaseDir = baseDir;
     myResult = new LinkedList<FilePatchInProgress>();
-    myFolderDecisions = new MultiMapBasedOnSet<String, VirtualFile>();
+    myFolderDecisions = MultiMap.createSet();
   }
 
   public abstract void acceptPatch(TextFilePatch patch, final Collection<VirtualFile> foundByName);

@@ -4,12 +4,12 @@ class Foo implements Comparable<Foo> {
 
     @Override
     int compareTo(Foo o) {
-        return 0  //To change body of implemented methods use File | Settings | File Templates.
+        <selection>return 0</selection>
     }
 }
 
 class X {
   def foo() {
-    final ObjectRange range = new Foo().<caret>.new Foo()
+    final ObjectRange range = new Foo()..new Foo()
   }
 }

@@ -87,6 +87,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   public void disposeFacet() {
   }
 
+  @Override
   public final void dispose() {
     assert !isDisposed;
     isDisposed = true;

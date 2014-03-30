@@ -94,12 +94,9 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   public String[] getUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(type)) {
-      final ContentEntry[] content = getRootModel().getContentEntries();
-      for (ContentEntry contentEntry : content) {
-        final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-        for (SourceFolder sourceFolder : sourceFolders) {
-          final String url = sourceFolder.getUrl();
-          result.add(url);
+      for (ContentEntry contentEntry : getRootModel().getContentEntries()) {
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+          result.add(sourceFolder.getUrl());
         }
       }
       return ArrayUtil.toStringArray(result);

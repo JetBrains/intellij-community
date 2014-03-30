@@ -20,13 +20,15 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -59,22 +61,32 @@ public class ConflictsUtil {
                                           final PsiMethod prototype,
                                           final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;
-    final String protoMethodInfo = getMethodPrototypeString(prototype);
+    String protoMethodInfo = getMethodPrototypeString(prototype);
 
     PsiMethod method = aClass != null ? aClass.findMethodBySignature(prototype, true) : null;
+    if (method == null && aClass != null) {
+      final MethodSignature signature = prototype.getSignature(PsiSubstitutor.EMPTY);
+      for (PsiMethod classMethod : aClass.getMethods()) {
+        if (MethodSignatureUtil.areSignaturesErasureEqual(signature, classMethod.getSignature(PsiSubstitutor.EMPTY))) {
+          method = classMethod;
+          protoMethodInfo = "with same erasure";
+          break;
+        }
+      }
+    }
 
-    if (method != null && method != refactoredMethod) {
+    if (method != null && method != refactoredMethod && !isStaticInterfaceMethods(aClass, refactoredMethod, method)) {
       if (aClass.equals(method.getContainingClass())) {
         final String classDescr = aClass instanceof PsiAnonymousClass ?
                                   RefactoringBundle.message("current.class") :
                                   RefactoringUIUtil.getDescription(aClass, false);
         conflicts.putValue(method, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
-                                                getMethodPrototypeString(prototype),
+                                                protoMethodInfo,
                                                 classDescr));
       }
       else { // method somewhere in base class
         if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
-          String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
+          String className = CommonRefactoringUtil.htmlEmphasize(DescriptiveNameUtil.getDescriptiveName(method.getContainingClass()));
           if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {
             boolean isMethodAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
             boolean isMyMethodAbstract = refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -102,6 +114,11 @@ public class ConflictsUtil {
         }
       });
     }
+  }
+
+  private static boolean isStaticInterfaceMethods(PsiClass aClass, PsiMethod refactoredMethod, PsiMethod method) {
+    return aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC) &&
+           refactoredMethod != null && refactoredMethod.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private static String getMethodPrototypeString(final PsiMethod prototype) {

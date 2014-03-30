@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 /**
  * @author yole
  */
-public class CreateInnerClassFromNewTest extends LightQuickFixTestCase {
+public class CreateInnerClassFromNewTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }

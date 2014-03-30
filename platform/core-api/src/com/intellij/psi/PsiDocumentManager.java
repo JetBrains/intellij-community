@@ -18,9 +18,11 @@ package com.intellij.psi;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.EventListener;
 
 /**
@@ -99,6 +101,15 @@ public abstract class PsiDocumentManager {
   public abstract void commitDocument(@NotNull Document document);
 
   /**
+   * @param document
+   * @return the document text that PSI should be based upon. For changed documents, it's their old text until the document is committed.
+   * This sequence is immutable.
+   * @see com.intellij.util.text.ImmutableCharSequence
+   */
+  @NotNull
+  public abstract CharSequence getLastCommittedText(@NotNull Document document);
+
+  /**
    * Returns the list of documents which have been modified but not committed.
    *
    * @return the list of uncommitted documents.
@@ -139,6 +150,15 @@ public abstract class PsiDocumentManager {
    * @return the value returned by the operation.
    */
   public abstract <T> T commitAndRunReadAction(@NotNull Computable<T> computation);
+
+  /**
+   * Reparses the specified set of files after an external configuration change that would cause them to be parsed differently
+   * (for example, a language level change in the settings).
+   *
+   * @param files the files to reparse.
+   * @param includeOpenFiles if true, the files opened in editor tabs will also be reparsed.
+   */
+  public abstract void reparseFiles(@NotNull final Collection<VirtualFile> files, final boolean includeOpenFiles);
 
   /**
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.

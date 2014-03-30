@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
@@ -57,6 +58,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
   private final Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
+  private final Map<PsiDirectory, TargetDirectoryWrapper> myNestedDirsToMove;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private final MoveCallback myMoveCallback;
 
@@ -84,8 +86,9 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     mySearchInNonJavaFiles = searchInNonJavaFiles;
     myMoveCallback = moveCallback;
     myFilesToMove = new HashMap<PsiFile, TargetDirectoryWrapper>();
+    myNestedDirsToMove = new HashMap<PsiDirectory, TargetDirectoryWrapper>();
     for (PsiDirectory dir : directories) {
-      collectFiles2Move(myFilesToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
+      collectFiles2Move(myFilesToMove, myNestedDirsToMove, dir, includeSelf ? dir.getParentDirectory() : dir, getTargetDirectory(dir));
     }
   }
 
@@ -140,6 +143,11 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       for (PsiDirectory directory : myDirectories) {
         getResultDirectory(directory).findOrCreateTargetDirectory();
       }
+
+      for (PsiDirectory directory : myNestedDirsToMove.keySet()) {
+        myNestedDirsToMove.get(directory).findOrCreateTargetDirectory();
+      }
+
       for (PsiFile psiFile : myFilesToMove.keySet()) {
         myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
       }
@@ -196,6 +204,28 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.move";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(myDirectories);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myTargetDirectory);
+    return data;
+  }
+
   private TargetDirectoryWrapper getResultDirectory(PsiDirectory dir) {
     return myTargetDirectory != null
            ? new TargetDirectoryWrapper(myTargetDirectory, dir.getName())
@@ -212,21 +242,23 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   private static void collectFiles2Move(Map<PsiFile, TargetDirectoryWrapper> files2Move,
-                                     PsiDirectory directory,
-                                     PsiDirectory rootDirectory,
-                                     @NotNull TargetDirectoryWrapper targetDirectory) {
+                                        Map<PsiDirectory, TargetDirectoryWrapper> nestedDirsToMove,
+                                        PsiDirectory directory,
+                                        PsiDirectory rootDirectory,
+                                        @NotNull TargetDirectoryWrapper targetDirectory) {
     final PsiElement[] children = directory.getChildren();
     final String relativePath = VfsUtilCore.getRelativePath(directory.getVirtualFile(), rootDirectory.getVirtualFile(), '/');
 
     final TargetDirectoryWrapper newTargetDirectory = relativePath.length() == 0
                                                       ? targetDirectory
                                                       : targetDirectory.findOrCreateChild(relativePath);
+    nestedDirsToMove.put(directory, newTargetDirectory);
     for (PsiElement child : children) {
       if (child instanceof PsiFile) {
         files2Move.put((PsiFile)child, newTargetDirectory);
       }
       else if (child instanceof PsiDirectory){
-        collectFiles2Move(files2Move, (PsiDirectory)child, directory, newTargetDirectory);
+        collectFiles2Move(files2Move, nestedDirsToMove, (PsiDirectory)child, directory, newTargetDirectory);
       }
     }
   }

@@ -16,10 +16,11 @@
 package org.jetbrains.jps.model.artifact;
 
 import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
 
 /**
  * @author nik
  */
-public class DirectoryArtifactType extends JpsArtifactType<JpsDummyElement> {
+public class DirectoryArtifactType extends JpsElementTypeWithDummyProperties implements JpsArtifactType<JpsDummyElement> {
   public static final DirectoryArtifactType INSTANCE = new DirectoryArtifactType();
 }

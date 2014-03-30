@@ -46,10 +46,10 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   public Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                   PackagingSourceItem parent) {
     if (parent == null) {
-      return createModuleItems(editorContext, artifact, ArrayUtil.EMPTY_STRING_ARRAY);
+      return createModuleItems(editorContext, ArrayUtil.EMPTY_STRING_ARRAY);
     }
     else if (parent instanceof ModuleGroupItem) {
-      return createModuleItems(editorContext, artifact, ((ModuleGroupItem)parent).getPath());
+      return createModuleItems(editorContext, ((ModuleGroupItem)parent).getPath());
     }
     else if (parent instanceof ModuleSourceItemGroup) {
       return createClasspathItems(editorContext, artifact, ((ModuleSourceItemGroup)parent).getModule());
@@ -57,8 +57,9 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return Collections.emptyList();
   }
 
-  private static Collection<? extends PackagingSourceItem> createClasspathItems(ArtifactEditorContext editorContext,
-                                                                                Artifact artifact, @NotNull Module module) {
+  @NotNull
+  private static Collection<? extends PackagingSourceItem> createClasspathItems(@NotNull ArtifactEditorContext editorContext,
+                                                                                @NotNull Artifact artifact, @NotNull Module module) {
     final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     final ModuleRootModel rootModel = editorContext.getModulesProvider().getRootModel(module);
     List<Library> libraries = new ArrayList<Library>();
@@ -83,7 +84,8 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
     return items;
   }
 
-  private static Collection<? extends PackagingSourceItem> createModuleItems(ArtifactEditorContext editorContext, Artifact artifact, @NotNull String[] groupPath) {
+  @NotNull
+  private static Collection<? extends PackagingSourceItem> createModuleItems(@NotNull ArtifactEditorContext editorContext, @NotNull String[] groupPath) {
     final Module[] modules = editorContext.getModulesProvider().getModules();
     final List<PackagingSourceItem> items = new ArrayList<PackagingSourceItem>();
     Set<String> groups = new HashSet<String>();

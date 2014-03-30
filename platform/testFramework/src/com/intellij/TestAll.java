@@ -52,7 +52,7 @@ import java.util.Set;
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestAll implements Test {
   static {
-    Logger.setFactory(TestLoggerFactory.getInstance());
+    Logger.setFactory(TestLoggerFactory.class);
   }
 
   private final TestCaseLoader myTestCaseLoader;
@@ -146,7 +146,7 @@ public class TestAll implements Test {
                       currentThread.interrupt();
                       if (!currentThread.isInterrupted()) {
                         //noinspection deprecation
-                        currentThread.stop(new RuntimeException("Current Test Interrupted: OUT OF TIME!"));
+                        currentThread.stop();
                       }
 
                       break;

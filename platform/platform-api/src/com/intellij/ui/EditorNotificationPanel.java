@@ -25,10 +25,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 /**
@@ -55,6 +55,16 @@ public class EditorNotificationPanel extends JPanel {
     myLabel.setText(text);
   }
 
+  public EditorNotificationPanel text(@NotNull String text) {
+    myLabel.setText(text);
+    return this;
+  }
+
+  public EditorNotificationPanel icon(@NotNull Icon icon) {
+    myLabel.setIcon(icon);
+    return this;
+  }
+
   @Override
   public Color getBackground() {
     Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND);
@@ -63,6 +73,7 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {
     return createActionLabel(text, new Runnable() {
+      @Override
       public void run() {
         executeAction(actionId);
       }
@@ -71,11 +82,10 @@ public class EditorNotificationPanel extends JPanel {
 
   public HyperlinkLabel createActionLabel(final String text, final Runnable action) {
     HyperlinkLabel label = new HyperlinkLabel(text, PlatformColors.BLUE, getBackground(), PlatformColors.BLUE);
-    label.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          action.run();
-        }
+    label.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        action.run();
       }
     });
     myLinksPanel.add(label);

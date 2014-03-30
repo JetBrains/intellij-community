@@ -130,7 +130,7 @@ public class MavenDomElementDescriptorHolder {
   }
 
   @Nullable
-  private FileKind getFileKind(PsiFile file) {
+  private static FileKind getFileKind(PsiFile file) {
     if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
     if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;

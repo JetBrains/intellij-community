@@ -17,6 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StateStorage;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -27,7 +28,8 @@ import java.util.Map;
 public class CompoundExternalizationSession {
   private final Map<StateStorage, StateStorage.ExternalizationSession> mySessions = new THashMap<StateStorage, StateStorage.ExternalizationSession>(1);
 
-  public StateStorage.ExternalizationSession getExternalizationSession(StateStorage stateStore) {
+  @NotNull
+  public StateStorage.ExternalizationSession getExternalizationSession(@NotNull StateStorage stateStore) {
     StateStorage.ExternalizationSession session = mySessions.get(stateStore);
     if (session == null) {
       mySessions.put(stateStore, session = stateStore.startExternalization());
@@ -37,6 +39,7 @@ public class CompoundExternalizationSession {
   }
 
 
+  @NotNull
   public Collection<StateStorage> getStateStorages() {
     return mySessions.keySet();
   }

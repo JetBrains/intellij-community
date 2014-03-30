@@ -61,6 +61,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.MoreAction;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
@@ -116,12 +117,12 @@ public class GitLogUI implements Disposable {
   private boolean myStarted;
   private String myPreviousFilter;
   private final CommentSearchContext myCommentSearchContext;
-  private List<String> myUsersSearchContext;
+  private final List<String> myUsersSearchContext;
   private String mySelectedBranch;
   private BranchSelectorAction myBranchSelectorAction;
   private final DescriptionRenderer myDescriptionRenderer;
 
-  private GenericDetailsLoader<CommitI, GitCommit> myDetailsLoader;
+  private GenericDetailsLoader<CommitI, GitHeavyCommit> myDetailsLoader;
   private GenericDetailsLoader<CommitI, List<String>> myBranchesLoader;
   private GitLogDetailsPanel myDetailsPanel;
 
@@ -158,7 +159,7 @@ public class GitLogUI implements Disposable {
   private JScrollPane myTableScrollPane;
   private GitLogUI.MyTextFieldAction myTextFieldAction;
   private DatesFilterI myDatesFilter;
-  private GitLogSettings mySettings;
+  private final GitLogSettings mySettings;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -456,7 +457,7 @@ public class GitLogUI implements Disposable {
       @Override
       public void consume(final CommitI commitI) {
         if (commitI == null || commitI.holdsDecoration()) return;
-        final GitCommit gitCommit = fullCommitPresentation(commitI);
+        final GitHeavyCommit gitCommit = fullCommitPresentation(commitI);
 
         if (gitCommit == null) {
           final MultiMap<VirtualFile, AbstractHash> question = new MultiMap<VirtualFile, AbstractHash>();
@@ -472,15 +473,15 @@ public class GitLogUI implements Disposable {
         }
       }
     };
-    myDetailsLoader = new GenericDetailsLoader<CommitI, GitCommit>(myDetailsLoaderImpl, new PairConsumer<CommitI, GitCommit>() {
+    myDetailsLoader = new GenericDetailsLoader<CommitI, GitHeavyCommit>(myDetailsLoaderImpl, new PairConsumer<CommitI, GitHeavyCommit>() {
       @Override
-      public void consume(CommitI commitI, GitCommit commit) {
+      public void consume(CommitI commitI, GitHeavyCommit commit) {
         myDetailsPanel.setData(commitI.selectRepository(myRootsUnderVcs), commit);
       }
     });
 
     myBranchesLoaderImpl = new Consumer<CommitI>() {
-      private Processor<AbstractHash> myRecheck;
+      private final Processor<AbstractHash> myRecheck;
 
       {
         myRecheck = new Processor<AbstractHash>() {
@@ -609,7 +610,7 @@ public class GitLogUI implements Disposable {
       myDetailsLoader.updateSelection(null, false);
       myBranchesLoader.updateSelection(null, false);
     } else if (meaningfulRows == 1) {
-      final GitCommit commit = fullCommitPresentation(commitAt);
+      final GitHeavyCommit commit = fullCommitPresentation(commitAt);
       if (commit == null) {
         myDetailsPanel.loading(commitAt.selectRepository(myRootsUnderVcs));
       }
@@ -622,7 +623,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  private GitCommit fullCommitPresentation(CommitI commitAt) {
+  private GitHeavyCommit fullCommitPresentation(CommitI commitAt) {
     return myDetailsCache.convert(commitAt.selectRepository(myRootsUnderVcs), commitAt.getHash());
   }
 
@@ -633,7 +634,7 @@ public class GitLogUI implements Disposable {
   private boolean gatherNotLoadedData() {
     if (myDataBeingAdded) return false;
     final int[] rows = myJBTable.getSelectedRows();
-    final List<GitCommit> commits = new ArrayList<GitCommit>();
+    final List<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
     final List<CommitI> forComparison = new ArrayList<CommitI>();
 
     final MultiMap<VirtualFile,AbstractHash> missingHashes = new MultiMap<VirtualFile, AbstractHash>();
@@ -641,7 +642,7 @@ public class GitLogUI implements Disposable {
       final int row = rows[i];
       final CommitI commitI = myTableModel.getCommitAt(row);
       if (commitI == null || commitI.holdsDecoration()) continue;
-      final GitCommit details = fullCommitPresentation(commitI);
+      final GitHeavyCommit details = fullCommitPresentation(commitI);
       if (details == null) {
         missingHashes.putValue(commitI.selectRepository(myRootsUnderVcs), commitI.getHash());
       } else if (missingHashes.isEmpty()) {   // no sense in collecting commits when s
@@ -658,7 +659,7 @@ public class GitLogUI implements Disposable {
     myCommitsInRepositoryChangesBrowser.addAll(forComparison);
 
     final List<Change> changes = new ArrayList<Change>();
-    for (GitCommit commit : commits) {
+    for (GitHeavyCommit commit : commits) {
       changes.addAll(commit.getChanges());
     }
     final List<Change> zipped = CommittedChangesTreeBrowser.zipChanges(changes);
@@ -684,11 +685,7 @@ public class GitLogUI implements Disposable {
       protected Object tryGetTag(MouseEvent e, JTable table, int row, int column) {
         myDescriptionRenderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
         final Rectangle rc = table.getCellRect(row, column, false);
-        int index = myDescriptionRenderer.myInner.findFragmentAt(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
-        if (index >= 0) {
-          return myDescriptionRenderer.myInner.getFragmentTag(index);
-        }
-        return null;
+        return myDescriptionRenderer.myInner.getFragmentTag(e.getPoint().x - rc.x - myDescriptionRenderer.getCurrentWidth());
       }
     };
     final ActionToolbar actionToolbar = createToolbar();
@@ -836,7 +833,7 @@ public class GitLogUI implements Disposable {
       SwingUtilities.convertPointFromScreen(location, myJBTable);
       final int row = myJBTable.rowAtPoint(location);
       if (row >= 0) {
-        final GitCommit commit = getCommitAtRow(row);
+        final GitHeavyCommit commit = getCommitAtRow(row);
         if (commit != null) {
           myUsersFilterAction.setPreselectedUser(commit.getCommitter());
         }
@@ -1042,7 +1039,7 @@ public class GitLogUI implements Disposable {
 
   private class DataProviderPanel extends JPanel implements TypeSafeDataProvider {
 
-    private GitCommitDetailsProvider myCommitDetailsProvider;
+    private final GitCommitDetailsProvider myCommitDetailsProvider;
 
     private DataProviderPanel(LayoutManager layout) {
       super(layout);
@@ -1062,7 +1059,7 @@ public class GitLogUI implements Disposable {
         final int[] rows = myJBTable.getSelectedRows();
         if (rows.length != 1) return;
         int row = rows[0];
-        final GitCommit gitCommit = getCommitAtRow(row);
+        final GitHeavyCommit gitCommit = getCommitAtRow(row);
         if (gitCommit == null) return;
 
         if (VcsDataKeys.CHANGES.equals(key)) {
@@ -1084,7 +1081,7 @@ public class GitLogUI implements Disposable {
         if (rows.length != 1) return;
         final CommitI commitAt = myTableModel.getCommitAt(rows[0]);
         if (commitAt == null) return;
-        final GitCommit gitCommit = fullCommitPresentation(commitAt);
+        final GitHeavyCommit gitCommit = fullCommitPresentation(commitAt);
         if (gitCommit == null) return;
         sink.put(key, gitCommit.getDescription());
       }
@@ -1095,12 +1092,12 @@ public class GitLogUI implements Disposable {
      * Returns the list of selected commits. The list is sorted so that newest commits go first (because they are above in the log).
      */
     @NotNull
-    private List<GitCommit> getSelectedCommits() {
+    private List<GitHeavyCommit> getSelectedCommits() {
       if (myJBTable == null) {
         return Collections.emptyList();
       }
 
-      final List<GitCommit> commits = new ArrayList<GitCommit>();
+      final List<GitHeavyCommit> commits = new ArrayList<GitHeavyCommit>();
       for (int row : myJBTable.getSelectedRows()) {
         final CommitI commitI = myTableModel.getCommitAt(row);
         if (commitI == null) {
@@ -1110,7 +1107,7 @@ public class GitLogUI implements Disposable {
           continue;
         }
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
-        final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
+        final GitHeavyCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
         if (gitCommit == null) {
           return Collections.emptyList();
         }
@@ -1120,10 +1117,10 @@ public class GitLogUI implements Disposable {
     }
 
   @Nullable
-  private GitCommit getCommitAtRow(int row) {
+  private GitHeavyCommit getCommitAtRow(int row) {
     final CommitI commitAt = myTableModel.getCommitAt(row);
     if (commitAt == null) return null;
-    final GitCommit gitCommit = fullCommitPresentation(commitAt);
+    final GitHeavyCommit gitCommit = fullCommitPresentation(commitAt);
     if (gitCommit == null) return null;
     return gitCommit;
   }
@@ -1259,7 +1256,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public Object valueOf(Object o) {
-      if (o instanceof GitCommit) {
+      if (o instanceof GitHeavyCommit) {
         return o;
       }
       if (BigTableTableModel.LOADING == o) return o;
@@ -1268,7 +1265,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public TableCellRenderer getRenderer(Object o) {
-      return o instanceof GitCommit ? myDescriptionRenderer : mySimpleRenderer;
+      return o instanceof GitHeavyCommit ? myDescriptionRenderer : mySimpleRenderer;
     }
   };
 
@@ -1380,10 +1377,10 @@ public class GitLogUI implements Disposable {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myCurrentWidth = 0;
       final Color bg = isSelected ? UIUtil.getTableSelectionBackground() : getRowBg(row);
-      if (value instanceof GitCommit) {
+      if (value instanceof GitHeavyCommit) {
         myPanel.removeAll();
         myPanel.setBackground(bg);
-        final GitCommit commit = (GitCommit)value;
+        final GitHeavyCommit commit = (GitHeavyCommit)value;
 
         final boolean marked = myMarked.containsKey(commit.getShortHash());
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
@@ -1449,7 +1446,7 @@ public class GitLogUI implements Disposable {
       addOneIcon(table, value, isSelected, hasFocus, row, column, icon);
     }
 
-    private List<Trinity<String, Boolean, Color>> getBranchesToDisplay(final GitCommit commit, final CommitI commitI) {
+    private List<Trinity<String, Boolean, Color>> getBranchesToDisplay(final GitHeavyCommit commit, final CommitI commitI) {
       final List<Trinity<String, Boolean, Color>> result = new ArrayList<Trinity<String, Boolean, Color>>();
 
       final List<String> localBranches = commit.getLocalBranches();
@@ -1498,8 +1495,8 @@ public class GitLogUI implements Disposable {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         //setBackground(getLogicBackground(selected, row));
-        if (value instanceof GitCommit) {
-          final GitCommit gitCommit = (GitCommit)value;
+        if (value instanceof GitHeavyCommit) {
+          final GitHeavyCommit gitCommit = (GitHeavyCommit)value;
           myIssueLinkRenderer.appendTextWithLinks(gitCommit.getSubject(), SimpleTextAttributes.REGULAR_ATTRIBUTES, myConsumer);
           //super.customizeCellRenderer(table, ((GitCommit) value).getDescription(), selected, hasFocus, row, column);
         } else {
@@ -1561,8 +1558,8 @@ public class GitLogUI implements Disposable {
     AUTHOR = new ColumnInfo<Object, String>("Author") {
       @Override
       public String valueOf(Object o) {
-        if (o instanceof GitCommit) {
-          return ((GitCommit)o).getAuthor();
+        if (o instanceof GitHeavyCommit) {
+          return ((GitHeavyCommit)o).getAuthor();
         }
         return "";
       }
@@ -1579,8 +1576,8 @@ public class GitLogUI implements Disposable {
 
     @Override
     public String valueOf(Object o) {
-      if (o instanceof GitCommit) {
-        return DateFormatUtil.formatPrettyDateTime(((GitCommit)o).getDate());
+      if (o instanceof GitHeavyCommit) {
+        return DateFormatUtil.formatPrettyDateTime(((GitHeavyCommit)o).getDate());
       }
       return "";
     }
@@ -1843,7 +1840,7 @@ public class GitLogUI implements Disposable {
         for (int row : selectedRows) {
           final CommitI commitAt = myTableModel.getCommitAt(row);
           if (commitAt.holdsDecoration()) continue;
-          final GitCommit atRow = getCommitAtRow(row);
+          final GitHeavyCommit atRow = getCommitAtRow(row);
           if (atRow != null && atRow.getCommitter() != null) return atRow.getCommitter();
         }
       }
@@ -1988,7 +1985,7 @@ public class GitLogUI implements Disposable {
     private final DumbAwareAction myMultiColorAction;
     private final DumbAwareAction myCalmAction;
     private final Icon myIcon;
-    private JLabel myLabel;
+    private final JLabel myLabel;
     private final GitLogUI.MySelectRootsForTreeAction myRootsForTreeAction;
     private final DumbAwareAction myDateOrder;
     private final DumbAwareAction myTopoOrder;
@@ -2068,7 +2065,7 @@ public class GitLogUI implements Disposable {
     public void execute(final MouseEvent e) {
       final DefaultActionGroup group = createActionGroup();
       final DataContext parent = DataManager.getInstance().getDataContext(myEqualToHeadr);
-      final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+      final DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), myProject, parent);
       final JBPopup popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                                 new Runnable() {
@@ -2101,7 +2098,7 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final CheckBoxList checkBoxList = new CheckBoxList();
+      final CheckBoxList<String> checkBoxList = new CheckBoxList<String>();
 
       final List<VirtualFile> order = myTableModel.getOrder();
       final Set<VirtualFile> activeRoots = myTableModel.getActiveRoots();
@@ -2542,6 +2539,11 @@ public class GitLogUI implements Disposable {
     public void update(AnActionEvent e) {
       commitCanBeUsedForCheckout(e);
     }
+  }
+
+  public void selectCommit(String commitId) {
+    myJBTable.getSelectionModel().clearSelection();
+    myMyGotoCommitAction.tryFind(commitId);
   }
 
   public class MyGotoCommitAction extends DumbAwareAction {

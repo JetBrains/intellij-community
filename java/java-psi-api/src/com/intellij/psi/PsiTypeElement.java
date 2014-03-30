@@ -30,6 +30,7 @@ public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
 
   ArrayFactory<PsiTypeElement> ARRAY_FACTORY = new ArrayFactory<PsiTypeElement>() {
+    @NotNull
     @Override
     public PsiTypeElement[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiTypeElement[count];
@@ -52,9 +53,4 @@ public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
    */
   @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
-
-  /** @deprecated equals to getType() (to remove in IDEA 13) */
-  PsiAnnotationOwner getOwner(PsiAnnotation annotation);
-
-  PsiType getTypeNoResolve(@NotNull PsiElement context);
 }

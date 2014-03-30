@@ -26,7 +26,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +64,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
-                                         final LocalQuickFix... fixes) {
+                                         @NotNull LocalQuickFix... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
@@ -68,7 +73,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
-                                         final LocalQuickFix... fixes) {
+                                         @NotNull LocalQuickFix... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -76,7 +81,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
     }
     mySeverity = type;
     myMessage = message;
-    myFixes = fixes;
+    myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.<LocalQuickFix>id(), LocalQuickFix.EMPTY_ARRAY) : fixes;
 
     if (textRange != null) {
       final PsiElement psiElement = getPsiElement();

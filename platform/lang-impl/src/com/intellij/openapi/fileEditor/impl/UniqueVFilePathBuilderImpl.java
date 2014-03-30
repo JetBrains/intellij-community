@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.ProjectScope;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,8 +38,19 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   @Override
   public String getUniqueVirtualFilePath(Project project, VirtualFile file) {
-    final Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, file.getName(),
+    String fileName = file.getName();
+    Collection<VirtualFile> filesWithSameName = FilenameIndex.getVirtualFilesByName(project, fileName,
                                                                                           ProjectScope.getProjectScope(project));
+    THashSet<VirtualFile> setOfFilesWithTheSameName = new THashSet<VirtualFile>(filesWithSameName);
+    // add open files out of project scope
+    for(VirtualFile openFile:FileEditorManager.getInstance(project).getOpenFiles()) {
+      if (openFile.getName().equals(fileName)) {
+        setOfFilesWithTheSameName.add(openFile);
+      }
+    }
+
+    filesWithSameName = setOfFilesWithTheSameName;
+
     if (filesWithSameName.size() > 1 && filesWithSameName.contains(file)) {
       String path = project.getBasePath();
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
@@ -43,8 +58,19 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       for (VirtualFile virtualFile: filesWithSameName) {
         builder.addPath(virtualFile, virtualFile.getPath());
       }
-      return builder.getShortPath(file);
+      return getEditorTabText(file, builder, UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS);
     }
-    return file.getName();
+    return file.getPresentableName();
+  }
+
+  public static <T> String getEditorTabText(T key, UniqueNameBuilder<T> builder, boolean hideKnownExtensionInTabs) {
+    String result = builder.getShortPath(key);
+    if (hideKnownExtensionInTabs) {
+      String withoutExtension = FileUtil.getNameWithoutExtension(result);
+      if (StringUtil.isNotEmpty(withoutExtension) && !withoutExtension.endsWith(builder.getSeparator())) {
+        return withoutExtension;
+      }
+    }
+    return result;
   }
 }

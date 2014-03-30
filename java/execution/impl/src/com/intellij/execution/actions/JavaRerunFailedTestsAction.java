@@ -25,6 +25,7 @@ import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
@@ -35,8 +36,8 @@ public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   @NotNull
   @Override
-  protected Filter getFilter(Project project) {
-    return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project));
+  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
+    return super.getFilter(project, searchScope).and(JavaAwareFilter.METHOD(project, searchScope));
   }
 
 }

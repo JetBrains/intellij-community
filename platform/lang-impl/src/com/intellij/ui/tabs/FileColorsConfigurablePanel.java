@@ -75,6 +75,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
 
     final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();
     myLocalTable = new FileColorSettingsTable(manager, localConfigurations) {
+      @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
         final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
         try {
@@ -106,6 +107,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     mainPanel.add(localPanel);
 
     mySharedTable = new FileColorSettingsTable(manager, manager.getSharedConfigurations()) {
+      @Override
       protected void apply(@NotNull List<FileColorConfiguration> configurations) {
         final List<FileColorConfiguration> copied = new ArrayList<FileColorConfiguration>();
         for (final FileColorConfiguration configuration : configurations) {
@@ -146,6 +148,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
                                 MessageType.INFO.getDefaultIcon(), SwingConstants.LEFT));
     final JButton editScopes = new JButton("Manage Scopes...");
     editScopes.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         EditScopesDialog.showDialog(myManager.getProject(), null, true);
       }
@@ -183,6 +186,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     myManager = null;
   }
@@ -201,7 +205,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   public void apply() {
     myManager.setEnabled(myEnabledCheckBox.isSelected());
     myManager.setEnabledForTabs(myTabsEnabledCheckBox.isSelected());
-    myManager.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
+    FileColorManagerImpl.setEnabledForProjectView(myProjectViewEnabledCheckBox.isSelected());
 
     myLocalTable.apply();
     mySharedTable.apply();

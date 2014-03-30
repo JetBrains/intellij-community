@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -60,7 +60,6 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JTextField classNameField;
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final DestinationFolderComboBox myDestinationFolderComboBox;
-  private final JTextField sourceClassTextField = null;
   private JCheckBox myGenerateAccessorsCb;
   private final JavaVisibilityPanel myVisibilityPanel;
   private final JCheckBox extractAsEnum;
@@ -252,7 +251,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       .addLabeledComponent(new JLabel(), extractAsEnum)
       .addLabeledComponent(RefactorJBundle.message("package.for.new.class.label"), packageTextField);
 
-    if (ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1) {
+    if (JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject).size() > 1) {
       builder.addLabeledComponent(RefactoringBundle.message("target.destination.folder"), myDestinationFolderComboBox);
     }
 
@@ -261,40 +260,34 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
 
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final MemberSelectionPanel memberSelectionPanel =
-      new MemberSelectionPanel(RefactorJBundle.message("members.to.extract.label"), memberInfo, "As enum") {
-        @Override
-        protected MemberSelectionTable createMemberSelectionTable(final List<MemberInfo> memberInfo, String abstractColumnHeader) {
-          return new MemberSelectionTable(memberInfo, abstractColumnHeader) {
-            @Nullable
-            @Override
-            protected Object getAbstractColumnValue(MemberInfo memberInfo) {
-              if (isExtractAsEnum()) {
-                final PsiMember member = memberInfo.getMember();
-                if (isConstantField(member)) {
-                  return Boolean.valueOf(enumConstants.contains(memberInfo));
-                }
-              }
-              return null;
-            }
-
-            @Override
-            protected boolean isAbstractColumnEditable(int rowIndex) {
-              final MemberInfo info = memberInfo.get(rowIndex);
-              if (info.isChecked()) {
-                final PsiMember member = info.getMember();
-                if (isConstantField(member)) {
-                  if (enumConstants.isEmpty()) return true;
-                  final MemberInfo currentEnumConstant = enumConstants.get(0);
-                  if (((PsiField)currentEnumConstant.getMember()).getType().equals(((PsiField)member).getType())) return true;
-                }
-              }
-              return false;
-            }
-          };
+    final MemberSelectionTable table = new MemberSelectionTable(memberInfo, "As enum") {
+      @Nullable
+      @Override
+      protected Object getAbstractColumnValue(MemberInfo memberInfo) {
+        if (isExtractAsEnum()) {
+          final PsiMember member = memberInfo.getMember();
+          if (isConstantField(member)) {
+            return Boolean.valueOf(enumConstants.contains(memberInfo));
+          }
         }
-      };
-    final MemberSelectionTable table = memberSelectionPanel.getTable();
+        return null;
+      }
+
+      @Override
+      protected boolean isAbstractColumnEditable(int rowIndex) {
+        final MemberInfo info = memberInfo.get(rowIndex);
+        if (info.isChecked()) {
+          final PsiMember member = info.getMember();
+          if (isConstantField(member)) {
+            if (enumConstants.isEmpty()) return true;
+            final MemberInfo currentEnumConstant = enumConstants.get(0);
+            if (((PsiField)currentEnumConstant.getMember()).getType().equals(((PsiField)member).getType())) return true;
+          }
+        }
+        return false;
+      }
+    };
+
     table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
 
       @Override
@@ -342,6 +335,10 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         return cause;
       }
     });
+
+    final MemberSelectionPanelBase<PsiMember, MemberInfo, MemberSelectionTable> memberSelectionPanel =
+      new MemberSelectionPanelBase<PsiMember, MemberInfo, MemberSelectionTable>(RefactorJBundle.message("members.to.extract.label"), table);
+
     panel.add(memberSelectionPanel, BorderLayout.CENTER);
     table.addMemberInfoChangeListener(this);
     extractAsEnum.addActionListener(new ActionListener() {
@@ -378,7 +375,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       final PsiMember member = info.getMember();
       if (isConstantField(member)) {
         if (enumConstants.isEmpty() || ((PsiField)enumConstants.get(0).getMember()).getType().equals(((PsiField)member).getType())) {
-          enumConstants.add(info);
+          if (!enumConstants.contains(info)) enumConstants.add(info);
           info.setToAbstract(true);
         }
       }
@@ -407,7 +404,9 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     if (extractAsEnum.isVisible()) {
       for (Object info : memberInfoChange.getChangedMembers()) {
         if (((MemberInfo)info).isToAbstract()) {
-          enumConstants.add((MemberInfo)info);
+          if (!enumConstants.contains(info)) {
+            enumConstants.add((MemberInfo)info);
+          }
         }
         else {
           enumConstants.remove((MemberInfo)info);

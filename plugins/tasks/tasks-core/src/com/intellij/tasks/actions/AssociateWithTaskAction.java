@@ -16,6 +16,7 @@
 
 package com.intellij.tasks.actions;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -46,7 +47,7 @@ public class AssociateWithTaskAction extends ToggleAction implements DumbAware {
     if (lists == null) {
       return false;
     }
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     TaskManager manager = TaskManager.getManager(project);
     for (ChangeList list : lists) {
       if (list instanceof LocalChangeList && manager.getAssociatedTask((LocalChangeList)list) == null) {
@@ -62,7 +63,7 @@ public class AssociateWithTaskAction extends ToggleAction implements DumbAware {
     if (lists == null) {
       return;
     }
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     TaskManager manager = TaskManager.getManager(project);
     for (ChangeList list : lists) {
       if (list instanceof LocalChangeList) {

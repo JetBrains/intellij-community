@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jetbrains.idea;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -55,7 +55,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,19 +70,25 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author yole
  */
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
+
+  public static String ourGlobalTestDataDir;
+  public static Boolean ourGlobalUseNativeAcceleration;
+
   protected TempDirTestFixture myTempDirFixture;
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
-  protected boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
+  // TODO: Change this to explicitly run either with native acceleration or not.
+  // properties set through run configurations or different runners (like Suite) could be used
+  private boolean myUseNativeAcceleration = new GregorianCalendar().get(Calendar.HOUR_OF_DAY) % 2 == 0;
 
-  protected final String myTestDataDir;
+  private String myTestDataDir;
   private File myRepoRoot;
   private File myWcRoot;
   private ChangeListManagerGate myGate;
@@ -98,9 +103,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public static void imitateEvent(VirtualFile dir) {
     final VirtualFile child = dir.findChild(".svn");
-    org.junit.Assert.assertNotNull(child);
+    assertNotNull(child);
     final VirtualFile wcdb = child.findChild("wc.db");
-    org.junit.Assert.assertNotNull(wcdb);
+    assertNotNull(wcdb);
 
     final BulkFileListener listener = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
     final VFileContentChangeEvent event =
@@ -117,7 +122,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
-    System.out.println("Native client for status: " + myUseNativeAcceleration);
+    System.out.println("Native client for status: " + isUseNativeAcceleration());
+
+    String property = System.getProperty("svn.test.data.directory");
+    if (!StringUtil.isEmpty(property)) {
+      myTestDataDir = property;
+    }
+
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -137,7 +148,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
             myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
           }
 
-          File svnBinDir =  new File(myPluginRoot, myTestDataDir + "/svn/bin");
+          File svnBinDir =  new File(myPluginRoot, getTestDataDir() + "/svn/bin");
           File svnExecutable = null;
           if (SystemInfo.isWindows) {
             svnExecutable = new File(svnBinDir, "windows/svn.exe");
@@ -155,7 +166,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
                      ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
                      : createClientRunner();
 
-          ZipUtil.extract(new File(myPluginRoot, myTestDataDir + "/svn/newrepo.zip"), myRepoRoot, null);
+          ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
 
           myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
           assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
@@ -204,8 +215,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Override
   protected void projectCreated() {
-    if (myUseNativeAcceleration) {
-      SvnConfiguration.getInstance(myProject).myUseAcceleration = SvnConfiguration.UseAcceleration.commandLine;
+    if (isUseNativeAcceleration()) {
+      SvnConfiguration.getInstance(myProject).setUseAcceleration(SvnConfiguration.UseAcceleration.commandLine);
       SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
     }
   }
@@ -299,7 +310,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File rootFile = new File(subTree.myRootDir.getPath());
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
+    assertTrue(!rootFile.exists());
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -316,6 +327,22 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     refreshSvnMappingsSynchronously();
     //clManager.ensureUpToDate(false);
     //clManager.ensureUpToDate(false);
+  }
+
+  public String getTestDataDir() {
+    return StringUtil.isEmpty(ourGlobalTestDataDir) ? myTestDataDir : ourGlobalTestDataDir;
+  }
+
+  public void setTestDataDir(String testDataDir) {
+    myTestDataDir = testDataDir;
+  }
+
+  public boolean isUseNativeAcceleration() {
+    return ourGlobalUseNativeAcceleration != null ? ourGlobalUseNativeAcceleration : myUseNativeAcceleration;
+  }
+
+  public void setUseNativeAcceleration(boolean useNativeAcceleration) {
+    myUseNativeAcceleration = useNativeAcceleration;
   }
 
   protected class SubTree {
@@ -377,7 +404,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       if (deleted) break;
       sleep(200);
     }
-    Assert.assertTrue(deleted);
+    assertTrue(deleted);
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -420,7 +447,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File rootFile = new File(subTree.myRootDir.getPath());
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
+    assertTrue(!rootFile.exists());
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -439,7 +466,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     if (updateExternal) {
       myWorkingCopyDir.refresh(false, true);
-      Assert.assertTrue(new File(sourceDir, "external").exists());
+      assertTrue(new File(sourceDir, "external").exists());
     }
     // above is preparation
 
@@ -458,7 +485,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File tmpWc = FileUtil.createTempDirectory("hhh", "");
     runInAndVerifyIgnoreOutput("co", myAnotherRepoUrl, tmpWc.getPath());
     final VirtualFile tmpWcVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpWc);
-    Assert.assertNotNull(tmpWcVf);
+    assertNotNull(tmpWcVf);
     final SubTree tree = new SubTree(tmpWcVf);
     runInAndVerifyIgnoreOutput(tmpWc, "add", "root");
     runInAndVerifyIgnoreOutput(tmpWc, "ci", "-m", "fff");
@@ -474,7 +501,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
                                                @Nullable
                                                @Override
                                                public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
                                                    return project;
                                                  }
                                                  return null;
@@ -531,7 +558,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     return new Processor<ProcessOutput>() {
       @Override
       public boolean process(ProcessOutput output) {
-        Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
+        assertEquals(output.getStderr(), 0, output.getExitCode());
         return false;
       }
     };
@@ -588,8 +615,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   protected void setNativeAcceleration(final boolean value) {
     System.out.println("Set native acceleration to " + value);
-    SvnConfiguration.getInstance(myProject).myUseAcceleration =
-      value ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing;
+    SvnConfiguration.getInstance(myProject).setUseAcceleration(
+      value ? SvnConfiguration.UseAcceleration.commandLine : SvnConfiguration.UseAcceleration.nothing);
     SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
   }
 }

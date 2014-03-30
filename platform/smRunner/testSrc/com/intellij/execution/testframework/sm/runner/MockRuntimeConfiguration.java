@@ -46,6 +46,7 @@ public class MockRuntimeConfiguration extends RuntimeConfiguration {
     //Do nothing
   }
 
+  @NotNull
   @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return null;

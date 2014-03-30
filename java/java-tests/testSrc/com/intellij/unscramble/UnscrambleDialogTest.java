@@ -17,6 +17,7 @@ package com.intellij.unscramble;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -65,6 +66,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private RunContentDescriptor showText(String unscramble) {
     RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", getProject(), unscramble);
     assertNotNull(descriptor);
+    Disposer.register(myModule, descriptor);
     return descriptor;
   }
 

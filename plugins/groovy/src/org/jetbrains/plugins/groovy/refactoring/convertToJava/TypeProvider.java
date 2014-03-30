@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -55,7 +56,9 @@ public class TypeProvider {
       if (typeElement != null) return typeElement.getType();
     }
     final PsiType smartReturnType = PsiUtil.getSmartReturnType(method);
-    if (smartReturnType != null) return smartReturnType;
+    if (smartReturnType != null && !PsiType.NULL.equals(smartReturnType)) return smartReturnType;
+
+    if (PsiType.NULL.equals(smartReturnType) && PsiUtil.isVoidMethod(method)) return PsiType.VOID;
 
     //todo make smarter. search for usages and infer type from them
     return TypesUtil.getJavaLangObject(method);
@@ -65,6 +68,11 @@ public class TypeProvider {
   @NotNull
   public PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
+    return getVariableTypeInner(variable);
+  }
+
+  @NotNull
+  private static PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
     PsiType type = null;
     if (variable instanceof GrVariable) {
       type = ((GrVariable)variable).getDeclaredType();
@@ -87,13 +95,11 @@ public class TypeProvider {
       }
       return parameter.getType();
     }
-    /*GrTypeElement typeElementGroovy = ((GrParameter)parameter).getTypeElementGroovy();
-    if (typeElementGroovy != null) {
-      return parameter.getType();
-    }*/
 
     PsiElement parent = parameter.getParent();
-    if (!(parent instanceof GrParameterList)) return parameter.getType();
+    if (!(parent instanceof GrParameterList)) {
+      return getVariableTypeInner(parameter);
+    }
 
     PsiElement pparent = parent.getParent();
     if (!(pparent instanceof GrMethod)) return parameter.getType();
@@ -110,7 +116,7 @@ public class TypeProvider {
     final GrParameter[] parameters = method.getParameters();
 
     final TIntArrayList paramInds = new TIntArrayList(parameters.length);
-    final PsiType[] types = new PsiType[parameters.length];
+    final PsiType[] types = PsiType.createArray(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       if (parameters[i].getTypeElementGroovy() == null) {
         paramInds.add(i);
@@ -119,7 +125,7 @@ public class TypeProvider {
       }
     }
 
-    if (paramInds.size() > 0) {
+    if (!paramInds.isEmpty()) {
       final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
       MethodReferencesSearch.search(method, true).forEach(new Processor<PsiReference>() {
         @Override
@@ -157,5 +163,19 @@ public class TypeProvider {
     });
     inferredTypes.put(method, types);
     return types;
+  }
+
+  @NotNull
+  public PsiType getReturnType(GrClosableBlock closure) {
+    final PsiType returnType = closure.getReturnType();
+    if (PsiType.NULL.equals(returnType) && PsiUtil.isBlockReturnVoid(closure)) {
+      return PsiType.VOID;
+    }
+
+    if (returnType == null) {
+      return TypesUtil.getJavaLangObject(closure);
+    }
+
+    return returnType;
   }
 }

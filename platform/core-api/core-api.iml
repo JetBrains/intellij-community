@@ -11,6 +11,15 @@
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="platform-resources-en" exported="" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/automaton.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

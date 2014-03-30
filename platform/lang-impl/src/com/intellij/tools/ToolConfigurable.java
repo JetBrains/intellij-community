@@ -28,15 +28,18 @@ import java.io.IOException;
 public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private BaseToolsPanel myPanel;
 
+  @Override
   public String getDisplayName() {
     return ToolsBundle.message("tools.settings.title");
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new ToolsPanel();
     return myPanel;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     try {
       myPanel.apply();
@@ -46,28 +49,34 @@ public class ToolConfigurable implements SearchableConfigurable, Configurable.No
     }
   }
 
+  @Override
   public boolean isModified() {
     return myPanel.isModified();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.externalTools";
   }
 
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

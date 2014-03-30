@@ -37,6 +37,7 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
   @Nullable
   PsiElement findTargetMember(PsiElement element);
 
+  @Override
   void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext);
 
   @Nullable

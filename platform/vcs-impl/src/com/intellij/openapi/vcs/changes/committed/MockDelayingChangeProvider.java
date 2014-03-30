@@ -36,12 +36,10 @@ public class MockDelayingChangeProvider implements ChangeProvider {
     throws VcsException {
     synchronized (myLock) {
       if (myExecuteInsideUpdate == null) {
-        ChangeListManagerImpl.log("MockDelayingChangeProvider: getChanges, no test set");
         return;
       }
 
       myLocked = true;
-      ChangeListManagerImpl.log("MockDelayingChangeProvider: getChanges, starting test thread...");
       myExecuteInsideUpdate.start();
 
       while (myLocked) {
@@ -52,12 +50,10 @@ public class MockDelayingChangeProvider implements ChangeProvider {
           //
         }
       }
-      ChangeListManagerImpl.log("MockDelayingChangeProvider: unlocked");
     }
   }
 
   public void setTest(final Runnable runnable) {
-    ChangeListManagerImpl.log("MockDelayingChangeProvider: setTest " + (runnable == null ? "(null)" : "(not null)"));
     synchronized (myLock) {
       if (runnable == null) {
         myExecuteInsideUpdate = null;
@@ -76,7 +72,6 @@ public class MockDelayingChangeProvider implements ChangeProvider {
 
   public void unlock() {
     synchronized (myLock) {
-      ChangeListManagerImpl.log("MockDelayingChangeProvider: unlocking");
       myLocked = false;
       myLock.notifyAll();
     }

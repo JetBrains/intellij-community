@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.openapi.util;
-
-import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.Nullable;
 
 public class PasswordUtil {
   private PasswordUtil() { }
@@ -43,12 +40,5 @@ public class PasswordUtil {
       result += new Character((char)c).charValue();
     }
     return result;
-  }
-
-  /** @deprecated use {@linkplain Messages#showPasswordDialog(String, String)} (to remove in IDEA 13) */
-  @Nullable
-  @SuppressWarnings("UnusedDeclaration")
-  public static String requestPassword(String prompt, String title, final String defaultValue) {
-    return Messages.showPasswordDialog(prompt, title);
   }
 }

@@ -23,12 +23,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -44,28 +44,32 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
     super(project);
   }
 
+  @Override
   @NonNls
   public String getToolWindowId() {
     return NAV_BAR_ID;
   }
 
+  @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
     return UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }
 
+  @Override
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     selectInNavBar();
   }
 
+  @Override
   protected void select(final PsiElement element, boolean requestFocus) {
     selectInNavBar();
   }
 
   private static void selectInNavBar() {
     DataManager.getInstance().getDataContextFromFocus()
-      .doWhenDone(new AsyncResult.Handler<DataContext>() {
+      .doWhenDone(new Consumer<DataContext>() {
         @Override
-        public void run(DataContext context) {
+        public void consume(DataContext context) {
           final IdeFrame frame = IdeFrame.KEY.getData(context);
           if (frame != null) {
             final IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
@@ -79,14 +83,17 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
       });
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.NAV_BAR_WEIGHT;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return false;
   }

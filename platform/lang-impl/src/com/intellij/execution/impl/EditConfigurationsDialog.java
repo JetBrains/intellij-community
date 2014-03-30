@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   protected Executor myExecutor;
 
   public EditConfigurationsDialog(final Project project) {
-    super(project, new RunConfigurable(project));
+    super(project, new RunConfigurable(project), IdeModalityType.PROJECT);
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
@@ -42,6 +42,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     }
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.execution.impl.EditConfigurationsDialog";
   }
@@ -52,6 +53,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     return myExecutor;
   }
 
+  @Override
   public void setOKActionEnabled(boolean isEnabled) {
     super.setOKActionEnabled(isEnabled);
   }

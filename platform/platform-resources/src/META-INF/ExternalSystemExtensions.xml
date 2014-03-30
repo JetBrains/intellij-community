@@ -1,0 +1,41 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
+    
+    <!--Generic services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.RemoteExternalSystemCommunicationManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.InProcessExternalSystemCommunicationManager"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
+        serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager"/>
+
+    <!--Project structure management services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
+    
+    <!--Tool window services-->
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
+    
+    <!--Execution-->
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
+    <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
+    
+  </extensions>
+
+</idea-plugin>
+  

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +59,7 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
     return super.contains(file);
   }
 
+  @Override
   @Nullable
   protected PsiElement extractPsiFromValue() {
     final NodeId nodeId = getValue();
@@ -86,15 +87,10 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
     if (!isValid()) {
       return null;
     }
-    final PsiElement psiElement = extractPsiFromValue();
-    assert psiElement != null;
-
-    if (psiElement instanceof PsiFileSystemItem) {
-      return ((PsiFileSystemItem)psiElement).getVirtualFile();
-    }
-    return psiElement.getContainingFile().getVirtualFile();
+    return PsiUtilCore.getVirtualFile(extractPsiFromValue());
   }
 
+  @Override
   protected void updateImpl(final PresentationData data) {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement instanceof NavigationItem) {
@@ -110,14 +106,17 @@ public abstract class AbstractMvcPsiNodeDescriptor extends AbstractPsiBasedNode<
     return myWeight;
   }
 
+  @Override
   protected boolean hasProblemFileBeneath() {
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile virtualFile) {
         return contains(virtualFile);
       }
     });
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement != null && psiElement.isValid();

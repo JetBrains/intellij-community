@@ -1,7 +1,22 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -59,7 +74,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             try {
@@ -228,7 +243,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
-      
+
       assertOneElement(highlightErrors());
 
       int offset = myEditor.getCaretModel().getOffset();
@@ -260,7 +275,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
       type(" ");
       backspace();
-      
+
       assertEquals(2, highlightErrors().size());
       UIUtil.dispatchAllInvocationEvents();
 
@@ -337,23 +352,23 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     configureByText(StdFileTypes.JAVA, text);
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
     ((UndoManagerImpl)UndoManager.getInstance(getProject())).clearUndoRedoQueueInTests(getFile().getVirtualFile());
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
 
 
     doHighlighting();
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));
 
     type(" ");
-    assertTrue(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));
+    assertTrue(DaemonListeners.canChangeFileSilently(getFile()));
 
     undo();
 
-    assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    assertFalse(DaemonListeners.canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
   }
 
 
   public void testAutoImportOfGenericReference() throws Throwable {
-    @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
+    @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(StdFileTypes.JAVA, text);
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
@@ -429,6 +444,30 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      }
    }
 
+   public void testAutoImportSkipsClassReferenceInMethodPosition() throws Throwable {
+     @NonNls String text = "package x; import java.util.HashMap; class S { HashMap<String,String> f(){ return  Hash<caret>Map <String, String >();} }  ";
+     configureByText(StdFileTypes.JAVA, text);
+
+     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+     try {
+       List<HighlightInfo> errs = highlightErrors();
+       assertTrue(errs.size() > 1);
+
+       PsiJavaFile javaFile = (PsiJavaFile)getFile();
+       assertEquals(1, javaFile.getImportList().getAllImportStatements().length);
+
+       PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
+       ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+       assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
+     }
+     finally {
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+     }
+   }
+
    public void testAutoImportDoNotBreakCode() throws Throwable {
      @NonNls String text = "package x; class S {{ S.<caret>\n Runnable r; }}";
      configureByText(StdFileTypes.JAVA, text);
@@ -447,6 +486,16 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
         CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = opt;
      }
+   }
+
+   public void testAutoImportIgnoresUnresolvedImportReferences() throws Throwable {
+     @NonNls String text = "package x; import xxx.yyy.ArrayList; class S {{ ArrayList<caret> r; }}";
+     configureByText(StdFileTypes.JAVA, text);
+
+     PsiJavaFile javaFile = (PsiJavaFile)getFile();
+     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset()-1);
+     ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
+     assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
    }
 
 }

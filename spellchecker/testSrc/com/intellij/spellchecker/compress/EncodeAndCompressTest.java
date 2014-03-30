@@ -9,10 +9,10 @@ public class EncodeAndCompressTest extends TestCase {
         Encoder encoder = new Encoder();
         String word = "example";
         UnitBitSet bs = encoder.encode(word, true);
-        byte[] compressed = UnitBitSet.getBytes(bs);
-        final UnitBitSet decompressed = UnitBitSet.create(compressed);
-        assertEquals(bs,decompressed);
-        String restored = encoder.decode(decompressed);
+        byte[] compressed = bs.pack();
+        final String decompressed = UnitBitSet.decode(compressed, encoder.getAlphabet());
+        assertEquals(word,decompressed);
+        String restored = encoder.decode(compressed);
         assertEquals(word,restored);
     }
 

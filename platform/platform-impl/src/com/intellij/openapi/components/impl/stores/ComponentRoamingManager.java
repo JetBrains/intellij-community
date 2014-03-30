@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,29 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.util.ObjectUtils;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class ComponentRoamingManager {
-
   private final static ComponentRoamingManager OUR_INSTANCE = new ComponentRoamingManager();
 
-  private final Map<String, RoamingType> myRoamingTypeMap = new HashMap<String, RoamingType>();
+  private final Map<String, RoamingType> myRoamingTypeMap = new THashMap<String, RoamingType>();
 
-  public static ComponentRoamingManager getInstance(){
+  public static ComponentRoamingManager getInstance() {
     return OUR_INSTANCE;
   }
 
-  public RoamingType getRoamingType(String name){
-    if (myRoamingTypeMap.containsKey(name)) {
-      return myRoamingTypeMap.get(name);
+  public RoamingType getRoamingType(@Nullable String name) {
+    return name == null ? RoamingType.PER_USER : ObjectUtils.notNull(myRoamingTypeMap.get(name), RoamingType.PER_USER);
+  }
+
+  public void setRoamingType(@NotNull String name, @NotNull RoamingType roamingType) {
+    if (roamingType != RoamingType.PER_USER) {
+      myRoamingTypeMap.put(name, roamingType);
     }
-
-    return RoamingType.PER_USER;
-  }
-
-  public void setRoamingType(final String name, final RoamingType roamingType) {
-     myRoamingTypeMap.put(name, roamingType);
-  }
-
-  public boolean typeSpecified(final String name) {
-    return myRoamingTypeMap.containsKey(name);
   }
 }

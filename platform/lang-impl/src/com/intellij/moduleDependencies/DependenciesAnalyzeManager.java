@@ -49,6 +49,7 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
   public DependenciesAnalyzeManager(final Project project) {
     myProject = project;
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      @Override
       public void run() {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES,
@@ -76,10 +77,12 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
     myContentManager.removeContent(content, true);
   }
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(final State state) {
     myState = state;
   }

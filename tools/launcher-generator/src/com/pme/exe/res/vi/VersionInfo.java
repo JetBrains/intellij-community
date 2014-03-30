@@ -17,17 +17,45 @@
 
 package com.pme.exe.res.vi;
 
-import com.pme.exe.Bin;
+import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.DataInput;
 import java.io.IOException;
 
-public class VersionInfo extends Bin.Structure {
+public class VersionInfo extends VersionInfoBin {
+  private final StringFileInfo myStringFileInfo;
+  private final FixedFileInfo myFixedFileInfo;
+
   public VersionInfo() {
-    super("VersionInfo");
-    addMember(new Word("wLength"));
-    addMember(new Bytes("Bytes", 38));
-    addMember(new FixedFileInfo());
-    addMember(new StringFileInfo());
+    super("VersionInfo", "VS_VERSION_INFO");
+    myFixedFileInfo = new FixedFileInfo();
+    addMember(myFixedFileInfo);
+    addMember(new Padding(4));
+    myStringFileInfo = new StringFileInfo();
+    addMember(myStringFileInfo);
+    addMember(new VarFileInfo());
+  }
+
+  @Override
+  public void read(DataInput stream) throws IOException {
+    long startOffset = -1;
+    if (stream instanceof OffsetTrackingInputStream) {
+      startOffset = ((OffsetTrackingInputStream) stream).getOffset();
+    }
+    super.read(stream);
+    if (stream instanceof OffsetTrackingInputStream) {
+      long offset = ((OffsetTrackingInputStream) stream).getOffset();
+      long length = getValue("wLength");
+      assert startOffset + length == offset: "Length specified in version info header (" + length +
+          ") does not match actual version info length (" + (offset - startOffset) + ")";
+    }
+  }
+
+  public FixedFileInfo getFixedFileInfo() {
+    return myFixedFileInfo;
+  }
+
+  public StringFileInfo getStringFileInfo() {
+    return myStringFileInfo;
   }
 }

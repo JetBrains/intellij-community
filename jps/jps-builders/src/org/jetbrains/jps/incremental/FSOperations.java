@@ -47,6 +47,25 @@ import java.util.Set;
 public class FSOperations {
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
 
+  /**
+   * @param context
+   * @param file
+   * @return true if file is marked as "dirty" in the <b>current</b> compilation round 
+   * @throws IOException
+   */
+  public static boolean isMarkedDirty(CompileContext context, final File file) throws IOException {
+    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rd != null) {
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      return pd.fsState.isMarkedForRecompilation(context, rd, file);
+    }
+    return false;
+  }
+  
+  /**
+   * Note: marked file will well be visible as "dirty" only on the <b>next</b> compilation round!
+   * @throws IOException
+   */
   public static void markDirty(CompileContext context, final File file) throws IOException {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
@@ -114,7 +133,7 @@ public class FSOperations {
       markDirtyFiles(context, target, timestamps, true, null, null);
     }
 
-    if (!JavaBuilderUtil.isForcedRecompilationJava(context)) {
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       // mark as non-incremental only the module that triggered non-incremental change
       for (ModuleBuildTarget target : targets) {
         context.markNonIncremental(target);
@@ -123,7 +142,7 @@ public class FSOperations {
   }
 
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
-    return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively().exportedOnly().getModules();
+    return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursivelyExportedOnly().getModules();
   }
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {

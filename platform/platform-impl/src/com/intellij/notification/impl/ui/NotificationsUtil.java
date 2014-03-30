@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.JBColor;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,16 +37,19 @@ public class NotificationsUtil {
   }
 
   public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
-    String result = "<html>";
+    return buildHtml(notification.getTitle(), notification.getContent(), style);
+  }
+
+  public static String buildHtml(@NotNull final String title, @NotNull final String content, @Nullable String style) {
+    String result = "";
     if (style != null) {
       result += "<div style=\"" + style + "\">";
     }
-    result += "<b>" + notification.getTitle() + "</b><p>" + notification.getContent() + "</p>";
+    result += "<b>" + title + "</b><p>" + content + "</p>";
     if (style != null) {
       result += "</div>";
     }
-    result += "</html>";
-    return result;
+    return XmlStringUtil.wrapInHtml(result);
   }
 
   @Nullable
@@ -66,32 +70,26 @@ public class NotificationsUtil {
   }
 
   public static Icon getIcon(@NotNull final Notification notification) {
-    final Icon icon = notification.getIcon();
-    if (icon != null) {
-      return icon;
+    Icon icon = notification.getIcon();
+
+    if (icon == null) {
+      icon = getMessageType(notification).getDefaultIcon();
     }
-    
+
+    return icon;
+  }
+
+  public static MessageType getMessageType(@NotNull Notification notification) {
     switch (notification.getType()) {
-      case ERROR:
-        return MessageType.ERROR.getDefaultIcon();
-      case WARNING:
-        return MessageType.WARNING.getDefaultIcon();
+      case WARNING: return MessageType.WARNING;
+      case ERROR: return MessageType.ERROR;
       case INFORMATION:
-      default:
-        return MessageType.INFO.getDefaultIcon();
+      default: return MessageType.INFO;
     }
   }
 
   public static Color getBackground(@NotNull final Notification notification) {
-    switch (notification.getType()) {
-      case ERROR:
-        return MessageType.ERROR.getPopupBackground();
-      case WARNING:
-        return MessageType.WARNING.getPopupBackground();
-      case INFORMATION:
-      default:
-        return MessageType.INFO.getPopupBackground();
-    }
+    return getMessageType(notification).getPopupBackground();
   }
 
   public static Color getBorderColor(Notification notification) {
@@ -99,7 +97,7 @@ public class NotificationsUtil {
       case ERROR:
         return new JBColor(Color.gray, new Color(0xc8c8c8));
       case WARNING:
-        return new JBColor(Color.gray, new Color(0x977124));
+        return new JBColor(Color.gray, new Color(0x615f51));
       case INFORMATION:
       default:
         return new JBColor(Color.gray, new Color(0x205c00));

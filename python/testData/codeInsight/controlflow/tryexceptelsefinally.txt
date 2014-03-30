@@ -1,0 +1,21 @@
+0(1) element: null
+1(2) element: PyAssignmentStatement
+2(3) READ ACCESS: dict
+3(4) WRITE ACCESS: d
+4(5) element: PyTryExceptStatement
+5(6,13,16) element: PyTryPart
+6(7,13,16) element: PyAssignmentStatement
+7(8,13,16) element: PySubscriptionExpression
+8(9,13,16) READ ACCESS: d
+9(10,13,16) WRITE ACCESS: v
+10(11,16) element: PyElsePart
+11(12,16) element: PyPrintStatement
+12(16,18) READ ACCESS: v
+13(14,16) element: PyExceptPart
+14(15,16) READ ACCESS: KeyError
+15(16,18) element: PyPrintStatement
+16(17) element: PyFinallyPart
+17(20) element: PyPrintStatement
+18(19) element: PyFinallyPart
+19(20) element: PyPrintStatement
+20() element: null

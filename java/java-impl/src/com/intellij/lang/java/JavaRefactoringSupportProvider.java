@@ -35,6 +35,7 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
-  public boolean isSafeDeleteAvailable(PsiElement element) {
+  public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
            element instanceof PsiPackage || element instanceof PsiLocalVariable;
@@ -59,12 +60,12 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(final PsiElement element, final PsiElement context) {
+  public boolean isInplaceRenameAvailable(@NotNull final PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
   }
 
   @Override
-  public boolean isMemberInplaceRenameAvailable(PsiElement elementToRename, PsiElement context) {
+  public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
     return elementToRename instanceof PsiMember;
   }
 
@@ -115,7 +116,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   }
 
   @Override
-  public boolean isInplaceIntroduceAvailable(PsiElement element, PsiElement context) {
+  public boolean isInplaceIntroduceAvailable(@NotNull PsiElement element, PsiElement context) {
     if (!(element instanceof PsiExpression)) return false;
     if (context == null || context.getContainingFile() != element.getContainingFile()) return false;
     return true;

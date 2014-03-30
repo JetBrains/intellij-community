@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -35,7 +33,7 @@ import static java.util.Collections.singleton;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
-  @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
+  @NonNls public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
   @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LocalFileSystemHolder {
@@ -102,24 +100,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#contentsToByteArray()} (to remove in IDEA 13) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  public byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException{
-    return virtualFile.contentsToByteArray();
-  }
-
-  /** @deprecated use {@linkplain VirtualFile#getLength()} (to remove in IDEA 13) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  public long physicalLength(@NotNull VirtualFile virtualFile) throws IOException{
-    return virtualFile.getLength();
-  }
-
-  @NotNull
+  /** @deprecated fake root considered harmful (to remove in IDEA 14) */
   public final VirtualFile getRoot() {
-    final String rootPath = SystemInfo.isWindows ? "" : "/";
-    final NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, this);
-    assert root != null : SystemInfo.OS_NAME;
-    return root;
+    VirtualFile[] roots = ManagingFS.getInstance().getLocalRoots();
+    assert roots.length > 0 : SystemInfo.OS_NAME;
+    return roots[0];
   }
 
   public interface WatchRequest {
@@ -127,14 +112,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     String getRootPath();
 
     boolean isToWatchRecursively();
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @SuppressWarnings({"UnusedDeclaration"})
-    String getFileSystemRootPath();
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @SuppressWarnings({"UnusedDeclaration"})
-    boolean dominates(@NotNull WatchRequest other);
   }
 
   @Nullable

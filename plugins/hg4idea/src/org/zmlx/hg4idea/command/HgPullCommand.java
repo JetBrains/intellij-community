@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +25,8 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.command.HgCommandExitCode.*;
+
 public class HgPullCommand {
 
   private final Project project;
@@ -33,9 +34,8 @@ public class HgPullCommand {
 
   private String source;
   private String revision;
-  private boolean update = true;
-  private boolean rebase = !update;
-  private static final Logger LOG = Logger.getInstance(HgPullCommand.class);
+  private boolean update;
+  private boolean rebase;
 
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
@@ -58,7 +58,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public boolean execute() {
+  public HgCommandExitCode execute() {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -79,13 +79,19 @@ public class HgPullCommand {
     if (HgErrorUtil.isAuthorizationError(result)) {
       new HgCommandResultNotifier(project)
         .notifyError(result, "Authorization required", "http authorization required for <code>" + source + "</code>");
-      return false;
-    } else if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+      return ERROR;
+    }
+    else if (HgErrorUtil.isAbort(result) || result.getExitValue() > 1) { //if result == null - > isAbort returns true
       new HgCommandResultNotifier(project).notifyError(result, "", "Pull failed");
-      return false;
-    } else {
+      return ERROR;
+    }
+    else if (result.getExitValue() == 1) {
+      return UNRESOLVED;
+    }
+    else {
       project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project, null);
-      return true;
+      return SUCCESS;
     }
   }
+
 }

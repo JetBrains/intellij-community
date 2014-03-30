@@ -16,7 +16,6 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.actions.SelectInContextImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -53,13 +52,9 @@ public class FavoritesAutoscrollFromSourceHandler extends AutoScrollFromSourceHa
     if (file != null) {
       final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
       if (psiFile != null) {
-        final SelectInTarget target = mySelectInTarget;
-        if (target != null) {
-          final SelectInContext selectInContext = SelectInContextImpl.createEditorContext(myProject, editor);
-
-          if (target.canSelect(selectInContext)) {
-            target.selectIn(selectInContext, false);
-          }
+        final SelectInContext selectInContext = SelectInContextImpl.createEditorContext(myProject, editor);
+        if (mySelectInTarget.canSelect(selectInContext)) {
+          mySelectInTarget.selectIn(selectInContext, false);
         }
       }
     }

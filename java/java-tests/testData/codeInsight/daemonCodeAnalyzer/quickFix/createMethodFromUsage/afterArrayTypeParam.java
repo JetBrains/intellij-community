@@ -6,6 +6,6 @@ public class Test {
     }
 
     private void test(byte[] bytes) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 }

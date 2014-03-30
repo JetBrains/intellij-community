@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.testFramework.fixtures
-import com.intellij.codeInsight.AutoPopupController
+
+import com.intellij.codeInsight.completion.CompletionPhase
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -49,19 +51,20 @@ class CompletionAutoPopupTester {
   }
 
   void joinCompletion() {
-    for (j in 1..4000) {
-      LookupImpl l = null
-      UsefulTestCase.edt {
-        l = lookup
-      }
-      if (!l || !l.calculating) {
-        UsefulTestCase.edt {} // for invokeLater in CompletionProgressIndicator.stop()
+    waitPhase { !(it instanceof CompletionPhase.CommittingDocuments || it instanceof CompletionPhase.Synchronous || it instanceof CompletionPhase.BgCalculation) }
+  }
+
+  private void waitPhase(Closure condition) {
+    for (j in 1..1000) {
+      def phase = null
+      UsefulTestCase.edt { phase = CompletionServiceImpl.completionPhase }
+      if (condition(phase)) {
         return
       }
       Thread.sleep(10)
     }
     UsefulTestCase.printThreadDump()
-    UsefulTestCase.fail("Too long completion")
+    UsefulTestCase.fail("Too long completion: " + CompletionServiceImpl.phaseRaw)
   }
 
   final static AtomicInteger cnt = new AtomicInteger()
@@ -102,13 +105,7 @@ class CompletionAutoPopupTester {
   }
 
   void joinAutopopup() {
-    joinAlarm();
-    joinCommit() // physical document commit
-    joinCommit() // file copy commit in background
-  }
-
-  def joinAlarm() {
-    AutoPopupController.getInstance(myFixture.getProject()).executePendingRequests()
+    waitPhase { !(it instanceof CompletionPhase.CommittingDocuments) }
   }
 
   LookupImpl getLookup() {

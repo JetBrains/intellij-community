@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -57,7 +54,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   private final ActionManager myActionManager;
   private final SchemesManager<QuickList, QuickList> mySchemesManager;
 
-  private final static Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + QuickListsManager.class.getName());
 
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
@@ -68,17 +65,17 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
     mySchemesManager = schemesManagerFactory.createSchemesManager(
         "$ROOT_CONFIG$/quicklists",
         new BaseSchemeProcessor<QuickList>(){
-          public QuickList readScheme(final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
+          public QuickList readScheme(@NotNull final Document schemeContent) throws InvalidDataException, IOException, JDOMException {
             return loadListFromDocument(schemeContent);
           }
 
-          public Document writeScheme(final QuickList scheme) throws WriteExternalException {
+          public Document writeScheme(@NotNull final QuickList scheme) throws WriteExternalException {
             Element element = new Element(LIST_TAG);
             scheme.writeExternal(element);
             return new Document(element);
           }
 
-          public boolean shouldBeSaved(final QuickList scheme) {
+          public boolean shouldBeSaved(@NotNull final QuickList scheme) {
             return true;
           }
         },
@@ -119,7 +116,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
   public void initComponent() {
     mySchemesManager.loadSchemes();
-    registerActions();    
+    registerActions();
   }
 
   public void disposeComponent() {
@@ -231,6 +228,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
     public InvokeQuickListAction(QuickList quickList) {
       myQuickList = quickList;
+      myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION;
       getTemplatePresentation().setDescription(myQuickList.getDescription());
       getTemplatePresentation().setText(myQuickList.getDisplayName(), false);
     }

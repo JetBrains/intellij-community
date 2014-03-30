@@ -36,14 +36,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
@@ -67,7 +70,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private JCheckBox myJavaDocCheckBox;
   private JCheckBox mySourcesCheckBox;
   private final Project myProject;
-  private final boolean myManaged;
   private AsyncProcessIcon myProgressIcon;
   private ComboboxWithBrowseButton myComboComponent;
   private JPanel myPanel;
@@ -79,16 +81,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final JComboBox myCombobox;
 
   private TextFieldWithBrowseButton myDirectoryField;
+  private JBCheckBox myDownloadToCheckBox;
   private String myFilterString;
   private boolean myInUpdate;
 
-  public RepositoryAttachDialog(Project project, boolean managed, final @Nullable String initialFilter) {
+  public RepositoryAttachDialog(Project project, final @Nullable String initialFilter) {
     super(project, true);
     myProject = project;
-    myManaged = managed;
     myProgressIcon.suspend();
-    myCaptionLabel.setText("<html>" + StringUtil.escapeXml("enter keyword, pattern or class name to search by or Maven coordinates," +
-                           "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':") + "</html>");
+    myCaptionLabel.setText(
+      XmlStringUtil.wrapInHtml(StringUtil.escapeXml("keyword or class name to search by or exact Maven coordinates, " +
+                                                    "i.e. 'spring', 'Logger' or 'ant:ant-junit:1.6.5'")
+      ));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
@@ -133,30 +137,36 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
     });
-    final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
-    final boolean pathValueSet = storage.isValueSet(PROPERTY_DOWNLOAD_TO_PATH);
+    PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
+    boolean pathValueSet = storage.isValueSet(PROPERTY_DOWNLOAD_TO_PATH);
     if (pathValueSet) {
+      myDownloadToCheckBox.setSelected(true);
       myDirectoryField.setText(storage.getValue(PROPERTY_DOWNLOAD_TO_PATH));
     }
+    else {
+      myDownloadToCheckBox.setSelected(false);
+    }
+    myDownloadToCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDirectoryField.setEnabled(myDownloadToCheckBox.isSelected());
+      }
+    });
     myJavaDocCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_JAVADOC) && storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
     mySourcesCheckBox.setSelected(storage.isValueSet(PROPERTY_ATTACH_SOURCES) && storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
-    if (!myManaged) {
-      if (!pathValueSet && myProject != null && !myProject.isDefault()) {
-        final VirtualFile baseDir = myProject.getBaseDir();
-        if (baseDir != null) {
-          myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath() + "/lib"));
-        }
+    if (!pathValueSet && myProject != null && !myProject.isDefault()) {
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null) {
+        myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath() + "/lib"));
       }
-      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
-      myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                               ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
-                                               descriptor);
     }
-    else {
-      myDirectoryField.setVisible(false);
-    }
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
+    myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
+                                             ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
+                                             descriptor);
     updateInfoLabel();
+    setOKActionEnabled(false);
     init();
   }
 
@@ -168,8 +178,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return mySourcesCheckBox.isSelected();
   }
 
+  @Nullable
   public String getDirectoryPath() {
-    return myDirectoryField.getText();
+    return myDownloadToCheckBox.isSelected()? myDirectoryField.getText() : null;
   }
 
   @Override
@@ -210,7 +221,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
       }
       myCombobox.setSelectedItem(null);
     }
-    Collections.sort(myShownItems);
+
+    // use maven version sorter
+    ArrayList<Comparable> comparables = new ArrayList<Comparable>(myShownItems.size());
+    for (String item : myShownItems) {
+      comparables.add(new MavenVersionComparable(item));
+    }
+    Collections.sort(comparables);
+    myShownItems.clear();
+    for (Comparable comparable : comparables) {
+      myShownItems.add(comparable.toString());
+    }
+
     ((CollectionComboBoxModel)myCombobox.getModel()).update();
     myInUpdate = false;
     field.setText(myFilterString);
@@ -255,6 +277,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
             }
           }
           updateComboboxSelection(prevSize != myCoordinates.size());
+          // tooMany != null on last call, so enable OK action to let
+          // local maven repo a chance even if all remote services failed
+          setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
           return true;
         }
       });
@@ -270,7 +295,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (!isValidCoordinateSelected()) {
       return new ValidationInfo("Please enter valid coordinate, discover it or select one from the list", myCombobox);
     }
-    else if (!myManaged) {
+    else if (myDownloadToCheckBox.isSelected()) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
         return new ValidationInfo("Please enter valid library files path", myDirectoryField.getTextField());
@@ -293,7 +318,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
   protected void dispose() {
     Disposer.dispose(myProgressIcon);
     final PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
-    storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, myDirectoryField.getText());
+    if (myDownloadToCheckBox.isSelected()) {
+      storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, myDirectoryField.getText());
+    }
     storage.setValue(PROPERTY_ATTACH_JAVADOC, String.valueOf(myJavaDocCheckBox.isSelected()));
     storage.setValue(PROPERTY_ATTACH_SOURCES, String.valueOf(mySourcesCheckBox.isSelected()));
     super.dispose();

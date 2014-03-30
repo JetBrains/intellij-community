@@ -15,27 +15,34 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-public class FileTypeManagerTest extends PlatformTestCase {
+public class FileTypeManagerTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testAutoDetectTextFileFromContents() throws IOException {
-    VirtualFile temp = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
-    VirtualFile vFile = createChildData(temp, "test.xxxxxxx");
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("test.xxxxxxxx");
     VfsUtil.saveText(vFile, "text");
 
     FileType type = vFile.getFileType();
     assertEquals(UnknownFileType.INSTANCE, type);
 
-    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().findFile(vFile); // autodetect text file if needed
+    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myFixture.getProject())).getFileManager().findFile(vFile); // autodetect text file if needed
     assertNotNull(psiFile);
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+  }
+
+  public void testIgnoredFiles() throws IOException {
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile(".svn", "");
+    assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));
+    vFile.delete(this);
+
+    vFile = myFixture.getTempDirFixture().createFile("a.txt", "");
+    assertFalse(FileTypeManager.getInstance().isFileIgnored(vFile));
   }
 }

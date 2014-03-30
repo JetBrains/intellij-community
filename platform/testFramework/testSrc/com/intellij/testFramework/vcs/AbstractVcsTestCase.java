@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -35,6 +36,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
@@ -42,8 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static junit.framework.Assert.assertTrue;
 
 /**
  * @author yole
@@ -142,57 +142,19 @@ public abstract class AbstractVcsTestCase {
   }
 
   public VirtualFile createFileInCommand(final VirtualFile parent, final String name, @Nullable final String content) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile file = parent.createChildData(this, name);
-          if (content != null) {
-            file.setBinaryContent(CharsetToolkit.getUtf8Bytes(content));
-          }
-          result.set(file);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
+    return VcsTestUtil.createFile(myProject, parent, name, content);
   }
 
-  /**
-   * Creates directory inside a write action and returns the resulting reference to it.
-   * If the directory already exists, does nothing.
-   * @param parent Parent directory.
-   * @param name   Name of the directory.
-   * @return reference to the created or already existing directory.
-   */
   public VirtualFile createDirInCommand(final VirtualFile parent, final String name) {
-    final Ref<VirtualFile> result = new Ref<VirtualFile>();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          VirtualFile dir = parent.findChild(name);
-          if (dir == null) {
-            dir = parent.createChildDirectory(this, name);
-          }
-          result.set(dir);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
-    return result.get();
+    return VcsTestUtil.createDir(myProject, parent, name);
   }
 
   protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
-        for (int i = 0; i < 5; i++) {
+        int numOfRuns = 5;
+        for (int i = 0; i < numOfRuns; i++) {
           try {
             final VirtualFile[] children = dir.getChildren();
             for (VirtualFile child : children) {
@@ -203,11 +165,11 @@ public abstract class AbstractVcsTestCase {
             return;
           }
           catch (IOException e) {
-            try {
-              Thread.sleep(50);
-            } catch (InterruptedException e1) {
-              //
+            if (i == (numOfRuns - 1)) {
+              // last run
+              throw e;
             }
+            Thread.sleep(50);
             continue;
           }
         }
@@ -230,9 +192,14 @@ public abstract class AbstractVcsTestCase {
   }
 
   public void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
-                                      final VcsShowConfirmationOption.Value value) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    final AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
+                                             final VcsShowConfirmationOption.Value value) {
+    setStandardConfirmation(myProject, vcsName, op, value);
+  }
+
+  public static void setStandardConfirmation(Project project, String vcsName, VcsConfiguration.StandardConfirmation op,
+                                             VcsShowConfirmationOption.Value value) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    AbstractVcs vcs = vcsManager.findVcsByName(vcsName);
     VcsShowConfirmationOption option = vcsManager.getStandardConfirmation(op, vcs);
     option.setValue(value);
   }
@@ -278,66 +245,15 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void renameFileInCommand(final VirtualFile file, final String newName) {
-    renameFileInCommand(myProject, file, newName);
+    VcsTestUtil.renameFileInCommand(myProject, file, newName);
   }
 
-  public static void renameFileInCommand(final Project project, final VirtualFile file, final String newName) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.rename(this, newName);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute().throwException();
+  public void deleteFileInCommand(final VirtualFile file) {
+    VcsTestUtil.deleteFileInCommand(myProject, file);
   }
 
-  protected void deleteFileInCommand(final VirtualFile file) {
-    deleteFileInCommand(myProject, file);
-  }
-
-  public static void deleteFileInCommand(final Project project, final VirtualFile file) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.delete(this);
-        }
-        catch(IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    }.execute();
-  }
-
-  protected void editFileInCommand(final VirtualFile file, final String newContent) {
-    editFileInCommand(myProject, file, newContent);
-  }
-
-  public static void editFileInCommand(final Project project, final VirtualFile file, final String newContent) {
-    assertTrue(file.isValid());
-    file.getTimeStamp();
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          long newModTs = Math.max(System.currentTimeMillis(), file.getModificationStamp() + 1100);
-          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
-          file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
-          final File file1 = new File(file.getPath());
-          FileUtil.writeToFile(file1, newContent.getBytes());
-          file.refresh(false, false);
-          newModTs = Math.max(System.currentTimeMillis() + 1100, file.getModificationStamp() + 1100);
-          assertTrue(file1 + " / " + newModTs, file1.setLastModified(newModTs));
-        }
-        catch(IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    }.execute();
+  public void editFileInCommand(final VirtualFile file, final String newContent) {
+    VcsTestUtil.editFileInCommand(myProject, file, newContent);
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final String toName) {
@@ -356,43 +272,8 @@ public abstract class AbstractVcsTestCase {
     return res.get();
   }
 
-  protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    return copyFileInCommand(myProject, file, newParent, file.getName());
-  }
-                                          
-  public static VirtualFile copyFileInCommand(final Project project,
-                                              final VirtualFile file,
-                                              final VirtualFile newParent,
-                                              final String newName) {
-    return new WriteCommandAction<VirtualFile>(project) {
-      @Override
-      protected void run(Result<VirtualFile> result) throws Throwable {
-        try {
-          result.setResult(file.copy(this, newParent, newName));
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute().getResultObject();
-  }
-
   protected void moveFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    moveFileInCommand(myProject, file, newParent);
-  }
-
-  public static void moveFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          file.move(this, newParent);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
+    VcsTestUtil.moveFileInCommand(myProject, file, newParent);
   }
 
   protected void verifyChange(final Change c, final String beforePath, final String afterPath) {
@@ -431,4 +312,16 @@ public abstract class AbstractVcsTestCase {
       }
     });
   }
+
+  public FileAnnotation createTestAnnotation(@NotNull AnnotationProvider provider, VirtualFile file) throws VcsException {
+    final FileAnnotation annotation = provider.annotate(file);
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        annotation.dispose();
+      }
+    });
+    return annotation;
+  }
+
 }

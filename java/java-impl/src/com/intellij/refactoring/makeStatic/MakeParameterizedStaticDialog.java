@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -33,8 +34,8 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   private final JCheckBox myMakeFieldParameters = new JCheckBox();
 
   private ParameterTablePanel myParameterPanel;
-  private ParameterTablePanel.VariableData[] myVariableData;
+  private VariableData[] myVariableData;
   private final boolean myAnyNonFieldMembersUsed;
 
 
@@ -71,10 +72,10 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private boolean buildVariableData(InternalUsageInfo[] internalUsages) {
-    ArrayList<ParameterTablePanel.VariableData> variableDatum = new ArrayList<ParameterTablePanel.VariableData>();
+    ArrayList<VariableData> variableDatum = new ArrayList<VariableData>();
     boolean nonFieldUsages = MakeStaticUtil.collectVariableData(myMember, internalUsages, variableDatum);
 
-    myVariableData = variableDatum.toArray(new ParameterTablePanel.VariableData[0]);
+    myVariableData = variableDatum.toArray(new VariableData[0]);
     return nonFieldUsages;
   }
 
@@ -109,7 +110,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
    *
    * @return null if field parameters are not selected
    */
-  public ParameterTablePanel.VariableData[] getVariableData() {
+  public VariableData[] getVariableData() {
     if(myMakeFieldParameters != null && myMakeFieldParameters.isSelected()) {
       return myVariableData;
     }
@@ -218,17 +219,18 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   protected boolean validateData() {
-    int ret = 0;
+    int ret = Messages.YES;
     if (isMakeClassParameter()) {
       final PsiMethod methodWithParameter = checkParameterDoesNotExist();
       if (methodWithParameter != null) {
-        String who = methodWithParameter == myMember ? RefactoringBundle.message("this.method") : UsageViewUtil.getDescriptiveName(methodWithParameter);
+        String who = methodWithParameter == myMember ? RefactoringBundle.message("this.method") : DescriptiveNameUtil
+          .getDescriptiveName(methodWithParameter);
         String message = RefactoringBundle.message("0.already.has.parameter.named.1.use.this.name.anyway", who, getClassParameterName());
         ret = Messages.showYesNoDialog(myProject, message, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
         myClassParameterNameInputField.requestFocusInWindow();
       }
     }
-    return ret == 0;
+    return ret == Messages.YES;
   }
 
   private PsiMethod checkParameterDoesNotExist() {
@@ -270,7 +272,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private JComboBox createComboBoxForName() {
-    final ComboBox combobox = new ComboBox(myNameSuggestions,-1);
+    final ComboBox combobox = new ComboBox(myNameSuggestions);
 
     combobox.setEditable(true);
     combobox.setSelectedIndex(0);

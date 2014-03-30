@@ -21,11 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.DirectoryElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil;
 
 import javax.swing.*;
 
@@ -51,7 +51,7 @@ class DirectoryElementType extends CompositePackagingElementType<DirectoryPackag
   @Override
   public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull DirectoryPackagingElement element,
                                                                                                  @NotNull ArtifactEditorContext context) {
-    if (ArtifactUtil.isArchiveName(element.getDirectoryName())) {
+    if (JpsArtifactUtil.isArchiveName(element.getDirectoryName())) {
       return new DirectoryElementPropertiesPanel(element, context);
     }
     return null;

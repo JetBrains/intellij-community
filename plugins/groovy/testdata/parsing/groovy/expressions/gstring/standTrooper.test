@@ -21,21 +21,25 @@ Groovy script
       PsiWhiteSpace(' ')
       Compound Gstring
         PsiElement(Gstring begin)('"""')
-        PsiElement(Gstring content)('DELIMITER ')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('DELIMITER ')
         GString injection
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             PsiElement($)('$')
-        PsiElement(Gstring content)('\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('\n\nDROP PROCEDURE IF EXISTS `gearloop`.`sp_CustomProductProfile_ins_upd`')
         GString injection
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             PsiElement($)('$')
-        PsiElement(Gstring content)('\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('\n\nCREATE PROCEDURE `gearloop`.`sp_CustomProductProfile_ins_upd`()\n    BEGIN\n\n    END')
         GString injection
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             PsiElement($)('$')
-        PsiElement(Gstring content)('\n\nDELIMITER ;')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('\n\nDELIMITER ;')
         PsiElement(Gstring end)('"""')
   PsiElement(;)(';')

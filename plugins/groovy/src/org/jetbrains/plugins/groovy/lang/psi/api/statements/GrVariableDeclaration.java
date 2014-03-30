@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration {
   ArrayFactory<GrVariableDeclaration> ARRAY_FACTORY = new ArrayFactory<GrVariableDeclaration>() {
+    @NotNull
     @Override
     public GrVariableDeclaration[] create(int count) {
       return new GrVariableDeclaration[count];

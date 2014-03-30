@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -31,8 +28,8 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -50,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(UnnecessaryQualifiedReferenceInspection.class);
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
@@ -57,7 +55,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
 
-        if (canBeReplacedWithImport(refElement)) {
+        if (canBeSimplified(refElement)) {
           registerError(refElement);
         }
       }
@@ -66,7 +64,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
-        if (canBeReplacedWithImport(referenceExpression) || isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
+        if (canBeSimplified(referenceExpression) || isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
           registerError(referenceExpression);
         }
       }
@@ -84,7 +82,10 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
     final PsiElement parent = ref.getParent();
     if (parent instanceof GrMethodCall) {
       final GrMethodCall copy = (GrMethodCall)parent.copy();
-      ((GrReferenceExpression)copy.getInvokedExpression()).setQualifier(null);
+      GrReferenceExpression invoked = (GrReferenceExpression)copy.getInvokedExpression();
+      assert invoked != null;
+
+      invoked.setQualifier(null);
 
       copyResolved = ((GrReferenceExpression)copy.getInvokedExpression()).resolve();
     }
@@ -116,7 +117,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
   }
 
   @Override
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     return new GroovyFix() {
       @Override
       protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
@@ -128,7 +129,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       @NotNull
       @Override
       public String getName() {
-        return GroovyInspectionBundle.message("unnecessary.qualified.reference");
+        return GroovyInspectionBundle.message("replace.qualified.name.with.import");
       }
     };
   }
@@ -138,7 +139,9 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
     return true;
   }
 
-  private static boolean canBeReplacedWithImport(PsiElement element) {
+  private static boolean canBeSimplified(PsiElement element) {
+    if (PsiTreeUtil.getParentOfType(element, PsiComment.class) != null) return false;
+
     if (element instanceof GrCodeReferenceElement) {
       if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, GrPackageDefinition.class) != null) return false;
     }
@@ -155,22 +158,25 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
 
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiClass)) return false;
-    if (((PsiClass)resolved).getContainingClass() != null &&
-        !CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
-      return false;
-    }
 
     final String name = ((PsiClass)resolved).getName();
     if (name == null) return false;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrReferenceExpression shortedRef = factory.createReferenceExpressionFromText(name, element);
-
     final GroovyResolveResult resolveResult = shortedRef.advancedResolve();
-    if (resolveResult.getElement() == null || !resolveResult.isAccessible() || !resolveResult.isStaticsOK()) {
+
+    if (element.getManager().areElementsEquivalent(resolved, resolveResult.getElement())) {
       return true;
     }
-    if (element.getManager().areElementsEquivalent(resolved, resolveResult.getElement())) {
+
+    final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
+    if (containingClass != null &&
+        !CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
+      return false;
+    }
+
+    if (resolveResult.getElement() == null || !resolveResult.isAccessible() || !resolveResult.isStaticsOK()) {
       return true;
     }
 

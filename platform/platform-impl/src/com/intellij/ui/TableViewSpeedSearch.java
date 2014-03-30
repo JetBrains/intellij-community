@@ -16,14 +16,16 @@
 package com.intellij.ui;
 
 import com.intellij.ui.table.TableView;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author Gregory.Shrago
  */
-public abstract class TableViewSpeedSearch extends SpeedSearchBase<TableView> {
-  public TableViewSpeedSearch(TableView component) {
+public abstract class TableViewSpeedSearch<Item> extends SpeedSearchBase<TableView<Item>> {
+  public TableViewSpeedSearch(TableView<Item> component) {
     super(component);
     setComparator(new SpeedSearchComparator(false));
   }
@@ -43,8 +45,14 @@ public abstract class TableViewSpeedSearch extends SpeedSearchBase<TableView> {
     return getComponent().getItems().toArray();
   }
 
+  @Nullable
   @Override
-  protected abstract String getElementText(final Object element);
+  protected String getElementText(Object element) {
+    return getItemText((Item)element);
+  }
+
+  @Nullable
+  protected abstract String getItemText(final @NotNull Item element);
 
   @Override
   protected void selectElement(final Object element, final String selectedText) {

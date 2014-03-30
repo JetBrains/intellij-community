@@ -41,6 +41,10 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
     boolean enabled = target != null;
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
       event.getPresentation().setVisible(enabled);
+      if (!(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(event)) {
+        event.getPresentation().setVisible(false);
+        return;
+      }
     }
     else {
       event.getPresentation().setEnabled(enabled);
@@ -66,7 +70,7 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
 
   @Nullable
   private Navigatable getTarget(final DataContext dataContext) {
-    if (!myFocusEditor && PlatformDataKeys.EDITOR.getData(dataContext) != null) {
+    if (!myFocusEditor && CommonDataKeys.EDITOR.getData(dataContext) != null) {
       // makes no sense in editor and conflicts with another action there (ctrl+enter)
       return null;
     }
@@ -82,6 +86,6 @@ public abstract class BaseNavigateToSourceAction extends AnAction implements Dum
 
   @Nullable
   protected Navigatable[] getNavigatables(final DataContext dataContext) {
-    return PlatformDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
+    return CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext);
   }
 }

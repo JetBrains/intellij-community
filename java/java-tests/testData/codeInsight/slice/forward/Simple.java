@@ -1,4 +1,4 @@
- public class T2 {
+class T2 {
      int <flown111111>fff;
 
      {

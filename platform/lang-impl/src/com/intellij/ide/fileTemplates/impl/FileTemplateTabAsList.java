@@ -42,6 +42,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         onTemplateSelected();
       }
@@ -58,6 +59,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   }
 
   private class MyListCellRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       Icon icon = null;
@@ -85,6 +87,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     }
   }
 
+  @Override
   public void removeSelected() {
     final FileTemplate selectedTemplate = getSelectedTemplate();
     if (selectedTemplate == null) {
@@ -108,6 +111,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     }
   }
 
+  @Override
   protected void initSelection(FileTemplate selection) {
     myModel = new MyListModel();
     myList.setModel(myModel);
@@ -122,10 +126,12 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     }
   }
 
+  @Override
   public void fireDataChanged() {
     myModel.fireListDataChanged();
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getTemplates() {
     final int size = myModel.getSize();
@@ -136,19 +142,23 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     return templates.toArray(new FileTemplate[templates.size()]);
   }
 
+  @Override
   public void addTemplate(FileTemplate newTemplate) {
     myModel.addElement(newTemplate);
   }
 
+  @Override
   public void selectTemplate(FileTemplate template) {
     myList.setSelectedValue(template, true);
   }
 
+  @Override
   public FileTemplate getSelectedTemplate() {
     final Object value = myList.getSelectedValue();
     return value instanceof FileTemplate ? (FileTemplate) value : null;
   }
 
+  @Override
   public JComponent getComponent() {
     return myList;
   }

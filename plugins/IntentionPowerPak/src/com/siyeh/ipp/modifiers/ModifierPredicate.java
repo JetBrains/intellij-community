@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class ModifierPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiClass || parent instanceof PsiField || parent instanceof PsiMethod)) {
+    if (!(parent instanceof PsiClass || parent instanceof PsiField || parent instanceof PsiMethod) || parent instanceof PsiEnumConstant) {
       return false;
     }
     if (element instanceof PsiDocComment || element instanceof PsiCodeBlock) {

@@ -2,6 +2,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -55,14 +56,56 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testMethodFormatting() throws Exception {
+    doTestMethod();
+  }
+
+  public void testConstantFieldInitializer() throws Exception {
+    doTestField();
+  }
+
   public void testInitializerWithNew() throws Exception {
+    doTestField();
+  }
+
+  public void testInitializerWithLiteral() throws Exception {
     doTestField();
   }
 
   public void testInitializerWithReference() throws Exception {
     doTestField();
   }
-  
+
+  public void testLiteral() throws Exception {
+    doTestField();
+  }
+
+  public void testCode() throws Exception {
+    doTestField();
+  }
+
+  public void testEnumConstantOrdinal() throws Exception {
+    PsiClass psiClass = getTestClass();
+    PsiField field = psiClass.getFields() [0];
+    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
+    String htmlText = FileUtil.loadFile(htmlPath);
+    String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
+    assertNotNull(docInfo);
+    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
+  }
+
+  public void testClassTypeParamsPresentation() throws Exception {
+    PsiClass psiClass = getTestClass();
+    final PsiReferenceList extendsList = psiClass.getExtendsList();
+    final PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
+    final PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
+    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
+    String htmlText = FileUtil.loadFile(htmlPath);
+    String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
+    assertNotNull(docInfo);
+    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
+  }
+
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];

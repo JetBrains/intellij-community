@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -55,10 +56,18 @@ public abstract class AutomaticRenamer {
                          final boolean searchInStringsAndComments,
                          final boolean searchInNonJavaFiles,
                          List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
+    findUsages(result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, null);
+  }
+
+  public void findUsages(List<UsageInfo> result,
+                         final boolean searchInStringsAndComments,
+                         final boolean searchInNonJavaFiles,
+                         List<UnresolvableCollisionUsageInfo> unresolvedUsages,
+                         Map<PsiElement, String> allRenames) {
     for (Iterator<PsiNamedElement> iterator = myElements.iterator(); iterator.hasNext();) {
       final PsiNamedElement variable = iterator.next();
       RenameProcessor.assertNonCompileElement(variable);
-      final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages);
+      final boolean success = findUsagesForElement(variable, result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, allRenames);
       if (!success) {
         iterator.remove();
       }
@@ -68,10 +77,22 @@ public abstract class AutomaticRenamer {
   private boolean findUsagesForElement(PsiNamedElement element,
                                        List<UsageInfo> result,
                                        final boolean searchInStringsAndComments,
-                                       final boolean searchInNonJavaFiles, List<UnresolvableCollisionUsageInfo> unresolvedUsages) {
+                                       final boolean searchInNonJavaFiles,
+                                       List<UnresolvableCollisionUsageInfo> unresolvedUsages,
+                                       Map<PsiElement, String> allRenames) {
     final String newName = getNewName(element);
     if (newName != null) {
-      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, searchInStringsAndComments, searchInNonJavaFiles, myRenames);
+
+      final LinkedHashMap<PsiNamedElement, String> renames = new LinkedHashMap<PsiNamedElement, String>();
+      renames.putAll(myRenames);
+      if (allRenames != null) {
+        for (PsiElement psiElement : allRenames.keySet()) {
+          if (psiElement instanceof PsiNamedElement) {
+            renames.put((PsiNamedElement)psiElement, allRenames.get(psiElement));
+          }
+        }
+      }
+      final UsageInfo[] usages = RenameUtil.findUsages(element, newName, searchInStringsAndComments, searchInNonJavaFiles, renames);
       for (final UsageInfo usage : usages) {
         if (usage instanceof UnresolvableCollisionUsageInfo) {
           if (unresolvedUsages != null) {
@@ -111,18 +132,7 @@ public abstract class AutomaticRenamer {
       final PsiNamedElement element = myElements.get(varIndex);
       final String name = element.getName();
       if (!myRenames.containsKey(element)) {
-        String newName;
-        if (oldClassName.equals(name)) {
-          newName = newClassName;
-        } else {
-          String canonicalName = nameToCanonicalName(name, element);
-          final String newCanonicalName = suggester.suggestName(canonicalName);
-          if (newCanonicalName.length() == 0) {
-            LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
-                      canonicalName + ", newCanonicalName = " + newCanonicalName);
-          }
-          newName = canonicalNameToName(newCanonicalName, element);
-        }
+        String newName = suggestNameForElement(element, suggester, newClassName, oldClassName);
         if (!newName.equals(name)) {
           myRenames.put(element, newName);
         }
@@ -136,6 +146,20 @@ public abstract class AutomaticRenamer {
     }
   }
 
+  protected String suggestNameForElement(PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName) {
+    String name = element.getName();
+    if (oldClassName.equals(name)) {
+      return newClassName;
+    }
+    String canonicalName = nameToCanonicalName(name, element);
+    final String newCanonicalName = suggester.suggestName(canonicalName);
+    if (newCanonicalName.length() == 0) {
+      LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
+                canonicalName + ", newCanonicalName = " + newCanonicalName);
+    }
+    return canonicalNameToName(newCanonicalName, element);
+  }
+
   @NonNls
   protected String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
     return canonicalName;
@@ -143,6 +167,10 @@ public abstract class AutomaticRenamer {
 
   protected String nameToCanonicalName(@NonNls String name, PsiNamedElement element) {
     return name;
+  }
+
+  public boolean allowChangeSuggestedName() {
+    return true;
   }
 
   public boolean isSelectedByDefault() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,12 +30,15 @@ import java.util.List;
  * plugin.dtd:idea-plugin interface.
  */
 @DefinesXml
+@Presentation(icon = "AllIcons.Nodes.Plugin", typeName = "Plugin")
+@Stubbed
 public interface IdeaPlugin extends DomElement {
   @Nullable
   String getPluginId();
 
   @NotNull
   @NameValue
+  @Stubbed
   GenericDomValue<String> getId();
 
   @NotNull
@@ -47,6 +51,7 @@ public interface IdeaPlugin extends DomElement {
   GenericAttributeValue<Boolean> getUseIdeaClassloader();
 
   @NotNull
+  @Stubbed
   GenericDomValue<String> getName();
 
 
@@ -87,31 +92,41 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
+  @Stubbed
   @SubTagList("depends")
   List<Dependency> getDependencies();
   @SubTagList("depends")
   Dependency addDependency();
 
   @NotNull
+  @Stubbed
   @SubTagList("module")
   List<PluginModule> getModules();
 
   @NotNull
   @SubTagList("extensions")
+  @Stubbed
   List<Extensions> getExtensions();
   Extensions addExtensions();
 
   @NotNull
+  @Stubbed
   @SubTagList("extensionPoints")
   List<ExtensionPoints> getExtensionPoints();
   ExtensionPoints addExtensionPoints();
 
 
   @NotNull
-  ApplicationComponents getApplicationComponents();
+  @SubTagList("application-components")
+  List<ApplicationComponents> getApplicationComponents();
+
+  ApplicationComponents addApplicationComponent();
 
   @NotNull
-  ProjectComponents getProjectComponents();
+  @SubTagList("project-components")
+  List<ProjectComponents> getProjectComponents();
+
+  ProjectComponents addProjectComponent();
 
   @NotNull
   ModuleComponents getModuleComponents();

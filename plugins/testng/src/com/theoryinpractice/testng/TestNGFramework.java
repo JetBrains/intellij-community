@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -103,16 +102,16 @@ public class TestNGFramework extends JavaTestFramework {
     PsiMethod inClass = clazz.findMethodBySignature(patternMethod, false);
     if (inClass != null) {
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
-                 DialogWrapper.OK_EXIT_CODE :
-                 Messages.showYesNoDialog("Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
+                 Messages.YES :
+                 Messages.showYesNoDialog(manager.getProject(), "Method \'" + setUpName + "\' already exist but is not annotated as @BeforeMethod.",
                                           CommonBundle.getWarningTitle(),
                                           "Annotate",
                                           "Create new method",
                                           Messages.getWarningIcon());
-      if (exit == DialogWrapper.OK_EXIT_CODE) {
+      if (exit == Messages.YES) {
         new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());
         return inClass;
-      } else if (exit == DialogWrapper.CANCEL_EXIT_CODE) {
+      } else if (exit == Messages.NO) {
         inClass = null;
         int i = 0;
         while (clazz.findMethodBySignature(patternMethod, false) != null) {
@@ -167,6 +166,11 @@ public class TestNGFramework extends JavaTestFramework {
     return inClass;
   }
 
+  @Override
+  public char getMnemonic() {
+    return 'N';
+  }
+
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG SetUp Method.java");
   }
@@ -177,6 +181,12 @@ public class TestNGFramework extends JavaTestFramework {
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");
+  }
+
+  @Nullable
+  @Override
+  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG Parameters Method.java");
   }
 
   @Override

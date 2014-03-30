@@ -1,0 +1,20 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+  <name>pluginName</name>
+
+  <depends>anotherPlugin</depends>
+  <module value="myModule"/>
+
+  <extensions xmlns="someNS" defaultExtensionNs="com.intellij">
+    <actionPromoter implementation="someImpl"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="myEP" interface="SomeInterface">
+    <with attribute="attributeName" implements="SomeImplements"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="qualifiedName" beanClass="BeanClass"/>
+  </extensionPoints>
+
+</idea-plugin>

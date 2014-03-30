@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,10 +123,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          runSelection(DataManager.getInstance().getDataContext(myTree));
-          return true;
+        final int eventY = e.getY();
+        final int row = myTree.getClosestRowForLocation(e.getX(), eventY);
+        if (row >= 0) {
+          final Rectangle bounds = myTree.getRowBounds(row);
+          if (bounds != null && eventY > bounds.getY() && eventY < bounds.getY() + bounds.getHeight()) {
+            runSelection(DataManager.getInstance().getDataContext(myTree));
+            return true;
+          }
         }
         return false;
       }
@@ -259,7 +263,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final String fileName = buildFile.getPresentableUrl();
     final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
                                                 AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
-    if (result != 0) {
+    if (result != Messages.YES) {
       return;
     }
     myConfig.removeBuildFile(buildFile);
@@ -417,7 +421,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
         return null;
@@ -455,7 +459,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myProject != null? myTreeExpander : null;
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;
@@ -850,7 +854,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     @Override
     public boolean canImport(final TransferSupport support) {
-      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
+      return FileCopyPasteUtil.isFileListFlavorAvailable(support.getDataFlavors());
     }
 
     private VirtualFile[] getAntFiles(final TransferSupport support) {

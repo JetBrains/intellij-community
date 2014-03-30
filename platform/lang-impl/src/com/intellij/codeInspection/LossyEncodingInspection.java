@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -33,18 +33,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -98,9 +94,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
-    if (virtualFile.getFileSystem() != LocalFileSystem.getInstance()
-        // tests
-        && virtualFile.getFileSystem() != TempFileSystem.getInstance()) return null;
+    if (!virtualFile.isInLocalFileSystem()) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
@@ -108,7 +102,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (charset instanceof Native2AsciiCharset) return null;
 
     List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-    boolean ok = checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, text, virtualFile, charset, descriptors);
+    boolean ok = checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, virtualFile, charset, descriptors);
     if (ok) {
       checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
     }
@@ -119,7 +113,6 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   private static boolean checkFileLoadedInWrongEncoding(@NotNull PsiFile file,
                                                         @NotNull InspectionManager manager,
                                                         boolean isOnTheFly,
-                                                        @NotNull String text,
                                                         @NotNull VirtualFile virtualFile,
                                                         @NotNull Charset charset,
                                                         @NotNull List<ProblemDescriptor> descriptors) {
@@ -128,7 +121,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       ) {
       return true;
     }
-    if (!isGoodCharset(virtualFile, text, charset, file.getProject())) {
+    if (!isGoodCharset(virtualFile, charset)) {
       descriptors.add(manager.createProblemDescriptor(file, "File was loaded in the wrong encoding: '"+charset+"'",
                                                       RELOAD_ENCODING_FIX, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
       return false;
@@ -138,38 +131,29 @@ public class LossyEncodingInspection extends LocalInspectionTool {
 
   // check if file was loaded in correct encoding
   // returns true if text converted with charset is equals to the bytes currently on disk
-  private static boolean isGoodCharset(@NotNull VirtualFile virtualFile,
-                                       @NotNull String text,
-                                       @NotNull Charset charset,
-                                       @NotNull Project project) {
+  private static boolean isGoodCharset(@NotNull VirtualFile virtualFile, @NotNull Charset charset) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return true;
-    byte[] bytes;
+    byte[] loadedBytes;
+    byte[] bytesToSave;
     try {
-      bytes = virtualFile.contentsToByteArray();
+      loadedBytes = virtualFile.contentsToByteArray();
+      bytesToSave = new String(loadedBytes, charset).getBytes(charset);
     }
-    catch (IOException e) {
+    catch (Exception e) {
       return true;
     }
-    String separator = LoadTextUtil.detectLineSeparator(virtualFile, false);
-    if (separator == null) {
-      separator = documentManager.isDocumentUnsaved(document) ?
-                  FileDocumentManagerImpl.getLineSeparator(document, virtualFile) :
-                  CodeStyleFacade.getInstance(project).getLineSeparator();
-    }
-    String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();
-    byte[] bytesToSave = toSave.getBytes(charset);
     if (bom != null && !ArrayUtil.startsWith(bytesToSave, bom)) {
       bytesToSave = ArrayUtil.mergeArrays(bom, bytesToSave); // for 2-byte encodings String.getBytes(Charset) adds BOM automatically
     }
 
-    boolean equals = Arrays.equals(bytesToSave, bytes);
+    boolean equals = Arrays.equals(bytesToSave, loadedBytes);
     if (!equals && LOG.isDebugEnabled()) {
       try {
         FileUtil.writeToFile(new File("C:\\temp\\bytesToSave"), bytesToSave);
-        FileUtil.writeToFile(new File("C:\\temp\\bytes"), bytes);
+        FileUtil.writeToFile(new File("C:\\temp\\loadedBytes"), loadedBytes);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -257,8 +241,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
       DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
-      DataContext projectContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project, context);
-      return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
+      DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
+      return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
     }
   }
 }

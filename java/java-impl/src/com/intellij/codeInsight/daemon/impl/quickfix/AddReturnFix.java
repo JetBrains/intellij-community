@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +34,7 @@ public class AddReturnFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
   private final PsiMethod myMethod;
 
-  public AddReturnFix(PsiMethod method) {
+  public AddReturnFix(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -52,17 +52,16 @@ public class AddReturnFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod != null
-        && myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myMethod.getBody() != null
-        && myMethod.getBody().getRBrace() != null
+    return myMethod.isValid() &&
+           myMethod.getManager().isInProject(myMethod) &&
+           myMethod.getBody() != null &&
+           myMethod.getBody().getRBrace() != null
         ;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
 
     try {
       String value = suggestReturnValue();

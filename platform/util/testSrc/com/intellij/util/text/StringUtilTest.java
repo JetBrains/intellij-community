@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 22, 2006
+ * @since Dec 22, 2006
  */
 public class StringUtilTest extends TestCase {
   public void testToUpperCase() {
@@ -48,6 +48,16 @@ public class StringUtilTest extends TestCase {
     assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
   }
 
+  public void testIsEmptyOrSpaces() throws Exception {
+    assertTrue(StringUtil.isEmptyOrSpaces(null));
+    assertTrue(StringUtil.isEmptyOrSpaces(""));
+    assertTrue(StringUtil.isEmptyOrSpaces("                   "));
+
+    assertFalse(StringUtil.isEmptyOrSpaces("1"));
+    assertFalse(StringUtil.isEmptyOrSpaces("         12345          "));
+    assertFalse(StringUtil.isEmptyOrSpaces("test"));
+  }
+
   public void testSplitWithQuotes() {
     final List<String> strings = StringUtil.splitHonorQuotes("aaa bbb   ccc \"ddd\" \"e\\\"e\\\"e\"  ", ' ');
     assertEquals(5, strings.size());
@@ -64,15 +74,17 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testStartsWithConcatenation() {
-    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "something", "."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something.withdot", "", "something."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something.", "something", "."));
-    assertTrue(StringUtil.startsWithConcatenationOf("something", "something", ""));
-    assertFalse(StringUtil.startsWithConcatenationOf("something", "something", "."));
-    assertFalse(StringUtil.startsWithConcatenationOf("some", "something", ""));
+    assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenation("something.with.dot", "", "something."));
+    assertTrue(StringUtil.startsWithConcatenation("something.", "something", "."));
+    assertTrue(StringUtil.startsWithConcatenation("something", "something", "", "", ""));
+    assertFalse(StringUtil.startsWithConcatenation("something", "something", "", "", "."));
+    assertFalse(StringUtil.startsWithConcatenation("some", "something", ""));
   }
 
   public void testNaturalCompare() {
+    assertEquals(1, StringUtil.naturalCompare("test011", "test10"));
+    assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
     final List<String> strings = new ArrayList<String>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
                                                              "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
     final Comparator<String> c = new Comparator<String>() {
@@ -133,5 +145,54 @@ public class StringUtilTest extends TestCase {
   public void testEscapeQuotes() {
     assertEquals("\\\"", StringUtil.escapeQuotes("\""));
     assertEquals("foo\\\"bar'\\\"", StringUtil.escapeQuotes("foo\"bar'\""));
+  }
+
+  public void testUnqote() {
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\"", StringUtil.unquoteString("\""));
+    assertEquals("", StringUtil.unquoteString("\"\""));
+    assertEquals("\"", StringUtil.unquoteString("\"\"\""));
+    assertEquals("foo", StringUtil.unquoteString("\"foo\""));
+    assertEquals("\"foo", StringUtil.unquoteString("\"foo"));
+    assertEquals("foo\"", StringUtil.unquoteString("foo\""));
+    assertEquals("", StringUtil.unquoteString(""));
+    assertEquals("\'", StringUtil.unquoteString("\'"));
+    assertEquals("", StringUtil.unquoteString("\'\'"));
+    assertEquals("\'", StringUtil.unquoteString("\'\'\'"));
+    assertEquals("foo", StringUtil.unquoteString("\'foo\'"));
+    assertEquals("\'foo", StringUtil.unquoteString("\'foo"));
+    assertEquals("foo\'", StringUtil.unquoteString("foo\'"));
+
+    assertEquals("\'\"", StringUtil.unquoteString("\'\""));
+    assertEquals("\"\'", StringUtil.unquoteString("\"\'"));
+    assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
+  }
+
+  public void testUnqoteWithQuotationChar() {
+    assertEquals("", StringUtil.unquoteString("", '|'));
+    assertEquals("|", StringUtil.unquoteString("|", '|'));
+    assertEquals("", StringUtil.unquoteString("||", '|'));
+    assertEquals("|", StringUtil.unquoteString("|||", '|'));
+    assertEquals("foo", StringUtil.unquoteString("|foo|", '|'));
+    assertEquals("|foo", StringUtil.unquoteString("|foo", '|'));
+    assertEquals("foo|", StringUtil.unquoteString("foo|", '|'));
+  }
+
+  public void testJoin() {
+    assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
+    assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
+  }
+
+  public void testSplitByLineKeepingSeparators() {
+    assertEquals(Arrays.asList(""), Arrays.asList(StringUtil.splitByLinesKeepSeparators("")));
+    assertEquals(Arrays.asList("aa"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("aa")));
+    assertEquals(Arrays.asList("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n"),
+                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")));
+    
+    assertEquals(Arrays.asList("\r", "\r\n", "\r"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")));
+    assertEquals(Arrays.asList("\r\n", "\r", "\r\n"), Arrays.asList(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")));
+
+    assertEquals(Arrays.asList("\n", "\r\n", "\n", "\r\n", "\r", "\r", "aa\r", "bb\r\n", "cc\n", "\r", "dd\n", "\n", "\r\n", "\r"),
+                 Arrays.asList(StringUtil.splitByLinesKeepSeparators("\n\r\n\n\r\n\r\raa\rbb\r\ncc\n\rdd\n\n\r\n\r")));
   }
 }

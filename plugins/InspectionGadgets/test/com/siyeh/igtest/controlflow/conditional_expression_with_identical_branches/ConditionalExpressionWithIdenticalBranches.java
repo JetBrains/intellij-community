@@ -13,4 +13,8 @@ class ConditionalExpressionWithIdenticalBranches {
   Class<String> three(boolean b) {
     return b ? java.lang.String.class : String.class;
   }
+
+  int incomplete(boolean b) {
+    return b?
+  }
 }

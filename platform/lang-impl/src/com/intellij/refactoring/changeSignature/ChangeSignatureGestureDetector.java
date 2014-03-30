@@ -31,7 +31,9 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -140,6 +142,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
     myPsiManager.addPsiTreeChangeListener(this);
     EditorFactory.getInstance().addEditorFactoryListener(this, myProject);
     Disposer.register(myProject, new Disposable() {
+      @Override
       public void dispose() {
         myPsiManager.removePsiTreeChangeListener(ChangeSignatureGestureDetector.this);
         LOG.assertTrue(myListenerMap.isEmpty(), myListenerMap);
@@ -248,8 +251,10 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       file = editor.getVirtualFile();
     }
     if (file != null && file.isValid()) {
-      if (myFileEditorManager.isFileOpen(file)) {
-        return;
+      for (FileEditor fileEditor : myFileEditorManager.getAllEditors(file)) {
+        if (fileEditor instanceof TextEditor && ((TextEditor)fileEditor).getEditor() != editor) {
+          return;
+        }
       }
     }
     removeDocListener(document, file);

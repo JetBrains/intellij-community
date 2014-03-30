@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class ShiftIndentInsideHelper {
             leafOffset = getStartOffset(element, leaf);
           }
           else {
-            if (newSpace.length() > 0) {
+            if (!newSpace.isEmpty()) {
               LeafElement newLeaf = ASTFactory.whitespace(newSpace);
               next.getTreeParent().addChild(newLeaf, next);
             }
@@ -129,7 +129,7 @@ public class ShiftIndentInsideHelper {
         }
         String leafText = leaf.getText();
         String newLeafText = leafText.substring(0, startOffset) + newSpace + leafText.substring(endOffset);
-        if (newLeafText.length() > 0) {
+        if (!newLeafText.isEmpty()) {
           LeafElement newLeaf = Factory.createSingleLeafElement(leaf.getElementType(), newLeafText,charTableByTree, SharedImplUtil.getManagerByTree(leaf));
           if (leaf.getTreeParent() != null) {
             leaf.getTreeParent().replaceChild(leaf, newLeaf);

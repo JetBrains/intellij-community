@@ -2,7 +2,7 @@
  * @author medved
  * @author vvp bugoga
  */
-------
+-----
 Groovy script
   GrDocComment
     PsiElement(GDOC_COMMENT_START)('/**')

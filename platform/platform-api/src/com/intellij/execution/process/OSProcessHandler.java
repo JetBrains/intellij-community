@@ -15,9 +15,12 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +32,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
   private boolean myDestroyRecursively = true;
+
+  public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    this(commandLine.createProcess(), commandLine.getCommandLineString(), CharsetToolkit.UTF8_CHARSET);
+  }
 
   public OSProcessHandler(@NotNull final Process process) {
     this(process, null);
@@ -67,6 +74,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     myDestroyRecursively = destroyRecursively;
   }
 
+  @Override
   protected void doDestroyProcess() {
     // Override this method if you want to customize default destroy behaviour, e.g.
     // if you want use some soft-kill.
@@ -80,7 +88,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   public static boolean processCanBeKilledByOS(Process process) {
-    return !(process instanceof OSProcessManager.SelfKiller);
+    return !(process instanceof SelfKiller);
   }
 
   /**

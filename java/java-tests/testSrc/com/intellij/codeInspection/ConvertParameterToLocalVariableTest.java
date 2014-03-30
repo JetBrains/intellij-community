@@ -21,13 +21,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ConvertParameterToLocalVariableTest extends LightQuickFixTestCase {
+public class ConvertParameterToLocalVariableTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

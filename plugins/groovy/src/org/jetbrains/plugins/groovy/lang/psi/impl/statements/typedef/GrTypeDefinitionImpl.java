@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -31,15 +29,14 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
-import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,31 +70,21 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.isClassEquivalentTo;
 
 /**
  * @author ilyas
  */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
-  private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyMembers");
-
-  private volatile PsiClass[] myInnerClasses;
-  private volatile GrMethod[] myGroovyMethods;
-  private volatile PsiMethod[] myConstructors;
-  private volatile GrMethod[] myCodeConstructors;
-  private volatile List<GrField> mySyntheticFields;
-
-  Key<CachedValue<PsiMethod[]>> CACHED_METHODS = Key.create("cached.type.definition.methods");
+  private final GrTypeDefinitionMembersCache myCache = new GrTypeDefinitionMembersCache(this);
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -178,7 +165,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   protected String[] getImplementsNames() {
     GrImplementsClause implementsClause = getImplementsClause();
     GrCodeReferenceElement[] implementsRefs =
-      implementsClause != null ? implementsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+      implementsClause != null ? implementsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
     ArrayList<String> implementsNames = new ArrayList<String>(implementsRefs.length);
     for (GrCodeReferenceElement ref : implementsRefs) {
       String name = ref.getReferenceName();
@@ -191,7 +178,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   protected String[] getExtendsNames() {
     GrExtendsClause extendsClause = getExtendsClause();
     GrCodeReferenceElement[] extendsRefs =
-      extendsClause != null ? extendsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+      extendsClause != null ? extendsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
     ArrayList<String> extendsNames = new ArrayList<String>(extendsRefs.length);
     for (GrCodeReferenceElement ref : extendsRefs) {
       String name = ref.getReferenceName();
@@ -258,17 +245,19 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiReferenceList getExtendsList() {
-    return null;
+    //return PsiImplUtil.getOrCreatePsiReferenceList(getExtendsClause(), PsiReferenceList.Role.EXTENDS_LIST);
+    return getExtendsClause();
   }
 
   @Nullable
   public PsiReferenceList getImplementsList() {
-    return null;
+    //return PsiImplUtil.getOrCreatePsiReferenceList(getImplementsClause(), PsiReferenceList.Role.IMPLEMENTS_LIST);
+    return getImplementsClause();
   }
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
       @Override
       public Result<PsiClassType[]> compute() {
         return Result.create(GrClassImplUtil.getExtendsListTypes(GrTypeDefinitionImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
@@ -278,7 +267,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @NotNull
   public PsiClassType[] getImplementsListTypes() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClassType[]>() {
       @Override
       public Result<PsiClassType[]> compute() {
         return Result.create(GrClassImplUtil.getImplementsListTypes(GrTypeDefinitionImpl.this),
@@ -293,7 +282,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   public PsiClass[] getInterfaces() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass[]>() {
       @Override
       public Result<PsiClass[]> compute() {
         return Result
@@ -327,149 +316,45 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return GrClassImplUtil.findFieldByName(this, name, checkBases, false);
   }
 
-  private List<GrField> getSyntheticFields() {
-    List<GrField> cached = mySyntheticFields;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      cached = AstTransformContributor.runContributorsForFields(this);
-      if (stamp.mayCacheNow()) {
-        mySyntheticFields = cached;
-      }
-    }
-    return cached;
-  }
-
   @NotNull
   public GrField[] getFields() {
-    GrField[] codeFields = getCodeFields();
-
-    List<GrField> fromAstTransform = getSyntheticFields();
-    if (fromAstTransform.isEmpty()) return codeFields;
-
-    GrField[] res = new GrField[codeFields.length + fromAstTransform.size()];
-    System.arraycopy(codeFields, 0, res, 0, codeFields.length);
-
-    for (int i = 0; i < fromAstTransform.size(); i++) {
-      res[codeFields.length + i] = fromAstTransform.get(i);
-    }
-
-    return res;
+    return myCache.getFields();
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    CachedValue<PsiMethod[]> cached = getUserData(CACHED_METHODS);
-    if (cached == null) {
-      cached = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<PsiMethod[]>() {
-        @Override
-        public Result<PsiMethod[]> compute() {
-          GrTypeDefinitionBody body = getBody();
-          List<PsiMethod> result = new ArrayList<PsiMethod>();
-          if (body != null) {
-            collectMethodsFromBody(body, result);
-          }
-
-          for (PsiMethod method : AstTransformContributor.runContributorsForMethods(GrTypeDefinitionImpl.this)) {
-            addExpandingReflectedMethods(result, method);
-          }
-
-          for (GrField field : getSyntheticFields()) {
-            ContainerUtil.addIfNotNull(result, field.getSetter());
-            Collections.addAll(result, field.getGetters());
-          }
-          return Result.create(result.toArray(new PsiMethod[result.size()]), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
-      putUserData(CACHED_METHODS, cached);
-    }
-
-
-    return cached.getValue();
+    return myCache.getMethods();
   }
 
   @NotNull
   public GrMethod[] getCodeMethods() {
-    GrMethod[] cached = myGroovyMethods;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      GrTypeDefinitionBody body = getBody();
-      cached = body != null ? body.getMethods() : GrMethod.EMPTY_ARRAY;
-      if (stamp.mayCacheNow()) {
-        myGroovyMethods = cached;
-      }
-    }
-    return cached;
+    return myCache.getCodeMethods();
   }
 
   public void subtreeChanged() {
-    myInnerClasses = null;
-    myConstructors = null;
-    myCodeConstructors = null;
-    myGroovyMethods = null;
+    myCache.dropCaches();
     super.subtreeChanged();
   }
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    PsiMethod[] cached = myConstructors;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (final PsiMethod method : getMethods()) {
-        if (method.isConstructor()) {
-          addExpandingReflectedMethods(result, method);
-        }
-      }
-
-      cached = result.toArray(new PsiMethod[result.size()]);
-      if (stamp.mayCacheNow()) {
-        myConstructors = cached;
-      }
-    }
-    return cached;
+    return myCache.getConstructors();
   }
 
   @NotNull
   public GrMethod[] getCodeConstructors() {
-    GrMethod[] cached = myCodeConstructors;
-    if (cached == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      List<GrMethod> result = new ArrayList<GrMethod>();
-      for (final GrMethod method : getCodeMethods()) {
-        if (method.isConstructor()) {
-          result.add(method);
-        }
-      }
-
-      cached = result.toArray(new GrMethod[result.size()]);
-      if (stamp.mayCacheNow()) {
-        myCodeConstructors = cached;
-      }
-    }
-    return cached;
+    return myCache.getCodeConstructors();
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    PsiClass[] inners = myInnerClasses;
-    if (inners == null) {
-      RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      final GrTypeDefinitionBody body = getBody();
-      inners = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
-      if (stamp.mayCacheNow()) {
-        myInnerClasses = inners;
-      }
-    }
-
-    return inners;
+    return myCache.getInnerClasses();
   }
 
   @NotNull
   public GrClassInitializer[] getInitializers() {
     GrTypeDefinitionBody body = getBody();
-    if (body == null) return GrClassInitializer.EMPTY_ARRAY;
-
-    return body.getInitializers();
+    return body != null ? body.getInitializers() : GrClassInitializer.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -675,7 +560,8 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Nullable
-  public Icon getIcon(int flags) {
+  @Override
+  protected Icon getElementIcon(@IconFlags int flags) {
     Icon icon = getIconInner();
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !isWritable();
     RowIcon rowIcon = createLayeredIcon(this, icon, ElementPresentationUtil.getFlags(this, isLocked) | getFlagsInner());
@@ -687,7 +573,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   //hack to get runnable icon for all classes that can be run by Groovy
   private int getFlagsInner() {
-    return GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
+    return !DumbService.isDumb(getProject()) && GroovyRunnerUtil.isRunnable(this) ? ElementPresentationUtil.FLAGS_RUNNABLE : 0;
   }
 
   private Icon getIconInner() {
@@ -774,7 +660,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       }
       if (psiElement instanceof GrField) {
         //add field with modifiers which are in its parent
-        int i = ArrayUtil.find(((GrVariableDeclaration)psiElement.getParent()).getVariables(), psiElement);
+        int i = ArrayUtilRt.find(((GrVariableDeclaration)psiElement.getParent()).getVariables(), psiElement);
         psiElement = body.addBefore(psiElement.getParent(), anchor);
         GrVariable[] vars = ((GrVariableDeclaration)psiElement).getVariables();
         for (int j = 0; j < vars.length; j++) {
@@ -835,18 +721,4 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     }
     return body.getRBrace();
   }
-
-
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore)
-    throws IncorrectOperationException {
-
-    if (anchorBefore == null) {
-      return (T)add(decl);
-    }
-
-    GrTypeDefinitionBody body = getBody();
-    if (body == null) throw new IncorrectOperationException("Type definition without a body");
-    return  (T)body.addBefore(decl, anchorBefore);
-  }
-
 }

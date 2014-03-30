@@ -15,101 +15,93 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.execution.*;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
-  private PsiElement myPsiElement = null;
-  public static final RuntimeConfigurationProducer PROTOTYPE = new ApplicationConfigurationProducer();
+public class ApplicationConfigurationProducer extends JavaRunConfigurationProducerBase<ApplicationConfiguration> {
 
   public ApplicationConfigurationProducer() {
     super(ApplicationConfigurationType.getInstance());
   }
 
-  public PsiElement getSourceElement() {
-    return myPsiElement;
-  }
-
-  public RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
-    location = JavaExecutionUtil.stepIntoSingleClass(location);
-    if (location == null) return null;
+  @Override
+  protected boolean setupConfigurationFromContext(ApplicationConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
+    if (location == null) return false;
     final PsiElement element = location.getPsiElement();
-    if (!element.isPhysical()) return null;
+    if (!element.isPhysical()) return false;
     PsiElement currentElement = element;
     PsiMethod method;
     while ((method = findMain(currentElement)) != null) {
       final PsiClass aClass = method.getContainingClass();
       if (ConfigurationUtil.MAIN_CLASS.value(aClass)) {
-        myPsiElement = method;
-        return createConfiguration(aClass, context, location);
+        sourceElement.set(method);
+        setupConfiguration(configuration, aClass, context);
+        return true;
       }
       currentElement = method.getParent();
     }
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(element);
-    if (aClass == null) return null;
-    myPsiElement = aClass;
-    return createConfiguration(aClass, context, location);
+    if (aClass == null) return false;
+    sourceElement.set(aClass);
+    setupConfiguration(configuration, aClass, context);
+    return true;
   }
 
-  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass, final ConfigurationContext context, Location location) {
-    final Project project = aClass.getProject();
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
+  private void setupConfiguration(ApplicationConfiguration configuration,
+                                  final PsiClass aClass,
+                                  final ConfigurationContext context) {
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
-    configuration.setName(configuration.getGeneratedName());
+    configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
   }
 
   @Nullable
   private static PsiMethod findMain(PsiElement element) {
     PsiMethod method;
-    while ((method = getContainingMethod(element)) != null)
+    while ((method = PsiTreeUtil.getParentOfType(element, PsiMethod.class)) != null) {
       if (PsiMethodUtil.isMainMethod(method)) return method;
       else element = method.getParent();
+    }
     return null;
-  }
-
-  public int compareTo(final Object o) {
-    return PREFERED;
   }
 
   @Override
-  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                 ConfigurationContext context) {
-    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location.getPsiElement());
-    if (aClass == null) {
-      return null;
-    }
-    final Module predefinedModule =
-      ((ApplicationConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+  public boolean isConfigurationFromContext(ApplicationConfiguration appConfiguration, ConfigurationContext context) {
+    final PsiElement location = context.getPsiLocation();
+    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
+    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
+      if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
+        return false;
+      }
+
+      final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
+      if (Comparing.equal(context.getModule(), configurationModule)) return true;
+
+      ApplicationConfiguration template = (ApplicationConfiguration)context.getRunManager()
         .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration()).getConfigurationModule().getModule();
-    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-      final ApplicationConfiguration appConfiguration = (ApplicationConfiguration)existingConfiguration.getConfiguration();
-      if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
-        final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
-        if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
-        if (Comparing.equal(predefinedModule, configurationModule)) {
-          return existingConfiguration;
-        }
+        .getConfiguration();
+      final Module predefinedModule = template.getConfigurationModule().getModule();
+      if (Comparing.equal(predefinedModule, configurationModule)) {
+        return true;
       }
     }
-    return null;
+    return false;
   }
 }

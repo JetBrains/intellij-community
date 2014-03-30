@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 
@@ -44,12 +45,18 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
   }
 
   @Override
-  public int indexOf(PsiElement element) {
+  public int indexOf(@NotNull PsiElement element) {
     GrExpression[] children = getExpressions();
-    return ArrayUtil.find(children, element);
+    return ArrayUtilRt.find(children, element);
   }
 
+  @NotNull
   public GrExpression[] getExpressions() {
     return findChildrenByClass(GrExpression.class);
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitTupleExpression(this);
   }
 }

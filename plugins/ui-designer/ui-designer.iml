@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
   <component name="copyright">
     <Base>

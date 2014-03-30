@@ -16,23 +16,28 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface ContentUI extends Disposable {
   JComponent getComponent();
-  void setManager(ContentManager manager);
-  
+  void setManager(@NotNull ContentManager manager);
+
   boolean isSingleSelection();
   boolean isToSelectAddedContent();
   boolean canBeEmptySelection();
 
   void beforeDispose();
 
-  boolean canChangeSelectionTo(Content content, boolean implicit);
+  boolean canChangeSelectionTo(@NotNull Content content, boolean implicit);
 
+  @NotNull
   String getCloseActionName();
+  @NotNull
   String getCloseAllButThisActionName();
+  @NotNull
   String getPreviousContentActionName();
+  @NotNull
   String getNextContentActionName();
 }

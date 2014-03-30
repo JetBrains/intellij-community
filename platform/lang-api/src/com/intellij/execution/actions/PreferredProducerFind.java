@@ -16,16 +16,15 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.impl.ConfigurationFromContextWrapper;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,47 +40,17 @@ class PreferredProducerFind {
 
   @Nullable
   public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, final ConfigurationContext context) {
-    final RuntimeConfigurationProducer preferredProducer = findPreferredProducer(location, context);
-    return preferredProducer != null ? preferredProducer.getConfiguration() : null;
+    final ConfigurationFromContext fromContext = findConfigurationFromContext(location, context);
+    return fromContext != null ? fromContext.getConfigurationSettings() : null;
   }
 
   @Nullable
+  @Deprecated
   public static List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
     if (location == null) {
       return null;
     }
-
-    //todo load configuration types if not already loaded
-    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
-    final RuntimeConfigurationProducer[] configurationProducers =
-      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
-    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
-      final RuntimeConfigurationProducer producer;
-      try {
-        producer = prototype.createProducer(location, context);
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(prototype.toString(), e);
-        continue;
-      }
-      if (producer.getConfiguration() != null) {
-        LOG.assertTrue(producer.getSourceElement() != null, producer);
-        producers.add(producer);
-      }
-    }
-    if (producers.isEmpty()) { //try to find by locatable type
-      final ConfigurationType[] factories = RunManager.getInstance(location.getProject()).getConfigurationFactories();
-      for (final ConfigurationType type : factories) {
-        if (type instanceof LocatableConfigurationType) {
-          final DefaultRuntimeConfigurationProducer prototype = new DefaultRuntimeConfigurationProducer(((LocatableConfigurationType)type));
-          final RuntimeConfigurationProducer producer = prototype.createProducer(location, context);
-          if (producer.getConfiguration() != null) {
-            producers.add(producer);
-          }
-        }
-      }
-    }
+    final List<RuntimeConfigurationProducer> producers = findAllProducers(location, context);
     if (producers.isEmpty()) return null;
     Collections.sort(producers, RuntimeConfigurationProducer.COMPARATOR);
 
@@ -98,51 +67,71 @@ class PreferredProducerFind {
     return producers;
   }
 
+  private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
+    //todo load configuration types if not already loaded
+    Extensions.getExtensions(ConfigurationType.CONFIGURATION_TYPE_EP);
+    final RuntimeConfigurationProducer[] configurationProducers =
+      ApplicationManager.getApplication().getExtensions(RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER);
+    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
+    for (final RuntimeConfigurationProducer prototype : configurationProducers) {
+      final RuntimeConfigurationProducer producer;
+      try {
+        producer = prototype.createProducer(location, context);
+      }
+      catch (AbstractMethodError e) {
+        LOG.error(new ExtensionException(prototype.getClass()));
+        continue;
+      }
+      if (producer.getConfiguration() != null) {
+        LOG.assertTrue(producer.getSourceElement() != null, producer);
+        producers.add(producer);
+      }
+    }
+    return producers;
+  }
+
+  public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
+                                                                            final ConfigurationContext context,
+                                                                            final boolean strict) {
+    if (location == null) {
+      return null;
+    }
+
+    final ArrayList<ConfigurationFromContext> configurationsFromContext = new ArrayList<ConfigurationFromContext>();
+    for (RuntimeConfigurationProducer producer : findAllProducers(location, context)) {
+      configurationsFromContext.add(new ConfigurationFromContextWrapper(producer));
+    }
+
+    for (RunConfigurationProducer producer : Extensions.getExtensions(RunConfigurationProducer.EP_NAME)) {
+      ConfigurationFromContext fromContext = producer.findOrCreateConfigurationFromContext(context);
+      if (fromContext != null) {
+        configurationsFromContext.add(fromContext);
+      }
+    }
+
+    if (configurationsFromContext.isEmpty()) return null;
+    Collections.sort(configurationsFromContext, ConfigurationFromContext.COMPARATOR);
+
+    if(strict) {
+      final ConfigurationFromContext first = configurationsFromContext.get(0);
+      for (Iterator<ConfigurationFromContext> it = configurationsFromContext.iterator(); it.hasNext();) {
+        ConfigurationFromContext producer = it.next();
+        if (producer != first && ConfigurationFromContext.COMPARATOR.compare(producer, first) > 0) {
+          it.remove();
+        }
+      }
+    }
+
+    return configurationsFromContext;
+  }
+
+
   @Nullable
-  private static RuntimeConfigurationProducer findPreferredProducer(final Location location, final ConfigurationContext context) {
-    final List<RuntimeConfigurationProducer> producers = findPreferredProducers(location, context, true);
+  private static ConfigurationFromContext findConfigurationFromContext(final Location location, final ConfigurationContext context) {
+    final List<ConfigurationFromContext> producers = getConfigurationsFromContext(location, context, true);
     if (producers != null){
       return producers.get(0);
     }
     return null;
-  }
-
-  private static class DefaultRuntimeConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-    private PsiElement myPsiElement;
-
-    public DefaultRuntimeConfigurationProducer(final LocatableConfigurationType configurationType) {
-      super(configurationType);
-    }
-
-    public PsiElement getSourceElement() {
-      return myPsiElement;
-    }
-
-    @Nullable
-    protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-      myPsiElement = location.getPsiElement();
-      return ((LocatableConfigurationType)getConfigurationType()).createConfigurationByLocation(location);
-    }
-
-    @Override
-    protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                   ConfigurationContext context) {
-      if (existingConfigurations.length > 0) {
-        ConfigurationType type = existingConfigurations[0].getType();
-        if (type instanceof LocatableConfigurationType) {
-          for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
-            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
-              return configuration;
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    public int compareTo(final Object o) {
-      return PREFERED;
-    }
   }
 }

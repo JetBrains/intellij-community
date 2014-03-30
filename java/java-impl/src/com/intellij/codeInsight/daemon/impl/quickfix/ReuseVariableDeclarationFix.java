@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;
 
-  public ReuseVariableDeclarationFix(final PsiLocalVariable variable) {
+  public ReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
     this.myVariable = variable;
   }
 
@@ -54,7 +54,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myVariable == null || !myVariable.isValid()) {
+    if (!myVariable.isValid()) {
       return false;
     }
     final PsiVariable previousVariable = findPreviousVariable();

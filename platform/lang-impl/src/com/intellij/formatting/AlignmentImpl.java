@@ -161,17 +161,86 @@ class AlignmentImpl extends Alignment {
     myOffsetRespBlocks.add(block);
   }
 
+  @Nullable
+  private AbstractBlockWrapper getLeftRespNeighbor(@NotNull AbstractBlockWrapper block) {
+    AbstractBlockWrapper nearLeft = null;
+    int distance = Integer.MAX_VALUE;
+    for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) if (offsetBlock != null) {
+      int curDistance = block.getStartOffset() - offsetBlock.getStartOffset();
+      if (curDistance < distance && curDistance > 0) {
+        nearLeft = offsetBlock;
+        distance = curDistance;
+      }
+    }
+    return nearLeft;
+  }
+
+  @NotNull
+  private static AbstractBlockWrapper extendBlockFromStart(@NotNull AbstractBlockWrapper block) {
+    while (true) {
+      AbstractBlockWrapper parent = block.getParent();
+      if (parent != null && parent.getStartOffset() == block.getStartOffset()) {
+        block = parent;
+      }
+      else {
+        return block;
+      }
+    }
+  }
+
+  @NotNull
+  private static AbstractBlockWrapper extendBlockFromEnd(@NotNull AbstractBlockWrapper block) {
+    while (true) {
+      AbstractBlockWrapper parent = block.getParent();
+      if (parent != null && parent.getEndOffset() == block.getEndOffset()) {
+        block = parent;
+      }
+      else {
+        return block;
+      }
+    }
+  }
+
   private boolean continueOffsetResponsibleBlockRetrieval(@Nullable AbstractBlockWrapper block) {
     // We don't want to align block that doesn't start new line if it's not configured for 'by columns' alignment.
     if (!myAllowBackwardShift && block != null && !block.getWhiteSpace().containsLineFeeds()) {
       return false;
     }
-    for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) {
-      if (offsetBlock == block) {
-        continue;
-      }
-      if (!onDifferentLines(offsetBlock, block) && block != null && offsetBlock.getStartOffset() < block.getStartOffset()) {
+
+    if (block != null) {
+      AbstractBlockWrapper prevAlignBlock = getLeftRespNeighbor(block);
+      if (!onDifferentLines(prevAlignBlock, block)) {
         return false;
+      }
+
+      //blocks are on different lines
+      if (myAllowBackwardShift
+          && myAnchor == Anchor.RIGHT
+          && prevAlignBlock != null
+          && prevAlignBlock.getWhiteSpace().containsLineFeeds() // {prevAlignBlock} starts new indent => can be moved
+      ) {
+        // extend block on position for right align
+        prevAlignBlock = extendBlockFromStart(prevAlignBlock);
+
+        AbstractBlockWrapper current = block;
+        do {
+          if (current.getStartOffset() < prevAlignBlock.getEndOffset()) {
+            return false; //{prevAlignBlock{current}} | {current}{prevAlignBlock}, no new lines
+          }
+          if (current.getWhiteSpace().containsLineFeeds()) {
+            break; // correct new line was found
+          }
+          else {
+            AbstractBlockWrapper prev = current.getPreviousBlock();
+            if (prev != null) {
+                prev = extendBlockFromEnd(prev);
+            }
+            current = prev;
+          }
+        } while (current != null);
+        if (current == null) {
+          return false; //root block is the top
+        }
       }
     }
     return myParentAlignment == null || myParentAlignment.continueOffsetResponsibleBlockRetrieval(block);

@@ -19,7 +19,6 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.CompilerMessage
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -208,7 +207,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
-    new File(PathManager.systemPath, "compile-server/server.log").delete()
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.runBare()
   }
 
@@ -231,7 +230,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       def logText = ideaLog.text
       println(logText.size() < limit ? logText : logText.substring(logText.size() - limit))
     }
-    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    def makeLog = new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log")
     if (makeLog.exists()) {
       println "\n\nServer Log:"
       println makeLog.text
@@ -528,14 +527,14 @@ class Indirect {
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Bar { }').virtualFile
     assertEmpty make()
-    long oldBaseStamp = findClassFile("Base").modificationStamp
-    long oldMainStamp = findClassFile("Main").modificationStamp
+    long oldBaseStamp = findClassFile("Base").timeStamp
+    long oldMainStamp = findClassFile("Main").timeStamp
 
     touch(main)
     touch(foo)
     assertEmpty make()
-    assert oldMainStamp != findClassFile("Main").modificationStamp
-    assert oldBaseStamp == findClassFile("Base").modificationStamp
+    assert oldMainStamp != findClassFile("Main").timeStamp
+    assert oldBaseStamp == findClassFile("Base").timeStamp
   }
 
   public void testPartialCrossRecompile() {
@@ -725,11 +724,11 @@ public class Main {
     ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
 
     def messages = make()
-    assert messages 
+    assert messages
     def error = messages.find { it.message.contains('InvalidType') }
     assert error?.virtualFile
     assert groovyFile.classes[0] == GroovycStubGenerator.findClassByStub(project, error.virtualFile)
-    
+
   }
 
   public void "test ignore groovy internal non-existent interface helper inner class"() {
@@ -786,6 +785,38 @@ string
     touch usage.virtualFile
     setFileName(renamed, 'Renamed.java')
     assertEmpty make()
+  }
+
+  public void "test compiling static extension"() {
+    setupTestSources()
+    myFixture.addFileToProject "src/extension/Extension.groovy", """
+package extension
+import groovy.transform.CompileStatic
+
+@CompileStatic class Extension {
+    static <T> T test2(List<T> self) {
+        self.first()
+    }
+}"""
+    myFixture.addFileToProject "src/META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """
+moduleName=extension-verify
+moduleVersion=1.0-test
+extensionClasses=extension.Extension
+staticExtensionClasses=
+"""
+    myFixture.addFileToProject "tests/AppTest.groovy", """
+class AppTest {
+    @groovy.transform.CompileStatic
+    static main(args) {
+        List<String> list = new ArrayList<>()
+        list.add("b")
+        list.add("c")
+        println list.test2()
+    }
+}
+"""
+    assertEmpty make()
+    assertOutput 'AppTest', 'b'
   }
 
   public static class IdeaModeTest extends GroovyCompilerTest {

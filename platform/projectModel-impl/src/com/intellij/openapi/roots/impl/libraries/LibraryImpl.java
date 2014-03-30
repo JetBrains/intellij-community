@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -63,9 +62,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NonNls public static final String ELEMENT = "library";
   @NonNls public static final String PROPERTIES_ELEMENT = "properties";
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private static final String EXCLUDED_ROOTS_TAG = "excluded";
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
+  private @Nullable VirtualFilePointerContainer myExcludedRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private final LibraryImpl mySource;
   private PersistentLibraryKind<?> myKind;
@@ -95,7 +96,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   private LibraryImpl(@NotNull LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
     this(from.myLibraryTable, rootModel, newSource, from.myName, from.myKind);
-    assert !from.isDisposed();
+    from.checkDisposed();
+
     if (from.myKind != null && from.myProperties != null) {
       myProperties = myKind.createDefaultProperties();
       //noinspection unchecked
@@ -105,6 +107,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
       final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
+    }
+    if (from.myExcludedRoots != null) {
+      myExcludedRoots = from.myExcludedRoots.clone(myPointersDisposable);
     }
     myJarDirectories.copyFrom(from.myJarDirectories);
   }
@@ -133,11 +138,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void dispose() {
-    if (isDisposed()) {
-      throwDisposalError("Already disposed:");
-    }
+    checkDisposed();
+
     myDisposed = true;
     kill(null);
+  }
+
+  private void checkDisposed() {
+    if (isDisposed()) {
+      throwDisposalError("'" + myName + "' already disposed:");
+    }
   }
 
   @Override
@@ -153,7 +163,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   @NotNull
   public String[] getUrls(@NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
+
     final VirtualFilePointerContainer result = myRoots.get(rootType);
     return result.getUrls();
   }
@@ -161,7 +172,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
+
     final List<VirtualFile> expanded = new ArrayList<VirtualFile>();
     for (VirtualFile file : myRoots.get(rootType).getFiles()) {
       if (file.isDirectory()) {
@@ -198,8 +210,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   /* you have to commit modifiable model or dispose it by yourself! */
   @Override
   @NotNull
-  public ModifiableModel getModifiableModel() {
-    assert !isDisposed();
+  public ModifiableModelEx getModifiableModel() {
+    checkDisposed();
     return new LibraryImpl(this, this, myRootModel);
   }
 
@@ -271,9 +283,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     myProperties = myKind.createDefaultProperties();
     final Element propertiesElement = element.getChild(PROPERTIES_ELEMENT);
     if (propertiesElement != null) {
-      final Class<?> stateClass = ReflectionUtil.getRawType(ReflectionUtil.resolveVariableInHierarchy(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass()));
-      //noinspection unchecked
-      myProperties.loadState(XmlSerializer.deserialize(propertiesElement, stateClass));
+      ComponentSerializationUtil.loadComponentState(myProperties, propertiesElement);
     }
   }
 
@@ -290,6 +300,17 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       VirtualFilePointerContainer roots = myRoots.get(rootType);
       roots.readExternal(rootChild, ROOT_PATH_ELEMENT);
     }
+    Element excludedRoot = element.getChild(EXCLUDED_ROOTS_TAG);
+    if (excludedRoot != null) {
+      getOrCreateExcludedRoots().readExternal(excludedRoot, ROOT_PATH_ELEMENT);
+    }
+  }
+
+  private VirtualFilePointerContainer getOrCreateExcludedRoots() {
+    if (myExcludedRoots == null) {
+      myExcludedRoots = VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable);
+    }
+    return myExcludedRoots;
   }
 
   //TODO<rv> Remove the next two methods as a temporary solution. Sort in OrderRootType.
@@ -317,7 +338,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void writeExternal(Element rootElement) throws WriteExternalException {
-    LOG.assertTrue(!isDisposed(), "Already disposed!");
+    checkDisposed();
 
     Element element = new Element(ELEMENT);
     if (myName != null) {
@@ -345,6 +366,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       roots.writeExternal(rootTypeElement, ROOT_PATH_ELEMENT);
       element.addContent(rootTypeElement);
     }
+    if (myExcludedRoots != null && myExcludedRoots.size() > 0) {
+      Element excluded = new Element(EXCLUDED_ROOTS_TAG);
+      myExcludedRoots.writeExternal(excluded, ROOT_PATH_ELEMENT);
+      element.addContent(excluded);
+    }
     myJarDirectories.writeExternal(element);
     rootElement.addContent(element);
   }
@@ -357,6 +383,38 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @Override
   public PersistentLibraryKind<?> getKind() {
     return myKind;
+  }
+
+  @Override
+  public void addExcludedRoot(@NotNull String url) {
+    VirtualFilePointerContainer roots = getOrCreateExcludedRoots();
+    if (roots.findByUrl(url) == null) {
+      roots.add(url);
+    }
+  }
+
+  @Override
+  public boolean removeExcludedRoot(@NotNull String url) {
+    if (myExcludedRoots != null) {
+      VirtualFilePointer pointer = myExcludedRoots.findByUrl(url);
+      if (pointer != null) {
+        myExcludedRoots.remove(pointer);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public String[] getExcludedRootUrls() {
+    return myExcludedRoots != null ? myExcludedRoots.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] getExcludedRoots() {
+    return myExcludedRoots != null ? myExcludedRoots.getFiles() : VirtualFile.EMPTY_ARRAY;
   }
 
   @Override
@@ -373,8 +431,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
+    checkDisposed();
     LOG.assertTrue(isWritable());
-    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(url);
@@ -382,8 +440,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addRoot(@NotNull VirtualFile file, @NotNull OrderRootType rootType) {
+    checkDisposed();
     LOG.assertTrue(isWritable());
-    assert !isDisposed();
 
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(file);
@@ -401,8 +459,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addJarDirectory(@NotNull final String url, final boolean recursive, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(url);
     myJarDirectories.add(rootType, url, recursive);
@@ -410,8 +469,9 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void addJarDirectory(@NotNull final VirtualFile file, final boolean recursive, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.add(file);
     myJarDirectories.add(rootType, file.getUrl(), recursive);
@@ -436,30 +496,54 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public boolean removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     final VirtualFilePointer byUrl = container.findByUrl(url);
     if (byUrl != null) {
       container.remove(byUrl);
+      if (myExcludedRoots != null) {
+        for (String excludedRoot : myExcludedRoots.getUrls()) {
+          if (!isUnderRoots(excludedRoot)) {
+            VirtualFilePointer pointer = myExcludedRoots.findByUrl(excludedRoot);
+            if (pointer != null) {
+              myExcludedRoots.remove(pointer);
+            }
+          }
+        }
+      }
       myJarDirectories.remove(rootType, url);
       return true;
     }
     return false;
   }
 
+  private boolean isUnderRoots(@NotNull String url) {
+    for (VirtualFilePointerContainer container : myRoots.values()) {
+      for (String rootUrl : container.getUrls()) {
+        if (VfsUtilCore.isEqualOrAncestor(rootUrl, url)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   public void moveRootUp(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveUp(url);
   }
 
   @Override
   public void moveRootDown(@NotNull String url, @NotNull OrderRootType rootType) {
-    assert !isDisposed();
+    checkDisposed();
     LOG.assertTrue(isWritable());
+
     final VirtualFilePointerContainer container = myRoots.get(rootType);
     container.moveDown(url);
   }
@@ -500,7 +584,8 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Override
   public void commit() {
-    assert !isDisposed();
+    checkDisposed();
+
     mySource.commit(this);
     Disposer.dispose(this);
   }
@@ -534,11 +619,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       VirtualFilePointerContainer clone = container.clone(myPointersDisposable);
       myRoots.put(rootType, clone);
     }
+    VirtualFilePointerContainer excludedRoots = fromModel.myExcludedRoots;
+    myExcludedRoots = excludedRoots != null ? excludedRoots.clone(myPointersDisposable) : null;
   }
 
   private void disposeMyPointers() {
     for (VirtualFilePointerContainer container : new THashSet<VirtualFilePointerContainer>(myRoots.values())) {
       container.killAll();
+    }
+    if (myExcludedRoots != null) {
+      myExcludedRoots.killAll();
     }
     Disposer.dispose(myPointersDisposable);
     Disposer.register(this, myPointersDisposable);
@@ -578,6 +668,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     if (myRoots != null ? !myRoots.equals(library.myRoots) : library.myRoots != null) return false;
     if (myKind != null ? !myKind.equals(library.myKind) : library.myKind != null) return false;
     if (myProperties != null ? !myProperties.equals(library.myProperties) : library.myProperties != null) return false;
+    if (!Comparing.equal(myExcludedRoots, library.myExcludedRoots)) return false;
 
     return true;
   }
@@ -585,7 +676,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   public int hashCode() {
     int result = myName != null ? myName.hashCode() : 0;
     result = 31 * result + (myRoots != null ? myRoots.hashCode() : 0);
-    result = 31 * result + (myJarDirectories != null ? myJarDirectories.hashCode() : 0);
+    result = 31 * result + myJarDirectories.hashCode();
     return result;
   }
 

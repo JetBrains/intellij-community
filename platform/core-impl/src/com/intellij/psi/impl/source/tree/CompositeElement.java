@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
@@ -53,8 +55,7 @@ public class CompositeElement extends TreeElement {
   private TreeElement lastChild = null;
 
   private volatile int myModificationsCount = 0;
-  private static final int NOT_CACHED = -239;
-  private volatile int myCachedLength = NOT_CACHED;
+  private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper = null;
   private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
@@ -107,7 +108,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public void clearCaches() {
     assertThreading();
-    myCachedLength = NOT_CACHED;
+    myCachedLength = -1;
 
     myModificationsCount++;
     myHC = -1;
@@ -117,25 +118,24 @@ public class CompositeElement extends TreeElement {
 
   public void assertThreading() {
     if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
-                   //Thread.holdsLock(START_OFFSET_LOCK) ||
-                   isNonPhysicalOrInjected();
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
       if (!ok) {
-        FileElement fileElement;
-        PsiFile psiFile;
-        LOG.error("Threading assertion. " +
-                  " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-                  "; Thread.holdsLock(START_OFFSET_LOCK): " + Thread.holdsLock(START_OFFSET_LOCK) +
-                  "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
-                  "; wrapper: " + myWrapper +
-                  "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
-                  "; fileElement: " +(fileElement = TreeUtil.getFileElement(this))+
-                  "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
-                  "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
-                  "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical())
-        );
+        LOG.error("Threading assertion. " + getThreadingDiagnostics());
       }
     }
+  }
+
+  private String getThreadingDiagnostics() {
+    FileElement fileElement;PsiFile psiFile;
+    return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
+           "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
+           "; wrapper: " + myWrapper +
+           "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
+           "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +
+           "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
+           "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
+           "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical()) +
+           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected();
   }
 
   private boolean isNonPhysicalOrInjected() {
@@ -285,7 +285,13 @@ public class CompositeElement extends TreeElement {
     final int len = getTextLength();
 
     if (startStamp != myModificationsCount) {
-      throw new AssertionError("Tree changed while calculating text. startStamp:"+startStamp+"; current:"+myModificationsCount+"; myHC:"+myHC+"; assertThreading:"+ASSERT_THREADING+"; Thread.holdsLock(START_OFFSET_LOCK):"+Thread.holdsLock(START_OFFSET_LOCK)+"; Thread.holdsLock(PSI_LOCK):"+Thread.holdsLock(PsiLock.LOCK)+"; this: " + this);
+      throw new AssertionError(
+        "Tree changed while calculating text. startStamp:"+startStamp+
+        "; current:"+myModificationsCount+
+        "; myHC:"+myHC+
+        "; assertThreading:"+ASSERT_THREADING+
+        "; this: " + this + 
+        "\n" + getThreadingDiagnostics());
     }
 
     char[] buffer = new char[len];
@@ -316,6 +322,7 @@ public class CompositeElement extends TreeElement {
   private String diagnoseTextInconsistency(String text, int startStamp) {
     @NonNls String msg = "";
     msg += ";\n changed=" + (startStamp != myModificationsCount);
+    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
     msg += ";\n buffer=" + text;
     try {
       msg += ";\n this=" + this;
@@ -538,21 +545,16 @@ public class CompositeElement extends TreeElement {
     int cachedLength = myCachedLength;
     if (cachedLength >= 0) return cachedLength;
 
-    synchronized (START_OFFSET_LOCK) {
-      cachedLength = myCachedLength;
-      if (cachedLength >= 0) return cachedLength;
-
-      ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
-      try {
-        walkCachingLength();
-      }
-      catch (AssertionError e) {
-        myCachedLength = NOT_CACHED;
-        String assertion = StringUtil.getThrowableText(e);
-        throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
-      }
-      return myCachedLength;
+    ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
+    try {
+      walkCachingLength();
     }
+    catch (AssertionError e) {
+      myCachedLength = -1;
+      String assertion = StringUtil.getThrowableText(e);
+      throw new AssertionError("Walking failure: ===\n"+assertion+"\n=== Thread dump:\n"+ ThreadDumper.dumpThreadsToString()+"\n===\n");
+    }
+    return myCachedLength;
   }
 
   @Override
@@ -575,65 +577,41 @@ public class CompositeElement extends TreeElement {
     return myCachedLength;
   }
 
+  @NotNull
+  private static TreeElement drillDown(@NotNull TreeElement start) {
+    TreeElement cur = start;
+    while (cur.getCachedLength() < 0) {
+      TreeElement child = cur.getFirstChildNode();
+      if (child == null) {
+        break;
+      }
+      cur = child;
+    }
+    return cur;
+  }
+
   private void walkCachingLength() {
-    if (myCachedLength != NOT_CACHED) {
-      throw new AssertionError("Before walking: cached="+myCachedLength);
-    }
+    TreeElement cur = drillDown(this);
+    while (true) {
+      if (cur.getCachedLength() < 0) {
+        int length = 0;
+        for (TreeElement child = cur.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+          length += child.getTextLength();
+        }
+        ((CompositeElement)cur).setCachedLength(length);
+      }
 
-    TreeElement cur = this;
-    while (cur != null) {
-      cur = next(cur);
-    }
+      if (cur == this) {
+        return;
+      }
 
-    if (myCachedLength < 0) {
-      throw new AssertionError("After walking: cached="+myCachedLength);
+      TreeElement next = cur.getTreeNext();
+      cur = next != null ? drillDown(next) : cur.getTreeParent();
     }
   }
 
   void setCachedLength(int cachedLength) {
     myCachedLength = cachedLength;
-  }
-
-  @Nullable
-  private TreeElement next(TreeElement cur) {
-    //for a collapsed chameleon, we're not going down, even if it's expanded by some other thread after this line
-    final int len = cur.getCachedLength();
-    final boolean down = len == NOT_CACHED;
-    if (down) {
-      CompositeElement composite = (CompositeElement)cur; // It's a composite or we won't be going down
-      TreeElement child = composite.getFirstChildNode(); // if we're LazyParseable, sync is a must for accessing the non-volatile field
-      if (child != null) {
-        LOG.assertTrue(child.getTreeParent() == composite, cur);
-        return child;
-      }
-
-      composite.myCachedLength = 0;
-    } else {
-      assert len >= 0 : this + "; len=" + len;
-    }
-
-    // up
-    while (cur != this) {
-      CompositeElement parent = cur.getTreeParent();
-      int curLength = cur.getCachedLength();
-      if (curLength < 0) {
-        throw new AssertionError(cur + "; " + curLength);
-      }
-      parent.myCachedLength -= curLength;
-
-      TreeElement next = cur.getTreeNext();
-      if (next != null) {
-        LOG.assertTrue(next.getTreePrev() == cur, cur);
-        return next;
-      }
-
-      LOG.assertTrue(parent.getLastChildNode() == cur, parent);
-      parent.myCachedLength = -parent.myCachedLength + NOT_CACHED;
-
-      cur = parent;
-    }
-
-    return null;
   }
 
   @Override
@@ -828,7 +806,7 @@ public class CompositeElement extends TreeElement {
   public void rawAddChildrenWithoutNotifications(TreeElement first) {
     final TreeElement last = getLastChildNode();
     if (last == null){
-      first.rawRemoveUpToWithoutNotifications(null);
+      first.rawRemoveUpToWithoutNotifications(null, false);
       setFirstChildNode(first);
       while(true){
         final TreeElement treeNext = first.getTreeNext();
@@ -855,27 +833,37 @@ public class CompositeElement extends TreeElement {
 
   // creates PSI and stores to the 'myWrapper', if not created already
   void createAllChildrenPsiIfNecessary() {
+    final List<CompositeElement> nodes = ContainerUtil.newArrayList();
+    final List<PsiElement> psiElements = ContainerUtil.newArrayList();
+    RecursiveTreeElementWalkingVisitor visitor = new RecursiveTreeElementWalkingVisitor(false) {
+      @Override
+      public void visitLeaf(LeafElement leaf) {
+      }
+
+      @Override
+      public void visitComposite(CompositeElement composite) {
+        ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
+        if (composite.myWrapper == null) {
+          nodes.add(composite);
+          psiElements.add(composite.createPsiNoLock());
+        }
+
+        super.visitComposite(composite);
+      }
+    };
+
+    for(TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      child.acceptTree(visitor);
+    }
     synchronized (PsiLock.LOCK) { // guard for race condition with getPsi()
-      acceptTree(CREATE_CHILDREN_PSI);
+      for (int i = 0; i < psiElements.size(); i++) {
+        CompositeElement node = nodes.get(i);
+        if (node.myWrapper == null) {
+          node.myWrapper = psiElements.get(i);
+        }
+      }
     }
   }
-  private static final RecursiveTreeElementWalkingVisitor CREATE_CHILDREN_PSI = new RecursiveTreeElementWalkingVisitor(false) {
-    @Override
-    public void visitLeaf(LeafElement leaf) {
-    }
-
-    @Override
-    public void visitComposite(CompositeElement composite) {
-      ProgressIndicatorProvider.checkCanceled(); // we can safely interrupt creating children PSI any moment
-      if (composite.myWrapper != null) {
-        // someone else 've managed to create the PSI in the meantime. Abandon our attempts to cache everything.
-        stopWalking();
-        return;
-      }
-      composite.createAndStorePsi();
-      super.visitComposite(composite);
-    }
-  };
 
   private static void repairRemovedElement(final CompositeElement oldParent, final TreeElement oldChild) {
     if(oldChild == null) return;

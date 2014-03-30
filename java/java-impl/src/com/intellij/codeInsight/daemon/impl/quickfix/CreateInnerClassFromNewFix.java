@@ -54,8 +54,15 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     PsiClass created = elementFactory.createClass(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-    if (PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression)) {
+    if (PsiTreeUtil.isAncestor(targetClass, newExpression, true)) {
+      if (targetClass.isInterface()) {
+        modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
+      } else {
+        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      }
+    }
+
+    if (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression)) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     created = (PsiClass)targetClass.add(created);

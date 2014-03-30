@@ -40,6 +40,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer {
     myColorTreeCellRenderer = new HighlightableCellRenderer();
   }
 
+  @Override
   public Component getTreeCellRendererComponent(JTree tree, Object obj, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Component result;
 

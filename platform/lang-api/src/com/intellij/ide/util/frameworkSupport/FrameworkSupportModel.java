@@ -44,5 +44,10 @@ public interface FrameworkSupportModel extends UserDataHolder {
 
   void setFrameworkComponentEnabled(@NotNull @NonNls String providerId, boolean enabled);
 
+  void updateFrameworkLibraryComponent(@NotNull String providerId);
+
   FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId);
+
+  @Nullable
+  FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId);
 }

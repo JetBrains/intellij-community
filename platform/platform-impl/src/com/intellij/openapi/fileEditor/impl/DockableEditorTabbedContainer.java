@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,10 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Override
   public RelativeRectangle getAcceptArea() {
+    return new RelativeRectangle(mySplitters);
+  }
+  
+  public RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }
@@ -100,7 +104,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
 
   @Nullable
   private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
-    if (content instanceof EditorTabbedContainer.MyDragOutDelegate.DockableEditor) {
+    if (content instanceof EditorTabbedContainer.DockableEditor) {
       JBTabs targetTabs = mySplitters.getTabsAt(point);
       if (targetTabs != null) {
         return targetTabs;
@@ -135,7 +139,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
       }
     }
 
-    final EditorTabbedContainer.MyDragOutDelegate.DockableEditor dockableEditor = (EditorTabbedContainer.MyDragOutDelegate.DockableEditor)content;
+    final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
     VirtualFile file = dockableEditor.getFile();
 
 

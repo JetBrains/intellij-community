@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param listener the listener instance.
    * @param parentDisposable object, after whose disposing the listener should be removed
    */
-  public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, Disposable parentDisposable);
+  public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Removes a listener for receiving notifications about all changes in the PSI tree of the project.

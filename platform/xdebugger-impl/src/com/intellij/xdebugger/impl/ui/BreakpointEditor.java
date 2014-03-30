@@ -18,9 +18,11 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +42,10 @@ public class BreakpointEditor {
   }
 
   private void createUIComponents() {
-    myShowMoreOptionsLink = new LinkLabel("More", null, new LinkListener() {
+    AnAction action = ActionManager.getInstance().getAction(XDebuggerActions.VIEW_BREAKPOINTS);
+    String shortcutText = action != null ? KeymapUtil.getFirstKeyboardShortcutText(action) : null;
+    String text = shortcutText != null ? "More (" + shortcutText + ")" : "More";
+    myShowMoreOptionsLink = new LinkLabel(text, null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myDelegate != null) {
@@ -79,7 +84,7 @@ public class BreakpointEditor {
       public void update(AnActionEvent e) {
         super.update(e);
         boolean lookup = LookupManager.getInstance(getEventProject(e)).getActiveLookup() != null;
-        Editor editor = e.getData(PlatformDataKeys.EDITOR);
+        Editor editor = e.getData(CommonDataKeys.EDITOR);
         e.getPresentation().setEnabled(!lookup && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
       }
 

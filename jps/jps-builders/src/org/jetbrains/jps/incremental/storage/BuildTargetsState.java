@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -27,6 +26,7 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,7 +37,7 @@ public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final BuildDataPaths myDataPaths;
   private AtomicInteger myMaxTargetId = new AtomicInteger(0);
-  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType<?>, BuildTargetTypeState>();
+  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<BuildTargetType<?>, BuildTargetTypeState>(16, 0.75f, 1);
   private JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
@@ -99,9 +99,11 @@ public class BuildTargetsState {
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
-      state = new BuildTargetTypeState(type, this);
-      myTypeStates.putIfAbsent(type, state);
-      state = myTypeStates.get(type);
+      final BuildTargetTypeState newState = new BuildTargetTypeState(type, this);
+      state = myTypeStates.putIfAbsent(type, newState);
+      if (state == null) {
+        state = newState;
+      }
     }
     return state;
   }

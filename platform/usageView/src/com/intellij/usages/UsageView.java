@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -70,6 +71,7 @@ public interface UsageView extends Disposable {
    */
   void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
+  @NotNull
   UsageViewPresentation getPresentation();
 
   @NotNull
@@ -83,4 +85,11 @@ public interface UsageView extends Disposable {
   @NotNull JComponent getComponent();
 
   int getUsagesCount();
+
+  /**
+   * Removes all specified usages from the usage view in one heroic swoop.
+   * Reloads the whole tree model once instead of firing individual remove event for each node.
+   * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
+   */
+  void removeUsagesBulk(@NotNull Collection<Usage> usages);
 }

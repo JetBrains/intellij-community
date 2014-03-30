@@ -186,9 +186,8 @@ public class GenericCompilerRunner {
     final List<GenericCompilerProcessingItem<Item, SourceState, OutputState>> toProcess = new ArrayList<GenericCompilerProcessingItem<Item,SourceState,OutputState>>();
     final THashSet<Key> keySet = new THashSet<Key>(new SourceItemHashingStrategy<Key>(compiler));
     final Ref<IOException> exception = Ref.create(null);
-    DumbService.getInstance(myProject).waitForSmartMode();
     final Map<Item, SourceState> sourceStates = new HashMap<Item,SourceState>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
       @Override
       public void run() {
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
-
+import com.intellij.openapi.extensions.ExtensionPointName;
 
 public interface ApplicationLoadListener {
+  ExtensionPointName<ApplicationLoadListener> EP_NAME = ExtensionPointName.create("com.intellij.ApplicationLoadListener");
+
   void beforeApplicationLoaded(Application application);
 }

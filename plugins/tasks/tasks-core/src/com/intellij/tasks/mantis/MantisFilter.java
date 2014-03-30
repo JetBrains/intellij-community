@@ -1,47 +1,80 @@
 package com.intellij.tasks.mantis;
 
+import com.intellij.tasks.mantis.model.FilterData;
+import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * User: evgeny.zakrevsky
  * Date: 9/24/12
  */
-public class MantisFilter {
-  public final static MantisFilter LAST_TASKS = new MantisFilter(0, "[Last tasks]");
+public final class MantisFilter implements Comparable<MantisFilter> {
+  // Used for "[Last task] filter"
+  public static final int UNSPECIFIED_FILTER_ID = 0;
 
-  private int id;
-  private String name;
+  public static MantisFilter newUndefined() {
+    return new MantisFilter(0, "-- all issues --");
+  }
+
+  private int myId;
+  private String myName;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public MantisFilter() {
   }
 
-  public MantisFilter(final int id, final String name) {
-    this.id = id;
-    this.name = name;
+  public MantisFilter(int id, String name) {
+    myId = id;
+    myName = name;
   }
 
+  public MantisFilter(@NotNull FilterData data) {
+    myId = data.getId().intValue();
+    myName = data.getName();
+  }
+
+  @Attribute("id")
   public int getId() {
-    return id;
+    return myId;
   }
 
   public void setId(final int id) {
-    this.id = id;
+    this.myId = id;
   }
 
+  @Attribute("name")
   public String getName() {
-    return name;
+    return myName;
   }
 
   public void setName(final String name) {
-    this.name = name;
+    this.myName = name;
+  }
+
+  public final boolean isUnspecified() {
+    return getId() == UNSPECIFIED_FILTER_ID;
   }
 
   @Override
-  public boolean equals(final Object obj) {
-    return obj != null && obj instanceof MantisFilter && ((MantisFilter)obj).getId() == getId();
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return myId == ((MantisFilter)o).myId;
+  }
+
+  @Override
+  public final int hashCode() {
+    return myId;
   }
 
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Override
+  public int compareTo(@NotNull MantisFilter o) {
+    return getName().compareTo(o.getName());
   }
 }

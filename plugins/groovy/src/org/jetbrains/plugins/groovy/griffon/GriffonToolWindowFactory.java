@@ -16,13 +16,13 @@
 
 package org.jetbrains.plugins.groovy.griffon;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -137,16 +137,12 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
   private static final Map<String, GriffonDirectoryMetadata> DIRECTORY_METADATA = new LinkedHashMap<String, GriffonDirectoryMetadata>();
 
   static {
-    DIRECTORY_METADATA.put("models", new GriffonDirectoryMetadata("Models", loadIcon("folder-models"), 20));
-    DIRECTORY_METADATA.put("views", new GriffonDirectoryMetadata("Views", loadIcon("folder-views"), 30));
-    DIRECTORY_METADATA.put("controllers", new GriffonDirectoryMetadata("Controllers", loadIcon("folder-controllers"), 40));
-    DIRECTORY_METADATA.put("services", new GriffonDirectoryMetadata("Services", loadIcon("folder-services"), 50));
-    DIRECTORY_METADATA.put("lifecycle", new GriffonDirectoryMetadata("Lifecycle", loadIcon("folder-lifecycle"), 60));
-    DIRECTORY_METADATA.put("conf", new GriffonDirectoryMetadata("Configuration", loadIcon("folder-conf"), 65));
-  }
-
-  private static Icon loadIcon(String name) {
-    return IconLoader.getIcon("/icons/griffon/" + name + ".png");
+    DIRECTORY_METADATA.put("models", new GriffonDirectoryMetadata("Models", JetgroovyIcons.Mvc.ModelsNode, 20));
+    DIRECTORY_METADATA.put("views", new GriffonDirectoryMetadata("Views", JetgroovyIcons.Groovy.Groovy_16x16, 30));
+    DIRECTORY_METADATA.put("controllers", new GriffonDirectoryMetadata("Controllers", AllIcons.Nodes.KeymapTools, 40));
+    DIRECTORY_METADATA.put("services", new GriffonDirectoryMetadata("Services", JetgroovyIcons.Mvc.Service, 50));
+    DIRECTORY_METADATA.put("lifecycle", new GriffonDirectoryMetadata("Lifecycle", JetgroovyIcons.Groovy.Groovy_16x16, 60));
+    DIRECTORY_METADATA.put("conf", new GriffonDirectoryMetadata("Configuration", JetgroovyIcons.Mvc.Config_folder_closed, 65));
   }
 
   private static class GriffonDirectoryMetadata {

@@ -25,13 +25,11 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 
@@ -117,5 +115,20 @@ class TestDirectory extends TestPackage {
       throw new CantRunException("Package not found in directory");
     }
     return aPackage;
+  }
+
+  @Override
+  public boolean isConfiguredByElement(JUnitConfiguration configuration,
+                                       PsiClass testClass,
+                                       PsiMethod testMethod,
+                                       PsiPackage testPackage, 
+                                       PsiDirectory testDir) {
+    if (JUnitConfiguration.TEST_DIRECTORY.equals(configuration.getPersistentData().TEST_OBJECT) && testDir != null) {
+      if (Comparing.strEqual(FileUtil.toSystemIndependentName(configuration.getPersistentData().getDirName()), 
+                             testDir.getVirtualFile().getPath())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -1,0 +1,38 @@
+def foo(A. b, A c) {}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    PsiElement(()('(')
+    Parameter list
+      Modifiers
+        <empty list>
+      Type element
+        Reference element
+          Reference element
+            PsiElement(identifier)('A')
+          PsiElement(.)('.')
+          PsiWhiteSpace(' ')
+          PsiElement(identifier)('b')
+      PsiErrorElement:Identifier expected
+        <empty list>
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('A')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('c')
+    PsiElement())(')')
+    Throw clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

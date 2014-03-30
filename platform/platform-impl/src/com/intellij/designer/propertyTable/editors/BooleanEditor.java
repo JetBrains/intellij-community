@@ -40,7 +40,7 @@ public class BooleanEditor extends PropertyEditor {
     myCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (!myInsideChange) {
-          fireValueCommitted(true, false);
+          fireValueCommitted(false, true);
         }
       }
     });

@@ -99,12 +99,13 @@ public class RollbackChangesDialog extends DialogWrapper {
       @Override
       public void run() {
         if (myBrowser != null) {
-          myInfoCalculator.update(changes, new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
+          myInfoCalculator.update(new ArrayList<Change>(myBrowser.getAllChanges()),
+                                  new ArrayList<Change>(myBrowser.getChangesIncludedInAllLists()));
           myCommitLegendPanel.update();
         }
       }
     };
-    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
+    myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
 
     myOperationName = operationNameByChanges(project, changes);
     setOKButtonText(myOperationName);
@@ -167,30 +168,23 @@ public class RollbackChangesDialog extends DialogWrapper {
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                              new Insets(1, 1, 1, 1), 0, 0);
 
-    JComponent browserHeader = myBrowser.getHeaderPanel();
-    myBrowser.remove(browserHeader);
     gb.fill = GridBagConstraints.HORIZONTAL;
     gb.weightx = 1;
-    gb.gridwidth = 2;
-    panel.add(browserHeader, gb);
 
     final JPanel border = new JPanel(new BorderLayout());
     border.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     border.add(myBrowser, BorderLayout.CENTER);
     gb.fill = GridBagConstraints.BOTH;
     gb.weighty = 1;
-    gb.gridwidth = 1;
-    gb.gridheight = 3;
     ++ gb.gridy;
     panel.add(border, gb);
 
-    final JPanel commitLegendPanel = myCommitLegendPanel.getComponent();
+    final JComponent commitLegendPanel = myCommitLegendPanel.getComponent();
     commitLegendPanel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     gb.fill = GridBagConstraints.NONE;
     gb.weightx = 0;
     gb.weighty = 0;
-    gb.gridheight = 1;
-    ++ gb.gridx;
+    ++ gb.gridy;
     panel.add(commitLegendPanel, gb);
 
     if (myDeleteLocallyAddedFiles != null) {

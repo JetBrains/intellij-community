@@ -17,13 +17,14 @@ package org.jetbrains.jps.builders.resources;
 
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
@@ -43,14 +44,33 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     rebuildAll();
     assertOutput(m, fs().file("a.xml"));
   }
+
+  public void testCaseChange() {
+    String file = createFile("src/a.xml");
+    JpsModule m = addModule("m", PathUtil.getParentPath(file));
+    rebuildAll();
+    assertOutput(m, fs().file("a.xml"));
+    rename(file, "A.xml");
+    makeAll();
+    assertOutput(m, fs().file("A.xml"));
+  }
+
   public void testPackagePrefix() {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
     JpsModuleSourceRoot sourceRoot = assertOneElement(m.getSourceRoots());
-    JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
+    JpsTypedModuleSourceRoot<JavaSourceRootProperties> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
     assertNotNull(typed);
-    typed.getProperties().setData(new JavaSourceRootProperties("xxx"));
+    typed.getProperties().setPackagePrefix("xxx");
     rebuildAll();
     assertOutput(m, fs().dir("xxx").file("a.xml"));
+  }
+
+  public void testResourceRoot() {
+    String file = createFile("res/A.java", "xxx");
+    JpsModule m = addModule("m");
+    m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
+    rebuildAll();
+    assertOutput(m, fs().file("A.java", "xxx"));
   }
 }

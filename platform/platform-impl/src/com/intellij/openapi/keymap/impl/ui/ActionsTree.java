@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +34,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -46,6 +48,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Set;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
@@ -160,7 +163,7 @@ public class ActionsTree {
     myRoot.removeAllChildren();
 
     ActionManager actionManager = ActionManager.getInstance();
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, allQuickLists, filter, true, filter != null && filter.length() > 0 ?
                                                                                                       ActionsTreeUtil.isActionFiltered(filter, true) :
                                                                                                       (shortcut != null ? ActionsTreeUtil.isActionFiltered(actionManager, myKeymap, shortcut) : null));
@@ -437,6 +440,7 @@ public class ActionsTree {
   }
 
   private class KeymapsRenderer extends ColoredTreeCellRenderer {
+    // Make sure that the text rendered by this method is 'searchable' via com.intellij.openapi.keymap.impl.ui.ActionsTree.filter method.
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final boolean showIcons = UISettings.getInstance().SHOW_ICONS_IN_MENUS;
       Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
@@ -519,20 +523,22 @@ public class ActionsTree {
   }
   
   private void paintRowData(Tree tree, Object data, Rectangle bounds, Graphics2D g) {
-    Shortcut[] shortcuts;
+    Shortcut[] shortcuts = null;
+    Set<String> abbreviations = null;
     if (data instanceof String) {
-      shortcuts = myKeymap.getShortcuts((String)data);            
+      final String actionId = (String)data;
+      shortcuts = myKeymap.getShortcuts(actionId);
+      abbreviations = AbbreviationManager.getInstance().getAbbreviations(actionId);
     }
     else if (data instanceof QuickList) {
       shortcuts = myKeymap.getShortcuts(((QuickList)data).getActionId());
     }
-    else {
-      shortcuts = null;
-    }
 
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+
+    int totalWidth = 0;
+    final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
     if (shortcuts != null && shortcuts.length > 0) {
-      int totalWidth = 0;
-      final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
       for (Shortcut shortcut : shortcuts) {
         totalWidth += metrics.stringWidth(KeymapUtil.getShortcutText(shortcut));
         totalWidth += 10;
@@ -558,5 +564,33 @@ public class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
+    if (Registry.is("actionSystem.enableAbbreviations") && abbreviations != null && abbreviations.size() > 0) {
+      for (String abbreviation : abbreviations) {
+        totalWidth += metrics.stringWidth(abbreviation);
+        totalWidth += 10;
+      }
+      totalWidth -= 5;
+
+      int x = bounds.x + bounds.width - totalWidth;
+      int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
+
+      Color c1 = new Color(206, 234, 176);
+      Color c2 = new Color(126, 208, 82);
+
+      g.translate(0, bounds.y - 1);
+
+      for (String abbreviation : abbreviations) {
+        int width = metrics.stringWidth(abbreviation);
+        UIUtil.drawSearchMatch(g, x, x + width, bounds.height, c1, c2);
+        g.setColor(Gray._50);
+        g.drawString(abbreviation, x, fontHeight);
+
+        x += width;
+        x += 10;
+      }
+      g.translate(0, -bounds.y + 1);
+    }
+
+    config.restore();
   }
 }

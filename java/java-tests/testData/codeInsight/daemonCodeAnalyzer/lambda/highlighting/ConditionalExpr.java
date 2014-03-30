@@ -31,7 +31,7 @@ class Test {
     I i4 =  flag ? (() -> 42) : new I() {
       @Override
       public int m() {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        return 0;
       }
     };
   }

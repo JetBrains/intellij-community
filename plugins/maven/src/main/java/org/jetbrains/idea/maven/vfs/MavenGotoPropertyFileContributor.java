@@ -27,12 +27,12 @@ import org.jetbrains.annotations.NotNull;
 public class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
     return MavenPropertiesVirtualFileSystem.PROPERTIES_FILES;
   }
 
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+    if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     VirtualFile file = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(name);
     if (file != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

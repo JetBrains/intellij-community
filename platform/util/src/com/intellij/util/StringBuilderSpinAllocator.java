@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ public class StringBuilderSpinAllocator {
   }
 
   private static class Creator implements SpinAllocator.ICreator<StringBuilder> {
+    @Override
     public StringBuilder createInstance() {
       return new StringBuilder();
     }
   }
 
   private static class Disposer implements SpinAllocator.IDisposer<StringBuilder> {
+    @Override
     public void disposeInstance(final StringBuilder instance) {
       instance.setLength(0);
       if (instance.capacity() > 1024) {

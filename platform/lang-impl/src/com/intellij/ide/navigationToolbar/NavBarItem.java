@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final int myIndex;
   private final Icon myIcon;
   private final NavBarPanel myPanel;
-  private Object myObject;
+  private final Object myObject;
   private final boolean isPopupElement;
   private final NavBarUI myUI;
 
@@ -63,7 +64,6 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     Disposer.register(parent == null ? panel : parent, this);
 
     setOpaque(false);
-    setFont(myUI.getElementFont(this));
     setIpad(myUI.getElementIpad(isPopupElement));
 
     if (!isPopupElement) {
@@ -95,6 +95,11 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return myText;
   }
 
+  @Override
+  public Font getFont() {
+    return myUI == null ? super.getFont() : myUI.getElementFont(this);
+  }
+
   void update() {
     clear();
 
@@ -114,7 +119,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
     //repaint();
   }
-  
+
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
     return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
@@ -153,6 +158,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     super.setOpaque(false);
   }
 
+  @NotNull
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
@@ -160,6 +166,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return new Dimension(size.width + offsets.width, size.height + offsets.height);
   }
 
+  @NotNull
   @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
@@ -198,14 +205,17 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
     return new Icon() {
+      @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         closedIcon.paintIcon(c, g, x, y);
       }
 
+      @Override
       public int getIconWidth() {
         return closedIcon.getIconWidth();
       }
 
+      @Override
       public int getIconHeight() {
         return openIcon.getIconHeight();
       }
@@ -217,7 +227,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     //count--;
     //System.out.println(count);
   }
-    
+
 
   public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;

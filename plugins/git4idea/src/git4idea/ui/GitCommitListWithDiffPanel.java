@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.util.Consumer;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,9 +43,10 @@ public class GitCommitListWithDiffPanel extends JPanel {
     super(new BorderLayout());
 
     myCommitListPanel = new GitCommitListPanel(commits, null);
-    myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
-      @Override public void consume(GitCommit commit) {
-        myChangesBrowser.setChangesToDisplay(commit.getChanges());
+    myCommitListPanel.addListMultipleSelectionListener(new Consumer<List<Change>>() {
+      @Override
+      public void consume(List<Change> changes) {
+        myChangesBrowser.setChangesToDisplay(changes);
       }
     });
 

@@ -35,10 +35,15 @@ public class CommandLineWrapper {
   public static void main(String[] args) throws Exception {
     final List urls = new ArrayList();
     final File file = new File(args[0]);
+    final StringBuffer buf = new StringBuffer();
     final BufferedReader reader = new BufferedReader(new FileReader(file));
     try {
       while(reader.ready()) {
         final String fileName = reader.readLine();
+        if (buf.length() > 0) {
+          buf.append(File.pathSeparator);
+        }
+        buf.append(fileName);
         try {
           //noinspection Since15
           urls.add(new File(fileName).toURI().toURL());
@@ -53,6 +58,7 @@ public class CommandLineWrapper {
       reader.close();
     }
     if (!file.delete()) file.deleteOnExit();
+    System.setProperty("java.class.path", buf.toString());
 
     int startArgsIdx = 2;
     if (args[1].equals("@vm_params")) {

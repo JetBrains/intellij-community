@@ -114,9 +114,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     return myWholePanel;
   }
 
-  public void disposeEditor() {
-  }
-
   private void createUIComponents() {
     myMainClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
     myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {

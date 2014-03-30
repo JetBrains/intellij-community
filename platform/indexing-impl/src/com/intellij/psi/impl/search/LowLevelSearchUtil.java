@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,19 +38,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class LowLevelSearchUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
-
-  private LowLevelSearchUtil() {
-  }
 
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found
   private static Boolean processInjectedFile(PsiElement element,
                                              final TextOccurenceProcessor processor,
                                              final StringSearcher searcher,
-                                             ProgressIndicator progress) {
+                                             ProgressIndicator progress,
+                                             InjectedLanguageManager injectedLanguageManager) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager == null) return null;
     List<Pair<PsiElement,TextRange>> list = injectedLanguageManager.getInjectedPsiFiles(element);
     if (list == null) return null;
@@ -61,7 +57,8 @@ public class LowLevelSearchUtil {
     return Boolean.TRUE;
   }
 
-  private static boolean processTreeUp(@NotNull TextOccurenceProcessor processor,
+  private static boolean processTreeUp(@NotNull Project project,
+                                       @NotNull TextOccurenceProcessor processor,
                                        @NotNull PsiElement scope,
                                        @NotNull StringSearcher searcher,
                                        final int offset,
@@ -93,13 +90,13 @@ public class LowLevelSearchUtil {
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
     if (start < 0) {
-      LOG.error("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + " " +
-                                  " scope=" + scope.toString());
+      throw new AssertionError("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
     }
     boolean contains = false;
     PsiElement prev = null;
     TreeElement prevNode = null;
     PsiElement run = null;
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     while (run != scope) {
       if (progress != null) progress.checkCanceled();
       if (useTree) {
@@ -115,7 +112,7 @@ public class LowLevelSearchUtil {
       if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
-          Boolean result = processInjectedFile(run, processor, searcher, progress);
+          Boolean result = processInjectedFile(run, processor, searcher, progress, injectedLanguageManager);
           if (result != null) {
             return result.booleanValue();
           }
@@ -139,7 +136,7 @@ public class LowLevelSearchUtil {
   }
   //@RequiresReadAction
   public static boolean processElementsContainingWordInElement(@NotNull TextOccurenceProcessor processor,
-                                                               @NotNull PsiElement scope,
+                                                               @NotNull final PsiElement scope,
                                                                @NotNull StringSearcher searcher,
                                                                final boolean processInjectedPsi,
                                                                ProgressIndicator progress) {
@@ -157,18 +154,19 @@ public class LowLevelSearchUtil {
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
-      LOG.error("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
+      throw new AssertionError("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextRange()+"; file contents length: "+buffer.length()+"; file provider: "+file.getViewProvider());
     }
 
     final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
 
+    Project project = file.getProject();
     do {
       if (progress != null) progress.checkCanceled();
       startOffset  = searchWord(buffer, bufferArray, startOffset, endOffset, searcher, progress);
       if (startOffset < 0) {
         return true;
       }
-      if (!processTreeUp(processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress)) return false;
+      if (!processTreeUp(project, processor, scope, searcher, startOffset - scopeStart, processInjectedPsi, progress)) return false;
 
       startOffset++;
     }
@@ -191,7 +189,9 @@ public class LowLevelSearchUtil {
                                int endOffset,
                                @NotNull StringSearcher searcher,
                                @Nullable ProgressIndicator progress) {
-    LOG.assertTrue(endOffset <= text.length());
+    if (endOffset > text.length()) {
+      throw new AssertionError("end>length");
+    }
 
     for (int index = startOffset; index < endOffset; index++) {
       if (progress != null) progress.checkCanceled();

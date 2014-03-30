@@ -30,8 +30,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,9 +49,9 @@ public class AntBuildModelImpl implements AntBuildModelBase {
     
     myTargets = new PsiCachedValueImpl<List<AntBuildTargetBase>>(PsiManager.getInstance(project), new CachedValueProvider<List<AntBuildTargetBase>>() {
       public Result<List<AntBuildTargetBase>> compute() {
-        final Pair<List<AntBuildTargetBase>, Collection<PsiFile>> result = getTargetListImpl(AntBuildModelImpl.this);
-        final Collection<PsiFile> deps = result.getSecond();
-        return Result.create(result.getFirst(), PsiUtilCore.toPsiFileArray(deps));
+        final Pair<List<AntBuildTargetBase>, Collection<Object>> result = getTargetListImpl(AntBuildModelImpl.this);
+        final Collection<Object> deps = result.getSecond();
+        return Result.create(result.getFirst(), ArrayUtil.toObjectArray(deps));
       }
     });    
   }
@@ -150,17 +151,16 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   // todo: return list of dependent psi files as well
-  private static Pair<List<AntBuildTargetBase>, Collection<PsiFile>> getTargetListImpl(final AntBuildModelBase model) {
+  private static Pair<List<AntBuildTargetBase>, Collection<Object>> getTargetListImpl(final AntBuildModelBase model) {
     final List<AntBuildTargetBase> list = new ArrayList<AntBuildTargetBase>();
-    final Set<PsiFile> dependencies = new HashSet<PsiFile>();
+    final Set<Object> dependencies = new HashSet<Object>();
     
     final AntDomProject project = model.getAntProject();
     if (project != null) {
       final AntBuildFile buildFile = model.getBuildFile();
       final XmlFile xmlFile = buildFile.getAntFile();
-      if (xmlFile != null) {
-        dependencies.add(xmlFile);
-      }
+      dependencies.add(xmlFile != null? xmlFile : PsiModificationTracker.MODIFICATION_COUNT);
+
       final VirtualFile sourceFile = buildFile.getVirtualFile();
       new Object() {
         private boolean myIsImported = false;
@@ -189,20 +189,26 @@ public class AntBuildModelImpl implements AntBuildModelBase {
           for (AntDomIncludingDirective incl : allIncludes) {
             final PsiFileSystemItem includedFile = incl.getFile().getValue();
             if (includedFile instanceof PsiFile) {
+              final PsiFile included = includedFile.getContainingFile().getOriginalFile();
+              dependencies.add(included);
               final AntDomProject includedProject = AntSupport.getAntDomProject((PsiFile)includedFile);
               if (includedProject != null) {
-                final PsiFile included = includedFile.getContainingFile().getOriginalFile();
-                dependencies.add(included);
                 fillTargets(list, model, includedProject, included.getVirtualFile());
               }
             }
-
+            else {
+              if (includedFile == null) {
+                // if not resolved yet, it's possible that the file will be created later,
+                // thus we need to recalculate the cached value
+                dependencies.add(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+              }
+            }
           }
     
         }
       }.fillTargets(list, model, project, sourceFile);
     }
-    return new Pair<List<AntBuildTargetBase>, Collection<PsiFile>>(list, dependencies);
+    return new Pair<List<AntBuildTargetBase>, Collection<Object>>(list, dependencies);
   }
 
 }

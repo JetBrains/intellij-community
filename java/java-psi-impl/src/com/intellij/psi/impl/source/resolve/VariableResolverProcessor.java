@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   private final PsiClass myAccessClass;
   private PsiElement myCurrentFileContext = null;
 
-  public VariableResolverProcessor(PsiJavaCodeReferenceElement place) {
-    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place);
+  public VariableResolverProcessor(@NotNull PsiJavaCodeReferenceElement place, PsiFile placeFile) {
+    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place, placeFile);
 
     PsiElement referenceName = place.getReferenceNameElement();
     if (referenceName instanceof PsiIdentifier){
@@ -69,7 +69,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public final void handleEvent(PsiScopeProcessor.Event event, Object associated) {
+  public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
     super.handleEvent(event, associated);
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStaticScopeFlag = true;
@@ -80,7 +80,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public void add(PsiElement element, PsiSubstitutor substitutor) {
+  public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     final boolean staticProblem = myStaticScopeFlag && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC);
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
@@ -92,7 +92,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName, myPlace))) {
       super.execute(element, state);
       return myResults.isEmpty();

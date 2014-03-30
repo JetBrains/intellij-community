@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
@@ -27,58 +28,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExceptionUtils;
-import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class TooBroadCatchInspection extends BaseInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public boolean onlyWarnOnRootExceptions = false;
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreInTestCode = false;
-
-  @SuppressWarnings("PublicField")
-  public boolean ignoreThrown = false;
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "OverlyBroadCatchBlock";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.broad.catch.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    final List<PsiClass> typesMasked = (List<PsiClass>)infos[0];
-    String typesMaskedString = typesMasked.get(0).getName();
-    if (typesMasked.size() == 1) {
-      return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor", typesMaskedString);
-    }
-    else {
-      //Collections.sort(typesMasked);
-      final int lastTypeIndex = typesMasked.size() - 1;
-      for (int i = 1; i < lastTypeIndex; i++) {
-        typesMaskedString += ", ";
-        typesMaskedString += typesMasked.get(i).getName();
-      }
-      final String lastTypeString = typesMasked.get(lastTypeIndex).getName();
-      return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor1", typesMaskedString, lastTypeString);
-    }
-  }
+public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
 
   @NotNull
   @Override
@@ -86,7 +44,17 @@ public class TooBroadCatchInspection extends BaseInspection {
     final List<PsiClass> maskedTypes = (List<PsiClass>)infos[0];
     final List<InspectionGadgetsFix> fixes = new ArrayList();
     for (PsiClass thrown : maskedTypes) {
-      fixes.add(new AddCatchSectionFix(thrown));
+      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(maskedTypes.get(0).getQualifiedName())) {
+        fixes.add(new ReplaceWithRuntimeExceptionFix());
+      }
+      else {
+        fixes.add(new AddCatchSectionFix(thrown));
+      }
+    }
+    final PsiElement context = (PsiElement)infos[1];
+    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
+    if (fix != null) {
+      fixes.add(fix);
     }
     return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
   }
@@ -95,9 +63,35 @@ public class TooBroadCatchInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
     return panel;
+  }
+
+  private static class ReplaceWithRuntimeExceptionFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiTypeElement)) {
+        return;
+      }
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiClassType type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
+      final PsiTypeElement newTypeElement = factory.createTypeElement(type);
+      typeElement.replace(newTypeElement);
+    }
   }
 
   private static class AddCatchSectionFix extends InspectionGadgetsFix {
@@ -114,6 +108,12 @@ public class TooBroadCatchInspection extends BaseInspection {
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("too.broad.catch.quickfix", myText);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Add 'catch' clause";
     }
 
     @Override
@@ -144,7 +144,9 @@ public class TooBroadCatchInspection extends BaseInspection {
       codeStyleManager.shortenClassReferences(element);
 
       if (isOnTheFly()) {
-        final TextRange range = getRangeToSelect(element.getCatchBlock());
+        final PsiCodeBlock newBlock = element.getCatchBlock();
+        assert newBlock != null;
+        final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
         final PsiFile file = element.getContainingFile();
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor == null) {
@@ -158,108 +160,6 @@ public class TooBroadCatchInspection extends BaseInspection {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
       }
-    }
-  }
-
-  private static TextRange getRangeToSelect(PsiCodeBlock block) {
-    PsiElement first = block.getFirstBodyElement();
-    if (first instanceof PsiWhiteSpace) {
-      first = first.getNextSibling();
-    }
-    if (first == null) {
-      final int offset = block.getTextRange().getStartOffset() + 1;
-      return new TextRange(offset, offset);
-    }
-    PsiElement last = block.getLastBodyElement();
-    if (last instanceof PsiWhiteSpace) {
-      last = last.getPrevSibling();
-    }
-    final TextRange textRange;
-    if (last == null) {
-      textRange = first.getTextRange();
-    }
-    else {
-      textRange = last.getTextRange();
-    }
-    return new TextRange(first.getTextRange().getStartOffset(), textRange.getEndOffset());
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new TooBroadCatchVisitor();
-  }
-
-  private class TooBroadCatchVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-      final PsiCodeBlock tryBlock = statement.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
-      if (ignoreInTestCode && TestUtils.isInTestCode(statement)) {
-        return;
-      }
-      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
-      final int numExceptionsThrown = exceptionsThrown.size();
-      final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(numExceptionsThrown);
-      final PsiCatchSection[] catchSections = statement.getCatchSections();
-      for (final PsiCatchSection catchSection : catchSections) {
-        final PsiParameter parameter = catchSection.getParameter();
-        if (parameter == null) {
-          continue;
-        }
-        final PsiType typeCaught = parameter.getType();
-        if (typeCaught instanceof PsiDisjunctionType) {
-          final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)typeCaught;
-          final List<PsiType> types = disjunctionType.getDisjunctions();
-          for (PsiType type : types) {
-            check(exceptionsThrown, exceptionsCaught, parameter, type);
-          }
-        }
-        else {
-          check(exceptionsThrown, exceptionsCaught, parameter, typeCaught);
-        }
-      }
-    }
-
-    private void check(Set<PsiClassType> exceptionsThrown, Set<PsiType> exceptionsCaught, PsiParameter parameter, PsiType type) {
-      final List<PsiClass> maskedExceptions = findMaskedExceptions(exceptionsThrown, exceptionsCaught, type);
-      if (maskedExceptions.isEmpty()) {
-        return;
-      }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      registerError(typeElement, maskedExceptions);
-    }
-
-    private List<PsiClass> findMaskedExceptions(Set<PsiClassType> exceptionsThrown, Set<PsiType> exceptionsCaught, PsiType typeCaught) {
-      if (exceptionsThrown.contains(typeCaught)) {
-        if (ignoreThrown) {
-          return Collections.emptyList();
-        }
-        exceptionsCaught.add(typeCaught);
-        exceptionsThrown.remove(typeCaught);
-      }
-      if (onlyWarnOnRootExceptions) {
-        if (!ExceptionUtils.isGenericExceptionClass(typeCaught)) {
-          return Collections.emptyList();
-        }
-      }
-      final List<PsiClass> typesMasked = new ArrayList();
-      for (PsiClassType typeThrown : exceptionsThrown) {
-        if (!exceptionsCaught.contains(typeThrown) && typeCaught.isAssignableFrom(typeThrown)) {
-          exceptionsCaught.add(typeThrown);
-          final PsiClass aClass = typeThrown.resolve();
-          if (aClass != null) {
-            typesMasked.add(aClass);
-          }
-        }
-      }
-      return typesMasked;
     }
   }
 }

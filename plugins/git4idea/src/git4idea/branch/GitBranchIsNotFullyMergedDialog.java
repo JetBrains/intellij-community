@@ -22,9 +22,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitPlatformFacade;
-import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitCommitListWithDiffPanel;
@@ -50,7 +51,7 @@ import java.util.Map;
 public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitBranchIsNotFullyMergedDialog.class);
-  
+
   private final Project myProject;
   private final Map<GitRepository, List<GitCommit>> myCommits;
   private final String myBranchToDelete;
@@ -74,7 +75,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   public static boolean showAndGetAnswer(@NotNull Project project,
                                          @NotNull Map<GitRepository, List<GitCommit>> commits,
                                          @NotNull String branchToDelete,
-                                         @NotNull List<String> mergedToBranches, 
+                                         @NotNull List<String> mergedToBranches,
                                          @Nullable String baseBranch) {
     GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, baseBranch, mergedToBranches);
     ServiceManager.getService(project, GitPlatformFacade.class).showDialog(dialog);
@@ -122,7 +123,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
       LOG.assertTrue(myBaseBranch != null, "Branches have unexpectedly diverged");
       currentBranchOrRev = myBaseBranch;
       onBranch = true;
-    } 
+    }
     else {
       GitRepository repository = myInitialRepository;
       if (repository.isOnBranch()) {
@@ -136,7 +137,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
         onBranch = false;
       }
     }
-    
+
     StringBuilder description = new StringBuilder();
     if (onBranch) {
       description.append(GitBundle.message("branch.delete.not_fully_merged.description", myBranchToDelete, myBaseBranch));
@@ -160,8 +161,8 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    JBLabel descriptionLabel = new JBLabel("<html>" + makeDescription() + "</html>");
-    
+    JBLabel descriptionLabel = new JBLabel(XmlStringUtil.wrapInHtml(makeDescription()));
+
       final JComboBox repositorySelector = new JComboBox(ArrayUtil.toObjectArray(myRepositories, GitRepository.class));
     repositorySelector.setRenderer(new GitRepositoryComboboxListCellRenderer(repositorySelector));
     repositorySelector.setSelectedItem(myInitialRepository);
@@ -178,7 +179,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     label.setLabelFor(repoSelectorPanel);
     repoSelectorPanel.add(label, BorderLayout.WEST);
     repoSelectorPanel.add(repositorySelector);
-    
+
     if (myRepositories.size() < 2) {
       repoSelectorPanel.setVisible(false);
     }

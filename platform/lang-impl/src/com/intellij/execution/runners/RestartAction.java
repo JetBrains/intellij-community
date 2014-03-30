@@ -15,17 +15,18 @@
  */
 package com.intellij.execution.runners;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import java.util.List;
  */
 public class RestartAction extends FakeRerunAction implements DumbAware, AnAction.TransparentUpdate, Disposable {
 
-  private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   @NotNull private final RunContentDescriptor myDescriptor;
   @NotNull private final Executor myExecutor;
@@ -50,7 +50,6 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
   public RestartAction(@NotNull final Executor executor,
                        final ProgramRunner runner,
-                       final ProcessHandler processHandler,//todo kill ProcessHandler here, use descriptor.getProcessHandler() is need
                        @NotNull final RunContentDescriptor descriptor,
                        @NotNull final ExecutionEnvironment env) {
     Disposer.register(descriptor, this);
@@ -58,7 +57,6 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
 
     myEnvironment = env;
     getTemplatePresentation().setEnabled(false);
-    myProcessHandler = processHandler;
     myRunner = runner;
     myDescriptor = descriptor;
     myExecutor = executor;
@@ -100,48 +98,18 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     return candidates.get(0);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
-    Project project = myEnvironment.getProject();
-    if (project == null)
-      return;
-      if (myProcessHandler != null) {
-        ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                                myExecutor,
-                                                                myEnvironment.getExecutionTarget(),
-                                                                myEnvironment.getRunnerAndConfigurationSettings(),
-                                                                myProcessHandler);
-      }
-      else {
-        ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                                myExecutor,
-                                                                myEnvironment.getExecutionTarget(),
-                                                                myEnvironment.getRunnerAndConfigurationSettings(),
-                                                                myDescriptor);
-      }
+    restart();
   }
 
   public void restart() {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myDescriptor.getComponent()));
-    if (ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId())) {
-      return;
-    }
-    try {
-      final ExecutionEnvironment old = myEnvironment;
-      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(),
-                                                            old.getExecutionTarget(),
-                                                            project,
-                                                            old.getRunnerSettings(),
-                                                            old.getConfigurationSettings(),
-                                                            myDescriptor,
-                                                            old.getRunnerAndConfigurationSettings()));
-    }
-    catch (RunCanceledByUserException ignore) {
-    }
-    catch (ExecutionException e1) {
-      Messages.showErrorDialog(project, e1.getMessage(), ExecutionBundle.message("restart.error.message.title"));
-    }
+    Project project = myEnvironment.getProject();
+    if (!ExecutorRegistry.getInstance().isStarting(project, myExecutor.getId(), myRunner.getRunnerId()))
+      ExecutionManager.getInstance(project).restartRunProfile(myRunner, myEnvironment, myDescriptor);
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     String name = myEnvironment.getRunProfile().getName();

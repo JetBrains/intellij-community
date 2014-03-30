@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public abstract class ReplaceWithFileTemplateFix implements LocalQuickFix {
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("default.file.template.replace.with.actual.file.template");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

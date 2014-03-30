@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -62,11 +63,19 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   protected static Color getBackgroundColor(@Nullable Object value) {
     if (value instanceof PsiElement) {
-      PsiFile psiFile = ((PsiElement)value).getContainingFile();
-      final FileColorManager colorManager = FileColorManager.getInstance(psiFile.getProject());
+      final PsiElement psiElement = (PsiElement)value;
+      final FileColorManager colorManager = FileColorManager.getInstance(psiElement.getProject());
 
       if (colorManager.isEnabled()) {
-        final Color fileBgColor = colorManager.getRendererBackground(psiFile);
+        VirtualFile file = null;
+        PsiFile psiFile = psiElement.getContainingFile();
+
+        if (psiFile != null) {
+          file = psiFile.getVirtualFile();
+        } else if (psiElement instanceof PsiDirectory) {
+          file = ((PsiDirectory)psiElement).getVirtualFile();
+        }
+        final Color fileBgColor = file != null ? colorManager.getRendererBackground(file) : null;
 
         if (fileBgColor != null) {
           return fileBgColor;
@@ -79,7 +88,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
-    private Matcher myMatcher;
+    private final Matcher myMatcher;
 
     public LeftRenderer(final String moduleName, Matcher matcher) {
       myModuleName = moduleName;
@@ -94,7 +103,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       if (value instanceof PsiElement) {
         T element = (T)value;
         String name = getElementText(element);
-        PsiFile psiFile = element.getContainingFile();
+        PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
         boolean isProblemFile = false;
 
         if (psiFile != null) {
@@ -124,7 +133,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
-        assert name != null : "Null name for PSI element " + element;
+        assert name != null : "Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")";
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
         if (!element.isValid()) {
           append(" Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);

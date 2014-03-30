@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.ExtensionPoints;
+import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
@@ -31,13 +32,17 @@ import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,10 +52,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -63,7 +70,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private UnusedSymbolLocalInspection myUnusedSymbolLocalInspection;
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
+  private void doTest(boolean checkWarnings, boolean checkInfos) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 
@@ -87,127 +94,138 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testCanHaveBody() throws Exception { doTest(false, false); }
-  public void testInheritFinal() throws Exception { doTest(false, false); }
-  public void testBreakOutside() throws Exception { doTest(false, false); }
-  public void testLoop() throws Exception { doTest(false, false); }
-  public void testIllegalModifiersCombination() throws Exception { doTest(false, false); }
-  public void testModifierAllowed() throws Exception { doTest(false, false); }
-  public void testAbstractMethods() throws Exception { doTest(false, false); }
-  public void testInstantiateAbstract() throws Exception { doTest(false, false); }
-  public void testDuplicateClassMethod() throws Exception { doTest(false, false); }
-  public void testStringLiterals() throws Exception { doTest(false, false); }
-  public void testStaticInInner() throws Exception { doTest(false, false); }
-  public void testInvalidExpressions() throws Exception { doTest(false, false); }
-  public void testIllegalVoidType() throws Exception { doTest(false, false); }
-  public void testIllegalType() throws Exception { doTest(false, false); }
-  public void testOperatorApplicability() throws Exception { doTest(false, false); }
-  public void testIncompatibleTypes() throws Exception { doTest(false, false); }
-  public void testCtrCallIsFirst() throws Exception { doTest(false, false); }
-  public void testAccessLevelClash() throws Exception { doTest(false, false); }
-  public void testCasts() throws Exception { doTest(false, false); }
-  public void testOverrideConflicts() throws Exception { doTest(false, false); }
-  public void testOverriddenMethodIsFinal() throws Exception { doTest(false, false); }
-  public void testMissingReturn() throws Exception { doTest(false, false); }
-  public void testUnreachable() throws Exception { doTest(false, false); }
-  public void testFinalFieldInit() throws Exception { doTest(false, false); }
-  public void testLocalVariableInitialization() throws Exception { doTest(false, false); }
-  public void testVarDoubleInitialization() throws Exception { doTest(false, false); }
-  public void testFieldDoubleInitialization() throws Exception { doTest(false, false); }
-  public void testAssignToFinal() throws Exception { doTest(false, false); }
-  public void testUnhandledExceptionsInSuperclass() throws Exception { doTest(false, false); }
-  public void testAssignmentCompatible () throws Exception { doTest(false, false); }
-  public void testMustBeBoolean() throws Exception { doTest(false, false); }
+  public void testCanHaveBody() { doTest(false, false); }
+  public void testInheritFinal() { doTest(false, false); }
+  public void testBreakOutside() { doTest(false, false); }
+  public void testLoop() { doTest(false, false); }
+  public void testIllegalModifiersCombination() { doTest(false, false); }
+  public void testModifierAllowed() { doTest(false, false); }
+  public void testAbstractMethods() { doTest(false, false); }
+  public void testInstantiateAbstract() { doTest(false, false); }
+  public void testDuplicateClassMethod() { doTest(false, false); }
+  public void testStringLiterals() { doTest(false, false); }
+  public void testStaticInInner() { doTest(false, false); }
+  public void testInvalidExpressions() { doTest(false, false); }
+  public void testIllegalVoidType() { doTest(false, false); }
+  public void testIllegalType() { doTest(false, false); }
+  public void testOperatorApplicability() { doTest(false, false); }
+  public void testIncompatibleTypes() { doTest(false, false); }
+  public void testCtrCallIsFirst() { doTest(false, false); }
+  public void testAccessLevelClash() { doTest(false, false); }
+  public void testCasts() { doTest(false, false); }
+  public void testOverrideConflicts() { doTest(false, false); }
+  public void testOverriddenMethodIsFinal() { doTest(false, false); }
+  public void testMissingReturn() { doTest(false, false); }
+  public void testUnreachable() { doTest(false, false); }
+  public void testFinalFieldInit() { doTest(false, false); }
+  public void testLocalVariableInitialization() { doTest(false, false); }
+  public void testVarDoubleInitialization() { doTest(false, false); }
+  public void testFieldDoubleInitialization() { doTest(false, false); }
+  public void testAssignToFinal() { doTest(false, false); }
+  public void testUnhandledExceptionsInSuperclass() { doTest(false, false); }
+  public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false, false); }
+  public void testIgnoreSuperMethodsInMultipleOverridingCheck() { doTest(false, false); }
+  public void testFalseExceptionsMultipleInheritance() { doTest(true, false); }
+  public void testAssignmentCompatible () { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(false, false); }
+  public void testMustBeBoolean() { doTest(false, false); }
 
-  public void testNumericLiterals() throws Exception { doTest(false, false); }
-  public void testInitializerCompletion() throws Exception { doTest(false, false); }
+  public void testNumericLiterals() { doTest(false, false); }
+  public void testInitializerCompletion() { doTest(false, false); }
 
-  public void testUndefinedLabel() throws Exception { doTest(false, false); }
-  public void testDuplicateSwitchLabels() throws Exception { doTest(false, false); }
-  public void testStringSwitchLabels() throws Exception { doTest(false, false); }
-  public void testIllegalForwardReference() throws Exception { doTest(false, false); }
-  public void testStaticOverride() throws Exception { doTest(false, false); }
-  public void testCyclicInheritance() throws Exception { doTest(false, false); }
-  public void testReferenceMemberBeforeCtrCalled() throws Exception { doTest(false, false); }
-  public void testLabels() throws Exception { doTest(false, false); }
-  public void testUnclosedBlockComment() throws Exception { doTest(false, false); }
-  public void testUnclosedComment() throws Exception { doTest(false, false); }
-  public void testUnclosedDecl() throws Exception { doTest(false, false); }
-  public void testSillyAssignment() throws Exception { doTest(true, false); }
-  public void testTernary() throws Exception { doTest(false, false); }
-  public void testDuplicateClass() throws Exception { doTest(false, false); }
-  public void testCatchType() throws Exception { doTest(false, false); }
-  public void testMustBeThrowable() throws Exception { doTest(false, false); }
-  public void testUnhandledMessingWithFinally() throws Exception { doTest(false, false); }
-  public void testSerializableStuff() throws Exception { doTest(true, false); }
-  public void testDeprecated() throws Exception { doTest(true, false); }
-  public void testJavadoc() throws Exception { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
-  public void testExpressionsInSwitch () throws Exception { doTest(false, false); }
-  public void testAccessInner () throws Exception { doTest(false, false); }
+  public void testUndefinedLabel() { doTest(false, false); }
+  public void testDuplicateSwitchLabels() { doTest(false, false); }
+  public void testStringSwitchLabels() { doTest(false, false); }
+  public void testIllegalForwardReference() { doTest(false, false); }
+  public void testStaticOverride() { doTest(false, false); }
+  public void testCyclicInheritance() { doTest(false, false); }
+  public void testReferenceMemberBeforeCtrCalled() { doTest(false, false); }
+  public void testLabels() { doTest(false, false); }
+  public void testUnclosedBlockComment() { doTest(false, false); }
+  public void testUnclosedComment() { doTest(false, false); }
+  public void testUnclosedDecl() { doTest(false, false); }
+  public void testSillyAssignment() { doTest(true, false); }
+  public void testTernary() { doTest(false, false); }
+  public void testDuplicateClass() { doTest(false, false); }
+  public void testCatchType() { doTest(false, false); }
+  public void testMustBeThrowable() { doTest(false, false); }
+  public void testUnhandledMessingWithFinally() { doTest(false, false); }
+  public void testSerializableStuff() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, false); }
+  public void testDeprecated() { doTest(true, false); }
+  public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true, false); }
+  public void testExpressionsInSwitch () { doTest(false, false); }
+  public void testAccessInner () { doTest(false, false); }
 
-  public void testExceptionNeverThrown() throws Exception { doTest(true, false); }
-  public void testExceptionNeverThrownInTry() throws Exception { doTest(false, false); }
+  public void testExceptionNeverThrown() { doTest(true, false); }
+  public void testExceptionNeverThrownInTry() { doTest(false, false); }
 
-  public void testSwitchStatement() throws Exception { doTest(false, false); }
-  public void testAssertExpression() throws Exception { doTest(false, false); }
+  public void testSwitchStatement() { doTest(false, false); }
+  public void testAssertExpression() { doTest(false, false); }
 
-  public void testSynchronizedExpression() throws Exception { doTest(false, false); }
-  public void testExtendMultipleClasses() throws Exception { doTest(false, false); }
-  public void testRecursiveConstructorInvocation() throws Exception { doTest(false, false); }
-  public void testMethodCalls() throws Exception { doTest(false, false); }
-  public void testSingleTypeImportConflicts() throws Exception { doTest(false, false); }
-  public void testMultipleSingleTypeImports() throws Exception { doTest(true, false); } //duplicate imports
-  public void testNotAllowedInInterface() throws Exception { doTest(false, false); }
-  public void testQualifiedNew() throws Exception { doTest(false, false); }
-  public void testEnclosingInstance() throws Exception { doTest(false, false); }
+  public void testSynchronizedExpression() { doTest(false, false); }
+  public void testExtendMultipleClasses() { doTest(false, false); }
+  public void testRecursiveConstructorInvocation() { doTest(false, false); }
+  public void testMethodCalls() { doTest(false, false); }
+  public void testSingleTypeImportConflicts() { doTest(false, false); }
+  public void testMultipleSingleTypeImports() { doTest(true, false); } //duplicate imports
+  public void testNotAllowedInInterface() { doTest(false, false); }
+  public void testQualifiedNew() { doTest(false, false); }
+  public void testEnclosingInstance() { doTest(false, false); }
 
-  public void testStaticViaInstance() throws Exception { doTest(true, false); } // static via instance
-  public void testQualifiedThisSuper() throws Exception { doTest(true, false); } //illegal qualified this or super
+  public void testStaticViaInstance() { doTest(true, false); } // static via instance
+  public void testQualifiedThisSuper() { doTest(true, false); } //illegal qualified this or super
 
-  public void testAmbiguousMethodCall() throws Exception { doTest(false, false); }
+  public void testAmbiguousMethodCall() { doTest(false, false); }
 
-  public void testImplicitConstructor() throws Exception { doTest(false, false); }
-  public void testDotBeforeDecl() throws Exception { doTest(false, false); }
-  public void testComputeConstant() throws Exception { doTest(false, false); }
+  public void testImplicitConstructor() { doTest(false, false); }
+  public void testDotBeforeDecl() { doTest(false, false); }
+  public void testComputeConstant() { doTest(false, false); }
 
-  public void testAnonInAnon() throws Exception { doTest(false, false); }
-  public void testAnonBaseRef() throws Exception { doTest(false, false); }
-  public void testReturn() throws Exception { doTest(false, false); }
-  public void testInterface() throws Exception { doTest(false, false); }
-  public void testExtendsClause() throws Exception { doTest(false, false); }
-  public void testMustBeFinal() throws Exception { doTest(false, false); }
+  public void testAnonInAnon() { doTest(false, false); }
+  public void testAnonBaseRef() { doTest(false, false); }
+  public void testReturn() { doTest(false, false); }
+  public void testInterface() { doTest(false, false); }
+  public void testExtendsClause() { doTest(false, false); }
+  public void testMustBeFinal() { doTest(false, false); }
 
-  public void testXXX() throws Exception { doTest(false, false); }
-  public void testUnused() throws Exception { doTest(true, false); }
-  public void testQualifierBeforeClassName() throws Exception { doTest(false, false); }
-  public void testQualifiedSuper() throws Exception { doTest(false, false); }
-  public void testCastFromVoid() throws Exception { doTest(false, false); }
-  public void testCatchUnknownMethod() throws Exception { doTest(false, false); }
-  public void testIDEADEV8822() throws Exception { doTest(false, false); }
-  public void testIDEADEV9201() throws Exception { doTest(false, false); }
-  public void testIDEADEV11877() throws Exception { doTest(false, false); }
-  public void testIDEADEV25784() throws Exception { doTest(false, false); }
-  public void testIDEADEV13249() throws Exception { doTest(false, false); }
-  public void testIDEADEV11919() throws Exception { doTest(false, false); }
-  public void testMethodCannotBeApplied() throws Exception { doTest(false, false); }
-  public void testDefaultPackageClassInStaticImport() throws Exception { doTest(false, false); }
+  public void testXXX() { doTest(false, false); }
+  public void testUnused() { doTest(true, false); }
+  public void testQualifierBeforeClassName() { doTest(false, false); }
+  public void testQualifiedSuper() {
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), myTestRootDisposable);
+    doTest(false, false);
+  }
 
-  public void testUnusedParamsOfPublicMethod() throws Exception { doTest(true, false); }
-  public void testInnerClassesShadowing() throws Exception { doTest(false, false); }
+  public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() throws Exception {
+    doTest(false, false);
+  }
 
-  public void testUnusedParamsOfPublicMethodDisabled() throws Exception {
+  public void testCastFromVoid() { doTest(false, false); }
+  public void testCatchUnknownMethod() { doTest(false, false); }
+  public void testIDEADEV8822() { doTest(false, false); }
+  public void testIDEADEV9201() { doTest(false, false); }
+  public void testIDEADEV25784() { doTest(false, false); }
+  public void testIDEADEV13249() { doTest(false, false); }
+  public void testIDEADEV11919() { doTest(false, false); }
+  public void testIDEA67829() { doTest(false, false); }
+  public void testMethodCannotBeApplied() { doTest(false, false); }
+  public void testDefaultPackageClassInStaticImport() { doTest(false, false); }
+
+  public void testUnusedParamsOfPublicMethod() { doTest(true, false); }
+  public void testInnerClassesShadowing() { doTest(false, false); }
+
+  public void testUnusedParamsOfPublicMethodDisabled() {
     myUnusedSymbolLocalInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
     doTest(true, false);
   }
 
-  public void testUnusedNonPrivateMembers() throws Exception {
+  public void testUnusedNonPrivateMembers() {
     UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
     enableInspectionTool(deadCodeInspection);
     doTest(true, false);
   }
 
-  public void testUnusedNonPrivateMembers2() throws Exception {
-    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
+  public void testUnusedNonPrivateMembers2() {
+    ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {
       @NotNull
       @Override
@@ -216,12 +234,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
         return false;
       }
 
       @Override
-      public boolean isEntryPoint(PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
         return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).getName().equals("myTestMethod");
       }
 
@@ -241,7 +259,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     };
 
     point.registerExtension(extension);
-    
+
     try {
       UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
       enableInspectionTool(deadCodeInspection);
@@ -252,12 +270,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       point.unregisterExtension(extension);
     }
   }
-  public void testUnusedNonPrivateMembersReferencedFromText() throws Exception {
+  public void testUnusedNonPrivateMembersReferencedFromText() {
     UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
     enableInspectionTool(deadCodeInspection);
 
     doTest(true, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         PsiDirectory directory = myFile.getParent();
@@ -278,12 +296,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertEmpty(infos);
   }
 
-  public void testNamesHighlighting() throws Exception {
+  public void testNamesHighlighting() {
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  public void testMultiFieldDeclNames() throws Exception {
+  public void testMultiFieldDeclNames() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
@@ -307,7 +325,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
   }
 
-  public void testInjectedAnnotator() throws Exception {
+  public void testInjectedAnnotator() {
     Annotator annotator = new MyAnnotator();
     Language xml = StdFileTypes.XML.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(xml, annotator);
@@ -355,11 +373,68 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
   }
 
-  public void testClassicRethrow() throws Exception { doTest(false, false); }
-  public void testRegexp() throws Exception { doTest(false, false); }
-  public void testUnsupportedFeatures() throws Exception { doTest(false, false); }
-  public void testThisBeforeSuper() throws Exception { doTest(false, false); }
-  public void testExplicitConstructorInvocation() throws Exception { doTest(false, false); }
-  public void testThisInInterface() throws Exception { doTest(false, false); }
-  public void testInnerClassConstantReference() throws Exception { doTest(false, false); }
+  public void testClassicRethrow() { doTest(false, false); }
+  public void testRegexp() { doTest(false, false); }
+  public void testUnsupportedFeatures() { doTest(false, false); }
+  public void testThisBeforeSuper() { doTest(false, false); }
+  public void testExplicitConstructorInvocation() { doTest(false, false); }
+  public void testThisInInterface() { doTest(false, false); }
+  public void testInnerClassConstantReference() { doTest(false, false); }
+  public void testIDEA60875() { doTest(false, false); }
+  public void testIDEA71645() { doTest(false, false); }
+  public void testIDEA18343() { doTest(false, false); }
+  public void testNewExpressionClass() { doTest(false, false); }
+
+  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testStaticMethodCalls() {
+    doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
+  }
+  public void testInsane() throws IOException {
+    configureFromFileText("x.java", "class X { \nxxxx\n }");
+    List<HighlightInfo> infos = highlightErrors();
+    assertTrue(!infos.isEmpty());
+  }
+
+  public static class MyTopFileAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
+        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
+        annotation.setFileLevelAnnotation(true);
+      }
+    }
+  }
+
+  public void testAnnotatorWorksWithFileLevel() {
+    Annotator annotator = new MyTopFileAnnotator();
+    Language java = StdFileTypes.JAVA.getLanguage();
+    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+    try {
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      assertTrue(list.toString(), list.contains(annotator));
+      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+      ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
+      doHighlighting();
+      List<HighlightInfo> fileLevel =
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      HighlightInfo info = assertOneElement(fileLevel);
+      assertEquals("top level", info.getDescription());
+
+      type("//xxx"); //disable top level annotation
+      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
+      assertEmpty(warnings);
+      fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(ourProject)).getFileLevelHighlights(getProject(), getFile());
+      assertEmpty(fileLevel);
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+    }
+
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    assertFalse(list.toString(), list.contains(annotator));
+  }
+
 }

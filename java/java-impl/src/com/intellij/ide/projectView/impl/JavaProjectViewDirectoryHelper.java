@@ -26,9 +26,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
@@ -88,11 +86,6 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   @Override
   public boolean skipDirectory(final PsiDirectory directory) {
     return JavaDirectoryService.getInstance().getPackage(directory) == null;
-  }
-
-  @Override
-  public boolean showFileInLibClasses(final VirtualFile vFile) {
-    return !FileIndexUtil.isJavaSourceFile(getProject(), vFile);
   }
 
   @Override

@@ -39,9 +39,9 @@ public class ConversionResultImpl implements ConversionResult {
   public static final ConversionResultImpl CONVERSION_NOT_NEEDED = new ConversionResultImpl(false, false, false);
   public static final ConversionResultImpl CONVERSION_CANCELED = new ConversionResultImpl(true, true, false);
   public static final ConversionResultImpl ERROR_OCCURRED = new ConversionResultImpl(true, false, true);
-  private boolean myConversionNeeded;
-  private boolean myConversionCanceled;
-  private boolean myErrorOccurred;
+  private final boolean myConversionNeeded;
+  private final boolean myConversionCanceled;
+  private final boolean myErrorOccurred;
   private final Set<File> myChangedFiles = new HashSet<File>();
   private final Set<File> myCreatedFiles = new HashSet<File>();
 
@@ -59,14 +59,17 @@ public class ConversionResultImpl implements ConversionResult {
     }
   }
 
+  @Override
   public boolean conversionNotNeeded() {
     return !myConversionNeeded;
   }
 
+  @Override
   public boolean openingIsCanceled() {
     return myConversionCanceled || myErrorOccurred;
   }
 
+  @Override
   public void postStartupActivity(@NotNull Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {

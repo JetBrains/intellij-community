@@ -12,13 +12,26 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
 public final class HgErrorUtil {
+
+  public static final String SETTINGS_LINK = "settings";
+  public static final String MAPPING_ERROR_MESSAGE = String.format(
+    "Please, ensure that your project base dir is hg root directory or specify full repository path in  <a href='" +
+    SETTINGS_LINK +
+    "'>directory mappings panel</a>.");
 
   private HgErrorUtil() { }
 
@@ -26,8 +39,13 @@ public final class HgErrorUtil {
     if (result == null) {
       return true;
     }
-    String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
+    final List<String> errorLines = result.getErrorLines();
+    for (String line : errorLines) {
+      if (!StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isAuthorizationError(@Nullable HgCommandResult result) {
@@ -60,5 +78,31 @@ public final class HgErrorUtil {
       return false;
     }
     return HgUtil.URL_WITH_PASSWORD.matcher(destinationPath).matches();
+  }
+
+  @NotNull
+  public static NotificationListener getMappingErrorNotificationListener(@NotNull final Project project) {
+    return new NotificationListener.Adapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull Notification notification,
+                                        @NotNull HyperlinkEvent e) {
+        if (SETTINGS_LINK.equals(e.getDescription())) {
+          ShowSettingsUtil.getInstance()
+            .showSettingsDialog(project, VcsBundle.message("version.control.main.configurable.name"));
+        }
+      }
+    };
+  }
+
+  public static boolean isUnknownEncodingError(@Nullable HgCommandResult result) {
+    if (result == null) {
+      return false;
+    }
+    List<String> errorLines = result.getErrorLines();
+    if (errorLines.isEmpty()) {
+      return false;
+    }
+    String line = errorLines.get(0);
+    return !StringUtil.isEmptyOrSpaces(line) && (line.contains("abort") && line.contains("unknown encoding"));
   }
 }

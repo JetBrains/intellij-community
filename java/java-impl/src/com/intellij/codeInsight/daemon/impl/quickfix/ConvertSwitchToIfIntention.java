@@ -40,7 +40,7 @@ import java.util.Set;
 public class ConvertSwitchToIfIntention implements IntentionAction {
   private final PsiSwitchStatement mySwitchExpression;
 
-  public ConvertSwitchToIfIntention(PsiSwitchStatement switchStatement) {
+  public ConvertSwitchToIfIntention(@NotNull PsiSwitchStatement switchStatement) {
     mySwitchExpression = switchStatement;
   }
 
@@ -92,7 +92,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     final boolean hadSideEffects;
     final String expressionText;
     final Project project = switchStatement.getProject();
-    if (RemoveUnusedVariableFix.checkSideEffects(switchExpression, null, new ArrayList<PsiElement>())) {
+    if (RemoveUnusedVariableUtil.checkSideEffects(switchExpression, null, new ArrayList<PsiElement>())) {
       hadSideEffects = true;
 
       final JavaCodeStyleManager javaCodeStyleManager =

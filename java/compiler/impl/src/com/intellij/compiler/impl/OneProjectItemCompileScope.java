@@ -23,7 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -49,7 +49,7 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, final boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>(1);
-    final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final ContentIterator iterator = new CompilerContentIterator(fileType, projectFileIndex, inSourceOnly, files);
     if (myFile.isDirectory()){
       projectFileIndex.iterateContentUnderDirectory(myFile, iterator);

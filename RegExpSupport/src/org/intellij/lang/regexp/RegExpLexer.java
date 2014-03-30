@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
@@ -29,7 +30,7 @@ public class RegExpLexer extends FlexAdapter {
         myCapabilities = capabilities;
   }
 
-    public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
         getFlex().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
         super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
     }

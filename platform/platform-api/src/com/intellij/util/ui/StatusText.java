@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class StatusText {
   public StatusText() {
     myClickListener = new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (e.getButton() == MouseEvent.BUTTON1 && clickCount == 1) {
           ActionListener actionListener = findActionListenerAt(e.getPoint());
           if (actionListener != null) {
@@ -67,11 +67,13 @@ public abstract class StatusText {
     myMouseMotionListener = new MouseAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
-        if (findActionListenerAt(e.getPoint()) != null) {
-          myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-        else {
-          myMouseTarget.setCursor(Cursor.getDefaultCursor());
+        if (isStatusVisible()) {
+          if (findActionListenerAt(e.getPoint()) != null) {
+            myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
+          else {
+            myMouseTarget.setCursor(Cursor.getDefaultCursor());
+          }
         }
       }
     };

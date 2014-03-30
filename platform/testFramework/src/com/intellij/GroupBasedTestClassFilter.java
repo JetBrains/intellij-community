@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,10 @@ package com.intellij;
 
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.Reader;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -39,25 +36,24 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>
  *     Define target class name filters (at regexp format) explicitly using
- *    {@link #TestClassesFilter(List) dedicated constructor};
+ *     {@link PatternListTestClassFilter#PatternListTestClassFilter(List) PatternListTestClassFilter};
  *   </li>
- *   <li>Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.InputStreamReader, String)};</li>
+ *   <li>
+ *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(Reader, String)};
+ *   </li>
  * </ul>
  */
 public class GroupBasedTestClassFilter extends TestClassesFilter {
-
-  private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
-
-  public static final ArrayList<Pattern> EMPTY_LIST = new ArrayList<Pattern>();
-  private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
-  private final List<Pattern> myTestGroupPatterns;
-
   /**
    * Holds reserved test group name that serves as a negation of matching result.
    *
    * @see #matches(String)
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
+
+  private final Map<String, List<Pattern>> myPatterns = new HashMap<String, List<Pattern>>();
+  private final List<Pattern> myAllPatterns = new ArrayList<Pattern>();
+  private final List<Pattern> myTestGroupPatterns;
   private final String myTestGroupName;
 
   private GroupBasedTestClassFilter(Map<String, List<String>> filters, String testGroupName) {
@@ -67,12 +63,12 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
       List<String> filterList = filters.get(groupName);
       addPatterns(groupName, filterList);
     }
-    
+
     myTestGroupPatterns = collectPatternsFor(myTestGroupName);
   }
 
   private void addPatterns(String groupName, List<String> filterList) {
-    ArrayList<Pattern> patterns = compilePatterns(filterList);
+    List<Pattern> patterns = compilePatterns(filterList);
     myPatterns.put(groupName, patterns);
     myAllPatterns.addAll(patterns);
   }
@@ -116,36 +112,31 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    * closed on caller side.
    *
    *
-   * @param inputStreamReader   reader that points to the target test groups config
+   * @param reader   reader that points to the target test groups config
    * @param testGroupName
-   * @return                    newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
+   * @return newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
    * @see #matches(String)
    */
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public static TestClassesFilter createOn(InputStreamReader inputStreamReader, String testGroupName) {
-    try {
-      Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
-      String currentGroupName = "";
-      LineNumberReader lineNumberReader = new LineNumberReader(inputStreamReader);
-      String line;
-      while ((line = lineNumberReader.readLine()) != null) {
-        if (line.startsWith("#")) continue;
-        if (line.startsWith("[") && line.endsWith("]")) {
-          currentGroupName = line.substring(1, line.length() - 1);
-        }
-        else {
-          if (!groupNameToPatternsMap.containsKey(currentGroupName)) {
-            groupNameToPatternsMap.put(currentGroupName, new ArrayList<String>());
-          }
-          groupNameToPatternsMap.get(currentGroupName).add(line);
-        }
-      }
+  public static TestClassesFilter createOn(Reader reader, String testGroupName) throws IOException {
+    Map<String, List<String>> groupNameToPatternsMap = new HashMap<String, List<String>>();
+    String currentGroupName = "";
 
-      return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupName);
+    @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"}) BufferedReader bufferedReader = new BufferedReader(reader);
+    String line;
+    while ((line = bufferedReader.readLine()) != null) {
+      if (line.startsWith("#")) continue;
+      if (line.startsWith("[") && line.endsWith("]")) {
+        currentGroupName = line.substring(1, line.length() - 1);
+      }
+      else {
+        if (!groupNameToPatternsMap.containsKey(currentGroupName)) {
+          groupNameToPatternsMap.put(currentGroupName, new ArrayList<String>());
+        }
+        groupNameToPatternsMap.get(currentGroupName).add(line);
+      }
     }
-    catch (IOException e) {
-      return ALL_CLASSES;
-    }
+
+    return new GroupBasedTestClassFilter(groupNameToPatternsMap, testGroupName);
   }
 
   /**
@@ -180,14 +171,14 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   }
 
   private List<Pattern> collectPatternsFor(String groupName) {
-    if (isAllExcludeDefinedGroup(groupName)){
+    if (isAllExcludeDefinedGroup(groupName)) {
       return myAllPatterns;
-    } else {
-      if (!myPatterns.containsKey(groupName)){
-        return EMPTY_LIST;
-      } else {
-        return myPatterns.get(groupName);
-      }
+    }
+    else if (myPatterns.containsKey(groupName)) {
+      return myPatterns.get(groupName);
+    }
+    else {
+      return Collections.emptyList();
     }
   }
 }

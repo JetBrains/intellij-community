@@ -17,7 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
@@ -27,6 +28,7 @@ import com.intellij.testFramework.InspectionTestCase;
  */
 public class UnusedDeclarationTest extends InspectionTestCase {
   private UnusedDeclarationInspection myTool;
+  private GlobalInspectionToolWrapper myToolWrapper;
 
   @Override
   protected String getTestDataPath() {
@@ -36,11 +38,12 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTool = new UnusedDeclarationInspection();
+    myToolWrapper = getUnusedDeclarationWrapper();
+    myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
   }
 
   private void doTest() {
-    doTest("deadCode/" + getTestName(true), myTool);
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
   }
 
   public void testSCR6067() {
@@ -126,12 +129,12 @@ public class UnusedDeclarationTest extends InspectionTestCase {
 
   public void testAdditionalAnnotations() {
     final String testAnnotation = "Annotated";
-    EntryPointsManagerImpl.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
+    EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation);
     try {
       doTest();
     }
     finally {
-      EntryPointsManagerImpl.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
+      EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation);
     }
   }
 
@@ -151,7 +154,7 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testJunitAbstractClassWithoutInheritor() {
     doTest();
   }
-  
+
   public void testJunitEntryPointCustomRunWith() {
     doTest();
   }

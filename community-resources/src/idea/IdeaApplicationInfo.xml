@@ -1,21 +1,21 @@
 <component>
-  <version codename="Community Edition" major="12" minor="1" eap="true"/>
+  <version codename="Community Edition" major="14" minor="0" eap="true"/>
   <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="126.1" maxbuild="127.9999" version="12.1"/>
-  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="236" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/idea_community_about.png" foreground="ffffff" logoX="300" logoY="265" logoW="75" logoH="30"/>
+  <install-over minbuild="129.1" maxbuild="135.9999" version="13.1"/>
+  <logo url="/idea_community_logo.png" textcolor="444444" progressColor="ffaa16" progressY="222" progressTailIcon="/community_progress_tail.png"/>
+  <about url="/idea_community_about.png" foreground="444444" linkColor="000099" logoX="300" logoY="265" logoW="75" logoH="30"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"
-                  caption-url="/welcomeCaption_community.png" 
+                  caption-url="/welcomeCaption_community.png"
                   slogan-url="/developSlogan_community.png"/>
 
   <third-party url="http://www.jetbrains.org/"/>
 
-  <editor background-url="/idea_logo_background.png"/>
+  <editor background-url="/idea_logo_welcome.png"/>
 
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
@@ -23,7 +23,7 @@
   <help file="ideahelp.jar" root="idea"/>
   <documentation url="http://www.jetbrains.com/idea/documentation"/>
   <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://youtrack.jetbrains.com"
+  <feedback eap-url="http://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
   <plugins url="http://plugins.jetbrains.com"/>
   <whatsnew url="http://www.jetbrains.com/idea/whatsnew/index.html"/>

@@ -134,15 +134,15 @@ public class FieldMayBeFinal {
     }
 
     static class AssigmentInForeach {
-        private boolean b;
-        private boolean c;
+        private boolean b, c;
+        private int j;
 
-        /*AssigmentInForeach(int[] is) {
+        AssigmentInForeach(int[][] is) {
             b = false;
-            for (int i : is) {
+            for (int i : is[j]) {
                 b = c = i == 10;
             }
-        }*/
+        }
     }
 
     static class StaticVariableModifiedInInstanceVariableInitializer {
@@ -376,7 +376,7 @@ class Q implements Iterator<String> {
     private final String[] strings;
     private int index = 0;
     
-    public ArrayIterator(String[] strings) {
+    public Q(String[] strings) {
             this.strings = strings;
     }
     
@@ -414,5 +414,475 @@ class R {
 
   public String getSomeInjectedStuff() {
     return someInjectedStuff;
+  }
+}
+class T1 {
+  private int i; // may be final, but red when it is
+  {
+    if (true) {
+      (i) = 2;
+    } else {
+      System.out.println(i);
+      i++;
+    }
+  }
+}
+class T2 {
+  private int i ; // may be final
+  {
+    if ((i = 1) == 1) {
+      System.out.println(i);
+    }
+    System.out.println(i);
+  }
+}
+class T3 {
+  private boolean b; // may be final, but red when it is
+  {
+    assert false : "" + (b = true);
+    b = true; // red, but valid code
+    System.out.println(b);
+  }
+}
+class T4 {
+  private boolean c; // may not be final, but green when it is
+  {
+    assert c = true : (c) = true; // green, but does not compile
+    System.out.println(c);
+  }
+}
+class T5 {
+  private boolean d; // may be final
+  {
+    assert true : d = true;
+    d = true;
+  }
+}
+class T6 {
+  private int i; // may be final
+  {
+    switch (i = 5) {}
+  }
+}
+class T7 {
+  private int i; // may be final
+  {
+    switch (5) {
+      default:
+        i = 1;
+        break;
+      case 1:
+        i =  3;
+        break;
+      case 2:
+        i = 4;
+        System.out.println(i);
+        break;
+    }
+  }
+}
+class T8 {
+  T8() {
+    i = 1;
+  }
+
+  T8(String s) {
+    i = 2;
+  }
+  private int i; // may be final
+}
+class T9 {
+  private int i = 1; // may be final
+}
+class T10 {
+  private int i = i = 1; // may not be final
+}
+class T11 {
+  private int i; // may be final
+  T11() {
+    i = 2;
+  }
+}
+class T12 {
+  private int i = 1; // may not be final
+  void m() { i = 1;}
+}
+class T13 {
+  private int i; // may be final
+  {
+    int j = i = 2;
+  }
+}
+class T14 {
+  private int i = 1; // may not final
+  class X {{
+    i = 2;
+  }}
+}
+class T15 {
+  private int i; // may be final
+  {
+    class X {{
+      System.out.println(i);
+    }}
+    i = 2;
+  }
+}
+class T16 {
+  private int i; // may not be final
+  {
+    class X {{
+      i = 3;
+      System.out.println(i);
+    }}
+    i = 2;
+  }
+}
+class T17 {
+  private int i; // may not be final
+  {
+    new java.util.ArrayList(i);
+    i = 23;
+  }
+}
+class T18 {
+  private int i; // may not be final
+  {
+    new Object() {{
+      i = 1;
+    }};
+    i = 2;
+  }
+}
+class T19 {
+  private int i; // may not be final, but green when it is
+  {
+    new Object() {{
+      System.out.println(i);
+    }};
+    i = 1;
+  }
+}
+class T20 {
+  private int i; // may not be final
+  {
+    final Object[] objects = new Object[i];
+    i = 2;
+  }
+}
+class T21 {
+  private int i; // may be final
+  {
+    final Object[] objects = new Object[]{1, 2, i=3};
+  }
+}
+class T22 {
+  private final int i; // may not be final, but green when it is
+  {
+    new Object() {{
+      System.out.println(i);
+    }};
+    i = 1;
+  }
+}
+class T23 {
+  private int i; // may be final
+  {
+    new Object() {
+      public String toString() {
+        System.out.println(i);
+        return null;
+      }
+    };
+    i = 1;
+  }
+}
+class T24 {
+  private int i; // may not be final
+  private int j; // may be final
+  {
+    i = j = 1;
+    i = 2;
+  }
+}
+class T25 {
+  private int i; // may be final
+  {
+    if (1 == 1) {
+      i = 2;
+    }
+  }
+}
+class T26 {
+  private int i; // may be final
+  {
+    if (true && (i = 32) == 30) {}
+  }
+}
+class T27 {
+  private int i; // may be final
+  {
+    if ((i = 32) == 30 && false) {}
+  }
+}
+class T28 {
+  private int i; // may be final
+  {
+    do {
+    } while(((i = 32) == 30) && false);
+  }
+}
+class T29 {
+  private int j; // may be final, but code is red when it is
+  T29 (int b) {
+    do {
+      j = 34; // red here
+      if (true) break;
+    } while (b == 1);
+  }
+}
+class T30 {
+  private int i; // may not be final
+  {
+    if (true || (i = 3) == 4) {}
+  }
+}
+class T31 {
+  private int i; // may be final
+  {
+    if (false || (i = 3) == 4) {}
+  }
+}
+class T32 {
+  private int i; // may be final
+  {
+    try {
+    } catch (RuntimeException e) {
+    } finally {
+      i = 1;
+    }
+  }
+}
+class T33 {
+  private int i; // may not be final
+  {
+    try {
+      i = 1;
+    } catch (RuntimeException e) {
+      i = 2;
+    } finally {
+    }
+  }
+}
+class T34 {
+  public static class X {
+    private int i = 1; // may be final
+  }
+}
+class T35 {
+  private int i; // may be final
+  private final int j = 3;
+  {
+    bas: {
+      i =  1;
+      if (j == 3) {
+        break bas;
+      }
+    }
+  }
+}
+class T36 {
+  private S s; // may not be final
+  {
+    System.out.println(s.t);
+    s = null;
+  }
+  class S {
+    public int t;
+  }
+}
+class T37 {
+  private int i; // may be final
+  {
+    outer: while (true) {
+      while (true) {
+        i  = 1;
+        break outer;
+      }
+    }
+  }
+}
+class T38 {
+  private int i; // may not be final
+  {
+    int j = 0;
+//        i = 1;
+    while (j < 8) {
+      i = 1;
+    }
+  }
+}
+class T39 {
+  private int i; // may not be final
+  {
+    int j = 0;
+    do {
+      i = 1;
+    } while (j == 2);
+  }
+}
+class T40 {
+  private int i; // may be final
+  {
+    for (;;) {
+      i = 1;
+      break;
+    }
+  }
+}
+class T41 {
+  private int i; // may not be final!
+  {
+    int j = 0;
+    for (; j < 9; ) {
+      i  = 1;
+      break;
+    }
+  }
+}
+class T42 {
+  private int i; // may not be final
+  {
+    for (; true ;i = 1) {
+      break;
+    }
+  }
+}
+class T43 {
+  private int i; // may be final!
+  {
+    for (int j = 0; (i = 1) == 1 && j < 9; j++) {
+      break;
+    }
+  }
+}
+class T44 {
+  private int i; // may not be final, but green when it is
+  {
+    for (; true ; i = 1, i = 2) {
+      i = 2 ;
+      break;
+    }
+  }
+}
+class T45 {
+  private int i; // should be allowed final, but does not compile in javac
+  {
+    for (; true; i = 1) {
+      i = 2;
+      break;
+    }
+  }
+}
+class T46 {
+  private int i; // may not be final
+  {
+    i = true ? i = 1 : 2;
+  }
+}
+class T47 {
+  private Object o; // may be final
+  {
+    boolean b = (o = new Object()) instanceof String;
+  }
+}
+class T48 {
+  private String s; // may be final
+  {
+    Object o = (Object) (s = "");
+  }
+}
+class T49 {
+  private int i; // may be final
+  {
+    for (String s : g(i = 1)) {
+      break;
+    }
+  }
+
+  java.util.List<String> g(int i) {
+    return null;
+  }
+}
+class T50 {
+  private boolean b; // may not be final, but green when it is.
+  T50(int i) {
+    if (false && (b = true)) {
+
+    } else {
+      b = false;
+    }
+  }
+}
+class T51 {
+  private boolean b; // may be final
+  {
+    if (true && (b = true)) {
+    }
+  }
+}
+class T52 {
+  private boolean z; // may be final
+  {
+    boolean y = false;
+    if ( true ? (z = y) : false ) {}
+  }
+}
+class T53 {
+  private int i; // may not be final
+  {
+    boolean b = true;
+    if (!b || (i = 2) == 2) {
+      System.out.println(i);
+    }
+  }
+}
+class T54 {
+  private boolean b; // may be final
+  {
+    boolean r = false;
+    boolean f = false;
+
+    if (!(f || (b = r)))
+      r = !b;
+    else throw new RuntimeException();
+    System.out.println(r);
+  }
+}
+class T55 {
+  private int i; // may be final, but red when it is
+  {
+    boolean [] a = new boolean [10];
+    a[i = 1] = i > 0;
+  }
+}
+class T56 {
+  private boolean b; // may not be final, but green when it is
+  {
+    if (false && (b = false)) ;
+    if (true && (b = false)) ;
+  }
+}
+class T57 {
+  private int x; // may be final according to one paragraph of the spec but not in another, and compiles, but let's choose to ignore that.
+  {
+    x = this.x;
+  }
+}
+class T58 {
+  private static int x;
+  static {
+    System.out.println("x = " + T58.x);
+    x = 3;
   }
 }

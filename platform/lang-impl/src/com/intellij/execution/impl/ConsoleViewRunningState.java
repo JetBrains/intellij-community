@@ -22,7 +22,9 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,7 +33,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-
 public class ConsoleViewRunningState extends ConsoleState {
   private final ConsoleViewImpl myConsole;
   private final ProcessHandler myProcessHandler;
@@ -39,6 +40,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   private final Writer myUserInputWriter;
 
   private final ProcessAdapter myProcessListener = new ProcessAdapter() {
+    @Override
     public void onTextAvailable(final ProcessEvent event, final Key outputType) {
       myConsole.print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
     }
@@ -74,12 +76,12 @@ public class ConsoleViewRunningState extends ConsoleState {
       charset = ((OSProcessHandler)processHandler).getCharset();
     }
     if (charset == null) {
-      charset = EncodingManager.getInstance().getDefaultCharset();
+      charset = ObjectUtils.notNull(EncodingManager.getInstance().getDefaultCharset(), CharsetToolkit.UTF8_CHARSET);
     }
-
     return new OutputStreamWriter(processInput, charset);
   }
 
+  @Override
   @NotNull
   public ConsoleState dispose() {
     if (myProcessHandler != null) {
@@ -88,14 +90,17 @@ public class ConsoleViewRunningState extends ConsoleState {
     return myFinishedStated;
   }
 
+  @Override
   public boolean isFinished() {
     return myProcessHandler == null || myProcessHandler.isProcessTerminated();
   }
 
+  @Override
   public boolean isRunning() {
     return myProcessHandler != null && !myProcessHandler.isProcessTerminated();
   }
 
+  @Override
   public void sendUserInput(final String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
@@ -104,6 +109,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     myUserInputWriter.flush();
   }
 
+  @Override
   public ConsoleState attachTo(final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }

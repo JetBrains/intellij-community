@@ -24,14 +24,17 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
   @Override
   protected ListTableModel createListModel() {
     ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Local path") {
+      @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getLocalRoot();
       }
 
+      @Override
       public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
+      @Override
       public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;
@@ -47,14 +50,17 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
     };
 
     ColumnInfo remote = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Remote path") {
+      @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getRemoteRoot();
       }
 
+      @Override
       public boolean isCellEditable(PathMappingSettings.PathMapping pathMapping) {
         return canDeleteElement(pathMapping);
       }
 
+      @Override
       public void setValue(PathMappingSettings.PathMapping pathMapping, String s) {
         if (s.equals(valueOf(pathMapping))) {
           return;

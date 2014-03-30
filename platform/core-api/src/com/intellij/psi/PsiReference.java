@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see PsiPolyVariantReference
  * @see PsiElement#getReference()
- * @see PsiElement#getReferences() 
+ * @see PsiElement#getReferences()
  * @see com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)
  * @see com.intellij.psi.PsiReferenceBase
  * @see com.intellij.psi.PsiReferenceContributor
@@ -42,6 +42,7 @@ public interface PsiReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = new ArrayFactory<PsiReference>() {
+    @NotNull
     @Override
     public PsiReference[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiReference[count];
@@ -118,7 +119,8 @@ public interface PsiReference {
    *
    * @return the array of available identifiers.
    */
-  @NotNull 
+  @SuppressWarnings("JavadocReference")
+  @NotNull
   Object[] getVariants();
 
   /**

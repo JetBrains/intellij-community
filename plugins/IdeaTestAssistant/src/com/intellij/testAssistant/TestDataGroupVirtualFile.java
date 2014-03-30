@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   @Override
   public String getName() {
     final String prefix = StringUtil.commonPrefix(myBeforeFile.getName(), myAfterFile.getName());
-    if (prefix.length() == 0) {
+    if (prefix.isEmpty()) {
       return StringUtil.commonSuffix(myBeforeFile.getName(), myAfterFile.getName());
     }
     return prefix + "." + myBeforeFile.getExtension();
@@ -63,6 +63,7 @@ public class TestDataGroupVirtualFile extends VirtualFile {
     return LocalFileSystem.getInstance();
   }
 
+  @NotNull
   @Override
   public String getPath() {
     return myBeforeFile.getPath();

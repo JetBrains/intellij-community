@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,13 +36,12 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RelatedUsageInfo;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -100,7 +100,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   public Set<PsiElement> getElements() {
     return Collections.unmodifiableSet(myAllRenames.keySet());
   }
-  
+
   public String getNewName(PsiElement element) {
     return myAllRenames.get(element);
   }
@@ -115,6 +115,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myRenamerFactories.remove(factory);
   }
 
+  @Override
   public void doRun() {
     prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
 
@@ -137,13 +138,19 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement);
   }
 
+  @Override
   public boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
-    RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts);
+    RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
     if (!conflicts.isEmpty()) {
+
+      final RefactoringEventData conflictData = new RefactoringEventData();
+      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.rename", conflictData);
+
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
       }
@@ -175,6 +182,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
         myAllRenames.putAll(renames);
         final Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             for (Map.Entry<PsiElement, String> entry : renames.entrySet()) {
               final UsageInfo[] usages =
@@ -213,9 +221,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         for (final AutomaticRenamer renamer : myRenamers) {
-          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages);
+          renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
         }
       }
     };
@@ -250,14 +259,16 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myNewName = newName;
     myAllRenames.put(myPrimaryElement, newName);
     myCommandName = RefactoringBundle
-      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement), newName);
+      .message("renaming.0.1.to.2", UsageViewUtil.getType(myPrimaryElement), DescriptiveNameUtil.getDescriptiveName(myPrimaryElement), newName);
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new RenameViewDescriptor(myAllRenames);
   }
 
+  @Override
   @NotNull
   public UsageInfo[] findUsages() {
     myRenamers.clear();
@@ -289,6 +300,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return usageInfos;
   }
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length > 0);
     if (myPrimaryElement != null) {
@@ -304,6 +316,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myAllRenames.putAll(newAllRenames);
   }
 
+  @Override
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (myForceShowPreview) return true;
     if (super.isPreviewUsages(usages)) return true;
@@ -315,6 +328,29 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.rename";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myPrimaryElement);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myPrimaryElement);
+    return data;
+  }
+
+  @Override
   public void performRefactoring(UsageInfo[] usages) {
     final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
     String message = null;
@@ -377,16 +413,19 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
             if (ideFrame != null) {
 
               StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
               HyperlinkListener listener = new HyperlinkListener() {
+                @Override
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                   if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
                   Messages.showMessageDialog("<html>Following usages were safely skipped:<br>" +
                                              StringUtil.join(mySkippedUsages, new Function<UnresolvableCollisionUsageInfo, String>() {
+                                               @Override
                                                public String fun(UnresolvableCollisionUsageInfo unresolvableCollisionUsageInfo) {
                                                  return unresolvableCollisionUsageInfo.getDescription();
                                                }
@@ -402,10 +441,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
+  @Override
   protected String getCommandName() {
     return myCommandName;
   }

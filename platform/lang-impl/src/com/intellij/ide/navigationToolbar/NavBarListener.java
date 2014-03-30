@@ -140,6 +140,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     }
   }
 
+  @Override
   public void focusGained(final FocusEvent e) {
     if (e.getOppositeComponent() == null && shouldFocusEditor) {
       shouldFocusEditor = false;
@@ -155,6 +156,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     }
   }
 
+  @Override
   public void focusLost(final FocusEvent e) {
     if (myPanel.getProject().isDisposed()) {
       myPanel.setContextComponent(null);
@@ -178,6 +180,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     // but future focused component
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         processFocusLost(e);
       }
@@ -227,22 +230,27 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     rebuildUI();
   }
 
+  @Override
   public void childAdded(@NotNull PsiTreeChangeEvent event) {
     updateModel();
   }
 
+  @Override
   public void childReplaced(@NotNull PsiTreeChangeEvent event) {
     updateModel();
   }
 
+  @Override
   public void childMoved(@NotNull PsiTreeChangeEvent event) {
     updateModel();
   }
 
+  @Override
   public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
     updateModel();
   }
 
+  @Override
   public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
     updateModel();
   }
@@ -313,6 +321,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       myPanel.moveDown();
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           try {
             final Robot robot = new Robot();
@@ -335,7 +344,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   @Override
-  public void fileOpened(final FileEditorManager manager, final VirtualFile file) {
+  public void fileOpened(@NotNull final FileEditorManager manager, @NotNull final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -394,8 +403,8 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
 
   @Override
-  public void fileClosed(FileEditorManager source, VirtualFile file) {}
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {}
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }

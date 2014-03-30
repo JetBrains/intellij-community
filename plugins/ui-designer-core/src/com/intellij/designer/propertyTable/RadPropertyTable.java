@@ -104,7 +104,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @NotNull
   protected TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity) {
-    return SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+    return SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

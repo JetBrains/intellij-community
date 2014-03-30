@@ -17,16 +17,14 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -138,8 +136,8 @@ public class SvnExternalTests extends Svn17TestCase {
     Assert.assertNotNull(vf1);
     Assert.assertNotNull(vf2);
 
-    editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
-    editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
+    VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
@@ -171,13 +169,22 @@ public class SvnExternalTests extends Svn17TestCase {
 
   private void updatedCreatedExternalFromIDEAImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    setNewDirectoryMappings(sourceDir);
     imitUpdate(myProject);
 
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
     Assert.assertNotNull(externalVf);
+  }
+
+  private void setNewDirectoryMappings(final File sourceDir) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+          Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+      }
+    });
   }
 
   @Test
@@ -221,8 +228,7 @@ public class SvnExternalTests extends Svn17TestCase {
 
   private void uncommittedExternalCopyIsDetectedImpl() {
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
+    setNewDirectoryMappings(sourceDir);
     imitUpdate(myProject);
     refreshSvnMappingsSynchronously();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,17 @@ public class EmptyIcon implements Icon {
     this(base.getIconWidth(), base.getIconHeight());
   }
 
+  @Override
   public int getIconWidth() {
     return width;
   }
 
+  @Override
   public int getIconHeight() {
     return height;
   }
 
+  @Override
   public void paintIcon(Component component, Graphics g, int i, int j) {
   }
 

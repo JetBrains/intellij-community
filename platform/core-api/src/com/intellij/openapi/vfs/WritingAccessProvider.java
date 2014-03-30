@@ -27,7 +27,7 @@ import java.util.Collection;
  */
 public abstract class WritingAccessProvider {
 
-  private static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
+  public static final ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
 
   /**
    * @param files files to be checked

@@ -78,6 +78,7 @@ public class ShutDownTracker implements Runnable {
 
   public final void ensureStopperThreadsFinished() {
     Thread[] threads = getStopperThreads();
+    final long started = System.currentTimeMillis();
     while (threads.length > 0) {
       Thread thread = threads[0];
       if (!thread.isAlive()) {
@@ -87,6 +88,13 @@ public class ShutDownTracker implements Runnable {
         }
       }
       else {
+        final long totalTimeWaited = System.currentTimeMillis() - started;
+        if (totalTimeWaited > 3000) {
+          // okay, we are waiting fo too long already, lets stop everyone:
+          // in some cases, stopper thread may try to run readAction while we are shutting down (under a writeAction) and deadlock.
+          thread.interrupt();
+        }
+
         try {
           thread.join(100);
         }

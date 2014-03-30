@@ -504,7 +504,7 @@ public class CharsetToolkit {
     Charset charset = null;
     try {
       charset = Charset.forName(System.getProperty(FILE_ENCODING_PROPERTY));
-    } catch (Exception e) {
+    } catch (Exception ignored) {
       // Null is OK here.
     }
 
@@ -564,7 +564,7 @@ public class CharsetToolkit {
   @NotNull
   public static byte[] getUtf8Bytes(@NotNull String s) {
     try {
-      return s.getBytes(CharsetToolkit.UTF8);
+      return s.getBytes(UTF8);
     }
     catch (UnsupportedEncodingException e) {
       throw new RuntimeException("UTF-8 must be supported", e);
@@ -621,10 +621,10 @@ public class CharsetToolkit {
       try {
         charset = Charset.forName(name);
       }
-      catch (IllegalCharsetNameException e) {
+      catch (IllegalCharsetNameException ignored) {
         //ignore
       }
-      catch(UnsupportedCharsetException e){
+      catch(UnsupportedCharsetException ignored){
         //ignore
       }
     }

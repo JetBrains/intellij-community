@@ -24,8 +24,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -49,7 +47,7 @@ public class DefaultConfigLoader {
       final SvnVcs vcs = SvnVcs.getInstance(project);
 
       File rootFile = new File(vcsRoot.getPath());
-      final SVNInfo info = vcs.createWCClient().doInfo(rootFile, SVNRevision.UNDEFINED);
+      final SVNInfo info = vcs.getInfo(rootFile);
       if (info == null || info.getURL() == null) {
         LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
         return null;

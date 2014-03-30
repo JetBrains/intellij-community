@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsOperationOnFiles;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
@@ -34,10 +32,10 @@ import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import java.io.File;
 
 /**
- * author: lesya
+ * @author lesya
  */
-
 public class CheckoutFileOperation extends CvsOperationOnFiles {
+
   private final File myFile;
   private final boolean myIsDirectory;
   private final String myModuleName;
@@ -76,22 +74,18 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
   }
 
   private static String getModuleName(final VirtualFile parent, final String fileName) {
-    return new WriteAction<String>() {
-      protected void run(Result<String> result) throws Throwable {
-        final String parentModule = CvsUtil.getModuleName(parent);
-        VirtualFile file = parent.findChild(fileName);
-        if (parentModule == null && file != null) {
-          result.setResult(CvsUtil.getModuleName(file));
-        }
-        else {
-          result.setResult(parentModule + "/" + fileName);
-        }
-      }
-    }.execute().getResultObject();
+    final String parentModule = CvsUtil.getModuleName(parent);
+    final VirtualFile file = parent.findChild(fileName);
+    if (parentModule == null && file != null) {
+      return CvsUtil.getModuleName(file);
+    }
+    else {
+      return parentModule + "/" + fileName;
+    }
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    CheckoutCommand result = new CheckoutCommand(null);
+    final CheckoutCommand result = new CheckoutCommand(null);
     result.setRecursive(true);
     result.addModule(myModuleName);
     myRevisionOrDate.setForCommand(result);
@@ -119,7 +113,7 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
   }
 
   protected File getLocalRootFor(CvsRootProvider root) {
-    File result = getRoot();
+    final File result = getRoot();
     LOG.assertTrue(result != null);
     return result;
   }

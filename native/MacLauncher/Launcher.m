@@ -14,6 +14,8 @@
 typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *args);
 
 
+static NSString *const JVMOptions = @"JVMOptions";
+
 @interface NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
 
@@ -64,18 +66,22 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
 }
 
 
+void appendBundle(NSString *path, NSMutableArray *sink) {
+    if ([path hasSuffix:@".jdk"] || [path hasSuffix:@".jre"]) {
+        NSBundle *bundle = [NSBundle bundleWithPath:path];
+        if (bundle != nil) {
+            [sink addObject:bundle];
+        }
+    }
+}
+
 void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     NSError *error = nil;
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
     if (names != nil) {
         for (NSString *name in names) {
-            if ([name hasSuffix:@".jdk"] || [name hasSuffix:@".jre"]) {
-                NSBundle *bundle = [NSBundle bundleWithPath:[path stringByAppendingPathComponent:name]];
-                if (bundle != nil) {
-                    [sink addObject:bundle];
-                }
-            }
+            appendBundle([path stringByAppendingPathComponent:name], sink);
         }
     }
 }
@@ -86,7 +92,7 @@ NSArray *allVms() {
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
-        appendJvmBundlesAt(explicit, jvmBundlePaths);
+        appendBundle(explicit, jvmBundlePaths);
     }
     else {
         NSBundle *bundle = [NSBundle mainBundle];
@@ -108,7 +114,7 @@ NSString *jvmVersion(NSBundle *bundle) {
 }
 
 NSString *requiredJvmVersion() {
-    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary:@"Java" defaultObject:@"1.7*"];
+    return [[NSBundle mainBundle].infoDictionary valueForKey:@"JVMVersion" inDictionary: JVMOptions defaultObject:@"1.7*"];
 }
 
 BOOL satisfies(NSString *vmVersion, NSString *requiredVersion) {
@@ -141,16 +147,19 @@ NSBundle *findMatchingVm() {
     NSString *required = requiredJvmVersion();
     debugLog([NSString stringWithFormat:@"Required VM: %@", required]);
 
-    for (NSBundle *vm in vmBundles) {
+    if (required != nil && required != NULL) {
+	  for (NSBundle *vm in vmBundles) {
         if (satisfies(jvmVersion(vm), required)) {
             debugLog(@"Chosen VM:");
             debugLog([vm bundlePath]);
             return vm;
         }
+  	  }
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent JVMOptios key.");
+        exit(-1);
     }
-
-    debugLog(@"No matching VM found");
-
+    NSLog(@"No matching VM found.");
     return nil;
 }
 
@@ -166,21 +175,28 @@ CFBundleRef NSBundle2CFBundle(NSBundle *bundle) {
 }
 
 - (NSMutableString *)buildClasspath:(NSBundle *)jvm {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSMutableString *classpathOption = [NSMutableString stringWithString:@"-Djava.class.path="];
-    [classpathOption appendString:[jvmInfo objectForKey:@"ClassPath"]];
-
-    NSString *toolsJar = [[jvm bundlePath] stringByAppendingString:@"/Contents/Home/lib/tools.jar"];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:toolsJar]) {
+    NSString *classPath = [jvmInfo objectForKey:@"ClassPath"];
+    if (classPath != nil && classPath != NULL) {
+      [classpathOption appendString:[jvmInfo objectForKey:@"ClassPath"]];
+      NSString *toolsJar = [[jvm bundlePath] stringByAppendingString:@"/Contents/Home/lib/tools.jar"];
+      if ([[NSFileManager defaultManager] fileExistsAtPath:toolsJar]) {
         [classpathOption appendString:@":"];
         [classpathOption appendString:toolsJar];
+      }
+
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent ClassPath key.");
+        exit(-1);
     }
-    return classpathOption;
+        
+  return classpathOption;
 }
 
 
 NSString *getSelector() {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSDictionary *properties = [jvmInfo dictionaryForKey:@"Properties"];
     if (properties != nil) {
         return [properties objectForKey:@"idea.paths.selector"];
@@ -231,7 +247,7 @@ NSDictionary *parseProperties() {
 - (JavaVMInitArgs)buildArgsFor:(NSBundle *)jvm {
     NSMutableString *classpathOption = [self buildClasspath:jvm];
 
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSMutableArray *args_array = [NSMutableArray array];
 
     [args_array addObject:classpathOption];
@@ -256,7 +272,14 @@ NSDictionary *parseProperties() {
 }
 
 - (const char *)mainClassName {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
+    
+    NSString *mainClass = [jvmInfo objectForKey:@"MainClass"];
+    if (mainClass == nil || mainClass == NULL) {
+        NSLog(@"Info.plist is corrupted, Absent MainClass key.");
+        exit(-1);
+    }
+    
     char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
     
     char *cur = answer;
@@ -271,13 +294,16 @@ NSDictionary *parseProperties() {
 }
 
 - (void)process_cwd {
-    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Java"];
+    NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
     NSString *cwd = [jvmInfo objectForKey:@"WorkingDirectory"];
-    if (cwd != nil) {
+    if (cwd != nil && cwd != NULL) {
         cwd = [self expandMacros:cwd];
         if (chdir([cwd UTF8String]) != 0) {
             NSLog(@"Cannot chdir to working directory at %@", cwd);
         }
+    } else {
+        NSLog(@"Info.plist is corrupted, Absent WorkingDirectory key.");
+        exit(-1);
     }
 }
 
@@ -383,6 +409,5 @@ NSDictionary *parseProperties() {
 
     [pool release];
 }
-
 
 @end

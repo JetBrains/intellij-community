@@ -54,7 +54,7 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
       int indent = 0;
       final int lineStart = document.getLineStartOffset(line);
       final int lineEnd = document.getLineEndOffset(line);
-      int indentEnd = lineStart;
+      int indentEnd = lineEnd;
       for(int offset = Math.max(lineStart, textRange.getStartOffset()); offset < lineEnd; offset++) {
         char c = document.getCharsSequence().charAt(offset);
         if (c == ' ') {

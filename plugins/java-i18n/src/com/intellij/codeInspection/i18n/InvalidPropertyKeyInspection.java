@@ -45,26 +45,31 @@ import java.util.*;
  */
 public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.PROPERTIES_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return CodeInsightBundle.message("inspection.unresolved.property.key.reference.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "UnresolvedPropertyKey";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

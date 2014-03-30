@@ -23,14 +23,17 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerator;
 
 public final class ModulePathMacro extends Macro {
+  @Override
   public String getName() {
     return "ModuleSourcePath";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.module.source.path");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) {

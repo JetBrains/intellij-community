@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.mock;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -78,12 +93,7 @@ public class Mock {
     @Override
     @NotNull
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-      return new FileEditorState() {
-            @Override
-            public boolean canBeMergedWith(FileEditorState fileEditorState, FileEditorStateLevel fileEditorStateLevel) {
-                return false;
-            }
-        };
+      return FileEditorState.INSTANCE;
     }
 
     @Override
@@ -133,12 +143,14 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
-    public ActionCallback notifyPublisher(Runnable runnable) {
+    public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
       return new ActionCallback.Done();
     }
 
+    @NotNull
     @Override
     public ActionCallback getReady(@NotNull Object requestor) {
       return new ActionCallback.Done();
@@ -149,7 +161,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           @NotNull EditorWindow window) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -167,14 +179,16 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
     public EditorsSplitters getSplitters() {
-      return null;
+      throw new RuntimeException("not implemented");
     }
 
+    @NotNull
     @Override
     public AsyncResult<EditorWindow> getActiveWindow() {
-      return null;
+      throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -223,7 +237,7 @@ public class Mock {
     }
 
     @Override
-    public void updateFilePresentation(VirtualFile file) {
+    public void updateFilePresentation(@NotNull VirtualFile file) {
     }
 
     @Override
@@ -244,7 +258,7 @@ public class Mock {
 
     @Override
     @NotNull
-    public VirtualFile[] getSiblings(VirtualFile file) {
+    public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
       return new VirtualFile[0];
     }
 
@@ -313,10 +327,10 @@ public class Mock {
 
     @Override
     @NotNull
-    public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                         boolean focusEditor,
-                                                                         boolean searchForSplitter) {
-      return Pair.create (new FileEditor[0], new FileEditorProvider [0]);
+    public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                          boolean focusEditor,
+                                                                          boolean searchForSplitter) {
+      return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
     }
 
     @Override
@@ -328,7 +342,7 @@ public class Mock {
     }
 
     @Override
-    public Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
+    public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
       return null;
     }
 
@@ -374,7 +388,7 @@ public class Mock {
     @NotNull
     @Override
     public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0]; 
+      return new FileEditor[0];
     }
 
     @Override
@@ -384,11 +398,11 @@ public class Mock {
     }
 
     @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent) {
+    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
     }
 
     @Override
@@ -423,6 +437,10 @@ public class Mock {
     public int getWindowSplitCount() {
       return 0;
     }
+
+    @Override
+    public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {
@@ -435,9 +453,10 @@ public class Mock {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public String getPath() {
-      return null;
+      throw new UnsupportedOperationException();
     }
 
     @Override

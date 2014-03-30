@@ -36,9 +36,6 @@
           <fileset dir="${project.home}/lib/ant/lib">
             <include name="*.jar"/>
           </fileset>
-          <fileset dir="${gant.home}/lib">
-            <include name="*.jar"/>
-          </fileset>
         </classpath>
 
         <arg value="-f"/>
@@ -46,6 +43,7 @@
       </java>
 
       <java classname="com.intellij.util.io.zip.ReorderJarsMain" fork="true">
+        <jvmarg line="-Djava.awt.headless=true"/>
         <arg value="${build}/order.txt"/>
         <arg value="@{deploy}"/>
         <arg value="@{deploy}"/>

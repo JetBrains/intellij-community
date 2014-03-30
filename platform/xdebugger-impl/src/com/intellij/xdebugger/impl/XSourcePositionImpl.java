@@ -20,7 +20,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,19 +41,25 @@ public class XSourcePositionImpl implements XSourcePosition {
     myOffset = offset;
   }
 
+  @Override
   public int getLine() {
     return myLine;
   }
 
+  @Override
   public int getOffset() {
     return myOffset;
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  /**
+   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPositionByOffset(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   */
   @Nullable
   public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
     if (file == null) return null;
@@ -63,23 +71,46 @@ public class XSourcePositionImpl implements XSourcePosition {
     return new XSourcePositionImpl(file, line, offset);
   }
 
+  /**
+   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPosition(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
-    if (file == null) return null;
-
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
+    if (file == null) {
       return null;
     }
-    if (line < 0){
-      line = 0;
+
+    int offset;
+    if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+      offset = -1;
     }
-    int offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+    else {
+      Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+      if (document == null) {
+        return null;
+      }
+      if (line < 0) {
+        line = 0;
+      }
+
+      offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+    }
     return new XSourcePositionImpl(file, line, offset);
   }
 
+  @Override
   @NotNull
-  public Navigatable createNavigatable(final @NotNull Project project) {
-    return myOffset != -1 ? new OpenFileDescriptor(project, myFile, myOffset) : new OpenFileDescriptor(project, myFile, getLine(), 0);
+  public Navigatable createNavigatable(@NotNull Project project) {
+    return createOpenFileDescriptor(project, this);
+  }
+
+  @NotNull
+  public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    return position.getOffset() != -1 ? new OpenFileDescriptor(project, position.getFile(), position.getOffset()) : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+  }
+
+  @Override
+  public String toString() {
+    return "XSourcePositionImpl[" + myFile + ":" + myLine + "(" + myOffset + ")]";
   }
 }

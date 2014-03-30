@@ -34,7 +34,7 @@ public class CutAction extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     CutProvider provider = PlatformDataKeys.CUT_PROVIDER.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(project != null && project.isOpen() && provider != null && provider.isCutEnabled(dataContext));
     if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
       presentation.setVisible(provider.isCutVisible(dataContext));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +46,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
+public class TemplateManagerImpl extends TemplateManager implements ProjectComponent, Disposable {
   protected Project myProject;
   private boolean myTemplateTesting;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
@@ -57,10 +58,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Override
   public void disposeComponent() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -79,24 +80,36 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
         if (myProject.isDisposed() || !myProject.isOpen()) return;
-        TemplateState tState = getTemplateState(editor);
-        if (tState != null) {
-          tState.gotoEnd();
+        TemplateState state = getTemplateState(editor);
+        if (state != null) {
+          state.gotoEnd();
         }
-        editor.putUserData(TEMPLATE_STATE_KEY, null);
+        clearTemplateState(editor);
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
   @TestOnly
+  @Deprecated
   public void setTemplateTesting(final boolean templateTesting) {
     myTemplateTesting = templateTesting;
   }
 
-  private void disposeState(final TemplateState tState) {
-    Disposer.dispose(tState);
-    myDisposables.remove(tState);
+  @TestOnly
+  public static void setTemplateTesting(Project project, Disposable parentDisposable) {
+    final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
+    instance.myTemplateTesting = true;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.myTemplateTesting = false;
+      }
+    });
+  }
+
+  private static void disposeState(@NotNull TemplateState state) {
+    Disposer.dispose(state);
   }
 
   @Override
@@ -110,11 +123,11 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   @Nullable
-  public static TemplateState getTemplateState(Editor editor) {
+  public static TemplateState getTemplateState(@NotNull Editor editor) {
     return editor.getUserData(TEMPLATE_STATE_KEY);
   }
 
-  void clearTemplateState(final Editor editor) {
+  static void clearTemplateState(@NotNull Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
       disposeState(prevState);
@@ -122,10 +135,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     editor.putUserData(TEMPLATE_STATE_KEY, null);
   }
 
-  private TemplateState initTemplateState(final Editor editor) {
+  private TemplateState initTemplateState(@NotNull Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
-    myDisposables.add(state);
+    Disposer.register(this, state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
@@ -166,6 +179,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
                              final Map<String, String> predefinedVarValues) {
     final TemplateState templateState = initTemplateState(editor);
 
+    //noinspection unchecked
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
 
     if (listener != null) {
@@ -268,6 +282,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
         if (isApplicable(customLiveTemplate, editor, file)) {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
           final String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
@@ -365,7 +380,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final Document document = editor.getDocument();
     final CharSequence text = document.getCharsSequence();
 
-    if (template2argument == null || template2argument.size() == 0) {
+    if (template2argument == null || template2argument.isEmpty()) {
       return null;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
@@ -390,17 +405,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
                                                          int caretOffset,
-                                                         Character shortcutChar,
+                                                         @Nullable Character shortcutChar,
                                                          TemplateSettings settings,
                                                          boolean hasArgument) {
-    String key;
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
       int wordStart = caretOffset - i;
       if (wordStart < 0) {
         continue;
       }
-      key = text.subSequence(wordStart, caretOffset).toString();
+      String key = text.subSequence(wordStart, caretOffset).toString();
       if (Character.isJavaIdentifierStart(key.charAt(0))) {
         if (wordStart > 0 && Character.isJavaIdentifierPart(text.charAt(wordStart - 1))) {
           continue;
@@ -505,7 +519,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for (TemplateContextType contextType : typeCollection) {
-      if (contextType.getClass().getName().startsWith("com.intellij.codeInsight.template")) {
+      if (contextType.getClass().getName().startsWith(Template.class.getPackage().getName())) {
         userDefinedExtensionsFirst.addLast(contextType);
       }
       else {
@@ -558,7 +572,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
     // language will be ERb, so we won't match HTML templates for it. but they're actually valid
-    Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
+    Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, offset);
     if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
       PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);
       if (basePsi != null) {
@@ -573,7 +587,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     file = (PsiFile)file.copy();
     final Document document = file.getViewProvider().getDocument();
     assert document != null;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(file.getProject(), new Runnable() {
       @Override
       public void run() {
         document.replaceString(startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);

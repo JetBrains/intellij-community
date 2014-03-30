@@ -18,14 +18,13 @@ package com.intellij.psi.util.proximity;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.ProximityLocation;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * NOTE: This class is only registered in platform-based IDEs. In IDEA, SamePackageWeigher is used instead.
- *
  * @author yole
  */
 public class SameDirectoryWeigher extends ProximityWeigher {
@@ -33,20 +32,27 @@ public class SameDirectoryWeigher extends ProximityWeigher {
     PLACE_DIRECTORY = NullableLazyKey.create("placeDirectory", new NullableFunction<ProximityLocation, PsiDirectory>() {
     @Override
     public PsiDirectory fun(ProximityLocation location) {
-      return PsiTreeUtil.getParentOfType(location.getPosition(), PsiDirectory.class, false);
+      return getParentDirectory(location.getPosition());
     }
   });
 
+  private static PsiDirectory getParentDirectory(PsiElement element) {
+    PsiFile file = InjectedLanguageUtil.getTopLevelFile(element);
+    if (file != null) {
+      element = file;
+    }
+    while (element != null && !(element instanceof PsiDirectory)) {
+      element = element.getParent();
+    }
+    return (PsiDirectory)element;
+  }
+
   @Override
-  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
-    if (location.getPosition() == null){
-      return null;
+  public Boolean weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+    if (location.getPosition() == null) {
+      return Boolean.TRUE;
     }
     final PsiDirectory placeDirectory = PLACE_DIRECTORY.getValue(location);
-    if (placeDirectory == null) {
-      return false;
-    }
-
-    return placeDirectory.equals(PsiTreeUtil.getParentOfType(element, PsiDirectory.class, false));
+    return placeDirectory != null && placeDirectory.equals(getParentDirectory(element));
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
@@ -71,7 +72,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Ref<String> visitorNameRef = Ref.create("MyVisitor");
     final Ref<PsiClass> parentClassRef = Ref.create(null);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiNameHelper helper = psiFacade.getNameHelper();
@@ -138,7 +139,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         return labeledComponent;
       }
     };
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     if (element instanceof PsiPackage) {
       dialog.selectPackage(((PsiPackage)element).getQualifiedName());
     }
@@ -173,7 +174,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 
   private static void generateVisitorClass(final String visitorName,

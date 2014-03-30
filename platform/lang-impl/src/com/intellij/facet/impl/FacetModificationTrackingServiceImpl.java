@@ -42,6 +42,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
     module.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener());
   }
 
+  @Override
   @NotNull
   public FacetModificationTracker getFacetModificationTracker(@NotNull final Facet facet) {
     return getFacetInfo(facet).first;
@@ -56,16 +57,19 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
     return pair;
   }
 
+  @Override
   public void incFacetModificationTracker(@NotNull final Facet facet) {
     final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
     pair.first.myModificationCount ++;
     pair.second.getMulticaster().modificationCountChanged(facet);
   }
 
+  @Override
   public <T extends Facet> void addModificationTrackerListener(final T facet, final ModificationTrackerListener<? super T> listener, final Disposable parent) {
     getFacetInfo(facet).second.addListener(listener, parent);
   }
 
+  @Override
   public void removeModificationTrackerListener(final Facet facet, final ModificationTrackerListener<?> listener) {
     getFacetInfo(facet).second.removeListener(listener);
   }
@@ -73,12 +77,14 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
   private static class FacetModificationTracker implements ModificationTracker {
     private long myModificationCount;
 
+    @Override
     public long getModificationCount() {
       return myModificationCount;
     }
   }
 
   private class FacetModificationTrackingListener extends FacetManagerAdapter {
+    @Override
     public void facetConfigurationChanged(@NotNull final Facet facet) {
       final Pair<FacetModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
       if (pair != null) {
@@ -87,6 +93,7 @@ public class FacetModificationTrackingServiceImpl extends FacetModificationTrack
       }
     }
 
+    @Override
     public void facetRemoved(@NotNull final Facet facet) {
       myModificationsTrackers.remove(facet);
     }

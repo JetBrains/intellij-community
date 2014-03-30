@@ -22,6 +22,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
   </component>
 </module>
 

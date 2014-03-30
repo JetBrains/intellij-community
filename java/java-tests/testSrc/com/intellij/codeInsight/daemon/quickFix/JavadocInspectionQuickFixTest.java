@@ -12,9 +12,10 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-public class JavadocInspectionQuickFixTest extends LightQuickFix15TestCase {
+public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTestCase {
 
   @NotNull
   @Override
@@ -38,4 +39,8 @@ public class JavadocInspectionQuickFixTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/javadocTags";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }

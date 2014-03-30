@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
   }
 
   private String composeName() {
-    if (myLeftIndex == 1 && myRightIndex == 0) {
+    if (myLeftIndex == 0 && myRightIndex == 1) {
       return DiffBundle.message("merge.partial.diff.action.name.0.1");
     }
     if (myLeftIndex == 1 && myRightIndex == 2) {
@@ -88,6 +88,6 @@ class OpenPartialDiffAction extends AnAction implements DumbAware {
 
   @Nullable
   private static Project projectFromDataContext(DataContext dataContext) {
-    return PlatformDataKeys.PROJECT.getData(dataContext);
+    return CommonDataKeys.PROJECT.getData(dataContext);
   }
 }

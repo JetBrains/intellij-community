@@ -22,4 +22,8 @@ public class ConfusingOctalEscape {
   public String path() {
     return "X:\\\\1234567890\\\\1234567890\\\\com\\\\company\\\\system\\\\subsystem";
   }
+
+  String twoDigitOctalEscape() {
+    return "\444\344";
+  }
 }

@@ -22,11 +22,10 @@ import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
 
 import java.util.Set;
-import java.util.TreeSet;
 
 
 public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvider {
-  
+
   private boolean active;
 
   public void setActive(boolean active) {
@@ -38,6 +37,7 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     return !active;
   }
 
+  @Override
   public SuggestedNameInfo getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext, Set<String> result) {
     assert result != null;
     if (!active || nameSuggestionContext==null) {
@@ -54,9 +54,7 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
 
     SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
 
-    Set<String> set = new TreeSet<String>();
-    set.addAll(manager.getSuggestions(text));
-    result.addAll(set);
+    result.addAll(manager.getSuggestions(text));
     return SuggestedNameInfo.NULL_INFO;
   }
 }

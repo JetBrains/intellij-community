@@ -15,16 +15,11 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +79,7 @@ public class FieldConflictsResolver {
           final PsiElement result = expression.resolve();
           if (expression.getManager().areElementsEquivalent(result, myField)) {
             try {
-              replacedRef[0] = qualifyReference(expression, myField, myQualifyingClass);
+              replacedRef[0] = RefactoringChangeUtil.qualifyReference(expression, myField, myQualifyingClass);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -104,46 +99,8 @@ public class FieldConflictsResolver {
       if (!referenceExpression.isValid()) continue;
       final PsiElement newlyResolved = referenceExpression.resolve();
       if (!manager.areElementsEquivalent(newlyResolved, myField)) {
-        qualifyReference(referenceExpression, myField, myQualifyingClass);
+        RefactoringChangeUtil.qualifyReference(referenceExpression, myField, myQualifyingClass);
       }
     }
-  }
-
-
-  public static PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression,
-                                                        final PsiMember member,
-                                                        @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
-    PsiManager manager = referenceExpression.getManager();
-    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
-    while (methodCallExpression != null) {
-      if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
-        return referenceExpression;
-      }
-      methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);
-    }
-    PsiReferenceExpression expressionFromText;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (qualifyingClass == null) {
-      PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
-      final PsiClass containingClass = member.getContainingClass();
-      if (parentClass != null && !InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
-        while (parentClass != null && !InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
-          parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
-        }
-        LOG.assertTrue(parentClass != null);
-        expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A.this." + member.getName(), null);
-        ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier().replace(factory.createClassReferenceElement(parentClass));
-      }
-      else {
-        expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
-      }
-    }
-    else {
-      expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A." + member.getName(), null);
-      expressionFromText.setQualifierExpression(factory.createReferenceExpression(qualifyingClass));
-    }
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-    expressionFromText = (PsiReferenceExpression)codeStyleManager.reformat(expressionFromText);
-    return (PsiReferenceExpression)referenceExpression.replace(expressionFromText);
   }
 }

@@ -16,25 +16,33 @@
 package org.jetbrains.git4idea.http;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.GitExternalApp;
 
 /**
  * <p>This is a program that would be called by Git when an HTTP connection is needed, that requires authorization,
  *    and if {@code GIT_ASKPASS} variable is set to the script that invokes this program.</p>
  * <p>The program is called separately for each authorization aspect.
  *    I. e. if no username is specified, then it is started and queried for the username, and then started once again for the password.</p>
- * <p>Query format is the following:
+ * <p>Since Git 1.7.9 the query format is the following:
  *    <ul>
  *      <li><code>Username for 'https://bitbucket.org':</code></li>
  *      <li><code>Password for 'https://bitbucket.org':</code></li>
  *      <li><code>Password for 'https://username@bitbucket.org':</code></li>
  *    </ul>
  * </p>
+ * <p>Before Git 1.7.9 the query didn't contain the URL:
+ *   <ul>
+ *     <li><code>Username: </code></li>
+ *     <li><code>Password: </code></li>
+ *   </ul>
+ * </p>
  * <p>Git expects the reply from the program's standard output.</p>
  *
  * @author Kirill Likhodedov
  */
-public class GitAskPassApp {
+public class GitAskPassApp implements GitExternalApp {
 
   // STDOUT is used to provide credentials to Git process; STDERR is used to print error message to the main IDEA command line.
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -78,13 +86,21 @@ public class GitAskPassApp {
 
   @NotNull
   private static Pair<Boolean, String> parseArguments(@NotNull String arg) {
+    boolean username = StringUtilRt.startsWithIgnoreCase(arg, "username");
+    String url;
     String[] split = arg.split(" ");
-    if (split.length < 3) {
-      throw new IllegalArgumentException("Unknown argument format: " + arg);
+    if (split.length > 2) {
+      url = parseUrl(split[2]);
     }
-    boolean username = split[0].equalsIgnoreCase("username");
-    String url = split[2];
+    else {
+      url = ""; // XML RPC doesn't like nulls
+    }
+    return Pair.create(username, url);
+  }
+
+  private static String parseUrl(@NotNull String urlArg) {
     // un-quote and remove the trailing colon
+    String url = urlArg;
     if (url.startsWith("'")) {
       url = url.substring(1);
     }
@@ -94,7 +110,7 @@ public class GitAskPassApp {
     if (url.endsWith("'")) {
       url = url.substring(0, url.length() - 1);
     }
-    return Pair.create(username, url);
+    return url;
   }
 
 }

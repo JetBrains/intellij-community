@@ -30,6 +30,6 @@ public class LambdaParamsTest extends LightDaemonAnalyzerTestCase {
   public void testInferFromFormal() { doTest(); }
 
   private void doTest() {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }

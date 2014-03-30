@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,12 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildLibrariesScope() {
     return new ProjectAndLibrariesScope(myProject) {
       @Override
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         return myProjectFileIndex.isInLibrarySource(file) || myProjectFileIndex.isInLibraryClasses(file);
       }
 
@@ -50,6 +51,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     };
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -64,6 +66,7 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     return new ProjectAndLibrariesScope(myProject, searchOutsideRootModel);
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildProjectScope() {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
@@ -75,11 +78,10 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         }
       };
     }
-    else {
-      return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
-    }
+    return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
   }
 
+  @NotNull
   @Override
   public GlobalSearchScope buildContentScope() {
     return new CoreProjectScopeBuilder.ContentSearchScope(myProject, FileIndexFacade.getInstance(myProject));

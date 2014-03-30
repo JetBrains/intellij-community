@@ -90,7 +90,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @Override
     protected int computeHash() {
       int result = super.computeHash();
-      result = result*31 + myVersion;
+      result = result * 31 + myVersion;
       return result;
     }
 
@@ -124,6 +124,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myDefaultsStateStorage;
   }
 
+  @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
@@ -132,5 +133,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myStateStorageManager;
   }
 
+  @NotNull
   protected abstract StateStorageManager createStateStorageManager();
 }

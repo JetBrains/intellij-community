@@ -1,0 +1,1 @@
+print("<selection>Hello</selection> %(name)s" % {"name": "World"})

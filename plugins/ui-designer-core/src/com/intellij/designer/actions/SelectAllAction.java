@@ -28,7 +28,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class SelectAllAction extends AnAction {
-  private final EditableArea myArea;
+  protected final EditableArea myArea;
 
   public SelectAllAction(EditableArea area) {
     super("Select All", "Select All", null);
@@ -43,7 +43,9 @@ public class SelectAllAction extends AnAction {
       rootComponent.accept(new RadComponentVisitor() {
         @Override
         public void endVisit(RadComponent component) {
-          components.add(component);
+          if (!component.isBackground()) {
+            components.add(component);
+          }
         }
       }, true);
       myArea.setSelection(components);

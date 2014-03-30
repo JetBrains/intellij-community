@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class comment
@@ -25,51 +27,45 @@ import java.util.ArrayList;
  * @author Dmitry Skavish
  */
 public class JDClassComment extends JDParamListOwnerComment {
-  public JDClassComment(CommentFormatter formatter) {
+  private List<String> myAuthorsList;
+  private String myVersion;
+
+  public JDClassComment(@NotNull CommentFormatter formatter) {
     super(formatter);
   }
 
-  private ArrayList authorsList;
-  private String version;
-
   @Override
-  protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
+  protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
     super.generateSpecial(prefix, sb);
-    if (!isNull(authorsList)) {
-      for (Object aAuthorsList : authorsList) {
-        String s = (String)aAuthorsList;
+    if (!isNull(myAuthorsList)) {
+      JDTag tag = JDTag.AUTHOR;
+      for (String author : myAuthorsList) {
         sb.append(prefix);
-        sb.append("@author ");
-        sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "        ", false));
+        sb.append(tag.getWithEndWhitespace());
+        sb.append(myFormatter.getParser().formatJDTagDescription(author, tag.getDescriptionPrefix(prefix)));
       }
     }
-    if (!isNull(version)) {
+    if (!isNull(myVersion)) {
       sb.append(prefix);
-      sb.append("@version ");
-      sb.append(myFormatter.getParser().splitIntoCLines(version, prefix + "         ", false));
+      JDTag tag = JDTag.VERSION;
+      sb.append(tag.getWithEndWhitespace());
+      sb.append(myFormatter.getParser().formatJDTagDescription(myVersion, tag.getDescriptionPrefix(prefix)));
     }
   }
 
-  public void addAuthor(String author) {
-    if (authorsList == null) {
-      authorsList = new ArrayList();
+  public void addAuthor(@NotNull String author) {
+    if (myAuthorsList == null) {
+      myAuthorsList = ContainerUtilRt.newArrayList();
     }
-    authorsList.add(author);
+    myAuthorsList.add(author);
   }
 
-  public ArrayList getAuthorsList() {
-    return authorsList;
-  }
-
-  public void setAuthorsList(ArrayList authorsList) {
-    this.authorsList = authorsList;
-  }
-
+  @Nullable
   public String getVersion() {
-    return version;
+    return myVersion;
   }
 
-  public void setVersion(String version) {
-    this.version = version;
+  public void setVersion(@NotNull String version) {
+    this.myVersion = version;
   }
 }

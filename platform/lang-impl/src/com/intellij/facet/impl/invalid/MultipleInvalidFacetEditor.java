@@ -28,7 +28,7 @@ import javax.swing.*;
  * @author nik
  */
 public class MultipleInvalidFacetEditor extends MultipleFacetSettingsEditor {
-  private MultipleFacetEditorHelperImpl myHelper;
+  private final MultipleFacetEditorHelperImpl myHelper;
   private JPanel myMainPanel;
   private ThreeStateCheckBox myIgnoreFacetsCheckBox;
 

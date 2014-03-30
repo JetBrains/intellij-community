@@ -1,10 +1,9 @@
 class Bar {
     static int x = 5
-
     final f = x + 2
 
     def foo() {
-        print <selection>f</selection>
+        print f<caret>
     }
 
     static def bar() {

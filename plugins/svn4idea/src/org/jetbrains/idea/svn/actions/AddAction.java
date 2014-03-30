@@ -30,8 +30,6 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.util.*;
 
@@ -68,8 +66,6 @@ public class AddAction extends BasicAction {
           ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
           manager.startBackgroundVcsOperation();
           try {
-
-            SVNWCClient wcClient = activeVcs.createWCClient();
             final Set<VirtualFile> additionallyDirty = new HashSet<VirtualFile>();
             final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
             for (VirtualFile item : items) {
@@ -84,13 +80,13 @@ public class AddAction extends BasicAction {
                 }
               }
             }
-            Collection<SVNException> exceptions =
-              SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(items), true);
+            Collection<VcsException> exceptions =
+              SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(activeVcs, Arrays.asList(items), true);
             additionallyDirty.addAll(Arrays.asList(items));
             markDirty(project, additionallyDirty);
             if (!exceptions.isEmpty()) {
               final Collection<String> messages = new ArrayList<String>(exceptions.size());
-              for (SVNException exception : exceptions) {
+              for (VcsException exception : exceptions) {
                 messages.add(exception.getMessage());
               }
               throw new VcsException(messages);

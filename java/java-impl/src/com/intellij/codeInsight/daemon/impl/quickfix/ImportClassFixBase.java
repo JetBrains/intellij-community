@@ -17,12 +17,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.HintManager;
@@ -41,15 +41,20 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -58,10 +63,12 @@ import java.util.regex.PatternSyntaxException;
  * @author peter
  */
 public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiReference> implements HintAction, HighPriorityAction {
+  @NotNull
   private final T myElement;
+  @NotNull
   private final R myRef;
 
-  protected ImportClassFixBase(@NotNull T elem, R ref) {
+  protected ImportClassFixBase(@NotNull T elem, @NotNull R ref) {
     myElement = elem;
     myRef = ref;
   }
@@ -88,6 +95,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @NotNull
   public List<PsiClass> getClassesToImport() {
+    if (myRef instanceof PsiJavaReference) {
+      JavaResolveResult result = ((PsiJavaReference)myRef).advancedResolve(true);
+      PsiElement element = result.getElement();
+      // already imported
+      // can happen when e.g. class name happened to be in a method position
+      if (element instanceof PsiClass && result.isValidResult()) return Collections.emptyList();
+    }
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myElement.getProject());
     String name = getReferenceName(myRef);
     GlobalSearchScope scope = myElement.getResolveScope();
@@ -99,6 +113,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
+    final PsiFile file = myElement.getContainingFile();
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (JavaCompletionUtil.isInExcludedPackage(aClass, false)) continue;
@@ -106,7 +121,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
-        if (qName.endsWith(name)) {
+        if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
           }
@@ -114,6 +129,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
+    classList = filterByRequiredMemberName(classList);
+
+    List<PsiClass> filtered = filterByContext(classList, myElement);
+    if (!filtered.isEmpty()) {
+      classList = filtered;
+    }
+
+    filterAlreadyImportedButUnresolved(classList);
+    return classList;
+  }
+
+  private List<PsiClass> filterByRequiredMemberName(List<PsiClass> classList) {
     final String memberName = getRequiredMemberName(myElement);
     if (memberName != null) {
       List<PsiClass> filtered = ContainerUtil.findAll(classList, new Condition<PsiClass>() {
@@ -135,13 +162,30 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         classList = filtered;
       }
     }
+    return classList;
+  }
 
-    List<PsiClass> filtered = filterByContext(classList, myElement);
-    if (!filtered.isEmpty()) {
-      classList = filtered;
+  private void filterAlreadyImportedButUnresolved(@NotNull List<PsiClass> list) {
+    PsiElement element = myRef.getElement();
+    PsiFile containingFile = element == null ? null : element.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) return;
+    PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    PsiImportList importList = javaFile.getImportList();
+    PsiImportStatementBase[] importStatements = importList == null ? PsiImportStatementBase.EMPTY_ARRAY : importList.getAllImportStatements();
+    Set<String> importedNames = new THashSet<String>(importStatements.length);
+    for (PsiImportStatementBase statement : importStatements) {
+      PsiJavaCodeReferenceElement ref = statement.getImportReference();
+      String name = ref == null ? null : ref.getReferenceName();
+      if (name != null && ref.resolve() == null) importedNames.add(name);
     }
 
-    return classList;
+    for (int i = list.size() - 1; i >= 0; i--) {
+      PsiClass aClass = list.get(i);
+      String className = aClass.getName();
+      if (className != null && importedNames.contains(className)) {
+        list.remove(i);
+      }
+    }
   }
 
   @Nullable
@@ -149,7 +193,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return null;
   }
 
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, T ref) {
+  @NotNull
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull T ref) {
     return candidates;
   }
 
@@ -166,6 +211,41 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
           return InheritanceUtil.isInheritorOrSelf(psiClass, actualClass, true);
         }
       });
+    }
+    return candidates;
+  }
+
+  protected static List<PsiClass> filterBySuperMethods(PsiParameter parameter, List<PsiClass> candidates) {
+    PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement granny = parent.getParent();
+      if (granny instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)granny;
+        if (method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null) {
+          PsiClass aClass = method.getContainingClass();
+          final Set<PsiClass> probableTypes = new HashSet<PsiClass>();
+          InheritanceUtil.processSupers(aClass, false, new Processor<PsiClass>() {
+            @Override
+            public boolean process(PsiClass psiClass) {
+              for (PsiMethod psiMethod : psiClass.findMethodsByName(method.getName(), false)) {
+                for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
+                  ContainerUtil.addIfNotNull(probableTypes, PsiUtil.resolveClassInClassTypeOnly(psiParameter.getType()));
+                }
+              }
+              return true;
+            }
+          });
+          List<PsiClass> filtered = ContainerUtil.filter(candidates, new Condition<PsiClass>() {
+            @Override
+            public boolean value(PsiClass psiClass) {
+              return probableTypes.contains(psiClass);
+            }
+          });
+          if (!filtered.isEmpty()) {
+            return filtered;
+          }
+        }
+      }
     }
     return candidates;
   }
@@ -203,16 +283,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     final QuestionAction action = createAddImportAction(classes, project, editor);
 
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-
     boolean canImportHere = true;
 
     if (classes.length == 1
         && (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName()))
-        && (JspPsiUtil.isInJspFile(psiFile) ?
+        && (FileTypeUtils.isInServerPageFile(psiFile) ?
             CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
             CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-        && (ApplicationManager.getApplication().isUnitTestMode() || codeAnalyzer.canChangeFileSilently(psiFile))
+        && (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile))
         && !autoImportWillInsertUnexpectedCharacters(classes[0])
         && !LaterInvocator.isInModalContext()
       ) {
@@ -258,7 +336,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected abstract boolean isQualified(R reference);
 
   @Override
-  public boolean showHint(final Editor editor) {
+  public boolean showHint(@NotNull final Editor editor) {
     if (isQualified(myRef)) {
       return false;
     }
@@ -311,7 +389,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

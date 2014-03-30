@@ -19,6 +19,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -104,6 +105,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
 
     final JList list = new JBList(m);
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setVisibleRowCount(options.size());
 
     list.addListSelectionListener(new ListSelectionListener() {
@@ -168,7 +170,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final PsiFile file = myElement.getContainingFile();
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override

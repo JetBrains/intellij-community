@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Gregory.Shrago
  */
 public class PomDefinitionSearch implements QueryExecutor<PsiElement, PsiElement> {
+  @Override
   public boolean execute(@NotNull PsiElement queryParameters, @NotNull Processor<PsiElement> consumer) {
     if (queryParameters instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)queryParameters).getTarget();

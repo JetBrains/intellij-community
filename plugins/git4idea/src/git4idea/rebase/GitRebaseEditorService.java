@@ -26,7 +26,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.util.Map;
 import java.util.Random;
@@ -89,7 +89,7 @@ public class GitRebaseEditorService {
     synchronized (myScriptLock) {
       if (myEditorCommand == null) {
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
-        generator.addInternal(Integer.toString(WebServerManager.getInstance().getPort()));
+        generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().getPort()));
         generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }

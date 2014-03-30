@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -26,7 +27,7 @@ public class GradleJavaHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public String getJdkHome(@Nullable Project project) {
-    List<String> candidates = new ArrayList<String>();
+    List<String> candidates = ContainerUtilRt.newArrayList();
     candidates.add(System.getProperty(GRADLE_JAVA_HOME_KEY));
     candidates.add(System.getenv("JAVA_HOME"));
     for (String candidate : candidates) {
@@ -39,7 +40,7 @@ public class GradleJavaHelper {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null) {
         String path = sdk.getHomePath();
-        if (JdkUtil.checkForJdk(new File(path))) {
+        if (path != null && JdkUtil.checkForJdk(new File(path))) {
           return path;
         }
       }
@@ -49,7 +50,7 @@ public class GradleJavaHelper {
     if (sdks != null) {
       for (Sdk sdk : sdks) {
         String path = sdk.getHomePath();
-        if (JdkUtil.checkForJdk(new File(path))) {
+        if (path != null && JdkUtil.checkForJdk(new File(path))) {
           return path;
         }
       }

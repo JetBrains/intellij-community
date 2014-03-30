@@ -16,9 +16,12 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
+import com.intellij.dvcs.DvcsCommitAdditionalComponent;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,16 +43,18 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.NewGitUsersComponent;
-import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -102,36 +107,38 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions(myProject, panel.getRoots());
+    return new GitCheckinOptions(myProject, panel);
   }
 
   @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
-    StringBuilder rc = new StringBuilder();
+    LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
       VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
       VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
-      if (mergeMsg != null || squashMsg != null) {
-        try {
-          String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
-          if (mergeMsg != null) {
-            rc.append(FileUtil.loadFileText(new File(mergeMsg.getPath()), encoding));
-          }
-          if (squashMsg != null) {
-            rc.append(FileUtil.loadFileText(new File(squashMsg.getPath()), encoding));
-          }
+      try {
+        if (mergeMsg == null && squashMsg == null) {
+          continue;
         }
-        catch (IOException e) {
-          if (log.isDebugEnabled()) {
-            log.debug("Unable to load merge message", e);
-          }
+        String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+        if (mergeMsg != null) {
+          messages.add(loadMessage(mergeMsg, encoding));
+        }
+        else {
+          messages.add(loadMessage(squashMsg, encoding));
+        }
+      }
+      catch (IOException e) {
+        if (log.isDebugEnabled()) {
+          log.debug("Unable to load merge message", e);
         }
       }
     }
-    if (rc.length() != 0) {
-      return rc.toString();
-    }
-    return null;
+    return DvcsUtil.joinMessagesOrNull(messages);
+  }
+
+  private static String loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFile(new File(messageFile.getPath()), encoding);
   }
 
   public String getHelpId() {
@@ -218,7 +225,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     return exceptions;
   }
-  
+
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
@@ -322,6 +329,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // perform merge commit
     try {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setStdoutSuppressed(false);
       handler.addParameters("-F", messageFile.getAbsolutePath());
       if (author != null) {
         handler.addParameters("--author=" + author);
@@ -467,6 +475,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean amend = nextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setStdoutSuppressed(false);
       if (amend) {
         handler.addParameters("--amend");
       }
@@ -591,29 +600,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   /**
    * Checkin options for git
    */
-  private class GitCheckinOptions implements CheckinChangeListSpecificComponent {
-    /**
-     * A container panel
-     */
-    private final JPanel myPanel;
+  private class GitCheckinOptions extends DvcsCommitAdditionalComponent implements CheckinChangeListSpecificComponent {
+    private final GitVcs myVcs;
     /**
      * The author ComboBox, the combobox contains previously selected authors.
      */
     private final JComboBox myAuthor;
-    /**
-     * The amend checkbox
-     */
-    private final JCheckBox myAmend;
+
     private Date myAuthorDate;
 
-    /**
-     * A constructor
-     *
-     * @param project
-     * @param roots
-     */
-    GitCheckinOptions(Project project, Collection<VirtualFile> roots) {
-      myPanel = new JPanel(new GridBagLayout());
+    GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+      super(project, panel);
+      myVcs = GitVcs.getInstance(project);
       final Insets insets = new Insets(2, 2, 2, 2);
       // add authors drop down
       GridBagConstraints c = new GridBagConstraints();
@@ -631,7 +629,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> usersList = getUsersList(project, roots);
+      final List<String> usersList = getUsersList(project);
       final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
@@ -642,52 +640,51 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           return StringUtil.shortenTextWithEllipsis(o, 30, 0);
         }
       });
-      myAuthor = new JComboBox(ArrayUtil.toObjectArray(list));
+      myAuthor = new ComboBox(ArrayUtil.toObjectArray(list));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
       authorLabel.setLabelFor(myAuthor);
       myAuthor.setToolTipText(GitBundle.getString("commit.author.tooltip"));
       myPanel.add(myAuthor, c);
-      // add amend checkbox
-      c = new GridBagConstraints();
-      c.gridx = 0;
-      c.gridy = 1;
-      c.gridwidth = 2;
-      c.anchor = GridBagConstraints.CENTER;
-      c.insets = insets;
-      c.weightx = 1;
-      c.fill = GridBagConstraints.HORIZONTAL;
-      myAmend = new JCheckBox(GitBundle.getString("commit.amend"));
-      myAmend.setMnemonic('m');
-      myAmend.setSelected(false);
-      myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
-      myPanel.add(myAmend, c);
     }
 
-    private List<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
+    @Override
+    @NotNull
+    protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> filePaths) {
+      return GitUtil.gitRoots(filePaths);
+    }
+
+    @Nullable
+    @Override
+    protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
+      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+      h.addParameters("--max-count=1");
+      String formatPattern;
+      if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+        formatPattern = "%B";
+      }
+      else {
+        // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+        // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
+        formatPattern = "%s%n%n%-b";
+      }
+      h.addParameters("--pretty=format:" + formatPattern);
+      return h.run();
+    }
+
+    private List<String> getUsersList(final Project project) {
       return NewGitUsersComponent.getInstance(project).get();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public JComponent getComponent() {
-      return myPanel;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void refresh() {
+      super.refresh();
       myAuthor.setSelectedItem("");
-      myAmend.setSelected(false);
       reset();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void saveState() {
       String author = (String)myAuthor.getEditor().getItem();
       myNextCommitAuthor = author.length() == 0 ? null : author;
@@ -702,9 +699,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myNextCommitAuthorDate = myAuthorDate;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void restoreState() {
       refresh();
     }
@@ -712,11 +707,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void onChangeListSelected(LocalChangeList list) {
       Object data = list.getData();
-      if (data instanceof GitCommit) {
-        GitCommit commit = (GitCommit)data;
-        String author = String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail());
+      if (data instanceof VcsFullCommitDetails) {
+        VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
+        String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
         myAuthor.getEditor().setItem(author);
-        myAuthorDate = new Date(commit.getAuthorTime());
+        myAuthorDate = new Date(commit.getTime());
       }
     }
   }

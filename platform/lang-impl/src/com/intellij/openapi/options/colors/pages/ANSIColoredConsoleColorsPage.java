@@ -35,6 +35,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "<logExpired>An expired log entry</logExpired>\n" +
     "\n" +
     "# Process output highlighted using ANSI colors codes\n" +
+    "<black>ANSI: black</black>\n" +
     "<red>ANSI: red</red>\n" +
     "<green>ANSI: green</green>\n" +
     "<yellow>ANSI: yellow</yellow>\n" +
@@ -42,6 +43,14 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "<magenta>ANSI: magenta</magenta>\n" +
     "<cyan>ANSI: cyan</cyan>\n" +
     "<gray>ANSI: gray</gray>\n" +
+    "<darkGray>ANSI: dark gray</darkGray>\n" +
+    "<redBright>ANSI: bright red</redBright>\n" +
+    "<greenBright>ANSI: bright green</greenBright>\n" +
+    "<yellowBright>ANSI: bright yellow</yellowBright>\n" +
+    "<blueBright>ANSI: bright blue</blueBright>\n" +
+    "<magentaBright>ANSI: bright magenta</magentaBright>\n" +
+    "<cyanBright>ANSI: bright cyan</cyanBright>\n" +
+    "<white>ANSI: white</white>\n" +
     "\n" +
     "<stdsys>Process finished with exit code 1</stdsys>\n";
 
@@ -55,6 +64,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.warning"), ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.expired"), ConsoleViewContentType.LOG_EXPIRED_ENTRY),
 
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.black"), ConsoleHighlighter.BLACK),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.red"), ConsoleHighlighter.RED),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.green"), ConsoleHighlighter.GREEN),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.yellow"), ConsoleHighlighter.YELLOW),
@@ -62,6 +72,15 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.magenta"), ConsoleHighlighter.MAGENTA),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.cyan"), ConsoleHighlighter.CYAN),
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.gray"), ConsoleHighlighter.GRAY),
+
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.darkGray"), ConsoleHighlighter.DARKGRAY),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.redBright"), ConsoleHighlighter.RED_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.greenBright"), ConsoleHighlighter.GREEN_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.yellowBright"), ConsoleHighlighter.YELLOW_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.blueBright"), ConsoleHighlighter.BLUE_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.magentaBright"), ConsoleHighlighter.MAGENTA_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.cyanBright"), ConsoleHighlighter.CYAN_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.message("color.settings.console.white"), ConsoleHighlighter.WHITE),
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<String, TextAttributesKey>();
@@ -74,6 +93,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logWarning", ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logExpired", ConsoleViewContentType.LOG_EXPIRED_ENTRY);
 
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("black", ConsoleHighlighter.BLACK);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("red", ConsoleHighlighter.RED);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("green", ConsoleHighlighter.GREEN);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("yellow", ConsoleHighlighter.YELLOW);
@@ -81,6 +101,15 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("magenta", ConsoleHighlighter.MAGENTA);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("cyan", ConsoleHighlighter.CYAN);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("gray", ConsoleHighlighter.GRAY);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("darkGray", ConsoleHighlighter.DARKGRAY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("redBright", ConsoleHighlighter.RED_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("greenBright", ConsoleHighlighter.GREEN_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("yellowBright", ConsoleHighlighter.YELLOW_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("blueBright", ConsoleHighlighter.BLUE_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("magentaBright", ConsoleHighlighter.MAGENTA_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("cyanBright", ConsoleHighlighter.CYAN_BRIGHT);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
   }
 
   private static final ColorDescriptor[] COLORS = {

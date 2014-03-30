@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ public class UI {
     ourColors.put("panel.custom.background", new Color(250, 249, 245));
 
     ourColors.put("link.foreground", new Color(82, 99, 155));
-    ourColors.put("link.pressed.foreground", new Color(240, 0, 0));
-    ourColors.put("link.visited.foreground", new Color(128, 0, 128));
+    ourColors.put("link.pressed.foreground", new JBColor(new Color(240, 0, 0), new Color(186, 111, 37)));
+    ourColors.put("link.visited.foreground", new JBColor(new Color(128, 0, 128), new Color(151, 118, 169)));
 
     ourColors.put("bar.separator.foreground", getColor("panel.separator.color"));
     ourColors.put("bar.selected.separator.foreground", new Color(232, 231, 228));
@@ -52,16 +52,16 @@ public class UI {
 
     ourColors.put("popup.selected.background", UIUtil.getTreeSelectionBackground());
     ourColors.put("popup.selected.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
-    ourColors.put("popup.separator.foreground", Color.gray);
+    ourColors.put("popup.separator.foreground", JBColor.GRAY);
 
-    ourColors.put("callout.background", Color.white);
-    ourColors.put("callout.frame.color", Color.red);
+    ourColors.put("callout.background", JBColor.WHITE);
+    ourColors.put("callout.frame.color", JBColor.RED);
 
-    ourColors.put("underline.error", Color.red);
-    ourColors.put("underline.warning", Color.yellow);
+    ourColors.put("underline.error", JBColor.RED);
+    ourColors.put("underline.warning", JBColor.YELLOW);
 
-    ourColors.put("tooltip.error", Color.red);
-    ourColors.put("tooltip.warning", Color.yellow.darker());
+    ourColors.put("tooltip.error", JBColor.RED);
+    ourColors.put("tooltip.warning", JBColor.YELLOW.darker());
 
     ourColors.put("toolbar.background", UIUtil.getPanelBackground());
     ourColors.put("toolbar.hover.background", UIUtil.getTreeSelectionBackground());
@@ -69,7 +69,7 @@ public class UI {
     ourColors.put("toolbar.hover.frame.foreground", UIUtil.getTreeSelectionBackground().darker());
 
     ourColors.put("speedsearch.background", new Color(244, 249, 181));
-    ourColors.put("speedsearch.foreground", Color.black);
+    ourColors.put("speedsearch.foreground", JBColor.BLACK);
   }
 
   public static Color getColor(@NonNls String id) {

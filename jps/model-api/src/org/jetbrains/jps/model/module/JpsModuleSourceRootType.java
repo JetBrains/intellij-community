@@ -17,9 +17,15 @@ package org.jetbrains.jps.model.module;
 
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementType;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
 /**
+ * Represents a type of source roots of modules in JPS model.
+ *
+ * <p>
+ * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface
+ * </p>
  * @author nik
  */
-public abstract class JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P> {
+public interface JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P>, JpsElementTypeWithDefaultProperties<P> {
 }

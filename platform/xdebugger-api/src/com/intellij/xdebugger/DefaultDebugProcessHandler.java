@@ -23,18 +23,22 @@ import java.io.OutputStream;
  * @author nik
  */
 public class DefaultDebugProcessHandler extends ProcessHandler {
+  @Override
   protected void destroyProcessImpl() {
     notifyProcessTerminated(0);
   }
 
+  @Override
   protected void detachProcessImpl() {
     notifyProcessDetached();
   }
 
+  @Override
   public boolean detachIsDefault() {
     return true;
   }
 
+  @Override
   public OutputStream getProcessInput() {
     return null;
   }

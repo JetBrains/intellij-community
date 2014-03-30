@@ -64,7 +64,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -75,7 +75,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -86,22 +86,23 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
   @NotNull
   @Override
-  public String fetchExternalDocumentation(String link, Project project) {
+  public String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
-        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, project);
+        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, element);
       }
     }
-    
+
     throw new IllegalStateException("Unable to find a provider to fetch documentation link!");
   }
 
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.getQuickNavigateInfo(element, originalElement);
@@ -114,42 +115,58 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       List<String> result = provider.getUrlFor(element,originalElement);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final List<String> result = provider.getUrlFor(element, originalElement);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.generateDoc(element,originalElement);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final String result = provider.generateDoc(element, originalElement);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for ( DocumentationProvider provider : myProviders ) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
-      if ( result != null ) return result;
+      if ( result != null ) {
+        return result;
+      }
     }
     for (DocumentationProvider provider : Extensions.getExtensions(EP_NAME)) {
       final PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
-      if (result != null) return result;
+      if (result != null) {
+        return result;
+      }
     }
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     for ( DocumentationProvider provider : myProviders ) {
       PsiElement result = provider.getDocumentationElementForLink(psiManager,link,context);
@@ -173,11 +190,14 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExternalDocumentationProvider) {
         final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls);
-        if (doc != null) return doc;
+        if (doc != null) {
+          return doc;
+        }
       }
     }
     return null;

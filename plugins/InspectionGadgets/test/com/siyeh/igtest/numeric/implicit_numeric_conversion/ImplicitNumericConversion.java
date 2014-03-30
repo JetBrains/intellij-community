@@ -79,4 +79,8 @@ public class ImplicitNumericConversion
         int a[] = new int[b];
         a[b] = (byte)1;
     }
+
+    private void polyadic() {
+        long l = 1 + 2 + 3;
+    }
 }

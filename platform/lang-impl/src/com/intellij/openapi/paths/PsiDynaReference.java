@@ -17,14 +17,13 @@
 package com.intellij.openapi.paths;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,7 +38,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
-  implements FileReferenceOwner, PsiPolyVariantReference, QuickFixProvider<PsiDynaReference>, LocalQuickFixProvider, EmptyResolveMessageProvider {
+  implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
 
   private final List<PsiReference> myReferences = new ArrayList<PsiReference>();
   private int myChosenOne = -1;
@@ -198,15 +197,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
   }
 
-  @Override
-  public void registerQuickfix(final HighlightInfo info, final PsiDynaReference reference) {
-    for (Object ref: reference.myReferences) {
-      if (ref instanceof QuickFixProvider) {
-        ((QuickFixProvider)ref).registerQuickfix(info, (PsiReference)ref);
-      }
-    }
-  }
-
   @NotNull
   @Override
   @SuppressWarnings({"UnresolvedPropertyKey"})
@@ -235,7 +225,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  public FileReference getLastFileReference() {
+  public PsiFileReference getLastFileReference() {
     for (PsiReference reference : myReferences) {
       if (reference instanceof FileReferenceOwner) {
         return ((FileReferenceOwner)reference).getLastFileReference();

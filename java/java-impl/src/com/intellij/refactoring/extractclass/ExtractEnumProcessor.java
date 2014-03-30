@@ -27,7 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -37,7 +37,6 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
 
@@ -47,17 +46,15 @@ public class ExtractEnumProcessor {
   private final PsiClass myClass;
 
   private TypeMigrationProcessor myTypeMigrationProcessor;
-  private List<PsiField> myFields;
 
-  public ExtractEnumProcessor(Project project, List<PsiField> enumConstants, List<PsiField> fields, PsiClass aClass) {
+  public ExtractEnumProcessor(Project project, List<PsiField> enumConstants, PsiClass aClass) {
     myProject = project;
     myEnumConstants = enumConstants;
-    myFields = fields;
     myClass = aClass;
   }
 
 
-  public void findEnumConstantConflicts(final Ref<UsageInfo[]> refUsages, final MultiMap<PsiElement, String> conflicts) {
+  public void findEnumConstantConflicts(final Ref<UsageInfo[]> refUsages) {
     if (hasUsages2Migrate()) {
       final List<UsageInfo> resolvableConflicts = new ArrayList<UsageInfo>();
       for (UsageInfo failedUsage : myTypeMigrationProcessor.getLabeler().getFailedUsages()) {
@@ -152,7 +149,7 @@ public class ExtractEnumProcessor {
       rules.setMigrationRootType(
         JavaPsiFacade.getElementFactory(myProject).createType(myClass));
       rules.setBoundScope(GlobalSearchScope.projectScope(myProject));
-      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject, PsiUtilBase.toPsiElementArray(myEnumConstants), rules);
+      myTypeMigrationProcessor = new TypeMigrationProcessor(myProject, PsiUtilCore.toPsiElementArray(myEnumConstants), rules);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {

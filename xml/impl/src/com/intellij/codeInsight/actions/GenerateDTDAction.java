@@ -16,12 +16,17 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -38,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
  * User: ik
  * Date: 22.05.2003
  * Time: 13:46:54
- * To change this template use Options | File Templates.
  */
 public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
@@ -82,12 +86,9 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
   @Nullable
   private static XmlDocument findSuitableXmlDocument(@Nullable PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile != null && virtualFile.isWritable()) {
-        final XmlDocument document = ((XmlFile)psiFile).getDocument();
-        if (document != null && document.getRootTag() != null) {
-          return document;
-        }
+      final XmlDocument document = ((XmlFile)psiFile).getDocument();
+      if (document != null && document.getRootTag() != null) {
+        return document;
       }
     }
     return null;
@@ -95,28 +96,13 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
 
   public void update(AnActionEvent event) {
     super.update(event);
-
-    final DataContext dataContext = event.getDataContext();
-    final Presentation presentation = event.getPresentation();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-    final boolean enabled;
-    if (editor != null && project != null) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      enabled = findSuitableXmlDocument(file) != null;
-    }
-    else {
-      enabled = false;
-    }
-
-    presentation.setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      presentation.setVisible(enabled);
+      Presentation presentation = event.getPresentation();
+      presentation.setVisible(presentation.isEnabled());
     }
   }
 
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file){
-    return file instanceof XmlFile;
+    return file.getLanguage() == XMLLanguage.INSTANCE && findSuitableXmlDocument(file) != null;
   }
 }

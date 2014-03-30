@@ -53,6 +53,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     myCbPreviewResults = previewResults;
   }
 
+  @Override
   protected void createDefaultActions() {
     super.createDefaultActions ();
     myRefactorAction = new RefactorAction();
@@ -87,6 +88,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   protected final void closeOKAction() { super.doOKAction(); }
 
+  @Override
   protected final void doOKAction() {
     doAction();
   }
@@ -119,6 +121,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     List<Action> actions = new ArrayList<Action>();
@@ -128,7 +131,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     if (hasHelpAction ())
       actions.add(getHelpAction());
-    
+
     if (SystemInfo.isMac) {
       Collections.reverse(actions);
     }
@@ -145,6 +148,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doRefactorAction ();
     }
@@ -153,12 +157,13 @@ public abstract class RefactoringDialog extends DialogWrapper {
   private class PreviewAction extends AbstractAction {
     public PreviewAction() {
       putValue(Action.NAME, RefactoringBundle.message("preview.button"));
-      
+
       if (SystemInfo.isMac) {
         putValue(FOCUSED_ACTION, Boolean.TRUE);
       }
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doPreviewAction ();
     }
@@ -166,6 +171,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   protected void invokeRefactoring(BaseRefactoringProcessor processor) {
     final Runnable prepareSuccessfulCallback = new Runnable() {
+      @Override
       public void run() {
         close(DialogWrapper.OK_EXIT_CODE);
       }

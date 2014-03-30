@@ -30,8 +30,8 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
     myFunction = function;
   }
 
-  @NotNull 
-  public final T getValue(H h) {
+  @NotNull
+  public final T getValue(@NotNull H h) {
     T data = h.getUserData(this);
     if (data == null) {
       h.putUserData(this, data = myFunction.fun(h));
@@ -39,7 +39,7 @@ public class NotNullLazyKey<T,H extends UserDataHolder> extends Key<T>{
     return data;
   }
 
-  public static <T,H extends UserDataHolder> NotNullLazyKey<T,H> create(@NonNls String name, final NotNullFunction<H, T> function) {
+  public static <T,H extends UserDataHolder> NotNullLazyKey<T,H> create(@NonNls @NotNull String name, @NotNull NotNullFunction<H, T> function) {
     return new NotNullLazyKey<T,H>(name, function);
   }
 }

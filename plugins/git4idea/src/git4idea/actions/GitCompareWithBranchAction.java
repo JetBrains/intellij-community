@@ -15,9 +15,8 @@
  */
 package git4idea.actions;
 
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -111,7 +110,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
   }
 
   private static VirtualFile getAffectedFile(AnActionEvent event) {
-    final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null && vFiles.length == 1 && vFiles[0] != null : "Illegal virtual files selected: " + Arrays.toString(vFiles);
     return vFiles[0];
   }
@@ -127,7 +126,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       return;
     }
 
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (vFiles == null || vFiles.length != 1 || vFiles[0] == null) { // only 1 file for now
       presentation.setEnabled(false);
       presentation.setVisible(true);
@@ -213,7 +212,7 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       GitUIUtil.notifyMessage(project, GitUtil.fileOrFolder(file) + " doesn't exist in branch",
                               String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
                                             GitUtil.fileOrFolder(file), file.getPresentableUrl(), branchToCompare),
-                              NotificationType.WARNING, true, null);
+                              false, null);
     }
   }
 

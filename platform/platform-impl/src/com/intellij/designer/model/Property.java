@@ -120,6 +120,10 @@ public abstract class Property<T extends PropertiesContainer> {
     return false;
   }
 
+  public boolean closeEditorDuringRefresh() {
+    return false;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Presentation
@@ -180,5 +184,10 @@ public abstract class Property<T extends PropertiesContainer> {
   @Nullable
   public String getJavadocText() {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof Property && getPath().equals(((Property) obj).getPath());
   }
 }

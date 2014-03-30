@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class EventDispatcher<T extends EventListener> {
 
   private EventDispatcher(@NotNull Class<T> listenerClass) {
     InvocationHandler handler = new InvocationHandler() {
+      @Override
       @NonNls
       public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
         if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
@@ -88,8 +89,10 @@ public class EventDispatcher<T extends EventListener> {
       try {
         method.invoke(listener, args);
       }
-      catch (AbstractMethodError e) {
-        //Do nothing. This listener just does not implement something newly added yet.
+      catch (AbstractMethodError ignored) {
+        // Do nothing. This listener just does not implement something newly added yet.
+        // AbstractMethodError is normally wrapped in InvocationTargetException,
+        // but some Java versions didn't do it in some cases (see http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6531596)
       }
       catch (RuntimeException e) {
         throw e;
@@ -99,7 +102,9 @@ public class EventDispatcher<T extends EventListener> {
         if (cause instanceof RuntimeException) {
           throw (RuntimeException)cause;
         }
-        LOG.error(cause);
+        else if (!(cause instanceof AbstractMethodError)) { // AbstractMethodError means this listener doesn't implement some new method in interface
+          LOG.error(cause);
+        }
       }
     }
   }
@@ -111,6 +116,7 @@ public class EventDispatcher<T extends EventListener> {
   public void addListener(@NotNull final T listener, @NotNull Disposable parentDisposable) {
     addListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeListener(listener);
       }

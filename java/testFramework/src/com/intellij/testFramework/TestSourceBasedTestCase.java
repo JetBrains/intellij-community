@@ -95,7 +95,6 @@ import java.io.File;
   
   protected String getRootFiles() {
     return " " + myModule.getModuleFile().getName() + "\n" +
-           " " + myProject.getName() + ProjectFileType.DOT_DEFAULT_EXTENSION +
-           "\n";
+           " " + myProject.getName() + ProjectFileType.DOT_DEFAULT_EXTENSION + "\n";
   }
 }

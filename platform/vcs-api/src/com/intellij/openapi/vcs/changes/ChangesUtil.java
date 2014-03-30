@@ -27,7 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import java.util.*;
  * @author max
  */
 public class ChangesUtil {
-  private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.<Boolean>create("internal vcs operation");
+  private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
   private ChangesUtil() {}
 
@@ -148,7 +148,7 @@ public class ChangesUtil {
         }
       }
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
@@ -207,6 +207,7 @@ public class ChangesUtil {
   public static FilePath getLocalPath(final Project project, final FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
     Change change = ApplicationManager.getApplication().runReadAction(new Computable<Change>() {
+      @Override
       @Nullable
       public Change compute() {
         if (project.isDisposed()) throw new ProcessCanceledException();
@@ -255,6 +256,7 @@ public class ChangesUtil {
 
   private static VirtualFile getValidParentUnderReadAction(final FilePath filePath) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
       public VirtualFile compute() {
         return findValidParent(filePath);
       }
@@ -326,6 +328,7 @@ public class ChangesUtil {
     final Map<AbstractVcs, List<T>> changesByVcs = new HashMap<AbstractVcs, List<T>>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         for (T item : items) {
           final AbstractVcs vcs = separator.getVcsFor(item);
@@ -348,6 +351,7 @@ public class ChangesUtil {
 
   public static void processChangesByVcs(final Project project, Collection<Change> changes, PerVcsProcessor<Change> processor) {
     processItemsByVcs(changes, new VcsSeparator<Change>() {
+      @Override
       public AbstractVcs getVcsFor(final Change item) {
         return getVcsForChange(item, project);
       }
@@ -356,6 +360,7 @@ public class ChangesUtil {
 
   public static void processVirtualFilesByVcs(final Project project, Collection<VirtualFile> files, PerVcsProcessor<VirtualFile> processor) {
     processItemsByVcs(files, new VcsSeparator<VirtualFile>() {
+      @Override
       public AbstractVcs getVcsFor(final VirtualFile item) {
         return getVcsForFile(item, project);
       }
@@ -364,6 +369,7 @@ public class ChangesUtil {
 
   public static void processFilePathsByVcs(final Project project, Collection<FilePath> files, PerVcsProcessor<FilePath> processor) {
     processItemsByVcs(files, new VcsSeparator<FilePath>() {
+      @Override
       public AbstractVcs getVcsFor(final FilePath item) {
         return getVcsForFile(item.getIOFile(), project);
       }
@@ -380,7 +386,7 @@ public class ChangesUtil {
 
   public static boolean hasFileChanges(final Collection<Change> changes) {
     for(Change change: changes) {
-      FilePath path = ChangesUtil.getFilePath(change);
+      FilePath path = getFilePath(change);
       if (!path.isDirectory()) {
         return true;
       }
@@ -407,6 +413,6 @@ public class ChangesUtil {
   }
 
   public static String getDefaultChangeListName() {
-    return VcsBundle.message("changes.default.changlist.name");
+    return VcsBundle.message("changes.default.changelist.name");
   }
 }

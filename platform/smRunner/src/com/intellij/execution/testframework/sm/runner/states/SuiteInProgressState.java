@@ -25,27 +25,27 @@ import java.util.List;
  */
 public class SuiteInProgressState extends TestInProgressState {
   private final SMTestProxy mySuiteProxy;
-  private Boolean isDefectWasReallyFound = null; // null - is unset
+  private boolean myDefectFound = false;
 
   public SuiteInProgressState(@NotNull final SMTestProxy suiteProxy) {
     mySuiteProxy = suiteProxy;
   }
-  
-  ///**
-  // * If any of child failed proxy also is defect
-  // * @return
-  // */
+
+  /**
+   * If any of child failed proxy also is defect
+   * @return
+   */
   @Override
   public boolean isDefect() {
-    if (isDefectWasReallyFound != null) {
-      return isDefectWasReallyFound.booleanValue();
+    if (myDefectFound) {
+      return true;
     }
 
      //Test suit fails if any of its tests fails
     final List<? extends SMTestProxy> children = mySuiteProxy.getChildren();
     for (SMTestProxy child : children) {
       if (child.isDefect()) {
-        isDefectWasReallyFound = true;
+        myDefectFound = true;
         return true;
       }
     }

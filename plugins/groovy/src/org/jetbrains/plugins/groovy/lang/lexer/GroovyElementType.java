@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
-import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Main classdef for Groovy element types, such as lexems or AST nodes
@@ -29,15 +29,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GroovyElementType extends IElementType {
 
-  private String debugName = null;
+  private final String myDebugName;
+  private final boolean myLeftBound;
 
   public GroovyElementType(String debugName) {
+    this(debugName, false);
+  }
+
+  public GroovyElementType(String debugName, boolean boundToLeft) {
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
-    this.debugName = debugName;
+    myDebugName = debugName;
+    myLeftBound = boundToLeft;
   }
 
   public String toString() {
-    return debugName;
+    return myDebugName;
+  }
+
+  @Override
+  public boolean isLeftBound() {
+    return myLeftBound;
   }
 
   public static abstract class PsiCreator extends GroovyElementType {

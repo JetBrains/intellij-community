@@ -17,6 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -177,11 +178,54 @@ public class PsiTypesUtil {
           final PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory()
             .createType(javaLangClass, substitutor, languageLevel);
           final PsiElement parent = call.getParent();
-          return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression
+          return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression || parent instanceof PsiExpressionList
                  ? PsiUtil.captureToplevelWildcards(classType, methodExpression) : classType;
         }
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static PsiType getExpectedTypeByParent(PsiExpression methodCall) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+    if (parent instanceof PsiVariable) {
+      if (PsiUtil.checkSameExpression(methodCall, ((PsiVariable)parent).getInitializer())) {
+        return ((PsiVariable)parent).getType();
+      }
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
+      if (PsiUtil.checkSameExpression(methodCall, ((PsiAssignmentExpression)parent).getRExpression())) {
+        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+      }
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
+      }
+      else {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          return method.getReturnType();
+        }
+      }
+    }
+    else if (PsiUtil.isCondition(methodCall, parent)) {
+      return PsiType.BOOLEAN.getBoxedType(parent);
+    }
+    return null;
+  }
+  
+  public static boolean compareTypes(PsiType leftType, PsiType rightType, boolean ignoreEllipsis) {
+    if (ignoreEllipsis) {
+      if (leftType instanceof PsiEllipsisType) {
+        leftType = ((PsiEllipsisType)leftType).toArrayType();
+      }
+      if (rightType instanceof PsiEllipsisType) {
+        rightType = ((PsiEllipsisType)rightType).toArrayType();
+      }
+    }
+    return Comparing.equal(leftType, rightType);
   }
 }

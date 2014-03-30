@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnonymousClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -52,14 +53,18 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
                                @Nullable PsiType type,
                                @NotNull final PsiElement context,
                                @NotNull final ClassNameProvider classNameProvider) {
+    if (type == null || PsiType.NULL.equals(type)) {
+      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
+      return;
+    }
+
     if (type instanceof PsiPrimitiveType) {
       builder.append(type.getCanonicalText());
       return;
     }
 
-    if (type == null) {
-      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
-      return;
+    if (type instanceof GrAnonymousClassType) {
+      type = ((GrAnonymousClassType)type).getSimpleClassType();
     }
 
     final boolean acceptEllipsis = isLastParameter(context);

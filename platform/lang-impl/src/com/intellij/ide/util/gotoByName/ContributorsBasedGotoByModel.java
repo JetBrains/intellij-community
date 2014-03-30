@@ -20,7 +20,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,20 +33,27 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import gnu.trove.THashSet;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Contributor-based goto model
  */
-public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel {
+public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelEx {
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
   protected final Project myProject;
@@ -71,39 +80,96 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     };
   }
 
+  public boolean sameNamesForProjectAndLibraries() {
+    return !ChooseByNameBase.ourLoadNamesEachTime;
+  }
+
+  private final ConcurrentHashMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = new ConcurrentHashMap<ChooseByNameContributor, TIntHashSet>();
+  private volatile IdFilter myIdFilter;
+  private volatile boolean myIdFilterForLibraries;
+
+  @Override
+  public void processNames(final Processor<String> nameProcessor, final boolean checkBoxState) {
+    long start = System.currentTimeMillis();
+    List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    Processor<ChooseByNameContributor> processor = new ReadActionProcessor<ChooseByNameContributor>() {
+      @Override
+      public boolean processInReadAction(ChooseByNameContributor contributor) {
+        try {
+          if (!myProject.isDisposed()) {
+            long contributorStarted = System.currentTimeMillis();
+            final TIntHashSet filter = new TIntHashSet(1000);
+            myContributorToItsSymbolsMap.put(contributor, filter);
+            if (contributor instanceof ChooseByNameContributorEx) {
+              ((ChooseByNameContributorEx)contributor).processNames(new Processor<String>() {
+                @Override
+                public boolean process(String s) {
+                  if (nameProcessor.process(s)) {
+                    filter.add(s.hashCode());
+                  }
+                  return true;
+                }
+              }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
+            } else {
+              String[] names = contributor.getNames(myProject, checkBoxState);
+              for (String element : names) {
+                if (nameProcessor.process(element)) {
+                  filter.add(element.hashCode());
+                }
+              }
+            }
+
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(contributor + " for " + (System.currentTimeMillis() - contributorStarted));
+            }
+          }
+        }
+        catch (ProcessCanceledException ex) {
+          // index corruption detected, ignore
+        }
+        catch (IndexNotReadyException ex) {
+          // index corruption detected, ignore
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
+        return true;
+      }
+    };
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, true, processor)) {
+      throw new ProcessCanceledException();
+    }
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+    long finish = System.currentTimeMillis();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("processNames(): "+(finish-start)+"ms;");
+    }
+  }
+
+  IdFilter getIdFilter(boolean withLibraries) {
+    IdFilter idFilter = myIdFilter;
+
+    if (idFilter == null || myIdFilterForLibraries != withLibraries) {
+      idFilter = IdFilter.getProjectIdFilter(myProject, withLibraries);
+      myIdFilter = idFilter;
+      myIdFilterForLibraries = withLibraries;
+    }
+    return idFilter;
+  }
+
   @NotNull
   @Override
   public String[] getNames(final boolean checkBoxState) {
-    final Set<String> names = new ConcurrentHashSet<String>();
+    final THashSet<String> allNames = ContainerUtil.newTroveSet();
 
-    long start = System.currentTimeMillis();
-    List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, ProgressManager.getInstance().getProgressIndicator(), false,
-                                                new Processor<ChooseByNameContributor>() {
-                                                  @Override
-                                                  public boolean process(ChooseByNameContributor contributor) {
-                                                    try {
-                                                      if (!myProject.isDisposed()) {
-                                                        ContainerUtil.addAll(names, contributor.getNames(myProject, checkBoxState));
-                                                      }
-                                                    }
-                                                    catch (ProcessCanceledException ex) {
-                                                      // index corruption detected, ignore
-                                                    }
-                                                    catch (IndexNotReadyException ex) {
-                                                      // index corruption detected, ignore
-                                                    }
-                                                    catch (Exception ex) {
-                                                      LOG.error(ex);
-                                                    }
-                                                    return true;
-                                                  }
-                                                });
-    long finish = System.currentTimeMillis();
+    processNames(new CommonProcessors.CollectProcessor<String>(Collections.synchronizedCollection(allNames)), checkBoxState);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("getNames(): "+(finish-start)+"ms; (got "+names.size()+" elements)");
+      LOG.debug("getNames(): (got "+allNames.size()+" elements)");
     }
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(allNames);
   }
 
   private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {
@@ -119,7 +185,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   }
 
   @NotNull
-  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern, @NotNull ProgressIndicator canceled) {
+  public Object[] getElementsByName(final String name, final FindSymbolParameters parameters, @NotNull final ProgressIndicator canceled) {
+    long elementByNameStarted = System.currentTimeMillis();
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
     Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
@@ -128,22 +195,47 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         if (myProject.isDisposed()) {
           return true;
         }
-
+        TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
+        if (filter != null && !filter.contains(name.hashCode())) return true;
         try {
-          for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
-            if (item == null) {
-              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
-              if (pluginId != null) {
-                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+          boolean searchInLibraries = parameters.getSearchScope().isSearchInLibraries();
+          long contributorStarted = System.currentTimeMillis();
+
+          if (contributor instanceof ChooseByNameContributorEx) {
+            ((ChooseByNameContributorEx)contributor).processElementsWithName(name, new Processor<NavigationItem>() {
+              @Override
+              public boolean process(NavigationItem item) {
+                canceled.checkCanceled();
+                if (acceptItem(item)) items.add(item);
+                return true;
               }
-              else {
-                LOG.error("null item from contributor " + contributor + " for name " + name);
+            }, parameters);
+
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
+            }
+          } else {
+            NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+            for (NavigationItem item : itemsByName) {
+              canceled.checkCanceled();
+              if (item == null) {
+                PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+                if (pluginId != null) {
+                  LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+                }
+                else {
+                  LOG.error("null item from contributor " + contributor + " for name " + name);
+                }
+                continue;
               }
-              continue;
+
+              if (acceptItem(item)) {
+                items.add(item);
+              }
             }
 
-            if (acceptItem(item)) {
-              items.add(item);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
             }
           }
         }
@@ -156,8 +248,13 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
         return true;
       }
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, false, processor);
-
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, true, processor)) {
+      canceled.cancel();
+    }
+    canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Retrieving " + name + ":" + items.size() + " for " + (System.currentTimeMillis() - elementByNameStarted));
+    }
     return ArrayUtil.toObjectArray(items);
   }
 
@@ -174,7 +271,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   @NotNull
   @Override
   public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
-    return getElementsByName(name, checkBoxState, pattern, new ProgressIndicatorBase());
+    return getElementsByName(name, FindSymbolParameters.wrap(pattern, myProject, checkBoxState), new ProgressIndicatorBase());
   }
 
   @Override
@@ -205,5 +302,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   @Override
   public boolean useMiddleMatching() {
     return true;
+  }
+
+  public @NotNull String removeModelSpecificMarkup(@NotNull String pattern) {
+    return pattern;
   }
 }

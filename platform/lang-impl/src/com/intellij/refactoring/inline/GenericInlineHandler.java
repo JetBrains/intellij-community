@@ -111,10 +111,12 @@ public class GenericInlineHandler {
       return true;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final String subj = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "element";
 
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             final PsiReference[] references = sortDepthFirstRightLeftOrder(allReferences);
 
@@ -202,6 +204,7 @@ public class GenericInlineHandler {
   public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<? extends PsiReference> allReferences) {
     final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
     Arrays.sort(usages, new Comparator<PsiReference>() {
+      @Override
       public int compare(final PsiReference usage1, final PsiReference usage2) {
         final PsiElement element1 = usage1.getElement();
         final PsiElement element2 = usage2.getElement();

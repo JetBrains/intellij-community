@@ -140,9 +140,9 @@ public class ElementPresentationUtil implements PlatformIcons {
       if (TestFrameworks.getInstance().isTestClass(aClass)) {
         return CLASS_KIND_JUNIT_TEST;
       }
-    }
-    if (PsiClassUtil.isRunnableClass(aClass, false) && PsiMethodUtil.findMainMethod(aClass) != null) {
-      return CLASS_KIND_RUNNABLE;
+      if (PsiClassUtil.isRunnableClass(aClass, false) && PsiMethodUtil.findMainMethod(aClass) != null) {
+        return CLASS_KIND_RUNNABLE;
+      }
     }
     return CLASS_KIND_CLASS;
   }

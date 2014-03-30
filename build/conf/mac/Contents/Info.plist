@@ -54,15 +54,11 @@
     <key>NSHighResolutionCapable</key>
     <true/>
 
-    <key>LSArchitecturePriority</key>
-    <array>
-      <string>x86_64</string>
-      <string>i386</string>
-    </array>
+    @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     @@url_schemes@@
-    <key>Java</key>
+    <key>JVMOptions</key>
     <dict>
       <key>ClassPath</key>
       <string>@@class_path@@</string>
@@ -75,6 +71,10 @@
       <key>Properties</key>
       <dict>
         @@idea_properties@@
+
+        <key>idea.java.redist</key>
+        <string>NoJavaDistribution</string>
+
       </dict>
 
       <key>VMOptions</key>

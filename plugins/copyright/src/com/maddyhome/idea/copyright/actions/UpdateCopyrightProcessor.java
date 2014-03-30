@@ -35,6 +35,9 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil;
 
 public class UpdateCopyrightProcessor extends AbstractFileProcessor
 {
+    public static final String TITLE = "Update Copyright";
+    public static final String MESSAGE = "Updating copyrights...";
+
     public UpdateCopyrightProcessor(Project project, Module module)
     {
         super(project, module, TITLE, MESSAGE);
@@ -114,9 +117,6 @@ public class UpdateCopyrightProcessor extends AbstractFileProcessor
 
     private Project project;
     private Module module;
-
-    private static final String TITLE = "Update Copyright";
-    private static final String MESSAGE = "Updating copyrights...";
 
     private static final Logger logger = Logger.getInstance(UpdateCopyrightProcessor.class.getName());
 }

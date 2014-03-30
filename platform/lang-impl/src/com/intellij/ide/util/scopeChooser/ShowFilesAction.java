@@ -35,10 +35,12 @@ public final class ShowFilesAction extends ToggleAction {
     myUpdate = update;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_SHOW_FILES;
   }
 
+  @Override
   public void setSelected(AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
     myUpdate.run();

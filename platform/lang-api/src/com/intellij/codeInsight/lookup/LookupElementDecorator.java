@@ -37,6 +37,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     return myDelegate;
   }
 
+  @Override
+  public boolean isValid() {
+    return super.isValid() && myDelegate.isValid();
+  }
+
+  @Override
   @NotNull
   public String getLookupString() {
     return myDelegate.getLookupString();
@@ -100,7 +106,8 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     final T t = super.as(conditionKey);
     return t == null ? myDelegate.as(conditionKey) : t;
   }
-  
+
+  @Override
   public boolean isCaseSensitive() {
     return myDelegate.isCaseSensitive();
   }

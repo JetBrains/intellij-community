@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoTestOrCodeAction extends BaseCodeInsightAction {
+  @Override
   @NotNull
   protected CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();
@@ -43,8 +45,8 @@ public class GotoTestOrCodeAction extends BaseCodeInsightAction {
       return;
     }
     p.setEnabled(false);
-    Project project = event.getData(PlatformDataKeys.PROJECT);
-    Editor editor = event.getData(PlatformDataKeys.EDITOR);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null || project == null) return;
 
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);

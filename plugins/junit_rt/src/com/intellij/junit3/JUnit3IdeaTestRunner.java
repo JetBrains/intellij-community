@@ -37,7 +37,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) {
     myListeners = listeners;
     mySendTree = sendTree;
     if (sendTree) {
@@ -74,7 +74,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     myTestsListener = new TestResultsSender(myRegistry);
   }
 
-  public Object getTestToStart(String[] args) {
+  public Object getTestToStart(String[] args, String name) {
     return TestRunnerUtil.getTestSuite(this, args);
   }
 
@@ -84,6 +84,10 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
 
   public OutputObjectRegistry getRegistry() {
     return myRegistry;
+  }
+
+  public String getTestClassName(Object child) {
+    return child instanceof TestSuite ? ((TestSuite)child).getName() : child.getClass().getName();
   }
 
   public String getStartDescription(Object child) {
@@ -126,15 +130,13 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   }
 
   public TestResult doRun(Test suite, boolean wait) {  //todo
-    if (mySendTree) {
-      try {
-        TreeSender.sendTree(this, suite);
-      }
-      catch (Exception e) {
-        //noinspection HardCodedStringLiteral
-        System.err.println("Internal Error occured.");
-        e.printStackTrace(System.err);
-      }
+    try {
+      TreeSender.sendTree(this, suite, mySendTree);
+    }
+    catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("Internal Error occured.");
+      e.printStackTrace(System.err);
     }
     return super.doRun(suite, wait);
   }

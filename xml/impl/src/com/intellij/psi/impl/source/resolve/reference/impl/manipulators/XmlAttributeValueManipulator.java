@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,7 +42,8 @@ import com.intellij.util.IncorrectOperationException;
 public class XmlAttributeValueManipulator extends AbstractElementManipulator<XmlAttributeValue> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
 
-  public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException {
+  @Override
+  public XmlAttributeValue handleContentChange(@NotNull XmlAttributeValue element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     return handleContentChange(element, range, newContent, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
   }
 
@@ -73,7 +75,9 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     return element;
   }
 
-  public TextRange getRangeInElement(final XmlAttributeValue xmlAttributeValue) {
+  @Override
+  @NotNull
+  public TextRange getRangeInElement(@NotNull final XmlAttributeValue xmlAttributeValue) {
     final PsiElement child = xmlAttributeValue.getFirstChild();
     if (child == null) {
       return TextRange.EMPTY_RANGE;

@@ -45,4 +45,8 @@ public abstract class ProjectTemplatesFactory {
   public int getGroupWeight(String group) {
     return 0;
   }
+
+  public String getParentGroup(String group) {
+    return null;
+  }
 }

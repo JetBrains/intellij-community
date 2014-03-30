@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,66 +17,12 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiCatchSection;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
-public class BadExceptionCaughtInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
-  public String exceptionsString = "";
-
-  /**
-   * @noinspection PublicField
-   */
-  public final ExternalizableStringSet exceptions =
-    new ExternalizableStringSet(
-      "java.lang.NullPointerException",
-      "java.lang.IllegalMonitorStateException",
-      "java.lang.ArrayIndexOutOfBoundsException"
-    );
-
-  public BadExceptionCaughtInspection() {
-    if (exceptionsString.length() != 0) {
-      exceptions.clear();
-      final List<String> strings = StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
-      exceptionsString = "";
-    }
-  }
-
-  @NotNull
-  public String getID() {
-    return "ProhibitedExceptionCaught";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("bad.exception.caught.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("bad.exception.caught.problem.descriptor");
-  }
+public class BadExceptionCaughtInspection extends BadExceptionCaughtInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
@@ -84,42 +30,5 @@ public class BadExceptionCaughtInspection extends BaseInspection {
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
     return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"),
                                                         "java.lang.Throwable");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new BadExceptionCaughtVisitor();
-  }
-
-  private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitCatchSection(PsiCatchSection section) {
-      super.visitCatchSection(section);
-      final PsiParameter parameter = section.getParameter();
-      if (parameter == null) {
-        return;
-      }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      final PsiTypeElement[] childTypeElements = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
-      if (childTypeElements != null) {
-        for (PsiTypeElement childTypeElement : childTypeElements) {
-          checkTypeElement(childTypeElement);
-        }
-      }
-      else {
-        checkTypeElement(typeElement);
-      }
-    }
-
-    private void checkTypeElement(PsiTypeElement typeElement) {
-      final PsiType type = typeElement.getType();
-      if (exceptions.contains(type.getCanonicalText())) {
-        registerError(typeElement);
-      }
-    }
   }
 }

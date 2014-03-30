@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
@@ -35,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
  */
 public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
   private static final ArrayFactory<GrTypeParameter> ARRAY_FACTORY = new ArrayFactory<GrTypeParameter>() {
+    @NotNull
     @Override
     public GrTypeParameter[] create(int count) {
       return new GrTypeParameter[count];
@@ -78,6 +82,8 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    appendParenthesesIfNeeded();
+
     if (first == last && first.getPsi() instanceof GrTypeParameter) {
       boolean hasParams = getTypeParameters().length > 0;
 
@@ -104,6 +110,27 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
     }
     else {
       return super.addInternal(first, last, anchor, before);
+    }
+  }
+
+  private void appendParenthesesIfNeeded() {
+    PsiElement first = getFirstChild();
+    if (first == null) {
+      getNode().addLeaf(GroovyTokenTypes.mLT, "<", null);
+    }
+
+    PsiElement last = getLastChild();
+    if (last.getNode().getElementType() != GroovyTokenTypes.mGT) {
+      getNode().addLeaf(GroovyTokenTypes.mGT, ">", null);
+    }
+
+    PsiElement parent = getParent();
+    if (parent instanceof GrMethod) {
+      GrModifierList list = ((GrMethod)parent).getModifierList();
+      PsiElement[] modifiers = list.getModifiers();
+      if (modifiers.length == 0) {
+        list.setModifierProperty(GrModifier.DEF, true);
+      }
     }
   }
 }

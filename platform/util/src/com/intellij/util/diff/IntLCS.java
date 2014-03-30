@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 /**
  * @author dyoma
@@ -24,6 +25,9 @@ class IntLCS {
   private final int[] myFirst;
   private final int[] mySecond;
 
+  private final int myStart1;
+  private final int myStart2;
+
   private final LinkedDiffPaths myPathsMatrix;
   private final int[] myPrevPathKey;
   private int[] myPrevEnds;
@@ -31,11 +35,23 @@ class IntLCS {
   private final int myMaxX;
   private final int myMaxY;
 
+  private final BitSet myChanges1;
+  private final BitSet myChanges2;
+
   public IntLCS(int[] first, int[] second) {
+    this(first, second, 0, first.length, 0, second.length, new BitSet(first.length), new BitSet(second.length));
+  }
+
+  public IntLCS(int[] first, int[] second, int start1, int count1, int start2, int count2, BitSet changes1, BitSet changes2) {
     myFirst = first;
     mySecond = second;
-    myMaxX = myFirst.length;
-    myMaxY = mySecond.length;
+    myStart1 = start1;
+    myStart2 = start2;
+    myMaxX = count1;
+    myMaxY = count2;
+
+    myChanges1 = changes1;
+    myChanges2 = changes2;
 
     myPathsMatrix = new LinkedDiffPaths(myMaxX, myMaxY);
     myPrevPathKey = new int[myMaxX + myMaxY + 1];
@@ -82,7 +98,10 @@ class IntLCS {
           }
         }
         myCurrentEnds[k + myMaxY] = end;
-        if (k == myMaxX - myMaxY && end == myMaxX) return d;
+        if (k == myMaxX - myMaxY && end == myMaxX) {
+          myPathsMatrix.applyChanges(myStart1, myStart2, myChanges1, myChanges2);
+          return d;
+        }
       }
       int[] temps = myCurrentEnds;
       myCurrentEnds = myPrevEnds;
@@ -91,8 +110,8 @@ class IntLCS {
     throw new RuntimeException();
   }
 
-  public LinkedDiffPaths getPaths() {
-    return myPathsMatrix;
+  public BitSet[] getChanges() {
+    return new BitSet[]{myChanges1, myChanges2};
   }
 
   private int findDiagonalEnd(int prevDiagonal, int prevEnd, boolean isVertical) {
@@ -122,7 +141,7 @@ class IntLCS {
 
   private int skipEquals(int x, int y) {
     int skipped = 0;
-    while (x < myMaxX && y < myMaxY && myFirst[x] == mySecond[y]) {
+    while (x < myMaxX && y < myMaxY && myFirst[myStart1 + x] == mySecond[myStart2 + y]) {
       skipped += 1;
       x++;
       y++;

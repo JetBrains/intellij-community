@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@
 package org.jetbrains.plugins.groovy.lang.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
-import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder;
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.NamedFoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -42,10 +42,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  * @author ilyas
@@ -81,13 +84,12 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
       usedComments.add(element);
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
+        if (PsiImplUtil.isWhiteSpaceOrNls(current)) continue;
+
         IElementType elementType = current.getNode().getElementType();
         if (elementType == mSL_COMMENT) {
           end = current;
           usedComments.add(current);
-          continue;
-        }
-        if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
           continue;
         }
         break;
@@ -120,11 +122,11 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
         if (lbrace != null && rbrace != null) {
           final PsiElement next = lbrace.getNextSibling();
           final PsiElement prev = rbrace.getPrevSibling();
-          if (next != null && TokenSets.WHITE_SPACES_SET.contains(next.getNode().getElementType()) &&
-              prev != null && TokenSets.WHITE_SPACES_SET.contains(prev.getNode().getElementType())) {
+          if (next != null && PsiImplUtil.isWhiteSpaceOrNls(next) &&
+              prev != null && PsiImplUtil.isWhiteSpaceOrNls(prev)) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
-            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
-            descriptors.add(new NamedFoldingDescriptor(psi.getNode(), prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
+            descriptors.add(new NamedFoldingDescriptor(psi, lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
+            descriptors.add(new NamedFoldingDescriptor(psi, prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
             return;
           }
         }
@@ -190,24 +192,6 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     }
   }
 
-  private static class NamedFoldingDescriptor extends FoldingDescriptor {
-    private final String myPlaceholderText;
-
-    private NamedFoldingDescriptor(@NotNull ASTNode node, int start, int end, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-      this(node, new TextRange(start, end), group, placeholderText);
-    }
-
-    private NamedFoldingDescriptor(@NotNull ASTNode node, @NotNull final TextRange range, @Nullable FoldingGroup group, @NotNull String placeholderText) {
-      super(node, range, group);
-      myPlaceholderText = placeholderText;
-    }
-
-    @Override
-    public String getPlaceholderText() {
-      return myPlaceholderText;
-    }
-  }
-
   private static void processImports(final List<FoldingDescriptor> descriptors, GrImportStatement[] imports) {
     if (imports.length < 2) return;
 
@@ -223,7 +207,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
         int start = first.getTextRange().getStartOffset();
         int end = marker.getTextRange().getEndOffset();
         int tail = "import ".length();
-        if (start + tail < end && !JavaFoldingBuilder.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
+        if (start + tail < end && !JavaFoldingBuilderBase.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
           descriptors.add(new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end)));
         }
       }
@@ -317,7 +301,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {
-    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) ||
+    return (STRING_LITERAL_SET.contains(node.getElementType()) ||
             node.getElementType().equals(GSTRING) ||
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&

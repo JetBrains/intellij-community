@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -29,9 +30,11 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -105,6 +108,11 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
   }
 
   @Override
+  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+    return StartMarkAction.start(myEditor, myProject, getCommandName());
+  }
+
+  @Override
   protected void beforeTemplateStart() {
     super.beforeTemplateStart();
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
@@ -169,6 +177,7 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         }
         if (myExpressionText != null) {
+          if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageUtil.getTopLevelEditor(myEditor).getDocument())) return;
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               final PsiDeclarationStatement element = myPointer.getElement();

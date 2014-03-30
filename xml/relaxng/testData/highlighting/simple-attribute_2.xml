@@ -1,2 +1,2 @@
-<<error>simple-attribute</error> xmlns="urn:test:simple.rng">
-</<error>simple-attribute</error>>
+<<error descr="Element simple-attribute doesn't have required attribute x">simple-attribute</error> xmlns="urn:test:simple.rng">
+</<error descr="Element simple-attribute doesn't have required attribute x">simple-attribute</error>>

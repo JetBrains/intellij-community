@@ -20,6 +20,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
@@ -43,15 +44,16 @@ class InitialInfoBuilder {
 
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
 
-  private final FormattingDocumentModel         myModel;
-  private final FormatTextRanges                myAffectedRanges;
-  private final int                             myPositionOfInterest;
+  private final FormattingDocumentModel               myModel;
+  private final FormatTextRanges                      myAffectedRanges;
+  private final int                                   myPositionOfInterest;
   @NotNull
-  private final FormattingProgressCallback myProgressCallback;
+  private final FormattingProgressCallback            myProgressCallback;
+  private final FormatterTagHandler                   myFormatterTagHandler;
+
   private final CommonCodeStyleSettings.IndentOptions myOptions;
 
   private final Stack<State> myStates = new Stack<State>();
-  
   private WhiteSpace                       myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
   private LeafBlockWrapper                 myPreviousBlock;
@@ -59,12 +61,13 @@ class InitialInfoBuilder {
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
-  
-  private final static boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));  
-  private final static boolean DEBUG_ENABLED = false;
+  private boolean                          myReadOnlyMode;
+
+  private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
-                             final FormatTextRanges affectedRanges,
+                             @Nullable final FormatTextRanges affectedRanges,
+                             @NotNull CodeStyleSettings settings,
                              final CommonCodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
                              @NotNull FormattingProgressCallback progressCallback)
@@ -75,23 +78,26 @@ class InitialInfoBuilder {
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
+    myReadOnlyMode = false;
+    myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
   public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
                                                                     FormattingDocumentModel model,
-                                                                    final FormatTextRanges affectedRanges,
+                                                                    @Nullable final FormatTextRanges affectedRanges,
+                                                                    @NotNull CodeStyleSettings settings,
                                                                     final CommonCodeStyleSettings.IndentOptions options,
                                                                     int interestingOffset,
                                                                     @NotNull FormattingProgressCallback progressCallback)
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressCallback);
+    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, settings, options, interestingOffset, progressCallback);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
   }
 
   /**
    * Asks current builder to wrap one more remaining {@link Block code block} (if any).
-   * 
+   *
    * @return    <code>true</code> if all blocks are wrapped; <code>false</code> otherwise
    */
   public boolean iteration() {
@@ -164,13 +170,13 @@ class InitialInfoBuilder {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
       if (isReadOnly) {
-        return processSimpleBlock(rootBlock, parent, isReadOnly, index, parentBlock);
+        return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
 
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
                                  && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
-        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, index, parentBlock);
+        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, false, index, parentBlock);
         if (!subBlocks.isEmpty()) {
           wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
         }
@@ -184,9 +190,9 @@ class InitialInfoBuilder {
   }
 
   private CompositeBlockWrapper buildCompositeBlock(final Block rootBlock,
-                                   final CompositeBlockWrapper parent,
+                                   @Nullable final CompositeBlockWrapper parent,
                                    final int index,
-                                   final WrapImpl currentWrapParent,
+                                   @Nullable final WrapImpl currentWrapParent,
                                    boolean rootBlockIsRightBlock)
   {
     final CompositeBlockWrapper wrappedRootBlock = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
@@ -236,7 +242,9 @@ class InitialInfoBuilder {
     if (!state.readOnly) {
       try {
         subBlocks.set(childBlockIndex, null); // to prevent extra strong refs during model building
-      } catch (Throwable ex) {} // read-only blocks
+      } catch (Throwable ex) {
+        // read-only blocks
+      }
     }
     
     if (state.childBlockProcessed(block, wrapper)) {
@@ -257,10 +265,10 @@ class InitialInfoBuilder {
   }
 
   private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
-                                                  final CompositeBlockWrapper parent,
+                                                  @Nullable final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
                                                   final int index,
-                                                  Block parentBlock) 
+                                                  @Nullable Block parentBlock) 
   {
     LeafBlockWrapper result = doProcessSimpleBlock(rootBlock, parent, readOnly, index, parentBlock);
     myProgressCallback.afterWrappingBlock(result);
@@ -268,10 +276,10 @@ class InitialInfoBuilder {
   }
 
   private LeafBlockWrapper doProcessSimpleBlock(final Block rootBlock,
-                                                final CompositeBlockWrapper parent,
+                                                @Nullable final CompositeBlockWrapper parent,
                                                 final boolean readOnly,
                                                 final int index,
-                                                Block parentBlock)
+                                                @Nullable Block parentBlock)
   {
     if (!INLINE_TABS_ENABLED && !myCurrentWhiteSpace.containsLineFeeds()) {
       myCurrentWhiteSpace.setForceSkipTabulationsUsage(true);
@@ -280,6 +288,17 @@ class InitialInfoBuilder {
       new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     if (index == 0) {
       info.arrangeParentTextRange();
+    }
+
+    switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
+      case ON:
+        myReadOnlyMode = false;
+        break;
+      case OFF:
+        myReadOnlyMode = true;
+        break;
+      case NONE:
+        break;
     }
 
     TextRange textRange = rootBlock.getTextRange();
@@ -308,6 +327,7 @@ class InitialInfoBuilder {
 
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
+    if (myReadOnlyMode) myCurrentWhiteSpace.setReadOnly(true);
     myPreviousBlock = info;
 
     if (myPositionOfInterest != -1 && (textRange.contains(myPositionOfInterest) || textRange.getEndOffset() == myPositionOfInterest)) {

@@ -15,20 +15,20 @@
  */
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
-  private final HashMap<String, String> myMap = new HashMap<String, String>();
+  private final Map<String, String> myMap = new LinkedHashMap<String, String>();
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
-
 
   @NotNull
   public String getComponentName() {
@@ -38,8 +38,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   PropertiesComponentImpl() {
   }
 
-
-
+  @Override
   public Element getState() {
     Element parentNode = new Element("state");
     for (final String key : myMap.keySet()) {
@@ -54,26 +53,35 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     return parentNode;
   }
 
+  @Override
   public void loadState(final Element parentNode) {
     myMap.clear();
-    for (final Object o : parentNode.getChildren(ELEMENT_PROPERTY)) {
-      Element e = (Element)o;
-
+    for (Element e : parentNode.getChildren(ELEMENT_PROPERTY)) {
       String name = e.getAttributeValue(ATTRIBUTE_NAME);
-      String value = e.getAttributeValue(ATTRIBUTE_VALUE);
-
       if (name != null) {
-        myMap.put(name, value);
+        myMap.put(name, e.getAttributeValue(ATTRIBUTE_VALUE));
       }
     }
   }
 
+  @Override
   public String getValue(String name) {
     return myMap.get(name);
   }
 
+  @Override
   public void setValue(String name, String value) {
     myMap.put(name, value);
+  }
+
+  @Override
+  public void setValue(@NotNull String name, @NotNull String value, @NotNull String defaultValue) {
+    if (value.equals(defaultValue)) {
+      myMap.remove(name);
+    }
+    else {
+      myMap.put(name, value);
+    }
   }
 
   @Override
@@ -81,6 +89,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     myMap.remove(name);
   }
 
+  @Override
   public boolean isValueSet(String name) {
     return myMap.containsKey(name);
   }
@@ -95,7 +104,8 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   public void setValues(@NonNls String name, String[] values) {
     if (values == null) {
       setValue(name, null);
-    } else {
+    }
+    else {
       setValue(name, StringUtil.join(values, "\n"));
     }
   }

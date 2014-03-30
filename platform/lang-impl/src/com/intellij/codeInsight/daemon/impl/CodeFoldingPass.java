@@ -18,14 +18,14 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
@@ -72,7 +72,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
       }
     }
 
-    if (InjectedLanguageUtil.getTopLevelFile(myFile) == myFile) {
+    if (InjectedLanguageManager.getInstance(myFile.getProject()).getTopLevelFile(myFile) == myFile) {
       clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME);
     }
   }

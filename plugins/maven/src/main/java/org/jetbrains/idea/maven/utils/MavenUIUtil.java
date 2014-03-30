@@ -32,6 +32,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.TreeSet;
 
 public class MavenUIUtil {
@@ -50,7 +51,7 @@ public class MavenUIUtil {
   }
 
   public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
-    java.util.List<E> selection = chooser.getSelectedElements();
+    List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<E>(comparator);
     sorted.addAll(all);

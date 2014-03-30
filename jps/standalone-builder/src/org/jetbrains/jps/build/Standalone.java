@@ -55,8 +55,14 @@ public class Standalone {
   @Argument(value = "modules", prefix = "--", delimiter = ",", description = "Comma-separated list of modules to compile")
   public String[] modules = ArrayUtil.EMPTY_STRING_ARRAY;
 
+  @Argument(value = "all-modules", prefix = "--", description = "Compile all modules")
+  public boolean allModules;
+
   @Argument(value = "artifacts", prefix = "--", delimiter = ",", description = "Comma-separated list of artifacts to build")
   public String[] artifacts = ArrayUtil.EMPTY_STRING_ARRAY;
+
+  @Argument(value = "all-artifacts", prefix = "--", description = "Build all artifacts")
+  public boolean allArtifacts;
 
   @Argument(value = "i", description = "Build incrementally")
   public boolean incremental;
@@ -80,8 +86,6 @@ public class Standalone {
       System.out.println("Only one project can be specified");
       printUsageAndExit();
     }
-
-
 
     instance.loadAndRunBuild(projectPaths.get(0));
     System.exit(0);
@@ -114,6 +118,11 @@ public class Standalone {
       initializer = new GroovyModelInitializer(scriptFile);
     }
 
+    if (modules.length == 0 && artifacts.length == 0 && !allModules && !allArtifacts) {
+      System.err.println("Nothing to compile: at least one of --modules, --artifacts, --all-modules or --all-artifacts parameters must be specified");
+      return;
+    }
+
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, initializer);
     Set<String> modulesSet = new HashSet<String>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);
@@ -131,7 +140,7 @@ public class Standalone {
 
     long start = System.currentTimeMillis();
     try {
-      runBuild(loader, dataStorageRoot, !incremental, modulesSet, artifactsList, true, new ConsoleMessageHandler());
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true, new ConsoleMessageHandler());
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
@@ -140,28 +149,55 @@ public class Standalone {
     System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
   }
 
+  @Deprecated
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
                               List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
+    runBuild(loader, dataStorageRoot, forceBuild, modulesSet, modulesSet.isEmpty(), artifactsList, includeTests, messageHandler);
+  }
+
+  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
+                              final boolean allModules, List<String> artifactsList, final boolean includeTests,
+                              final MessageHandler messageHandler) throws Exception {
+    runBuild(loader, dataStorageRoot, forceBuild, modulesSet, allModules, artifactsList, false, includeTests, messageHandler);
+  }
+
+  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
+                              final boolean allModules, List<String> artifactsList, boolean allArtifacts, final boolean includeTests,
+                              final MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
         TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
-        if (modulesSet.isEmpty()) {
-          builder.setAllTargets(true);
+        if (allModules) {
+          scopes.add(builder.setAllTargets(true).build());
         }
-        else {
-          builder.addAllTargetId(modulesSet);
+        else if (!modulesSet.isEmpty()) {
+          scopes.add(builder.addAllTargetId(modulesSet).build());
         }
-        scopes.add(builder.build());
       }
     }
-    if (!artifactsList.isEmpty()) {
-      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).setForceBuild(forceBuild).addAllTargetId(artifactsList).build());
+
+    TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()
+      .setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
+      .setForceBuild(forceBuild);
+
+    if (allArtifacts) {
+      scopes.add(builder.setAllTargets(true).build());
     }
-    final BuildRunner buildRunner = new BuildRunner(loader, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
+    else if (!artifactsList.isEmpty()) {
+      scopes.add(builder.addAllTargetId(artifactsList).build());
+    }
+
+    runBuild(loader, dataStorageRoot, messageHandler, scopes, true);
+  }
+
+  public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
+                              boolean includeDependenciesToScope) throws Exception {
+    final BuildRunner buildRunner = new BuildRunner(loader, Collections.<String>emptyList(), Collections.<String, String>emptyMap()
+    );
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();

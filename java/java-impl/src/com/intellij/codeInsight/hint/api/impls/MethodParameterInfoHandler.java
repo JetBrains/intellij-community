@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -76,13 +77,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   @Nullable
-  public PsiExpressionList findElementForParameterInfo(final CreateParameterInfoContext context) {
+  public PsiExpressionList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
 
     if (argumentList != null) {
       return findMethodsForArgumentList(context, argumentList);
     }
-    return argumentList;
+    return null;
   }
 
   private PsiExpressionList findArgumentList(final PsiFile file, int offset, int parameterStart) {
@@ -110,26 +111,29 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiExpressionList element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset(), this);
   }
 
   @Override
-  public PsiExpressionList findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     return findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiExpressionList o, final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != o) {
+  public void updateParameterInfo(@NotNull final PsiExpressionList o, @NotNull final UpdateParameterInfoContext context) {
+    PsiElement parameterOwner = context.getParameterOwner();
+    if (parameterOwner != o) {
       context.removeHint();
       return;
     }
+
     int index = ParameterInfoUtils.getCurrentParameterIndex(o.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
 
     Object[] candidates = context.getObjectsToView();
     PsiExpression[] args = o.getExpressions();
+    PsiElement realResolve = null;
 
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
@@ -198,14 +202,19 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           enabled &&
           parms.length == args.length &&
           isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
-        context.setHighlightedParameter(candidate);
+        if (realResolve == null) {
+          PsiCall call = getCall(o);
+          if (call != null) realResolve = call.resolveMethod();
+          if (realResolve == null) realResolve = PsiUtilBase.NULL_PSI_ELEMENT;
+        }
+        if (realResolve == PsiUtilBase.NULL_PSI_ELEMENT || realResolve == method) context.setHighlightedParameter(candidate);
       }
     }
   }
 
   private static PsiSubstitutor getCandidateInfoSubstitutor(CandidateInfo candidate) {
     return candidate instanceof MethodCandidateInfo && ((MethodCandidateInfo)candidate).isInferencePossible()
-                                 ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE)
+                                 ? ((MethodCandidateInfo)candidate).inferTypeArguments(CompletionParameterTypeInferencePolicy.INSTANCE, true)
                                  : candidate.getSubstitutor();
   }
 
@@ -218,10 +227,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiExpression arg = args[j];
       assert parm.isValid();
       assert arg.isValid();
-      PsiType parmType = substitutor.substitute(parm.getType());
+      PsiType parmType = parm.getType();
       PsiType argType = arg.getType();
+      if (argType == null) continue;
+      if (parmType instanceof PsiEllipsisType && parmType.getArrayDimensions() == argType.getArrayDimensions() + 1) {
+        parmType = ((PsiEllipsisType)parmType).getComponentType();
+      }
+      parmType = substitutor.substitute(parmType);
 
-      if (argType != null && !parmType.isAssignableFrom(argType)) {
+      if (!parmType.isAssignableFrom(argType)) {
         return false;
       }
     }
@@ -301,12 +315,22 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
         cand:
         for (CandidateInfo candidate : candidates) {
+          PsiMethod methodCandidate = (PsiMethod)candidate.getElement();
+
           for (CandidateInfo info : result) {
-            if (MethodSignatureUtil.isSuperMethod((PsiMethod)candidate.getElement(), (PsiMethod)info.getElement())) {
+            if (MethodSignatureUtil.isSuperMethod(methodCandidate, (PsiMethod)info.getElement())) {
               continue cand;
             }
           }
-          if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
+          if (candidate.isStaticsScopeCorrect()) {
+            boolean accessible = candidate.isAccessible();
+            if (!accessible && methodCandidate.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
+              // privates are accessible within one file
+              accessible = JavaPsiFacade.getInstance(methodCandidate.getProject()).getResolveHelper()
+                .isAccessible(methodCandidate, methodCandidate.getModifierList(), call, null, null);
+            }
+            if (accessible) result.add(candidate);
+          }
         }
       }
       else {
@@ -317,7 +341,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
         }
       }
-      return result.toArray(new CandidateInfo[result.size()]);
+      return result.isEmpty() ? candidates : result.toArray(new CandidateInfo[result.size()]);
     }
     else {
       assert call instanceof PsiEnumConstant;
@@ -332,12 +356,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  public static void updateMethodPresentation(PsiMethod method, @Nullable PsiSubstitutor substitutor, ParameterInfoUIContext context) {
+  public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
     if (!method.isValid() || substitutor != null && !substitutor.isValid()) {
       context.setUIComponentEnabled(false);
-      return;
+      return null;
     }
 
     StringBuilder buffer = new StringBuilder();
@@ -406,7 +430,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       buffer.append(")");
     }
 
-    context.setupUIComponentPresentation(
+    return context.setupUIComponentPresentation(
       buffer.toString(),
       highlightStartOffset,
       highlightEndOffset,
@@ -419,16 +443,20 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
     int lastSize = buffer.length();
-    for (PsiAnnotation a : AnnotationUtil.getAllAnnotations(owner, false, null)) {
-      if (lastSize != buffer.length()) buffer.append(" ");
-      final PsiJavaCodeReferenceElement element = a.getNameReferenceElement();
-      if (element != null) buffer.append("@").append(element.getReferenceName());
+    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null)) {
+      final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+      if (element != null) {
+        final PsiElement resolved = element.resolve();
+        if (resolved instanceof PsiClass && !AnnotationUtil.isAnnotated((PsiClass)resolved, "java.lang.annotation.Documented", false)) continue;
+        if (lastSize != buffer.length()) buffer.append(" ");
+        buffer.append("@").append(element.getReferenceName());
+      }
     }
     if (lastSize != buffer.length()) buffer.append(" ");
   }
 
   @Override
-  public void updateUI(final Object p, final ParameterInfoUIContext context) {
+  public void updateUI(final Object p, @NotNull final ParameterInfoUIContext context) {
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
       PsiMethod method = (PsiMethod)info.getElement();

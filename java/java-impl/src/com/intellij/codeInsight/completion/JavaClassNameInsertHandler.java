@@ -24,7 +24,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -39,8 +41,6 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
   @Override
   public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-    final char c = context.getCompletionChar();
-
     int offset = context.getTailOffset() - 1;
     final PsiFile file = context.getFile();
     if (PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiImportStatementBase.class, false) != null) {
@@ -57,6 +57,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     final Project project = context.getProject();
 
     final Editor editor = context.getEditor();
+    final char c = context.getCompletionChar();
     if (c == '#') {
       context.setLaterRunnable(new Runnable() {
         @Override
@@ -66,6 +67,12 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       });
     } else if (c == '.' && PsiTreeUtil.getParentOfType(position, PsiParameterList.class) == null) {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+    }
+
+    if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null &&
+        CodeStyleSettingsManager.getSettings(project).USE_FQ_CLASS_NAMES_IN_JAVADOC) {
+      AllClassesGetter.INSERT_FQN.handleInsert(context, item);
+      return;
     }
 
     if (position != null) {

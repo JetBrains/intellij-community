@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.profile.ApplicationProfileManager;
@@ -57,6 +56,7 @@ public class ProfilesComboBox extends JComboBox {
     reloadProfiles(profileManager, availableProfiles, selectedProfile);
 
     setRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof Profile) {
@@ -73,6 +73,7 @@ public class ProfilesComboBox extends JComboBox {
     addItemListener(new ItemListener() {
       private Object myDeselectedItem = null;
 
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (myFrozenProfilesCombo) return; //do not update during reloading
         if (ItemEvent.SELECTED == e.getStateChange()) {
@@ -80,7 +81,7 @@ public class ProfilesComboBox extends JComboBox {
           if (profileManager instanceof ProjectProfileManager && item instanceof Profile && ((Profile)item).isLocal()) {
             if (Messages.showOkCancelDialog(InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.message"),
                                             InspectionsBundle.message("inspection.new.profile.ide.to.project.warning.title"),
-                                            Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                            Messages.getErrorIcon()) == Messages.OK) {
               final String newName = Messages.showInputDialog(InspectionsBundle.message("inspection.new.profile.text"),
                                                               InspectionsBundle.message("inspection.new.profile.dialog.title"),
                                                               Messages.getInformationIcon());

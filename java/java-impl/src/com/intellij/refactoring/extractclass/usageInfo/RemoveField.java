@@ -28,6 +28,7 @@ public class RemoveField extends FixableUsageInfo {
     }
 
     public void fixUsage() throws IncorrectOperationException {
+        field.normalizeDeclaration();
         field.delete();
     }
 }

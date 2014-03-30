@@ -1,6 +1,6 @@
 class Test {
-    /**
-     *  @throws <warning>Integer</warning> sometimes
+    <warning descr="Required tag '@throws' java.lang.Exception is missing">/**</warning>
+     *  @throws <warning descr="Class java.lang.Integer is not a descendant of Throwable">Integer</warning> sometimes
      */
-     public void <warning>foo</warning>() throws Exception {}
+     public void foo() throws Exception {}
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
+import com.intellij.util.UriUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.vcsUtil.AuthDialog;
 import git4idea.jgit.GitHttpAuthDataProvider;
@@ -52,6 +53,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull  private final Project myProject;
   @Nullable private final ModalityState myModalityState;
   @NotNull  private final String myTitle;
+  @NotNull private final String myUrlFromCommand;
 
   @Nullable private String myPassword;
   @Nullable private String myPasswordKey;
@@ -59,10 +61,12 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myLogin;
   private boolean myRememberOnDisk;
 
-  GitHttpGuiAuthenticator(@NotNull Project project, @Nullable ModalityState modalityState, @NotNull GitCommand command) {
+  GitHttpGuiAuthenticator(@NotNull Project project, @Nullable ModalityState modalityState, @NotNull GitCommand command,
+                          @NotNull String url) {
     myProject = project;
     myModalityState = modalityState;
     myTitle = "Git " + StringUtil.capitalize(command.name());
+    myUrlFromCommand = url;
   }
 
   @Override
@@ -71,10 +75,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myPassword != null) {  // already asked in askUsername
       return myPassword;
     }
+    url = adjustUrl(url);
     String prompt = "Enter the password for " + url;
-    String key = adjustHttpUrl(url);
-    myPasswordKey = key;
-    String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, key, false, null);
+    myPasswordKey = url;
+    String password = PasswordSafePromptDialog.askPassword(myProject, myModalityState, myTitle, prompt, PASS_REQUESTER, url, false, null);
     if (password == null) {
       return "";
     }
@@ -88,8 +92,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
-    String key = adjustHttpUrl(url);
-    AuthData authData = getSavedAuthData(myProject, key);
+    url = adjustUrl(url);
+    AuthData authData = getSavedAuthData(myProject, url);
     String login = null;
     String password = null;
     if (authData != null) {
@@ -116,7 +120,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     // remember values to store in the database afterwards, if authentication succeeds
     myPassword = dialog.getPassword();
     myLogin = dialog.getUsername();
-    myUrl = key;
+    myUrl = url;
     myRememberOnDisk = dialog.isRememberPassword();
     myPasswordKey = makeKey(myUrl, myLogin);
 
@@ -157,6 +161,25 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
+  @NotNull
+  private String adjustUrl(@NotNull String url) {
+    if (StringUtil.isEmptyOrSpaces(url)) {
+      // if Git doesn't specify the URL in the username/password query, we use the url from the Git command
+      // We only take the host, to avoid entering the same password for different repositories on the same host.
+      return adjustHttpUrl(getHost(myUrlFromCommand));
+    }
+    return adjustHttpUrl(url);
+  }
+
+  @NotNull
+  private static String getHost(@NotNull String url) {
+    Pair<String, String> split = UriUtil.splitScheme(url);
+    String scheme = split.getFirst();
+    String urlItself = split.getSecond();
+    int pathStart = urlItself.indexOf("/");
+    return scheme + URLUtil.SCHEME_SEPARATOR + urlItself.substring(0, pathStart);
+  }
+
   /**
    * If the url scheme is HTTPS, store it as HTTP in the database, not to make user enter and remember same credentials twice.
    */
@@ -182,7 +205,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       if (password != null) {
         return new AuthData(userName, password);
       }
-      return null;
+      return trySavedAuthDataFromProviders(url);
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't get the password for key [" + key + "]", e);
@@ -207,10 +230,10 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    */
   @NotNull
   private static String makeKey(@NotNull String url, @NotNull String login) {
-    Pair<String,String> pair = URLUtil.splitScheme(url);
+    Pair<String,String> pair = UriUtil.splitScheme(url);
     String scheme = pair.getFirst();
-    if (scheme != null) {
-      return scheme + login + "@" + pair.getSecond();
+    if (StringUtil.isEmpty(scheme)) {
+      return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
     }
     return login + "@" + url;
   }

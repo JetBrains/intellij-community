@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
@@ -39,7 +37,7 @@ import java.util.List;
 import java.util.Set;
 
 public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
-  private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
+
   @NonNls private static final String ID = "PLUGIN_MODULE";
 
   public PluginModuleType() {
@@ -50,18 +48,21 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return (PluginModuleType) ModuleTypeManager.getInstance().findByID(ID);
   }
 
-  public static boolean isOfType(Module module) {
+  public static boolean isOfType(@NotNull Module module) {
     return get(module) instanceof PluginModuleType;
   }
 
+  @NotNull
   public PluginModuleBuilder createModuleBuilder() {
     return new PluginModuleBuilder();
   }
 
+  @NotNull
   public String getName() {
     return DevKitBundle.message("module.title");
   }
 
+  @NotNull
   public String getDescription() {
     return DevKitBundle.message("module.description");
   }
@@ -77,7 +78,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module) {
     if (module == null) return null;
-    if (!(get(module) instanceof PluginModuleType)) return null;
+    if (!isOfType(module)) return null;
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
@@ -85,9 +86,9 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return configFile != null ? configFile.getXmlFile() : null;
 }
 
-  public static boolean isPluginModuleOrDependency(@NotNull Module module) {
+  public static boolean isPluginModuleOrDependency(@Nullable Module module) {
+    if (module == null) return false;
     if (isOfType(module)) return true;
-
     return getCandidateModules(module).size() > 0;
   }
 
@@ -117,18 +118,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   @Override
-  public boolean isValidSdk(final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
     return JavaModuleType.isValidJavaSdk(module);
-  }
-
-  public static Module[] getAllPluginModules(final Project project) {
-    List<Module> modules = new ArrayList<Module>();
-    Module[] allModules = ModuleManager.getInstance(project).getModules();
-    for (Module module : allModules) {
-      if (get(module) == getInstance()) {
-        modules.add(module);
-      }
-    }
-    return modules.toArray(new Module[modules.size()]);
   }
 }

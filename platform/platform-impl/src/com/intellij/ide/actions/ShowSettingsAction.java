@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
@@ -31,16 +30,23 @@ import com.intellij.openapi.util.SystemInfo;
 import javax.swing.*;
 
 public class ShowSettingsAction extends AnAction implements DumbAware {
+  public ShowSettingsAction() {
+    super(CommonBundle.settingsAction(), CommonBundle.settingsActionDescription(), AllIcons.General.Settings);
+  }
+
   @Override
   public void update(AnActionEvent e) {
     if (SystemInfo.isMac && e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);
     }
+    if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
+      e.getPresentation().setText(CommonBundle.settingsTitle());
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

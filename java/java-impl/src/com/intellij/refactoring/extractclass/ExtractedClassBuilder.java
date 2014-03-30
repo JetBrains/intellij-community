@@ -433,7 +433,7 @@ class ExtractedClassBuilder {
               }
             }
             else {
-              out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field.getProject(), field) + "()");
+              out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field) + "()");
             }
           }
         }
@@ -476,16 +476,16 @@ class ExtractedClassBuilder {
     private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
                           final String fieldName) {
       if (tokenType.equals(JavaTokenType.EQ)) {
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = PropertyUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
         rhs.accept(this);
         out.append(')');
       }
       else {
         final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = PropertyUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
-        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        final String getterName = PropertyUtil.suggestGetterName(field);
         out.append(fieldName + '.' + getterName + "()");
         out.append(operator);
         rhs.accept(this);
@@ -521,10 +521,10 @@ class ExtractedClassBuilder {
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           out.append(backPointerName +
-                     '.' + PropertyUtil.suggestSetterName(field.getProject(), field) +
+                     '.' + PropertyUtil.suggestSetterName(field) +
                      '(' +
                      backPointerName +
-                     '.' + PropertyUtil.suggestGetterName(field.getProject(), field) +
+                     '.' + PropertyUtil.suggestGetterName(field) +
                      "()" +
                      operator +
                      "1)");

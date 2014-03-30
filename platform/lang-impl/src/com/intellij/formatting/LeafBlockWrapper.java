@@ -44,7 +44,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
    * @param isReadOnly          flag that indicates if target block is read-only
    */
   public LeafBlockWrapper(final Block block,
-                          CompositeBlockWrapper parent,
+                          @Nullable CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
@@ -70,7 +70,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     int flagsValue = myFlags;
     final boolean containsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
     flagsValue |= containsLineFeeds ? CONTAIN_LINE_FEEDS:0;
-        
+
     // We need to perform such a complex calculation because block construction algorithm is allowed to create 'leaf' blocks
     // that contain more than one token interleaved white space that contains either tabulations or line breaks.
     // E.g. consider the following code:
@@ -83,7 +83,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     int start = containsLineFeeds ? model.getLineStartOffset(lastLineNumber) : textRange.getStartOffset();
     int symbols = 0;
     CharSequence text = model.getDocument().getCharsSequence();
-    for (int i = start; i < textRange.getEndOffset(); i++) {      
+    for (int i = start; i < textRange.getEndOffset(); i++) {
       if (text.charAt(i) == '\t') {
         symbols += options.TAB_SIZE;
       } else {
@@ -144,6 +144,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new IndentData(indentSpaces, spaces);
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myPreviousBlock = null;
@@ -187,7 +188,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
-  public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
+  public void setSpaceProperty(@Nullable final SpacingImpl currentSpaceProperty) {
     mySpaceProperty = currentSpaceProperty;
   }
 

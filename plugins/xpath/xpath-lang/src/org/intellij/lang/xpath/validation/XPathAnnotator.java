@@ -23,7 +23,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
@@ -329,6 +331,18 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
                                                                                      qName.getPrefix() +
                                                                                      "' has not been declared");
           ann.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        } else if (name != null){
+          final String extNS = name.getNamespaceURI();
+          if (!StringUtil.isEmpty(extNS)) {
+            final Set<Pair<QName,Integer>> pairs = contextProvider.getFunctionContext().getFunctions().keySet();
+            for (Pair<QName, Integer> pair : pairs) {
+              // extension namespace is known
+              final String uri = pair.first.getNamespaceURI();
+              if (uri != null && uri.equals(extNS)) {
+                holder.createWarningAnnotation(node, "Unknown function '" + name + "'");
+              }
+            }
+          }
         }
       } else {
         if (name != null) {

@@ -31,11 +31,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ParenthesesInsertHandler<T extends LookupElement> implements InsertHandler<T> {
   public static final ParenthesesInsertHandler<LookupElement> WITH_PARAMETERS = new ParenthesesInsertHandler<LookupElement>() {
+    @Override
     protected boolean placeCaretInsideParentheses(final InsertionContext context, final LookupElement item) {
       return true;
     }
   };
   public static final ParenthesesInsertHandler<LookupElement> NO_PARAMETERS = new ParenthesesInsertHandler<LookupElement>() {
+    @Override
     protected boolean placeCaretInsideParentheses(final InsertionContext context, final LookupElement item) {
       return false;
     }
@@ -87,6 +89,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
 
   protected abstract boolean placeCaretInsideParentheses(final InsertionContext context, final T item);
 
+  @Override
   public void handleInsert(final InsertionContext context, final T item) {
     final Editor editor = context.getEditor();
     final Document document = editor.getDocument();

@@ -33,7 +33,7 @@ class DeleteBookmarkAction extends DumbAwareAction {
   private final JList myList;
 
   DeleteBookmarkAction(Project project, JList list) {
-    super("Delete", "Delete current bookmark", AllIcons.Actions.Delete);
+    super("Delete", "Delete current bookmark", AllIcons.General.Remove);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), list);

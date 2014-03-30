@@ -56,6 +56,10 @@ public class MavenModuleMap {
 
   public boolean resolveToModule(Artifact artifact) {
     String extension = artifact.getArtifactHandler().getExtension();
+    if ("jar".equals(extension) && "test-jar".equals(artifact.getType())) {
+      extension = "test-jar";
+    }
+
     File file = findArtifact(artifact.getGroupId(), artifact.getArtifactId(), extension, artifact.getBaseVersion());
 
     if(file == null) {

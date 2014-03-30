@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -106,7 +105,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
                                CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(),
-                               Messages.getQuestionIcon()) == 0;
+                               Messages.getQuestionIcon()) == Messages.OK;
   }
 
   @NotNull
@@ -125,7 +124,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         elementsToSearch.add(parameters[idx]);
       }
     }
-    return elementsToSearch.toArray(new PsiElement[elementsToSearch.size()]);
+    return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
 
 
@@ -184,7 +183,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                                FindBundle.message("find.field.accessors.title"),
                                                                CommonBundle.getYesButtonText(),
                                                                CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) ==
-                                   DialogWrapper.OK_EXIT_CODE;
+                                   Messages.OK;
           if (doSearch) {
             final Set<PsiElement> elements = new THashSet<PsiElement>();
             for (PsiMethod accessor : accessors) {

@@ -104,9 +104,14 @@ class Outer {
   void arrays(String @TA ... docs) {
     @TA String @TA [] @TA [] docs1 = new @TA String @TA [2] @TA [2];
     @TA int @TA [] ints = new @TA int @TA [2];
-    new Boolean @TA [2] <error descr="Annotations are not allowed here">@TA</error>;
-    new Boolean @<error descr="Duplicate annotation">TA</error> @<error descr="Duplicate annotation">TA</error> [42];
   }
+
+  int @TA [] mixedArrays @TA [] <error descr="Annotations are not allowed here">@TA</error> = new int[0][0];
+  int @TA [] mixedArrays(int @TA [] p @TA [] <error descr="Annotations are not allowed here">@TA</error>) @TA [] <error descr="Annotations are not allowed here">@TA</error> {
+    int @TA [] a @TA [] <error descr="Annotations are not allowed here">@TA</error> = (p != null ? p : mixedArrays);
+    return a;
+  }
+  void <error descr="Annotations are not allowed here">@TA</error> misplaced() { }
 
   @TA Outer() { }
 
@@ -138,6 +143,4 @@ class Outer {
       }
     }
   }*/
-
-  List<@<error descr="Duplicate annotation">TA</error> @<error descr="Duplicate annotation">TA</error> String> c = null;
 }

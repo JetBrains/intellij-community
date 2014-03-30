@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -102,14 +101,11 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     if (myUseUserManifest.isSelected() && myManifest.getText() != null && !new File(myManifest.getText()).exists()){
       throw new ConfigurationException(DevKitBundle.message("error.file.not.found.message", myManifest.getText()));
     }
-    final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
+    final File plugin = new File(myBuildProperties.getPluginXmlPath());
     final String newPluginPath = myPluginXML.getText() + File.separator + META_INF + File.separator + PLUGIN_XML;
-    if (plugin != null &&
-        plugin.exists() &&
-        !plugin.getPath().equals(newPluginPath) &&
-        Messages.showYesNoDialog(myModule.getProject(),
-                                 DevKitBundle.message("deployment.view.delete", plugin.getPath()),
-                                 DevKitBundle.message("deployment.cleanup", META_INF), null) == DialogWrapper.OK_EXIT_CODE) {
+    if (plugin.exists() && !plugin.getPath().equals(newPluginPath) && 
+        Messages.showYesNoDialog(myModule.getProject(), DevKitBundle.message("deployment.view.delete", plugin.getPath()),
+                                 DevKitBundle.message("deployment.cleanup", META_INF), null) == Messages.YES) {
 
       CommandProcessor.getInstance().executeCommand(myModule.getProject(),
                                                     new Runnable() {

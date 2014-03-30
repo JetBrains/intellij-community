@@ -109,7 +109,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
         final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
         if (lastParent instanceof PsiClass) {
           if (hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-            processor.execute(lastParent, state);
+            if (!processor.execute(lastParent, state)) return false;
           }
         }
       }

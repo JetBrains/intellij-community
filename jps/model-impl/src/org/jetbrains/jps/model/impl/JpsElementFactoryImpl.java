@@ -28,11 +28,10 @@ import org.jetbrains.jps.model.library.impl.sdk.JpsSdkImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
+import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl;
 
 /**
  * @author nik
@@ -69,6 +68,14 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
                                                                      @Nullable String versionString, @NotNull JpsSdkType<P> type,
                                                                      @NotNull P properties) {
     return createLibrary(name, type, new JpsSdkImpl<P>(homePath, versionString, type, properties));
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> JpsModuleSourceRoot createModuleSourceRoot(@NotNull String url,
+                                                                           @NotNull JpsModuleSourceRootType<P> type,
+                                                                           @NotNull P properties) {
+    return new JpsModuleSourceRootImpl<P>(url, type, properties);
   }
 
   @NotNull

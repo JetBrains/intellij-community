@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,17 +37,16 @@ public class RegexpFilter implements Filter {
   @NonNls public static final String COLUMN_MACROS = "$COLUMN$";
 
   @NonNls private static final String FILE_PATH_REGEXP = "((?:\\p{Alpha}\\:)?[0-9 a-z_A-Z\\-\\\\./]+)";
-  private static final String NUMBER_REGEXP = "([0-9]+)";
+  @NonNls private static final String NUMBER_REGEXP = "([0-9]+)";
+  @NonNls private static final String FILE_STR = "file";
+  @NonNls private static final String LINE_STR = "line";
+  @NonNls private static final String COLUMN_STR = "column";
 
   private final int myFileRegister;
   private final int myLineRegister;
   private final int myColumnRegister;
-
   private final Pattern myPattern;
   private final Project myProject;
-  @NonNls private static final String FILE_STR = "file";
-  @NonNls private static final String LINE_STR = "line";
-  @NonNls private static final String COLUMN_STR = "column";
 
   public RegexpFilter(Project project, @NonNls String expression) {
     myProject = project;
@@ -104,17 +103,17 @@ public class RegexpFilter implements Filter {
     myPattern = Pattern.compile(expression, Pattern.MULTILINE);
   }
 
+  @SuppressWarnings("ResultOfMethodCallIgnored")
   public static void validate(String expression) {
     if (expression == null || expression.trim().isEmpty()) {
       throw new InvalidExpressionException("expression == null or empty");
     }
 
-    expression = substituteMacrosesWithRegexps(expression);
-
+    expression = substituteMacrosWithRegexps(expression);
     Pattern.compile(expression, Pattern.MULTILINE);
   }
 
-  private static String substituteMacrosesWithRegexps(String expression) {
+  private static String substituteMacrosWithRegexps(String expression) {
     int filePathIndex = expression.indexOf(FILE_PATH_MACROS);
     int lineIndex = expression.indexOf(LINE_MACROS);
     int columnIndex = expression.indexOf(COLUMN_MACROS);
@@ -135,21 +134,19 @@ public class RegexpFilter implements Filter {
     return expression;
   }
 
-  public Result applyFilter(final String line, final int entireLength) {
-
-    final Matcher matcher = myPattern.matcher(line);
-    if (matcher.find()) {
-      return createResult(matcher, entireLength - line.length());
+  @Override
+  public Result applyFilter(String line, int entireLength) {
+    Matcher matcher = myPattern.matcher(line);
+    if (!matcher.find()) {
+      return null;
     }
 
-    return null;
-  }
-
-  private Result createResult(final Matcher matcher, final int entireLen) {
-    final String filePath = matcher.group(myFileRegister);
+    String filePath = matcher.group(myFileRegister);
+    if (filePath == null) {
+      return null;
+    }
 
     String lineNumber = "0";
-
     if (myLineRegister != -1) {
       lineNumber = matcher.group(myLineRegister);
     }
@@ -159,32 +156,29 @@ public class RegexpFilter implements Filter {
       columnNumber = matcher.group(myColumnRegister);
     }
 
-    int line = 0;
+    int line1 = 0;
     int column = 0;
     try {
-      line = Integer.parseInt(lineNumber);
+      line1 = Integer.parseInt(lineNumber);
       column = Integer.parseInt(columnNumber);
     } catch (NumberFormatException e) {
-      // Do nothing, so that line and column will remain at their initial
-      // zero values.
+      // Do nothing, so that line and column will remain at their initial zero values.
     }
 
-    if (line > 0) line -= 1;
+    if (line1 > 0) line1 -= 1;
     if (column > 0) column -= 1;
     // Calculate the offsets relative to the entire text.
-    final int highlightStartOffset = entireLen + matcher.start(myFileRegister);
+    final int highlightStartOffset = entireLength - line.length() + matcher.start(myFileRegister);
     final int highlightEndOffset = highlightStartOffset + filePath.length();
-
-    final HyperlinkInfo info = createOpenFileHyperlink(filePath, line, column);
+    final HyperlinkInfo info = createOpenFileHyperlink(filePath, line1, column);
     return new Result(highlightStartOffset, highlightEndOffset, info);
   }
 
   @Nullable
   protected HyperlinkInfo createOpenFileHyperlink(String fileName, final int line, final int column) {
     fileName = fileName.replace(File.separatorChar, '/');
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
-    if (file == null) return null;
-    return new OpenFileHyperlinkInfo(myProject, file, line, column);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
+    return file != null ? new OpenFileHyperlinkInfo(myProject, file, line, column) : null;
   }
 
   public static String[] getMacrosName() {

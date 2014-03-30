@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +51,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   }
 
   private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
-    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int maxSeverity = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST ? severityRegistrar.getSeveritiesCount() - 1 : 0;
 
@@ -72,7 +71,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     final HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     final int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
 
-    DaemonCodeAnalyzerImpl.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
         int startOffset = getNavigationPositionFor(info, document);
@@ -127,6 +126,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     if (offset != oldOffset) {
       ScrollType scrollType = offset > oldOffset ? ScrollType.CENTER_DOWN : ScrollType.CENTER_UP;
       editor.getSelectionModel().removeSelection();
+      editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(offset);
       scrollingModel.scrollToCaret(scrollType);
     }
@@ -150,7 +150,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int start = info.getActualStartOffset();
     if (start >= document.getTextLength()) return document.getTextLength();
     char c = document.getCharsSequence().charAt(start);
-    int shift = info.isAfterEndOfLine && c != '\n' ? 1 : info.navigationShift;
+    int shift = info.isAfterEndOfLine() && c != '\n' ? 1 : info.navigationShift;
 
     int offset = info.getActualStartOffset() + shift;
     return Math.min(offset, document.getTextLength());

@@ -1,4 +1,3 @@
-
 /*
  * User: anna
  * Date: 29-Jan-2007
@@ -8,9 +7,10 @@ package com.intellij.codeInspection.ui.actions;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.RefElementNode;
@@ -40,12 +40,12 @@ public class SuppressActionWrapper extends ActionGroup {
   private final Project myProject;
   private final InspectionManagerEx myManager;
   private final Set<InspectionTreeNode> myNodesToSuppress = new HashSet<InspectionTreeNode>();
-  private final InspectionTool myTool;
+  private final InspectionToolWrapper myToolWrapper;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.SuppressActionWrapper");
 
-  public SuppressActionWrapper(final Project project,
-                                  final InspectionTool tool,
-                                  final TreePath[] paths) {
+  public SuppressActionWrapper(@NotNull final Project project,
+                               @NotNull final InspectionToolWrapper toolWrapper,
+                               @NotNull final TreePath[] paths) {
     super(InspectionsBundle.message("suppress.inspection.problem"), false);
     myProject = project;
     myManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
@@ -53,6 +53,7 @@ public class SuppressActionWrapper extends ActionGroup {
       final Object node = path.getLastPathComponent();
       if (!(node instanceof TreeNode)) continue;
       TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
+        @Override
         public boolean accept(final Object node) {    //fetch leaves
           final InspectionTreeNode n = (InspectionTreeNode)node;
           if (n.isLeaf()) {
@@ -62,12 +63,13 @@ public class SuppressActionWrapper extends ActionGroup {
         }
       });
     }
-    myTool = tool;
+    myToolWrapper = toolWrapper;
   }
 
+  @Override
   @NotNull
   public SuppressTreeAction[] getChildren(@Nullable final AnActionEvent e) {
-    final SuppressIntentionAction[] suppressActions = myTool.getSuppressActions();
+    final SuppressIntentionAction[] suppressActions = InspectionManagerEx.getSuppressActions(myToolWrapper.getTool());
     if (suppressActions == null || suppressActions.length == 0) return new SuppressTreeAction[0];
     final SuppressTreeAction[] actions = new SuppressTreeAction[suppressActions.length];
     for (int i = 0; i < suppressActions.length; i++) {
@@ -77,20 +79,36 @@ public class SuppressActionWrapper extends ActionGroup {
     return actions;
   }
 
-  private boolean suppress(final PsiElement element, final SuppressIntentionAction action) {
+  private boolean suppress(final PsiElement element,
+                           final CommonProblemDescriptor descriptor,
+                           final SuppressIntentionAction action,
+                           final RefEntity refEntity) {
     final PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         try {
           final long startModificationCount = tracker.getModificationCount();
+
+          PsiElement container = null;
+          if (action instanceof SuppressIntentionActionFromFix) {
+            container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+          }
+          if (container == null) {
+            container = element;
+          }
+
           if (action.isAvailable(myProject, null, element)) {
             action.invoke(myProject, null, element);
           }
           if (startModificationCount != tracker.getModificationCount()) {
             final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
             for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-              context.ignoreElement(myTool, element);
+              context.ignoreElement(myToolWrapper.getTool(), container);
+              if (descriptor != null) {
+                context.getPresentation(myToolWrapper).ignoreCurrentElementProblem(refEntity, descriptor);
+              }
             }
           }
         }
@@ -102,9 +120,10 @@ public class SuppressActionWrapper extends ActionGroup {
     return true;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(myTool != null && myTool.getSuppressActions() != null);
+    e.getPresentation().setEnabled(InspectionManagerEx.getSuppressActions(myToolWrapper.getTool()) != null);
   }
 
   private static Pair<PsiElement, CommonProblemDescriptor> getContentToSuppress(InspectionTreeNode node) {
@@ -134,16 +153,25 @@ public class SuppressActionWrapper extends ActionGroup {
       mySuppressAction = suppressAction;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
             public void run() {
               for (InspectionTreeNode node : myNodesToSuppress) {
                 final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
                 if (content.first == null) break;
                 final PsiElement element = content.first;
-                if (!suppress(element, mySuppressAction)) break;
+                RefEntity refEntity = null;
+                if (node instanceof RefElementNode) {
+                  refEntity = ((RefElementNode)node).getElement();
+                } else if (node instanceof ProblemDescriptionNode) {
+                  refEntity = ((ProblemDescriptionNode)node).getElement();
+                }
+                if (!suppress(element, content.second, mySuppressAction, refEntity)) break;
               }
               final Set<GlobalInspectionContextImpl> globalInspectionContexts = myManager.getRunningContexts();
               for (GlobalInspectionContextImpl context : globalInspectionContexts) {
@@ -156,6 +184,7 @@ public class SuppressActionWrapper extends ActionGroup {
       });
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       if (!isAvailable()) e.getPresentation().setVisible(false);

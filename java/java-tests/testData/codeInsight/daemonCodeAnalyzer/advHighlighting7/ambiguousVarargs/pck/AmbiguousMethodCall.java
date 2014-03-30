@@ -19,7 +19,7 @@ abstract class A {
     abstract void foo(int... x);
 
     {
-        foo<error descr="Ambiguous method call: both 'A.foo(Object...)' and 'A.foo(int...)' match">(1)</error>;
+        foo(1);
     }
 }
 abstract class A1 {

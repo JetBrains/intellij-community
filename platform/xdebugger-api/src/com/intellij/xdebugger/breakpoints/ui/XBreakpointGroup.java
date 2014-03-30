@@ -32,6 +32,18 @@ public abstract class XBreakpointGroup implements Comparable<XBreakpointGroup> {
   @NotNull
   public abstract String getName();
 
+  @Override
+  public String toString() {
+    return getName();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj == null) return false;
+    return (getClass() == obj.getClass()) && compareTo((XBreakpointGroup)obj) == 0;
+  }
+
   public int compareTo(final XBreakpointGroup o) {
     return getName().compareTo(o.getName());
   }

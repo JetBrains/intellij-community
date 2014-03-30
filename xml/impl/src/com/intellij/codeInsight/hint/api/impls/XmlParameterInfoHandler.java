@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return true;
   }
 
-  public XmlTag findElementForParameterInfo(final CreateParameterInfoContext context) {
+  public XmlTag findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
 
@@ -80,11 +80,11 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return tag;
   }
 
-  public void showParameterInfo(final @NotNull XmlTag element, final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull XmlTag element, @NotNull final CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
-  public XmlTag findElementForUpdatingParameterInfo(final UpdateParameterInfoContext context) {
+  public XmlTag findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     if (tag != null) {
       final PsiElement currentXmlTag = context.getParameterOwner();
@@ -94,9 +94,9 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateParameterInfo(@NotNull final XmlTag o, final UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() == null || o.equals(context.getParameterOwner())) {
-      context.setParameterOwner( o );
+  public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+    if (context.getParameterOwner() == null || parameterOwner.equals(context.getParameterOwner())) {
+      context.setParameterOwner(parameterOwner);
     } else {
       context.removeHint();
     }
@@ -145,7 +145,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  public void updateUI(XmlElementDescriptor o, final ParameterInfoUIContext context) {
+  public void updateUI(XmlElementDescriptor o, @NotNull final ParameterInfoUIContext context) {
     updateElementDescriptor(
       o,
       context,

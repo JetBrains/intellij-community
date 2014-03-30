@@ -20,9 +20,7 @@ import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -30,8 +28,8 @@ import java.util.List;
  */
 public class StdArrangementSettings implements ArrangementSettings {
 
-  @NotNull private final List<ArrangementGroupingRule> myGroupings = new ArrayList<ArrangementGroupingRule>();
-  @NotNull private final List<StdArrangementMatchRule> myRules     = new ArrayList<StdArrangementMatchRule>();
+  @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<ArrangementGroupingRule>();
+  @NotNull protected final List<StdArrangementMatchRule> myRules           = new ArrayList<StdArrangementMatchRule>();
 
   public StdArrangementSettings() {
   }
@@ -54,6 +52,31 @@ public class StdArrangementSettings implements ArrangementSettings {
     return myRules;
   }
 
+  @NotNull
+  protected List<ArrangementGroupingRule> cloneGroupings() {
+    final ArrayList<ArrangementGroupingRule> groupings = new ArrayList<ArrangementGroupingRule>();
+    for (ArrangementGroupingRule grouping : myGroupings) {
+      groupings.add(grouping.clone());
+    }
+    return groupings;
+  }
+
+  @NotNull
+  protected List<StdArrangementMatchRule> cloneMatchRules() {
+    final ArrayList<StdArrangementMatchRule> rules = new ArrayList<StdArrangementMatchRule>();
+    for (StdArrangementMatchRule rule : myRules) {
+      rules.add(rule.clone());
+    }
+    return rules;
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettings clone() {
+    return new StdArrangementSettings(cloneGroupings(), cloneMatchRules());
+  }
+
+  @Override
   @NotNull
   public List<ArrangementGroupingRule> getGroupings() {
     return myGroupings;

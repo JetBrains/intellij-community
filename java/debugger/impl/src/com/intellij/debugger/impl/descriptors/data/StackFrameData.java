@@ -21,27 +21,30 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
   private final StackFrameProxyImpl myFrame;
   private final FrameDisplayKey myDisplayKey;
   private final MethodsTracker myMethodsTracker;
 
-  public StackFrameData(StackFrameProxyImpl frame) {
+  public StackFrameData(@NotNull StackFrameProxyImpl frame) {
     super();
+
     myFrame = frame;
     myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKeyForFrame(frame));
     myMethodsTracker = new MethodsTracker();
-    
   }
 
-  protected StackFrameDescriptorImpl createDescriptorImpl(Project project) {
+  @Override
+  protected StackFrameDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new StackFrameDescriptorImpl(myFrame, myMethodsTracker);
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof StackFrameData)) return false;
-
+    if (!(object instanceof StackFrameData)) {
+      return false;
+    }
     return ((StackFrameData)object).myFrame == myFrame;
   }
 
@@ -49,6 +52,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
     return myFrame.hashCode();
   }
 
+  @Override
   public DisplayKey<StackFrameDescriptorImpl> getDisplayKey() {
     return myDisplayKey;
   }
@@ -74,6 +78,5 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
     public int hashCode() {
       return myContextKey == null? 0 : myContextKey.hashCode();
     }
-  } 
-  
+  }
 }

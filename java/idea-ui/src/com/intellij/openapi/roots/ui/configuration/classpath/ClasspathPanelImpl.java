@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -64,18 +63,18 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -115,6 +114,22 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           return value.getDisplayName();
         }
       });
+
+    myEntryTable.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        OrderEntry entry = getSelectedEntry();
+        if (entry == null) return null;
+        String text = entry.getPresentableName();
+        return new TextTransferable(text);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -307,7 +322,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     //removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
     //upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
     //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
-    myEntryTable.setBorder(new LineBorder(UIUtil.getBorderColor()));
 
     // we need to register our listener before ToolbarDecorator registers its own. Otherwise
     myEntryTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -772,7 +786,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
           if (Messages.showOkCancelDialog(myEntryTable,
                                           "No code dependencies were found. Would you like to remove the dependency?",
-                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                          CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == Messages.OK) {
             removeSelectedItems(TableUtil.removeSelectedItems(myEntryTable));
           }
           return false;

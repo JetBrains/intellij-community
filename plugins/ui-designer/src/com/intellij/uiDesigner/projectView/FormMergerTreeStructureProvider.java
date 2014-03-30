@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,14 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,8 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     myProject = project;
   }
 
-  public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
+  @NotNull
+  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent.getValue() instanceof Form) return children;
 
     // Optimization. Check if there are any forms at all.
@@ -152,7 +154,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     }
 
     public void deleteElement(@NotNull DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       DeleteHandler.deletePsiElement(myElements, project);
     }
 
@@ -172,7 +174,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
           result.add((PsiElement) node.getValue());
         }
       }
-      return PsiUtilBase.toPsiElementArray(result);
+      return PsiUtilCore.toPsiElementArray(result);
     }
   }
 }

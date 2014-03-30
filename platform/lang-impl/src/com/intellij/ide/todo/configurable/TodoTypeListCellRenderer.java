@@ -24,6 +24,7 @@ final class TodoTypeListCellRenderer extends DefaultListCellRenderer{
     setHorizontalAlignment(JLabel.CENTER);
   }
 
+  @Override
   public Component getListCellRendererComponent(
     JList list,
     Object value,

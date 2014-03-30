@@ -20,16 +20,24 @@
  */
 package com.intellij.openapi.roots.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.KeyedExtensionFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public interface OrderRootTypeUIFactory {
-  KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, "com.intellij.OrderRootTypeUI") {
-    public String getKey(final OrderRootType key) {
+  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.OrderRootTypeUI");
+  KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, EP_NAME,
+                                                                                                                                          ApplicationManager
+                                                                                                                                            .getApplication().getPicoContainer()) {
+    @Override
+    public String getKey(@NotNull final OrderRootType key) {
       return key.name();
     }
   };

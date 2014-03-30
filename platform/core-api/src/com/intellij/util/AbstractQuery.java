@@ -96,6 +96,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
 
   protected abstract boolean processResults(@NotNull Processor<Result> consumer);
 
+  @NotNull
   protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<Result> consumer) {
     final AsyncFutureResult<Boolean> result = AsyncFutureFactory.getInstance().createAsyncFutureResult();
     try {

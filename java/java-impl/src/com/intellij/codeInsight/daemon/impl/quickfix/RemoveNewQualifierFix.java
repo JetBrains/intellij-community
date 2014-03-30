@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -38,7 +38,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
   private final PsiNewExpression expression;
   private final PsiClass aClass;
 
-  public RemoveNewQualifierFix(PsiNewExpression expression, PsiClass aClass) {
+  public RemoveNewQualifierFix(@NotNull PsiNewExpression expression, PsiClass aClass) {
     this.expression = expression;
     this.aClass = aClass;
   }
@@ -58,15 +58,12 @@ public class RemoveNewQualifierFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return
-        expression != null
-        && expression.isValid()
-        && (aClass == null || aClass.isValid())
-        && expression.getManager().isInProject(expression);
+      expression.isValid() && (aClass == null || aClass.isValid()) && expression.getManager().isInProject(expression);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(expression.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();
     if (aClass != null && classReference != null) {

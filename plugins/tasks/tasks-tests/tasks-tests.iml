@@ -10,12 +10,16 @@
     <orderEntry type="module" module-name="tasks-api" />
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="tasks-java" />
-    <orderEntry type="module" module-name="jira-connector" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xslt-debugger" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
+    <orderEntry type="module" module-name="git4idea" scope="TEST" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="jira" scope="TEST" />
   </component>
 </module>
 

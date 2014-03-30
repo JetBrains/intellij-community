@@ -3,12 +3,12 @@ package enums;
 public abstract enum OurEnumWithConstantsAndStaticFields2 {
     A {
         void foo() {
-            //To change body of implemented methods use File | Settings | File Templates.
+          
         }
     },
     B {
         void foo() {
-            //To change body of implemented methods use File | Settings | File Templates.
+          
         }
 
     },

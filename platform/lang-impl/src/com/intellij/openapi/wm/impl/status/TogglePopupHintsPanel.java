@@ -18,7 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +41,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-
   private Icon myCurrentIcon;
   private String myToolTipText;
 
@@ -57,13 +56,13 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     updateStatus();
   }
 
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     updateStatus();
   }
 
@@ -128,13 +127,13 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
         myCurrentIcon = AllIcons.Ide.HectorNo;
         myToolTipText = "Code analysis is disabled in power save mode. ";
       }
-      else if (HighlightLevelUtil.shouldInspect(file)) {
+      else if (HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) {
         myCurrentIcon = AllIcons.Ide.HectorOn;
         myToolTipText = "Current inspection profile: " +
                         InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() +
                         ". ";
       }
-      else if (HighlightLevelUtil.shouldHighlight(file)) {
+      else if (HighlightingLevelManager.getInstance(myProject).shouldHighlight(file)) {
         myCurrentIcon = AllIcons.Ide.HectorSyntax;
         myToolTipText = "Highlighting level is: Syntax. ";
       }
@@ -149,7 +148,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
       myToolTipText = null;
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }
   }
@@ -166,5 +165,4 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
     }
     return null;
   }
-
 }

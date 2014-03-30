@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -71,7 +71,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     if (!myConfigDirectoryRefreshed && (app.isUnitTestMode() || app.isDispatchThread())) {
       try {
-        syncRefreshPathRecursively(PathManager.getConfigPath(true), "componentVersions");
+        syncRefreshPathRecursively(PathManager.getConfigPath(), "componentVersions");
       }
       finally {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -92,17 +92,17 @@ public class FileBasedStorage extends XmlElementStorage {
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         @Override
-        public void fileMoved(VirtualFileMoveEvent event) {
+        public void fileMoved(@NotNull VirtualFileMoveEvent event) {
           myCachedVirtualFile = null;
         }
 
         @Override
-        public void fileDeleted(VirtualFileEvent event) {
+        public void fileDeleted(@NotNull VirtualFileEvent event) {
           myCachedVirtualFile = null;
         }
 
         @Override
-        public void contentsChanged(final VirtualFileEvent event) {
+        public void contentsChanged(@NotNull final VirtualFileEvent event) {
           if (!isDisposed()) {
             listener.storageFileChanged(event, FileBasedStorage.this);
           }
@@ -134,10 +134,11 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public void resetProviderCache() {
-    myProviderUpToDateHash = null;
-    myProviderVersions = null;
+    myProviderUpToDateHash = -1;
+    if (myRemoteVersionProvider != null) {
+      myRemoteVersionProvider.myProviderVersions = null;
+    }
   }
-
 
   private class FileSaveSession extends MySaveSession {
     protected FileSaveSession(MyExternalizationSession externalizationSession) {
@@ -153,11 +154,10 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     @Override
-    protected Integer calcHash() {
+    protected int calcHash() {
       int hash = myStorageData.getHash();
-
       if (myPathMacroSubstitutor != null) {
-        hash = 31*hash + myPathMacroSubstitutor.hashCode();
+        hash = 31 * hash + myPathMacroSubstitutor.hashCode();
       }
       return hash;
     }
@@ -171,9 +171,11 @@ public class FileBasedStorage extends XmlElementStorage {
         throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
       }
 
+      LOG.assertTrue(myFile != null);
       myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
     }
 
+    @NotNull
     @Override
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       boolean needsSave = needsSave();
@@ -189,6 +191,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.singletonList(myFile);
@@ -197,7 +200,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Override
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
-    ((FileStorageData)result).myFileName = myFile.getAbsolutePath();
     ((FileStorageData)result).myFilePath = myFile.getAbsolutePath();
     super.loadState(result, element);
   }
@@ -210,7 +212,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
   public static class FileStorageData extends StorageData {
     String myFilePath;
-    String myFileName;
 
     public FileStorageData(final String rootElementName) {
       super(rootElementName);
@@ -218,7 +219,6 @@ public class FileBasedStorage extends XmlElementStorage {
 
     protected FileStorageData(FileStorageData storageData) {
       super(storageData);
-      myFileName = storageData.myFileName;
       myFilePath = storageData.myFilePath;
     }
 
@@ -229,7 +229,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @NonNls
     public String toString() {
-      return "FileStorageData[" + myFileName + "]";
+      return "FileStorageData[" + myFilePath + "]";
     }
   }
 
@@ -252,16 +252,14 @@ public class FileBasedStorage extends XmlElementStorage {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
-      if (file == null || file.isDirectory()) {
-        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));        
+      if (file == null || file.isDirectory() || !file.isValid()) {
+        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));
         return null;
       }
-      else if (file.getLength() == 0) {
+      if (file.getLength() == 0) {
         return processReadException(null);
       }
-      else {
-        return loadDocumentImpl(file);
-      }
+      return loadDocumentImpl(file);
     }
     catch (final JDOMException e) {
       return processReadException(e);
@@ -274,7 +272,7 @@ public class FileBasedStorage extends XmlElementStorage {
   @Nullable
   private Document processReadException(@Nullable final Exception e) {
     boolean contentTruncated = e == null;
-    myBlockSavingTheContent = isProjectOrModuleFile() && !contentTruncated;
+    myBlockSavingTheContent = isProjectOrModuleOrWorkspaceFile() && !contentTruncated;
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       if (e != null) {
         LOG.info(e);
@@ -288,12 +286,12 @@ public class FileBasedStorage extends XmlElementStorage {
     return null;
   }
 
-  private boolean isProjectOrModuleFile() {
-    return myIsProjectSettings || myFileSpec.equals("$MODULE_FILE$");
+  private boolean isProjectOrModuleOrWorkspaceFile() {
+    return StorageUtil.isProjectOrModuleFile(myFileSpec) || myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
   }
 
   private String getInvalidContentMessage(boolean contentTruncated) {
-    return isProjectOrModuleFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
+    return isProjectOrModuleOrWorkspaceFile() && !contentTruncated ? "Please correct the file content" : "File content will be recreated";
   }
 
   private static Document loadDocumentImpl(final VirtualFile file) throws IOException, JDOMException {
@@ -327,7 +325,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    StorageData loadedData = loadData(true, myListener);
+    StorageData loadedData = loadData(true);
     Document document = getDocument(loadedData);
     if (physicalContentNeedsSave(document)) {
       File file = new File(myFile.getAbsolutePath());

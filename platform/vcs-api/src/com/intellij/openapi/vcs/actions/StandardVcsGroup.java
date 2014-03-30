@@ -16,8 +16,8 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ public abstract class StandardVcsGroup extends DefaultActionGroup implements Dum
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
 
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final String vcsName = getVcsName(project);
       presentation.setVisible(vcsName != null &&

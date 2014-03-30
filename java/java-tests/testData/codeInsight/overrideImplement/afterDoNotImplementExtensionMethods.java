@@ -10,6 +10,6 @@ interface B<T> extends A<T> {
 class MyClass<T> implements B<T> {
     @Override
     public void m2() {
-        <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

@@ -18,6 +18,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ public class TypeCookAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
     if (project == null) {
       return false;

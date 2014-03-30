@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,7 +491,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     if (actionManager.getAction(actionId) != null) {
       if (Messages.showYesNoDialog(IdeBundle.message("message.macro.exists", name),
                                    IdeBundle.message("title.macro.name.already.used"),
-                                   Messages.getWarningIcon()) != 0) {
+                                   Messages.getWarningIcon()) != Messages.YES) {
         return false;
       }
       actionManager.unregisterAction(actionId);

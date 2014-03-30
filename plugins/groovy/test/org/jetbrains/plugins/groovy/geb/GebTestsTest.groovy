@@ -47,6 +47,18 @@ class FooTest extends geb.junit4.GebReportingTest {
 
     TestUtils.checkCompletionContains(myFixture, "\$()", "to()", "go()", "currentWindow", "verifyAt()", "title")
   }
+  
+  void testTestNGTestMemberCompletion() {
+    myFixture.configureByText("FooTest.groovy", """
+class FooTest extends geb.testng.GebReportingTest {
+    def testFoo() {
+      <caret>
+    }
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "\$()", "to()", "go()", "currentWindow", "verifyAt()", "title")
+  }
 
   void testFieldNameCompletion() {
     myFixture.configureByText("FooTest.groovy", """

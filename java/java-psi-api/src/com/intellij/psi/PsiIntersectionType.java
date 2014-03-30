@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,45 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
+ * Intersection types arise in a process of computing least upper bound.
+ *
  * @author ven
  */
-
-// Intersection types arise in the process of computing lub.
-public class PsiIntersectionType extends PsiType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiIntersectionType");
+public class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
-    super(PsiAnnotation.EMPTY_ARRAY);//todo
-    LOG.assertTrue(conjuncts.length != 0);
-    LOG.assertTrue(conjuncts.length > 1);
+    super(PsiAnnotation.EMPTY_ARRAY);
     myConjuncts = conjuncts;
+  }
+
+  @NotNull
+  public static PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
+    return createIntersection(conjuncts.toArray(createArray(conjuncts.size())));
+  }
+
+  @NotNull
+  public static PsiType createIntersection(PsiType... conjuncts) {
+    assert conjuncts.length > 0;
+    conjuncts = flattenAndRemoveDuplicates(conjuncts);
+    if (conjuncts.length == 1) return conjuncts[0];
+    return new PsiIntersectionType(conjuncts);
   }
 
   private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
     try {
       Set<PsiType> flattened = flatten(conjuncts, new THashSet<PsiType>());
-      return flattened.toArray(new PsiType[flattened.size()]);
+      return flattened.toArray(createArray(flattened.size()));
     }
     catch (NoSuchElementException e) {
       throw new RuntimeException(Arrays.toString(conjuncts), e);
@@ -63,14 +71,15 @@ public class PsiIntersectionType extends PsiType {
       }
     }
     if (types.size() > 1) {
-      PsiType[] array = types.toArray(new PsiType[types.size()]);
-      for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext();) {
+      PsiType[] array = types.toArray(createArray(types.size()));
+      for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext(); ) {
         PsiType type = iterator.next();
 
         for (PsiType existing : array) {
           if (type != existing) {
             final boolean allowUncheckedConversion = type instanceof PsiClassType && ((PsiClassType)type).isRaw();
-            if (TypeConversionUtil.isAssignable(type, existing, allowUncheckedConversion)) {
+            if (TypeConversionUtil.isAssignable(GenericsUtil.eliminateWildcards(type), 
+                                                GenericsUtil.eliminateWildcards(existing), allowUncheckedConversion)) {
               iterator.remove();
               break;
             }
@@ -89,24 +98,32 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
-    return myConjuncts[0].getPresentableText();
+    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getPresentableText();
+      }
+    }, " & ");
   }
 
+  @NotNull
   @Override
-  public String getCanonicalText() {
-    return myConjuncts[0].getCanonicalText();
+  public String getCanonicalText(boolean annotated) {
+    return myConjuncts[0].getCanonicalText(annotated);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < myConjuncts.length; i++) {
-      buffer.append(myConjuncts[i].getInternalCanonicalText());
-      if (i < myConjuncts.length - 1) buffer.append(" & ");
-    }
-    return buffer.toString();
+    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getInternalCanonicalText();
+      }
+    }, " & ");
   }
 
   @Override
@@ -118,13 +135,13 @@ public class PsiIntersectionType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 
   @Override
   public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
-    return myConjuncts[0].accept(visitor);
+    return visitor.visitIntersectionType(this);
   }
 
   @Override
@@ -136,13 +153,6 @@ public class PsiIntersectionType extends PsiType {
   @NotNull
   public PsiType[] getSuperTypes() {
     return myConjuncts;
-  }
-
-  public static PsiType createIntersection(PsiType... conjuncts) {
-    LOG.assertTrue(conjuncts.length >= 1);
-    conjuncts = flattenAndRemoveDuplicates(conjuncts);
-    if (conjuncts.length == 1) return conjuncts[0];
-    return new PsiIntersectionType(conjuncts);
   }
 
   public PsiType getRepresentative() {

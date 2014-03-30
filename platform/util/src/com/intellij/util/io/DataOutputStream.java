@@ -34,4 +34,14 @@ public class DataOutputStream extends java.io.DataOutputStream {
     out.write(b, off, len);
     written += len;
   }
+
+  public int getWrittenBytesCount() {
+    return written;
+  }
+
+  public int resetWrittenBytesCount() {
+    int result = written;
+    written = 0;
+    return result;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.highlighting;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -119,7 +119,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
       GenericDomValueReference domReference = ContainerUtil.findInstance(psiReferences, GenericDomValueReference.class);
       final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
       boolean hasBadResolve = false;
-      if (!(domReference != null && isDomResolveOK(element, domReference, converter))) {
+      if (domReference == null || !isDomResolveOK(element, domReference, converter)) {
         for (final PsiReference reference : psiReferences) {
           if (reference != domReference && hasBadResolve(reference)) {
             hasBadResolve = true;
@@ -132,7 +132,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
                                      hasBadResolve(domReference = new GenericDomValueReference(element)))) {
           hasBadResolve = true;
           final String errorMessage = converter
-            .getErrorMessage(element.getStringValue(), ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element)));
+            .getErrorMessage(element.getStringValue(), ConvertContextFactory.createConvertContext(
+              DomManagerImpl.getDomInvocationHandler(element)));
           if (errorMessage != null && XmlHighlightVisitor.getErrorDescription(domReference) != null) {
             list.add(holder.createResolveProblem(element, domReference));
           }
@@ -151,8 +152,8 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
   }
 
   private static boolean isDomResolveOK(GenericDomValue element, GenericDomValueReference domReference, Converter converter) {
-    return !hasBadResolve(domReference)
-      || converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
+    return !hasBadResolve(domReference) ||
+           converter instanceof ResolvingConverter && ((ResolvingConverter)converter).getAdditionalVariants(domReference.getConvertContext()).contains(element.getStringValue());
   }
 
   @NotNull
@@ -274,7 +275,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     }
 
     private void doFix() {
-      if (!CodeInsightUtilBase.prepareFileForWrite(parentTag.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(parentTag.getContainingFile())) return;
 
       try {
         parentTag.add(parentTag.createChildTag(tagName, tagNamespace, null, false));

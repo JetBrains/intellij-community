@@ -162,6 +162,12 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 
+  @NotNull
+  @Override
+  public PsiFile getStubBindingRoot() {
+    return getPsi(getBaseLanguage());
+  }
+
   @Override
   public PsiElement findElementAt(final int offset) {
     final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);

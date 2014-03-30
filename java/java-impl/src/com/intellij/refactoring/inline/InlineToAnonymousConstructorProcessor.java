@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ class InlineToAnonymousConstructorProcessor {
     PsiType substType = classResolveSubstitutor.substitute(mySuperType);
 
     PsiTypeParameter[] typeParams = myClass.getTypeParameters();
-    PsiType[] substitutedParameters = new PsiType[typeParams.length];
+    PsiType[] substitutedParameters = PsiType.createArray(typeParams.length);
     for(int i=0; i< typeParams.length; i++) {
       substitutedParameters [i] = classResolveSubstitutor.substitute(typeParams [i]);
     }

@@ -295,8 +295,8 @@ class HTMLTextPainter {
     writer.write('\n');
     myColumn = 0;
     lineCount++;
-    writer.write("<a name=\"l" + lineCount + "\">");
     if (myPrintLineNumbers) {
+      writer.write("<a name=\"l" + lineCount + "\">");
 
 //      String numberCloseTag = writeFontTag(writer, ourLineNumberAttributes);
 

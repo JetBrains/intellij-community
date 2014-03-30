@@ -13,7 +13,7 @@ class D extends A {
 }
 
 
-public class Main {
+class Main {
   public static void test(Collection<? extends A> <warning descr="Parameter 'c' is never used">c</warning>) {}
 
   public static void main(String[] args) {

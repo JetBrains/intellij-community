@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +37,13 @@ import java.util.concurrent.TimeUnit;
 
 public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   @NonNls public static final String WIDGET_ID = "Memory";
-
-  // todo: drop unless J. will insist to keep old style look
-  private static final boolean FRAMED_STYLE = SystemInfo.isMac || !SystemProperties.getBooleanProperty("idea.ui.old.mem.use", false);
-
-  @NonNls private static final String SAMPLE_STRING = "0000M of 0000M";
   private static final int MEGABYTE = 1024 * 1024;
+  @NonNls private static final String SAMPLE_STRING;
+  
+  static {
+    long maxMemory = Math.min(Runtime.getRuntime().maxMemory() / MEGABYTE, 9999);
+    SAMPLE_STRING = maxMemory + " of " + maxMemory + "M ";
+  }
   private static final int HEIGHT = 16;
   private static final Color USED_COLOR_1 = new JBColor(Gray._185, Gray._150);
   private static final Color USED_COLOR_2 = new JBColor(Gray._145, Gray._120);
@@ -108,8 +107,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   }
 
   private static Font getWidgetFont() {
-    final Font font = UIUtil.getLabelFont();
-    return FRAMED_STYLE ? font.deriveFont(11.0f) : font;
+    return UIUtil.getLabelFont().deriveFont(11.0f);
   }
 
   @Override
@@ -125,7 +123,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
     if (myBufferedImage == null || stateChanged) {
       final Dimension size = getSize();
-      final Insets insets = FRAMED_STYLE ? getInsets() : new Insets(0, 0, 0, 0);
+      final Insets insets = getInsets();
 
       myBufferedImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics2D g2 = (Graphics2D)myBufferedImage.getGraphics().create();
@@ -139,7 +137,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int totalBarLength = size.width - insets.left - insets.right;
       final int usedBarLength = (int)(totalBarLength * usedMem / maxMem);
       final int unusedBarLength = (int)(totalBarLength * unusedMem / maxMem);
-      final int barHeight = FRAMED_STYLE ? HEIGHT : size.height;
+      final int barHeight = HEIGHT;
       final int yOffset = (size.height - barHeight) / 2;
       final int xOffset = insets.left;
 
@@ -165,7 +163,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       }
 
       // frame
-      if (FRAMED_STYLE && !UIUtil.isUnderDarcula()) {
+      if (!UIUtil.isUnderDarcula()) {
         g2.setColor(USED_COLOR_2);
         g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
       }
@@ -185,7 +183,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       g2.dispose();
     }
 
-    g.drawImage(myBufferedImage, 0, 0, null);
+    UIUtil.drawImage(g, myBufferedImage, 0, 0, null);
   }
 
   private static void setGradient(Graphics2D g2, boolean invert, int height, Color start, Color end) {
@@ -203,13 +201,15 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(getPreferredWidth(),
-                         isVisible() && getParent() != null ? getParent().getSize().height : super.getPreferredSize().height);
+    final Insets insets = getInsets();
+    int width = getFontMetrics(getWidgetFont()).stringWidth(SAMPLE_STRING) + insets.left + insets.right + 2;
+    int height = getFontMetrics(getWidgetFont()).getHeight() + insets.top + insets.bottom + 2;
+    return new Dimension(width, height);
   }
 
-  private int getPreferredWidth() {
-    final Insets insets = getInsets();
-    return getFontMetrics(getWidgetFont()).stringWidth(SAMPLE_STRING) + insets.left + insets.right + 2;
+  @Override
+  public Dimension getMinimumSize() {
+    return getPreferredSize();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,45 +15,37 @@
  */
 package com.intellij.codeInsight.intention;
 
-
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
-
   public void testMap15() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_5)
-    myFixture.configureByText 'a.java', '''\
+    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
+      myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
-    importClass()
-    myFixture.checkResult '''import java.util.Map;
+      importClass()
+      myFixture.checkResult '''import java.util.Map;
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
-  }
-
-  @Override
-  protected void tearDown() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
-    super.tearDown()
+    })
   }
 
   public void testMapLatestLanguageLevel() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
     myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -62,7 +54,7 @@ public class Foo {
 
 public class Foo {
     void foo() {
-        Ma<caret>p<> l;
+        Ma<caret>p l;
     }
 }
 '''
@@ -83,7 +75,6 @@ public class Foo {
     String<caret>Value sv;
 }
 '''
-
   }
 
   public void testUseContext() {
@@ -102,10 +93,95 @@ public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }
 '''
+  }
 
+  public void testUseOverrideContext() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.addClass 'package goo; public class Super { public void foo(foo.Log log) {} }'
+    myFixture.configureByText 'a.java', '''\
+public class Foo extends goo.Super {
+    @Override
+    public void foo(Log<caret> log) {}
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.Log;
+
+public class Foo extends goo.Super {
+    @Override
+    public void foo(Log<caret> log) {}
+}
+'''
+  }
+
+  public void testAnnotatedImport() {
+    myFixture.configureByText 'a.java', '''
+import java.lang.annotation.*;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA Collection<caret> c;
+}
+'''
+    importClass();
+    myFixture.checkResult '''
+import java.lang.annotation.*;
+import java.util.Collection;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA Collection<caret> c;
+}
+'''
+  }
+
+  public void testAnnotatedQualifiedImport() {
+    myFixture.configureByText 'a.java', '''
+import java.lang.annotation.*;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    java.util.@TA Collection<caret> c;
+}
+'''
+    reimportClass();
+    myFixture.checkResult '''
+import java.lang.annotation.*;
+import java.util.Collection;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA Collection<caret> c;
+}
+'''
+  }
+
+  public void testUnresolvedAnnotatedImport() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    @Nullable Collection<caret> c;
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collection;
+
+class Test {
+    @Nullable
+    Collection<caret> c;
+}
+'''
   }
 
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+  }
+
+  private def reimportClass() {
+    myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
   }
 }

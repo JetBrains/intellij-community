@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,18 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineUpdateClient;
-import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
-import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -76,10 +71,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       progress.setText(SvnBundle.message("progress.text.updating", root.getAbsolutePath()));
     }
 
-    protected long doUpdate(
-      final File root,
-      final SVNUpdateClient client) throws
-                                    SVNException {
+    protected long doUpdate(final File root) throws SVNException {
       final long rev;
 
       final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
@@ -89,12 +81,13 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
       final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
       if (isSwitch) {
-        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
+        final UpdateClient updateClient = createUpdateClient(configuration, root, true, sourceUrl);
         myHandler.addToSwitch(root, sourceUrl);
-        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.getUpdateDepth(),
+                                    configuration.isForceUpdate(), false);
       } else {
-        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, false, sourceUrl);
-        rev = updateClient.doUpdate(root, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
+        final UpdateClient updateClient = createUpdateClient(configuration, root, false, sourceUrl);
+        rev = updateClient.doUpdate(root, updateTo, configuration.getUpdateDepth(), configuration.isForceUpdate(), false);
       }
 
       myPostUpdateFiles.setRevisions(root.getAbsolutePath(), myVcs, new SvnRevisionNumber(SVNRevision.create(rev)));
@@ -102,24 +95,15 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return rev;
     }
 
-    private SvnUpdateClientI createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
-      final SvnUpdateClientI updateClient;
-      // do not do from command line for switch now
-      if (! isSwitch && SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration) &&
-          Svn17Detector.is17(myVcs.getProject(), root) && (
-          SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) ||
-          SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol())
-          )) {
-          //|| sourceUrl.getProtocol().contains("svn+"))) {
-        updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
-      } else {
-        updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
-      }
+    private UpdateClient createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
+      final UpdateClient updateClient = myVcs.getFactory(root).createUpdateClient();
+
       if (! isSwitch) {
-        updateClient.setIgnoreExternals(configuration.IGNORE_EXTERNALS);
+        updateClient.setIgnoreExternals(configuration.isIgnoreExternals());
       }
       updateClient.setEventHandler(myHandler);
-      updateClient.setUpdateLocksOnDemand(configuration.UPDATE_LOCK_ON_DEMAND);
+      updateClient.setUpdateLocksOnDemand(configuration.isUpdateLockOnDemand());
+
       return updateClient;
     }
 
@@ -130,18 +114,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   @Nullable
   private static SVNURL getSourceUrl(final SvnVcs vcs, final File root) {
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      final SVNInfo svnInfo = wcClient.doInfo(root, SVNRevision.UNDEFINED);
-      if (svnInfo != null) {
-        return svnInfo.getURL();
-      } else {
-        return null;
-      }
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    final SVNInfo svnInfo = vcs.getInfo(root);
+    return svnInfo != null ? svnInfo.getURL() : null;
   }
 
   public boolean validateOptions(final Collection<FilePath> roots) {
@@ -194,9 +168,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
   // false - do not do update
   private boolean checkAncestry(final File sourceFile, final SVNURL targetUrl, final SVNRevision targetRevision) throws SVNException {
-    final SVNWCClient client = myVcs.createWCClient();
-    final SVNInfo sourceSvnInfo = client.doInfo(sourceFile, SVNRevision.UNDEFINED);
-    final SVNInfo targetSvnInfo = client.doInfo(targetUrl, SVNRevision.UNDEFINED, targetRevision);
+    final SVNInfo sourceSvnInfo = myVcs.getInfo(sourceFile);
+    final SVNInfo targetSvnInfo = myVcs.getInfo(targetUrl, targetRevision);
 
     if (sourceSvnInfo == null || targetSvnInfo == null) {
       // cannot check
@@ -214,6 +187,6 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
 
     final int result = Messages.showYesNoDialog(myVcs.getProject(), SvnBundle.message("switch.target.not.copy.current"),
                                                 SvnBundle.message("switch.target.problem.title"), Messages.getWarningIcon());
-    return (DialogWrapper.OK_EXIT_CODE == result);
+    return (Messages.YES == result);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import junit.framework.Assert;
 
 import java.util.List;
 
@@ -62,9 +61,10 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
         final IntentionAction intention = myFixture.findSingleIntention(hint);
         myFixture.launchAction(intention);
         myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
-      } else {
+      }
+      else {
         final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(hint);
-        Assert.assertEquals(true, intentionActions.isEmpty());
+        assertEmpty(intentionActions);
       }
     }
     finally {

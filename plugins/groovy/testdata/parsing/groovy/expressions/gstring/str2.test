@@ -5,7 +5,8 @@ $c.d.e fff"""
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"""')
-    PsiElement(Gstring content)('aaa ')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('aaa ')
     GString injection
       PsiElement($)('$')
       Reference expression
@@ -16,7 +17,8 @@ Groovy script
           PsiElement(identifier)('b')
         PsiElement(.)('.')
         PsiElement(identifier)('c')
-    PsiElement(Gstring content)('\nbbb\n')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('\nbbb\n')
     GString injection
       PsiElement($)('$')
       Reference expression
@@ -27,5 +29,6 @@ Groovy script
           PsiElement(identifier)('d')
         PsiElement(.)('.')
         PsiElement(identifier)('e')
-    PsiElement(Gstring content)(' fff')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)(' fff')
     PsiElement(Gstring end)('"""')

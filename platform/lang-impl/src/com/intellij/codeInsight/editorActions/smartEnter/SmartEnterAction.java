@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -43,15 +44,19 @@ public class SmartEnterAction extends EditorAction {
   }
 
   @Override
-  protected Editor getEditor(final DataContext dataContext) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+  protected Editor getEditor(@NotNull final DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return null;
     Project project = editor.getProject();
-    if (project == null) project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) project = CommonDataKeys.PROJECT.getData(dataContext);
     return project == null ? null : BaseCodeInsightAction.getInjectedEditor(project, editor);
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, dataContext);
@@ -59,7 +64,7 @@ public class SmartEnterAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, dataContext);
         return;

@@ -8,7 +8,7 @@ class Test {
     }
 
     void foo() {
-        <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<?>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.asList</warning>(String.class, Integer.class);</error>
+        <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> l = <warning descr="Unchecked generics array creation for varargs parameter">this.asList</warning>(String.class, Integer.class);</error>
         l.size();
         List<? extends Object> objects = this.asList(new String(), new Integer(0));
         objects.size();
@@ -146,7 +146,7 @@ class IDEADEV25515 {
     }
 
     public static final
-    <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<?>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> SIMPLE_TYPES =
+    <error descr="Incompatible types. Found: 'java.util.List<java.lang.Class<? extends java.io.Serializable & java.lang.Comparable<? extends java.lang.Comparable<?>>>>', required: 'java.util.List<java.lang.Class<? extends java.io.Serializable>>'">List<Class<? extends Serializable>> SIMPLE_TYPES =
 <warning descr="Unchecked generics array creation for varargs parameter">asList</warning>(String.class, Integer.class ,Long.class, Double.class, /*Date.class,*/
 Boolean.class, Boolean.TYPE /*,String[].class */ /*,BigDecimal.class*/);</error>
 
@@ -167,7 +167,7 @@ class Axx {
 }
 ///////////////
 interface L {}
-public class MaximalType  {
+class MaximalType  {
     public static <T> T getParentOfType(Class<? extends T>... classes) {
        classes.hashCode();
        return null;
@@ -179,3 +179,43 @@ public class MaximalType  {
 class M extends MaximalType implements L{}
 class M2 extends MaximalType implements L{}
 /////////////
+
+
+class IDEA67676 {
+  interface I<<warning descr="Type parameter 'T' is never used">T</warning>> {}
+  interface A<T> extends I<A<T>>{}
+  interface Com2<T, U> {
+    void foo(T t, U u);
+  }
+  interface Com1<T> {
+    void foo(T t);
+  }
+
+  abstract class X {
+      abstract <T> T foo(T x, T y);
+
+      void bar(A<A2> x, A<B2> y) {
+          A<? extends Com2<? extends Com2<?, ?>, ? extends Com2<?, ?>>> f = foo(x, y);
+          f.hashCode();
+      }
+
+      void boo(A<A3> x, A<B3> y) {
+          A<? extends Com2<? extends Com2<?, ?>, ? extends Com2<?, ?>>> f = foo(x, y);
+          f.hashCode();
+      }
+
+      void baz(A<A1> x, A<B1> y) {
+          A<? extends Com1<? extends Com1<?>>> f = foo(x, y);
+          f.hashCode();
+      }
+  }
+
+  abstract class A1 implements Com1<A1> {}
+  abstract class B1 implements Com1<B1> {}
+
+  abstract class A2 implements Com2<A2, A2> {}
+  abstract class B2 implements Com2<B2, B2> {}
+
+  abstract class A3 implements Com2<A3, B3> {}
+  abstract class B3 implements Com2<B3, A3> {}
+}

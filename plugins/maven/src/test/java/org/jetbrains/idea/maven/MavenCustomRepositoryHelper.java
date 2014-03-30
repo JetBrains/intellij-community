@@ -45,7 +45,7 @@ public class MavenCustomRepositoryHelper {
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
   }
 
-  private String getOriginalTestDataPath() {
+  private static String getOriginalTestDataPath() {
     String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
     return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -55,7 +55,7 @@ import java.util.List;
 public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   private Project myProject;
   private Editor myEditor;
-  private PsiFile myFile;
+  private @NotNull PsiFile myFile;
   private Document myDocument;
   private CommenterDataHolder mySelfManagedCommenterData;
 
@@ -202,7 +202,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         }
       }
       else {
-        if (!isWhiteSpaceOrComment(element)) {
+        if (!isWhiteSpaceOrComment(element, range)) {
           return false;
         }
       }
@@ -225,17 +225,18 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean isWhiteSpaceOrComment(@NotNull PsiElement element, @NotNull TextRange range) {
-    TextRange intersection = range.intersection(element.getTextRange());
+    final TextRange textRange = element.getTextRange();
+    TextRange intersection = range.intersection(textRange);
     if (intersection == null) {
       return false;
     }
-    intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
-                                  Math.min(intersection.getEndOffset() - element.getTextRange().getStartOffset(), element.getTextRange().getLength()));
+    intersection = TextRange.create(Math.max(intersection.getStartOffset() - textRange.getStartOffset(), 0),
+                                    Math.min(intersection.getEndOffset() - textRange.getStartOffset(), textRange.getLength()));
     return isWhiteSpaceOrComment(element) ||
            intersection.substring(element.getText()).trim().length() == 0;
   }
 
-  private boolean isWhiteSpaceOrComment(PsiElement element) {
+  private static boolean isWhiteSpaceOrComment(PsiElement element) {
     return element instanceof PsiWhiteSpace ||
            PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
@@ -297,14 +298,14 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       }
 
       commentedRange = getSelectedComments(text, prefix, suffix);
-      if (commentedRange == null) {
-        PsiElement comment = findCommentAtCaret();
-        if (comment != null) {
+    }
+    if (commentedRange == null) {
+      PsiElement comment = findCommentAtCaret();
+      if (comment != null) {
 
-          String commentText = comment.getText();
-          if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
-            commentedRange = comment.getTextRange();
-          }
+        String commentText = comment.getText();
+        if (commentText.startsWith(prefix) && commentText.endsWith(suffix)) {
+          commentedRange = comment.getTextRange();
         }
       }
     }
@@ -401,7 +402,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     if (startOffset == 0 || chars.charAt(startOffset - 1) == '\n') {
       if (endOffset == myDocument.getTextLength() || endOffset > 0 && chars.charAt(endOffset - 1) == '\n') {
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+        CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage());
         String space;
         if (!settings.BLOCK_COMMENT_AT_FIRST_COLUMN) {
           final FileType fileType = myFile.getFileType();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyStatementSelectioner implements ExtendWordSelectionHandler {
+public class GroovyStatementSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof GrExpression && PsiUtil.isExpressionStatement(e) ||
@@ -131,7 +130,7 @@ public class GroovyStatementSelectioner implements ExtendWordSelectionHandler {
 
   private static boolean isOneLineFeed(PsiElement e) {
     if (e == null) return false;
-    if (!TokenSets.WHITE_SPACES_SET.contains(e.getNode().getElementType())) return false;
+    if (!PsiImplUtil.isWhiteSpaceOrNls(e)) return false;
 
     final String text = e.getText();
     final int i = text.indexOf('\n');

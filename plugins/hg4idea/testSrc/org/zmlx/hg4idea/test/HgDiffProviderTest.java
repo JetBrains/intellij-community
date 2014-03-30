@@ -67,8 +67,6 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     
     
     refreshVfs();
-    //ChangeListManager.getInstance(myProject).ensureUpToDate(false);
-    
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
 
     HgRevisionNumber currentRevision = (HgRevisionNumber)diffProvider.getCurrentRevision(myWorkingCopyDir.findChild(AFILE));

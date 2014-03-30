@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
@@ -59,7 +60,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
   MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
-        throw new UnsupportedOperationException();
+        return new MavenRunConfiguration(project, this, "");
       }
 
       public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
@@ -184,19 +185,19 @@ public class MavenRunConfigurationType implements ConfigurationType {
                                                                                          params,
                                                                                          project);
 
-    ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(DefaultRunExecutor.EXECUTOR_ID);
-    ExecutionEnvironment env = new ExecutionEnvironment(runner, configSettings, project);
+    ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, configSettings, project);
 
     try {
-      runner.execute(executor, env, callback);
+      runner.execute(env, callback);
     }
     catch (ExecutionException e) {
       MavenUtil.showError(project, "Failed to execute Maven goal", e);
     }
   }
 
-  static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+  public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
                                                                              @Nullable MavenRunnerSettings runnerSettings,
                                                                              MavenRunnerParameters params,
                                                                              Project project) {

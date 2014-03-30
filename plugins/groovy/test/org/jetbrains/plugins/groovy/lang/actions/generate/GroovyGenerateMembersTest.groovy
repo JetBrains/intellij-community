@@ -223,7 +223,7 @@ class Test {
 class Test {
     def foo
 
-    void setFoo(def foo) {
+    void setFoo(foo) {
         this.foo = foo
     }
 }'''
@@ -262,7 +262,7 @@ class Test {
 class Test {
     static foo
 
-    static void setFoo(def foo) {
+    static void setFoo(foo) {
         Test.foo = foo
     }
 }'''
@@ -336,6 +336,39 @@ class Inheritor extends Base {
     }
 }
 ''')
+  }
+
+  void testGetterInTheEnd() {
+    myFixture.configureByText 'a.groovy', '''
+class GrImportStatementStub {
+    private final String myAlias;
+    private final String mySymbolName;
+
+    protected GrImportStatementStub(String symbolName, String alias) {
+    }
+    <caret>
+}
+'''
+    generateGetter()
+
+    myFixture.checkResult '''
+class GrImportStatementStub {
+    private final String myAlias;
+    private final String mySymbolName;
+
+    protected GrImportStatementStub(String symbolName, String alias) {
+    }
+
+    String getMyAlias() {
+        return myAlias
+    }
+
+    String getMySymbolName() {
+        return mySymbolName
+    }
+}
+'''
+
   }
 
   private void generateGetter() {

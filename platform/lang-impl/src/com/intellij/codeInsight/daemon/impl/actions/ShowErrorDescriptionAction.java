@@ -56,7 +56,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     HighlightInfo info =
       ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
-    return info != null && info.description != null;
+    return info != null && info.getDescription() != null;
   }
 
   @Override

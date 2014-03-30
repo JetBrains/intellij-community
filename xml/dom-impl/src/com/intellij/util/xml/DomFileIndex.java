@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -38,12 +37,6 @@ import java.util.Set;
  */
 public class DomFileIndex extends ScalarIndexExtension<String>{
   public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file.getFileType() == StdFileTypes.XML;
-    }
-  };
   private final DataIndexer<String,Void, FileContent> myDataIndexer;
 
   public DomFileIndex() {
@@ -91,14 +84,16 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILTER;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
   }
 
   @Override
@@ -108,13 +103,6 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
 
   @Override
   public int getVersion() {
-    final DomApplicationComponent component = DomApplicationComponent.getInstance();
-    int result = 0;
-    for (DomFileDescription description : component.getAllFileDescriptions()) {
-      result += description.getVersion();
-      result += description.getRootTagName().hashCode(); // so that a plugin enabling/disabling could trigger the reindexing
-    }
-    return result;
+    return DomApplicationComponent.getInstance().getCumulativeVersion();
   }
-
 }

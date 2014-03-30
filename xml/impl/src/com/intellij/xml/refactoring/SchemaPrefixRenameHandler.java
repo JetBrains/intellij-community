@@ -64,6 +64,10 @@ public class SchemaPrefixRenameHandler extends VariableInplaceRenameHandler {
           @Override
           protected void addReferenceAtCaret(Collection<PsiReference> refs) {}
 
+          @Override
+          protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
+            return false;
+          }
         };
       }
     }

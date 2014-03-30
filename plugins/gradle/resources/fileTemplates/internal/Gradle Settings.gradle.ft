@@ -1,0 +1,11 @@
+#if (${PROJECT_NAME} && ${PROJECT_NAME} != "")
+#if (((!${MODULE_DIR_NAME} || ${MODULE_DIR_NAME} == "")) && (${MODULE_NAME} && ${MODULE_NAME} != ""))rootProject.name = '${MODULE_NAME}'
+#elseif(true)rootProject.name = '${PROJECT_NAME}'
+#end
+#end
+#if (${MODULE_DIR_NAME} && ${MODULE_DIR_NAME} != "")
+include '${MODULE_DIR_NAME}'
+#if (${MODULE_NAME} && ${MODULE_NAME} != "" && ${MODULE_DIR_NAME} != ${MODULE_NAME})rootProject.children.find { it.name == '${MODULE_DIR_NAME}' }.name = '${MODULE_NAME}'
+#end
+#end
+

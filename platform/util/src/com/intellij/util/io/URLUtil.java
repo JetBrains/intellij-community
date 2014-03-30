@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.Base64Converter;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.util.text.StringUtil.stripQuotesAroundValue;
+
 public class URLUtil {
-  private URLUtil() {
-  }
+  public static final String SCHEME_SEPARATOR = "://";
+  public static final String FILE_PROTOCOL = "file";
+  public static final String HTTP_PROTOCOL = "http";
+  public static final String JAR_PROTOCOL = "jar";
+  public static final String JAR_SEPARATOR = "!/";
+
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset=[^,;]+)?(;base64)?,(.+)");
+
+  private URLUtil() { }
 
   /**
    * Opens a url stream. The semantics is the sames as {@link java.net.URL#openStream()}. The
@@ -41,13 +56,9 @@ public class URLUtil {
    * mapped into memory.
    */
   @NotNull
-  public static InputStream openStream(final URL url) throws IOException {
-    @NonNls final String protocol = url.getProtocol();
-    if (protocol.equals("jar")) {
-      return openJarStream(url);
-    }
-
-    return url.openStream();
+  public static InputStream openStream(@NotNull URL url) throws IOException {
+    @NonNls String protocol = url.getProtocol();
+    return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
   }
 
   @NotNull
@@ -58,10 +69,10 @@ public class URLUtil {
     catch(FileNotFoundException ex) {
       @NonNls final String protocol = url.getProtocol();
       String file = null;
-      if (protocol.equals("file")) {
+      if (protocol.equals(FILE_PROTOCOL)) {
         file = url.getFile();
       }
-      else if (protocol.equals("jar")) {
+      else if (protocol.equals(JAR_PROTOCOL)) {
         int pos = url.getFile().indexOf("!");
         if (pos >= 0) {
           file = url.getFile().substring(pos+1);
@@ -76,23 +87,40 @@ public class URLUtil {
   }
 
   @NotNull
-  private static InputStream openJarStream(final URL url) throws IOException {
-    String file = url.getFile();
-    assert file.startsWith("file:");
-    file = file.substring("file:".length());
-    assert file.indexOf("!/") > 0;
+  private static InputStream openJarStream(@NotNull URL url) throws IOException {
+    Pair<String, String> paths = splitJarUrl(url.getFile());
+    if (paths == null) {
+      throw new MalformedURLException(url.getFile());
+    }
 
-    String resource = file.substring(file.indexOf("!/") + 2);
-    file = file.substring(0, file.indexOf("!"));
-    final ZipFile zipFile = new ZipFile(FileUtil.unquote(file));
-    final ZipEntry zipEntry = zipFile.getEntry(resource);
-    if (zipEntry == null) throw new FileNotFoundException("Entry " + resource + " not found in " + file);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final ZipFile zipFile = new ZipFile(FileUtil.unquote(paths.first));
+    ZipEntry zipEntry = zipFile.getEntry(paths.second);
+    if (zipEntry == null) {
+      zipFile.close();
+      throw new FileNotFoundException("Entry " + paths.second + " not found in " + paths.first);
+    }
+
     return new FilterInputStream(zipFile.getInputStream(zipEntry)) {
+        @Override
         public void close() throws IOException {
           super.close();
           zipFile.close();
         }
       };
+  }
+
+  @Nullable
+  public static Pair<String, String> splitJarUrl(@NotNull String fullPath) {
+    int delimiter = fullPath.indexOf(JAR_SEPARATOR);
+    if (delimiter >= 0) {
+      String resourcePath = fullPath.substring(delimiter + 2);
+      String jarPath = fullPath.substring(0, delimiter);
+      if (StringUtil.startsWithConcatenation(jarPath, FILE_PROTOCOL, ":")) {
+        jarPath = jarPath.substring(FILE_PROTOCOL.length() + 1);
+        return Pair.create(jarPath, resourcePath);
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -145,24 +173,33 @@ public class URLUtil {
       return -1;
   }
 
-  public static boolean containsScheme(String url) {
-    return url.contains("://");
+  public static boolean containsScheme(@NotNull String url) {
+    return url.contains(SCHEME_SEPARATOR);
+  }
+
+  public static boolean isDataUri(@NotNull String value) {
+    return !value.isEmpty() && value.startsWith("data:", value.charAt(0) == '"' || value.charAt(0) == '\'' ? 1 : 0);
   }
 
   /**
-   * Splits the url into 2 parts: the scheme ("http://" for instance) and the rest of the URL.
-   * The scheme can be null.
+   * Extracts byte array from given data:URL string.
+   * data:URL will be decoded from base64 if it contains the marker of base64 encoding.
+   *
+   * @param dataUrl data:URL-like string (may be quoted)
+   * @return extracted byte array or {@code null} if it cannot be extracted.
    */
-  @NotNull
-  public static Pair<String, String> splitScheme(@NotNull String url) {
-    final String schemeSeparator = "://";
-    int ind = url.indexOf(schemeSeparator);
-    if (ind >= 0) {
-      String scheme = url.substring(0, ind + schemeSeparator.length());
-      return Pair.create(scheme, url.substring(ind));
+  @Nullable
+  public static byte[] getBytesFromDataUri(@NotNull String dataUrl) {
+    Matcher matcher = DATA_URI_PATTERN.matcher(stripQuotesAroundValue(dataUrl));
+    if (matcher.matches()) {
+      try {
+        String content = matcher.group(4);
+        return ";base64".equalsIgnoreCase(matcher.group(3)) ? Base64Converter.decode(content.getBytes(CharsetToolkit.UTF8_CHARSET)) : content.getBytes(CharsetToolkit.UTF8_CHARSET);
+      }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
     }
-    else {
-      return Pair.create(null, url);
-    }
+    return null;
   }
 }

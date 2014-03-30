@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -34,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 
 /**
  * @author yole
@@ -67,8 +72,12 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  protected UsageGroup getGroupForFile(VirtualFile dir) {
+  protected UsageGroup getGroupForFile(@NotNull VirtualFile dir) {
     return new DirectoryGroup(dir);
+  }
+
+  public String getActionTitle() {
+    return "Group by directory";
   }
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {
@@ -78,7 +87,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     public void update() {
     }
 
-    private DirectoryGroup(VirtualFile dir) {
+    private DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
     }
 
@@ -90,8 +99,9 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      String url = myDir.getPresentableUrl();
-      return url != null ? url : "<invalid>";
+      VirtualFile baseDir = myProject.getBaseDir();
+      String relativePath = baseDir == null ? null : VfsUtilCore.getRelativePath(myDir, baseDir, File.separatorChar);
+      return relativePath == null ? myDir.getPresentableUrl() : relativePath;
     }
 
     @Override
@@ -127,7 +137,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
@@ -144,11 +154,11 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (PlatformDataKeys.VIRTUAL_FILE == key) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, myDir);
+      if (CommonDataKeys.VIRTUAL_FILE == key) {
+        sink.put(CommonDataKeys.VIRTUAL_FILE, myDir);
       }
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getDirectory());
+      if (CommonDataKeys.PSI_ELEMENT == key) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
       }
     }
   }

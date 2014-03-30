@@ -15,8 +15,8 @@
  */
 package com.siyeh.ipp.annotation;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -144,8 +144,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     else {
       final PsiFile containingFile =
         modifierListOwner.getContainingFile();
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(
-        containingFile)) {
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) {
         return;
       }
       final PsiAnnotation inserted =

@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
@@ -76,7 +78,12 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {
       final VirtualFile directory;
       try {
-        directory = VfsUtil.createDirectoryIfMissing(directoryForManifest);
+        directory = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+          @Override
+          public VirtualFile compute() throws IOException {
+            return VfsUtil.createDirectoryIfMissing(directoryForManifest);
+          }
+        });
       }
       catch (IOException e) {
         LOG.info(e);

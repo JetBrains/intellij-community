@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -95,7 +95,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
       templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
       final RangeMarker rangeMarker = psiFile.getViewProvider().getDocument().createRangeMarker(myMethodCall.getTextRange());
 
-      constructor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(constructor);
+      constructor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(constructor);
 
       targetClass = constructor.getContainingClass();
       myMethodCall = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), myMethodCall.getClass());
@@ -144,7 +144,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
     PsiExpressionList argumentList = methodCall.getArgumentList();
     List<PsiClass> classes = getTargetClasses(element);
-    return classes.size() > 0 && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
+    return !classes.isEmpty() && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
   }
 
   @Override

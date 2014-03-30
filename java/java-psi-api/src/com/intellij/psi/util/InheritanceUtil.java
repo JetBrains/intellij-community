@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,11 +28,6 @@ import java.util.Set;
 
 public class InheritanceUtil {
   private InheritanceUtil() { }
-
-  /** @deprecated Use {@link PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)} instead (to remove in IDEA 13) */
-  public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep) {
-    return candidateClass.isInheritor(baseClass, checkDeep);
-  }
 
   /**
    * @param aClass     a class to check.
@@ -43,11 +39,6 @@ public class InheritanceUtil {
     if (aClass == null || baseClass == null) return false;
     PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
-  }
-
-  /** @deprecated use {@linkplain #isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean) (to remove in IDEA 13)} */
-  public static boolean isCorrectDescendant(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {
-    return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }
 
   public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, @NotNull Processor<PsiClass> superProcessor) {
@@ -71,6 +62,7 @@ public class InheritanceUtil {
     return true;
   }
 
+  @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
@@ -79,10 +71,12 @@ public class InheritanceUtil {
     return false;
   }
 
+  @Contract("null, _ -> false")
   public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull final String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
 
+  @Contract("null, _, _ -> false")
   public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull final String baseClassName) {
     if (psiClass == null) {
       return false;
@@ -127,5 +121,34 @@ public class InheritanceUtil {
         getSuperClassesOfList(resolved.getSuperTypes(), results, includeNonProject, visited, manager);
       }
     }
+  }
+
+  public static boolean hasEnclosingInstanceInScope(PsiClass aClass,
+                                                    PsiElement scope,
+                                                    final boolean isSuperClassAccepted,
+                                                    boolean isTypeParamsAccepted) {
+    PsiManager manager = aClass.getManager();
+    PsiElement place = scope;
+    while (place != null && place != aClass && !(place instanceof PsiFile)) {
+      if (place instanceof PsiClass) {
+        if (isSuperClassAccepted) {
+          if (isInheritorOrSelf((PsiClass)place, aClass, true)) return true;
+        }
+        else {
+          if (manager.areElementsEquivalent(place, aClass)) return true;
+        }
+        if (isTypeParamsAccepted && place instanceof PsiTypeParameter) {
+          return true;
+        }
+      }
+      if (place instanceof PsiModifierListOwner) {
+        final PsiModifierList modifierList = ((PsiModifierListOwner)place).getModifierList();
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+          return false;
+        }
+      }
+      place = place.getParent();
+    }
+    return place == aClass;
   }
 }

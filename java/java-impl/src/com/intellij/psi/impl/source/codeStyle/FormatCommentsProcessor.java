@@ -16,9 +16,11 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -31,57 +33,65 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
   @NotNull
   @Override
   public TextRange process(@NotNull final ASTNode element, @NotNull final TextRange range) {
-    final Project project = SourceTreeToPsiMap.treeElementToPsi(element).getProject();
+    PsiElement e = SourceTreeToPsiMap.treeElementToPsi(element);
+    assert e != null;
+    final Project project = e.getProject();
     if (!CodeStyleSettingsManager.getSettings(project).ENABLE_JAVADOC_FORMATTING ||
-        element.getPsi().getContainingFile().getLanguage() != StdLanguages.JAVA) {
+        element.getPsi().getContainingFile().getLanguage() != JavaLanguage.INSTANCE)
+    {
       return range;
     }
-
     return formatCommentsInner(project, element, range);
   }
 
-  private static TextRange formatCommentsInner(Project project, ASTNode element, final TextRange range) {
-    TextRange result = range;
+  /**
+   * Formats PsiDocComments of current ASTNode element and all his children PsiDocComments
+   */
+  @NotNull
+  private static TextRange formatCommentsInner(@NotNull Project project, @NotNull ASTNode element, @NotNull final TextRange markedRange) {
+    TextRange resultTextRange = markedRange;
+    final PsiElement elementPsi = element.getPsi();
+    boolean shouldFormat = markedRange.contains(element.getTextRange());
 
-
-    // check for RepositoryTreeElement is optimization
-    if (shouldProcess(element)) {
-      final TextRange elementRange = element.getTextRange();
-
-      if (range.contains(elementRange)) {
-        new CommentFormatter(project).process(element);
-        final TextRange newRange = element.getTextRange();
-        result = new TextRange(range.getStartOffset(), range.getEndOffset() + newRange.getLength() - elementRange.getLength());
+    if (shouldFormat) {
+      final ASTNode rangeAnchor;
+      // There are two possible cases:
+      //   1. Given element correspond to comment's owner (e.g. field or method);
+      //   2. Given element corresponds to comment itself;
+      // However, doc comment formatter replaces old comment with the new one, hence, old element becomes invalid. That's why we need
+      // to calculate text length delta not for the given comment element (it's invalid because removed from the AST tree) but for
+      // its parent.
+      if (elementPsi instanceof PsiDocComment) {
+        rangeAnchor = element.getTreeParent();
       }
-
-      // optimization, does not seek PsiDocComment inside fields / methods or out of range
-      if (element.getPsi() instanceof PsiField ||
-          element.getPsi() instanceof PsiMethod ||
-          element instanceof PsiDocComment ||
-          range.getEndOffset() < elementRange.getStartOffset()
-         ) {
-        return result;
+      else {
+        rangeAnchor = element;
       }
+      TextRange before = rangeAnchor.getTextRange();
+      new CommentFormatter(project).processComment(element);
+      int deltaRange = rangeAnchor.getTextRange().getLength() - before.getLength();
+      resultTextRange = new TextRange(markedRange.getStartOffset(), markedRange.getEndOffset() + deltaRange);
+    }
+
+    
+    // If element is Psi{Method, Field, DocComment} and was formatted there is no reason to continue - we formatted all possible javadocs.
+    // If element is out of range its children are also out of range. So in both cases formatting is finished. It's just for optimization.
+    if ((shouldFormat && (elementPsi instanceof  PsiMethod || elementPsi instanceof PsiField || elementPsi instanceof PsiDocComment))
+        || markedRange.getEndOffset() < element.getStartOffset())
+    {
+      return resultTextRange;
     }
 
     ASTNode current = element.getFirstChildNode();
     while (current != null) {
-      // we expand the chameleons here for effectiveness
-      current.getFirstChildNode();
-      result = formatCommentsInner(project, current, result);
+      // When element is PsiClass its PsiDocComment is formatted up to this moment, so we didn't need to format it again.
+      if (!(shouldFormat && current.getPsi() instanceof PsiDocComment && elementPsi instanceof PsiClass)) {
+        resultTextRange = formatCommentsInner(project, current, resultTextRange);
+      }
       current = current.getTreeNext();
     }
-    return result;
-  }
 
-  private static boolean shouldProcess(final ASTNode element) {
-    if (element instanceof PsiDocComment) {
-      return true;
-    }
-    else {
-      return true;//element.getElementType() instanceof JavaStubElementType &&
-          //(element.getPsi()) instanceof PsiDocCommentOwner;
-    }
+    return resultTextRange;
   }
 
 }

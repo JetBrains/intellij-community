@@ -17,7 +17,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 /**
  * Created by IntelliJ IDEA.
@@ -64,6 +63,36 @@ public class VersionCompareTest extends TestCase {
 
     assertTrue("Version 1 is not less than Version 2",
                StringUtil.compareVersionNumbers(v1, v2) < 0);
+  }
+
+  public void testDifferentNumberOfParts() {
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0"));
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1"));
+
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1.0."));
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.0", "1."));
+    
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0.", "1.0.0"));
+    assertEquals(0, StringUtil.compareVersionNumbers("1.", "1.0.0"));
+
+    assertEquals(0, StringUtil.compareVersionNumbers("1.0", "1.0.0"));
+    assertEquals(0, StringUtil.compareVersionNumbers("1", "1.0.0"));
+
+    assertEquals(1, StringUtil.compareVersionNumbers("1.0.1", "1.0"));
+    assertEquals(1, StringUtil.compareVersionNumbers("1.0.1", "1"));
+    assertEquals(-1, StringUtil.compareVersionNumbers("1.0", "1.0.1"));
+    assertEquals(-1, StringUtil.compareVersionNumbers("1", "1.0.1"));
+
+    assertTrue(StringUtil.compareVersionNumbers("1.0.a", "1.0") > 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0.a", "1") > 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.a") < 0);
+    assertTrue(StringUtil.compareVersionNumbers("1", "1.0.a") < 0);
+
+    assertTrue(StringUtil.compareVersionNumbers("1.0.+", "1.0") > 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0", "1.0.+") < 0);
+
+    assertTrue(StringUtil.compareVersionNumbers("1.0.00", "1.0") == 0);
+    assertTrue(StringUtil.compareVersionNumbers("1.0.01", "1") > 0);
   }
 
   public void testWord () {

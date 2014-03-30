@@ -6,5 +6,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method may be 'static'</problem_class>
     <description>Method &lt;code&gt;g()&lt;/code&gt; may be 'static' #loc</description>
   </problem>
+  <problem>
+    <file>A.java</file>
+    <line>42</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method may be 'static'</problem_class>
+    <description>Method &lt;code&gt;foo()&lt;/code&gt; may be 'static' #loc</description>
+  </problem>
 
 </problems>

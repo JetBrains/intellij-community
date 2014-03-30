@@ -53,6 +53,7 @@ public class GitRepositoryFiles {
   public static final String GIT_MERGE_HEAD = DOT_GIT + slash(MERGE_HEAD);
   public static final String GIT_MERGE_MSG = DOT_GIT + slash(MERGE_MSG);
   public static final String GIT_SQUASH_MSG = DOT_GIT + slash(SQUASH_MSG);
+  public static final String GIT_COMMIT_EDITMSG = DOT_GIT + slash(COMMIT_EDITMSG);
 
   private final String myConfigFilePath;
   private final String myHeadFilePath;

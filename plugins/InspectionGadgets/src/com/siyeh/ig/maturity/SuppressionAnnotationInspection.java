@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,67 +15,108 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.psi.JavaTokenType;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.tree.IElementType;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class SuppressionAnnotationInspection extends BaseInspection {
+import javax.swing.*;
+import java.util.Collection;
 
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inspection.suppression.annotation.display.name");
+/**
+ * User: anna
+ * Date: 10/24/13
+ */
+public class SuppressionAnnotationInspection extends SuppressionAnnotationInspectionBase {
+  @Override
+  public JComponent createOptionsPanel() {
+    final ListEditForm form = new ListEditForm("Ignore suppressions", myAllowedSuppressions);
+    return form.getContentPanel();
   }
 
   @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "inspection.suppression.annotation.problem.descriptor");
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new SuppressionAnnotationVisitor();
-  }
-
-  private static class SuppressionAnnotationVisitor
-    extends BaseInspectionVisitor {
-    @Override
-    public void visitComment(PsiComment comment) {
-      super.visitComment(comment);
-      final String commentText = comment.getText();
-      final IElementType tokenType = comment.getTokenType();
-      if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)
-          && !tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
-        return;
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) { 
+    if (infos.length == 1) {
+      if (infos[0] instanceof PsiAnnotation) {
+        final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+        PsiElement parent = annotation.getParent();
+        final Collection<String> ids = JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)parent);
+        if (!ids.isEmpty()) {
+          return new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()};
+        }
+      } else if (infos[0] instanceof PsiComment) {
+        return new InspectionGadgetsFix[]{new RemoveSuppressCommentFix(), new AllowSuppressionsFix()};
       }
-      @NonNls final String strippedComment = commentText.substring(2).trim();
-      if (strippedComment.startsWith(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
-        registerError(comment);
+    }
+    return InspectionGadgetsFix.EMPTY_ARRAY;
+  }
+
+  private static class RemoveSuppressCommentFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement != null) {
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
+        psiElement.delete();
       }
     }
 
+    @NotNull
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
-      super.visitAnnotation(annotation);
-      final PsiJavaCodeReferenceElement reference =
-        annotation.getNameReferenceElement();
-      if (reference == null) {
-        return;
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
+    }
+  }
+
+  private class AllowSuppressionsFix extends InspectionGadgetsFix {
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      final String suppressedIds = JavaSuppressionUtil.getSuppressedInspectionIdsIn(psiElement);
+      final Iterable<String> ids = suppressedIds != null ? StringUtil.tokenize(suppressedIds, "[, ]") : null;
+      if (ids != null) {
+        for (String id : ids) {
+          if (!myAllowedSuppressions.contains(id)) {
+            myAllowedSuppressions.add(id);
+          }
+        }
+        saveProfile(project);
       }
-      @NonNls final String text = reference.getText();
-      if ("SuppressWarnings".equals(text) ||
-          SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(text)) {
-        registerError(annotation);
-      }
+    }
+
+    private void saveProfile(Project project) {
+      final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Allow these suppressions";
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Allow suppressions";
     }
   }
 }

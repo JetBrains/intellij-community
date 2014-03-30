@@ -25,7 +25,7 @@ package com.intellij.execution;
 public class Output {
   private final String stdout;
   private final String stderr;
-  private int exitCode;
+  private final int exitCode;
 
   public Output(String stdout, String stderr) {
     this(stdout, stderr, -1);

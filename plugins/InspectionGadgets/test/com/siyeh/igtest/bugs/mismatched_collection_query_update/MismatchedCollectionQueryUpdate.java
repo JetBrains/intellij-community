@@ -178,3 +178,22 @@ public class MismatchedCollectionQueryUpdate {
 
   List<String> boo() {return null;}
 }
+
+class MethReference<E> {
+    private String foo(){
+        List<E> list = new ArrayList<>();
+        forEach(list::add);
+        return list.toString();
+    }
+
+    private void forEach(I<E> ei) {}
+    interface I<E> {
+        boolean _(E e);
+    }
+
+    void qTest() {
+        Map<Integer, Boolean> map = new HashMap<>();
+        map.put(1, true);
+        I<Integer> mapper = map::get;
+    }
+}

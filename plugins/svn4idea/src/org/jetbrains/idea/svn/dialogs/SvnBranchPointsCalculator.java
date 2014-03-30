@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
@@ -88,7 +89,7 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String,BranchCopyData>> {
-    public void save(DataOutput out, TreeMap<String,BranchCopyData> value) throws IOException {
+    public void save(@NotNull DataOutput out, TreeMap<String,BranchCopyData> value) throws IOException {
       out.writeInt(value.size());
       for (Map.Entry<String, BranchCopyData> entry : value.entrySet()) {
         out.writeUTF(entry.getKey());
@@ -100,7 +101,7 @@ public class SvnBranchPointsCalculator {
       }
     }
 
-    public TreeMap<String,BranchCopyData> read(DataInput in) throws IOException {
+    public TreeMap<String,BranchCopyData> read(@NotNull DataInput in) throws IOException {
       final TreeMap<String,BranchCopyData> result = new TreeMap<String, BranchCopyData>();
 
       final int num = in.readInt();

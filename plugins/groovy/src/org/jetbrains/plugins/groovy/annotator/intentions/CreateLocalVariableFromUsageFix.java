@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -33,7 +32,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -42,11 +42,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 /**
  * @author ven
  */
-public class CreateLocalVariableFromUsageFix implements IntentionAction {
+public class CreateLocalVariableFromUsageFix extends Intention {
   private final GrVariableDeclarationOwner myOwner;
   private final GrReferenceExpression myRefExpression;
 
@@ -80,10 +81,11 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    final PsiFile file = element.getContainingFile();
     PsiClassType type = JavaPsiFacade.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
-        null, type, myRefExpression.getReferenceName());
+    GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, myRefExpression.getReferenceName());
     int offset = myRefExpression.getTextRange().getStartOffset();
     GrStatement anchor = findAnchor(file, offset);
 
@@ -99,7 +101,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project), typeElement.getResolveScope());
     TemplateBuilderImpl builder = new TemplateBuilderImpl(decl);
     builder.replaceElement(typeElement, expr);
-    decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
+    decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
     Template template = builder.buildTemplate();
 
     Editor newEditor = positionCursor(project, myOwner.getContainingFile(), decl);
@@ -108,6 +110,18 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
 
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
+
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return myRefExpression.isValid() && myOwner.isValid();
+      }
+    };
   }
 
   @Nullable

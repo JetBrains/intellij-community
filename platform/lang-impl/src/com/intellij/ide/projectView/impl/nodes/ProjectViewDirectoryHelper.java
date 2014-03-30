@@ -38,7 +38,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,10 +94,6 @@ public class ProjectViewDirectoryHelper {
     return true;
   }
 
-  public boolean showFileInLibClasses(VirtualFile vFile) {
-    return true;
-  }
-
   public boolean isEmptyMiddleDirectory(PsiDirectory directory, final boolean strictlyEmpty) {
     return false;
   }
@@ -122,7 +118,7 @@ public class ProjectViewDirectoryHelper {
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories) {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final Project project = psiDirectory.getProject();                                                    
+    final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
     final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
@@ -190,7 +186,7 @@ public class ProjectViewDirectoryHelper {
       }
     }
 
-    return PsiUtilBase.toPsiElementArray(directoriesOnTheWayToContentRoots);
+    return PsiUtilCore.toPsiElementArray(directoriesOnTheWayToContentRoots);
   }
 
   // used only for non-flatten packages mode

@@ -15,48 +15,13 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiParameter;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassVariableHidesContainingMethodVariableInspection
-  extends BaseInspection {
-
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "anonymous.class.variable.hides.containing.method.variable.display.name");
-  }
-
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final Object info = infos[0];
-    if (info instanceof PsiParameter) {
-      return InspectionGadgetsBundle.message(
-        "anonymous.class.parameter.hides.containing.method.variable.problem.descriptor");
-    }
-    else if (info instanceof PsiField) {
-      return InspectionGadgetsBundle.message(
-        "anonymous.class.field.hides.containing.method.variable.problem.descriptor");
-    }
-    return InspectionGadgetsBundle.message(
-      "anonymous.class.variable.hides.containing.method.variable.problem.descriptor");
-  }
-
+  extends AnonymousClassVariableHidesContainingMethodVariableInspectionBase {
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
-  }
-
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  public BaseInspectionVisitor buildVisitor() {
-    return new AnonymousClassVariableHidesOuterClassVariableVisitor();
   }
 }

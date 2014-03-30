@@ -26,11 +26,12 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActionGroup implements DumbAware {
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     removeAll();
     String context = event.getPlace();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

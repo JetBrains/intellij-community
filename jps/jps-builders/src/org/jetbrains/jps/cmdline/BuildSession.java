@@ -24,9 +24,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.Channels;
+import io.netty.channel.Channel;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -72,7 +72,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final ConstantSearch myConstantSearch = new ConstantSearch();
   private final BuildRunner myBuildRunner;
   private final boolean myForceModelLoading;
-  private BuildType myBuildType;
+  private final BuildType myBuildType;
+  private final List<TargetTypeBuildScope> myScopes;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -85,7 +86,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
-    List<TargetTypeBuildScope> scopes = params.getScopeList();
+    myScopes = params.getScopeList();
     List<String> filePaths = params.getFilePathList();
     Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -93,10 +94,11 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, null);
-    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildMain.FORCE_MODEL_LOADING_PARAMETER.toString()));
-    myBuildRunner = new BuildRunner(loader, scopes, filePaths, builderParams);
+    myForceModelLoading = Boolean.parseBoolean(builderParams.get(BuildParametersKeys.FORCE_MODEL_LOADING));
+    myBuildRunner = new BuildRunner(loader, filePaths, builderParams);
   }
 
+  @Override
   public void run() {
     Throwable error = null;
     final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
@@ -109,6 +111,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
 
       runBuild(new MessageHandler() {
+        @Override
         public void processMessage(BuildMessage buildMessage) {
           final CmdlineRemoteProto.Message.BuilderMessage response;
           if (buildMessage instanceof FileGeneratedEvent) {
@@ -138,15 +141,18 @@ final class BuildSession implements Runnable, CanceledStatus {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
-          else {
+          else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
             if (buildMessage instanceof ProgressMessage) {
               done = ((ProgressMessage)buildMessage).getDone();
             }
             response = CmdlineProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
           }
+          else {
+            response = null;
+          }
           if (response != null) {
-            Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, response));
+            myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, response));
           }
         }
       }, this);
@@ -181,7 +187,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // optimization: check whether we can skip the build
       final boolean hasWorkToDoWithModules = fsStateStream.readBoolean();
       if (!myForceModelLoading && (myBuildType == BuildType.BUILD || myBuildType == BuildType.UP_TO_DATE_CHECK) && !hasWorkToDoWithModules
-          && scopeContainsModulesOnlyForIncrementalMake(myBuildRunner.getScopes()) && !containsChanges(myInitialFSDelta)) {
+          && scopeContainsModulesOnlyForIncrementalMake(myScopes) && !containsChanges(myInitialFSDelta)) {
         updateFsStateOnDisk(dataStorageRoot, fsStateStream, myInitialFSDelta.getOrdinal());
         return;
       }
@@ -190,12 +196,14 @@ final class BuildSession implements Runnable, CanceledStatus {
     final BuildFSState fsState = new BuildFSState(false);
     try {
       final ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
+      TimingLog.LOG.debug("Project descriptor loaded");
       myProjectDescriptor = pd;
       if (fsStateStream != null) {
         try {
           try {
             fsState.load(fsStateStream, pd.getModel(), pd.getBuildRootIndex());
             applyFSEvent(pd, myInitialFSDelta, false);
+            TimingLog.LOG.debug("FS Delta loaded");
           }
           finally {
             fsStateStream.close();
@@ -213,7 +221,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType);
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, myBuildType, myScopes, false);
+      TimingLog.LOG.debug("Build finished");
     }
     finally {
       saveData(fsState, dataStorageRoot);
@@ -433,9 +442,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   private static void saveOnDisk(BufferExposingByteArrayOutputStream bytes, final File file) throws IOException {
     FileOutputStream fos = null;
     try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
       fos = new FileOutputStream(file);
     }
-    catch (FileNotFoundException e) {
+    catch (FileNotFoundException ignored) {
       FileUtil.createIfDoesntExist(file);
     }
 
@@ -533,7 +543,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       try {
-        Channels.write(myChannel, lastMessage).await();
+        myChannel.writeAndFlush(lastMessage).await();
       }
       catch (InterruptedException e) {
         LOG.info(e);
@@ -599,11 +609,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (prev != null) {
         prev.setDone();
       }
-      Channels.write(myChannel,
-        CmdlineProtoUtil.toMessage(
-          mySessionId, CmdlineRemoteProto.Message.BuilderMessage.newBuilder().setType(CmdlineRemoteProto.Message.BuilderMessage.Type.CONSTANT_SEARCH_TASK).setConstantSearchTask(task.build()).build()
-        )
-      );
+      myChannel.writeAndFlush(CmdlineProtoUtil.toMessage(mySessionId, CmdlineRemoteProto.Message.BuilderMessage.newBuilder()
+        .setType(CmdlineRemoteProto.Message.BuilderMessage.Type.CONSTANT_SEARCH_TASK).setConstantSearchTask(task.build()).build()));
       return future;
     }
   }

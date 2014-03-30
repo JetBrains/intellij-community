@@ -17,9 +17,12 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import icons.JetgroovyIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.mvc.GroovySdkForNewModuleWizardStep;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
@@ -36,7 +39,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @SuppressWarnings("UnusedDeclaration")
   public GroovyAwareModuleBuilder() {
-    this("groovy", "Groovy Module", "Simple module with attached Groovy library", null);
+    this("groovy", "Groovy", "Simple module with attached Groovy library", JetgroovyIcons.Groovy.GroovyModule);
   }
 
   protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description, Icon bigIcon) {
@@ -46,17 +49,17 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     myBigIcon = bigIcon;
   }
 
+  @Nullable
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework())};
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
   }
 
-  //@Nullable
-  //@Override
-  //public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-  //  return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework());
-  //}
-  //
+  @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    return ModuleWizardStep.EMPTY_ARRAY;
+  }
+
   @Override
   public String getBuilderId() {
     return myBuilderId;
@@ -87,6 +90,17 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     return "Groovy";
   }
 
+  @Override
+  public String getParentGroup() {
+    return getModuleTypeName();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
+  @Nullable
   protected MvcFramework getFramework() {
     return null;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -101,6 +102,8 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
       return;
     }
 
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+    
     Runnable runnable = new Runnable() {
       @Override
       public void run() {

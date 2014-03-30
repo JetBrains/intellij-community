@@ -34,13 +34,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
@@ -50,36 +51,32 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.ExceptionRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 import javax.swing.*;
 
-public class ExceptionBreakpoint extends Breakpoint {
+public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointProperties> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint");
-
-  public boolean NOTIFY_CAUGHT   = true;
-  public boolean NOTIFY_UNCAUGHT = true;
-  private String myQualifiedName;
-  private String myPackageName;
 
   protected final static String READ_NO_CLASS_NAME = DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   public static final @NonNls Key<ExceptionBreakpoint> CATEGORY = BreakpointCategory.lookup("exception_breakpoints");
 
-  public ExceptionBreakpoint(Project project) {
-    super(project);
+  public ExceptionBreakpoint(Project project, XBreakpoint xBreakpoint) {
+    super(project, xBreakpoint);
   }
 
   public Key<? extends ExceptionBreakpoint> getCategory() {
     return CATEGORY;
   }
 
-  protected ExceptionBreakpoint(Project project, String qualifiedName, String packageName) {
-    super(project);
-    myQualifiedName = qualifiedName;
+  protected ExceptionBreakpoint(Project project, String qualifiedName, String packageName, XBreakpoint xBreakpoint) {
+    super(project, xBreakpoint);
+    setQualifiedName(qualifiedName);
     if (packageName == null) {
-      myPackageName = calcPackageName(qualifiedName);
+      setPackageName(calcPackageName(qualifiedName));
     }
     else {
-      myPackageName = packageName;
+      setPackageName(packageName);
     }
   }
 
@@ -92,27 +89,27 @@ public class ExceptionBreakpoint extends Breakpoint {
   }
 
   public String getClassName() {
-    return myQualifiedName;
+    return getQualifiedName();
   }
 
   public String getPackageName() {
-    return myPackageName;
+    return getProperties().myPackageName;
   }
 
   public PsiClass getPsiClass() {
     return PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
-        return myQualifiedName != null ? DebuggerUtilsEx.findClass(myQualifiedName, myProject, GlobalSearchScope.allScope(myProject)) : null;
+        return getQualifiedName() != null ? DebuggerUtilsEx.findClass(getQualifiedName(), myProject, GlobalSearchScope.allScope(myProject)) : null;
       }
     });
   }
 
   public String getDisplayName() {
-    return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", myQualifiedName);
+    return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
   }
 
   public Icon getIcon() {
-    if (!ENABLED) {
+    if (!isEnabled()) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
       return master == null? AllIcons.Debugger.Db_disabled_exception_breakpoint : AllIcons.Debugger.Db_dep_exception_breakpoint;
     }
@@ -124,20 +121,20 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void createRequest(final DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!isEnabled() || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
 
     SourcePosition classPosition = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
-        PsiClass psiClass = DebuggerUtilsEx.findClass(myQualifiedName, myProject, debugProcess.getSearchScope());
+        PsiClass psiClass = DebuggerUtilsEx.findClass(getQualifiedName(), myProject, debugProcess.getSearchScope());
 
         return psiClass != null ? SourcePosition.createFromElement(psiClass) : null;
       }
     });
 
     if(classPosition == null) {
-      createOrWaitPrepare(debugProcess, myQualifiedName);
+      createOrWaitPrepare(debugProcess, getQualifiedName());
     }
     else {
       createOrWaitPrepare(debugProcess, classPosition);
@@ -146,11 +143,12 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void processClassPrepare(DebugProcess process, ReferenceType refType) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)process;
-    if (!ENABLED) {
+    if (!isEnabled()) {
       return;
     }
     // trying to create a request
-    ExceptionRequest request = debugProcess.getRequestsManager().createExceptionRequest(this, refType, NOTIFY_CAUGHT, NOTIFY_UNCAUGHT);
+    ExceptionRequest request = debugProcess.getRequestsManager().createExceptionRequest(this, refType, isNotifyCaught(),
+                                                                                        isNotifyUncaught());
     debugProcess.getRequestsManager().enableRequest(request);
     if (LOG.isDebugEnabled()) {
       if (refType != null) {
@@ -170,7 +168,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   }
 
   public String getEventMessage(LocatableEvent event) {
-    String exceptionName = (myQualifiedName != null)? myQualifiedName : "java.lang.Throwable";
+    String exceptionName = (getQualifiedName() != null)? getQualifiedName() : "java.lang.Throwable";
     String threadName    = null;
     if (event instanceof ExceptionEvent) {
       ExceptionEvent exceptionEvent = (ExceptionEvent)event;
@@ -216,15 +214,15 @@ public class ExceptionBreakpoint extends Breakpoint {
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
-    super.writeExternal(parentNode);
-    if(myQualifiedName != null) {
-      parentNode.setAttribute("class_name", myQualifiedName);
-    }
-    if(myPackageName != null) {
-      parentNode.setAttribute("package_name", myPackageName);
-    }
-  }
+  //@SuppressWarnings({"HardCodedStringLiteral"}) public void writeExternal(Element parentNode) throws WriteExternalException {
+  //  super.writeExternal(parentNode);
+  //  if(getQualifiedName() != null) {
+  //    parentNode.setAttribute("class_name", getQualifiedName());
+  //  }
+  //  if(getPackageName() != null) {
+  //    parentNode.setAttribute("package_name", getPackageName());
+  //  }
+  //}
 
   public PsiElement getEvaluationElement() {
     if (getClassName() == null) {
@@ -235,16 +233,45 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     super.readExternal(parentNode);
-    //noinspection HardCodedStringLiteral
-    String className = parentNode.getAttributeValue("class_name");
-    myQualifiedName = className;
-    if(className == null) {
-      throw new InvalidDataException(READ_NO_CLASS_NAME);
-    }
 
     //noinspection HardCodedStringLiteral
     String packageName = parentNode.getAttributeValue("package_name");
-    myPackageName = packageName != null? packageName : calcPackageName(packageName);
+    setPackageName(packageName != null? packageName : calcPackageName(packageName));
+
+    try {
+      getProperties().NOTIFY_CAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_CAUGHT"));
+    } catch (Exception e) {
+    }
+    try {
+      getProperties().NOTIFY_UNCAUGHT = Boolean.valueOf(JDOMExternalizerUtil.readField(parentNode, "NOTIFY_UNCAUGHT"));
+    } catch (Exception e) {
+    }
+
+    //noinspection HardCodedStringLiteral
+    String className = parentNode.getAttributeValue("class_name");
+    setQualifiedName(className);
+    if(className == null) {
+      throw new InvalidDataException(READ_NO_CLASS_NAME);
+    }
   }
 
+  private boolean isNotifyCaught() {
+    return getProperties().NOTIFY_CAUGHT;
+  }
+
+  private boolean isNotifyUncaught() {
+    return getProperties().NOTIFY_UNCAUGHT;
+  }
+
+  private String getQualifiedName() {
+    return getProperties().myQualifiedName;
+  }
+
+  private void setQualifiedName(String qualifiedName) {
+    getProperties().myQualifiedName = qualifiedName;
+  }
+
+  private void setPackageName(String packageName) {
+    getProperties().myPackageName = packageName;
+  }
 }

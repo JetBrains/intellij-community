@@ -33,6 +33,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -43,7 +44,7 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
 
   @NotNull
   @Override
-  public IntentionAction[] getQuickFixes(PsiElement element) {
+  public IntentionAction[] getQuickFixes(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return IntentionAction.EMPTY_ARRAY;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) return IntentionAction.EMPTY_ARRAY;
@@ -55,20 +56,22 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
       return new IntentionAction[] { new RegisterInspectionFix(parentClass, InspectionEP.GLOBAL_INSPECTION) };
     }
     List<ExtensionPointCandidate> candidateList = new ArrayList<ExtensionPointCandidate>();
-    findExtensionPointCandidatesInHierarchy(parentClass, candidateList);
+    findExtensionPointCandidatesInHierarchy(parentClass, candidateList, new HashSet<PsiClass>());
     if (!candidateList.isEmpty()) {
       return new IntentionAction[] { new RegisterExtensionFix(parentClass, candidateList) };
     }
     return IntentionAction.EMPTY_ARRAY;
   }
 
-  private static void findExtensionPointCandidatesInHierarchy(PsiClass aClass, List<ExtensionPointCandidate> list) {
+  private static void findExtensionPointCandidatesInHierarchy(PsiClass aClass,
+                                                              List<ExtensionPointCandidate> list,
+                                                              HashSet<PsiClass> processed) {
     for (PsiClass superClass : aClass.getSupers()) {
-      if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+      if (!processed.add(superClass) || CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
         continue;
       }
       findExtensionPointCandidates(superClass, list);
-      findExtensionPointCandidatesInHierarchy(superClass, list);
+      findExtensionPointCandidatesInHierarchy(superClass, list, processed);
     }
   }
 

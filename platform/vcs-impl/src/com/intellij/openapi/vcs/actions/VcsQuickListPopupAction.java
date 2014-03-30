@@ -113,7 +113,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
     // additional stuff
     addSeparator(group);
-    addAction("MoveToChangeList", group);
+    addAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, group);
 
     // local history
     addLocalHistoryActions(group);
@@ -162,7 +162,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     }
 
     // by current file
-    final VirtualFile file =  dataContext != null ? PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) : null;
+    final VirtualFile file =  dataContext != null ? CommonDataKeys.VIRTUAL_FILE.getData(dataContext) : null;
     if (file != null) {
       final AbstractVcs vscForFile = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
       if (vscForFile != null) {

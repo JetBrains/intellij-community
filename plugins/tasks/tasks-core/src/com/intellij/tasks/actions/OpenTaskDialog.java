@@ -16,351 +16,267 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.CommonBundle;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.ControlBinder;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsTaskHandler;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.tasks.*;
-import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.ui.*;
-import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
-import java.util.Collection;
-import java.util.List;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
  */
 public class OpenTaskDialog extends DialogWrapper {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
+  public static final String START_FROM_BRANCH = "start.from.branch";
 
   private JPanel myPanel;
-
   @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
-  @BindControl(value = "createChangelist", instant = true)
-  private JCheckBox myCreateChangelist;
-  private EditorTextField myTaskName;
   private JCheckBox myMarkAsInProgressBox;
-  private HyperlinkLabel myServers;
-  private JPanel myEditorPanel;
-  private JLabel myNameLabel;
+  private JLabel myTaskNameLabel;
+  private JPanel myVcsPanel;
+  private JTextField myBranchName;
+  private JTextField myChangelistName;
+  private JBCheckBox myCreateBranch;
+  private JBCheckBox myCreateChangelist;
+  private JBLabel myFromLabel;
+  private ComboBox myBranchFrom;
 
   private final Project myProject;
-  private Task mySelectedTask;
-  private boolean myVcsEnabled;
-  private AsyncProcessIcon myUpdateIcon;
-  private JLabel myUpdateLabel;
+  private final Task myTask;
+  private VcsTaskHandler myVcsTaskHandler;
 
-  protected OpenTaskDialog(Project project) {
-
-    super(project, true);
+  public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
+    super(project, false);
     myProject = project;
+    myTask = task;
+    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     setTitle("Open Task");
-
-    myTaskName = new TextFieldWithAutoCompletion<Task>(project, new MyTextFieldWithAutoCompletionListProvider(project) {
-      protected void handleInsert(@NotNull final Task task) {
-        mySelectedTask = task;
-        taskChanged();
-      }
-    }, false, null);
-    myEditorPanel.add(myTaskName);
-    myTaskName.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        taskChanged();
-      }
-    });
-
-    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-    final Shortcut[] shortcuts = keymap.getShortcuts("CodeCompletion");
-    if (shortcuts.length > 0) {
-      myNameLabel.setText("Enter task name or press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to choose an existing task:");
-    }
-    myNameLabel.setLabelFor(myTaskName);
+    myTaskNameLabel.setText(TaskUtil.getTrimmedSummary(task));
+    myTaskNameLabel.setIcon(task.getIcon());
 
     TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
     ControlBinder binder = new ControlBinder(manager.getState());
     binder.bindAnnotations(this);
     binder.reset();
 
-    myVcsEnabled = manager.isVcsEnabled();
-
+    TaskRepository repository = task.getRepository();
     myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
-    myMarkAsInProgressBox.setVisible(false);
-    for (TaskRepository repository : manager.getAllRepositories()) {
-      if (repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
-        myMarkAsInProgressBox.setVisible(true);
-        break;
-      }
+    if (!TaskUtil.isStateSupported(repository, TaskState.IN_PROGRESS)) {
+      myMarkAsInProgressBox.setVisible(false);
     }
 
-    taskChanged();
+    TaskManagerImpl.Config state = taskManager.getState();
+    myClearContext.setSelected(state.clearContext);
 
-    init();
+    AbstractVcs vcs = manager.getActiveVcs();
+    if (vcs == null) {
+      myVcsPanel.setVisible(false);
+    }
+    else {
+      ActionListener listener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          updateFields();
+        }
+      };
+      myCreateChangelist.addActionListener(listener);
+      myCreateBranch.addActionListener(listener);
+      myCreateChangelist.setSelected(manager.getState().createChangelist);
+      myCreateBranch.setSelected(manager.getState().createBranch);
 
-    if (manager.getState().updateEnabled) {
-      manager.updateIssues(new Runnable() {
-        public void run() {
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myUpdateIcon.suspend();
-              myUpdateIcon.setVisible(false);
-              myUpdateLabel.setText("");
+      // In git 'master' branch appears (in .git/refs/heads/master) only after at least one commit was made in it.
+      // Before that feature branches can't be created normally.
+      if (vcs.getType() != VcsType.distributed || !branchesExist(project)) {
+        myCreateBranch.setSelected(false);
+        myCreateBranch.setVisible(false);
+        myBranchName.setVisible(false);
+        myFromLabel.setVisible(false);
+        myBranchFrom.setVisible(false);
+      }
+      else {
+        VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(project);
+        for (VcsTaskHandler handler : handlers) {
+          VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
+          if (tasks.length > 0) {
+            myVcsTaskHandler = handler;
+            myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
+            final String startFrom = PropertiesComponent.getInstance(project).getValue(START_FROM_BRANCH);
+            VcsTaskHandler.TaskInfo info = null;
+            if (startFrom != null) {
+              info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
+                @Override
+                public boolean value(VcsTaskHandler.TaskInfo taskInfo) {
+                  return startFrom.equals(taskInfo.getName());
+                }
+              });
             }
-          });
+            if (info == null) {
+              info = handler.getActiveTask();
+            }
+            myBranchFrom.setSelectedItem(info);
+            myBranchFrom.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent e) {
+                VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
+                if (item != null) {
+                  PropertiesComponent.getInstance(project).setValue(START_FROM_BRANCH, item.getName());
+                }
+              }
+            });
+            break;
+          }
         }
-      });
+        myBranchFrom.setRenderer(new ColoredListCellRenderer<VcsTaskHandler.TaskInfo>() {
+          @Override
+          protected void customizeCellRenderer(JList list, VcsTaskHandler.TaskInfo value, int index, boolean selected, boolean hasFocus) {
+            append(value.getName());
+          }
+        });
+      }
+
+      myBranchName.setText(taskManager.suggestBranchName(task));
+      myChangelistName.setText(taskManager.getChangelistName(task));
+      updateFields();
     }
-    else {
-      myUpdateIcon.setVisible(false);
-      myUpdateLabel.setText("");
-    }
+    init();
   }
 
-  @Override
-  protected JComponent createSouthPanel() {
-    JComponent panel = super.createSouthPanel();
-    JPanel updatePanel = new JPanel(new BorderLayout());
-    myUpdateIcon = new AsyncProcessIcon("task update");
-    updatePanel.add(myUpdateIcon, BorderLayout.WEST);
-    myUpdateLabel = new JLabel(" Updating...");
-    updatePanel.add(myUpdateLabel);
-    assert panel != null;
-    panel.add(updatePanel, BorderLayout.WEST);
-    return panel;
-  }
-
-  private void taskChanged() {
-    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
-    Task task = getSelectedTask();
-
-    if (myMarkAsInProgressBox.isVisible()) {
-      myMarkAsInProgressBox.setEnabled(false);
-      if (task != null) {
-        TaskRepository repository = task.getRepository();
-        if (repository != null && repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
-          myMarkAsInProgressBox.setEnabled(true);
-        }
+  private static boolean branchesExist(Project project) {
+    for (VcsTaskHandler handler : VcsTaskHandler.getAllHandlers(project)) {
+      if (handler.getCurrentTasks().length != 0) {
+        return true;
       }
     }
-
-    if (!taskManager.isVcsEnabled()) {
-      myCreateChangelist.setEnabled(false);
-      myCreateChangelist.setSelected(false);
-    }
-    else {
-      myCreateChangelist.setSelected(taskManager.getState().createChangelist);
-      myCreateChangelist.setEnabled(true);
-    }
-
-    setOKActionEnabled(isOKActionEnabled());
+    return false;
   }
+
+  private void updateFields() {
+    myBranchName.setEnabled(myCreateBranch.isSelected());
+    myChangelistName.setEnabled(myCreateChangelist.isSelected());
+  }
+
 
   @Override
   protected void doOKAction() {
-    TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(myProject);
-    if (mySelectedTask == null) {
-      String taskName = getTaskName();
-
-      String lastId = null;
-      for (final TaskRepository repository : manager.getAllRepositories()) {
-        final String id = repository.extractId(taskName);
-        if (id != null) {
-          lastId = id;
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            public void run() {
-              try {
-                mySelectedTask = repository.findTask(id);
-              }
-              catch (Exception e) {
-                //
-              }
-            }
-          }, "Getting " + id + " from " + repository.getPresentableName() + "...", true, myProject);
-        }
-        if (mySelectedTask != null) {
-          break;
-        }
-      }
-      if (lastId == null) {
-        mySelectedTask = manager.createLocalTask(taskName);
-      }
-      else if (mySelectedTask == null) {
-        if (Messages.showOkCancelDialog(myProject,
-                                        "Issue " + lastId + " not found.\n" +
-                                        "Do you want to create local task?",
-                                        "Issue Not Found",
-                                        CommonBundle.getNoButtonText(), CommonBundle.getYesButtonText(),
-                                        Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
-          return;
-        }
-        mySelectedTask = manager.createLocalTask(taskName);
-      }
-    }
-    manager.getState().markAsInProgress = myMarkAsInProgressBox.isSelected();
+    createTask();
     super.doOKAction();
   }
 
-  @Nullable
-  public Task getSelectedTask() {
-    return mySelectedTask;
+  public void createTask() {
+    final TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
+
+    taskManager.getState().markAsInProgress = isMarkAsInProgress();
+    taskManager.getState().createChangelist = myCreateChangelist.isSelected();
+    taskManager.getState().createBranch = myCreateBranch.isSelected();
+
+    TaskRepository repository = myTask.getRepository();
+    if (isMarkAsInProgress() && repository != null) {
+      try {
+        repository.setTaskState(myTask, TaskState.IN_PROGRESS);
+      }
+      catch (Exception ex) {
+        Messages.showErrorDialog(myProject, ex.getMessage(), "Cannot Set State For Issue");
+        LOG.warn(ex);
+      }
+    }
+    final LocalTask activeTask = taskManager.getActiveTask();
+    final LocalTask localTask = taskManager.activateTask(myTask, isClearContext());
+    if (myCreateChangelist.isSelected()) {
+      taskManager.createChangeList(localTask, myChangelistName.getText());
+    }
+    if (myCreateBranch.isSelected()) {
+      VcsTaskHandler.TaskInfo item = (VcsTaskHandler.TaskInfo)myBranchFrom.getSelectedItem();
+      Runnable createBranch = new Runnable() {
+        @Override
+        public void run() {
+          taskManager.createBranch(localTask, activeTask, myBranchName.getText());
+        }
+      };
+      if (item != null && !item.equals(myVcsTaskHandler.getActiveTask())) {
+        myVcsTaskHandler.switchToTask(item, createBranch);
+      }
+      else {
+        createBranch.run();
+      }
+    }
+    if (myTask.getType() == TaskType.EXCEPTION && AnalyzeTaskStacktraceAction.hasTexts(myTask)) {
+      AnalyzeTaskStacktraceAction.analyzeStacktrace(myTask, myProject);
+    }
   }
 
-  public boolean isClearContext() {
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    if (myCreateBranch.isSelected()) {
+      String branchName = myBranchName.getText().trim();
+      if (branchName.isEmpty()) {
+        return new ValidationInfo("Branch name should not be empty", myBranchName);
+      }
+      else if (branchName.contains(" ")) {
+        return new ValidationInfo("Branch name should not contain spaces");
+      }
+      else {
+        return null;
+      }
+    }
+    if (myCreateChangelist.isSelected()) {
+      if (myChangelistName.getText().trim().isEmpty()) {
+        return new ValidationInfo("Changelist name should not be empty");
+      }
+    }
+    return null;
+  }
+
+  private boolean isClearContext() {
     return myClearContext.isSelected();
   }
 
-  public boolean isCreateChangelist() {
-    return myCreateChangelist.isSelected();
-  }
-
-  boolean isMarkAsInProgress() {
-    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible() && myMarkAsInProgressBox.isEnabled();
+  private boolean isMarkAsInProgress() {
+    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible();
   }
 
   @NonNls
   protected String getDimensionServiceKey() {
-    return "OpenTaskDialog";
-  }
-
-  @Override
-  public boolean isOKActionEnabled() {
-    return !StringUtil.isEmptyOrSpaces(getTaskName());
-  }
-
-  private String getTaskName() {
-    return myTaskName.getText();
+    return "SimpleOpenTaskDialog";
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTaskName;
+    if (myCreateBranch.isSelected()) {
+      return myBranchName;
+    }
+    else if (myCreateChangelist.isSelected()) {
+      return myChangelistName;
+    }
+    else {
+      return null;
+    }
   }
 
   protected JComponent createCenterPanel() {
     return myPanel;
-  }
-
-  private void createUIComponents() {
-    myServers = new HyperlinkLabel("Configure");
-    myServers.addHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
-        TaskRepositoriesConfigurable configurable = new TaskRepositoriesConfigurable(myProject);
-        if (ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable)) {
-          taskChanged();
-        }
-      }
-    });
-  }
-
-  public static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
-
-    private final Project myProject;
-
-    public MyTextFieldWithAutoCompletionListProvider(Project project) {
-      super(null);
-      myProject = project;
-    }
-
-    @Override
-    protected String getQuickDocHotKeyAdvertisementTail(@NotNull String shortcut) {
-      return "task description and comments";
-    }
-
-    @NotNull
-    @Override
-    public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
-      return TaskSearchSupport.getItems(TaskManager.getManager(myProject), prefix, cached, parameters.isAutoPopup());
-    }
-
-    @Override
-    public void setItems(@Nullable Collection variants) {
-      // Do nothing
-    }
-
-    @Override
-    public LookupElementBuilder createLookupBuilder(@NotNull final Task task) {
-      LookupElementBuilder builder = super.createLookupBuilder(task);
-
-      builder = builder.withLookupString(task.getSummary());
-      if (task.isClosed()) {
-        builder = builder.strikeout();
-      }
-
-      return builder;
-    }
-
-    @Override
-    protected InsertHandler<LookupElement> createInsertHandler(@NotNull final Task task) {
-      return new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(InsertionContext context, LookupElement item) {
-          Document document = context.getEditor().getDocument();
-          String s = ((TaskManagerImpl)TaskManager.getManager(context.getProject())).getChangelistName(task);
-          s = StringUtil.convertLineSeparators(s);
-          document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
-          context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
-
-          MyTextFieldWithAutoCompletionListProvider.this.handleInsert(task);
-        }
-      };
-    }
-
-    protected void handleInsert(@NotNull final Task task) {
-      // Override it for autocompletion insert handler
-    }
-
-    @Override
-    protected Icon getIcon(@NotNull final Task task) {
-      return task.getIcon();
-    }
-
-    @NotNull
-    @Override
-    protected String getLookupString(@NotNull final Task task) {
-      return task.getId();
-    }
-
-    @Override
-    protected String getTailText(@NotNull final Task task) {
-      return " " + task.getSummary();
-    }
-
-    @Override
-    protected String getTypeText(@NotNull final Task task) {
-      return null;
-    }
-
-    @Override
-    public int compare(@NotNull final Task task1, @NotNull final Task task2) {
-      // N/A here
-      throw new UnsupportedOperationException();
-    }
   }
 }

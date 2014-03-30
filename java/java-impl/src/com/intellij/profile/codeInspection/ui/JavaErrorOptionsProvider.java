@@ -29,6 +29,7 @@ import java.awt.*;
 public class JavaErrorOptionsProvider implements ErrorOptionsProvider {
   private JCheckBox mySuppressWay;
 
+  @Override
   public JComponent createComponent() {
     mySuppressWay = new JCheckBox(ApplicationBundle.message("checkbox.suppress.with.suppresswarnings"));
     final JPanel panel = new JPanel(new BorderLayout());
@@ -36,21 +37,25 @@ public class JavaErrorOptionsProvider implements ErrorOptionsProvider {
     return panel;
   }
 
+  @Override
   public void reset() {
-    mySuppressWay.setSelected(DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS);
+    mySuppressWay.setSelected(DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings());
   }
 
+  @Override
   public void disposeUIResources() {
     mySuppressWay = null;
   }
 
+  @Override
   public void apply() {
-    DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS = mySuppressWay.isSelected();
+    DaemonCodeAnalyzerSettings.getInstance().setSuppressWarnings(mySuppressWay.isSelected());
   }
 
+  @Override
   public boolean isModified() {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    return mySuppressWay.isSelected() != settings.SUPPRESS_WARNINGS;
+    return mySuppressWay.isSelected() != settings.isSuppressWarnings();
   }
 
 }

@@ -13,12 +13,13 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgTagCreateCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgTagDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
@@ -26,13 +27,15 @@ import java.util.Collection;
 
 public class HgCreateTagAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, Collection<VirtualFile> repos) {
-    final HgTagDialog dialog = new HgTagDialog(project);
-    dialog.setRoots(repos);
+  public void execute(@NotNull final Project project,
+                      @NotNull Collection<HgRepository> repositories,
+                      @Nullable HgRepository selectedRepo,
+                      @Nullable final String reference) {
+    final HgTagDialog dialog = new HgTagDialog(project, repositories, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       try {
-        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute(new HgCommandResultHandler() {
+        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName(), reference).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
             if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
@@ -46,5 +49,11 @@ public class HgCreateTagAction extends HgAbstractGlobalAction {
         handleException(project, e);
       }
     }
+  }
+
+  protected void execute(@NotNull final Project project,
+                         @NotNull Collection<HgRepository> repositories,
+                         @Nullable HgRepository selectedRepo) {
+    execute(project, repositories, selectedRepo, null);
   }
 }

@@ -44,7 +44,7 @@ public class MoveModuleToGroup extends ActionGroup {
   @Override
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     boolean active = project != null && modules != null && modules.length != 0;
     final Presentation presentation = e.getPresentation();

@@ -17,13 +17,15 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
 public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
-  public ConcurrentWeakValueHashMap(Map<K, V> map) {
+  public ConcurrentWeakValueHashMap(@NotNull Map<K, V> map) {
     super(map);
   }
 
@@ -35,13 +37,18 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
     super(initialCapacity, loadFactor, concurrencyLevel);
   }
 
-  private static class MyWeakReference<K,T> extends WeakReference<T> implements MyReference<K,T> {
+  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+  }
+
+  private static class MyWeakReference<K,T> extends WeakReference<T> implements MyValueReference<K,T> {
     private final K key;
-    private MyWeakReference(K key, T referent, ReferenceQueue<T> q) {
+    private MyWeakReference(@NotNull K key, @NotNull T referent, @NotNull ReferenceQueue<T> q) {
       super(referent, q);
       this.key = key;
     }
 
+    @NotNull
     @Override
     public K getKey() {
       return key;
@@ -52,7 +59,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final MyReference that = (MyReference)o;
+      final MyValueReference that = (MyValueReference)o;
 
       return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
     }
@@ -63,7 +70,7 @@ public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHas
   }
 
   @Override
-  protected MyReference<K, V> createRef(K key, V value) {
+  protected MyValueReference<K, V> createRef(@NotNull K key, @NotNull V value) {
     return new MyWeakReference<K,V>(key, value, myQueue);
   }
 }

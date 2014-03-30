@@ -22,7 +22,7 @@
  */
 package com.intellij.openapi.ui;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,17 +37,11 @@ public class PanelWithText extends JPanel {
   public PanelWithText(String text) {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEtchedBorder());
-    myLabel.setText(wrapText(text));
+    myLabel.setText(XmlStringUtil.wrapInHtml(text));
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(8,8,8,8), 0, 0));
   }
 
-  private static String wrapText(final String text) {
-    @NonNls String opentTag = "<html>";
-    @NonNls String closeTag = "</html>";
-    return opentTag + text + closeTag;
-  }
-
   public void setText(String text){
-    myLabel.setText(wrapText(text));
+    myLabel.setText(XmlStringUtil.wrapInHtml(text));
   }
 }

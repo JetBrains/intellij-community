@@ -17,6 +17,8 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.Processor;
@@ -25,25 +27,27 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class MethodImplementationsSearch implements QueryExecutor<PsiElement, PsiElement> {
-  public boolean execute(@NotNull final PsiElement sourceElement, @NotNull final Processor<PsiElement> consumer) {
+public class MethodImplementationsSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
+  @Override
+  public boolean execute(@NotNull DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull Processor<PsiElement> consumer) {
+    final PsiElement sourceElement = queryParameters.getElement();
     if (sourceElement instanceof PsiMethod) {
-      PsiMethod[] implementations = getMethodImplementations((PsiMethod)sourceElement);
+      PsiMethod[] implementations = getMethodImplementations((PsiMethod)sourceElement, queryParameters.getScope());
       return ContainerUtil.process(implementations, consumer);
     }
     return true;
   }
 
-  public static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list) {
-    for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+  public static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list, SearchScope scope) {
+    for (PsiMethod psiMethod : OverridingMethodsSearch.search(method, scope, true)) {
       list.add(psiMethod);
     }
   }
 
-  public static PsiMethod[] getMethodImplementations(final PsiMethod method) {
+  public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
     ArrayList<PsiMethod> result = new ArrayList<PsiMethod>();
 
-    getOverridingMethods(method, result);
+    getOverridingMethods(method, result, scope);
     return result.toArray(new PsiMethod[result.size()]);
   }
 }

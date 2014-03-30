@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.rules.*;
@@ -132,7 +133,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (document == null) {
       // element over light virtual file
       PsiElement element = getElement();
-      chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+      if (element == null) {
+        chunks = new TextChunk[]{new TextChunk(SimpleTextAttributes.ERROR_ATTRIBUTES.toTextAttributes(), UsageViewBundle.message("node.invalid"))};
+      }
+      else {
+        chunks = new TextChunk[] {new TextChunk(new TextAttributes(), element.getText())};
+      }
     }
     else {
       chunks = ChunkExtractor.extractChunks(psiFile, this);
@@ -155,14 +161,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       return false;
     }
     for (UsageInfo usageInfo : getMergedInfos()) {
-      if (usageInfo.getSegment() == null) return false;
+      if (!usageInfo.isValid()) return false;
     }
     return true;
   }
 
   @Override
   public boolean isReadOnly() {
-    return isValid() && !getElement().isWritable();
+    PsiFile psiFile = getPsiFile();
+    return psiFile == null || psiFile.isValid() && !psiFile.isWritable();
   }
 
   @Override
@@ -361,7 +368,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   // by start offset
   @Override
-  public int compareTo(final UsageInfo2UsageAdapter o) {
+  public int compareTo(@NotNull final UsageInfo2UsageAdapter o) {
     VirtualFile containingFile = getFile();
     int shift1 = 0;
     if (containingFile instanceof VirtualFileWindow) {
@@ -431,8 +438,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
-    Reference<TextChunk[]> reference = myTextChunks;
-    TextChunk[] chunks = reference == null ? null : reference.get();
+    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
     if (chunks == null || isValid() && isModified) {
@@ -456,7 +462,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
         int lineEnd = document.getLineEndOffset(lineNumber);
         String prefixSuffix = null;
 
-        if (lineEnd - lineStart > ChunkExtractor.MAX_LINE_TO_SHOW) {
+        if (lineEnd - lineStart > ChunkExtractor.MAX_LINE_LENGTH_TO_SHOW) {
           prefixSuffix = "...";
           lineStart = Math.max(startOffset - ChunkExtractor.OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE, lineStart);
           lineEnd = Math.min(startOffset + ChunkExtractor.OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE, lineEnd);
@@ -474,9 +480,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     Icon icon = myIcon;
     if (icon == null) {
       PsiElement psiElement = getElement();
-      myIcon = icon = psiElement != null && psiElement.isValid() ? psiElement.getIcon(0) : null;
+      myIcon = icon = psiElement != null && psiElement.isValid() && !isFindInPathUsage(psiElement) ? psiElement.getIcon(0) : null;
     }
     return icon;
+  }
+
+  private boolean isFindInPathUsage(PsiElement psiElement) {
+    return psiElement instanceof PsiFile && getUsageInfo().getPsiFileRange() != null;
   }
 
   @Override

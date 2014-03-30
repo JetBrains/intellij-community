@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -36,14 +37,17 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && findTargetMember(elements[0]) != null;
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     PsiElement targetMember = findTargetMember(file, editor);
     if (targetMember == null) {
@@ -89,9 +93,9 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
 
   @Override
   protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiElement targetMember;
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -105,16 +109,18 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
     return targetMember != null && getChangeSignatureHandler(targetMember.getLanguage()) != null;
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language == null) {
-      PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (psiElement != null) {
         language = psiElement.getLanguage();
       }
     }
     if (language != null) {
       return new RefactoringActionHandler() {
+        @Override
         public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
           editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
           final PsiElement targetMember = findTargetMember(file, editor);
@@ -133,6 +139,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
           handler.invoke(project, new PsiElement[]{targetMember}, dataContext);
         }
 
+        @Override
         public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
           if (elements.length != 1) return;
           final PsiElement targetMember = findTargetMember(elements[0]);

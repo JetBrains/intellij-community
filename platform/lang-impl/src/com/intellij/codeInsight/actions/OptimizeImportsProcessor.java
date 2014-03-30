@@ -24,7 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.concurrent.FutureTask;
 
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
-  private static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
+  public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);
@@ -60,9 +60,13 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
   }
 
+  public OptimizeImportsProcessor(AbstractLayoutCodeProcessor processor) {
+    super(processor, COMMAND_NAME, PROGRESS_TEXT);
+  }
+
   @Override
   @NotNull
-  protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
+  protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
     final List<Runnable> runnables = new ArrayList<Runnable>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
@@ -76,8 +80,13 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
       @Override
       public void run() {
-        for (Runnable runnable : runnables) {
-          runnable.run();
+        CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
+        try {
+          for (Runnable runnable : runnables)
+            runnable.run();
+        }
+        finally {
+          CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
         }
       }
     };

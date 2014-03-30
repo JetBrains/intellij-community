@@ -17,32 +17,22 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 import java.io.File;
 
-public abstract class ResourceCopyingTest extends MavenImportingTestCase {
-
-  public static class IdeaModeTest extends ResourceCopyingTest {
-    @Override
-    protected boolean useJps() {
-      return false;
-    }
+public class ResourceCopyingTest extends MavenCompilingTestCase {
+  @Override
+  protected boolean useJps() {
+    return true;
   }
-
-  public static class JpsModeTest extends ResourceCopyingTest {
-    @Override
-    protected boolean useJps() {
-      return true;
-    }
-  }
-
 
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -426,38 +416,6 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
     assertCopied("target/classes/file.properties");
   }
 
-  public void testWorkCorrectlyIfFoldersMarkedAsSource() throws Exception {
-    createProjectSubFile("src/main/resources/file.properties");
-    createProjectSubFile("src/main/resources/file.txt");
-    createProjectSubFile("src/main/resources/file.xxx");
-    createProjectSubFile("src/main/ideaRes/file2.xxx");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                                  getModule("project"),
-                                                                  new MavenDefaultModifiableModelsProvider(myProject));
-        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/resources").getPath(), false);
-        adapter.addSourceFolder(myProjectRoot.findFileByRelativePath("src/main/ideaRes").getPath(), false);
-        adapter.getRootModel().commit();
-      }
-    });
-
-
-    assertSources("project", "src/main/resources", "src/main/ideaRes");
-
-    compileModules("project");
-
-    assertCopied("target/classes/file.properties");
-    assertCopied("target/classes/file.txt");
-    assertCopied("target/classes/file.xxx");
-    assertNotCopied("target/classes/file2.xxx");
-  }
-
   public void testDoNotDeleteFilesFromOtherModulesOutput() throws Exception {
     createProjectSubFile("m1/resources/file.xxx");
     createProjectSubFile("m2/resources/file.yyy");
@@ -576,14 +534,16 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
   }
 
   private void setModulesOutput(final VirtualFile output, final String... moduleNames) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (String each : moduleNames) {
-          PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), false);
-          PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), true);
-        }
+    AccessToken accessToken = WriteAction.start();
+    try {
+      for (String each : moduleNames) {
+        PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), false);
+        PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), true);
       }
-    });
+    }
+    finally {
+      accessToken.finish();
+    }
   }
 
   public void testWebResources() throws Exception {
@@ -673,6 +633,47 @@ public abstract class ResourceCopyingTest extends MavenImportingTestCase {
                      "    </plugin>" +
                      "  </plugins>" +
                      "</build>");
+  }
+
+  public void testCopingNonMavenResources() throws Exception {
+    if (ignore()) return;
+
+    createProjectSubFile("src/resources/a.txt", "a");
+
+    VirtualFile configDir = createProjectSubDir("src/config");
+    createProjectSubFile("src/config/b.txt", "b");
+    createProjectSubFile("src/config/JavaClass.java", "class JavaClass {}");
+    createProjectSubFile("src/config/xxx.xxx", "xxx"); // *.xxx is excluded from resource coping, see setUpInWriteAction()
+
+    final VirtualFile excludedDir = createProjectSubDir("src/excluded");
+    createProjectSubFile("src/excluded/c.txt", "c");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
+    PsiTestUtil.addSourceRoot(module, configDir);
+    PsiTestUtil.addSourceRoot(module, excludedDir);
+
+    new WriteCommandAction.Simple(myProject) {
+      @Override
+      protected void run() throws Throwable {
+        CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration()
+          .addExcludeEntryDescription(new ExcludeEntryDescription(excludedDir, true, false, getTestRootDisposable()));
+
+        setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+      }
+    }.execute().throwException();
+
+    compileModules("project");
+
+    assertCopied("output/a.txt");
+    assertCopied("output/b.txt");
+
+    assertNotCopied("output/JavaClass.java");
+    assertNotCopied("output/xxx.xxx");
+    assertNotCopied("output/c.txt");
   }
 
   private void assertCopied(String path) {

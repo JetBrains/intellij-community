@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.macro;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -32,23 +33,41 @@ public class CapitalizeAndUnderscoreMacro extends MacroBase {
     super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"));
   }
 
+  protected CapitalizeAndUnderscoreMacro(String name, String description) {
+    super(name, description);
+  }
+
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     String text = getTextResult(params, context, true);
-    if (text != null && text.length() > 0) {
-      final String[] words = NameUtil.nameToWords(text);
-      boolean insertUnderscore = false;
-      final StringBuffer buf = new StringBuffer();
-      for (String word : words) {
-        if (insertUnderscore) {
-          buf.append("_");
-        } else {
-          insertUnderscore = true;
-        }
-        buf.append(StringUtil.toUpperCase(word));
-      }
-      return new TextResult(buf.toString());
+    if (StringUtil.isNotEmpty(text)) {
+      return new TextResult(convertString(text));
     }
     return null;
+  }
+
+  @VisibleForTesting
+  public String convertString(String text) {
+    final String[] words = NameUtil.nameToWords(text);
+    boolean insertUnderscore = false;
+    final StringBuilder buf = new StringBuilder();
+    for (String word : words) {
+      if (!Character.isLetterOrDigit(word.charAt(0))) {
+        buf.append("_");
+        insertUnderscore = false;
+        continue;
+      }
+      if (insertUnderscore) {
+        buf.append("_");
+      } else {
+        insertUnderscore = true;
+      }
+      buf.append(convertCase(word));
+    }
+    return buf.toString();
+  }
+
+  protected String convertCase(String word) {
+    return StringUtil.toUpperCase(word);
   }
 }

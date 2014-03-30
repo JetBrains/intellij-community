@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -258,7 +258,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myFormEditor;
     }
 
-    if (!PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return null;
     }
 
@@ -328,7 +328,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     SimpleTextAttributes result = highlightMap.get(attrs);
     if (result == null) {
-      final TextAttributesKey attrKey = SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      final TextAttributesKey attrKey = SeverityRegistrar.getSeverityRegistrar(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       TextAttributes textAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attrKey);
       textAttrs = TextAttributes.merge(attrs.toTextAttributes(), textAttrs);
       result = SimpleTextAttributes.fromTextAttributes(textAttrs);
@@ -346,7 +346,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     myHighlightAttributes = new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes attributes = globalScheme.getAttributes(SyntaxHighlighterColors.STRING);
+    final TextAttributes attributes = globalScheme.getAttributes(JavaHighlightingColors.STRING);
 
     myBindingAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getTreeForeground());
     myClassAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getTreeForeground());

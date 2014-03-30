@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param title        the dialog title
    * @param message      the message on the dialog
    */
-  private PasswordSafePromptDialog(Project project, PasswordSafeImpl passwordSafe, String title, String message) {
+  private PasswordSafePromptDialog(@Nullable Project project, @NotNull PasswordSafeImpl passwordSafe, String title, String message) {
     super(project, true);
     setTitle(title);
     myMessageLabel.setText(message);
@@ -96,19 +97,20 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   @Nullable
   public static String askPassword(final Project project,
-                                   @Nullable ModalityState modalityState, final String title,
+                                   @Nullable ModalityState modalityState,
+                                   final String title,
                                    final String message,
-                                   final Class<?> requester,
+                                   @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword, String error) {
-    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error, null, null);
+    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error, null, null);
   }
 
   /**
@@ -117,7 +119,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @return null if dialog was cancelled or password (stored in database or a entered by user)
@@ -125,10 +127,10 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   @Nullable
   public static String askPassword(final String title,
                                    final String message,
-                                   final Class<?> requester,
+                                   @NotNull final Class<?> requestor,
                                    final String key,
                                    boolean resetPassword) {
-    return askPassword(null, null, title, message, requester, key, resetPassword, null);
+    return askPassword(null, null, title, message, requestor, key, resetPassword, null);
   }
 
 
@@ -141,7 +143,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error to show in the dialog       @return null if dialog was cancelled or password (stored in database or a entered by user)
@@ -150,11 +152,11 @@ public class PasswordSafePromptDialog extends DialogWrapper {
   public static String askPassphrase(final Project project,
                                      @Nullable ModalityState modalityState, final String title,
                                      final String message,
-                                     final Class<?> requester,
+                                     @NotNull final Class<?> requestor,
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, modalityState, title, message, requester, key, resetPassword, error,
+    return askPassword(project, modalityState, title, message, requestor, key, resetPassword, error,
                        "Passphrase:", "Remember the passphrase");
   }
 
@@ -168,7 +170,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    *                      If null then {@link ModalityState#defaultModalityState() the default modality state} will be used.
    * @param title         the dialog title
    * @param message       the message describing a resource for which password is asked
-   * @param requester     the password requester
+   * @param requestor     the password requestor
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
    * @param error         the error text to show in the dialog
@@ -177,20 +179,22 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    */
   @Nullable
   private static String askPassword(final Project project,
-                                    @Nullable ModalityState modalityState, final String title,
+                                    @Nullable ModalityState modalityState,
+                                    final String title,
                                     final String message,
-                                    final Class<?> requester,
+                                    @NotNull final Class<?> requestor,
                                     final String key,
-                                    boolean resetPassword, final String error,
+                                    boolean resetPassword,
+                                    final String error,
                                     final String promptLabel,
                                     final String checkboxLabel) {
     final PasswordSafeImpl ps = (PasswordSafeImpl)PasswordSafe.getInstance();
     try {
       if (resetPassword) {
-        ps.removePassword(project, requester, key);
+        ps.removePassword(project, requestor, key);
       }
       else {
-        String pw = ps.getPassword(project, requester, key);
+        String pw = ps.getPassword(project, requestor, key);
         if (pw != null) {
           return pw;
         }
@@ -220,14 +224,14 @@ public class PasswordSafePromptDialog extends DialogWrapper {
           pw.set(p);
           try {
             if (d.myRememberPasswordCheckBox.isSelected()) {
-              ps.storePassword(project, requester, key, p);
+              ps.storePassword(project, requestor, key, p);
             }
             else if (!ps.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-              ps.getMemoryProvider().storePassword(project, requester, key, p);
+              ps.getMemoryProvider().storePassword(project, requestor, key, p);
             }
           }
           catch (PasswordSafeException e) {
-            Messages.showErrorDialog(project, e.getMessage(), "Failed to store password");
+            Messages.showErrorDialog(project, e.getMessage(), "Failed to Store Password");
             if (LOG.isDebugEnabled()) {
               LOG.debug("Failed to store password", e);
             }

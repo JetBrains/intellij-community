@@ -1,9 +1,8 @@
-
 package com.intellij.codeInsight.daemon.quickFix;
 
 
 
-public class AddMethodBodyTest extends LightQuickFixTestCase {
+public class AddMethodBodyTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

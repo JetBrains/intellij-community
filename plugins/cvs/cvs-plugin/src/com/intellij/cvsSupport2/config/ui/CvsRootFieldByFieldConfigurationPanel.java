@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.awt.event.ActionListener;
  * author: lesya
  */
 public class CvsRootFieldByFieldConfigurationPanel {
+
   private JComboBox myMethods;
   private JTextField myUser;
   private JTextField myHost;
@@ -64,7 +65,7 @@ public class CvsRootFieldByFieldConfigurationPanel {
   }
 
   public String getSettings() {
-    final int port = FormUtils.getPositiveIntFieldValue(myPort, true, true);
+    final int port = FormUtils.getPositiveIntFieldValue(myPort, true, true, 0xFFFF);
     final CvsMethod cvsMethod = (CvsMethod)myMethods.getSelectedItem();
     final String user = FormUtils.getFieldValue(myUser, cvsMethod.hasUserValue());
     final String host = FormUtils.getFieldValue(myHost, cvsMethod.hasHostValue());

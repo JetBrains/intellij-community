@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -405,7 +406,7 @@ public class DeclarationParser {
   private PsiBuilder.Marker parseMethodFromLeftParenth(PsiBuilder builder, PsiBuilder.Marker declaration, boolean anno, boolean constructor) {
     parseParameterList(builder);
 
-    eatBrackets(builder, constructor, "expected.semicolon");
+    eatBrackets(builder, constructor ? "expected.semicolon" : null);
 
     myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
@@ -600,7 +601,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (!resource) {
-        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, "expected.rparen");
+        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg ? "expected.rparen" : null);
         done(param, JavaElementType.PARAMETER);
         return param;
       }
@@ -644,7 +645,7 @@ public class DeclarationParser {
     while (true) {
       shouldRollback = true;
 
-      if (!eatBrackets(builder, false, null)) {
+      if (!eatBrackets(builder, null)) {
         unclosed = true;
       }
 
@@ -706,26 +707,43 @@ public class DeclarationParser {
     return declaration;
   }
 
-  private static boolean eatBrackets(final PsiBuilder builder, final boolean isError,
-                                     @Nullable @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorKey) {
-    if (builder.getTokenType() != JavaTokenType.LBRACKET) return true;
+  private boolean eatBrackets(PsiBuilder builder, @Nullable @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorKey) {
+    IElementType tokenType = builder.getTokenType();
+    if (tokenType != JavaTokenType.LBRACKET && tokenType != JavaTokenType.AT) return true;
 
-    final PsiBuilder.Marker marker = isError ? builder.mark() : null;
+    PsiBuilder.Marker marker = builder.mark();
 
-    boolean result = true;
-    while (expect(builder, JavaTokenType.LBRACKET)) {
-      if (!expect(builder, JavaTokenType.RBRACKET)) {
-        if (!isError) error(builder, JavaErrorMessages.message("expected.rbracket"));
-        result = false;
+    int count = 0;
+    while (true) {
+      parseAnnotations(builder);
+      if (!expect(builder, JavaTokenType.LBRACKET)) {
         break;
       }
+      ++count;
+      if (!expect(builder, JavaTokenType.RBRACKET)) {
+        break;
+      }
+      ++count;
     }
 
-    if (marker != null && errorKey != null) {
+    if (count == 0) {
+      // just annotation, most probably belongs to a next declaration
+      marker.rollbackTo();
+      return true;
+    }
+
+    if (errorKey != null) {
       marker.error(JavaErrorMessages.message(errorKey));
     }
+    else {
+      marker.drop();
+    }
 
-    return result;
+    boolean paired = count % 2 == 0;
+    if (!paired) {
+      error(builder, JavaErrorMessages.message("expected.rbracket"));
+    }
+    return paired;
   }
 
   @Nullable
@@ -893,7 +911,7 @@ public class DeclarationParser {
 
     done(annoArray, JavaElementType.ANNOTATION_ARRAY_INITIALIZER);
     if (unclosed) {
-      annoArray.setCustomEdgeTokenBinders(null, GREEDY_RIGHT_EDGE_PROCESSOR);
+      annoArray.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
     }
     return annoArray;
   }

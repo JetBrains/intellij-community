@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ import java.util.*;
 public class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.DetectedFrameworksData");
   private PersistentHashMap<Integer,TIntHashSet> myExistentFrameworkFiles;
-  private TIntObjectHashMap<TIntHashSet> myNewFiles;
-  private MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
+  private final TIntObjectHashMap<TIntHashSet> myNewFiles;
+  private final MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<Integer, DetectedFrameworkDescription>();
@@ -141,7 +141,7 @@ public class DetectedFrameworksData {
 
   private static class TIntHashSetExternalizer implements DataExternalizer<TIntHashSet> {
     @Override
-    public void save(DataOutput out, TIntHashSet value) throws IOException {
+    public void save(@NotNull DataOutput out, TIntHashSet value) throws IOException {
       out.writeInt(value.size());
       final TIntIterator iterator = value.iterator();
       while (iterator.hasNext()) {
@@ -150,7 +150,7 @@ public class DetectedFrameworksData {
     }
 
     @Override
-    public TIntHashSet read(DataInput in) throws IOException {
+    public TIntHashSet read(@NotNull DataInput in) throws IOException {
       int size = in.readInt();
       final TIntHashSet set = new TIntHashSet(size);
       while (size-- > 0) {

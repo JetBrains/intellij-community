@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
         resetState();
         final DataContext dataContext = myContext.getDataContext();
-        StatusBar.Info.set(null, dataContext == null ? null : PlatformDataKeys.PROJECT.getData(dataContext));
+        StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
       }
     }
   };
@@ -321,7 +321,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
       setState(KeyState.STATE_INIT);
-      Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+      Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
       StatusBar.Info.set(null, project);
       return false;
     }
@@ -337,7 +337,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // finally user had managed to enter the second keystroke, so let it be processed
-    Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, myActionProcessor)) {
       if (statusBar != null) {
@@ -423,7 +423,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myFirstKeyStroke=keyStroke;
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
@@ -449,7 +449,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
             @Override
             public void run() {
               if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-                StatusBar.Info.set(null, PlatformDataKeys.PROJECT.getData(oldContext));
+                StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
                 new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
               }
             }
@@ -575,11 +575,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public boolean processAction(final InputEvent e, @NotNull ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
     List<AnAction> actions = myContext.getActions();
-    for (final AnAction action : actions) {
+    for (final AnAction action : actions.toArray(new AnAction[actions.size()])) {
       Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
@@ -651,8 +651,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (!(component instanceof JComponent)) {
         continue;
       }
-      ArrayList listOfActions = (ArrayList)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
-      if (listOfActions == null) {
+      List<AnAction> listOfActions = ActionUtil.getActions((JComponent)component);
+      if (listOfActions.isEmpty()) {
         continue;
       }
       for (Object listOfAction : listOfActions) {
@@ -712,10 +712,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     myContext.setHasSecondStroke(hasSecondStroke);
+    final List<AnAction> actions = myContext.getActions();
 
-    Comparator<? super AnAction> comparator = PlatformDataKeys.ACTIONS_SORTER.getData(myContext.getDataContext());
-    if (comparator != null) {
-      Collections.sort(myContext.getActions(), comparator);
+    if (actions.size() > 1) {
+      final List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
+      for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
+        final List<AnAction> promoted = promoter.promote(readOnlyActions, myContext.getDataContext());
+        if (promoted.isEmpty()) continue;
+
+        actions.removeAll(promoted);
+        actions.addAll(0, promoted);
+      }
     }
 
     return myContext;
@@ -737,7 +744,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
     for (Shortcut each : shortcuts) {
       if (!each.isKeyboard()) continue;
-      
+
       if (each.startsWith(sc)) {
         if (!myContext.getActions().contains(action)) {
           myContext.getActions().add(action);

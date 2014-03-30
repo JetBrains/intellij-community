@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -47,8 +49,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class ModuleBuilder extends ProjectBuilder{
-  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+public abstract class ModuleBuilder extends AbstractModuleBuilder {
+
+  public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   protected Sdk myJdk;
@@ -57,8 +60,8 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   private String myContentEntryPath;
   private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<ModuleConfigurationUpdater>();
   private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
-  private Map<String, Boolean> myAvailableFrameworks;
 
+  @NotNull
   public static List<ModuleBuilder> getAllBuilders() {
     final ArrayList<ModuleBuilder> result = new ArrayList<ModuleBuilder>();
     for (final ModuleType moduleType : ModuleTypeManager.getInstance().getRegisteredTypes()) {
@@ -79,13 +82,15 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myName;
   }
 
+  @Override
   @Nullable
   public String getBuilderId() {
     ModuleType moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
 
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleType moduleType = getModuleType();
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
   }
@@ -98,8 +103,9 @@ public abstract class ModuleBuilder extends ProjectBuilder{
    *         and {@link com.intellij.ide.util.projectWizard.ModuleWizardStep#updateDataModel()}
    *         will be invoked)
    */
+  @Override
   @Nullable
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     ModuleType type = getModuleType();
     if (type == null) {
       return null;
@@ -140,6 +146,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return Collections.emptyList();
   }
 
+  @Override
   public void setName(String name) {
     myName = acceptParameter(name);
   }
@@ -152,6 +159,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     myUpdaters.add(updater);
   }
 
+  @Override
   public void setModuleFilePath(@NonNls String path) {
     myModuleFilePath = acceptParameter(path);
   }
@@ -169,6 +177,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myContentEntryPath;
   }
 
+  @Override
   public void setContentEntryPath(String moduleRootPath) {
     final String path = acceptParameter(moduleRootPath);
     if (path != null) {
@@ -334,11 +343,28 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   public String getPresentableName() {
-    return getModuleType().getName();
+    return getModuleTypeName();
+  }
+
+  protected String getModuleTypeName() {
+    String name = getModuleType().getName();
+    return StringUtil.trimEnd(name, " Module");
   }
 
   public String getGroupName() {
     return getPresentableName().split(" ")[0];
+  }
+
+  public String getParentGroup() {
+    return null;
+  }
+
+  public boolean isTemplate() {
+    return false;
+  }
+
+  public boolean isTemplateBased() {
+    return false;
   }
 
   public void updateFrom(ModuleBuilder from) {
@@ -355,12 +381,9 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myJdk;
   }
 
-  public Map<String, Boolean> getAvailableFrameworks() {
-    return myAvailableFrameworks;
-  }
-
-  public void setAvailableFrameworks(Map<String, Boolean> availableFrameworks) {
-    myAvailableFrameworks = availableFrameworks;
+  @NotNull
+  public FrameworkRole getDefaultAcceptableRole() {
+    return getModuleType().getDefaultAcceptableRole();
   }
 
   public static abstract class ModuleConfigurationUpdater {

@@ -43,7 +43,7 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
   public JUnitConfiguration getConfiguration() { return myConfiguration; }
 
   @Override
-  public GlobalSearchScope getScope() {
+  protected GlobalSearchScope initScope() {
     final SourceScope sourceScope = myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration);
     return sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(getProject());
   }

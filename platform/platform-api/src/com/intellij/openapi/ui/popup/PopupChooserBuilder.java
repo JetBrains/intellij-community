@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ActiveComponent;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +48,6 @@ import java.util.List;
  * @author max
  */
 public class PopupChooserBuilder {
-  public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
 
   private JComponent myChooserComponent;
   private String myTitle;
@@ -212,10 +209,20 @@ public class PopupChooserBuilder {
 
   @NotNull
   public JBPopup createPopup() {
-    JList list = null;
+    final JList list;
+    BooleanFunction<KeyEvent> keyEventHandler = null;
     if (myChooserComponent instanceof JList) {
       list = (JList)myChooserComponent;
       myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
+      keyEventHandler = new BooleanFunction<KeyEvent>() {
+        @Override
+        public boolean fun(KeyEvent keyEvent) {
+          return keyEvent.isConsumed();
+        }
+      };
+    }
+    else {
+      list = null;
     }
 
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -308,7 +315,7 @@ public class PopupChooserBuilder {
       .setCancelCallback(myCancelCallback)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
-      .setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter))
+      .setCancelKeyEnabled(myCancelKeyEnabled)
       .setAdText(myAd, myAdAlignment)
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
@@ -318,6 +325,10 @@ public class PopupChooserBuilder {
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
       .setCouldPin(myCouldPin);
+
+    if (keyEventHandler != null) {
+      builder.setKeyEventHandler(keyEventHandler);
+    }
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -524,21 +535,7 @@ public class PopupChooserBuilder {
 
 
       if (myAutoselectOnMouseMove) {
-        list.addMouseMotionListener(new MouseMotionAdapter() {
-          boolean myIsEngaged = false;
-          public void mouseMoved(MouseEvent e) {
-            if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
-              Point point = e.getPoint();
-              int index = list.locationToIndex(point);
-              list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.TRUE);
-              list.setSelectedIndex(index);
-              list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.FALSE);
-            }
-            else {
-              myIsEngaged = true;
-            }
-          }
-        });
+        ListUtil.installAutoSelectOnMouseMove(list);
       }
 
       ListScrollingUtil.installActions(list);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -27,20 +28,19 @@ import java.util.ResourceBundle;
  * @author lesya
  */
 public class EditorBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls protected static final String PATH_TO_BUNDLE = "messages.EditorBundle";
 
   private EditorBundle() {
   }
 
-  public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
   private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);

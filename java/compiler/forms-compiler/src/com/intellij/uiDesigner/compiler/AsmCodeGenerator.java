@@ -515,36 +515,35 @@ public class AsmCodeGenerator {
         final String propertyClass = property.getCodeGenPropertyClassName();
         if (myIgnoreCustomCreation) {
           try {
-            Class setterClass;
+            final String descriptor;
+            // convert wrapper classes to primitive
             if (propertyClass.equals(Integer.class.getName())) {
-              setterClass = int.class;
+              descriptor = "(I)V";
             }
             else if (propertyClass.equals(Boolean.class.getName())) {
-              setterClass = boolean.class;
+              descriptor = "(Z)V";
             }
             else if (propertyClass.equals(Double.class.getName())) {
-              setterClass = double.class;
+              descriptor = "(D)V";
             }
             else if (propertyClass.equals(Float.class.getName())) {
-              setterClass = float.class;
+              descriptor = "(F)V";
             }
             else if (propertyClass.equals(Long.class.getName())) {
-              setterClass = long.class;
+              descriptor = "(L)V";
             }
             else if (propertyClass.equals(Byte.class.getName())) {
-              setterClass = byte.class;
+              descriptor = "(B)V";
             }
             else if (propertyClass.equals(Short.class.getName())) {
-              setterClass = short.class;
+              descriptor = "(S)V";
             }
             else if (propertyClass.equals(Character.class.getName())) {
-              setterClass = char.class;
+              descriptor = "(C)V";
             }
             else {
-              setterClass = Class.forName(propertyClass);
+              descriptor = "(L"+Class.forName(propertyClass).getName().replace('.', '/') + ";)V";
             }
-            //componentClass.getMethod(property.getWriteMethodName(), new Class[] { setterClass } );
-            final String descriptor = "(L"+setterClass.getName().replace('.', '/') + ";)V";
             final InstrumentationClassFinder.PseudoMethod setter = componentClass.findMethodInHierarchy(property.getWriteMethodName(),
                                                                                                         descriptor);
             if (setter == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-
 /**
 * @author peter
 */
@@ -53,7 +51,7 @@ public abstract class StaticMemberProcessor {
   }
 
   public void importMembersOf(@Nullable PsiClass psiClass) {
-    addIfNotNull(myStaticImportedClasses, psiClass);
+    ContainerUtil.addIfNotNull(myStaticImportedClasses, psiClass);
   }
 
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {

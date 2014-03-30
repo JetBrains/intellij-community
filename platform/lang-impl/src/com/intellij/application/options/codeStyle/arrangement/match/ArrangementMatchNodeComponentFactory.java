@@ -151,9 +151,8 @@ public class ArrangementMatchNodeComponentFactory {
       if (!finished) {
         return;
       }
-      ArrangementMatchingRulesModel model = myList.getModel();
       if (myModelValue instanceof DummyElement) {
-        model.removeRow(myRow);
+        myList.removeRow(myRow);
       }
     }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
@@ -174,7 +175,7 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     final String oldPath = absPath(d1);
     final String oldF11Path = new File(f11.getPath()).getAbsolutePath();
     moveFileInCommand(d1, d2);
-    editFileInCommand(myProject, f11, "new");
+    VcsTestUtil.editFileInCommand(myProject, f11, "new");
 
     Thread.sleep(100);
 

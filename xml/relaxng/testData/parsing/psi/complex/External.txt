@@ -1,0 +1,12 @@
+RncFileImpl:External.rnc
+  DOCUMENT
+    GRAMMAR_PATTERN
+      DEFINE
+        PsiElement(IDENTIFIER)('foo')
+        PsiWhiteSpace(' ')
+        PsiElement(=)('=')
+        PsiWhiteSpace(' ')
+        EXTERNAL_REF
+          PsiElement(KEYWORD_EXTERNAL)('external')
+          PsiWhiteSpace(' ')
+          PsiElement(LITERAL)('"Main.rnc"')

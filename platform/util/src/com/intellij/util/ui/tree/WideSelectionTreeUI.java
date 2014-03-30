@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.awt.event.MouseListener;
 * @author Konstantin Bulenkov
 */
 public class WideSelectionTreeUI extends BasicTreeUI {
+  public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
 
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
@@ -50,6 +51,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private boolean myOldRepaintAllRowValue;
   private boolean invertLineColor;
   private boolean myForceDontPaintLines = false;
+  private boolean mySkinny = false;
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
@@ -68,9 +70,57 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     myWideSelectionCondition = wideSelectionCondition;
   }
 
+  @Override
+  public int getRightChildIndent() {
+    return isSkinny() ? 8 : super.getRightChildIndent();
+  }
+
+  public boolean isSkinny() {
+    return mySkinny;
+  }
+
+  /**
+   * Setting to <code>true</code> make tree to reduce row offset
+   * @param skinny <code>true</code> to reduce row offset
+   */
+  public void setSkinny(boolean skinny) {
+    mySkinny = skinny;
+  }
+
   private final MouseListener mySelectionListener = new MouseAdapter() {
+    boolean handled = false;
     @Override
     public void mousePressed(@NotNull final MouseEvent e) {
+      handled = false;
+      if (!isSelected(e)) {
+        handled = true;
+        handle(e);
+      }
+    }
+
+    @Override
+    public void mouseReleased(@NotNull final MouseEvent e) {
+      if (!handled) {
+        handle(e);
+      }
+    }
+
+    private boolean isSelected(MouseEvent e) {
+      final JTree tree = (JTree)e.getSource();
+      final int selected = tree.getClosestRowForLocation(e.getX(), e.getY());
+      final int[] rows = tree.getSelectionRows();
+      if (rows != null) {
+        for (int row : rows) {
+          if (row == selected) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    private void handle(MouseEvent e) {
       final JTree tree = (JTree)e.getSource();
       if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
         // if we can't stop any ongoing editing, do nothing
@@ -175,6 +225,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
 
     actionMap.put("collapse_or_move_up", new TreeUIAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final Object source = e.getSource();
         if (source instanceof JTree) {
@@ -211,6 +262,16 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   @Override
+  protected int getRowX(int row, int depth) {
+    if (isSkinny()) {
+      int off = tree.isRootVisible() ? 8 : 0;
+      return 8 * depth + 8 + off;
+    } else {
+      return super.getRowX(row, depth);
+    }
+  }
+
+  @Override
   protected void paintHorizontalPartOfLeg(final Graphics g,
                                           final Rectangle clipBounds,
                                           final Insets insets,
@@ -221,7 +282,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
     if (!shouldPaintLines()) return;
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF()) {
       if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
         invertLineColor = tree.getSelectionModel().isRowSelected(row) && tree.hasFocus();
       }
@@ -241,7 +302,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
-    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && shouldPaintLines()) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF() && shouldPaintLines()) {
       invertLineColor = UIUtil.isUnderAlloyIDEALookAndFeel() && tree.hasFocus() && tree.getSelectionModel().isPathSelected(path);
       super.paintVerticalPartOfLeg(g, clipBounds, insets, path);
       invertLineColor = false;
@@ -323,13 +384,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
-          Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus());
-          if (!selected) {
-            bg = background;
-          }
+        if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+          Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(tree.getClientProperty(TREE_TABLE_TREE_KEY)));
 
-          if (myWideSelectionCondition.value(row) || selected) {
+          if (myWideSelectionCondition.value(row)) {
             rowGraphics.setColor(bg);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
           }
@@ -350,7 +408,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
+    if (myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isUnderIntelliJLaF()) {
       paintSelectedRows(g, ((JTree)c));
     }
     if (myWideSelection) {

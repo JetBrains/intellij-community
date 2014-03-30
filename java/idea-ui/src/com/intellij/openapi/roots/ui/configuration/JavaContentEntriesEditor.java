@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.SwingWorker;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,22 +43,17 @@ import java.util.Map;
 
 public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
   public JavaContentEntriesEditor(String moduleName, ModuleConfigurationState state) {
-    super(moduleName, state, true, true);
+    super(moduleName, state, JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE, JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE);
   }
 
   @Override
   protected ContentEntryEditor createContentEntryEditor(final String contentEntryUrl) {
-    return new JavaContentEntryEditor(contentEntryUrl) {
+    return new JavaContentEntryEditor(contentEntryUrl, getEditHandlers()) {
       @Override
       protected ModifiableRootModel getModel() {
         return JavaContentEntriesEditor.this.getModel();
       }
     };
-  }
-
-  @Override
-  protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
-    return new ContentEntryTreeEditor(project, true, true);
   }
 
   @Override

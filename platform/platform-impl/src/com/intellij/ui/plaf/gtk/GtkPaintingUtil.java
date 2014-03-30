@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.plaf.gtk;
 
+import com.intellij.Patches;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -73,6 +74,7 @@ public class GtkPaintingUtil {
   }
 
   public static SynthContext getSynthContext(final MenuItemUI ui, final JComponent item) {
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
     try {
       final Method getContext = ui.getClass().getMethod("getContext", JComponent.class);
       getContext.setAccessible(true);

@@ -20,16 +20,15 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
-import com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -45,6 +44,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -121,44 +121,19 @@ public class UnversionedViewDialog extends DialogWrapper {
     final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
     actions.add(collapseAction);
     actions.add(new ToggleShowFlattenAction());
-    actions.add(new ScheduleForAdditionAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
-      }
-    });
-    actions.add(new MoveChangesToAnotherListAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
-      }
-    });
+
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
+
+    final ActionGroup operatingActions = (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
+    registerShortcuts(operatingActions, actionToolbar.getToolbarDataContext());
+    refreshViewAfterActionPerformed(operatingActions);
+    actions.add(operatingActions);
 
     for (AnAction action : actions) {
       group.add(action);
     }
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-
-    final DeleteUnversionedFilesAction deleteUnversionedFilesAction = new DeleteUnversionedFilesAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
-      }
-    };
-    actions.add(deleteUnversionedFilesAction);
-    deleteUnversionedFilesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
-    actions.add(new IgnoreUnversionedAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
-      }
-    });
 
     final DefaultActionGroup secondGroup = new DefaultActionGroup();
     for (AnAction action : actions) {
@@ -167,6 +142,32 @@ public class UnversionedViewDialog extends DialogWrapper {
 
     myView.setMenuActions(secondGroup);
     myView.setShowFlatten(false);
+  }
+
+  private void registerShortcuts(@NotNull ActionGroup opActionGroup, @NotNull DataContext dataContext) {
+    List<AnAction> opActions = new ArrayList<AnAction>();
+    Utils.expandActionGroup(opActionGroup, opActions, new PresentationFactory(), dataContext, "", ActionManager.getInstance());
+    for (AnAction action : opActions) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), myView);
+    }
+
+    // special shortcut for deleting a file
+    AnAction deleteAction = ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog");
+    deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
+  }
+
+  private void refreshViewAfterActionPerformed(@NotNull final ActionGroup opActionGroup) {
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        for (AnAction anAction : opActionGroup.getChildren(event)) {
+          if (anAction.equals(action)) {
+            refreshView();
+            return;
+          }
+        }
+      }
+    }, myDisposable);
   }
 
   @Override

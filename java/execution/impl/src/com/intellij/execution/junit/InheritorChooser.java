@@ -17,14 +17,19 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -32,6 +37,7 @@ import com.intellij.util.Processor;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,14 +59,25 @@ public class InheritorChooser {
                                           final Runnable performRunnable,
                                           final PsiMethod psiMethod,
                                           final PsiClass containingClass) {
-    if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass, Condition.TRUE);
+  }
+
+  public boolean runMethodInAbstractClass(final ConfigurationContext context,
+                                          final Runnable performRunnable,
+                                          final PsiMethod psiMethod,
+                                          final PsiClass containingClass,
+                                          final Condition<PsiClass> acceptAbstractCondition) {
+    if (containingClass != null && containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
       if (location instanceof MethodLocation) {
         final PsiClass aClass = ((MethodLocation)location).getContainingClass();
         if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           return false;
         }
+      } else if (location instanceof PsiMemberParameterizedLocation) {
+        return false;
       }
+
       final List<PsiClass> classes = new ArrayList<PsiClass>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
@@ -68,7 +85,7 @@ public class InheritorChooser {
           ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {
             @Override
             public boolean process(PsiClass aClass) {
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              if (PsiClassUtil.isRunnableClass(aClass, true, true)) {
                 classes.add(aClass);
               }
               return true;
@@ -84,6 +101,19 @@ public class InheritorChooser {
         return true;
       }
       if (classes.isEmpty()) return false;
+      final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context.getDataContext());
+      if (fileEditor instanceof TextEditor) {
+        final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+        final PsiFile containingFile = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(document);
+        if (containingFile instanceof PsiClassOwner) {
+          final List<PsiClass> psiClasses = new ArrayList<PsiClass>(Arrays.asList(((PsiClassOwner)containingFile).getClasses()));
+          psiClasses.retainAll(classes);
+          if (psiClasses.size() == 1) {
+            runForClass(psiClasses.get(0), psiMethod, context, performRunnable);
+            return true;
+          }
+        }
+      }
       final PsiClassListCellRenderer renderer = new PsiClassListCellRenderer() {
         @Override
         protected boolean customizeNonPsiElementLeftRenderer(ColoredListCellRenderer renderer,

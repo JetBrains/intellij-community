@@ -56,6 +56,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
 
     if (enableBrowseButton) {
       addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           final NamedScope scope;
           if (component instanceof JComboBox) {
@@ -191,11 +192,13 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       myPanel.reset(myScope, null);
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 
+    @Override
     protected void doOKAction() {
       myScope = myPanel.getCurrentScope();
       super.doOKAction();

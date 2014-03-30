@@ -34,6 +34,7 @@ public class PathMacroUtil {
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+  @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
   @NonNls public static final String USER_HOME_NAME = "USER_HOME";
 
   @Nullable
@@ -63,6 +64,7 @@ public class PathMacroUtil {
   public static Map<String, String> getGlobalSystemMacros() {
     final Map<String, String> map = new HashMap<String, String>();
     map.put(APPLICATION_HOME_DIR, getApplicationHomeDirPath());
+    map.put(APPLICATION_PLUGINS_DIR, getApplicationPluginsDirPath());
     map.put(USER_HOME_NAME, getUserHomePath());
     return map;
   }
@@ -71,9 +73,14 @@ public class PathMacroUtil {
     return FileUtil.toSystemIndependentName(PathManager.getHomePath());
   }
 
+  private static String getApplicationPluginsDirPath() {
+    return FileUtil.toSystemIndependentName(PathManager.getPluginsPath());
+  }
+
   @Nullable
   public static String getGlobalSystemMacroValue(String name) {
     if (APPLICATION_HOME_DIR.equals(name)) return getApplicationHomeDirPath();
+    if (APPLICATION_PLUGINS_DIR.equals(name)) return getApplicationPluginsDirPath();
     if (USER_HOME_NAME.equals(name)) return getUserHomePath();
     return null;
   }

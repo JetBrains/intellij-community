@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
-import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -32,6 +32,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +43,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,7 +68,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class JavaClassReference extends GenericReference implements PsiJavaReference, QuickFixProvider, LocalQuickFixProvider {
+public class JavaClassReference extends GenericReference implements PsiJavaReference, LocalQuickFixProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference");
   protected final int myIndex;
   private TextRange myRange;
@@ -93,7 +94,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   @Override
-  public void processVariants(final PsiScopeProcessor processor) {
+  public void processVariants(@NotNull final PsiScopeProcessor processor) {
     if (processor instanceof JavaCompletionProcessor) {
       final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
       if (options != null &&
@@ -117,7 +118,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
       processorToUse = new PsiScopeProcessor() {
         @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, state);
         }
 
@@ -127,7 +128,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
 
         @Override
-        public void handleEvent(Event event, Object associated) {
+        public void handleEvent(@NotNull Event event, Object associated) {
           processor.handleEvent(event, associated);
         }
       };
@@ -267,18 +268,23 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
   }
 
-  private Object[] processPackage(final PsiPackage aPackage) {
-    final ArrayList<Object> list = new ArrayList<Object>();
+  private LookupElement[] processPackage(final PsiPackage aPackage) {
+    final ArrayList<LookupElement> list = ContainerUtil.newArrayList();
     final int startOffset = StringUtil.isEmpty(aPackage.getName()) ? 0 : aPackage.getQualifiedName().length() + 1;
     final GlobalSearchScope scope = getScope();
     for (final PsiPackage subPackage : aPackage.getSubPackages(scope)) {
       final String shortName = subPackage.getQualifiedName().substring(startOffset);
       if (JavaPsiFacade.getInstance(subPackage.getProject()).getNameHelper().isIdentifier(shortName)) {
-        list.add(subPackage);
+        list.add(LookupElementBuilder.create(subPackage).withIcon(subPackage.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
       }
     }
 
-    final PsiClass[] classes = aPackage.getClasses(scope);
+    final List<PsiClass> classes = ContainerUtil.filter(aPackage.getClasses(scope), new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass psiClass) {
+        return StringUtil.isNotEmpty(psiClass.getName());
+      }
+    });
     final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
     if (options != null) {
       final boolean instantiatable = JavaClassReferenceProvider.INSTANTIATABLE.getBooleanValue(options);
@@ -289,14 +295,16 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
       for (PsiClass clazz : classes) {
         if (isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
-          list.add(clazz);
+          list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
         }
       }
     }
     else {
-      ContainerUtil.addAll(list, classes);
+      for (PsiClass clazz : classes) {
+        list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
+      }
     }
-    return list.toArray();
+    return list.toArray(new LookupElement[list.size()]);
   }
 
   @Nullable
@@ -408,7 +416,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       PsiFile containingFile = psiElement.getContainingFile();
 
       if (containingFile instanceof PsiJavaFile) {
-        if (containingFile instanceof JspFile) {
+        if (containingFile instanceof ServerPageFile) {
           containingFile = containingFile.getViewProvider().getPsi(JavaLanguage.INSTANCE);
           if (containingFile == null) return JavaResolveResult.EMPTY;
         }
@@ -444,11 +452,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     Project project = getElement().getProject();
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(project);
     if (scope == null) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
-      if (module != null) {
-        return module.getModuleWithDependenciesAndLibrariesScope(true);
-      }
-      return GlobalSearchScope.allScope(project);
+      Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
+      return module != null ? module.getModuleWithDependenciesAndLibrariesScope(true) : GlobalSearchScope.allScope(project);
     }
     return scope;
   }
@@ -464,11 +469,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final JavaResolveResult javaResolveResult = advancedResolve(incompleteCode);
     if (javaResolveResult.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
     return new JavaResolveResult[]{javaResolveResult};
-  }
-
-  @Override
-  public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    registerFixes(info);
   }
 
   @Nullable
@@ -515,7 +515,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return list;
   }
 
-  @NotNull
   public void processSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses, Consumer<LookupElement> result) {
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());

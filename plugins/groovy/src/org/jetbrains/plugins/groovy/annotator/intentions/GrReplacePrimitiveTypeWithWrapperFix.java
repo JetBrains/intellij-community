@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author Max Medvedev
  */
-public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
+public class GrReplacePrimitiveTypeWithWrapperFix extends GroovyFix {
   private static final Logger LOG = Logger.getInstance(GrReplacePrimitiveTypeWithWrapperFix.class);
 
-  private final GrTypeElement myTypeElement;
   private final String myBoxedName;
 
   public GrReplacePrimitiveTypeWithWrapperFix(GrTypeElement typeElement) {
     LOG.assertTrue(typeElement.isValid());
-    myTypeElement = typeElement;
 
     final PsiType type = typeElement.getType();
     LOG.assertTrue(type instanceof PsiPrimitiveType);
@@ -48,7 +49,7 @@ public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
 
   @NotNull
   @Override
-  public String getText() {
+  public String getName() {
     return GroovyIntentionsBundle.message("replace.with.wrapper", myBoxedName);
   }
 
@@ -59,24 +60,18 @@ public class GrReplacePrimitiveTypeWithWrapperFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTypeElement.isValid() && myTypeElement.getType() instanceof PsiPrimitiveType;
-  }
+  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    final PsiElement element = descriptor.getPsiElement();
+    assert element instanceof GrTypeElement : element;
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiType type = myTypeElement.getType();
+    GrTypeElement typeElement = (GrTypeElement)element;
+    final PsiType type = typeElement.getType();
     if (!(type instanceof PsiPrimitiveType)) return;
 
-    final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(myTypeElement);
+    final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(typeElement);
     final GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(boxed);
 
-    final PsiElement replaced = myTypeElement.replace(newTypeElement);
-    GrReferenceAdjuster.shortenReferences(replaced);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    final PsiElement replaced = typeElement.replace(newTypeElement);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
   }
 }

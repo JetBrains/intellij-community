@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.fileEditor.impl.UniqueVFilePathBuilderImpl;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import junit.framework.TestCase;
 
@@ -64,5 +65,14 @@ public class UniqueNameBuilderTest extends TestCase {
     builder.addPath("B", "source/components/views/something_else/tmpl/default.php");
     assertEquals("something/\u2026/default.php", builder.getShortPath("A"));
     assertEquals("something_else/\u2026/default.php", builder.getShortPath("B"));
+  }
+
+  public void testFilesWithoutExtensions() {
+    UniqueNameBuilder<String> builder = new UniqueNameBuilder<String>("", "/", 25);
+    builder.addPath("A", "foo/.htaccess");
+    builder.addPath("B", "bar/.htaccess");
+    assertEquals("foo/.htaccess", UniqueVFilePathBuilderImpl.getEditorTabText("A", builder, false));
+    assertEquals("foo/.htaccess", UniqueVFilePathBuilderImpl.getEditorTabText("A", builder, true));
+
   }
 }

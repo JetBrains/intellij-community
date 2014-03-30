@@ -71,7 +71,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myDebugProcess.addDebugProcessListener(this);
   }
 
-
   public EventRequestManager getVMRequestManager() {
     return myEventRequestManager;
   }
@@ -94,6 +93,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return Collections.unmodifiableSet(requestSet);
   }
 
+  @Nullable
   public Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null? (Requestor)request.getProperty(REQUESTOR) : null;
@@ -142,7 +142,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.SUSPEND_POLICY)) {
+    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
@@ -151,40 +151,41 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
 
-    if (requestor.COUNT_FILTER_ENABLED && requestor.COUNT_FILTER > 0) {
-      request.addCountFilter(requestor.COUNT_FILTER);
+    if (requestor.isCountFilterEnabled() && requestor.getCountFilter() > 0) {
+      request.addCountFilter(requestor.getCountFilter());
     }
 
-    if (requestor.CLASS_FILTERS_ENABLED && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
+    if (requestor.isClassFiltersEnabled() && !(request instanceof BreakpointRequest) /*no built-in class filters support for breakpoint requests*/ ) {
       ClassFilter[] classFilters = requestor.getClassFilters();
-      for (final ClassFilter filter : classFilters) {
-        if (!filter.isEnabled()) {
-          continue;
-        }
-        final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
-          public JVMName compute() {
-            PsiClass psiClass =
-              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
-            if (psiClass == null) {
-              return null;
+      if (DebuggerUtilsEx.getEnabledNumber(classFilters) == 1) {
+        for (final ClassFilter filter : classFilters) {
+          if (!filter.isEnabled()) {
+            continue;
+          }
+          final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
+            public JVMName compute() {
+              PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+              if (psiClass == null) {
+                return null;
+              }
+              return JVMNameUtil.getJVMQualifiedName(psiClass);
             }
-            return JVMNameUtil.getJVMQualifiedName(psiClass);
+          });
+          String pattern = filter.getPattern();
+          try {
+            if (jvmClassName != null) {
+              pattern = jvmClassName.getName(myDebugProcess);
+            }
           }
-        });
-        String pattern = filter.getPattern();
-        try {
-          if (jvmClassName != null) {
-            pattern = jvmClassName.getName(myDebugProcess);
+          catch (EvaluateException ignored) {
           }
-        }
-        catch (EvaluateException e) {
-        }
 
-        addClassFilter(request, pattern);
+          addClassFilter(request, pattern);
+          break; // adding more than one inclusion filter does not work, only events that satisfy ALL filters are placed in the event queue.
+        }
       }
 
-      final ClassFilter[] iclassFilters = requestor.getClassExclusionFilters();
-      for (ClassFilter filter : iclassFilters) {
+      for (ClassFilter filter : requestor.getClassExclusionFilters()) {
         if (filter.isEnabled()) {
           addClassExclusionFilter(request, filter.getPattern());
         }
@@ -206,7 +207,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       myRequestorToBelongedRequests.put(requestor, reqSet);
     }
     reqSet.add(request);
-
   }
 
   // requests creation
@@ -293,12 +293,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         // request is already deleted
       }
       catch (InternalException e) {
+        //noinspection StatementWithEmptyBody
         if (e.errorCode() == 41) {
           //event request not found
           //there could be no requests after hotswap
         }
         else {
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }
@@ -346,10 +347,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       request.enable();
     } catch (InternalException e) {
-      if(e.errorCode() == 41) {
+      //noinspection StatementWithEmptyBody
+      if (e.errorCode() == 41) {
         //event request not found
         //there could be no requests after hotswap
-      } else {
+      }
+      else {
         LOG.error(e);
       }
     }
@@ -389,13 +392,27 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
-    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeneres are executed
+    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
+        Project project = myDebugProcess.getProject();
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
         for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
           breakpoint.createRequest(myDebugProcess);
         }
+
+        //AccessToken token = ReadAction.start();
+        //try {
+        //  JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
+        //  for (XLineBreakpoint breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
+        //    .getBreakpoints(JavaLineBreakpointType.class)) {
+        //    //new JavaLineBreakpointRequestor(breakpoint).createRequest(myDebugProcess);
+        //    //adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
+        //  }
+        //}
+        //finally {
+        //  token.finish();
+        //}
       }
     });
   }
@@ -421,7 +438,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static interface AllProcessesCommand {
+  private interface AllProcessesCommand {
     void action(DebugProcessImpl process);
   }
 

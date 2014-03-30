@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInput;
 import java.io.EOFException;
 import java.io.IOException;
@@ -33,12 +35,12 @@ public class CompactDataInput implements DataInput {
   }
 
   @Override
-  public void readFully(byte[] b) throws IOException {
+  public void readFully(@NotNull byte[] b) throws IOException {
     readFully(b, 0, b.length);
   }
 
   @Override
-  public void readFully(byte[] b, int off, int len) throws IOException {
+  public void readFully(@NotNull byte[] b, int off, int len) throws IOException {
     if (len < 0)
         throw new IndexOutOfBoundsException();
     int n = 0;
@@ -146,6 +148,7 @@ public class CompactDataInput implements DataInput {
     throw new UnsupportedOperationException("readLine is not implemented!");
   }
 
+  @NotNull
   @Override
   public String readUTF() throws IOException {
     return IOUtil.readUTFFast(readBuffer, this);

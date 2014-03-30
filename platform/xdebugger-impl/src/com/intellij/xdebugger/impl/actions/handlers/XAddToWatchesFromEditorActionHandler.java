@@ -15,15 +15,12 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,25 +35,17 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Nullable
-  private static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+  protected static String getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }
 
     String text = editor.getSelectionModel().getSelectedText();
-    if (text == null && session.isSuspended()) {
-      final XStackFrame stackFrame = session.getCurrentStackFrame();
-      if (stackFrame != null) {
-        final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-        if (evaluator != null) {
-          final int offset = editor.getCaretModel().getOffset();
-          final Document document = editor.getDocument();
-          final TextRange textRange = evaluator.getExpressionRangeAtOffset(session.getProject(), document, offset, false);
-          if (textRange != null) {
-            text = document.getText(textRange);
-          }
-        }
+    if (text == null) {
+      XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+      if (evaluator != null) {
+        text = XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor);
       }
     }
 

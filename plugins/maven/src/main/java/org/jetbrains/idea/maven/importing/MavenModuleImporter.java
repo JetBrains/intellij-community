@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,10 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
@@ -25,6 +29,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +40,20 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MavenModuleImporter {
 
   public static final String SUREFIRE_PLUGIN_LIBRARY_NAME = "maven-surefire-plugin urls";
+
+  private static final Set<String> IMPORTED_CLASSIFIERS = ImmutableSet.of("client");
+
+  private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = ImmutableMap.of(
+    "JDK_1_3", LanguageLevel.JDK_1_3,
+    "JDK_1_4", LanguageLevel.JDK_1_4,
+    "JDK_1_5", LanguageLevel.JDK_1_5,
+    "JDK_1_6", LanguageLevel.JDK_1_6,
+    "JDK_1_7", LanguageLevel.JDK_1_7);
 
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
@@ -146,21 +161,88 @@ public class MavenModuleImporter {
   }
 
   private void configDependencies() {
+    THashSet<String> dependencyTypesFromSettings = new THashSet<String>();
+
+    AccessToken accessToken = ReadAction.start();
+    try {
+      if (myModule.getProject().isDisposed()) return;
+
+      dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
+    }
+    finally {
+      accessToken.finish();
+    }
+
+
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
-      if (!myMavenProject.isSupportedDependency(artifact, SupportedRequestType.FOR_IMPORT)) continue;
+      String dependencyType = artifact.getType();
+
+      if (!dependencyTypesFromSettings.contains(dependencyType)
+          && !myMavenProject.getDependencyTypesFromImporters(SupportedRequestType.FOR_IMPORT).contains(dependencyType)) {
+        continue;
+      }
 
       DependencyScope scope = selectScope(artifact.getScope());
+
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
 
       if (depProject != null) {
         if (depProject == myMavenProject) continue;
-        boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(artifact.getType()) || "tests".equals(artifact.getClassifier());
-        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
 
-        Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
-        if (buildHelperCfg != null) {
-          addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
+        String moduleName = myMavenProjectToModuleName.get(depProject);
+
+        if (moduleName == null || myMavenTree.isIgnored(depProject)) {
+          MavenArtifact projectsArtifactInRepository = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            dependencyType,
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            artifact.getExtension(),
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+
+          myRootModelAdapter.addLibraryDependency(projectsArtifactInRepository, scope, myModifiableModelsProvider, myMavenProject);
         }
+        else {
+          boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(dependencyType) || "tests".equals(artifact.getClassifier());
+          myRootModelAdapter.addModuleDependency(moduleName, scope, isTestJar);
+
+          Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
+          if (buildHelperCfg != null) {
+            addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
+          }
+
+          if (IMPORTED_CLASSIFIERS.contains(artifact.getClassifier())
+              && !isTestJar
+              && !"system".equals(artifact.getScope())
+              && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
+            MavenArtifact a = new MavenArtifact(
+              artifact.getGroupId(),
+              artifact.getArtifactId(),
+              artifact.getVersion(),
+              artifact.getBaseVersion(),
+              dependencyType,
+              artifact.getClassifier(),
+              artifact.getScope(),
+              artifact.isOptional(),
+              artifact.getExtension(),
+              null,
+              myMavenProject.getLocalRepository(),
+              false, false
+            );
+
+            myRootModelAdapter.addLibraryDependency(a, scope, myModifiableModelsProvider, myMavenProject);
+          }
+        }
+      }
+      else if ("system".equals(artifact.getScope())) {
+        myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
@@ -187,8 +269,8 @@ public class MavenModuleImporter {
                                            @NotNull MavenArtifact artifact) {
     Library.ModifiableModel libraryModel = null;
 
-    for (Element artifactsElement : (List<Element>)buildHelperCfg.getChildren("artifacts")) {
-      for (Element artifactElement : (List<Element>)artifactsElement.getChildren("artifact")) {
+    for (Element artifactsElement : buildHelperCfg.getChildren("artifacts")) {
+      for (Element artifactElement : artifactsElement.getChildren("artifact")) {
         String typeString = artifactElement.getChildTextTrim("type");
         if (typeString != null && !typeString.equals("jar")) continue;
 
@@ -212,9 +294,7 @@ public class MavenModuleImporter {
         if (file == null) continue;
 
         if (libraryModel == null) {
-          String libraryName = artifact.getLibraryName();
-          assert libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX);
-          libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length());
+          String libraryName = getAttachedJarsLibName(artifact);
 
           Library library = myModifiableModelsProvider.getLibraryByName(libraryName);
           if (library == null) {
@@ -232,15 +312,35 @@ public class MavenModuleImporter {
   }
 
   @NotNull
+  public static String getAttachedJarsLibName(@NotNull MavenArtifact artifact) {
+    String libraryName = artifact.getLibraryName();
+    assert libraryName.startsWith(MavenArtifact.MAVEN_LIB_PREFIX);
+    libraryName = MavenArtifact.MAVEN_LIB_PREFIX + "ATTACHED-JAR: " + libraryName.substring(MavenArtifact.MAVEN_LIB_PREFIX.length());
+    return libraryName;
+  }
+
+  @NotNull
   public static DependencyScope selectScope(String mavenScope) {
     if (MavenConstants.SCOPE_RUNTIME.equals(mavenScope)) return DependencyScope.RUNTIME;
     if (MavenConstants.SCOPE_TEST.equals(mavenScope)) return DependencyScope.TEST;
-    if (MavenConstants.SCOPE_PROVIDEED.equals(mavenScope)) return DependencyScope.PROVIDED;
+    if (MavenConstants.SCOPE_PROVIDED.equals(mavenScope)) return DependencyScope.PROVIDED;
     return DependencyScope.COMPILE;
   }
 
   private void configLanguageLevel() {
-    final LanguageLevel level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+    if ("false".equalsIgnoreCase(System.getProperty("idea.maven.configure.language.level"))) return;
+
+    LanguageLevel level = null;
+
+    Element cfg = myMavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
+    if (cfg != null) {
+      level = MAVEN_IDEA_PLUGIN_LEVELS.get(cfg.getChildTextTrim("jdkLevel"));
+    }
+
+    if (level == null) {
+      level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+    }
+
     myRootModelAdapter.setLanguageLevel(level);
   }
 }

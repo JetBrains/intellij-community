@@ -18,6 +18,7 @@ public class PatternRegexpConvertorTest extends TestCase {
      assertEquals("a\\.[^\\.]*", FilePatternPackageSet.convertToRegexp("a.*", '.'));
      assertEquals("a\\.(.*\\.)?[^\\.]*", FilePatternPackageSet.convertToRegexp("a..*", '.'));
      assertEquals("a\\/[^\\/]*", FilePatternPackageSet.convertToRegexp("a/*", '/'));
+     assertEquals("a\\/.*\\.css", FilePatternPackageSet.convertToRegexp("a/*.css", '/'));
      assertEquals("a\\/(.*\\/)?[^\\/]*", FilePatternPackageSet.convertToRegexp("a//*", '/'));
      assertEquals("[^\\.]*", FilePatternPackageSet.convertToRegexp("*", '.'));
   }

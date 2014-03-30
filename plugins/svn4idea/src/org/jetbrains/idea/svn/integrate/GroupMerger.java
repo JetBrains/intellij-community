@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.Topic;
@@ -30,10 +31,9 @@ import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,12 +43,13 @@ import java.util.List;
 public class GroupMerger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  protected final SVNDiffClient myDiffClient;
+  private final SvnVcs myVcs;
   private final ProgressIndicator myProgressIndicator;
   protected final SVNURL myCurrentBranchUrl;
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
+  private UpdateEventHandler myHandler;
   private final String myBranchName;
   private final boolean myInverseRange;
   private final boolean myDryRun;
@@ -69,7 +70,7 @@ public class GroupMerger implements IMerger {
     myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstance(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
-    myDiffClient = vcs.createDiffClient();
+    myVcs = vcs;
     myChangeLists = changeLists;
 
     Collections.sort(myChangeLists, ByNumberChangeListComparator.getInstance());
@@ -77,9 +78,7 @@ public class GroupMerger implements IMerger {
 
     myTarget = target;
     myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    myDiffClient.setEventHandler(handler);
-    myDiffClient.setMergeOptions(new SVNDiffOptions(mySvnConfig.IGNORE_SPACES_IN_MERGE, mySvnConfig.IGNORE_SPACES_IN_MERGE,
-                                                    mySvnConfig.IGNORE_SPACES_IN_MERGE));
+    myHandler = handler;
     myCommitMessage = new StringBuilder();
     myPackStart = myPackEnd = -1;
   }
@@ -88,7 +87,7 @@ public class GroupMerger implements IMerger {
     return mySplitter.hasNext();
   }
 
-  public void mergeNext() throws SVNException {
+  public void mergeNext() throws SVNException, VcsException {
     final int step = mySplitter.step();
     myPackStart = myPackEnd + 1;
     myPackEnd = myPackStart + step - 1;
@@ -128,9 +127,12 @@ public class GroupMerger implements IMerger {
     return myInverseRange ? new SVNRevisionRange(end, start) :  new SVNRevisionRange(start, end);
   }
 
-  protected void doMerge() throws SVNException {
-    myDiffClient.doMerge(myCurrentBranchUrl, SVNRevision.UNDEFINED, Collections.singletonList(createRange()),
-      myTarget, SVNDepth.INFINITY, true, true, mySvnConfig.MERGE_DRY_RUN, myDryRun);
+  protected void doMerge() throws VcsException {
+    SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
+    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+
+    client.merge(source, createRange(), myTarget, SVNDepth.INFINITY, mySvnConfig.isMergeDryRun(), myDryRun, true,
+                 mySvnConfig.getMergeOptions(), myHandler);
   }
 
   @NonNls

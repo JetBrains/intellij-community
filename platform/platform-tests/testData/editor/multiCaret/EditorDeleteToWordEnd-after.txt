@@ -1,0 +1,2 @@
+s<caret>text<caret>o<selection>t<caret></selection> text
+an<caret> l<caret>yet a<selection>not<caret></selection> line

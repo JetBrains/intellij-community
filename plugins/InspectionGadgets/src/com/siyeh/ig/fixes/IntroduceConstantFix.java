@@ -29,12 +29,19 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantFix extends InspectionGadgetsFix {
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionGadgetsBundle.message("introduce.constant.quickfix");
   }
 
+  @Override
   public void doFix(@NotNull final Project project,
                     ProblemDescriptor descriptor) {
 
@@ -42,6 +49,7 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
 
+      @Override
       public void run() {
         if (!constant.isValid()) return;
         final JavaRefactoringActionHandlerFactory factory =

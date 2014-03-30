@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,4 +234,42 @@ public class ContainerUtilTest extends TestCase {
     Iterator<Object> iterator = my.iterator();
     assertSame(EmptyIterator.getInstance(), iterator);
   }
+
+  public void testLockFreeCOWIteratorRemove() {
+    List<String> seq = Arrays.asList("0", "1", "2", "3", "4");
+    LockFreeCopyOnWriteArrayList<String> my = (LockFreeCopyOnWriteArrayList<String>)ContainerUtil.createLockFreeCopyOnWriteList(seq);
+    {
+      Iterator<String> iterator = my.iterator();
+      try {
+        iterator.remove();
+        fail("must not be able to remove before next() call");
+      }
+      catch (IllegalStateException ignored) {
+      }
+    }
+    int size = my.size();
+    Iterator<String> iterator = my.iterator();
+    for (int i = 0; i<size; i++) {
+      assertTrue(iterator.hasNext());
+      String next = iterator.next();
+      assertEquals(next, String.valueOf(i));
+      iterator.remove();
+      assertEquals(my.size(), size - i-1);
+      if (i == size-1) {
+        assertTrue(my.isEmpty());
+      }
+      else {
+        assertEquals(my.toArray()[0], String.valueOf(i+1));
+        assertEquals(my.toString(), seq.subList(i+1,seq.size()).toString());
+      }
+    }
+
+    try {
+      iterator.remove();
+      fail("must not be able to double remove()");
+    }
+    catch (IllegalStateException ignored) {
+    }
+  }
+
 }

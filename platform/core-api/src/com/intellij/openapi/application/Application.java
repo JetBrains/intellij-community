@@ -331,6 +331,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @NotNull
   Future<?> executeOnPooledThread(@NotNull Runnable action);
 
   /**
@@ -338,6 +339,7 @@ public interface Application extends ComponentManager {
    * @param action to be executed
    * @return future result
    */
+  @NotNull
   <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action);
 
   /**
@@ -355,7 +357,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Exits and restarts IDEA. If the current platform is not restart capable, only exits.
-   * 
+   *
    * @since 8.1
    */
   void restart();
@@ -370,12 +372,16 @@ public interface Application extends ComponentManager {
   /**
    * Returns lock used for read operations, should be closed in finally block
    */
+  @NotNull
   AccessToken acquireReadActionLock();
 
   /**
    * Returns lock used for write operations, should be closed in finally block
    */
+  @NotNull
   AccessToken acquireWriteActionLock(@Nullable Class marker);
 
   boolean isInternal();
+
+  boolean isEAP();
 }

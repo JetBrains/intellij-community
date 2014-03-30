@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -34,13 +35,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author Max Medvedev
  */
 public class StaticChecker {
-  public static boolean isStaticsOK(PsiModifierListOwner member,
-                                    PsiElement place,
+  public static boolean isStaticsOK(@NotNull PsiModifierListOwner member,
+                                    @NotNull PsiElement place,
                                     @Nullable PsiElement resolveContext,
                                     boolean filterStaticAfterInstanceQualifier) {
     if (!(member instanceof PsiMember)) return true;
 
     if (!(place instanceof GrReferenceExpression)) return true;
+
+    if (member instanceof PsiClass && PsiTreeUtil.isAncestor(member, place, false)) return true;
 
     GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
     final PsiClass containingClass = getContainingClass((PsiMember)member);

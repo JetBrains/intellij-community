@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@ package com.intellij.testFramework;
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
@@ -56,6 +58,15 @@ public abstract class InspectionTestCase extends PsiTestCase {
   private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
 
+  protected static GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
+    InspectionEP ep = new InspectionEP();
+    ep.presentation = UnusedDeclarationPresentation.class.getName();
+    ep.implementationClass = UnusedDeclarationInspection.class.getName();
+    ep.shortName = UnusedDeclarationInspection.SHORT_NAME;
+    GlobalInspectionToolWrapper wrapper = new GlobalInspectionToolWrapper(ep);
+    return wrapper;
+  }
+
   public InspectionManagerEx getManager() {
     return (InspectionManagerEx)InspectionManager.getInstance(myProject);
   }
@@ -76,11 +87,11 @@ public abstract class InspectionTestCase extends PsiTestCase {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), "java 1.4", checkRange, runDeadCodeFirst);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool) {
+  public void doTest(@NonNls String folderName, InspectionToolWrapper tool) {
     doTest(folderName, tool, "java 1.4");
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, final boolean checkRange) {
+  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, final boolean checkRange) {
     doTest(folderName, tool, "java 1.4", checkRange);
   }
 
@@ -88,35 +99,35 @@ public abstract class InspectionTestCase extends PsiTestCase {
     doTest(folderName, new LocalInspectionToolWrapper(tool), jdkName);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName) {
+  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, @NonNls final String jdkName) {
     doTest(folderName, tool, jdkName, false);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) {
+  public void doTest(@NonNls String folderName, InspectionToolWrapper tool, @NonNls final String jdkName, boolean checkRange) {
     doTest(folderName, tool, jdkName, checkRange, false);
   }
 
   public void doTest(@NonNls String folderName,
-                     InspectionTool tool,
+                     InspectionToolWrapper toolWrapper,
                      @NonNls final String jdkName,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     InspectionTool... additional) {
+                     InspectionToolWrapper... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
-    runTool(testDir, jdkName, runDeadCodeFirst, tool, additional);
+    GlobalInspectionContextImpl context = runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
 
-    InspectionTestUtil.compareToolResults(tool, checkRange, testDir);
+    InspectionTestUtil.compareToolResults(context, toolWrapper, checkRange, testDir);
   }
 
-  protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionTool tool) {
+  protected void runTool(@NonNls final String testDir, @NonNls final String jdkName, final InspectionToolWrapper tool) {
     runTool(testDir, jdkName, false, tool);
   }
 
-  protected void runTool(final String testDir,
-                         final String jdkName,
-                         boolean runDeadCodeFirst,
-                         final InspectionTool tool,
-                         InspectionTool... additional) {
+  protected GlobalInspectionContextImpl runTool(final String testDir,
+                                                final String jdkName,
+                                                boolean runDeadCodeFirst,
+                                                @NotNull InspectionToolWrapper toolWrapper,
+                                                @NotNull InspectionToolWrapper... additional) {
     final VirtualFile[] sourceDir = new VirtualFile[1];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -132,14 +143,16 @@ public abstract class InspectionTestCase extends PsiTestCase {
     AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
 
     InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    InspectionTool[] tools = runDeadCodeFirst ? new InspectionTool[]{new UnusedDeclarationInspection(), tool} : new InspectionTool[]{tool};
-    tools = ArrayUtil.mergeArrays(tools, additional);
+    InspectionToolWrapper[] toolWrappers = runDeadCodeFirst ? new InspectionToolWrapper []{getUnusedDeclarationWrapper(), toolWrapper} : new InspectionToolWrapper []{toolWrapper};
+    toolWrappers = ArrayUtil.mergeArrays(toolWrappers, additional);
     final GlobalInspectionContextImpl globalContext =
-      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, tools);
+      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, toolWrappers);
 
-    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
+    InspectionTestUtil.runTool(toolWrapper, scope, globalContext, inspectionManager);
+    return globalContext;
   }
 
+  @NotNull
   protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     return new AnalysisScope(psiManager.findDirectory(sourceDir));
@@ -175,12 +188,12 @@ public abstract class InspectionTestCase extends PsiTestCase {
       }
 
       @Override
-      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
         return isEntryPoint(psiElement);
       }
 
       @Override
-      public boolean isEntryPoint(PsiElement psiElement) {
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
         return ext_src != null && VfsUtilCore.isAncestor(ext_src, PsiUtilCore.getVirtualFile(psiElement), false);
       }
 

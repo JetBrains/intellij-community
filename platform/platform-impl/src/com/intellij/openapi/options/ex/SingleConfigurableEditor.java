@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,9 @@ public class SingleConfigurableEditor extends DialogWrapper {
   public SingleConfigurableEditor(@Nullable Project project,
                                   Configurable configurable,
                                   @NonNls String dimensionKey,
-                                  final boolean showApplyButton) {
-    super(project, true);
+                                  final boolean showApplyButton,
+                                  final IdeModalityType ideModalityType) {
+    super(project, true, ideModalityType);
     myDimensionKey = dimensionKey;
     myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
@@ -68,7 +69,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
   public SingleConfigurableEditor(Component parent,
                                   Configurable configurable,
                                   String dimensionServiceKey,
-                                  final boolean showApplyButton) {
+                                  final boolean showApplyButton,
+                                  final IdeModalityType ideModalityType) {
     super(parent, true);
     myDimensionKey = dimensionServiceKey;
     myShowApplyButton = showApplyButton;
@@ -80,12 +82,34 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myConfigurable.reset();
   }
 
+  public SingleConfigurableEditor(@Nullable Project project,
+                                  Configurable configurable,
+                                  @NonNls String dimensionKey,
+                                  final boolean showApplyButton) {
+    this(project, configurable, dimensionKey, showApplyButton, IdeModalityType.IDE);
+  }
+
+  public SingleConfigurableEditor(Component parent,
+                                  Configurable configurable,
+                                  String dimensionServiceKey,
+                                  final boolean showApplyButton) {
+    this(parent, configurable, dimensionServiceKey, showApplyButton, IdeModalityType.IDE);
+  }
+
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey, IdeModalityType ideModalityType) {
+    this(project, configurable, dimensionKey, true, ideModalityType);
+  }
+
   public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, @NonNls String dimensionKey) {
     this(project, configurable, dimensionKey, true);
   }
 
   public SingleConfigurableEditor(Component parent, Configurable configurable, String dimensionServiceKey) {
     this(parent, configurable, dimensionServiceKey, true);
+  }
+
+  public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, IdeModalityType ideModalityType) {
+    this(project, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), ideModalityType);
   }
 
   public SingleConfigurableEditor(@Nullable Project project, Configurable configurable) {
@@ -157,7 +181,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
         else {
-          Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
       }
       return;
@@ -215,7 +239,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
           Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
         }
         else {
-          Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(),
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(),
                                      Messages.getErrorIcon());
         }
       } finally {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -34,8 +34,8 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class BrowseChangesAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     assert vFile != null;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
     assert vcs != null;
@@ -53,10 +53,10 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
                                      VcsBundle.message("browse.changes.show.all.button"),
                                      CommonBundle.getCancelButtonText(),
                                     Messages.getQuestionIcon());
-      if (rc == 2) {
+      if (rc == Messages.CANCEL) {
         return;
       }
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         maxCount = 50;
       }
     }
@@ -69,9 +69,9 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
   }
 
   private static boolean isActionEnabled(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
-    VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (vFile == null) return false;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(vFile);
     if (vcs == null || vcs.getCommittedChangesProvider() == null || !vcs.allowsRemoteCalls(vFile)) {

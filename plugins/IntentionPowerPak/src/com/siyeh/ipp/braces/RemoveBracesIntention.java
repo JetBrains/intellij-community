@@ -15,9 +15,10 @@
  */
 package com.siyeh.ipp.braces;
 
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.FileTypeUtils;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,7 @@ public class RemoveBracesIntention extends BaseBracesIntention {
         final PsiFile file = statement.getContainingFile();
         //this intention doesn't work in JSP files, as it can't tell about tags
         // inside the braces
-        return !JspPsiUtil.isInJspFile(file);
+        return !FileTypeUtils.isInServerPageFile(file);
       }
     };
   }
@@ -64,7 +65,7 @@ public class RemoveBracesIntention extends BaseBracesIntention {
     handleComments(blockStatement, codeBlock);
 
     final String text = statement.getText();
-    replaceStatement(text, blockStatement);
+    PsiReplacementUtil.replaceStatement(blockStatement, text);
   }
 
   private static void handleComments(PsiBlockStatement blockStatement, PsiCodeBlock codeBlock) {

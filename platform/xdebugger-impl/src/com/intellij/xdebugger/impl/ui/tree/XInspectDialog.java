@@ -15,14 +15,16 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,28 +35,38 @@ import javax.swing.*;
  * @author nik
  */
 public class XInspectDialog extends DialogWrapper {
-  private final XDebuggerTreePanel myTreePanel;
+  private final DebuggerTreeWithHistoryPanel<Pair<XValue, String>> myDebuggerTreePanel;
 
-  public XInspectDialog(final XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String nodeName, @NotNull XValue value) {
-    super(session.getProject(), false);
-    setTitle(XDebuggerBundle.message("inspect.value.dialog.title", nodeName));
+  public XInspectDialog(@NotNull Project project,
+                        XDebuggerEditorsProvider editorsProvider,
+                        XSourcePosition sourcePosition,
+                        @NotNull String name,
+                        @NotNull XValue value,
+                        XValueMarkers<?, ?> markers) {
+    super(project, false);
+
+    setTitle(XDebuggerBundle.message("inspect.value.dialog.title", name));
     setModal(false);
-    myTreePanel = new XDebuggerTreePanel(session, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
-    XDebuggerTree tree = myTreePanel.getTree();
-    tree.setRoot(new XValueNodeImpl(tree, null, nodeName, value), true);
+
+    Pair<XValue, String> initialItem = Pair.create(value, name);
+    XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
+    myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project);
     init();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    return myTreePanel.getMainPanel();
+    return myDebuggerTreePanel.getMainPanel();
   }
 
+  @Override
   @Nullable
   protected JComponent createSouthPanel() {
     return null;
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "#xdebugger.XInspectDialog";

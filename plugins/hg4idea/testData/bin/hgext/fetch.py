@@ -5,12 +5,14 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-'''pull, update and merge in one command'''
+'''pull, update and merge in one command (DEPRECATED)'''
 
 from mercurial.i18n import _
 from mercurial.node import nullid, short
-from mercurial import commands, cmdutil, hg, util, url, error
+from mercurial import commands, cmdutil, hg, util, error
 from mercurial.lock import release
+
+testedwith = 'internal'
 
 def fetch(ui, repo, source='default', **opts):
     '''pull changes from a remote repository, merge new changes if needed.
@@ -23,12 +25,13 @@ def fetch(ui, repo, source='default', **opts):
     Otherwise, the working directory is updated to include the new
     changes.
 
-    When a merge occurs, the newly pulled changes are assumed to be
-    "authoritative". The head of the new changes is used as the first
-    parent, with local changes as the second. To switch the merge
-    order, use --switch-parent.
+    When a merge is needed, the working directory is first updated to
+    the newly pulled changes. Local changes are then merged into the
+    pulled changes. To switch the merge order, use --switch-parent.
 
-    See 'hg help dates' for a list of formats valid for -d/--date.
+    See :hg:`help dates` for a list of formats valid for -d/--date.
+
+    Returns 0 on success.
     '''
 
     date = opts.get('date')
@@ -37,7 +40,10 @@ def fetch(ui, repo, source='default', **opts):
 
     parent, p2 = repo.dirstate.parents()
     branch = repo.dirstate.branch()
-    branchnode = repo.branchtags().get(branch)
+    try:
+        branchnode = repo.branchtip(branch)
+    except error.RepoLookupError:
+        branchnode = None
     if parent != branchnode:
         raise util.Abort(_('working dir not at branch tip '
                            '(use "hg update" to check out branch tip)'))
@@ -61,16 +67,15 @@ def fetch(ui, repo, source='default', **opts):
             raise util.Abort(_('multiple heads in this branch '
                                '(use "hg heads ." and "hg merge" to merge)'))
 
-        other = hg.repository(cmdutil.remoteui(repo, opts),
-                              ui.expandpath(source))
+        other = hg.peer(repo, opts, ui.expandpath(source))
         ui.status(_('pulling from %s\n') %
-                  url.hidepassword(ui.expandpath(source)))
+                  util.hidepassword(ui.expandpath(source)))
         revs = None
         if opts['rev']:
             try:
                 revs = [other.lookup(rev) for rev in opts['rev']]
             except error.CapabilityError:
-                err = _("Other repository doesn't support revision lookup, "
+                err = _("other repository doesn't support revision lookup, "
                         "so a rev cannot be specified.")
                 raise util.Abort(err)
 
@@ -82,11 +87,11 @@ def fetch(ui, repo, source='default', **opts):
         # Is this a simple fast-forward along the current branch?
         newheads = repo.branchheads(branch)
         newchildren = repo.changelog.nodesbetween([parent], newheads)[2]
-        if len(newheads) == 1:
+        if len(newheads) == 1 and len(newchildren):
             if newchildren[0] != parent:
-                return hg.clean(repo, newchildren[0])
+                return hg.update(repo, newchildren[0])
             else:
-                return
+                return 0
 
         # Are there more than one additional branch heads?
         newchildren = [n for n in newchildren if n != parent]
@@ -99,7 +104,10 @@ def fetch(ui, repo, source='default', **opts):
             ui.status(_('not merging with %d other new branch heads '
                         '(use "hg heads ." and "hg merge" to merge them)\n') %
                       (len(newheads) - 1))
-            return
+            return 1
+
+        if not newheads:
+            return 0
 
         # Otherwise, let's merge.
         err = False
@@ -121,9 +129,9 @@ def fetch(ui, repo, source='default', **opts):
 
         if not err:
             # we don't translate commit messages
-            message = (cmdutil.logmessage(opts) or
+            message = (cmdutil.logmessage(ui, opts) or
                        ('Automated merge with %s' %
-                        url.removeauth(other.url())))
+                        util.removeauth(other.url())))
             editor = cmdutil.commiteditor
             if opts.get('force_editor') or opts.get('edit'):
                 editor = cmdutil.commitforceeditor
@@ -132,13 +140,16 @@ def fetch(ui, repo, source='default', **opts):
                         'with local\n') % (repo.changelog.rev(n),
                                            short(n)))
 
+        return err
+
     finally:
         release(lock, wlock)
 
 cmdtable = {
     'fetch':
         (fetch,
-        [('r', 'rev', [], _('a specific revision you would like to pull')),
+        [('r', 'rev', [],
+          _('a specific revision you would like to pull'), _('REV')),
          ('e', 'edit', None, _('edit commit message')),
          ('', 'force-editor', None, _('edit commit message (DEPRECATED)')),
          ('', 'switch-parent', None, _('switch parents when merging')),

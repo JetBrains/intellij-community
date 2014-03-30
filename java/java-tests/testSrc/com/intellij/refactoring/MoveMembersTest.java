@@ -1,8 +1,25 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -11,6 +28,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -105,6 +123,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("B", "A", 0);
   }
 
+  public void testStringConstantFromCaseStatement() throws Exception {
+    doTest("B", "A", 0);
+  }
+
   public void testDependantFields() throws Exception {
     doTest("B", "A", 0);
   }
@@ -122,9 +144,31 @@ public class MoveMembersTest extends MultiFileTestCase {
       assertEquals("Field <b><code>B.ONE</code></b> has write access but is moved to an interface", e.getMessage());
     }
   }
+  
+  public void testFinalFieldWithInitializer() throws Exception {
+    try {
+      doTest("B", "A", 0);
+      fail("conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("final variable initializer won't be available after move.", e.getMessage());
+    }
+  }
 
   public void testInnerToInterface() throws Exception {
     doTest("A", "B", 0);
+  }
+
+  public void testStaticToInterface() throws Exception {
+    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel level = levelProjectExtension.getLanguageLevel();
+    try {
+      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
+      doTest("A", "B", 0);
+    }
+    finally {
+      levelProjectExtension.setLanguageLevel(level);
+    }
   }
   
   public void testEscalateVisibility1() throws Exception {
@@ -135,6 +179,15 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
+  public void testMultipleWithDependencies1() throws Exception {
+    doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
+  }
+
+  public void testFromNestedToOuter() throws Exception {
+    doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";

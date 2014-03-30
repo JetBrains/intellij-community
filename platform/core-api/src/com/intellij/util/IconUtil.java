@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
@@ -92,6 +93,13 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
+  public static Icon cropIcon(@NotNull Icon icon, Rectangle area) {
+    if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
+      return icon;
+    }
+    return new CropIcon(icon, area);
+  }
+
   @NotNull
   public static Icon flip(@NotNull Icon icon, boolean horizontal) {
     int w = icon.getIconWidth();
@@ -113,44 +121,46 @@ public class IconUtil {
     return new ImageIcon(second);
   }
 
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
+    @Override
+    public Icon fun(final FileIconKey key) {
+      final VirtualFile file = key.getFile();
+      final int flags = key.getFlags();
+      final Project project = key.getProject();
+
+      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+
+      final Icon providersIcon = getProvidersIcon(file, flags, project);
+      Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
+
+      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+      for (FileIconPatcher patcher : getPatchers()) {
+        if (dumb && !DumbService.isDumbAware(patcher)) {
+          continue;
+        }
+
+        icon = patcher.patchIcon(icon, file, flags, project);
+      }
+
+      if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
+          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+      }
+      if (file.is(VFileProperty.SYMLINK)) {
+        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+      }
+
+      Iconable.LastComputedIcon.put(file, icon, flags);
+
+      return icon;
+    }
+  };
+
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIcon(file);
-    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), new NullableFunction<FileIconKey, Icon>() {
-      @Override
-      public Icon fun(final FileIconKey key) {
-        final VirtualFile file = key.getFile();
-        final int flags = key.getFlags();
-        final Project project = key.getProject();
-
-        if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
-
-        final Icon providersIcon = getProvidersIcon(file, flags, project);
-        Icon icon = providersIcon == null ? VirtualFilePresentation.getIcon(file) : providersIcon;
-
-        final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-        for (FileIconPatcher patcher : getPatchers()) {
-          if (dumb && !DumbService.isDumbAware(patcher)) {
-            continue;
-          }
-
-          icon = patcher.patchIcon(icon, file, flags, project);
-        }
-
-        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
-            (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-          icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-        }
-        if (file.isSymLink()) {
-          icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-        }
-
-        Iconable.LastComputedIcon.put(file, icon, flags);
-
-        return icon;
-      }
-    });
+    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
   @Nullable
@@ -284,7 +294,7 @@ public class IconUtil {
   }
 
   /**
-   * Result icons look like original but have equal (maximum) size 
+   * Result icons look like original but have equal (maximum) size
    */
   @NotNull
   public static Icon[] getEqualSizedIcons(@NotNull Icon... icons) {
@@ -331,6 +341,31 @@ public class IconUtil {
     @Override
     public int getIconHeight() {
       return myHeight;
+    }
+  }
+
+  private static class CropIcon implements Icon {
+    private final Icon mySrc;
+    private final Rectangle myCrop;
+
+    private CropIcon(@NotNull Icon src, Rectangle crop) {
+      mySrc = src;
+      myCrop = crop;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      mySrc.paintIcon(c, g, x - myCrop.x, y - myCrop.y);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myCrop.width;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return myCrop.height;
     }
   }
 }

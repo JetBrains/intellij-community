@@ -19,7 +19,10 @@ package com.pme.exe;
 
 import com.pme.exe.res.ValuesAdd;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * Date: Mar 30, 2006
@@ -33,7 +36,8 @@ public class ExeReader extends Bin.Structure{
   private Bin.Bytes myBytes;
   private Bin.Bytes myMsDosStub;
   private MsDosHeader myMsDosHeader;
-  public ExeReader(String name) {
+
+  public ExeReader(String name, ExeFormat exeFormat) {
     super(name);
     myMsDosHeader = new MsDosHeader();
     addMember( myMsDosHeader );
@@ -41,8 +45,11 @@ public class ExeReader extends Bin.Structure{
     ValuesAdd size = new ValuesAdd( member, new DWord("").setValue( myMsDosHeader.sizeInBytes() ) );
     myMsDosStub = new Bytes( "MsDos stub program", size );
     addMember( myMsDosStub );
-    myPeHeader = new PeHeaderReader( member );
+    myPeHeader = new PeHeaderReader(member, exeFormat);
     addMember( myPeHeader );
+    if (exeFormat == ExeFormat.UNKNOWN) {
+      return;
+    }
     myImageOptionalHeader = (ImageOptionalHeader) myPeHeader.getMember("Image Optional Header");
     mySectionHeaders = (ArrayOfBins)myPeHeader.getMember( "ImageSectionHeaders" );
     addSizeHolder( myImageOptionalHeader.getValueMember( "SizeOfImage" ) );  //b164
@@ -79,9 +86,8 @@ public class ExeReader extends Bin.Structure{
   }
 
   public SectionReader getSectionReader( String sectionName ){
-    for (int i = 0; i < mySections.length; i++) {
-      SectionReader section = mySections[i];
-      if ( sectionName.equals( section.getSectionName() )){
+    for (SectionReader section : mySections) {
+      if (sectionName.equals(section.getSectionName())) {
         return section;
       }
     }
@@ -90,6 +96,9 @@ public class ExeReader extends Bin.Structure{
 
   public void read(DataInput stream) throws IOException {
     super.read(stream);
+    if (mySectionHeaders == null) {
+      return;
+    }
 
     long filePointer = getOffset() + sizeOfHeaders();
 
@@ -123,35 +132,37 @@ public class ExeReader extends Bin.Structure{
     super.resetOffsets(newOffset);
     long mainOffset = myPeHeader.getOffset() + myPeHeader.sizeInBytes() + myBytes.sizeInBytes();
     long offset = 0;
-    for (int i = 0; i < mySections.length; i++) {
-      Bin section = mySections[i];
-      section.resetOffsets( mainOffset + offset );
+    for (SectionReader section : mySections) {
+      section.resetOffsets(mainOffset + offset);
       offset += section.sizeInBytes();
     }
   }
 
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
-    myBytes.write( stream );
-    for (int i = 0; i < mySections.length; i++) {
-      mySections[i].write( stream );
+    myBytes.write(stream);
+    for (SectionReader section : mySections) {
+      section.write(stream);
     }
   }
 
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
     myBytes.report( writer );
-    mySectionHeaders.report( writer );
-    for ( int i = 0; i < mySections.length; ++i ){
-      mySections[i].report( writer );
+    mySectionHeaders.report(writer);
+    for (SectionReader section : mySections) {
+      section.report(writer);
     }
   }
 
-  public static void main(String[] args) throws Throwable {
-    ExeReader reader = new ExeReader( "SeaShell.exe" );
-    File file = new File( "C:\\work\\SeaShell.exe" );
-    RandomAccessFile stream = new RandomAccessFile( file, "r" );
-    reader.read( stream );
-    stream.close();
+  public ExeFormat getExeFormat() {
+    long machine = myPeHeader.getImageFileHeader().getMachine();
+    if (machine == 0x14c) {
+      return ExeFormat.X86;
+    }
+    if (machine == 0x8664) {
+      return ExeFormat.X64;
+    }
+    throw new UnsupportedOperationException("Unsupported machine code " + machine);
   }
 }

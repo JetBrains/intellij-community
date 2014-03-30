@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -31,7 +32,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
+public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable, RoamingTypeDisabled {
   private final Project myProject;
 
   private UpdateInfo myUpdateInfo;
@@ -41,8 +42,10 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
     myProject = project;
   }
 
+  @Override
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();
@@ -61,20 +64,25 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
     });
   }
 
+  @Override
   public void projectClosed() {
 
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "RestoreUpdateTree";
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     Element child = element.getChild(UPDATE_INFO);
     if (child != null) {
@@ -84,6 +92,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
       }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (myUpdateInfo != null) {
       Element child = new Element(UPDATE_INFO);

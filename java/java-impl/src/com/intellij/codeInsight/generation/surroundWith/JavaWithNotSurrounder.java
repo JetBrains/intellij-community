@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
-class JavaWithNotSurrounder extends JavaExpressionSurrounder{
-  @Override
-  public boolean isApplicable(PsiExpression expr) {
-    return PsiType.BOOLEAN.equals(expr.getType());
-  }
-
+class JavaWithNotSurrounder extends JavaBooleanExpressionSurrounder {
   @Override
   public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
     PsiManager manager = expr.getManager();

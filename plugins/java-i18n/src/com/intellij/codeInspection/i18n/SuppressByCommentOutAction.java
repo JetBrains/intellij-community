@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +42,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     element = findJavaCodeUpThere(element);
     PsiFile file = element.getContainingFile();
     editor = InjectedLanguageUtil.openEditorFor(file, project);
@@ -76,18 +76,19 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
     if (!element.isValid()) {
       return false;
     }
-    // find java code up there, going through injecttions if necessary
+    // find java code up there, going through injections if necessary
     return findJavaCodeUpThere(element) != null;
   }
 
   private static PsiElement findJavaCodeUpThere(PsiElement element) {
     while (element != null) {
-      if (element.getLanguage() == StdLanguages.JAVA) return element;
+      if (element.getLanguage() == JavaLanguage.INSTANCE) return element;
       element = element.getContext();
     }
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");

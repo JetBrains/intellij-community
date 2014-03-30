@@ -56,7 +56,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder{
   }
 
   @Override
-  public String getGroupName() {
+  public String getParentGroup() {
     return JavaModuleType.JAVA_GROUP;
   }
 }

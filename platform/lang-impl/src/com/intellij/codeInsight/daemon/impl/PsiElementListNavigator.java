@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -33,10 +34,12 @@ import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -70,10 +73,29 @@ public class PsiElementListNavigator {
                                                final String title,
                                                final String findUsagesTitle,
                                                final ListCellRenderer listRenderer,
-                                               final @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+                                               @Nullable final ListBackgroundUpdaterTask listUpdaterTask) {
+    return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, new Consumer<Object[]>() {
+      @Override
+      public void consume(Object[] selectedElements) {
+        for (Object element : selectedElements) {
+          PsiElement selected = (PsiElement)element;
+          LOG.assertTrue(selected.isValid());
+          ((NavigatablePsiElement)selected).navigate(true);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  public static JBPopup navigateOrCreatePopup(final NavigatablePsiElement[] targets,
+                                              final String title,
+                                              final String findUsagesTitle,
+                                              final ListCellRenderer listRenderer,
+                                              @Nullable final ListBackgroundUpdaterTask listUpdaterTask,
+                                              final Consumer<Object[]> consumer) {
     if (targets.length == 0) return null;
     if (targets.length == 1) {
-      targets[0].navigate(true);
+      consumer.consume(targets);
       return null;
     }
     final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<NavigatablePsiElement>(targets);
@@ -83,6 +105,24 @@ public class PsiElementListNavigator {
         return (PsiElement) selectedValue;
       }
     };
+
+    list.setTransferHandler(new TransferHandler(){
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final Object[] selectedValues = list.getSelectedValues();
+        final PsiElement[] copy = new PsiElement[selectedValues.length];
+        for (int i = 0; i < selectedValues.length; i++) {
+          copy[i] = (PsiElement)selectedValues[i];
+        }
+        return new PsiCopyPasteManager.MyTransferable(copy);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     list.setCellRenderer(listRenderer);
 
@@ -101,11 +141,7 @@ public class PsiElementListNavigator {
           int[] ids = list.getSelectedIndices();
           if (ids == null || ids.length == 0) return;
           Object[] selectedElements = list.getSelectedValues();
-          for (Object element : selectedElements) {
-            PsiElement selected = (PsiElement)element;
-            LOG.assertTrue(selected.isValid());
-            ((NavigatablePsiElement)selected).navigate(true);
-          }
+          consumer.consume(selectedElements);
         }
       }).
       setCancelCallback(new Computable<Boolean>() {

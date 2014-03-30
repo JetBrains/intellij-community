@@ -99,4 +99,8 @@ public class UniqueNameBuilder<T> {
     }
     return b.toString();
   }
+
+  public String getSeparator() {
+    return mySeparator;
+  }
 }

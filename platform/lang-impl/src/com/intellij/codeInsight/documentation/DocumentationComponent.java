@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,12 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
 
-  private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
+  @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
 
   private static final DataContext EMPTY_DATA_CONTEXT = new DataContext() {
     @Override
@@ -77,29 +78,29 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   };
 
-  private static final int MAX_WIDTH  = 500;
+  private static final int MAX_WIDTH = 500;
   private static final int MAX_HEIGHT = 300;
   private static final int MIN_HEIGHT = 45;
 
-  private DocumentationManager   myManager;
+  private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
 
-  private final Stack<Context> myBackStack    = new Stack<Context>();
+  private final Stack<Context> myBackStack = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
-  private       ActionToolbar        myToolBar;
-  private       boolean              myIsEmpty;
-  private       boolean              myIsShown;
-  private final JLabel               myElementLabel;
-  private       Style                myFontSizeStyle;
-  private       JSlider              myFontSizeSlider;
-  private       JComponent           mySettingsPanel;
-  private       MyShowSettingsButton myShowSettingsButton;
-  private       boolean              myIgnoreFontSizeSliderChange;
+  private final ActionToolbar myToolBar;
+  private boolean myIsEmpty;
+  private boolean myIsShown;
+  private final JLabel myElementLabel;
+  private Style myFontSizeStyle;
+  private JSlider myFontSizeSlider;
+  private final JComponent mySettingsPanel;
+  private final MyShowSettingsButton myShowSettingsButton;
+  private boolean myIgnoreFontSizeSliderChange;
 
   private static class Context {
     final SmartPsiElementPointer element;
-    final String                 text;
-    final Rectangle              viewRect;
+    final String text;
+    final Rectangle viewRect;
 
     public Context(SmartPsiElementPointer element, String text, Rectangle viewRect) {
       this.element = element;
@@ -108,18 +109,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private final JScrollPane          myScrollPane;
-  private final JEditorPane          myEditorPane;
-  private       String               myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private final JPanel               myControlPanel;
-  private       boolean              myControlPanelVisible;
-  private final ExternalDocAction    myExternalDocAction;
-  private       Consumer<PsiElement> myNavigateCallback;
+  private final JScrollPane myScrollPane;
+  private final JEditorPane myEditorPane;
+  private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
+  private final JPanel myControlPanel;
+  private boolean myControlPanelVisible;
+  private final ExternalDocAction myExternalDocAction;
+  private Consumer<PsiElement> myNavigateCallback;
 
   private JBPopup myHint;
 
-  private final HashMap<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
-  // KeyStroke --> ActionListener
+  private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
 
   @Override
   public boolean requestFocusInWindow() {
@@ -192,7 +192,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           super.processMouseWheelEvent(e);
           return;
         }
-        
+
         int change = Math.abs(e.getWheelRotation());
         boolean increase = e.getWheelRotation() <= 0;
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -206,7 +206,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
             newFontSize = newFontSize.smaller();
           }
         }
-        
+
         if (newFontSize == scheme.getQuickDocFontSize()) {
           return;
         }
@@ -279,7 +279,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     layeredPane.add(myScrollPane);
     layeredPane.setLayer(myScrollPane, 0);
-    
+
     mySettingsPanel = createSettingsPanel();
     layeredPane.add(mySettingsPanel);
     layeredPane.setLayer(mySettingsPanel, JLayeredPane.POPUP_LAYER);
@@ -352,16 +352,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.getName().equals(dataId)) {
       // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
       // with raw white spaces. See IDEA-86633 for more details.
-      return myEditorPane.getSelectedText().replace((char)160, ' ');
+      String selectedText = myEditorPane.getSelectedText();
+      return selectedText == null? null : selectedText.replace((char)160, ' ');
     }
-     
+
     return null;
   }
 
   private JComponent createSettingsPanel() {
     JPanel result = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
     result.add(new JLabel(ApplicationBundle.message("label.font.size")));
-    myFontSizeSlider = new JSlider(JSlider.HORIZONTAL, 0, FontSize.values().length - 1, 3);
+    myFontSizeSlider = new JSlider(SwingConstants.HORIZONTAL, 0, FontSize.values().length - 1, 3);
     myFontSizeSlider.setMinorTickSpacing(1);
     myFontSizeSlider.setPaintTicks(true);
     myFontSizeSlider.setPaintTrack(true);
@@ -391,7 +392,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myFontSizeSlider.setOpaque(true);
     return result;
   }
-  
+
   private void setFontSizeSliderSize(FontSize fontSize) {
     myIgnoreFontSizeSliderChange = true;
     try {
@@ -407,7 +408,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myIgnoreFontSizeSliderChange = false;
     }
   }
-  
+
   public synchronized boolean isEmpty() {
     return myIsEmpty;
   }
@@ -499,10 +500,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
-    boolean justShown = false;
 
     myElement = element;
 
+    boolean justShown = false;
     if (!myIsShown && myHint != null) {
       myEditorPane.setText(text);
       applyFontSize();
@@ -546,7 +547,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
   }
-  
+
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();
@@ -748,7 +749,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, KeyEvent.CTRL_MASK), new ActionListener() {
+    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_MASK), new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
@@ -756,7 +757,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     });
 
-    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.CTRL_MASK), new ActionListener() {
+    myKeyboardActions.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.CTRL_MASK), new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
@@ -779,7 +780,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = null;
     myNavigateCallback = null;
   }
-  
+
   private class MyShowSettingsButton extends ActionButton {
 
     MyShowSettingsButton() {
@@ -801,7 +802,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myAction.actionPerformed(event);
     }
   }
-  
+
   private class MyShowSettingsAction extends ToggleAction {
 
     @Override
@@ -815,7 +816,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         mySettingsPanel.setVisible(false);
         return;
       }
-      
+
       EditorColorsManager colorsManager = EditorColorsManager.getInstance();
       EditorColorsScheme scheme = colorsManager.getGlobalScheme();
       setFontSizeSliderSize(scheme.getQuickDocFontSize());

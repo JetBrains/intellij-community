@@ -19,15 +19,15 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
-import org.intellij.lang.xpath.context.functions.Function;
-import org.intellij.lang.xpath.context.functions.FunctionContext;
-import org.intellij.lang.xpath.context.functions.FunctionDeclarationParsing;
+import org.intellij.lang.xpath.context.functions.*;
+import org.intellij.lang.xpath.psi.XPath2Type;
 
 import javax.xml.namespace.QName;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.intellij.lang.xpath.xslt.context.XsltFunctionContext.SAXON_7;
 
 /*
 * Created by IntelliJ IDEA.
@@ -109,6 +109,34 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
             "$language as xs:string?,\n" +
             "$calendar as xs:string?,\n" +
             "$country as xs:string?) as xs:string?");
+
+    final Parameter optional_string = new Parameter(XPath2Type.STRING, Parameter.Kind.OPTIONAL);
+    final Parameter required_string = new Parameter(XPath2Type.STRING, Parameter.Kind.REQUIRED);
+    final Parameter required_nodeset = new Parameter(XPath2Type.NODE_SEQUENCE, Parameter.Kind.REQUIRED);
+    final Parameter required_any = new Parameter(XPath2Type.ITEM, Parameter.Kind.REQUIRED);
+    final Parameter optional_any = new Parameter(XPath2Type.ITEM, Parameter.Kind.OPTIONAL);
+    final Parameter any_list = new Parameter(XPath2Type.ITEM, Parameter.Kind.VARARG);
+
+    addFunction(decls, SAXON_7, new FunctionImpl("dayTimeDuration-from-seconds", XPath2Type.DAYTIMEDURATION, new Parameter(XPath2Type.INTEGER, Parameter.Kind.REQUIRED)));
+    addFunction(decls, SAXON_7, new FunctionImpl("yearMonthDuration-from-months", XPath2Type.YEARMONTHDURATION, new Parameter(XPath2Type.INTEGER, Parameter.Kind.REQUIRED)));
+
+    addFunction(decls, SAXON_7, new FunctionImpl("distinct", XPath2Type.NODE_SEQUENCE, required_nodeset, optional_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("eval", XPath2Type.ITEM, required_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("evaluate", XPath2Type.ITEM, required_string, any_list));
+    addFunction(decls, SAXON_7, new FunctionImpl("expression", XPath2Type.ITEM, required_string, any_list));
+    addFunction(decls, SAXON_7, new FunctionImpl("get-pseudo-attribute", XPath2Type.ITEM, required_string));
+    addFunction(decls, SAXON_7, new FunctionImpl("has-same-nodes", XPath2Type.BOOLEAN, required_nodeset, required_nodeset));
+    addFunction(decls, SAXON_7, new FunctionImpl("highest", XPath2Type.NODE_SEQUENCE, required_nodeset, optional_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("leading", XPath2Type.NODE_SEQUENCE, required_nodeset, required_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("line-number", XPath2Type.INTEGER));
+    addFunction(decls, SAXON_7, new FunctionImpl("max", XPath2Type.NUMERIC, required_nodeset, optional_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("min", XPath2Type.NUMERIC, required_string));
+    addFunction(decls, SAXON_7, new FunctionImpl("parse", XPath2Type.NODE_SEQUENCE, required_nodeset, optional_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("path", XPath2Type.STRING));
+    addFunction(decls, SAXON_7, new FunctionImpl("serialize", XPath2Type.STRING, required_nodeset, required_string));
+    addFunction(decls, SAXON_7, new FunctionImpl("sum", XPath2Type.NUMERIC, required_nodeset, optional_any));
+    addFunction(decls, SAXON_7, new FunctionImpl("systemId", XPath2Type.STRING));
+    addFunction(decls, SAXON_7, new FunctionImpl("tokenize", XPath2Type.NODE_SEQUENCE, required_string, optional_string));
 
     XSLT2_FUNCTIONS = Collections.unmodifiableMap(decls);
   }

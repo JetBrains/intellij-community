@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -106,13 +106,14 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
+  @NotNull
   @Override
-  public Collection<StructureViewExtension> getAllExtensions(Class<? extends PsiElement> type) {
+  public Collection<StructureViewExtension> getAllExtensions(@NotNull Class<? extends PsiElement> type) {
     Collection<StructureViewExtension> result = myImplExtensions.get(type);
     if (result == null) {
       MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map = myExtensions.getValue();
       for (Class<? extends PsiElement> registeredType : map.keySet()) {
-        if (ReflectionCache.isAssignable(registeredType, type)) {
+        if (ReflectionUtil.isAssignable(registeredType, type)) {
           final Collection<StructureViewExtension> extensions = map.get(registeredType);
           for (StructureViewExtension extension : extensions) {
             myImplExtensions.put(type, extension);
@@ -154,7 +155,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   @Override
-  public void runWhenInitialized(Runnable runnable) {
+  public void runWhenInitialized(@NotNull Runnable runnable) {
     if (myStructureViewWrapperImpl != null) {
       runnable.run();
     }
@@ -163,14 +164,20 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     }
   }
 
-  @Override
-  public StructureView createStructureView(final FileEditor fileEditor, final StructureViewModel treeModel, final Project project) {
-    return new StructureViewComponent(fileEditor, treeModel, project);
-  }
-
+  @NotNull
   @Override
   public StructureView createStructureView(final FileEditor fileEditor,
-                                           final StructureViewModel treeModel, final Project project, final boolean showRootNode) {
+                                           @NotNull final StructureViewModel treeModel,
+                                           @NotNull final Project project) {
+    return createStructureView(fileEditor, treeModel, project, true);
+  }
+
+  @NotNull
+  @Override
+  public StructureView createStructureView(final FileEditor fileEditor,
+                                           @NotNull StructureViewModel treeModel,
+                                           @NotNull Project project,
+                                           final boolean showRootNode) {
     return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -36,16 +36,19 @@ import java.util.Set;
 public class UnimplementInterfaceAction implements IntentionAction {
   private String myName = "Interface";
 
+  @Override
   @NotNull
   public String getText() {
     return "Unimplement " + myName;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Unimplement Interface/Class";
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
@@ -72,7 +75,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     else {
       myName = "Class";
     }
-    
+
     return true;
   }
 
@@ -88,8 +91,9 @@ public class UnimplementInterfaceAction implements IntentionAction {
     return (PsiJavaCodeReferenceElement)element;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
 
     final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
     if (psiReference == null) return;
@@ -131,6 +135,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

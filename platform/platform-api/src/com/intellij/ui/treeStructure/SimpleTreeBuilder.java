@@ -28,21 +28,22 @@ import java.awt.*;
 import java.util.Comparator;
 
 public class SimpleTreeBuilder extends AbstractTreeBuilder {
-
   public SimpleTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, @Nullable Comparator comparator) {
+    //noinspection unchecked
     super(tree, treeModel, treeStructure, comparator);
   }
 
+  @Override
   public boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((SimpleNode) nodeDescriptor).isAlwaysShowPlus();
   }
 
+  @Override
   public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return ((SimpleNode) nodeDescriptor).isAutoExpandNode();
   }
 
-
-
+  @Override
   public final void updateFromRoot() {
     updateFromRoot(false);
   }
@@ -53,12 +54,14 @@ public class SimpleTreeBuilder extends AbstractTreeBuilder {
     }
 
     if (EventQueue.isDispatchThread()) {
-      SimpleTreeBuilder.super.updateFromRoot();
-    } else {
+      SimpleTreeBuilder.super.queueUpdate();
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (!isDisposed()) {
-            SimpleTreeBuilder.super.updateFromRoot();
+            SimpleTreeBuilder.super.queueUpdate();
           }
         }
       });

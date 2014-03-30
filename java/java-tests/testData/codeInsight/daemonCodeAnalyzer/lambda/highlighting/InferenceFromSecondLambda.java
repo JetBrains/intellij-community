@@ -1,5 +1,5 @@
 import java.util.*;
-public class Main1 {
+class Main1 {
 
     interface I<T> {
         List<T> f();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class Declaration implements GroovyElementTypes {
 
   private static boolean isCall(@NotNull PsiBuilder builder) {
     if (builder.eof()) return false;
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) return false;
+    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) return false;
 
     final String text = builder.getTokenText();
     if (StringUtil.isEmpty(text)) return false;

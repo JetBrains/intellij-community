@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +32,7 @@ import java.util.*;
  * Date: 7/17/12
  */
 public class LambdaUtil {
+  public static ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
   @NonNls public static final String JAVA_LANG_FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 
@@ -43,7 +40,7 @@ public class LambdaUtil {
   public static PsiType getFunctionalInterfaceReturnType(PsiLambdaExpression expr) {
     return getFunctionalInterfaceReturnType(expr.getFunctionalInterfaceType());
   }
-  
+
   @Nullable
   public static PsiType getFunctionalInterfaceReturnType(@Nullable PsiType functionalInterfaceType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
@@ -61,6 +58,16 @@ public class LambdaUtil {
   @Nullable
   public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiType functionalInterfaceType) {
     return getFunctionalInterfaceMethod(PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
+  }
+
+  public static PsiMethod getFunctionalInterfaceMethod(@Nullable PsiElement element) {
+    if (element instanceof PsiLambdaExpression || element instanceof PsiMethodReferenceExpression) {
+      final PsiType samType = element instanceof PsiLambdaExpression
+                              ? ((PsiLambdaExpression)element).getFunctionalInterfaceType()
+                              : ((PsiMethodReferenceExpression)element).getFunctionalInterfaceType();
+      return getFunctionalInterfaceMethod(samType);
+    }
+    return null;
   }
 
   @Nullable
@@ -93,7 +100,23 @@ public class LambdaUtil {
     return initialSubst;
   }
 
-  public static boolean isValidLambdaContext(PsiElement context) {
+  public static boolean isFunctionalType(PsiType type) {
+    if (type instanceof PsiIntersectionType) {
+      for (PsiType type1 : ((PsiIntersectionType)type).getConjuncts()) {
+        if (isFunctionalType(type1)) return true;
+      }
+    }
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(type));
+    final PsiClass aClass = resolveResult.getElement();
+    if (aClass != null) {
+      if (aClass instanceof PsiTypeParameter) return false;
+      final List<MethodSignature> signatures = findFunctionCandidates(aClass);
+      return signatures != null && signatures.size() == 1;
+    }
+    return false;
+  }
+  
+  public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     return context instanceof PsiTypeCastExpression ||
            context instanceof PsiAssignmentExpression ||
            context instanceof PsiVariable ||
@@ -102,99 +125,14 @@ public class LambdaUtil {
            context instanceof PsiExpressionList ||
            context instanceof PsiParenthesizedExpression ||
            context instanceof PsiArrayInitializerExpression ||
-           context instanceof PsiConditionalExpression;
+           context instanceof PsiConditionalExpression && PsiTreeUtil.getParentOfType(context, PsiTypeCastExpression.class) == null;
   }
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
     final boolean hasParams = expression.getParameterList().getParametersCount() > 0;
     if (hasParams || getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
-      if (hasParams && !checkRawAcceptable(expression, functionalInterfaceType)) {
-        return false;
-      }
+      
       return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression);
-    }
-    return true;
-  }
-
-  private static boolean checkRawAcceptable(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
-    PsiElement parent = expression.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    if (parent instanceof PsiExpressionList) {
-      final PsiElement gParent = parent.getParent();
-      if (gParent instanceof PsiMethodCallExpression) {
-        final PsiExpression qualifierExpression = ((PsiMethodCallExpression)gParent).getMethodExpression().getQualifierExpression();
-        final PsiType type = qualifierExpression != null ? qualifierExpression.getType() : null;
-        if (type instanceof PsiClassType && ((PsiClassType)type).isRaw()) {
-          return true;
-        }
-        final PsiMethod method = ((PsiMethodCallExpression)gParent).resolveMethod();
-        if (method != null) {
-          int lambdaIdx = getLambdaIdx((PsiExpressionList)parent, expression);
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
-          final PsiType normalizedType = getNormalizedType(parameters[adjustLambdaIdx(lambdaIdx, method, parameters)]);
-          if (normalizedType instanceof PsiClassType && ((PsiClassType)normalizedType).isRaw()) return true;
-        }
-      }
-      if (functionalInterfaceType instanceof PsiClassType && ((PsiClassType)functionalInterfaceType).isRaw()){
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType, boolean checkReturnType) {
-    if (leftType instanceof PsiIntersectionType) {
-      for (PsiType conjunctType : ((PsiIntersectionType)leftType).getConjuncts()) {
-        if (isAcceptable(lambdaExpression, conjunctType, checkReturnType)) return true;
-      }
-      return false;
-    }
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
-    final PsiClass psiClass = resolveResult.getElement();
-    if (psiClass instanceof PsiAnonymousClass) {
-      return isAcceptable(lambdaExpression, ((PsiAnonymousClass)psiClass).getBaseClassType(), checkReturnType);
-    }
-    final MethodSignature methodSignature = getFunction(psiClass);
-    if (methodSignature == null) return false;
-    final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
-    final PsiType[] parameterTypes = methodSignature.getParameterTypes();
-    if (lambdaParameters.length != parameterTypes.length) return false;
-    for (int lambdaParamIdx = 0, length = lambdaParameters.length; lambdaParamIdx < length; lambdaParamIdx++) {
-      PsiParameter parameter = lambdaParameters[lambdaParamIdx];
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement != null) {
-        final PsiType lambdaFormalType = typeElement.getType();
-        final PsiType methodParameterType = parameterTypes[lambdaParamIdx];
-        if (lambdaFormalType instanceof PsiPrimitiveType) {
-          if (methodParameterType instanceof PsiPrimitiveType) return methodParameterType.equals(lambdaFormalType);
-          return false;
-        }
-
-        if (!TypeConversionUtil.erasure(lambdaFormalType)
-          .isAssignableFrom(TypeConversionUtil.erasure(GenericsUtil.eliminateWildcards(
-            resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)))))) {
-          return false;
-        }
-      }
-    }
-    if (checkReturnType) {
-      final String uniqueVarName =
-        JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).suggestUniqueVariableName("l", lambdaExpression, true);
-      String canonicalText = leftType.getCanonicalText();
-      if (leftType instanceof PsiEllipsisType) {
-        canonicalText = ((PsiEllipsisType)leftType).toArrayType().getCanonicalText();
-      }
-      final PsiStatement assignmentFromText = JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
-        .createStatementFromText(canonicalText + " " + uniqueVarName + " = " + lambdaExpression.getText(), lambdaExpression);
-      final PsiLocalVariable localVariable = (PsiLocalVariable)((PsiDeclarationStatement)assignmentFromText).getDeclaredElements()[0];
-      LOG.assertTrue(psiClass != null);
-      PsiType methodReturnType = getReturnType(psiClass, methodSignature);
-      if (methodReturnType != null) {
-        methodReturnType = resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodReturnType));
-        return LambdaHighlightingUtil.checkReturnTypeCompatible((PsiLambdaExpression)localVariable.getInitializer(), methodReturnType) == null;
-      }
     }
     return true;
   }
@@ -253,11 +191,11 @@ public class LambdaUtil {
   }
 
   @Nullable
-  static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
+  public static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
     }
-    if (psiClass != null && psiClass.isInterface()) {
+    if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
       for (HierarchicalMethodSignature signature : visibleSignatures) {
@@ -312,12 +250,6 @@ public class LambdaUtil {
   }
 
   public static boolean dependsOnTypeParams(PsiType type,
-                                            PsiLambdaExpression expr,
-                                            PsiTypeParameter param2Check) {
-    return depends(type, new TypeParamsChecker(expr), param2Check);
-  }
-
-  public static boolean dependsOnTypeParams(PsiType type,
                                             PsiType functionalInterfaceType,
                                             PsiElement lambdaExpression,
                                             PsiTypeParameter... param2Check) {
@@ -325,13 +257,7 @@ public class LambdaUtil {
                                                PsiUtil.resolveClassInType(functionalInterfaceType)), param2Check);
   }
 
-  public static boolean dependsOnTypeParams(PsiType type,
-                                            PsiClass aClass,
-                                            PsiMethod aMethod) {
-    return depends(type, new TypeParamsChecker(aMethod, aClass));
-  }
-
-  static boolean depends(PsiType type, TypeParamsChecker visitor, PsiTypeParameter... param2Check) {
+  public static boolean depends(PsiType type, TypeParamsChecker visitor, PsiTypeParameter... param2Check) {
     if (!visitor.startedInference()) return false;
     final Boolean accept = type.accept(visitor);
     if (param2Check.length > 0) {
@@ -340,83 +266,12 @@ public class LambdaUtil {
     return accept != null && accept.booleanValue();
   }
 
-  public static boolean isFreeFromTypeInferenceArgs(final PsiParameter[] methodParameters,
-                                                    final PsiLambdaExpression lambdaExpression,
-                                                    final PsiExpression expression,
-                                                    final PsiSubstitutor subst,
-                                                    final PsiType functionalInterfaceType,
-                                                    final PsiTypeParameter typeParam) {
-    if (expression instanceof PsiCallExpression && ((PsiCallExpression)expression).getTypeArguments().length > 0) return true;
-    if (expression instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
-      if (classReference != null) {
-        final PsiReferenceParameterList parameterList = classReference.getParameterList();
-        if (parameterList != null) {
-          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-          if (typeParameterElements.length > 0) {
-            if (!(typeParameterElements[0].getType() instanceof PsiDiamondType)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters();
-    if (lambdaParams.length != methodParameters.length) return false;
-    final boolean[] independent = new boolean[]{true};
-    final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(functionalInterfaceType);
-    if (interfaceMethod == null) return false;
-    final TypeParamsChecker paramsChecker = new TypeParamsChecker(lambdaExpression);
-    for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-      subst.substitute(parameter.getType()).accept(paramsChecker);
-    }
-    paramsChecker.myUsedTypeParams.add(typeParam);
-
-    expression.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
-        final PsiExpression thenExpression = expression.getThenExpression();
-        if (thenExpression != null) {
-          thenExpression.accept(this);
-        }
-        final PsiExpression elseExpression = expression.getElseExpression();
-        if (elseExpression != null) {
-          elseExpression.accept(this);
-        }
-      }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        int usedParamIdx = -1;
-        for (int i = 0; i < lambdaParams.length; i++) {
-          PsiParameter param = lambdaParams[i];
-          if (expression.isReferenceTo(param)) {
-            usedParamIdx = i;
-            break;
-          }
-        }
-
-        if (usedParamIdx > -1 && dependsOnTypeParams(subst.substitute(methodParameters[usedParamIdx].getType()), functionalInterfaceType,
-                                                     lambdaExpression, paramsChecker.myUsedTypeParams.toArray(new PsiTypeParameter[paramsChecker.myUsedTypeParams.size()]))) {
-          independent[0] = false;
-        }
-      }
-    });
-    return independent[0];
-  }
-
   @Nullable
   public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute) {
-    return getFunctionalInterfaceType(expression, tryToSubstitute, -1);
-  }
-
-  @Nullable
-  public static PsiType getFunctionalInterfaceType(PsiElement expression, final boolean tryToSubstitute, int paramIdx) {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
-      if (parent instanceof PsiConditionalExpression && 
+      if (parent instanceof PsiConditionalExpression &&
           ((PsiConditionalExpression)parent).getThenExpression() != element &&
           ((PsiConditionalExpression)parent).getElseExpression() != element) break;
       element = parent;
@@ -428,7 +283,13 @@ public class LambdaUtil {
         return ((PsiArrayType)psiType).getComponentType();
       }
     } else if (parent instanceof PsiTypeCastExpression) {
-      return ((PsiTypeCastExpression)parent).getType();
+      final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      if (castType instanceof PsiIntersectionType) {
+        for (PsiType conjunctType : ((PsiIntersectionType)castType).getConjuncts()) {
+          if (getFunctionalInterfaceMethod(conjunctType) != null) return conjunctType;
+        }
+      }
+      return castType;
     }
     else if (parent instanceof PsiVariable) {
       return ((PsiVariable)parent).getType();
@@ -442,18 +303,29 @@ public class LambdaUtil {
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
       if (lambdaIdx > -1) {
 
-        PsiType cachedType = null;
-        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-        final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
-        if (method != null) {
-          final PsiParameter[] parameters = method.first.getParameterList().getParameters();
-          cachedType = lambdaIdx < parameters.length ? method.second.substitute(getNormalizedType(parameters[adjustLambdaIdx(lambdaIdx, method.first, parameters)])) : null;
-          if (!tryToSubstitute) return cachedType;
+        PsiElement gParent = expressionList.getParent();
+
+        if (gParent instanceof PsiAnonymousClass) {
+          gParent = gParent.getParent();
         }
 
-        final PsiElement gParent = expressionList.getParent();
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
+          final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
+          if (properties != null && properties.isApplicabilityCheck()) { //todo simplification
+            final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
+            final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);
+            if (finalLambdaIdx < parameters.length) {
+              return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
+            }
+          }
+          final Map<PsiElement, PsiType> map = ourFunctionTypes.get();
+          if (map != null) {
+            final PsiType type = map.get(expression);
+            if (type != null) {
+              return type;
+            }
+          }
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
@@ -461,17 +333,7 @@ public class LambdaUtil {
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                if (cachedType != null && paramIdx > -1) {
-                  final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(cachedType);
-                  if (interfaceMethod != null) {
-                    final PsiClassType.ClassResolveResult cachedResult = PsiUtil.resolveGenericsClassInType(cachedType);
-                    final PsiType interfaceMethodParameterType = interfaceMethod.getParameterList().getParameters()[paramIdx].getType();
-                    if (!dependsOnTypeParams(cachedResult.getSubstitutor().substitute(interfaceMethodParameterType), cachedType, expression)){
-                      return cachedType;
-                    }
-                  }
-                }
-                return PsiResolveHelper.ourGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
                     return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
@@ -484,23 +346,30 @@ public class LambdaUtil {
       }
     }
     else if (parent instanceof PsiReturnStatement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      if (method != null) {
-        return method.getReturnType();
+      final PsiLambdaExpression gParent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (gParent != null) {
+        return getFunctionalInterfaceTypeByContainingLambda(gParent);
+      } else {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          return method.getReturnType();
+        }
       }
     }
     else if (parent instanceof PsiLambdaExpression) {
-      final PsiType parentInterfaceType = ((PsiLambdaExpression)parent).getFunctionalInterfaceType();
-      if (parentInterfaceType != null) {
-        return getFunctionalInterfaceReturnType(parentInterfaceType);
-      }
+      return getFunctionalInterfaceTypeByContainingLambda((PsiLambdaExpression)parent);
     }
     return null;
   }
 
+  private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
+    final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
+    return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;
+  }
+
   private static int adjustLambdaIdx(int lambdaIdx, PsiMethod resolve, PsiParameter[] parameters) {
     final int finalLambdaIdx;
-    if (((PsiMethod)resolve).isVarArgs() && lambdaIdx >= parameters.length) {
+    if (resolve.isVarArgs() && lambdaIdx >= parameters.length) {
       finalLambdaIdx = parameters.length - 1;
     } else {
       finalLambdaIdx = lambdaIdx;
@@ -514,84 +383,6 @@ public class LambdaUtil {
       return ((PsiEllipsisType)type).getComponentType();
     }
     return type;
-  }
-
-  public static PsiType getLambdaParameterType(PsiParameter param) {
-    final PsiElement paramParent = param.getParent();
-    if (paramParent instanceof PsiParameterList) {
-      final int parameterIndex = ((PsiParameterList)paramParent).getParameterIndex(param);
-      if (parameterIndex > -1) {
-        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
-        if (lambdaExpression != null) {
-
-          final PsiParameterList parameterList = lambdaExpression.getParameterList();
-          PsiType type = getFunctionalInterfaceType(lambdaExpression, true, parameterIndex);
-          if (type == null) {
-            type = getFunctionalInterfaceType(lambdaExpression, false);
-          }
-          if (type instanceof PsiIntersectionType) {
-            final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-            for (PsiType conjunct : conjuncts) {
-              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, conjunct);
-              if (lambdaParameterFromType != null) return lambdaParameterFromType;
-            }
-          } else {
-            final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, type);
-            if (lambdaParameterFromType != null) {
-              return lambdaParameterFromType;
-            }
-          }
-        }
-      }
-    }
-    return new PsiLambdaParameterType(param);
-  }
-
-  private static PsiType getLambdaParameterFromType(int parameterIndex, PsiLambdaExpression lambdaExpression, PsiType conjunct) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(conjunct);
-    if (resolveResult != null) {
-      final PsiMethod method = getFunctionalInterfaceMethod(conjunct);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameterIndex < parameters.length) {
-          final PsiType psiType = getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-          if (!dependsOnTypeParams(psiType, conjunct, lambdaExpression)) {
-            return GenericsUtil.eliminateWildcards(psiType);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public static PsiSubstitutor inferFromReturnType(final PsiTypeParameter[] typeParameters,
-                                                   final PsiType returnType,
-                                                   @Nullable final PsiType interfaceMethodReturnType,
-                                                   PsiSubstitutor psiSubstitutor,
-                                                   final LanguageLevel languageLevel,
-                                                   final Project project) {
-    if (interfaceMethodReturnType == null) return psiSubstitutor;
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      final PsiType constraint = resolveHelper.getSubstitutionForTypeParameter(typeParameter, returnType, interfaceMethodReturnType, false, languageLevel);
-      if (constraint != PsiType.NULL) {
-        PsiType inferredType = null;
-        final PsiClassType[] bounds = typeParameter.getExtendsListTypes();
-        for (PsiClassType classTypeBound : bounds) {
-          if (TypeConversionUtil.isAssignable(classTypeBound, constraint)) {
-            inferredType = constraint;
-            break;
-          }
-        }
-        if (bounds.length == 0) {
-          inferredType = constraint;
-        }
-        if (inferredType != null) {
-          psiSubstitutor = psiSubstitutor.put(typeParameter, inferredType);
-        }
-      }
-    }
-    return psiSubstitutor;
   }
 
   public static boolean notInferredType(PsiType typeByExpression) {
@@ -636,148 +427,9 @@ public class LambdaUtil {
     return result;
   }
 
-  public static void checkMoreSpecificReturnType(List<CandidateInfo> conflicts, PsiType[] actualParameterTypes) {
-    final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
-    for (int i = 1; i < newConflictsArray.length; i++) {
-      final CandidateInfo method = newConflictsArray[i];
-      for (int j = 0; j < i; j++) {
-        final CandidateInfo conflict = newConflictsArray[j];
-        assert conflict != method;
-        int moreSpecific = 0;
-        final PsiMethod methodElement = (PsiMethod)method.getElement();
-        final PsiMethod conflictElement = (PsiMethod)conflict.getElement();
-        if (methodElement.isVarArgs() == conflictElement.isVarArgs()) {
-          for (int functionalInterfaceIdx = 0; functionalInterfaceIdx < actualParameterTypes.length; functionalInterfaceIdx++) {
-            final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
-            final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
-            if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
-              if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
-                int moreSpecific1 = isMoreSpecific(interfaceReturnType, interfaceReturnType1, actualParameterTypes[functionalInterfaceIdx]);
-                if (moreSpecific < 0 && moreSpecific1 > 0 || moreSpecific > 0 && moreSpecific1 < 0) {
-                  moreSpecific = 0;
-                  break;
-                }
-                moreSpecific = moreSpecific1;
-              }
-            } else if (interfaceReturnType != null && interfaceReturnType1 != null) {
-              moreSpecific = 0;
-              break;
-            }
-          }
-          if (moreSpecific > 0 && conflictElement.getParameterList().getParametersCount() <= actualParameterTypes.length) {
-            conflicts.remove(method);
-            break;
-          }
-          else if (moreSpecific < 0 && methodElement.getParameterList().getParametersCount() <= actualParameterTypes.length) {
-            conflicts.remove(conflict);
-          }
-        }
-      }
-    }
-  }
-
-  enum TypeKind {
-    PRIMITIVE, REFERENCE, NONE_DETERMINED
-  }
-  
-  private static int isMoreSpecific(PsiType returnType, PsiType returnType1, PsiType lambdaType) {
-    if (returnType == PsiType.VOID || returnType1 == PsiType.VOID) return 0;
-    TypeKind typeKind = TypeKind.PRIMITIVE;
-    if (lambdaType instanceof PsiLambdaExpressionType) {
-      typeKind = areLambdaReturnExpressionsPrimitive((PsiLambdaExpressionType)lambdaType);
-    } else if (lambdaType instanceof PsiMethodReferenceType) {
-      final PsiElement referencedElement = ((PsiMethodReferenceType)lambdaType).getExpression().resolve();
-      if (referencedElement instanceof PsiMethod && !(((PsiMethod)referencedElement).getReturnType() instanceof PsiPrimitiveType)) {
-        typeKind = TypeKind.REFERENCE;
-      }
-    }
-    if (typeKind != TypeKind.NONE_DETERMINED) {
-      if (returnType instanceof PsiPrimitiveType) {
-        final int moreSpecific = typeKind == TypeKind.PRIMITIVE ? 1 : -1;
-        if (!(returnType1 instanceof PsiPrimitiveType)) {
-          return -moreSpecific;
-        } else {
-          return TypeConversionUtil.isAssignable(returnType, returnType1) ? moreSpecific : -moreSpecific;
-        }
-      }
-      if (returnType1 instanceof PsiPrimitiveType) {
-        return typeKind == TypeKind.PRIMITIVE ? 1 : -1;
-      }
-    }
-
-    final PsiClassType.ClassResolveResult r = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType));
-    final PsiClass rClass = r.getElement();
-    final PsiClassType.ClassResolveResult r1 = PsiUtil.resolveGenericsClassInType(GenericsUtil.eliminateWildcards(returnType1));
-    final PsiClass rClass1 = r1.getElement();
-    if (rClass != null && rClass1 != null) {
-      if (rClass == rClass1) {
-        int moreSpecific = 0;
-        for (PsiTypeParameter parameter : rClass.getTypeParameters()) {
-          final PsiType t = r.getSubstitutor().substituteWithBoundsPromotion(parameter);
-          final PsiType t1 = r1.getSubstitutor().substituteWithBoundsPromotion(parameter);
-          if (t == null || t1 == null) continue;
-          if (t1.isAssignableFrom(t) && !GenericsUtil.eliminateWildcards(t1).equals(t)) {
-            if (moreSpecific == 1) {
-              return 0;
-            }
-            moreSpecific = -1;
-          }
-          else if (t.isAssignableFrom(t1) && !GenericsUtil.eliminateWildcards(t).equals(t1)) {
-            if (moreSpecific == -1) {
-              return 0;
-            }
-            moreSpecific = 1;
-          }
-          else {
-            return 0;
-          }
-        }
-        return moreSpecific;
-      }
-      else if (rClass1.isInheritor(rClass, true)) {
-        return 1;
-      }
-      else if (rClass.isInheritor(rClass1, true)) {
-        return -1;
-      }
-    }
-    return 0;
-  }
-
-  private static TypeKind areLambdaReturnExpressionsPrimitive(PsiLambdaExpressionType lambdaType) {
-    final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaType.getExpression());
-    TypeKind typeKind = TypeKind.NONE_DETERMINED;
-    for (PsiExpression expression : returnExpressions) {
-      final PsiType returnExprType = expression.getType();
-      if (returnExprType instanceof PsiPrimitiveType) {
-        if (typeKind == TypeKind.REFERENCE) {
-          typeKind = TypeKind.NONE_DETERMINED;
-          break;
-        }
-        typeKind = TypeKind.PRIMITIVE;
-      } else {
-        if (typeKind == TypeKind.PRIMITIVE) {
-          typeKind = TypeKind.NONE_DETERMINED;
-          break;
-        }
-        typeKind = TypeKind.REFERENCE;
-      }
-    }
-    return typeKind;
-  }
-
   @Nullable
-  private static PsiType getReturnType(int functionalTypeIdx, CandidateInfo method) {
-    final PsiParameter[] methodParameters = ((PsiMethod)method.getElement()).getParameterList().getParameters();
-    if (methodParameters.length == 0) return null;
-    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
-    final PsiType functionalInterfaceType = method.getSubstitutor().substitute(param.getType());
-    return getFunctionalInterfaceReturnType(functionalInterfaceType);
-  }
-
-  @Nullable
-  public static String checkFunctionalInterface(PsiAnnotation annotation) {
-    if (PsiUtil.isLanguageLevel8OrHigher(annotation) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+  public static String checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
         final PsiElement parent = ((PsiModifierList)owner).getParent();
@@ -789,19 +441,24 @@ public class LambdaUtil {
     return null;
   }
 
-  static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
+  public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method,
+                                                                   @NotNull PsiReferenceExpression methodReferenceExpression,
+                                                                   @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+        return qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true))||
+               qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass;
+      }
+    }
+    return true;
+  }
+
+  public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
     private PsiMethod myMethod;
     private final PsiClass myClass;
-    private final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<PsiTypeParameter>();
-
-    private TypeParamsChecker(PsiMethod method, PsiClass aClass) {
-      myMethod = method;
-      myClass = aClass;
-    }
-
-    public TypeParamsChecker(PsiElement expression) {
-      this(expression, PsiUtil.resolveGenericsClassInType(getFunctionalInterfaceType(expression, false)).getElement());
-    }
+    public final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<PsiTypeParameter>();
 
     public TypeParamsChecker(PsiElement expression, PsiClass aClass) {
       myClass = aClass;
@@ -812,14 +469,8 @@ public class LambdaUtil {
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCall) {
-          final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          if (map != null) {
-            final Pair<PsiMethod, PsiSubstitutor> pair = map.get(parent);
-            myMethod = pair != null ? pair.first : null;
-          }
-          else {
-            myMethod = null;
-          }
+          final MethodCandidateInfo.CurrentCandidateProperties pair = MethodCandidateInfo.getCurrentMethod(parent);
+          myMethod = pair != null ? pair.getMethod() : null;
           if (myMethod == null) {
             myMethod = ((PsiCall)gParent).resolveMethod();
           }

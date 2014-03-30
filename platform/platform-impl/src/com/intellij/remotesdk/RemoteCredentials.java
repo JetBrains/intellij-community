@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,10 @@
  */
 package com.intellij.remotesdk;
 
-import com.intellij.util.xmlb.annotations.Transient;
-
 /**
+ * @deprecated Remove in IDEA 14
+ * 
  * @author traff
  */
-public interface RemoteCredentials {
-  String getHost();
-
-  int getPort();
-
-  @Transient
-  String getUserName();
-
-  String getPassword();
-
-  @Transient
-  String getPassphrase();
-
-  boolean isUseKeyPair();
-
-  boolean isAnonymous();
-
-  String getPrivateKeyFile();
-
-  boolean isStorePassword();
-
-  boolean isStorePassphrase();
-
-  String getKnownHostsFile();
+public interface RemoteCredentials extends com.intellij.remote.RemoteCredentials {
 }

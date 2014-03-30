@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testExtends10() throws Exception { doTest(false); }
   public void testExtends11() throws Exception { doTest(false); }
   public void testExtends12() throws Exception { doTest(false); }
+  public void testExtends13() throws Exception { doTest(false); }
   public void testSynchronized1() throws Exception { doTest(false); }
 
   public void testSynchronized2() throws Exception {
@@ -73,23 +74,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope2() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract"); }
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
-  public void testMethodScope5() throws Exception { doTest(true); }
-  public void testExtraBracketAfterFinally1() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
-  }
-  public void testExtraBracketAfterFinally2() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
-  }
+  public void testMethodScope5() throws Exception { doTest(false); }
+  public void testExtraBracketAfterFinally1() throws Exception { doTest(false); }
+  public void testExtraBracketAfterFinally2() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters2() throws Exception { doTest(2, "extends", "super"); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
-  public void testTrueInVariableDeclaration() throws Exception { doTest(true); }
-  public void testNullInIf() throws Exception { doTest(true); }
-  public void testNullInReturn() throws Exception { doTest(true); }
+  public void testTrueInVariableDeclaration() throws Exception { doTest(false); }
+  public void testNullInIf() throws Exception { doTest(false); }
+  public void testNullInReturn() throws Exception { doTest(false); }
   public void testExtendsInMethodParameters() throws Exception { doTest(false); }
   public void testInstanceOf1() throws Exception { doTest(false); }
   public void testInstanceOf2() throws Exception { doTest(false); }
@@ -97,13 +90,17 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testCatchFinally() throws Exception { doTest(2, "catch", "finally"); }
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
+  public void testSuper3() throws Exception { doTest(true); }
+  public void testSuper4() throws Exception { doTest(0, "class"); }
   public void testContinue() throws Exception { doTest(false); }
-  public void testThrowsOnSeparateLine() throws Exception { doTest(true); }
+  public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
   public void testDefaultInAnno() throws Exception { doTest(false); }
-  public void testNullInMethodCall() throws Exception { doTest(true); }
+  public void testNullInMethodCall() throws Exception { doTest(false); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(1, "new"); }
   public void testSpaceAfterInstanceof() throws Exception { doTest(false); }
+  public void testInstanceofAfterUnresolved() throws Exception { doTest(1, "instanceof"); }
+  public void testInstanceofAfterStatementStart() throws Exception { doTest(1, "instanceof"); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
@@ -111,6 +108,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno2() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() throws Exception { doTest(3, "final", "float", "class"); }
   public void testFinalInTryWithResources() throws Exception { doTest(1, "final", "float", "class"); }
+  public void testNoFinalAfterTryBody() throws Exception { doTest(1, "final", "finally"); }
   public void testClassInMethod() throws Exception { doTest(2, "class", "char"); }
   public void testIntInClassArray() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray2() throws Throwable { doTest(2, "int", "char", "final"); }

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -80,6 +81,12 @@ public class ConsoleViewContentType {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myTextAttributesKey);
     }
     return myTextAttributes;
+  }
+
+  public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key key, @NotNull TextAttributesKey attributesKey) {
+    ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
+    registerNewConsoleViewType(key, type);
+    return type;
   }
 
   public static synchronized void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {

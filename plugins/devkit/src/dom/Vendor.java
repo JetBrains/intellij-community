@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ public interface Vendor extends DomElement {
 	 * @return the value of the simple content.
 	 */
 	@NotNull
+        @NoSpellchecking
 	String getValue();
 	/**
 	 * Sets the value of the simple content.
@@ -52,6 +54,7 @@ public interface Vendor extends DomElement {
 	 * @return the value of the email child.
 	 */
 	@NotNull
+        @NoSpellchecking
 	GenericAttributeValue<String> getEmail();
 
 
@@ -61,6 +64,7 @@ public interface Vendor extends DomElement {
 	 * @return the value of the url child.
 	 */
 	@NotNull
+        @NoSpellchecking
 	GenericAttributeValue<String> getUrl();
 
 
@@ -70,6 +74,7 @@ public interface Vendor extends DomElement {
 	 * @return the value of the logo child.
 	 */
 	@NotNull
+        @NoSpellchecking
 	GenericAttributeValue<String> getLogo();
 
 

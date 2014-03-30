@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -40,16 +39,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.IntentionFilterOwner;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
@@ -74,11 +76,67 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private volatile boolean myShowBulb;
   private volatile boolean myHasToRecreate;
 
+  @NotNull
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
+    final int offset = editor.getCaretModel().getOffset();
+    final Project project = file.getProject();
+
+    final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+        return true;
+      }
+    });
+    return result;
+  }
+
+  private static void addAvailableActionsForGroups(@NotNull HighlightInfo info,
+                                                   @NotNull Editor editor,
+                                                   @NotNull PsiFile file,
+                                                   @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
+                                                   int group,
+                                                   int offset) {
+    if (info.quickFixActionMarkers == null) return;
+    if (group != -1 && group != info.getGroup()) return;
+    Editor injectedEditor = null;
+    PsiFile injectedFile = null;
+    for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> pair : info.quickFixActionMarkers) {
+      HighlightInfo.IntentionActionDescriptor actionInGroup = pair.first;
+      RangeMarker range = pair.second;
+      if (!range.isValid()) continue;
+      int start = range.getStartOffset();
+      int end = range.getEndOffset();
+      final Project project = file.getProject();
+      if (start > offset || offset > end) {
+        continue;
+      }
+      Editor editorToUse;
+      PsiFile fileToUse;
+      if (info.isFromInjection()) {
+        if (injectedEditor == null) {
+          injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+          injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+        }
+        editorToUse = injectedEditor;
+        fileToUse = injectedFile;
+      }
+      else {
+        editorToUse = editor;
+        fileToUse = file;
+      }
+      if (actionInGroup.getAction().isAvailable(project, editorToUse, fileToUse)) {
+        outList.add(actionInGroup);
+      }
+    }
+  }
+
   public static class IntentionsInfo {
-    public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
+    public final List<HighlightInfo.IntentionActionDescriptor> intentionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> errorFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
 
     public void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
       filter(intentionsToShow, actionsFilter);
@@ -114,7 +172,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     myEditor = editor;
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    
+
     myFile = documentManager.getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
@@ -163,16 +221,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (myIntentionsInfo.isEmpty()) {
       return;
     }
-    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty();
-    if (!myShowBulb) {
-      for (HighlightInfo.IntentionActionDescriptor descriptor : ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow)) {
-        final IntentionAction action = descriptor.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
-          myShowBulb = true;
-          break;
+    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() ||
+      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow), new Condition<HighlightInfo.IntentionActionDescriptor>() {
+        @Override
+        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
         }
-      }
-    }
+      });
   }
 
   private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
@@ -202,7 +257,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     int offset = hostEditor.getCaretModel().getOffset();
     Project project = hostFile.getProject();
 
-    List<HighlightInfo.IntentionActionDescriptor> fixes = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> fixes = getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     final Document hostDocument = hostEditor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
@@ -234,42 +289,43 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     final int line = hostDocument.getLineNumber(offset);
-    DaemonCodeAnalyzerImpl.processHighlights(hostDocument, project, null,
-                                             hostDocument.getLineStartOffset(line),
-                                             hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(HighlightInfo info) {
-          final GutterIconRenderer renderer = info.getGutterIconRenderer();
-          if (renderer == null) {
-            return true;
-          }
-          final AnAction action = renderer.getClickAction();
-          if (action == null) {
-            return true;
-          }
-          final String text = renderer.getTooltipText();
-          if (text == null) {
-            return true;
-          }
-          final IntentionAction actionAdapter = new AbstractIntentionAction() {
-            @Override
-            public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-              final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-              action.actionPerformed(
-                new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
-                                  ActionManager.getInstance(), 0));
-            }
-
-            @Override
-            @NotNull
-            public String getText() {
-              return text;
-            }
-          };
-          intentions.guttersToShow.add(new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+    DaemonCodeAnalyzerEx.processHighlights(hostDocument, project, null,
+                                           hostDocument.getLineStartOffset(line),
+                                           hostDocument.getLineEndOffset(line), new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        final GutterIconRenderer renderer = (GutterIconRenderer)info.getGutterIconRenderer();
+        if (renderer == null) {
           return true;
         }
-      });
+        final AnAction action = renderer.getClickAction();
+        if (action == null) {
+          return true;
+        }
+        final String text = renderer.getTooltipText();
+        if (text == null) {
+          return true;
+        }
+        final IntentionAction actionAdapter = new AbstractIntentionAction() {
+          @Override
+          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+            action.actionPerformed(
+              new AnActionEvent(relativePoint.toMouseEvent(), DataManager.getInstance().getDataContext(), text, new Presentation(),
+                                ActionManager.getInstance(), 0));
+          }
+
+          @Override
+          @NotNull
+          public String getText() {
+            return text;
+          }
+        };
+        intentions.guttersToShow.add(
+          new HighlightInfo.IntentionActionDescriptor(actionAdapter, Collections.<IntentionAction>emptyList(), text, renderer.getIcon()));
+        return true;
+      }
+    });
   }
 }
 

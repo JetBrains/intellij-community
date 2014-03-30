@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,14 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -34,6 +32,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,9 +48,11 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     final PsiFile containingFile = psiElement.getContainingFile();
-    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
+    if (containingFile == null) return null;
 
-    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof JspFile) {
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
+
+    if (!(topLevelFile instanceof PsiJavaFile) || topLevelFile instanceof ServerPageFile) {
       return null;
     }
     PsiElement containingClass = topLevelFile == containingFile ? psiElement : InjectedLanguageManager
@@ -78,7 +79,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
     else {
       // skip JspClass synthetic classes.
-      if (containingClass.getParent() instanceof PsiFile && JspPsiUtil.isInJspFile(containingClass)) {
+      if (containingClass.getParent() instanceof PsiFile && FileTypeUtils.isInServerPageFile(containingClass)) {
         containingClass = null;
       }
     }
@@ -179,15 +180,15 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getPsiClass());
+      if (CommonDataKeys.PSI_ELEMENT == key) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiClass());
       }
       if (UsageView.USAGE_INFO_KEY == key) {
         PsiClass psiClass = getPsiClass();

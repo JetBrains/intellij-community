@@ -18,10 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -33,13 +30,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
 public class MasterDetailPopupBuilder implements MasterController {
 
   private static final Color BORDER_COLOR = Gray._135;
-  private Project myProject;
+  private final Project myProject;
   private ActionGroup myActions;
   private Delegate myDelegate;
   private boolean myCloseOnEnter;
@@ -116,8 +115,10 @@ public class MasterDetailPopupBuilder implements MasterController {
 
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+          @Override
           public void run() {
             Object[] values = getSelectedItems();
             if (values.length == 1) {
@@ -185,7 +186,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         });
       }
       else {
-        builder.setCommandButton(new InplaceButton("Close", AllIcons.Actions.CloseNew, actionListener));
+        builder.setCommandButton(new InplaceButton(new IconButton("Close", AllIcons.Actions.CloseNew, AllIcons.Actions.CloseNewHovered), actionListener));
       }
     }
 
@@ -201,6 +202,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       setMayBeParent(true).
       setDimensionServiceKey(myDimensionServiceKey).
       setFilteringEnabled(new Function<Object, String>() {
+        @Override
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }
@@ -282,8 +284,9 @@ public class MasterDetailPopupBuilder implements MasterController {
     return this;
   }
 
-  public void setDoneRunnable(Runnable doneRunnable) {
+  public MasterDetailPopupBuilder setDoneRunnable(Runnable doneRunnable) {
     myDoneRunnable = doneRunnable;
+    return this;
   }
 
   public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
@@ -347,21 +350,22 @@ public class MasterDetailPopupBuilder implements MasterController {
     return this;
   }
 
-  public MasterDetailPopupBuilder setTree(final JTree tree) {
-    setChooser(tree);
-    myDetailController.setTree(tree);
-    return this;
-  }
-
   public MasterDetailPopupBuilder setList(final JBList list) {
     setChooser(list);
     myDetailController.setList(list);
+    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent event) {
+        myDetailController.updateDetailView();
+      }
+    });
     return this;
   }
 
   private void setChooser(JComponent list) {
     myChooserComponent = list;
     list.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           removeSelectedItems(myProject);
@@ -421,7 +425,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   public static class ListItemRenderer extends JPanel implements ListCellRenderer {
     private final Project myProject;
     private final ColoredListCellRenderer myRenderer;
-    private Delegate myDelegate;
+    private final Delegate myDelegate;
 
     private ListItemRenderer(Delegate delegate, Project project) {
       super(new BorderLayout());
@@ -438,6 +442,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       add(myRenderer, BorderLayout.CENTER);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value instanceof SplitterItem) {
         String label = ((SplitterItem)value).getText();
@@ -465,7 +470,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     @Override
     protected void addCenterComponentToContentPane(JPanel contentPane, JComponent component) {
       if (myAddDetailViewToEast) {
-        JBSplitter splitPane = new JBSplitter(false, 0.3f);
+        JBSplitter splitPane = new JBSplitter(0.3f);
         splitPane.setSplitterProportionKey(getSplitterProportionKey());
         splitPane.setFirstComponent(component);
         splitPane.setSecondComponent((JComponent)myDetailView);

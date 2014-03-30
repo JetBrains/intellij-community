@@ -15,36 +15,21 @@
  */
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
  * @since 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
-  private JavaSdkVersion myTestVersion = JavaSdkVersion.JDK_1_7;
-
-  @TestOnly
-  public void setTestVersion(@Nullable JavaSdkVersion testVersion, Disposable parentDisposable) {
-    myTestVersion = testVersion;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myTestVersion = JavaSdkVersion.JDK_1_7;
-      }
-    });
+  @Override
+  public boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
+    return JavaSdkVersionUtil.isAtLeast(element, version);
   }
 
   @Override
-  public boolean isAtLeast(PsiElement element, JavaSdkVersion version) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myTestVersion != null && myTestVersion.isAtLeast(version);
-    }
-    return JavaSdkVersionUtil.isAtLeast(element, version);
+  public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
+    return JavaSdkVersionUtil.getJavaSdkVersion(element);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ public class ObjectIntCache<K> implements Iterable {
 
   protected int myTop;
   protected int myBack;
-  final protected CacheEntry[] myCache;
-  final protected int[] myHashTable;
+  protected final CacheEntry[] myCache;
+  protected final int[] myHashTable;
   protected int myHashTableSize;
   protected int myCount;
   protected int myFirstFree;
 
-  final protected EventDispatcher<DeletedPairsListener> myEventDispatcher = EventDispatcher.create(DeletedPairsListener.class);
+  protected final EventDispatcher<DeletedPairsListener> myEventDispatcher = EventDispatcher.create(DeletedPairsListener.class);
 
   private static final int[] tableSizes =
     new int[]{5, 11, 23, 47, 101, 199, 397, 797, 1597, 3191, 6397, 12799, 25589, 51199,
@@ -125,7 +125,7 @@ public class ObjectIntCache<K> implements Iterable {
 
   // Some AbstractMap functions finished
 
-  final public void cacheObject(K key, int x) {
+  public final void cacheObject(K key, int x) {
     int index = myFirstFree;
     if (myCount < myCache.length - 1) {
       if (index == 0) {
@@ -151,7 +151,7 @@ public class ObjectIntCache<K> implements Iterable {
     add2Top(index);
   }
 
-  final public int tryKey(K key) {
+  public final int tryKey(K key) {
     ++myAttempts;
     int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -165,7 +165,7 @@ public class ObjectIntCache<K> implements Iterable {
     return myCache[index].value;
   }
 
-  final public boolean isCached(K key) {
+  public final boolean isCached(K key) {
     return searchForCacheEntry(key) != 0;
   }
 
@@ -244,6 +244,7 @@ public class ObjectIntCache<K> implements Iterable {
 
   // start of Iterable implementation
 
+  @Override
   public Iterator iterator() {
     return new ObjectCacheIterator<K>(this);
   }
@@ -258,14 +259,17 @@ public class ObjectIntCache<K> implements Iterable {
       cache.myCache[0].next = cache.myTop;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentEntry = myCache.myCache[myCurrentEntry].next) != 0;
     }
 
+    @Override
     public Object next() {
       return myCache.myCache[myCurrentEntry].value;
     }
 
+    @Override
     public void remove() {
       myCache.remove((K)myCache.myCache[myCurrentEntry].key);
     }

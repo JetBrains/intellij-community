@@ -1,78 +1,88 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.io;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.UIUtil;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import org.apache.sanselan.ImageFormat;
+import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.ide.HttpRequestHandler;
-import org.jetbrains.ide.WebServerManager;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import java.io.IOException;
 
 @ChannelHandler.Sharable
-final class DelegatingHttpRequestHandler extends SimpleChannelUpstreamHandler {
+final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
+  private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = AttributeKey.valueOf("DelegatingHttpRequestHandler.handler");
+
   @Override
-  public void messageReceived(ChannelHandlerContext context, MessageEvent event) throws Exception {
-    if (!(event.getMessage() instanceof HttpRequest)) {
-      context.sendUpstream(event);
-      return;
+  protected boolean process(ChannelHandlerContext context, FullHttpRequest request, QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
+    Attribute<HttpRequestHandler> prevHandlerAttribute = context.attr(PREV_HANDLER);
+    HttpRequestHandler connectedHandler = prevHandlerAttribute.get();
+    if (connectedHandler != null) {
+      if (connectedHandler.isSupported(request) && connectedHandler.process(urlDecoder, request, context)) {
+        return true;
+      }
+      // prev cached connectedHandler is not suitable for this request, so, let's find it again
+      prevHandlerAttribute.set(null);
     }
 
-    HttpRequest request = (HttpRequest)event.getMessage();
-    QueryStringDecoder urlDecoder = new QueryStringDecoder(request.getUri());
-    HttpRequestHandler connectedHandler = (HttpRequestHandler)context.getAttachment();
-    if (connectedHandler == null) {
-      if (urlDecoder.getPath().equals("/favicon.ico")) {
-        Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-        if (icon != null) {
-          //noinspection UndesirableClassUsage
-          BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-          icon.paintIcon(null, image.getGraphics(), 0, 0);
-          byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
-          Responses.send(FileResponses.createResponse(urlDecoder.getPath()), icoBytes, request, context);
-          return;
+    for (HttpRequestHandler handler : HttpRequestHandler.EP_NAME.getExtensions()) {
+      try {
+        if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
+          prevHandlerAttribute.set(handler);
+          return true;
         }
       }
-      else if (urlDecoder.getPath().equals(WebServer.START_TIME_PATH)) {
-        Responses.send(WebServer.getApplicationStartTime(), request, context);
-        return;
+      catch (Throwable e) {
+        BuiltInServer.LOG.error(e);
       }
+    }
 
-      for (HttpRequestHandler handler : WebServerManager.EP_NAME.getExtensions()) {
-        try {
-          if (handler.isSupported(request) && handler.process(urlDecoder, request, context)) {
-            if (context.getAttachment() == null) {
-              context.setAttachment(handler);
-            }
-            return;
-          }
-        }
-        catch (Throwable e) {
-          WebServer.LOG.error(e);
-        }
+    if (urlDecoder.path().equals("/favicon.ico")) {
+      Icon icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      if (icon != null) {
+        BufferedImage image = UIUtil.createImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        icon.paintIcon(null, image.getGraphics(), 0, 0);
+        byte[] icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null);
+        HttpResponse response = Responses.response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes));
+        Responses.addNoCache(response);
+        Responses.send(response, context.channel(), request);
+        return true;
       }
     }
-    else if (connectedHandler.isSupported(request)) {
-      connectedHandler.process(urlDecoder, request, context);
-      return;
-    }
-    Responses.sendError(request, context, NOT_FOUND);
+
+    return false;
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent event) throws Exception {
-    try {
-      WebServer.LOG.error(event.getCause());
-    }
-    finally {
-      context.setAttachment(null);
-      event.getChannel().close();
-    }
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
+    super.exceptionCaught(context, cause);
+
+    context.attr(PREV_HANDLER).remove();
   }
 }

@@ -65,13 +65,13 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
 
   public void reset(final SvnConfiguration configuration) {
     super.reset(configuration);
-    myDryRunCheckbox.setSelected(configuration.MERGE_DRY_RUN);
-    myUseAncestry.setSelected(configuration.MERGE_DIFF_USE_ANCESTRY);
+    myDryRunCheckbox.setSelected(configuration.isMergeDryRun());
+    myUseAncestry.setSelected(configuration.isMergeDiffUseAncestry());
   }
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
     super.apply(configuration);
-    configuration.MERGE_DRY_RUN = myDryRunCheckbox.isSelected();
-    configuration.MERGE_DIFF_USE_ANCESTRY = myUseAncestry.isSelected();
+    configuration.setMergeDryRun(myDryRunCheckbox.isSelected());
+    configuration.setMergeDiffUseAncestry(myUseAncestry.isSelected());
   }
 
   protected JComponent getPanel() {

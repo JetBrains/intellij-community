@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -34,49 +33,54 @@ import java.io.File;
 import java.io.IOException;
 
 public class FileContent extends DiffContent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.FileContent");
   @NotNull private final VirtualFile myFile;
   private Document myDocument;
   private final Project myProject;
-  private final FileDocumentManager myDocumentManager;
-  @Nullable  private FileType myType;
+  @Nullable private final FileType myType;
 
   public FileContent(Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
-    myDocumentManager = FileDocumentManager.getInstance();
+    myType = detectType(file);
   }
 
+  @Override
   public Document getDocument() {
-    if (myDocument == null && DiffContentUtil.isTextFile(myFile))
+    if (myDocument == null && DiffContentUtil.isTextFile(myFile)) {
       myDocument = FileDocumentManager.getInstance().getDocument(myFile);
+    }
     return myDocument;
   }
 
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return new OpenFileDescriptor(myProject, myFile, offset);
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
-  @Nullable 
+  @Override
+  @Nullable
   public FileType getContentType() {
     FileType type = myFile.getFileType();
     return isUnknown(type) ? myType : type;
   }
 
+  @Override
   public byte[] getBytes() throws IOException {
     if (myFile.isDirectory()) return null;
     return myFile.contentsToByteArray();
   }
 
+  @Override
   public boolean isBinary() {
     if (myFile.isDirectory()) return false;
     if (myType != null && !myType.isBinary()) {
-      return false;                                      
+      return false;
     }
     return myFile.getFileType().isBinary();
   }
@@ -93,22 +97,20 @@ public class FileContent extends DiffContent {
       file = lfs.refreshAndFindFileByIoFile(tempFile);
     }
     if (file != null) {
-      final FileContent fileContent = new FileContent(project, file);
-      fileContent.myType = detectType(file);
-      return fileContent;
+      return new FileContent(project, file);
     }
     throw new IOException("Can not create temp file for revision content");
   }
 
-  @Nullable  
+  @Nullable
   private static FileType detectType(@NotNull VirtualFile file) {
     FileType type = FileTypeManager.getInstance().getFileTypeByFile(file);
     if (isUnknown(type)) {
       type = FileTypeManager.getInstance().detectFileTypeFromContent(file);
     }
-    // the type is left null intentionally: according to the contract of #getContentType, 
+    // the type is left null intentionally: according to the contract of #getContentType,
     // if file type is null it may be taken from another diff content
-    return isUnknown(type) ? null : type;   
+    return isUnknown(type) ? null : type;
   }
 
   private static boolean isUnknown(@NotNull FileType type) {
@@ -118,7 +120,7 @@ public class FileContent extends DiffContent {
   @NotNull
   @Override
   public LineSeparator getLineSeparator() {
-    return LineSeparator.fromString(myDocumentManager.getLineSeparator(myFile, myProject));
+    return LineSeparator.fromString(FileDocumentManager.getInstance().getLineSeparator(myFile, myProject));
   }
 
 }

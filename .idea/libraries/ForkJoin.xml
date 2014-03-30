@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="ForkJoin">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jsr166e.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/jsr166e_src.jar!/" />
+    </SOURCES>
+  </library>
+</component>

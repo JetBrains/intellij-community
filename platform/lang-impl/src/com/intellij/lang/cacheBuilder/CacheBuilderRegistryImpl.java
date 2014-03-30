@@ -30,10 +30,12 @@ import java.util.Map;
 public class CacheBuilderRegistryImpl extends CacheBuilderRegistry {
   private final Map<FileType, WordsScanner> myMap = new HashMap<FileType, WordsScanner>();
 
+  @Override
   public void registerCacheBuilder(@NotNull FileType fileType, WordsScanner cacheBuilder) {
     myMap.put(fileType, cacheBuilder);
   }
 
+  @Override
   @Nullable
   public WordsScanner getCacheBuilder(@NotNull FileType fileType) {
     final WordsScanner scanner = myMap.get(fileType);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,15 @@ public abstract class SoftFactoryMap<T,V> {
 
   public final V get(T key) {
     final SoftReference<V> reference = myMap.get(key);
-    if (reference != null) {
-      final V v = reference.get();
-      if (v != null) {
-        return v == NULL ? null : v;
-      }
+    final V v = com.intellij.reference.SoftReference.dereference(reference);
+    if (v != null) {
+      return v == NULL ? null : v;
     }
 
     final V value = create(key);
     SoftReference<V> valueRef = new SoftReference<V>(value == null ? (V)NULL : value);
     SoftReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
-    V prev = prevRef == null ? null : prevRef.get();
+    V prev = com.intellij.reference.SoftReference.dereference(prevRef);
     return prev == null || prev == NULL ? value : prev;
   }
 

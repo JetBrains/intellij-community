@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -35,6 +36,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
+import icons.AntIcons;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -95,7 +97,7 @@ public class AntUIUtil {
   }
 
   public static void customizeAnt(AbstractProperty.AbstractPropertyContainer antProperties, SimpleColoredComponent component) {
-    component.setIcon(AllIcons.Ant.AntInstallation);
+    component.setIcon(AntIcons.AntInstallation);
     String name = AntInstallation.NAME.get(antProperties);
     component.append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     String versionString = AntInstallation.VERSION.get(antProperties);
@@ -177,7 +179,10 @@ public class AntUIUtil {
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
           setIcon(AllIcons.General.Jdk);
-          append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName), selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
+                 selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+                 ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
+                 : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else {
           setIcon(PlatformIcons.INVALID_ENTRY_ICON);

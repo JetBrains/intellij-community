@@ -38,7 +38,7 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
@@ -72,7 +72,11 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         if (usage instanceof CollidingClassImportUsageInfo) {
           ((CollidingClassImportUsageInfo)usage).getImportStatement().delete();
         } else if (usage instanceof MemberHidesOuterMemberUsageInfo) {
-          hidesOut.add((MemberHidesOuterMemberUsageInfo)usage);
+          final PsiElement usageElement = usage.getElement();
+          final PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)usageElement;
+          if (collidingRef != null) {
+            hidesOut.add(new MemberHidesOuterMemberUsageInfo(usageElement, (PsiClass)collidingRef.resolve()));
+          }
         }
         else {
           postponedCollisions.add(usage);
@@ -105,13 +109,25 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       collision.resolveCollision();
     }
 
-    /*for (MemberHidesOuterMemberUsageInfo usage : hidesOut) {
+    for (MemberHidesOuterMemberUsageInfo usage : hidesOut) {
       PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)usage.getElement();
-      PsiReferenceExpression ref = RenameJavaMemberProcessor.createQualifiedMemberReference(aClass, collidingRef);
-      collidingRef.replace(ref);
-    }*/
-
-
+      PsiMember member = (PsiMember)usage.getReferencedElement();
+      if (collidingRef != null && collidingRef.isValid() && member != null && member.isValid()) {
+        final PsiManager manager = member.getManager();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(member.getProject());
+        final String name = member.getName();
+        final PsiClass containingClass = member.getContainingClass();
+        if (name != null && containingClass != null) {
+          if (manager.areElementsEquivalent(factory.createReferenceFromText(name, collidingRef).resolve(), member)) continue;
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText("A." + name, collidingRef);
+          final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)ref.getQualifier();
+          LOG.assertTrue(qualifier != null);
+          final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(containingClass);
+          qualifier.replace(classReference);
+          collidingRef.replace(ref);
+        }
+      }
+    }
     if (listener != null) {
       listener.elementRenamed(aClass);
     }
@@ -252,7 +268,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         final PsiTypeParameterListOwner member = PsiTreeUtil.getParentOfType(referenceElement, PsiTypeParameterListOwner.class);
         if (member != null) {
           final PsiTypeParameterList typeParameterList = member.getTypeParameterList();
-          if (typeParameterList != null && ArrayUtil.find(typeParameterList.getTypeParameters(), myRenamedClass) > -1) {
+          if (typeParameterList != null && ArrayUtilRt.find(typeParameterList.getTypeParameters(), myRenamedClass) > -1) {
             if (member.hasModifierProperty(PsiModifier.STATIC)) return;
           }
         }

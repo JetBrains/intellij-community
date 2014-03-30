@@ -21,14 +21,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.IgnoreSpaceEnum;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
-import org.jdom.Element;
+import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,27 +37,17 @@ import java.util.List;
 /**
  * author: lesya
  */
-
 @State(
   name = "VcsManagerConfiguration",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.WORKSPACE_FILE
-    )
-    }
-)
-public final class VcsConfiguration implements PersistentStateComponent<Element> {
+  storages = { @Storage(file = StoragePathMacros.WORKSPACE_FILE) })
+public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.VcsConfiguration");
   public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
   @NonNls static final String VALUE_ATTR = "value";
-  @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
-  @NonNls private static final String CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT = "confirmRemoveEmptyChangelist";
 
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
-
-  private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine();
@@ -71,7 +60,9 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
   public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
+  @OptionTag(tag = "confirmMoveToFailedCommit", nameAttribute = "")
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+  @OptionTag(tag = "confirmRemoveEmptyChangelist", nameAttribute = "")
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
@@ -132,7 +123,9 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean FORCE_NON_EMPTY_COMMENT = false;
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
-  private final ArrayList<String> myLastCommitMessages = new ArrayList<String>();
+  @Property(surroundWithTag = false)
+  @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)
+  public List<String> myLastCommitMessages = new ArrayList<String>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
 
@@ -142,10 +135,11 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REFORMAT_BEFORE_FILE_COMMIT = false;
 
+  public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
+
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 
-  public String ACTIVE_VCS_NAME = null;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
@@ -160,71 +154,12 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
 
-  public VcsConfiguration(final Project project) {
-    myProject = project;
+  public VcsConfiguration getState() {
+    return this;
   }
 
-  public Element getState() {
-    try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
-    }
-    catch (WriteExternalException e1) {
-      LOG.error(e1);
-      return null;
-    }
-  }
-
-  public void loadState(Element state) {
-    try {
-      readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-    Element child = element.getChild(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
-    if (child != null) {
-      MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.fromString(child.getAttributeValue(VALUE_ATTR));
-    }
-    child = element.getChild(CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT);
-    if (child != null) {
-      REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.fromString(child.getAttributeValue(VALUE_ATTR));
-    }
-    final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
-    for (final Object message : messages) {
-      saveCommitMessage(((Element)message).getAttributeValue(VALUE_ATTR));
-    }
-    if (ACTIVE_VCS_NAME != null && ACTIVE_VCS_NAME.length() > 0) {
-      StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
-        public void run() {
-          ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping("", ACTIVE_VCS_NAME);
-        }
-      });
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
-    if (MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      Element confirmChild = new Element(CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT);
-      confirmChild.setAttribute(VALUE_ATTR, MOVE_TO_FAILED_COMMIT_CHANGELIST.toString());
-      element.addContent(confirmChild);
-    }
-    if (REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
-      Element confirmChild = new Element(CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT);
-      confirmChild.setAttribute(VALUE_ATTR, REMOVE_EMPTY_INACTIVE_CHANGELISTS.toString());
-      element.addContent(confirmChild);
-    }
-    for (String message : myLastCommitMessages) {
-      final Element messageElement = new Element(MESSAGE_ELEMENT_NAME);
-      messageElement.setAttribute(VALUE_ATTR, message);
-      element.addContent(messageElement);
-    }
+  public void loadState(VcsConfiguration state) {
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   public static VcsConfiguration getInstance(Project project) {
@@ -232,17 +167,12 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   }
 
   public void saveCommitMessage(final String comment) {
-
     LAST_COMMIT_MESSAGE = comment;
-
     if (comment == null || comment.length() == 0) return;
-
     myLastCommitMessages.remove(comment);
-
     while (myLastCommitMessages.size() >= MAX_STORED_MESSAGES) {
       myLastCommitMessages.remove(0);
     }
-
     myLastCommitMessages.add(comment);
   }
 

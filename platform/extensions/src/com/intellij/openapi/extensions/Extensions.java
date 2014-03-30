@@ -133,20 +133,19 @@ public class Extensions {
     throw new IllegalArgumentException("could not find extension implementation " + extClass);
   }
 
-  public static void instantiateArea(@NonNls @NotNull String areaClass, @Nullable AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
-    if (!ourAreaClass2Configuration.containsKey(areaClass)) {
+  public static void instantiateArea(@NonNls @NotNull String areaClass, @NotNull AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
+    AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
+    if (configuration == null) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
-    if (areaInstance == null || ourAreaInstance2area.containsKey(areaInstance)) {
-      throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
-    }
     ExtensionsArea parentArea = getArea(parentAreaInstance);
-    AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
     if (!equals(parentArea.getAreaClass(), configuration.getParentClassName())) {
       throw new IllegalArgumentException("Wrong parent area. Expected class: " + configuration.getParentClassName() + " actual class: " + parentArea.getAreaClass());
     }
     ExtensionsAreaImpl area = new ExtensionsAreaImpl(areaClass, areaInstance, parentArea.getPicoContainer(), ourLogger);
-    ourAreaInstance2area.put(areaInstance, area);
+    if (ourAreaInstance2area.put(areaInstance, area) != null) {
+      throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
+    }
     for (AreaListener listener : getAreaListeners()) {
       listener.areaCreated(areaClass, areaInstance);
     }
@@ -183,7 +182,8 @@ public class Extensions {
       for (AreaListener listener : getAreaListeners()) {
         listener.areaDisposing(areaClass, areaInstance);
       }
-    } finally {
+    }
+    finally {
       ourAreaInstance2area.remove(areaInstance);
     }
   }
@@ -200,11 +200,12 @@ public class Extensions {
     private final String myClassName;
     private final String myParentClassName;
 
-    AreaClassConfiguration(String className, String parentClassName) {
+    AreaClassConfiguration(@NotNull String className, String parentClassName) {
       myClassName = className;
       myParentClassName = parentClassName;
     }
 
+    @NotNull
     public String getClassName() {
       return myClassName;
     }

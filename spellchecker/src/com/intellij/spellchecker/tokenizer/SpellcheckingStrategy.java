@@ -15,13 +15,12 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.codeInsight.daemon.impl.actions.AbstractSuppressByNoInspectionCommentFix;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiPlainText;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
-  protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = TokenizerBase.create(TextSplitter.getInstance());
+  protected final Tokenizer<XmlAttributeValue> myXmlAttributeTokenizer = new XmlAttributeValueTokenizer();
   protected final Tokenizer<XmlText> myXmlTextTokenizer = new XmlTextTokenizer();
 
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
@@ -52,7 +51,7 @@ public class SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
     if (element instanceof PsiComment) {
-      if (AbstractSuppressByNoInspectionCommentFix.isSuppressionComment(element)) {
+      if (SuppressionUtil.isSuppressionComment(element)) {
         return EMPTY_TOKENIZER;
       }
       return myCommentTokenizer;
@@ -84,5 +83,32 @@ public class SpellcheckingStrategy {
 
   public static SpellCheckerQuickFix[] getDefaultBatchFixes() {
     return BATCH_FIXES;
+  }
+
+  protected static class XmlAttributeValueTokenizer extends Tokenizer<XmlAttributeValue> {
+    public void tokenize(@NotNull final XmlAttributeValue element, final TokenConsumer consumer) {
+      if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) return;
+
+      final String valueTextTrimmed = element.getValue().trim();
+      // do not inspect colors like #00aaFF
+      if (valueTextTrimmed.startsWith("#") && valueTextTrimmed.length() <= 7 && isHexString(valueTextTrimmed.substring(1))) {
+        return;
+      }
+
+      consumer.consumeToken(element, TextSplitter.getInstance());
+    }
+
+    private static boolean isHexString(final String s) {
+      for (int i = 0; i < s.length(); i++) {
+        if (!StringUtil.isHexDigit(s.charAt(i))) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  public boolean isMyContext(@NotNull PsiElement element) {
+    return true;
   }
 }

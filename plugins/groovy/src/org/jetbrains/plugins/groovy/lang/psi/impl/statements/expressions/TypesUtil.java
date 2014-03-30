@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -35,6 +36,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
@@ -43,11 +45,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureImpl;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrImmediateClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -68,9 +68,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author ven
  */
 public class TypesUtil {
-  
+
   private static final LightCacheKey<Map<String, PsiClass>> PARENT_CACHE_KEY = LightCacheKey.create();
-  
+
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
   public static final PsiPrimitiveType[] PRIMITIVES = new PsiPrimitiveType[]{
@@ -88,39 +88,28 @@ public class TypesUtil {
   private TypesUtil() {
   }
 
-  @Nullable
-  public static PsiType getNumericResultType(GrBinaryExpression binaryExpression) {
-    PsiType lType = binaryExpression.getLeftOperand().getType();
-    final GrExpression rop = binaryExpression.getRightOperand();
-    PsiType rType = rop == null ? null : rop.getType();
-    if (lType == null || rType == null) return null;
-    return getLeastUpperBoundForNumericType(lType, rType);
-  }
-
-  @Nullable
-  private static PsiType getLeastUpperBoundForNumericType(@NotNull PsiType lType, @NotNull PsiType rType) {
-    String lCanonical = lType.getCanonicalText();
-    String rCanonical = rType.getCanonicalText();
-    if (JAVA_LANG_FLOAT.equals(lCanonical)) lCanonical = JAVA_LANG_DOUBLE;
-    if (JAVA_LANG_FLOAT.equals(rCanonical)) rCanonical = JAVA_LANG_DOUBLE;
-    if (TYPE_TO_RANK.containsKey(lCanonical) && TYPE_TO_RANK.containsKey(rCanonical)) {
-      return TYPE_TO_RANK.get(lCanonical) > TYPE_TO_RANK.get(rCanonical) ? lType : rType;
-    }
-    return null;
+  @NotNull
+  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
+                                                                      IElementType tokenType,
+                                                                      @NotNull GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes) {
+    return getOverloadedOperatorCandidates(thisType, tokenType, place, argumentTypes, false);
   }
 
   @NotNull
   public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
                                                                       IElementType tokenType,
                                                                       @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes) {
-    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+                                                                      PsiType[] argumentTypes,
+                                                                      boolean incompleteCode) {
+    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, true, incompleteCode, false, argumentTypes);
   }
 
+
   public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
-                                                                      IElementType tokenType,
-                                                                      @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes) {
+                                                                           IElementType tokenType,
+                                                                           @NotNull GroovyPsiElement place,
+                                                                           PsiType[] argumentTypes) {
     return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
@@ -172,6 +161,7 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mSTAR_STAR, "power");
     ourOperationsToOperatorNames.put(COMPOSITE_LSHIFT_SIGN, "leftShift");
     ourOperationsToOperatorNames.put(COMPOSITE_RSHIFT_SIGN, "rightShift");
+    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, "rightShiftUnsigned");
     ourOperationsToOperatorNames.put(mEQUAL, "equals");
     ourOperationsToOperatorNames.put(mNOT_EQUAL, "equals");
 
@@ -186,27 +176,27 @@ public class TypesUtil {
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
 
   static {
-    TYPE_TO_RANK.put(JAVA_LANG_BYTE,        1);
-    TYPE_TO_RANK.put(JAVA_LANG_SHORT,       2);
-    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER,   2);
-    TYPE_TO_RANK.put(JAVA_LANG_INTEGER,     3);
-    TYPE_TO_RANK.put(JAVA_LANG_LONG,        4);
+    TYPE_TO_RANK.put(JAVA_LANG_BYTE, 1);
+    TYPE_TO_RANK.put(JAVA_LANG_SHORT, 2);
+    TYPE_TO_RANK.put(JAVA_LANG_CHARACTER, 2);
+    TYPE_TO_RANK.put(JAVA_LANG_INTEGER, 3);
+    TYPE_TO_RANK.put(JAVA_LANG_LONG, 4);
     TYPE_TO_RANK.put(JAVA_MATH_BIG_INTEGER, 5);
     TYPE_TO_RANK.put(JAVA_MATH_BIG_DECIMAL, 6);
-    TYPE_TO_RANK.put(JAVA_LANG_FLOAT,       7);
-    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE,      8);
-    TYPE_TO_RANK.put(JAVA_LANG_NUMBER,      9);
+    TYPE_TO_RANK.put(JAVA_LANG_FLOAT, 7);
+    TYPE_TO_RANK.put(JAVA_LANG_DOUBLE, 8);
+    TYPE_TO_RANK.put(JAVA_LANG_NUMBER, 9);
   }
 
   static {
-    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN,    PsiType.BOOLEAN);
-    ourQNameToUnboxed.put(JAVA_LANG_BYTE,       PsiType.BYTE);
-    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER,  PsiType.CHAR);
-    ourQNameToUnboxed.put(JAVA_LANG_SHORT,      PsiType.SHORT);
-    ourQNameToUnboxed.put(JAVA_LANG_INTEGER,    PsiType.INT);
-    ourQNameToUnboxed.put(JAVA_LANG_LONG,       PsiType.LONG);
-    ourQNameToUnboxed.put(JAVA_LANG_FLOAT,      PsiType.FLOAT);
-    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE,     PsiType.DOUBLE);
+    ourQNameToUnboxed.put(JAVA_LANG_BOOLEAN, PsiType.BOOLEAN);
+    ourQNameToUnboxed.put(JAVA_LANG_BYTE, PsiType.BYTE);
+    ourQNameToUnboxed.put(JAVA_LANG_CHARACTER, PsiType.CHAR);
+    ourQNameToUnboxed.put(JAVA_LANG_SHORT, PsiType.SHORT);
+    ourQNameToUnboxed.put(JAVA_LANG_INTEGER, PsiType.INT);
+    ourQNameToUnboxed.put(JAVA_LANG_LONG, PsiType.LONG);
+    ourQNameToUnboxed.put(JAVA_LANG_FLOAT, PsiType.FLOAT);
+    ourQNameToUnboxed.put(JAVA_LANG_DOUBLE, PsiType.DOUBLE);
   }
 
 
@@ -246,35 +236,21 @@ public class TypesUtil {
       return true;
     }
 
-    if (rType == PsiType.NULL) {
-      return !(lType instanceof PsiPrimitiveType);
-    }
-
-    if (isNumericType(lType) && isNumericType(rType)) {
+    if (isAssignableWithoutConversions(lType, rType, context)) {
       return true;
     }
 
-    if (isClassType(lType, JAVA_LANG_STRING)) {
-      return true;
+    Boolean byConversionInMethodCall = isAssignableByConversion(lType, rType, context, true);
+    if (byConversionInMethodCall != null) {
+      return byConversionInMethodCall.booleanValue();
+    }
+
+    if (lType instanceof PsiPrimitiveType && rType == PsiType.NULL) { //check it because now we will wrap primitive type.
+      return false;
     }
 
     final PsiManager manager = context.getManager();
     final GlobalSearchScope scope = context.getResolveScope();
-
-    if (lType instanceof PsiArrayType) {
-      PsiType lComponentType = ((PsiArrayType)lType).getComponentType();
-      PsiType rComponentType = ClosureParameterEnhancer.findTypeForIteration(rType, context);
-      if (rComponentType != null && isAssignable(lComponentType, rComponentType, context)) {
-        return true;
-      }
-    }
-
-    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (isClassType(rType, JAVA_LANG_STRING) || isClassType(rType, GROOVY_LANG_GSTRING))) {
-      return true;
-    }
-
-    if (isAssignableByMethodCallConversion(lType, rType, context)) return true;
 
     lType = boxPrimitiveType(lType, manager, scope);
     rType = boxPrimitiveType(rType, manager, scope);
@@ -282,15 +258,9 @@ public class TypesUtil {
       return true;
     }
 
-    if (context instanceof GroovyPsiElement) {
-      for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        if (!converter.isAllowedInMethodCall()) {
-          Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
-          if (result != null) {
-            return result;
-          }
-        }
-      }
+    Boolean byConversion = isAssignableByConversion(lType, rType, context, false);
+    if (byConversion != null) {
+      return byConversion.booleanValue();
     }
 
     return false;
@@ -298,15 +268,14 @@ public class TypesUtil {
 
   public static boolean isAssignableByMethodCallConversion(@Nullable PsiType lType,
                                                            @Nullable PsiType rType,
-                                                           @NotNull PsiElement context)
-  {
+                                                           @NotNull PsiElement context) {
     if (lType == null || rType == null) {
       return false;
     }
 
     if (rType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)rType).getConjuncts()) {
-        if (isAssignable(lType, child, context)) {
+        if (isAssignableByMethodCallConversion(lType, child, context)) {
           return true;
         }
       }
@@ -314,24 +283,33 @@ public class TypesUtil {
     }
     if (lType instanceof PsiIntersectionType) {
       for (PsiType child : ((PsiIntersectionType)lType).getConjuncts()) {
-        if (!isAssignable(child, rType, context)) {
+        if (!isAssignableByMethodCallConversion(child, rType, context)) {
           return false;
         }
       }
       return true;
     }
 
-    if (rType == PsiType.NULL) {
-      return !(lType instanceof PsiPrimitiveType);
-    }
-
     if (isAssignableWithoutConversions(lType, rType, context)) {
       return true;
     }
 
+    Boolean byConversion = isAssignableByConversion(lType, rType, context, true);
+    if (byConversion != null) {
+      return byConversion.booleanValue();
+    }
+
+    return false;
+  }
+
+  @Nullable
+  private static Boolean isAssignableByConversion(@NotNull PsiType lType,
+                                                  @NotNull PsiType rType,
+                                                  @NotNull PsiElement context,
+                                                  boolean inMethodCall) {
     if (context instanceof GroovyPsiElement) {
       for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-        if (converter.isAllowedInMethodCall()) {
+        if (inMethodCall == converter.isAllowedInMethodCall()) {
           final Boolean result = converter.isConvertible(lType, rType, (GroovyPsiElement)context);
           if (result != null) {
             return result;
@@ -339,14 +317,12 @@ public class TypesUtil {
         }
       }
     }
-
-    return false;
+    return null;
   }
 
   public static boolean isAssignableWithoutConversions(@Nullable PsiType lType,
                                                        @Nullable PsiType rType,
-                                                       @NotNull PsiElement context)
-  {
+                                                       @NotNull PsiElement context) {
     if (lType == null || rType == null) return false;
 
     if (rType == PsiType.NULL) {
@@ -384,6 +360,12 @@ public class TypesUtil {
       if (result != null && result.booleanValue()) return true;
     }
 
+    if (rType instanceof GrClosureType) {
+      if (canMakeClosureRaw(lType)) {
+        rType = ((GrClosureType)rType).rawType();
+      }
+    }
+
     if (TypeConversionUtil.isAssignable(lType, rType)) {
       return true;
     }
@@ -391,11 +373,23 @@ public class TypesUtil {
     return false;
   }
 
+  private static boolean canMakeClosureRaw(PsiType type) {
+    if (!(type instanceof PsiClassType)) return true;
+
+    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+
+    if (parameters.length != 1) return true;
+
+    final PsiType parameter = parameters[0];
+    if (parameter instanceof PsiWildcardType) return true;
+
+    return false;
+  }
+
   @Nullable
   private static Boolean isAssignableForNativeTypes(@NotNull PsiType lType,
                                                     @NotNull PsiClassType rType,
-                                                    @NotNull PsiElement context)
-  {
+                                                    @NotNull PsiElement context) {
     if (!(lType instanceof PsiClassType)) return null;
     final PsiClassType.ClassResolveResult leftResult = ((PsiClassType)lType).resolveGenerics();
     final PsiClassType.ClassResolveResult rightResult = rType.resolveGenerics();
@@ -456,7 +450,10 @@ public class TypesUtil {
     return type;
   }
 
-  public static PsiType boxPrimitiveType(@Nullable PsiType result, @NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope, boolean boxVoid) {
+  public static PsiType boxPrimitiveType(@Nullable PsiType result,
+                                         @NotNull PsiManager manager,
+                                         @NotNull GlobalSearchScope resolveScope,
+                                         boolean boxVoid) {
     if (result instanceof PsiPrimitiveType && (boxVoid || result != PsiType.VOID)) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
@@ -471,6 +468,7 @@ public class TypesUtil {
   public static PsiType boxPrimitiveType(@Nullable PsiType result, @NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return boxPrimitiveType(result, manager, resolveScope, false);
   }
+
   @NotNull
   public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
     return createTypeByFQClassName(fqName, context);
@@ -510,7 +508,7 @@ public class TypesUtil {
       if (components1.length == 0) return genNewListBy(type2, manager);
       if (components2.length == 0) return genNewListBy(type1, manager);
 
-      PsiType[] components3 = new PsiType[Math.min(components1.length, components2.length)];
+      PsiType[] components3 = PsiType.createArray(Math.min(components1.length, components2.length));
       for (int i = 0; i < components3.length; i++) {
         PsiType c1 = components1[i];
         PsiType c2 = components2[i];
@@ -521,10 +519,11 @@ public class TypesUtil {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()),
+                             tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
-      return genNewListBy(type2,manager);
+      return genNewListBy(type2, manager);
     }
     else if (checkEmptyListAndList(type2, type1)) {
       return genNewListBy(type1, manager);
@@ -546,8 +545,8 @@ public class TypesUtil {
 
       if (signature1 instanceof GrClosureSignature && signature2 instanceof GrClosureSignature) {
         if (((GrClosureSignature)signature1).getParameterCount() == ((GrClosureSignature)signature2).getParameterCount()) {
-          final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
-                                                                                         ((GrClosureSignature)signature2), manager);
+          final GrClosureSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
+                                                                                                  ((GrClosureSignature)signature2), manager);
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
@@ -564,8 +563,6 @@ public class TypesUtil {
              CommonClassNames.JAVA_LANG_STRING.equals(type1.getInternalCanonicalText())) {
       return type1;
     }
-    final PsiType result = getLeastUpperBoundForNumericType(type1, type2);
-    if (result != null) return result;
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
   }
 
@@ -669,8 +666,8 @@ public class TypesUtil {
 
   @Nullable
   public static PsiType createJavaLangClassType(@Nullable PsiType type,
-                                         Project project,
-                                         GlobalSearchScope resolveScope) {
+                                                Project project,
+                                                GlobalSearchScope resolveScope) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiType result = null;
     PsiClass javaLangClass = facade.findClass(JAVA_LANG_CLASS, resolveScope);
@@ -694,10 +691,9 @@ public class TypesUtil {
       if (primitive.getCanonicalText().equals(typeText)) {
         return primitive;
       }
-
     }
 
-    assert false: "Unknown primitive type";
+    assert false : "Unknown primitive type";
     return null;
   }
 
@@ -853,7 +849,7 @@ public class TypesUtil {
       public PsiType fun(GrAnnotationMemberValue value) {
         return inferAnnotationMemberValueType(value);
       }
-    }, new PsiType[initializers.length]);
+    }, PsiType.createArray(initializers.length));
     return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
   }
 
@@ -863,5 +859,64 @@ public class TypesUtil {
       return resolved != null && fqn.equals(resolved.getQualifiedName());
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiType rawSecondGeneric(PsiType type, Project project) {
+    if (!(type instanceof PsiClassType)) return null;
+
+    final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    final PsiClass element = result.getElement();
+    if (element == null) return null;
+
+    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+
+    boolean changed = false;
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType parameter = parameters[i];
+      if (parameter == null) continue;
+
+      final Ref<PsiType> newParam = new Ref<PsiType>();
+      parameter.accept(new PsiTypeVisitorEx<Object>() {
+        @Nullable
+        @Override
+        public Object visitClassType(PsiClassType classType) {
+          if (classType.getParameterCount() > 0) {
+            newParam.set(classType.rawType());
+          }
+          return null;
+        }
+
+        @Nullable
+        @Override
+        public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+          newParam.set(capturedWildcardType.getWildcard().getBound());
+          return null;
+        }
+
+        @Nullable
+        @Override
+        public Object visitWildcardType(PsiWildcardType wildcardType) {
+          newParam.set(wildcardType.getBound());
+          return null;
+        }
+      });
+
+      if (!newParam.isNull()) {
+        changed = true;
+        parameters[i] = newParam.get();
+      }
+    }
+    if (!changed) return null;
+    return JavaPsiFacade.getElementFactory(project).createType(element, parameters);
+  }
+
+  public static boolean isPsiClassTypeToClosure(PsiType type) {
+    if (!(type instanceof PsiClassType)) return false;
+
+    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    if (psiClass == null) return false;
+
+    return GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 }

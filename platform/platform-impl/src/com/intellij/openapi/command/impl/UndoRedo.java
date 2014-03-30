@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -189,7 +188,7 @@ abstract class UndoRedo {
     }
 
     return Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                       Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
+                                       Messages.getQuestionIcon()) == Messages.OK;
   }
 
   private boolean restore(EditorAndState pair) {

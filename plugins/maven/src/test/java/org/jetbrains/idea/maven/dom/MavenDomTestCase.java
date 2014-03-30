@@ -24,9 +24,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
@@ -99,9 +98,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void configTest(VirtualFile f) throws IOException {
-    if (Comparing.equal(myConfigTimestamps.get(f), f.getModificationStamp())) return;
+    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) return;
     myFixture.configureFromExistingVirtualFile(f);
-    myConfigTimestamps.put(f, f.getModificationStamp());
+    myConfigTimestamps.put(f, f.getTimeStamp());
   }
 
   protected void type(VirtualFile f, char c) throws IOException {
@@ -290,7 +289,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void checkHighlighting(VirtualFile f) throws IOException {
-    checkHighlighting(f, true, true, true);
+    checkHighlighting(f, true, false, true);
   }
 
   protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws IOException {
@@ -352,9 +351,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   private MapDataContext createDataContext(VirtualFile f) throws IOException {
     MapDataContext context = new MapDataContext();
-    context.put(PlatformDataKeys.EDITOR, getEditor(f));
-    context.put(LangDataKeys.PSI_FILE, getTestPsiFile(f));
-    context.put(LangDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
+    context.put(CommonDataKeys.EDITOR, getEditor(f));
+    context.put(CommonDataKeys.PSI_FILE, getTestPsiFile(f));
+    context.put(CommonDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
                                                                               TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                                                                               | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED));
     return context;

@@ -38,6 +38,10 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configure();
     assertStringItems("b.getGoo", "getBar().getGoo");
   }
+  public void testFirstMethodWithParams() throws Throwable {
+    configure();
+    assertStringItems("getBar().getGoo", "getBar().getGoo2");
+  }
 
   public void testSuggestArraysAsList() throws Throwable { doTest(); }
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }
@@ -137,12 +141,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoUnqualifiedCastsInQualifiedContext() throws Throwable { doAntiTest(); }
 
-  private void doAntiTest() throws Exception {
-    configure();
-    assertEmpty(myItems);
-    checkResultByFile(getTestName(false) + ".java");
-  }
-
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testNoLeftRecursion() throws Throwable {
@@ -205,7 +203,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testGlobalFactoryMethods() {
     configure();
-    assertStringItems("createExpected", "Constants.SUBSTRING", "createSubGeneric", "createSubRaw", "createSubString");
+    assertStringItems("Constants.SUBSTRING", "createExpected", "createSubGeneric", "createSubRaw", "createSubString");
   }
 
   public void testEmptyMapPresentation() {

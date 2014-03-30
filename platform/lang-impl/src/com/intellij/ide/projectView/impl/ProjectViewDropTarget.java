@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -56,7 +57,7 @@ import java.util.List;
  */
 class ProjectViewDropTarget implements DnDNativeTarget {
 
-  private JTree myTree;
+  private final JTree myTree;
   private final Retriever myRetriever;
   private final Project myProject;
 
@@ -80,7 +81,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
       return false;
     }
-    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorSupported(event)) {
+    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
       return false;
     }
     else if (sourceNodes != null && ArrayUtilRt.find(sourceNodes, targetNode) != -1) {
@@ -103,8 +104,8 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     else {
       // it seems like it's not possible to obtain dragged items _before_ accepting _drop_ on Macs, so just skip this check
       if (!SystemInfo.isMac) {
-        final PsiFileSystemItem[] psiFiles = getPsiFiles(getFileListFromAttachedObject(attached));
-        if (psiFiles == null) return false;
+        final PsiFileSystemItem[] psiFiles = getPsiFiles(FileCopyPasteUtil.getFileListFromAttachedObject(attached));
+        if (psiFiles == null || psiFiles.length == 0) return false;
         if (!MoveHandler.isValidTarget(getPsiElement(targetNode), psiFiles)) return false;
       }
     }
@@ -115,17 +116,6 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     return false;
   }
 
-  @Nullable
-  private static List<File> getFileListFromAttachedObject(Object attached) {
-    if (attached instanceof TransferableWrapper) {
-      return ((TransferableWrapper)attached).asFileList();
-    }
-    else if (attached instanceof EventInfo) {
-      return FileCopyPasteUtil.getFileList(((EventInfo)attached).getTransferable());
-    }
-    return null;
-  }
-
   @Override
   public void drop(DnDEvent event) {
     final Object attached = event.getAttachedObject();
@@ -134,9 +124,9 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     assert targetNode != null;
     final int dropAction = event.getAction().getActionId();
     if (sourceNodes == null) {
-      if (FileCopyPasteUtil.isFileListFlavorSupported(event)) {
-        final List<File> fileList = getFileListFromAttachedObject(attached);
-        if (fileList != null) {
+      if (FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
+        List<File> fileList = FileCopyPasteUtil.getFileListFromAttachedObject(attached);
+        if (!fileList.isEmpty()) {
           getDropHandler(dropAction).doDropFiles(fileList, targetNode);
         }
       }

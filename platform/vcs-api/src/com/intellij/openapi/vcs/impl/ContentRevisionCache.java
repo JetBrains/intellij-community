@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class ContentRevisionCache {
   public byte[] getBytes(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
     synchronized (myLock) {
       final SoftReference<byte[]> reference = myCache.get(new Key(path, number, vcsKey, type));
-      return reference != null ? reference.get() : null;
+      return SoftReference.dereference(reference);
     }
   }
 

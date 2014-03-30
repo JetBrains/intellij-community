@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.MacUIUtil;
 
@@ -39,10 +40,15 @@ public class DeleteAction extends EditorAction {
   }
 
   public static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       MacUIUtil.hideCursor();
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
+      CopyPasteManager.getInstance().stopKillRings();
       SelectionModel selectionModel = editor.getSelectionModel();
       final LogicalPosition logicalBlockSelectionStart = selectionModel.getBlockStart();
       final LogicalPosition logicalBlockSelectionEnd = selectionModel.getBlockEnd();

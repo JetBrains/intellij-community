@@ -30,7 +30,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     if (testProxy != null) {
       final AbstractTestProxy.AssertEqualsDiffViewerProvider diffViewerProvider = testProxy.getDiffViewerProvider();
       if (diffViewerProvider != null) {
-        diffViewerProvider.openDiff(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+        diffViewerProvider.openDiff(CommonDataKeys.PROJECT.getData(e.getDataContext()));
       }
     }
   }
@@ -39,7 +39,7 @@ public class ViewAssertEqualsDiffAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     final boolean enabled;
     final DataContext dataContext = e.getDataContext();
-    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+    if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
       enabled = false;
     }
     else {

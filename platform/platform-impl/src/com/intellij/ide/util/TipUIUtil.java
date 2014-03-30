@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,42 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 
 /**
  * @author dsl
+ * @author Konstantin Bulenkov
  */
 public class TipUIUtil {
   @NonNls private static final String SHORTCUT_ENTITY = "&shortcut:";
@@ -39,41 +58,107 @@ public class TipUIUtil {
   private TipUIUtil() {
   }
 
-  public static void openTipInBrowser(String tipPath, JEditorPane browser, Class providerClass) {
-    /* TODO: detect that file is not present
-    if (!file.exists()) {
-      browser.read(new StringReader("Tips for '" + feature.getDisplayName() + "' not found.  Make sure you installed IntelliJ IDEA correctly."), null);
-      return;
+  @NotNull
+  public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
+    PluginDescriptor descriptor = tip.getPluginDescriptor();
+    return descriptor instanceof IdeaPluginDescriptor &&
+           !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString()) ?
+           ((IdeaPluginDescriptor)descriptor).getName() : "";
+  }
+
+  public static void openTipInBrowser(String tipFileName, JEditorPane browser, Class providerClass) {
+    TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
+    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+      tip = new TipAndTrickBean();
+      tip.fileName = tipFileName;
     }
-    */
+    openTipInBrowser(tip, browser);
+  }
+
+  public static void openTipInBrowser(@Nullable TipAndTrickBean tip, JEditorPane browser) {
+    if (tip == null) return;
     try {
-      if (tipPath == null) return;
-      if (providerClass == null) providerClass = TipUIUtil.class;
-      URL url = ResourceUtil.getResource(providerClass, "/tips/", tipPath);
+      PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
+      ClassLoader tipLoader = pluginDescriptor == null ? TipUIUtil.class.getClassLoader() :
+                              ObjectUtils.notNull(pluginDescriptor.getPluginClassLoader(), TipUIUtil.class.getClassLoader());
+
+      URL url = ResourceUtil.getResource(tipLoader, "/tips/", tip.fileName);
 
       if (url == null) {
-        setCantReadText(browser, tipPath);
+        setCantReadText(browser, tip);
         return;
       }
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
+      updateImages(text, tipLoader);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
+      if (UIUtil.isUnderDarcula()) {
+        replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
+      }
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
-      setCantReadText(browser, tipPath);
+      setCantReadText(browser, tip);
     }
   }
 
-  private static void setCantReadText(JEditorPane browser, String missingFile) {
+  private static void setCantReadText(JEditorPane browser, TipAndTrickBean bean) {
     try {
-      browser.read(new StringReader(
-        IdeBundle.message("error.unable.to.read.tip.of.the.day", missingFile, ApplicationNamesInfo.getInstance().getFullProductName())), null);
+      String plugin = getPoweredByText(bean);
+      String product = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (!plugin.isEmpty()) {
+        product += " and " + plugin + " plugin";
+      }
+      String message = IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
+      browser.read(new StringReader(message), null);
     }
     catch (IOException ignored) {
+    }
+  }
+
+  private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
+    final boolean dark = UIUtil.isUnderDarcula();
+    final boolean retina = UIUtil.isRetina();
+//    if (!dark && !retina) {
+//      return;
+//    }
+
+    String suffix = "";
+    if (retina) suffix += "@2x";
+    if (dark) suffix += "_dark";
+    int index = text.indexOf("<img", 0);
+    while (index != -1) {
+      final int end = text.indexOf(">", index + 1);
+      if (end == -1) return;
+      final String img = text.substring(index, end + 1).replace('\r', ' ').replace('\n',' ');
+      final int srcIndex = img.indexOf("src=");
+      final int endIndex = img.indexOf(".png", srcIndex);
+      if (endIndex != -1) {
+        String path = img.substring(srcIndex + 5, endIndex);
+        if (!path.endsWith("_dark") && !path.endsWith("@2x")) {
+          path += suffix + ".png";
+          URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
+          if (url != null) {
+            String newImgTag = "<img src=\"" + path + "\" ";
+            if (retina) {
+              try {
+                final BufferedImage image = ImageIO.read(url.openStream());
+                final int w = image.getWidth() / 2;
+                final int h = image.getHeight() / 2;
+                newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
+              } catch (Exception ignore) {
+                newImgTag += "width=\"400\" height=\"200\"";
+              }
+            }
+            newImgTag += "/>";
+            text.replace(index, end + 1, newImgTag);
+          }
+        }
+      }
+      index = text.indexOf("<img", index + 1);
     }
   }
 
@@ -88,16 +173,65 @@ public class TipUIUtil {
         return;
       }
       final String actionId = text.substring(actionIdStart, actionIdEnd);
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
-      String shortcutText = "";
-      for (final Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          shortcutText = KeymapUtil.getShortcutText(shortcut);
-          break;
+      String shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
+      if (shortcutText == null) {
+        Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.getInstance().getDefaultKeymapName());
+        if (defKeymap != null) {
+          shortcutText = getShortcutText(actionId, defKeymap);
+          if (shortcutText != null) {
+            shortcutText += " in default keymap";
+          }
         }
+      }
+      if (shortcutText == null) {
+        shortcutText = "<no shortcut for action " + actionId + ">";
       }
       text.replace(lastIndex, actionIdEnd + 1, shortcutText);
       lastIndex += shortcutText.length();
     }
+  }
+
+  @Nullable
+  private static String getShortcutText(String actionId, Keymap keymap) {
+    for (final Shortcut shortcut : keymap.getShortcuts(actionId)) {
+      if (shortcut instanceof KeyboardShortcut) {
+        return KeymapUtil.getShortcutText(shortcut);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static JEditorPane createTipBrowser() {
+    JEditorPane browser = new JEditorPane();
+    browser.setEditable(false);
+    browser.setBackground(UIUtil.getTextFieldBackground());
+    browser.addHyperlinkListener(
+      new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserUtil.browse(e.getURL());
+          }
+        }
+      }
+    );
+    HTMLEditorKit kit;
+    try {
+      // set default CSS for plugin tips
+      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+      final StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(resource.openStream()), resource);
+      kit = new HTMLEditorKit() {
+        @Override
+        public StyleSheet getStyleSheet() {
+          return styleSheet;
+        }
+      };
+    }
+    catch (IOException ignored) {
+      kit = new HTMLEditorKit();
+    }
+    browser.setEditorKit(kit);
+    return browser;
   }
 }

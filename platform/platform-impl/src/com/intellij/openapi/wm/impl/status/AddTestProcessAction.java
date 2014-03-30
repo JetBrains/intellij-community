@@ -15,29 +15,18 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AddTestProcessAction extends AnAction implements DumbAware {
@@ -46,33 +35,7 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-
-    BalloonBuilder builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("" +
-                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
-                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
-                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
-                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
-                                                                                                      "Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend Load up on guns bring your friends it's fun to loose and to pretend " +
-                                                                                                      "", MessageType.INFO, null);
-
-    JFrame wnd = (JFrame)KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    JRootPane ro = wnd.getRootPane();
-    Point point = new Point(ro.getWidth() - 200, ro.getHeight() - 200);
-    builder.createBalloon().show(new RelativePoint(ro, point), Balloon.Position.above);
-
-
-
-    final Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (p != null) {
-      ToolWindowManager.getInstance(p)
-        .notifyByBalloon("TODO", MessageType.INFO, "Started. <a href=\"#a\">Click me!</a>", null, new HyperlinkListener() {
-          public void hyperlinkUpdate(final HyperlinkEvent e) {
-            System.out.println(e);
-          }
-        });
-    }
-
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     new Task.Backgroundable(project, "Test Process", true, PerformInBackgroundOption.DEAF) {
       public void run(@NotNull final ProgressIndicator indicator) {
         try {

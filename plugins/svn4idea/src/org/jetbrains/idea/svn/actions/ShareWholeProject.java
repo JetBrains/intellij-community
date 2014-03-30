@@ -57,7 +57,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
 
     public void execute(final AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
-      myProject = PlatformDataKeys.PROJECT.getData(dataContext);
+      myProject = CommonDataKeys.PROJECT.getData(dataContext);
       if (myProject == null || myProject.isDefault()) {
         // remain false
         return;

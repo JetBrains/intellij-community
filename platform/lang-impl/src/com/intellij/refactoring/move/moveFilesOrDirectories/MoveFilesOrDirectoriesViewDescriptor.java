@@ -53,19 +53,23 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
     }
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElementsToMove;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("comments.elements.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));

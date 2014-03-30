@@ -46,13 +46,13 @@ import java.util.List;
  */
 public class ConditionCheckDialog extends DialogWrapper {
   private final Project myProject;
-  private final @NotNull Splitter mainSplitter;
-  private final @NotNull MethodsPanel myIsNullCheckMethodPanel;
-  private final @NotNull MethodsPanel myIsNotNullCheckMethodPanel;
-  private final @NotNull MethodsPanel myAssertIsNullMethodPanel;
-  private final @NotNull MethodsPanel myAssertIsNotNullMethodPanel;
-  private final @NotNull MethodsPanel myAssertTrueMethodPanel;
-  private final @NotNull MethodsPanel myAssertFalseMethodPanel;
+  @NotNull private final Splitter mainSplitter;
+  @NotNull private final MethodsPanel myIsNullCheckMethodPanel;
+  @NotNull private final MethodsPanel myIsNotNullCheckMethodPanel;
+  @NotNull private final MethodsPanel myAssertIsNullMethodPanel;
+  @NotNull private final MethodsPanel myAssertIsNotNullMethodPanel;
+  @NotNull private final MethodsPanel myAssertTrueMethodPanel;
+  @NotNull private final MethodsPanel myAssertFalseMethodPanel;
 
   public ConditionCheckDialog(Project project, String mainDialogTitle) {
     super(project, true);
@@ -140,12 +140,12 @@ public class ConditionCheckDialog extends DialogWrapper {
    * Is Null, Is Not Null, Assert True and Assert False Method Panel at the top of the main Dialog.
    */
   class MethodsPanel {
-    private final @NotNull JBList myList;
-    private final @NotNull JPanel myPanel;
-    private final @NotNull Project myProject;
+    @NotNull private final JBList myList;
+    @NotNull private final JPanel myPanel;
+    @NotNull private final Project myProject;
     private Set<MethodsPanel> otherPanels;
 
-    public MethodsPanel(final List<ConditionChecker> checkers, final ConditionChecker.Type type, final @NotNull Project myProject) {
+    public MethodsPanel(final List<ConditionChecker> checkers, final ConditionChecker.Type type, @NotNull final Project myProject) {
       this.myProject = myProject;
       myList = new JBList(new CollectionListModel<ConditionChecker>(checkers));
       myPanel = new JPanel(new BorderLayout());
@@ -192,6 +192,7 @@ public class ConditionCheckDialog extends DialogWrapper {
         });
 
       myList.addMouseListener(new MouseAdapter() {
+        @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
             int index = myList.locationToIndex(e.getPoint());

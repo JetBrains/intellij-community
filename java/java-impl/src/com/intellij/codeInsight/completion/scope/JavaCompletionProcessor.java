@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +49,25 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
-  private final Set<Object> myResultNames = new THashSet<Object>();
+  private final Set<Object> myResultNames = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+    @Override
+    public int computeHashCode(Object object) {
+      if (object instanceof MethodSignature) {
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)object);
+      }
+      return object != null ? object.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object o1, Object o2) {
+      if (o1 instanceof MethodSignature && o2 instanceof MethodSignature) {
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)o1, (MethodSignature)o2);
+      }
+      return o1 != null ? o1.equals(o2) : o2 == null;
+    }
+  });
   private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
+  private final List<CompletionElement> myFilteredResults = new ArrayList<CompletionElement>();
   private final PsiElement myElement;
   private final PsiElement myScope;
   private final ElementFilter myFilter;
@@ -61,7 +77,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   private final Condition<String> myMatcher;
   private final Options myOptions;
   private final Set<PsiField> myNonInitializedFields = new HashSet<PsiField>();
-  private boolean myAllowStaticWithInstanceQualifier;
+  private final boolean myAllowStaticWithInstanceQualifier;
 
   public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<String> nameCondition) {
     myOptions = options;
@@ -94,8 +110,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
         }
       }
       else if (qualifier != null) {
-        myQualifierType = qualifier.getType();
-        myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
+        setQualifierType(qualifier.getType());
         if (myQualifierType == null && qualifier instanceof PsiJavaCodeReferenceElement) {
           final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
           if (target instanceof PsiClass) {
@@ -181,7 +196,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   @Override
-  public void handleEvent(Event event, Object associated){
+  public void handleEvent(@NotNull Event event, Object associated){
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStatic = true;
     }
@@ -194,13 +209,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   @Override
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     //noinspection SuspiciousMethodCalls
     if (myNonInitializedFields.contains(element)) {
-      return true;
-    }
-
-    if (!(myElement.getParent() instanceof PsiMethodReferenceExpression) && !isStaticsOk(element)) {
       return true;
     }
 
@@ -211,9 +222,15 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (satisfies(element, state) && isAccessible(element)) {
       CompletionElement element1 = new CompletionElement(element, state.get(PsiSubstitutor.KEY));
       if (myResultNames.add(element1.getUniqueId())) {
-        myResults.add(element1);
+        StaticProblem sp = myElement.getParent() instanceof PsiMethodReferenceExpression ? StaticProblem.none : getStaticProblem(element);
+        if (sp != StaticProblem.instanceAfterStatic) {
+          (sp == StaticProblem.staticAfterInstance ? myFilteredResults : myResults).add(element1);
+        }
       }
+    } else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      myResultNames.add(CompletionElement.getVariableUniqueId((PsiVariable)element));
     }
+
     return true;
   }
 
@@ -222,16 +239,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null;
   }
 
-  private boolean isStaticsOk(PsiElement element) {
+  private StaticProblem getStaticProblem(PsiElement element) {
     if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
-      return true;
+      return StaticProblem.none;
     }
-    if (!(element instanceof PsiClass) && element instanceof PsiModifierListOwner) {
+    if (element instanceof PsiModifierListOwner) {
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if (myStatic) {
-        if (!modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
+        if (!(element instanceof PsiClass) && !modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non static method in static context.
-          return false;
+          return StaticProblem.instanceAfterStatic;
         }
       }
       else {
@@ -239,11 +256,11 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
             && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
             && !myMembersFlag) {
           // according settings we don't need to process such fields/methods
-          return false;
+          return StaticProblem.staticAfterInstance;
         }
       }
     }
-    return true;
+    return StaticProblem.none;
   }
 
   public boolean satisfies(@NotNull PsiElement element, @NotNull ResolveState state) {
@@ -256,12 +273,17 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return false;
   }
 
+  public void setQualifierType(@Nullable PsiType qualifierType) {
+    myQualifierType = qualifierType;
+    myQualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
+  }
+
   @Nullable
   public PsiType getQualifierType() {
     return myQualifierType;
   }
 
-  private boolean isAccessible(final PsiElement element) {
+  public boolean isAccessible(@Nullable final PsiElement element) {
     if (!myOptions.checkAccess) return true;
     if (!(element instanceof PsiMember)) return true;
 
@@ -275,12 +297,16 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public Iterable<CompletionElement> getResults(){
+  public Iterable<CompletionElement> getResults() {
+    if (myResults.isEmpty()) {
+      return myFilteredResults;
+    }
     return myResults;
   }
 
   public void clear() {
     myResults.clear();
+    myFilteredResults.clear();
   }
 
   @Override
@@ -350,4 +376,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       return new Options(checkAccess, checkInitialized, filterStaticAfterInstance, showInstanceInStaticContext);
     }
   }
+  
+  private enum StaticProblem { none, staticAfterInstance, instanceAfterStatic }
 }

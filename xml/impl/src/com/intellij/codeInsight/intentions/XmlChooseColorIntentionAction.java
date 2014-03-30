@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,25 +66,26 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     final XmlAttributeValue literal = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class, false);
     if (literal == null) return;
     final String text = StringUtil.unquoteString(literal.getValue());
-    final String hexPrefix = text.startsWith("#") ? "#" : "";
 
     Color oldColor;
     try {
       oldColor = Color.decode(text);
     }
     catch (NumberFormatException e) {
-      oldColor = Color.GRAY;
+      oldColor = JBColor.GRAY;
     }
     Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
-      final String newText =  hexPrefix + ColorUtil.toHex(color);
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
+      final String newText = "#" + ColorUtil.toHex(color);
       final PsiManager manager = literal.getManager();
       final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createXmlAttribute("name", newText);
       final Runnable replaceRunnable = new Runnable() {
         public void run() {
-          literal.replace(newAttribute.getValueElement());
+          final XmlAttributeValue valueElement = newAttribute.getValueElement();
+          assert valueElement != null;
+          literal.replace(valueElement);
         }
       };
       if (startInWriteAction) {

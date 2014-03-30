@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class DefaultLogFilterModel extends LogFilterModel {
   private final Project myProject;
-  private boolean myCheckStandartFilters = true;
+  private boolean myCheckStandardFilters = true;
   private String myPrevType = null;
 
   public DefaultLogFilterModel(Project project) {
@@ -42,112 +42,121 @@ public class DefaultLogFilterModel extends LogFilterModel {
   }
 
   public boolean isCheckStandartFilters() {
-    return myCheckStandartFilters;
+    return myCheckStandardFilters;
   }
 
-  public void setCheckStandartFilters(boolean checkStandartFilters) {
-    myCheckStandartFilters = checkStandartFilters;
+  public void setCheckStandartFilters(boolean checkStandardFilters) {
+    myCheckStandardFilters = checkStandardFilters;
   }
 
+  @Override
   public void updateCustomFilter(String filter) {
     super.updateCustomFilter(filter);
     getPreferences().updateCustomFilter(filter);
   }
 
+  @Override
   public String getCustomFilter() {
     return getPreferences().CUSTOM_FILTER;
   }
 
+  @Override
   public void addFilterListener(LogFilterListener listener) {
     getPreferences().addFilterListener(listener);
   }
 
+  @Override
   public boolean isApplicable(String line) {
     if (!super.isApplicable(line)) return false;
-    return getPreferences().isApplicable(line, myPrevType, myCheckStandartFilters);
+    return getPreferences().isApplicable(line, myPrevType, myCheckStandardFilters);
   }
 
+  @Override
   public void removeFilterListener(LogFilterListener listener) {
     getPreferences().removeFilterListener(listener);
   }
 
+  @Override
   public List<LogFilter> getLogFilters() {
-    LogConsolePreferences prefs = getPreferences();
+    LogConsolePreferences preferences = getPreferences();
     final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
-    if (myCheckStandartFilters) {
-      addStandartFilters(filters, prefs);
+    if (myCheckStandardFilters) {
+      addStandardFilters(filters, preferences);
     }
-    filters.addAll(prefs.getRegisteredLogFilters());
+    filters.addAll(preferences.getRegisteredLogFilters());
     return filters;
   }
 
-  private void addStandartFilters(ArrayList<LogFilter> filters, final LogConsolePreferences prefs) {
-    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.all"), prefs) {
+  private void addStandardFilters(ArrayList<LogFilter> filters, final LogConsolePreferences preferences) {
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.all"), preferences) {
       @Override
       public void selectFilter() {
-        prefs.FILTER_ERRORS = false;
-        prefs.FILTER_INFO = false;
-        prefs.FILTER_WARNINGS = false;
-        prefs.FILTER_DEBUG = false;
+        preferences.FILTER_ERRORS = false;
+        preferences.FILTER_INFO = false;
+        preferences.FILTER_WARNINGS = false;
+        preferences.FILTER_DEBUG = false;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && !prefs.FILTER_DEBUG;
+        return !preferences.FILTER_ERRORS && !preferences.FILTER_INFO && !preferences.FILTER_WARNINGS && !preferences.FILTER_DEBUG;
       }
     });
-    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.warnings.and.infos"), prefs) {
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.warnings.and.infos"), preferences) {
       @Override
       public void selectFilter() {
-        prefs.FILTER_ERRORS = false;
-        prefs.FILTER_INFO = false;
-        prefs.FILTER_WARNINGS = false;
-        prefs.FILTER_DEBUG = true;
+        preferences.FILTER_ERRORS = false;
+        preferences.FILTER_INFO = false;
+        preferences.FILTER_WARNINGS = false;
+        preferences.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && !prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
+        return !preferences.FILTER_ERRORS && !preferences.FILTER_INFO && !preferences.FILTER_WARNINGS && preferences.FILTER_DEBUG;
       }
     });
-    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.and.warnings"), prefs) {
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors.and.warnings"), preferences) {
       @Override
       public void selectFilter() {
-        prefs.FILTER_ERRORS = false;
-        prefs.FILTER_INFO = true;
-        prefs.FILTER_WARNINGS = false;
-        prefs.FILTER_DEBUG = true;
+        preferences.FILTER_ERRORS = false;
+        preferences.FILTER_INFO = true;
+        preferences.FILTER_WARNINGS = false;
+        preferences.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && !prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
+        return !preferences.FILTER_ERRORS && preferences.FILTER_INFO && !preferences.FILTER_WARNINGS && preferences.FILTER_DEBUG;
       }
     });
-    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors"), prefs) {
+    filters.add(new MyFilter(DiagnosticBundle.message("log.console.filter.show.errors"), preferences) {
       @Override
       public void selectFilter() {
-        prefs.FILTER_ERRORS = false;
-        prefs.FILTER_INFO = true;
-        prefs.FILTER_WARNINGS = true;
-        prefs.FILTER_DEBUG = true;
+        preferences.FILTER_ERRORS = false;
+        preferences.FILTER_INFO = true;
+        preferences.FILTER_WARNINGS = true;
+        preferences.FILTER_DEBUG = true;
       }
 
       @Override
       public boolean isSelected() {
-        return !prefs.FILTER_ERRORS && prefs.FILTER_INFO && prefs.FILTER_WARNINGS && prefs.FILTER_DEBUG;
+        return !preferences.FILTER_ERRORS && preferences.FILTER_INFO && preferences.FILTER_WARNINGS && preferences.FILTER_DEBUG;
       }
     });
   }
 
+  @Override
   public boolean isFilterSelected(LogFilter filter) {
     return getPreferences().isFilterSelected(filter);
   }
 
+  @Override
   public void selectFilter(LogFilter filter) {
     getPreferences().selectOnlyFilter(filter);
   }
 
+  @Override
   @NotNull
   public MyProcessingResult processLine(String line) {
     final String type = LogConsolePreferences.getType(line);
@@ -162,15 +171,16 @@ public class DefaultLogFilterModel extends LogFilterModel {
   }
 
   private abstract class MyFilter extends IndependentLogFilter {
-    private final LogConsolePreferences myPrefs;
+    private final LogConsolePreferences myPreferences;
 
-    protected MyFilter(String name, LogConsolePreferences prefs) {
+    protected MyFilter(String name, LogConsolePreferences preferences) {
       super(name);
-      myPrefs = prefs;
+      myPreferences = preferences;
     }
 
+    @Override
     public boolean isAcceptable(String line) {
-      return myPrefs.isApplicable(line, myPrevType, myCheckStandartFilters);
+      return myPreferences.isApplicable(line, myPrevType, myCheckStandardFilters);
     }
   }
 }

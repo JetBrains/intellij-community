@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -72,11 +73,11 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
-    myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
+    myLabel.setIcon(SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         IntentionListStep step = new IntentionListStep(null, info, editor, psiFile, project);
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
@@ -97,11 +98,11 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
   }
 
   private  Color getColor(HighlightSeverity severity) {
-    if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
+    if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }
 
-    if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
+    if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
       return LightColors.YELLOW;
     }
 

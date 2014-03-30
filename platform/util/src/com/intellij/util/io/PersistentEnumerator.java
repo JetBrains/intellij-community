@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,12 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
           new RecordBufferHandler(), true);
   }
 
+  @Override
   protected  void setupEmptyFile() throws IOException {
     allocVector(FIRST_VECTOR);
   }
 
+  @Override
   public synchronized boolean traverseAllRecords(@NotNull RecordsProcessor p) throws IOException {
     return traverseRecords(FIRST_VECTOR_OFFSET, SLOTS_PER_FIRST_VECTOR, p);
   }
@@ -90,6 +92,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
+  @Override
   protected synchronized int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     lockStorage();
     try {
@@ -181,6 +184,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
     }
   }
 
+  @Override
   protected int writeData(final Data value, int hashCode) {
     int id = super.writeData(value, hashCode);
     ++valuesCount;
@@ -224,6 +228,7 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static class RecordBufferHandler extends PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumerator> {
     private final byte[] myBuffer = new byte[RECORD_SIZE];
 
+    @Override
     protected int recordWriteOffset(@NotNull PersistentEnumerator enumerator, byte[] buf) {
       return (int)enumerator.myStorage.length();
     }

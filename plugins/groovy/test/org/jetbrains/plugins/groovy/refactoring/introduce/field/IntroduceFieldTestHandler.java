@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
+
+import java.util.LinkedHashSet;
 
 /**
 * @author Maxim.Medvedev
@@ -46,8 +49,9 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
     mySelectedType = selectedType;
   }
 
+  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(GrIntroduceContext context) {
+  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceDialog<GrIntroduceFieldSettings>() {
       @Override
       public GrIntroduceFieldSettings getSettings() {
@@ -64,7 +68,7 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
 
           @Override
           public String getVisibilityModifier() {
-            return GrModifier.PACKAGE_LOCAL;
+            return PsiModifier.PACKAGE_LOCAL;
           }
 
           @Override
@@ -101,6 +105,14 @@ class IntroduceFieldTestHandler extends GrIntroduceFieldHandler {
       @Override
       public boolean isOK() {
         return true;
+      }
+
+      @NotNull
+      @Override
+      public LinkedHashSet<String> suggestNames() {
+        LinkedHashSet<String> strings = new LinkedHashSet<String>();
+        strings.add("f");
+        return strings;
       }
     };
   }

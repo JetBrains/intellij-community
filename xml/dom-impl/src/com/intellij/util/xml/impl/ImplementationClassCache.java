@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ReflectionCache;
-import com.intellij.util.SofterReference;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.DomReflectionUtil;
 import com.intellij.util.xml.Implementation;
@@ -33,7 +29,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -82,7 +77,7 @@ class ImplementationClassCache {
         return;
       }
     }
-    for (final Class aClass1 : ReflectionCache.getInterfaces(concreteInterface)) {
+    for (final Class aClass1 : concreteInterface.getInterfaces()) {
       findImplementationClassDFS(aClass1, results);
     }
   }

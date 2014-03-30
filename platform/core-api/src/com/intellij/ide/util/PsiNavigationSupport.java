@@ -16,6 +16,8 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -31,6 +33,10 @@ public abstract class PsiNavigationSupport {
 
   @Nullable
   public abstract Navigatable getDescriptor(final PsiElement element);
+
+  @Nullable
+  public abstract Navigatable createNavigatable(Project project, VirtualFile vFile, int offset);
+
   public abstract boolean canNavigate(final PsiElement element);
   public abstract void navigateToDirectory(PsiDirectory psiDirectory, boolean requestFocus);
 }

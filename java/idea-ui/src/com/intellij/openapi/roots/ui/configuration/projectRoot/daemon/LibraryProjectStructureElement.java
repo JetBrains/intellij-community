@@ -36,10 +36,12 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -93,14 +95,12 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("<html>");
     buffer.append("Library '").append(StringUtil.escapeXml(libraryName)).append("' has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
       buffer.append(PathUtil.toPresentableUrl(url));
     }
-    buffer.append("</html>");
-    return buffer.toString();
+    return XmlStringUtil.wrapInHtml(buffer);
   }
 
   @NotNull
@@ -134,7 +134,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final Library source = realLibrary instanceof LibraryImpl? ((LibraryImpl)realLibrary).getSource() : null;
     return source != null ? source : myLibrary;
   }
-  
+
   @Override
   public int hashCode() {
     return System.identityHashCode(getSourceOrThis());
@@ -149,7 +149,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
-    final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix());
+    final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
     return new ProjectStructureProblemDescription("Library '" + StringUtil.escapeXml(myLibrary.getName()) + "'" + " is not used", null, createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
                                                   fixes, false);
@@ -224,6 +224,26 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     @Override
     public void performFix() {
       BaseLibrariesConfigurable.getInstance(myContext.getProject(), myLibrary.getTable().getTableLevel()).removeLibrary(LibraryProjectStructureElement.this);
+    }
+  }
+
+  private class RemoveAllUnusedLibrariesFix extends ConfigurationErrorQuickFix {
+    private RemoveAllUnusedLibrariesFix() {
+      super("Remove All Unused Libraries");
+    }
+
+    @Override
+    public void performFix() {
+      BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.getInstance(myContext.getProject(), LibraryTablesRegistrar.PROJECT_LEVEL);
+      Library[] libraries = configurable.getModelProvider().getModifiableModel().getLibraries();
+      List<LibraryProjectStructureElement> toRemove = new ArrayList<LibraryProjectStructureElement>();
+      for (Library library : libraries) {
+        LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
+        if (myContext.getDaemonAnalyzer().getUsages(libraryElement).isEmpty()) {
+          toRemove.add(libraryElement);
+        }
+      }
+      configurable.removeLibraries(toRemove);
     }
   }
 }

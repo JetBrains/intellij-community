@@ -54,6 +54,7 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
                 CustomHighlighterColors.CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES);
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     Lexer customFileTypeLexer = new CustomFileTypeLexer(myTable, true);
@@ -67,6 +68,7 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
     return customFileTypeLexer;
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(ourKeys.get(tokenType));

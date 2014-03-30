@@ -79,7 +79,7 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
       myTf.setText(UIDesignerBundle.message("client.properties.configure"));
       myTf.getTextField().setEditable(false);
       myTf.getTextField().setBorder(null);
-      myTf.getTextField().setForeground(JBColor.foreground);
+      myTf.getTextField().setForeground(JBColor.foreground());
       myTf.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           showClientPropertiesDialog();

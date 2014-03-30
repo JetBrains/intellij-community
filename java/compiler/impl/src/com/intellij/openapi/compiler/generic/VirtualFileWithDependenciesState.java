@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class VirtualFileWithDependenciesState {
     private byte[] myBuffer = IOUtil.allocReadWriteUTFBuffer();
 
     @Override
-    public void save(DataOutput out, VirtualFileWithDependenciesState value) throws IOException {
+    public void save(@NotNull DataOutput out, VirtualFileWithDependenciesState value) throws IOException {
       out.writeLong(value.mySourceTimestamp);
       final Map<String, Long> dependencies = value.myDependencies;
       out.writeInt(dependencies.size());
@@ -74,7 +74,7 @@ public class VirtualFileWithDependenciesState {
     }
 
     @Override
-    public VirtualFileWithDependenciesState read(DataInput in) throws IOException {
+    public VirtualFileWithDependenciesState read(@NotNull DataInput in) throws IOException {
       final VirtualFileWithDependenciesState state = new VirtualFileWithDependenciesState(in.readLong());
       int size = in.readInt();
       while (size-- > 0) {

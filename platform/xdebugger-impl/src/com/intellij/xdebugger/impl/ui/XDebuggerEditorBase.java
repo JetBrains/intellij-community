@@ -35,7 +35,7 @@ import java.util.List;
 public abstract class XDebuggerEditorBase {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
-  private final EvaluationMode myMode;
+  @NotNull private final EvaluationMode myMode;
   @Nullable private final String myHistoryId;
   private final XSourcePosition mySourcePosition;
   private int myHistoryIndex;
@@ -52,6 +52,7 @@ public abstract class XDebuggerEditorBase {
     mySourcePosition = sourcePosition;
   }
 
+  @NotNull
   public EvaluationMode getMode() {
     return myMode;
   }

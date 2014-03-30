@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
 
+@Deprecated
 /**
- * author: lesya
+ * @deprecated Please use {@link com.intellij.util.ui.table.ComboBoxTableCellEditor}
  */
 public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
-  public final static ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
+  public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
   private final JComboBox myComboBox = new JComboBox();
@@ -36,6 +36,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   private ComboBoxTableCellEditor() {
     myComboBox.setRenderer(new BasicComboBoxRenderer());
     myComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         stopCellEditing();
       }
@@ -45,14 +46,16 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
                                        0));
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final ListWithSelection options = (ListWithSelection)value;
     if (options.getSelection() == null) {
       options.selectFirst();
     }
     myComboBox.removeAllItems();
-    for (Iterator each = options.iterator(); each.hasNext();) {
-      myComboBox.addItem(each.next());
+    for (Object option : options) {
+      //noinspection unchecked
+      myComboBox.addItem(option);
     }
 
     myComboBox.setSelectedItem(options.getSelection());
@@ -60,6 +63,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
     return myPanel;
   }
 
+  @Override
   public Object getCellEditorValue() {
     return myComboBox.getSelectedItem();
   }

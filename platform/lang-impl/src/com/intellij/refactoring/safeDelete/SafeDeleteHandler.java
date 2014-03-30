@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -49,8 +50,9 @@ import java.util.Set;
 public class SafeDeleteHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null || !SafeDeleteProcessor.validElement(element)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
@@ -60,6 +62,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
   }
@@ -106,7 +109,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;
 
-    final PsiElement[] elementsToDelete = PsiUtilBase.toPsiElementArray(fullElementsSet);
+    final PsiElement[] elementsToDelete = PsiUtilCore.toPsiElementArray(fullElementsSet);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       RefactoringSettings settings = RefactoringSettings.getInstance();
@@ -116,8 +119,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     }
     else {
       final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
+        @Override
         public void run(final SafeDeleteDialog dialog) {
           SafeDeleteProcessor.createInstance(project, new Runnable() {
+            @Override
             public void run() {
               if (successRunnable != null) {
                 successRunnable.run();

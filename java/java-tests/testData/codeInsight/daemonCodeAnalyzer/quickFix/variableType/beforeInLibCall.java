@@ -1,4 +1,4 @@
-// "Change 'i' type to 'long'" "false"
+// "Change parameter 'i' type to 'long'" "false"
 
 class M extends Thread {
   @Override

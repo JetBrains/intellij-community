@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
@@ -33,6 +34,7 @@ public abstract class PsiConstantEvaluationHelper {
    * @return the result of the evaluation, or null if the expression is not a constant expression.
    */
   @Nullable
+  @Contract("null -> null")
   public Object computeConstantExpression(PsiElement expression) {
     return computeConstantExpression(expression, false);
   }

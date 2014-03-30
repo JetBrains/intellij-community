@@ -15,13 +15,14 @@
  */
 package com.intellij.execution.console;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author peter
@@ -62,6 +63,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     return myNegativePatterns;
   }
 
+  @Override
   public MyBean getState() {
     MyBean result = new MyBean();
     writeDiff(result.addedPositive, result.removedPositive, false);
@@ -89,12 +91,19 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     return negated ? myNegativePatterns : myPositivePatterns;
   }
 
+  private Collection<String> filterEmptyStringsFromCollection(Collection<String> collection) {
+    return Collections2.filter(collection, new Predicate<String>() {
+      @Override
+      public boolean apply(@Nullable String input) {
+        return !StringUtil.isEmpty(input);
+      }
+    });
+  }
+
+  @Override
   public void loadState(MyBean state) {
     myPositivePatterns.clear();
     myNegativePatterns.clear();
-
-    myPositivePatterns.addAll(state.addedPositive);
-    myNegativePatterns.addAll(state.addedNegative);
 
     Set<String> removedPositive = new HashSet<String>(state.removedPositive);
     Set<String> removedNegative = new HashSet<String>(state.removedNegative);
@@ -104,6 +113,10 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
         patternList(regexp.negate).add(regexp.substring);
       }
     }
+
+    myPositivePatterns.addAll(filterEmptyStringsFromCollection(state.addedPositive));
+    myNegativePatterns.addAll(filterEmptyStringsFromCollection(state.addedNegative));
+
   }
 
   public static class MyBean {

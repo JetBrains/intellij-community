@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,15 +34,15 @@ public class UsageTargetUtil {
   private static final ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
 
   public static UsageTarget[] findUsageTargets(DataProvider dataProvider) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataProvider);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataProvider);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataProvider);
 
     List<UsageTarget> result = new ArrayList<UsageTarget>();
     if (file != null && editor != null) {
       UsageTarget[] targets = findUsageTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
     }
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (psiElement != null) {
       UsageTarget[] targets = findUsageTargets(psiElement);
       if (targets != null)Collections.addAll(result, targets);
@@ -60,7 +62,9 @@ public class UsageTargetUtil {
 
   public static UsageTarget[] findUsageTargets(PsiElement psiElement) {
     List<UsageTarget> result = new ArrayList<UsageTarget>();
-    for (UsageTargetProvider provider : Extensions.getExtensions(EP_NAME)) {
+    UsageTargetProvider[] providers = Extensions.getExtensions(EP_NAME);
+    Project project = psiElement.getProject();
+    for (UsageTargetProvider provider : DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers))) {
       UsageTarget[] targets = provider.getTargets(psiElement);
       if (targets != null) Collections.addAll(result, targets);
     }

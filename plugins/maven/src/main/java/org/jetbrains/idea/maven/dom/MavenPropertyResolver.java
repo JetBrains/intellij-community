@@ -16,8 +16,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -36,7 +34,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.maven.compiler.MavenEscapeWindowsCharacterUtils;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +47,7 @@ public class MavenPropertyResolver {
   public static void doFilterText(Module module,
                                   String text,
                                   Properties additionalProperties,
-                                  String propertyEscapeString,
+                                  @Nullable String propertyEscapeString,
                                   Appendable out) throws IOException {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(module.getProject());
     MavenProject mavenProject = manager.findProject(module);
@@ -226,6 +227,9 @@ public class MavenPropertyResolver {
       if (unprefixed.equals("artifactId")) {
         return parentId.getArtifactId();
       }
+      if (unprefixed.equals("version")) {
+        return parentId.getVersion();
+      }
 
       selectedProject = projectsManager.findProject(parentId);
       if (selectedProject == null) return null;
@@ -236,18 +240,16 @@ public class MavenPropertyResolver {
     }
 
     if ("java.home".equals(propName)) {
-      Module module = projectsManager.findModule(mavenProject);
-      if (module != null) {
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null) {
-          VirtualFile homeDirectory = sdk.getHomeDirectory();
-          if (homeDirectory != null) {
-            VirtualFile jreDir = homeDirectory.findChild("jre");
-            if (jreDir != null) {
-              return jreDir.getPath();
-            }
-          }
-        }
+      String jreDir = MavenUtil.getModuleJreHome(projectsManager, mavenProject);
+      if (jreDir != null) {
+        return jreDir;
+      }
+    }
+
+    if ("java.version".equals(propName)) {
+      String javaVersion = MavenUtil.getModuleJavaVersion(projectsManager, mavenProject);
+      if (javaVersion != null) {
+        return javaVersion;
       }
     }
 
@@ -267,6 +269,10 @@ public class MavenPropertyResolver {
 
     result = mavenProject.getProperties().getProperty(propName);
     if (result != null) return result;
+
+    if ("settings.localRepository".equals(propName)) {
+      return mavenProject.getLocalRepository().getAbsolutePath();
+    }
 
     return null;
   }

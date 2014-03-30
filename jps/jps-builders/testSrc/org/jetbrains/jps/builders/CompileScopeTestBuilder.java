@@ -26,10 +26,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -73,6 +70,11 @@ public class CompileScopeTestBuilder {
 
   public CompileScopeTestBuilder artifact(JpsArtifact artifact) {
     myTargets.add(new ArtifactBuildTarget(artifact));
+    return this;
+  }
+
+  public CompileScopeTestBuilder targetTypes(BuildTargetType<?>... targets) {
+    myTargetTypes.addAll(Arrays.asList(targets));
     return this;
   }
 

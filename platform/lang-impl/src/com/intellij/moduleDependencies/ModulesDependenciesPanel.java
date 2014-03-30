@@ -81,7 +81,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private Graph<Module> myModulesGraph;
   private final Module[] myModules;
 
-  private JTextField myPathField = new JTextField();
+  private final JTextField myPathField = new JTextField();
 
   private final Splitter mySplitter;
   @NonNls private static final String ourHelpID = "module.dependencies.tool.window";
@@ -123,6 +123,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -135,6 +136,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     group.add(new AnAction(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.modules.dependencies.description"),
                            AllIcons.Actions.Cancel){
+      @Override
       public void actionPerformed(AnActionEvent e) {
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
@@ -144,15 +146,18 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", isForwardDirection() ? AllIcons.Actions.SortAsc
                                                                                                                              : AllIcons.Actions.SortDesc){
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return isForwardDirection();
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance(myProject).setValue(DIRECTION, String.valueOf(state));
         initLeftTreeModel();
       }
 
+      @Override
       public void update(final AnActionEvent e) {
         e.getPresentation().setIcon(isForwardDirection() ? AllIcons.Actions.SortAsc : AllIcons.Actions.SortDesc);
       }
@@ -179,11 +184,13 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
                            analyzeDepsAction.getTemplatePresentation().getDescription(),
                            AllIcons.Toolwindows.ToolWindowInspection){
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         analyzeDepsAction.actionPerformed(e);
       }
 
 
+      @Override
       public void update(AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
@@ -214,6 +221,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     myModulesGraph = buildGraph();
     setSplitterProportion();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final Map<Module, Boolean> inCycle = new HashMap<Module, Boolean>();
@@ -244,6 +252,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
   private static void sortSubTree(final DefaultMutableTreeNode root) {
     TreeUtil.sort(root, new Comparator() {
+      @Override
       public int compare(final Object o1, final Object o2) {
         DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)o1;
         DefaultMutableTreeNode node2 = (DefaultMutableTreeNode)o2;
@@ -297,9 +306,11 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     initTree(myLeftTree, false);
 
     myLeftTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
       }
 
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         final DefaultMutableTreeNode expandedNode = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
         for(int i = 0; i < expandedNode.getChildCount(); i++){
@@ -318,11 +329,13 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     });
 
     myLeftTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath selectionPath = myLeftTree.getSelectionPath();
         if (selectionPath != null) {
 
           myPathField.setText(StringUtil.join(selectionPath.getPath(), new Function<Object, String>() {
+            @Override
             public String fun(Object o) {
               final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
               if (userObject instanceof MyUserObject) {
@@ -335,6 +348,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
           final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           if (selection != null){
             TreeUtil.traverseDepth(selection, new TreeUtil.Traverse() {
+              @Override
               public boolean accept(Object node) {
                 DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
                 if (treeNode.getUserObject() instanceof MyUserObject){
@@ -355,18 +369,22 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private static ActionGroup createTreePopupActions(final boolean isRightTree, final Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     final TreeExpander treeExpander = new TreeExpander() {
+      @Override
       public void expandAll() {
         TreeUtil.expandAll(tree);
       }
 
+      @Override
       public boolean canExpand() {
         return isRightTree;
       }
 
+      @Override
       public void collapseAll() {
         TreeUtil.collapseAll(tree, 3);
       }
 
+      @Override
       public boolean canCollapse() {
         return true;
       }
@@ -395,6 +413,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     TreeUtil.installActions(tree);
     new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(TreePath o) {
         return o.getLastPathComponent().toString();
       }
@@ -417,9 +436,11 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     myContent = content;
   }
 
+  @Override
   public void beforeRootsChange(ModuleRootEvent event) {
   }
 
+  @Override
   public void rootsChanged(ModuleRootEvent event) {
     initLeftTreeModel();
     TreeUtil.selectFirstNode(myLeftTree);
@@ -447,7 +468,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
 
     public boolean equals(Object object) {
-      return object instanceof MyUserObject && myModule.equals(((MyUserObject)object).getModule());      
+      return object instanceof MyUserObject && myModule.equals(((MyUserObject)object).getModule());
     }
 
     public int hashCode() {
@@ -458,14 +479,17 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       return myModule.getName();
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
       ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
     }
 
+    @Override
     public boolean canNavigate() {
       return myModule != null && !myModule.isDisposed();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
@@ -486,8 +510,9 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     }
 
+    @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.PROJECT.is(dataId)){
+      if (CommonDataKeys.PROJECT.is(dataId)){
         return myProject;
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)){
@@ -502,7 +527,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return ourHelpID;
       }
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final TreePath selectionPath = myTree.getLeadSelectionPath();
         if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -515,6 +540,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     }
   }
    private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(
     JTree tree,
     Object value,

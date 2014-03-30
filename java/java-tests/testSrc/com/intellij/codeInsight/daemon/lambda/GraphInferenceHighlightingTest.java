@@ -17,8 +17,8 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -27,7 +27,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testNestedCalls() throws Exception {
     doTest();
   }
-  
+
   public void testNestedCallsSameMethod() throws Exception {
     doTest();
   }
@@ -76,12 +76,121 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferFromTypeArgs() throws Exception {
+    doTest();
+  }
+
+  public void testDefaultConstructorAsArgument() throws Exception {
+    doTest();
+  }
+
+  public void testAfterAbstractPipeline() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedReturnTypes() throws Exception {
+    doTest();
+  }
+
+  public void testClsCapturedReturnTypes() throws Exception {
+    doTest();
+  }
+
+  public void testOverloadChooserOfReturnType() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA98866() throws Exception {
+    doTest();
+  }
+
+  public void testIncompleteSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testJDK8028774() throws Exception {
+    doTest();
+  }
+
+  public void testErasedByReturnConstraint() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA104429() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeByOverloadedMethod() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeByOverloadedMethod2() throws Exception {
+    doTest();
+  }
+
+  public void testGrandParentTypeParams() throws Exception {
+    doTest();
+  }
+
+  public void testDeepCallsChain() throws Exception {
+    doTest();
+  }
+
+  public void testArrayPassedToVarargsMethod() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA121055() throws Exception {
+    doTest();
+  }
+
+  public void testTargetTypeByAnonymousClass() throws Exception {
+    doTest();
+  }
+
+  public void testStaticInheritorsAmbiguity() throws Exception {
+    doTest();
+  }
+
+  public void testNestedCalls1() throws Exception {
+    doTest();
+  }
+
+  public void testMostSpecificVarargsCase() throws Exception {
+    doTest();
+  }
+
+  public void testLiftedCaptureToOuterCall() throws Exception {
+    doTest();
+  }
+
+  public void testSiteSubstitutionForReturnConstraint() throws Exception {
+    doTest();
+  }
+
+  public void testIncorporationWithEqualsBoundsSubstitution() throws Exception {
+    doTest();
+  }
+
+  public void testOuterCallConflictResolution() throws Exception {
+    doTest();
+  }
+
+  public void testVarargsOnNonPertinentPlace() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) throws Exception {
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_8, getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

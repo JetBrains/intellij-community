@@ -16,20 +16,21 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public interface Dictionary {
-
+  @NotNull
   String getName();
 
   @Nullable
-  Boolean contains(String word);
+  Boolean contains(@NotNull String word);
 
   boolean isEmpty();
 
-  void traverse(final Consumer<String> action);
+  void traverse(@NotNull Consumer<String> action);
 
   @Nullable
   Set<String> getWords();

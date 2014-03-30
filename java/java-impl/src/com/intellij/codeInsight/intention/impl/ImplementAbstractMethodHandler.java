@@ -19,13 +19,13 @@
  * User: mike
  * Date: Sep 4, 2002
  * Time: 6:26:27 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -158,7 +158,7 @@ public class ImplementAbstractMethodHandler {
             classes.add((PsiClass)o);
           }
         }
-        if (!CodeInsightUtilBase.preparePsiElementsForWrite(classes)) return;
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(classes)) return;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {

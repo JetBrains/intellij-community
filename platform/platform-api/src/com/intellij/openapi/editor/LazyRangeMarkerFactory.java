@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -37,13 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
-public class LazyRangeMarkerFactory extends AbstractProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.LazyRangeMarkerFactory");
-
+public class LazyRangeMarkerFactory {
+  private final Project myProject;
   private final ConcurrentMap<VirtualFile,WeakList<LazyMarker>> myMarkers = new ConcurrentWeakHashMap<VirtualFile, WeakList<LazyMarker>>();
 
   public LazyRangeMarkerFactory(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
-    super(project);
+    myProject = project;
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -66,7 +65,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   private void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
-    WeakList<LazyMarker> markers = myMarkers.get(file);
+    List<LazyMarker> markers = myMarkers.get(file);
     if (markers == null) {
       markers = ConcurrencyUtil.cacheOrGet(myMarkers, file, new WeakList<LazyMarker>());
     }
@@ -74,7 +73,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   public static LazyRangeMarkerFactory getInstance(Project project) {
-    return project.getComponent(LazyRangeMarkerFactory.class);
+    return ServiceManager.getService(project, LazyRangeMarkerFactory.class);
   }
 
   @NotNull
@@ -82,13 +81,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
       @Override
       public RangeMarker compute() {
-        FileDocumentManager fdm = FileDocumentManager.getInstance();
-        final Document document = fdm.getCachedDocument(file);
-        if (document != null) {
-          int _offset = Math.min(offset, document.getTextLength());
-          return document.createRangeMarker(_offset, _offset);
-        }
-
+        // even for already loaded document do not create range marker yet - wait until it really needed when e.g. user clicked to jump to OpenFileDescriptor
         final LazyMarker marker = new OffsetLazyMarker(file, offset);
         addToLazyMarkersList(marker, file);
         return marker;
@@ -101,8 +94,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
       @Override
       public RangeMarker compute() {
-        FileDocumentManager fdm = FileDocumentManager.getInstance();
-        final Document document = fdm.getCachedDocument(file);
+        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document != null) {
           final int offset = calculateOffset(myProject, file, document, line, column);
           return document.createRangeMarker(offset, offset, persistent);
@@ -131,7 +123,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
     }
 
     @Nullable
-    private RangeMarker getOrCreateDelegate() {
+    protected final RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
         if (document == null) {
@@ -226,6 +218,18 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
       int offset = calculateOffset(myProject, file, document, myLine, myColumn);
 
       return document.createRangeMarker(offset, offset);
+    }
+
+    @Override
+    public int getStartOffset() {
+      getOrCreateDelegate();
+      return super.getStartOffset();
+    }
+
+    @Override
+    public int getEndOffset() {
+      getOrCreateDelegate();
+      return super.getEndOffset();
     }
   }
 

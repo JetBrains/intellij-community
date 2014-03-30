@@ -19,6 +19,7 @@ package com.intellij.tools;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -31,6 +32,7 @@ import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -268,7 +270,7 @@ public class Tool implements SchemeElement {
    * @return <code>true</code> if task has been started successfully
    */
   public boolean execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }
@@ -279,9 +281,11 @@ public class Tool implements SchemeElement {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
         assert runner != null;
 
-        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder().setRunProfile(profile).setProject(project).build();
+        ExecutionEnvironment executionEnvironment = new ExecutionEnvironmentBuilder(project, DefaultRunExecutor.getRunExecutorInstance())
+          .setRunProfile(profile)
+          .build();
         executionEnvironment.setExecutionId(executionId);
-        runner.execute(new DefaultRunExecutor(), executionEnvironment, new ProgramRunner.Callback() {
+        runner.execute(executionEnvironment, new ProgramRunner.Callback() {
           @Override
           public void processStarted(RunContentDescriptor descriptor) {
             ProcessHandler processHandler = descriptor.getProcessHandler();
@@ -315,7 +319,7 @@ public class Tool implements SchemeElement {
   @Nullable
   public GeneralCommandLine createCommandLine(DataContext dataContext) {
     if (StringUtil.isEmpty(getWorkingDirectory())) {
-      setWorkingDirectory(null);
+      setWorkingDirectory("$ProjectFileDir$");
     }
 
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -339,6 +343,7 @@ public class Tool implements SchemeElement {
         commandLine.getParametersList().prependAll("-a", exePath);
       }
       else {
+        exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
         commandLine.setExePath(exePath);
       }
     }
@@ -348,14 +353,17 @@ public class Tool implements SchemeElement {
     return commandLine;
   }
 
+  @Override
   public void setGroupName(final String name) {
     setGroup(name);
   }
 
+  @Override
   public String getKey() {
     return getName();
   }
 
+  @Override
   public SchemeElement copy() {
     Tool copy = new Tool();
     copy.copyFrom(this);

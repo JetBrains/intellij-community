@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.LeafElement");
+  private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
   private static final int TEXT_MATCHES_THRESHOLD = 5;
 
@@ -58,6 +61,15 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public String getText() {
+    if (myText.length() > 1000 && !(myText instanceof String)) { // e.g. a large text file
+      String text = SoftReference.dereference(getUserData(CACHED_TEXT));
+      if (text == null) {
+        text = myText.toString();
+        putUserData(CACHED_TEXT, new SoftReference<String>(text));
+      }
+      return text;
+    }
+
     return myText.toString();
   }
 
@@ -234,42 +246,42 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public void addChild(@NotNull ASTNode child, ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void addChild(@NotNull ASTNode child) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void removeChild(@NotNull ASTNode child) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
   public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
-    throw new RuntimeException(new IncorrectOperationException("Leaf elements cannot have children."));
+    throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override

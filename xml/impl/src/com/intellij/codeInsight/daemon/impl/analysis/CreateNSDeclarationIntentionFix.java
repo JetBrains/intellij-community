@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
@@ -52,6 +52,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -95,7 +96,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                         final String namespacePrefix,
+                                         @NotNull String namespacePrefix,
                                          @Nullable final XmlToken token) {
     myNamespacePrefix = namespacePrefix;
     myElement = PsiAnchor.create(element);
@@ -109,8 +110,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 
-  private XmlExtension getXmlExtension() {
-    return XmlExtension.getExtension(getFile());
+  private XmlNamespaceHelper getXmlExtension() {
+    return XmlNamespaceHelper.getHelper(getFile());
   }
 
   @Override
@@ -145,7 +146,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
@@ -161,8 +162,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
           String prefix = myNamespacePrefix;
           if (StringUtil.isEmpty(prefix)) {
-            final XmlExtension extension = getXmlExtension();
-            final XmlFile xmlFile = extension.getContainingFile(element);
+            final XmlFile xmlFile = XmlExtension.getExtension(file).getContainingFile(element);
             prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
             if (StringUtil.isNotEmpty(prefix)) {
               // namespace already declared
@@ -179,15 +179,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           }
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-          final XmlExtension extension = XmlExtension.getExtension(file);
-          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
-            @Override
-            public void run(final String param) throws IncorrectOperationException {
-              if (!namespace.isEmpty()) {
-                editor.getCaretModel().moveToOffset(marker.getStartOffset());
-              }
-            }
-          });
+          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
+          helper.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), prefix,
+                                               new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                                                 @Override
+                                                 public void run(final String param) throws IncorrectOperationException {
+                                                   if (!namespace.isEmpty()) {
+                                                     editor.getCaretModel().moveToOffset(marker.getStartOffset());
+                                                   }
+                                                 }
+                                               });
         }
       }, getTitle(),
       this,
@@ -204,10 +205,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public boolean showHint(final Editor editor) {
-    if (myToken == null) return false;
-    XmlToken token = (XmlToken)myToken.retrieve();
-    if (token == null) return false;
+  public boolean showHint(@NotNull final Editor editor) {
+    XmlToken token = null;
+    if (myToken != null) {
+      token = (XmlToken)myToken.retrieve();
+      if (token == null) return false;
+    }
     if (!XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS || myNamespacePrefix.isEmpty()) {
       return false;
     }
@@ -218,12 +221,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
-      if (element instanceof XmlTag) {
+      if (element instanceof XmlTag && token != null) {
         if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(token.getTextRange())) {
           HintManager.getInstance().showQuestionHint(editor, message,
                                                      token.getTextOffset(),
                                                      token.getTextOffset() + myNamespacePrefix.length(), action);
-          return true;        
+          return true;
         }
       } else {
         HintManager.getInstance().showQuestionHint(editor, message,
@@ -281,7 +284,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                                                                            String title,
                                                                                            final IntentionAction requestor,
                                                                                            final Editor editor) throws IncorrectOperationException {
-    
+
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
@@ -356,7 +359,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public static class TagMetaHandler implements MetaHandler {
     private final String myName;
-    
+
 
     public TagMetaHandler(final String name) {
       myName = name;

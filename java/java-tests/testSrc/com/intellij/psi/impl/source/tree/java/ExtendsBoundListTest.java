@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
@@ -25,7 +26,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 public class ExtendsBoundListTest extends LightCodeInsightTestCase {
   public void testRemoveBoundFromFront() throws Exception {
     final PsiTypeParameter typeParameter = getTypeParameter();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         typeParameter.getExtendsList().getReferenceElements()[0].delete();

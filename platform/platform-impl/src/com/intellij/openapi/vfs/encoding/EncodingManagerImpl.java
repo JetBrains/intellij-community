@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
@@ -117,25 +118,20 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
   private void handleDocument(@NotNull final Document document) {
-    ApplicationManager.getApplication().runReadAction(new Runnable(){
-      @Override
-      public void run() {
-        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-        if (virtualFile == null) return;
-        Project project = guessProject(virtualFile);
-        if (project != null && project.isDisposed()) return;
-        Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
-        Charset oldCached = getCachedCharsetFromContent(document);
-        if (!Comparing.equal(charset, oldCached)) {
-          setCachedCharsetFromContent(charset, oldCached, document);
-        }
-      }
-    });
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null) return;
+    Project project = guessProject(virtualFile);
+    if (project != null && project.isDisposed()) return;
+    Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
+    Charset oldCached = getCachedCharsetFromContent(document);
+    if (!Comparing.equal(charset, oldCached)) {
+      setCachedCharsetFromContent(charset, oldCached, document);
+    }
   }
 
-  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, Document document) {
+  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-    firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -148,7 +144,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return ApplicationManager.getApplication().runReadAction(new Computable<Charset>() {
       @Override
       public Charset compute() {
-        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
         if (charsetFromContent != null) {
           setCachedCharsetFromContent(charsetFromContent, cached, document);
         }
@@ -226,7 +222,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
-    return project != null && EncodingProjectManager.getInstance(project).isUseUTFGuessing(virtualFile);
+    return project == null || EncodingProjectManager.getInstance(project).isUseUTFGuessing(virtualFile);
   }
 
   @Override
@@ -312,7 +308,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
-  void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
-    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  void firePropertyChange(@Nullable Document document, @NotNull String propertyName, final Object oldValue, final Object newValue) {
+    Object source = document == null ? this : document;
+    myPropertyChangeSupport.firePropertyChange(new PropertyChangeEvent(source, propertyName, oldValue, newValue));
   }
 }

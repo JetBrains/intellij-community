@@ -33,6 +33,10 @@
     <component>
       <implementation-class>com.intellij.openapi.roots.impl.libraries.LibraryKindLoader</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -122,6 +126,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -204,11 +212,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</interface-class>
-      <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewProjectComponent</implementation-class>
-    </component>
-
-    <component>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</implementation-class>
     </component>
 
@@ -227,6 +230,10 @@
       <skipForDefaultProject/>
     </component>
 
+    <component>
+      <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
+      <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
+    </component>
   </project-components>
 
   <module-components>

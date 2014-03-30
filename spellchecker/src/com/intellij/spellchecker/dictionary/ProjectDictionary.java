@@ -17,6 +17,7 @@ package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,39 +26,37 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ProjectDictionary implements EditableDictionary {
-
-  private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
+  @NonNls private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
   private Set<EditableDictionary> dictionaries;
 
-
   public ProjectDictionary() {
   }
 
-  public ProjectDictionary(Set<EditableDictionary> dictionaries) {
+  public ProjectDictionary(@NotNull Set<EditableDictionary> dictionaries) {
     this.dictionaries = dictionaries;
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return DEFAULT_PROJECT_DICTIONARY_NAME;
   }
 
-  public String getActiveName() {
-    return activeName;
-  }
-
   public void setActiveName(String name) {
-    this.activeName = name;
+    activeName = name;
   }
 
+  @Override
   @Nullable
-  public Boolean contains(String word) {
-    if (word == null || dictionaries == null) {
+  public Boolean contains(@NotNull String word) {
+    if (dictionaries == null) {
       return false;
     }
     int errors = 0;
@@ -66,8 +65,7 @@ public class ProjectDictionary implements EditableDictionary {
       if (contains == null) {
         errors++;
       }
-      else
-      if (contains) {
+      else if (contains) {
         return true;
       }
     }
@@ -75,10 +73,12 @@ public class ProjectDictionary implements EditableDictionary {
     return false;
   }
 
+  @Override
   public void addToDictionary(String word) {
     getActiveDictionary().addToDictionary(word);
   }
 
+  @Override
   public void removeFromDictionary(String word) {
     getActiveDictionary().removeFromDictionary(word);
   }
@@ -95,7 +95,7 @@ public class ProjectDictionary implements EditableDictionary {
     }
     EditableDictionary result = getDictionaryByName(activeName);
     if (result == null) {
-      result = new UserDictionary(this.activeName);
+      result = new UserDictionary(activeName);
       if (dictionaries == null) {
         dictionaries = new THashSet<EditableDictionary>();
       }
@@ -119,16 +119,18 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-
+  @Override
   public void replaceAll(@Nullable Collection<String> words) {
     getActiveDictionary().replaceAll(words);
   }
 
+  @Override
   public void clear() {
     getActiveDictionary().clear();
   }
 
 
+  @Override
   @Nullable
   public Set<String> getWords() {
     if (dictionaries == null) {
@@ -136,11 +138,15 @@ public class ProjectDictionary implements EditableDictionary {
     }
     Set<String> words = new HashSet<String>();
     for (Dictionary dictionary : dictionaries) {
-      words.addAll(dictionary.getWords());
+      Set<String> otherWords = dictionary.getWords();
+      if (otherWords != null) {
+        words.addAll(otherWords);
+      }
     }
     return words;
   }
 
+  @Override
   public int size(){
     int result = 0;
     for (Dictionary dictionary : dictionaries) {
@@ -149,7 +155,8 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-  public void traverse(final Consumer<String> consumer) {
+  @Override
+  public void traverse(@NotNull final Consumer<String> consumer) {
     if (dictionaries == null) {
       return;
     }
@@ -160,12 +167,14 @@ public class ProjectDictionary implements EditableDictionary {
 
   }
 
+  @Override
   @Nullable
   public Set<String> getEditableWords() {
     return getActiveDictionary().getWords();
   }
 
 
+  @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     getActiveDictionary().addToDictionary(words);
   }
@@ -195,6 +204,7 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "ProjectDictionary{" + "activeName='" + activeName + '\'' + ", dictionaries=" + dictionaries + '}';

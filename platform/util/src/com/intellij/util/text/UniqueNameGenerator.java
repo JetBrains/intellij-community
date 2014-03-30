@@ -38,6 +38,7 @@ public class UniqueNameGenerator implements Condition<String> {
   public UniqueNameGenerator() {
   }
 
+  @Override
   public final boolean value(final String candidate) {
     return !myExistingNames.contains(candidate);
   }
@@ -52,6 +53,7 @@ public class UniqueNameGenerator implements Condition<String> {
 
   public static String generateUniqueName(final String defaultName, final String prefix, final String suffix, final Collection<String> existingNames) {
     return generateUniqueName(defaultName, prefix, suffix, new Condition<String>() {
+      @Override
       public boolean value(final String s) {
         return !existingNames.contains(s); 
       }

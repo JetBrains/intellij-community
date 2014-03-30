@@ -17,25 +17,26 @@ package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
+import com.intellij.psi.injection.Injectable;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
+import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Provides completion for available Language-IDs in
  * <pre>@Language("[ctrl-space]")</pre>
  */
-final class LanguageReference extends StringLiteralReference {
+public final class LanguageReference extends StringLiteralReference {
 
-  public LanguageReference(PsiLiteralExpression value) {
+  public LanguageReference(PsiLiteral value) {
     super(value);
   }
 
@@ -50,22 +51,13 @@ final class LanguageReference extends StringLiteralReference {
 
   @NotNull
   public Object[] getVariants() {
-    final String[] ids = InjectedLanguage.getAvailableLanguageIDs();
-    return ContainerUtil.map2Array(ids, LookupElement.class, new Function<String, LookupElement>() {
-      public LookupElement fun(String s) {
-        final Language l = InjectedLanguage.findLanguageById(s);
-        assert l != null;
-
-        final FileType ft = l.getAssociatedFileType();
-        if (ft != null) {
-          return LookupElementBuilder.create(s).withIcon(ft.getIcon()).withTypeText(ft.getDescription());
-//                } else if (l == StdLanguages.EL) {
-//                    // IDEA-10012
-//                    return new LanguageLookupValue(s, StdFileTypes.JSP.getIcon(), "Expression Language");
-        }
-        return LookupElementBuilder.create(s).withIcon(EmptyIcon.ICON_16);
+    List<Injectable> list = InjectLanguageAction.getAllInjectables();
+    return ContainerUtil.map2Array(list, LookupElement.class, new Function<Injectable, LookupElement>() {
+      @Override
+      public LookupElement fun(Injectable injectable) {
+        return LookupElementBuilder.create(injectable.getId()).withIcon(injectable.getIcon()).withTailText(
+          "(" + injectable.getDisplayName() + ")", true);
       }
     });
   }
-
 }

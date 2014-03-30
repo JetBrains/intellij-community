@@ -22,6 +22,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -32,12 +33,12 @@ public class PopupHectorAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     new HectorComponent(file).showComponent(JBPopupFactory.getInstance().guessBestPopupLocation(dataContext));
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(LangDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(CommonDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
   }
 }

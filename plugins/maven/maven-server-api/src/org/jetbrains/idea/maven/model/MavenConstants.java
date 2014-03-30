@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ public class MavenConstants {
   public static final String TYPE_WAR = "war";
 
   public static final String SCOPE_COMPILE = "compile";
-  public static final String SCOPE_PROVIDEED = "provided";
+  public static final String SCOPE_PROVIDED = "provided";
+  /* @deprecated to remove in IDEA 14 */
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"}) public static final String SCOPE_PROVIDEED = SCOPE_PROVIDED;
   public static final String SCOPE_RUNTIME = "runtime";
   public static final String SCOPE_TEST = "test";
   public static final String SCOPE_SYSTEM = "system";
@@ -45,11 +47,11 @@ public class MavenConstants {
     Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
                   "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",
                   "generate-test-resources",
-                  "process-test-resources", "test-compile", "test", "prepare-package", "package", "pre-integration-test",
+                  "process-test-resources", "test-compile", "process-test-classes", "test", "prepare-package", "package", "pre-integration-test",
                   "integration-test",
                   "post-integration-test",
                   "verify", "install", "site", "deploy");
   public static final List<String> BASIC_PHASES =
-    Arrays.asList("clean", "validate", "compile", "test", "package", "install", "deploy", "site");
+    Arrays.asList("clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
 
 }

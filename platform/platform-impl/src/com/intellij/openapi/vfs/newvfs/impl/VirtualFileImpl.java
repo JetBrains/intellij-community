@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +33,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-  VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
-    super(name, parent, id, attributes);
+  private Charset myCharset;
+
+  VirtualFileImpl(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
+    super(nameId, parent, id, attributes);
+  }
+
+  @Override
+  protected void storeCharset(Charset charset) {
+    myCharset = charset;
+  }
+
+  @Override
+  protected Charset getStoredCharset() {
+    return myCharset;
   }
 
   @Override
@@ -110,5 +124,20 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   public OutputStream getOutputStream(final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     return VfsUtilCore.outputStreamAddingBOM(ourPersistence.getOutputStream(this, requestor, modStamp, timeStamp), this);
+  }
+
+  @Override
+  public String getDetectedLineSeparator() {
+    if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+      return LineSeparator.getSystemLineSeparator().getSeparatorString();
+    }
+    return super.getDetectedLineSeparator();
+  }
+
+  @Override
+  public void setDetectedLineSeparator(String separator) {
+    boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
+    setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+    super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }
 }

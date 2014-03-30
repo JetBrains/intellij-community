@@ -40,6 +40,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     myId = Key.create(mirrorProviderName);
   }
 
+  @Override
   public Key<UnknownTask> getId() {
     return myId;
   }
@@ -54,6 +55,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
   }
 
+  @Override
   public boolean configureTask(RunConfiguration runConfiguration, UnknownTask task) {
     return false;
   }
@@ -63,14 +65,17 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     return false;
   }
 
+  @Override
   public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, UnknownTask task) {
     return true;
   }
 
+  @Override
   public boolean isConfigurable() {
     return false;
   }
 
+  @Override
   public UnknownTask createTask(RunConfiguration runConfiguration) {
     return new UnknownTask(getId());
   }
@@ -82,10 +87,12 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
       super(providerId);
     }
 
+    @Override
     public void readExternal(Element element) {
       myConfig = element;
     }
 
+    @Override
     public void writeExternal(Element element) {
       if (myConfig != null) {
         element.removeContent();
@@ -99,6 +106,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
       }
     }
 
+    @Override
     public BeforeRunTask clone() {
       return super.clone();
     }

@@ -18,13 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -120,10 +120,6 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     if (isMainMethodFirstUntypedParameter()) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, this).createArrayType();
     }
-    if (getParent() instanceof GrForClause) { //inside for loop
-      final PsiType typeGroovy = getTypeGroovy();
-      if (typeGroovy != null) return typeGroovy;
-    }
     return type;
   }
 
@@ -163,7 +159,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
-    GrReferenceAdjuster.shortenReferences(newTypeElement);
+    JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(newTypeElement);
   }
 
   @Nullable

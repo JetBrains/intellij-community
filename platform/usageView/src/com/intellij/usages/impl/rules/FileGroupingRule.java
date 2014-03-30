@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,18 +131,18 @@ public class FileGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (key == PlatformDataKeys.VIRTUAL_FILE) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, myFile);
+      if (key == CommonDataKeys.VIRTUAL_FILE) {
+        sink.put(CommonDataKeys.VIRTUAL_FILE, myFile);
       }
-      if (key == LangDataKeys.PSI_ELEMENT) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getPsiFile());
+      if (key == CommonDataKeys.PSI_ELEMENT) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiFile());
       }
     }
 

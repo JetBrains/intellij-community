@@ -37,7 +37,27 @@ public class ColorUtil {
   public static Color softer(@NotNull Color color) {
     if (color.getBlue() > 220 && color.getRed() > 220 && color.getGreen() > 220) return color;
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    return Color.getHSBColor(hsb[0], 0.6f *hsb[1], hsb[2]);
+    return Color.getHSBColor(hsb[0], 0.6f * hsb[1], hsb[2]);
+  }
+
+  public static Color darker(@NotNull Color color, int tones) {
+    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    float brightness = hsb[2];
+    for (int i = 0; i < tones; i++) {
+      brightness = Math.max(0, brightness / 1.1F);
+      if (brightness == 0) break;
+    }
+    return Color.getHSBColor(hsb[0], hsb[1], brightness);
+  }
+
+  public static Color brighter(@NotNull Color color, int tones) {
+    final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+    float brightness = hsb[2];
+    for (int i = 0; i < tones; i++) {
+      brightness = Math.min(1, brightness * 1.1F);
+      if (brightness == 1) break;
+    }
+    return Color.getHSBColor(hsb[0], hsb[1], brightness);
   }
 
   public static Color dimmer(@NotNull Color color) {
@@ -52,6 +72,7 @@ public class ColorUtil {
     final int n = (int)(colorComponent * d);
     return n > 255 ? 255 : n < 0 ? 0 : n;
   }
+
   public static Color shift(Color c, double d) {
     return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
   }
@@ -95,9 +116,11 @@ public class ColorUtil {
         17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),
         17 * Integer.valueOf(String.valueOf(str.charAt(1)), 16).intValue(),
         17 * Integer.valueOf(String.valueOf(str.charAt(2)), 16).intValue());
-    } else if (str.length() == 6) {
+    }
+    else if (str.length() == 6) {
       return Color.decode("0x" + str);
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Should be String of 3 or 6 chars length.");
     }
   }
@@ -106,7 +129,8 @@ public class ColorUtil {
   public static Color fromHex(String str, @Nullable Color defaultValue) {
     try {
       return fromHex(str);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       return defaultValue;
     }
   }
@@ -124,6 +148,7 @@ public class ColorUtil {
   /**
    * Checks whether color is dark or not based on perceptional luminosity
    * http://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color
+   *
    * @param c color to check
    * @return dark or not
    */

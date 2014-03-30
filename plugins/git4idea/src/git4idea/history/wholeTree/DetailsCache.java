@@ -28,7 +28,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
 import git4idea.GitBranch;
 import git4idea.history.browser.CachedRefs;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ import java.util.*;
  */
 public class DetailsCache {
   private final static int ourSize = 500;
-  private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit> myCache;
+  private final SLRUMap<Pair<VirtualFile, AbstractHash>, GitHeavyCommit> myCache;
   private final SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>> myBranches;
   private final Project myProject;
   private final DetailsLoaderImpl myDetailsLoader;
@@ -62,11 +62,11 @@ public class DetailsCache {
     myStash = new HashMap<VirtualFile, Map<AbstractHash,String>>();
     myRefresh = uiRefresh;
     myLock = new Object();
-    myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitCommit>(ourSize, 150);
+    myCache = new SLRUMap<Pair<VirtualFile, AbstractHash>, GitHeavyCommit>(ourSize, 150);
     myBranches = new SLRUMap<Pair<VirtualFile, AbstractHash>, List<String>>(20, 20);
   }
 
-  public GitCommit convert(final VirtualFile root, final AbstractHash hash) {
+  public GitHeavyCommit convert(final VirtualFile root, final AbstractHash hash) {
     synchronized (myLock) {
       return myCache.get(new Pair<VirtualFile, AbstractHash>(root, hash));
     }
@@ -77,9 +77,9 @@ public class DetailsCache {
     myDetailsLoader.load(hashes);
   }
 
-  public void acceptAnswer(final Collection<GitCommit> commits, final VirtualFile root) {
+  public void acceptAnswer(final Collection<GitHeavyCommit> commits, final VirtualFile root) {
     synchronized (myLock) {
-      for (GitCommit commit : commits) {
+      for (GitHeavyCommit commit : commits) {
         myCache.put(new Pair<VirtualFile, AbstractHash>(root, commit.getShortHash()), commit);
       }
     }
@@ -116,8 +116,8 @@ public class DetailsCache {
       // uncommented because of reference caching
       //myCache.clear();
       final Set<Pair<VirtualFile, AbstractHash>> forDeletion = new HashSet<Pair<VirtualFile, AbstractHash>>();
-      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitCommit> entry : myCache.entrySet()) {
-        final GitCommit value = entry.getValue();
+      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitHeavyCommit> entry : myCache.entrySet()) {
+        final GitHeavyCommit value = entry.getValue();
         if (! value.getLocalBranches().isEmpty() || ! value.getRemoteBranches().isEmpty() ||
             ! value.getTags().isEmpty()) {
           forDeletion.add(new Pair<VirtualFile, AbstractHash>(entry.getKey().getFirst(), entry.getKey().getSecond()));
@@ -195,8 +195,8 @@ public class DetailsCache {
         hashes.add(branch.getHash());
       }
 
-      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitCommit> entry : myCache.entrySet()) {
-        final GitCommit value = entry.getValue();
+      for (Map.Entry<Pair<VirtualFile, AbstractHash>, GitHeavyCommit> entry : myCache.entrySet()) {
+        final GitHeavyCommit value = entry.getValue();
         if (! root.equals(entry.getKey().getFirst())) continue;
         AbstractHash hash = value.getShortHash();
         if (hash.equals(headHash) || hashes.contains(value.getHash().getValue())) {

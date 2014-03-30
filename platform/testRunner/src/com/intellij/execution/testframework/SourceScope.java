@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,11 +174,11 @@ public abstract class SourceScope {
       }
     }
 
-    public boolean contains(final VirtualFile file) {
+    public boolean contains(@NotNull final VirtualFile file) {
       return findScopeFor(file) != null;
     }
 
-    public int compare(final VirtualFile file1, final VirtualFile file2) {
+    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final GlobalSearchScope scope = findScopeFor(file1);
       assert scope != null;
       if (scope.contains(file2)) return scope.compare(file1, file2);

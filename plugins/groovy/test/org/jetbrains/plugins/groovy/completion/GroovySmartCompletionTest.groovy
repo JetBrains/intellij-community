@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
 
   public void testDontCompletePrivateMembers() {doSmartCompletion "foo1", "foo2", "getFoo1", "getFoo2"}
 
-  public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED" }
+  public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "valueOf" }
   public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous", "valueOf" }
 
   public void testPreferVarargElement() {
@@ -155,8 +155,8 @@ Runnable r = new Run<caret>
 ''', '''\
 Runnable r = new Runnable() {
     @Override
-    void run() {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    void run() {<caret><selection></selection>
+
     }
 }
 ''')
@@ -176,5 +176,42 @@ aaaa = 123
 
 foo(aaaa<caret>)
 ''')
+  }
+
+  void testQualifiedNameAfterNew() {
+    myFixture.addClass('''\
+package foo;
+public class User<T> {}
+''')
+    doSmartTest('''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new Us<caret>)
+''', '''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new foo.User<String>()<caret>)
+''')
+  }
+
+  void testBinaryExpr() {
+    doSmartTest('''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new <caret>
+''', '''
+class A {
+  def plus(String s) {}
+}
+
+print new A() + new String(<caret>)
+'''
+)
   }
 }

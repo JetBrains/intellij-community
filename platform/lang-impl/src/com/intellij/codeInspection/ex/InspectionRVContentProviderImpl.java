@@ -21,16 +21,14 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.reference.RefDirectory;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -39,37 +37,45 @@ import java.util.Map;
 import java.util.Set;
 
 public class InspectionRVContentProviderImpl extends InspectionRVContentProvider {
-
   public InspectionRVContentProviderImpl(final Project project) {
     super(project);
   }
 
-  public boolean checkReportedProblems(final InspectionTool tool) {
-    tool.updateContent();
-    return tool.hasReportedProblems();
+  @Override
+  public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
+                                       @NotNull final InspectionToolWrapper toolWrapper) {
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    presentation.updateContent();
+    return presentation.hasReportedProblems();
   }
 
+  @Override
   @Nullable
-  public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
+  public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
-    return refEntities.length == 0 ? null : tool.getQuickFixes(refEntities);
+    InspectionToolPresentation presentation = tree.getContext().getPresentation(toolWrapper);
+    return refEntities.length == 0 ? null : presentation.getQuickFixes(refEntities);
   }
 
 
-  public void appendToolNodeContent(final InspectionNode toolNode,
-                                    final InspectionTreeNode parentNode,
+  @Override
+  public void appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
+                                    @NotNull final InspectionNode toolNode,
+                                    @NotNull final InspectionTreeNode parentNode,
                                     final boolean showStructure,
-                                    final Map<String, Set<RefEntity>> contents,
-                                    final Map<RefEntity, CommonProblemDescriptor[]> problems, DefaultTreeModel model) {
-    final InspectionTool tool = toolNode.getTool();
+                                    @NotNull final Map<String, Set<RefEntity>> contents,
+                                    @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
+                                    DefaultTreeModel model) {
+    final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+      @Override
       public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
-        return new RefElementContainer(refElement, problems != null ? problems.get(refElement) : null);
+        return new RefElementContainer(refElement, problems.get(refElement));
       }
     };
-
-    final Set<RefModule> moduleProblems = tool.getModuleProblems();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    final Set<RefModule> moduleProblems = presentation.getModuleProblems();
     if (moduleProblems != null && !moduleProblems.isEmpty()) {
       Set<RefEntity> entities = contents.get("");
       if (entities == null) {
@@ -78,23 +84,22 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
       entities.addAll(moduleProblems);
     }
-    List<InspectionTreeNode> list = buildTree(contents, false, tool, computeContainer, showStructure);
+    List<InspectionTreeNode> list = buildTree(context, contents, false, toolWrapper, computeContainer, showStructure);
 
     for (InspectionTreeNode node : list) {
       merge(model, node, toolNode, true);
     }
 
-    if (tool.isOldProblemsIncluded()) {
-      final Map<RefEntity, CommonProblemDescriptor[]> oldProblems =
-        tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)? ((DescriptorProviderInspection)tool)
-          .getOldProblemElements() : null;
+    if (presentation.isOldProblemsIncluded()) {
+      final Map<RefEntity, CommonProblemDescriptor[]> oldProblems = presentation.getOldProblemElements();
       computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+        @Override
         public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
           return new RefElementContainer(refElement, oldProblems != null ? oldProblems.get(refElement) : null);
         }
       };
 
-      list = buildTree(tool.getOldContent(), true, tool, computeContainer, showStructure);
+      list = buildTree(context, presentation.getOldContent(), true, toolWrapper, computeContainer, showStructure);
 
       for (InspectionTreeNode node : list) {
         merge(model, node, toolNode, true);
@@ -103,52 +108,53 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     merge(model, toolNode, parentNode, false);
   }
 
-  protected void appendDescriptor(final InspectionTool tool,
-                                  final UserObjectContainer container,
-                                  final InspectionPackageNode pNode,
+  @Override
+  protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
+                                  @NotNull final InspectionToolWrapper toolWrapper,
+                                  @NotNull final UserObjectContainer container,
+                                  @NotNull final InspectionPackageNode pNode,
                                   final boolean canPackageRepeat) {
-    final GlobalInspectionContextImpl context = tool.getContext();
-    final RefElementContainer refElementDescriptor = ((RefElementContainer)container);
+    final RefElementContainer refElementDescriptor = (RefElementContainer)container;
     final RefEntity refElement = refElementDescriptor.getUserObject();
-    if (context.getUIOptions().SHOW_ONLY_DIFF && tool.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
-    if (tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)) {
-      final DescriptorProviderInspection descriptorProviderInspection = (DescriptorProviderInspection)tool;
-      final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
-      if (problems != null) {
-        final RefElementNode elemNode = addNodeToParent(container, tool, pNode);
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getElementStatus(refElement) == FileStatus.NOT_CHANGED) return;
+    final CommonProblemDescriptor[] problems = refElementDescriptor.getProblemDescriptors();
+    if (problems != null) {
+        final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
-          if (context.getUIOptions().SHOW_ONLY_DIFF && descriptorProviderInspection.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
+          assert problem != null;
+          if (context.getUIOptions().SHOW_ONLY_DIFF && presentation.getProblemStatus(problem) == FileStatus.NOT_CHANGED) {
             continue;
           }
-          elemNode.add(
-            new ProblemDescriptionNode(refElement, problem, descriptorProviderInspection));
+          elemNode.add(new ProblemDescriptionNode(refElement, problem, toolWrapper,presentation));
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }
         }
-      }
     }
     else {
       if (canPackageRepeat) {
-        final Set<RefEntity> currentElements = tool.getContent().get(pNode.getPackageName());
+        final Set<RefEntity> currentElements = presentation.getContent().get(pNode.getPackageName());
         if (currentElements != null) {
           final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
-          if (InspectionTool.contains(refElement, currentEntities)) return;
+          if (RefUtil.contains(refElement, currentEntities)) return;
         }
       }
-      addNodeToParent(container, tool, pNode);
+      addNodeToParent(container, presentation, pNode);
     }
   }
 
   private static class RefElementContainer implements UserObjectContainer<RefEntity> {
+    @NotNull
     private final RefEntity myElement;
     private final CommonProblemDescriptor[] myDescriptors;
 
-    public RefElementContainer(final RefEntity element, final CommonProblemDescriptor[] descriptors) {
+    public RefElementContainer(@NotNull RefEntity element, CommonProblemDescriptor[] descriptors) {
       myElement = element;
       myDescriptors = descriptors;
     }
 
+    @Override
     @Nullable
     public RefElementContainer getOwner() {
       final RefEntity entity = myElement.getOwner();
@@ -158,26 +164,33 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       return null;
     }
 
-    public RefElementNode createNode(InspectionTool tool) {
-      return new RefElementNode(myElement, tool);
+    @NotNull
+    @Override
+    public RefElementNode createNode(@NotNull InspectionToolPresentation presentation) {
+      return new RefElementNode(myElement, presentation);
     }
 
+    @Override
+    @NotNull
     public RefEntity getUserObject() {
       return myElement;
     }
 
+    @Override
     @Nullable
     public String getModule() {
       final RefModule refModule = myElement instanceof RefElement
                                   ? ((RefElement)myElement).getModule()
-                                  : myElement instanceof RefModule ? ((RefModule)myElement) : null;
+                                  : myElement instanceof RefModule ? (RefModule)myElement : null;
       return refModule != null ? refModule.getName() : null;
     }
 
+    @Override
     public boolean areEqual(final RefEntity o1, final RefEntity o2) {
       return Comparing.equal(o1, o2);
     }
 
+    @Override
     public boolean supportStructure() {
       return myElement instanceof RefElement && !(myElement instanceof RefDirectory); //do not show structure for refModule and refPackage
     }

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 // The only purpose of this action is to serve as placeholder for assigning keyboard shortcuts.
 // For actual tab switching code, see EditorComposite constructor.
 public class SelectPreviousEditorTabAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(final AnActionEvent e) {
   }
 

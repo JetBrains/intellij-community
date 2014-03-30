@@ -18,7 +18,7 @@ package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionRVContentProvider;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
@@ -47,6 +47,7 @@ public class InvokeQuickFixAction extends AnAction {
                               myView.getTree());
   }
 
+  @Override
   public void update(AnActionEvent e) {
     if (!myView.isSingleToolInSelection()) {
       e.getPresentation().setEnabled(false);
@@ -54,10 +55,10 @@ public class InvokeQuickFixAction extends AnAction {
     }
 
     //noinspection ConstantConditions
-    final @NotNull InspectionTool tool = myView.getTree().getSelectedTool();
+    @NotNull InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
     final InspectionRVContentProvider provider = myView.getProvider();
     if (provider.isContentLoaded()) {
-      final QuickFixAction[] quickFixes = provider.getQuickFixes(tool, myView.getTree());
+      final QuickFixAction[] quickFixes = provider.getQuickFixes(toolWrapper, myView.getTree());
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -68,6 +69,8 @@ public class InvokeQuickFixAction extends AnAction {
 
   private static ActionGroup getFixes(final QuickFixAction[] quickFixes) {
     return new ActionGroup() {
+      @Override
+      @NotNull
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
         List<QuickFixAction> children = new ArrayList<QuickFixAction>();
         for (QuickFixAction fix : quickFixes) {
@@ -80,10 +83,11 @@ public class InvokeQuickFixAction extends AnAction {
     };
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    final InspectionTool tool = myView.getTree().getSelectedTool();
-    assert tool != null;
-    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
+    InspectionToolWrapper toolWrapper = myView.getTree().getSelectedToolWrapper();
+    assert toolWrapper != null;
+    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(toolWrapper, myView.getTree());
     if (quickFixes == null || quickFixes.length == 0) {
       Messages.showInfoMessage(myView, "There are no applicable quickfixes", "Nothing found to fix");
       return;

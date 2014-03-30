@@ -32,7 +32,7 @@ import java.util.List;
 
 public class CreateConstructorFromThisFix extends CreateConstructorFromThisOrSuperFix {
 
-  public CreateConstructorFromThisFix(PsiMethodCallExpression methodCall) {
+  public CreateConstructorFromThisFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

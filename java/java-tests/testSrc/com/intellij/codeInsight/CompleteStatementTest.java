@@ -106,6 +106,12 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testMethod() throws Exception { doTest(); }
 
+  public void testClass() throws Exception { doTest(); }
+  
+  public void testInnerEnumBeforeMethod() { doTest(); }
+  
+  public void testInnerEnumBeforeMethodWithSpace() { doTest(); }
+
   public void testCompleteElseIf() throws Exception { doTest(); }
 
   public void testCompleteStringLiteral() throws Exception {
@@ -138,6 +144,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSCR30227() throws Exception { doTest(); }
 
   public void testFieldWithInitializer() throws Exception { doTest(); }
+
+  public void testFieldBeforeAnnotation() throws Exception { doTest(); }
+  public void testMethodBeforeAnnotation() throws Exception { doTest(); }
+  public void testMethodBeforeCommentField() throws Exception { doTest(); }
+  public void testMethodBeforeCommentMethod() throws Exception { doTest(); }
 
   public void testParenthesized() throws Exception { doTest(); }
 
@@ -202,6 +213,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV40479() throws Exception { doTest(); }
 
   public void testMultilineReturn() throws Exception { doTest(); }
+  public void testMultilineCall() throws Exception { doTest(); }
 
   public void testIDEADEV13019() throws Exception {
     doTestBracesNextLineStyle();
@@ -246,6 +258,10 @@ public class CompleteStatementTest extends EditorActionTestCase {
   
   public void testCompleteMethodCallAtReturn() throws Exception { doTest(); }
   
+  public void testGenericMethodBody() throws Exception { doTest(); }
+  
+  public void testArrayInitializerRBracket() throws Exception { doTest(); }
+  
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
@@ -261,11 +277,11 @@ public class CompleteStatementTest extends EditorActionTestCase {
     }
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     doTest("java");
   }
 
-  private void doTest(String ext) throws Exception {
+  private void doTest(String ext) {
     String path = "/codeInsight/completeStatement/";
     doFileTest(path + getTestName(false) + "." + ext, path + getTestName(false) + "_after." + ext, true);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,26 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   public static final String DIMENSION_KEY = "OptionsEditor";
   @NonNls static final String LAST_SELECTED_CONFIGURABLE = "options.lastSelected";
 
+  /** This constructor should be eliminated after the new modality approach
+   *  will have been checked. See a {@code Registry} key ide.perProjectModality
+   *  @deprecated
+   */
+  public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,
+                             @Nullable Configurable preselectedConfigurable, boolean applicationModalIfPossible) {
+    super(project, true, applicationModalIfPossible);
+    init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups, project));
+  }
+
+  /** This constructor should be eliminated after the new modality approach
+   *  will have been checked. See a {@code Registry} key ide.perProjectModality
+   *  @deprecated
+   */
+  public OptionsEditorDialog(Project project, ConfigurableGroup[] groups,
+                             @NotNull String preselectedConfigurableDisplayName, boolean applicationModalIfPossible) {
+    super(project, true, applicationModalIfPossible);
+    init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName, project));
+  }
+
   public OptionsEditorDialog(Project project, ConfigurableGroup[] groups, @Nullable Configurable preselectedConfigurable) {
     super(project, true);
     init(project, groups, preselectedConfigurable != null ? preselectedConfigurable : findLastSavedConfigurable(groups, project));
@@ -67,7 +87,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     myGroups = groups;
     myPreselected = preselected;
 
-    setTitle("Settings");
+    setTitle(CommonBundle.settingsTitle());
 
     init();
   }

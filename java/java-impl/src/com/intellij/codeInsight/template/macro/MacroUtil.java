@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,13 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MacroUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
@@ -158,11 +160,15 @@ public class MacroUtil {
       return new PsiVariable[0];
     }
 
+    final Set<String> usedNames = ContainerUtil.newHashSet();
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
       @Override
-      public boolean execute(@NotNull PsiElement pe, ResolveState state) {
+      public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
         if (pe instanceof PsiVariable) {
+          if (!usedNames.add(((PsiVariable)pe).getName())) {
+            return false;
+          }
           //exclude variables that are initialized in 'place'
           final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
           if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;

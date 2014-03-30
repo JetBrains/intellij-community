@@ -19,86 +19,46 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.util.RefFilter;
-import org.jdom.Element;
+import com.intellij.codeInspection.ProblemDescriptionsProcessor;
+import com.intellij.codeInspection.ex.JobDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
-public class DummyEntryPointsTool extends FilteringInspectionTool {
-  private RefEntryPointFilter myFilter;
-  private final UnusedDeclarationInspection myOwner;
-  private QuickFixAction[] myQuickFixActions;
-
-  public DummyEntryPointsTool(UnusedDeclarationInspection owner) {
-    myOwner = owner;
+public class DummyEntryPointsTool extends UnusedDeclarationInspection {
+  public DummyEntryPointsTool() {
   }
-
-  public RefFilter getFilter() {
-    if (myFilter == null) {
-      myFilter = new RefEntryPointFilter();
-    }
-    return myFilter;
-  }
-
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {}
 
   @Override
-  public void exportResults(@NotNull Element parentNode, RefEntity refEntity) {
+  public void runInspection(@NotNull AnalysisScope scope,
+                            @NotNull InspectionManager manager,
+                            @NotNull GlobalInspectionContext globalContext,
+                            @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
   }
 
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
-    return new JobDescriptor[0];
+  @Nullable
+  @Override
+  public JobDescriptor[] getAdditionalJobs() {
+    return JobDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "";
-  }
-
-  public HTMLComposerImpl getComposer() {
-    return new DeadHTMLComposer(this);
-  }
-
-  public GlobalInspectionContextImpl getContext() {
-    return myOwner.getContext();
-  }
-
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
-    if (myQuickFixActions == null) {
-      myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious()};
-    }
-    return myQuickFixActions;
-  }
-
-  private class MoveEntriesToSuspicious extends QuickFixAction {
-    private MoveEntriesToSuspicious() {
-      super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, DummyEntryPointsTool.this);
-    }
-
-    protected boolean applyFix(RefElement[] refElements) {
-      final EntryPointsManager entryPointsManager =
-        getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
-      for (RefElement refElement : refElements) {
-        entryPointsManager.removeEntryPoint(refElement);
-      }
-
-      return true;
-    }
   }
 }

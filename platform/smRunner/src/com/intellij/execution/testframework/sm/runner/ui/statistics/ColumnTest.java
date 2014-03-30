@@ -51,19 +51,10 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
 
   @Override
   public TableCellRenderer getRenderer(final SMTestProxy proxy) {
-    return new TestsCellRenderer(proxy);
+    return new TestsCellRenderer();
   }
 
   public static class TestsCellRenderer extends ColoredTableCellRenderer implements ColoredRenderer {
-    @NonNls private static final String TOTAL_TITLE = SMTestsRunnerBundle.message("sm.test.runner.ui.tabs.statistics.columns.test.total.title");
-    @NonNls private static final String PARENT_TITLE = "..";
-
-    private final SMTestProxy myProxy;
-
-    public TestsCellRenderer(final SMTestProxy proxy) {
-      myProxy = proxy;
-    }
-
     public void customizeCellRenderer(final JTable table,
                                          final Object value,
                                          final boolean selected,
@@ -72,24 +63,7 @@ public class ColumnTest extends BaseColumn implements Comparator<SMTestProxy>{
                                          final int column) {
       assert value != null;
 
-      final String title = value.toString();
-      //Black bold for with caption "Total" for parent suite of items in statistics
-      if (myProxy.isSuite() && isFirstLine(row)) {
-        if (myProxy.getParent() == null) {
-          append(TOTAL_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        else {
-          append(PARENT_TITLE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          append(" (" + myProxy.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        }
-        return;
-      }
-      //Black, regular for other suites and tests
-      append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-
-    public static boolean isFirstLine(final int row) {
-      return row == 0;
+      append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,8 +125,6 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
     doTest();
   }
 
-  public void testJavaUtilString() { doTest(); }
-
   public void testSamePackage() {
     myFixture.addClass("package foo; public class Bar {}");
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
@@ -146,6 +144,14 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
   public void testRemoveImplicitlyImported() { doTest(); }
   public void testRemoveImplicitlyDemandImported() { doTest(); }
   public void testDontRemoveRedImports() { doTest(); }
+  public void testDontRemoveRedImports2() { doTest(); }
+  public void testDontRemoveRedImports3() { doTest(); }
+  public void testDontRemoveRedImports4() { doTest(); }
+  public void testDontRemoveRedImports5() { doTest(); }
+  public void testDontRemoveRedImports6() { doTest(); }
+  public void testDontRemoveRedImports7() { doTest(); }
+  public void testDontRemoveRedImports8() { doTest(); }
+  public void testDontRemoveRedImports9() { doTest(); }
 
   public void testRemoveSamePackaged() {
     myFixture.addClass("package foo.bar; public class Aaaa {}");
@@ -157,9 +163,9 @@ public class OptimizeImportsTest extends LightGroovyTestCase {
   }
 
   public void testJustWrongImport() throws Exception {
-    myFixture.configureByText("a.groovy", "import a.b.c.d");
+    myFixture.configureByText("a.groovy", "import a.b.c.d; final d c;");
     doOptimizeImports();
-    myFixture.checkResult("import a.b.c.d");
+    myFixture.checkResult("import a.b.c.d; final d c;");
   }
 
   public void testCleanBeforeJavadoc() throws Exception {
@@ -253,7 +259,7 @@ package pack
 
 import foo.Foo
 import foo.Bar
-import java.test.Test 
+import java.test.Test
 import java.test2.Test2
 import static foo.Bar.foo0
 import static java.test.Test.foo
@@ -352,11 +358,11 @@ GParsExecutorsPool oi
     doOptimizeImports()
 
     myFixture.checkResult('''\
-@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12') @Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
 import groovyx.gpars.GParsExecutorsPool
 
 GParsExecutorsPool oi
 ''')
   }
-
 }

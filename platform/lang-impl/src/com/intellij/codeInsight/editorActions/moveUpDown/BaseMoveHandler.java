@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,6 +36,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   protected final boolean isDown;
 
   public BaseMoveHandler(boolean down) {
+    super(true);
     isDown = down;
   }
 
@@ -45,9 +47,11 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     final Document document = editor.getDocument();
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
 
-    final MoverWrapper mover = getSuitableMover(editor, file);
-    if (mover != null) {
-      mover.move(editor,file);
+    if (file != null) {
+      final MoverWrapper mover = getSuitableMover(editor, file);
+      if (mover != null) {
+        mover.move(editor,file);
+      }
     }
   }
 
@@ -72,7 +76,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
   }
 
   @Nullable
-  protected abstract MoverWrapper getSuitableMover(Editor editor, PsiFile file);
+  protected abstract MoverWrapper getSuitableMover(@NotNull Editor editor, @NotNull PsiFile file);
 
   @Nullable
   private static PsiFile getRoot(final PsiFile file, final Editor editor) {

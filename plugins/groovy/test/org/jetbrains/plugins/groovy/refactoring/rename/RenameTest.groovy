@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.rename
 
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -76,11 +77,13 @@ def foo(newName) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 import foo.bar.Zoo
 SomeClass c = new SomeClass()
+Zoo zoo
 """)
     myFixture.renameElement(someClass, "NewClass")
     myFixture.checkResult """
 import foo.bar.Zoo
 NewClass c = new NewClass()
+Zoo zoo
 """
   }
 
@@ -523,7 +526,9 @@ class Test {
   private def doInplaceRenameTest() {
     String prefix = "/${getTestName(false)}"
     myFixture.configureByFile prefix + ".groovy";
-    CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+    WriteCommandAction.runWriteCommandAction project, {
+      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+    }
     myFixture.checkResultByFile prefix + "_after.groovy"
   }
 
@@ -687,6 +692,18 @@ class Inheritor extends Base {
 new Base().bar()
 new Inheritor().bar()
 new Inheritor().bar(2)
+''')
+    }
+  }
+
+  void testRenameScriptFile() {
+    myFixture.with {
+      final PsiFile file = configureByText('Abc.groovy', '''\
+print new Abc()
+''')
+      renameElement(file, 'Abcd.groovy')
+      checkResult('''\
+print new Abcd()
 ''')
     }
   }

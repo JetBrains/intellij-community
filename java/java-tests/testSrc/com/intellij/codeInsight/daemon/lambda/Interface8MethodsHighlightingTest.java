@@ -29,12 +29,23 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   public void testInheritDefaultMethodInInterface() { doTest(false, false); }
   public void testStaticMethodsInFunctionalInterface() { doTest(false, false); }
   public void testCyclicSubstitutor() { doTest(false, false); }
+  public void testThisAccessibility() { doTest(false, false); }
+  public void testStaticMethodCalls() { doTest(false, false); }
+  public void testDefaultMethodOverrideEquivalentObject() { doTest(false, false); }
+  public void testStaticMethods() { doTest(false, false); }
+  public void testFinalStaticDefaultMethods() { doTest(false, false); }
+  public void testIDEA122720() { doTest(false, false); }
+  public void testDefaultSupersInStaticContext() {
+    doTest(false, false);
+  }
+
+  public void testIDEA120498() { doTest(false, false); }
 
   private void doTest() {
     doTest(false, false);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 }

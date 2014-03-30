@@ -16,12 +16,12 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.javac.JavacRemoteProto;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -32,8 +32,9 @@ import java.util.concurrent.Executor;
 * @author Eugene Zhuravlev
 *         Date: 1/22/12
 */
-final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelHandler {
-  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
+@ChannelHandler.Sharable
+final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
+  private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>(16, 0.75f, 1);
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
@@ -45,8 +46,9 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     myAsyncExec = asyncExec;
   }
 
-  public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    final UUID messageUUID = myUuidGetter.getSessionUUID(e);
+  @Override
+  public final void messageReceived(ChannelHandlerContext context, MessageLite message) throws Exception {
+    final UUID messageUUID = myUuidGetter.getSessionUUID((JavacRemoteProto.Message)message);
     final RequestFuture<T> future = myHandlers.get(messageUUID);
     final T handler = future != null ? future.getMessageHandler() : null;
     if (handler == null) {
@@ -55,7 +57,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     else {
       boolean terminateSession = false;
       try {
-        terminateSession = handler.handleMessage((MessageLite)e.getMessage());
+        terminateSession = handler.handleMessage(message);
       }
       catch (Exception ex) {
         terminateSession = true;
@@ -78,8 +80,9 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
           try {
             handler.sessionTerminated();
           }
-          catch (Throwable ignored) {
-            ignored.printStackTrace();
+          catch (Throwable e) {
+            //noinspection CallToPrintStackTrace
+            e.printStackTrace();
           }
         }
       }
@@ -89,30 +92,26 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
   }
 
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    try {
-      super.channelClosed(ctx, e);
-    }
-    finally {
-      for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
-        terminateSession(uuid);
-      }
-    }
-  }
-
   @Override
-  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  public void channelInactive(ChannelHandlerContext context) throws Exception {
     try {
-      super.channelDisconnected(ctx, e);
+      super.channelInactive(context);
     }
     finally {
-      // make sure the client is in disconnected state
-      myAsyncExec.execute(new Runnable() {
-        @Override
-        public void run() {
-          myClient.disconnect();
+      try {
+        for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
+          terminateSession(uuid);
         }
-      });
+      }
+      finally {
+        // make sure the client is in disconnected state
+        myAsyncExec.execute(new Runnable() {
+          @Override
+          public void run() {
+            myClient.disconnect();
+          }
+        });
+      }
     }
   }
 

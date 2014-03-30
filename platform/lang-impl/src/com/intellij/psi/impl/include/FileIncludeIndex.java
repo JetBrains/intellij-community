@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,6 +108,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<Key> getKeyDescriptor() {
     return new KeyDescriptor<Key>() {
@@ -119,50 +123,52 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       }
 
       @Override
-      public void save(DataOutput out, Key value) throws IOException {
+      public void save(@NotNull DataOutput out, Key value) throws IOException {
         out.writeBoolean(value.isInclude());
         value.writeValue(out);
       }
 
       @Override
-      public Key read(DataInput in) throws IOException {
+      public Key read(@NotNull DataInput in) throws IOException {
         boolean isInclude = in.readBoolean();
-        return isInclude ? new IncludeKey(in.readUTF()) : new FileKey(in.readInt());
+        return isInclude ? new IncludeKey(IOUtil.readUTF(in)) : new FileKey(in.readInt());
       }
     };
   }
 
+  @NotNull
   @Override
   public DataExternalizer<List<FileIncludeInfoImpl>> getValueExternalizer() {
     return new DataExternalizer<List<FileIncludeInfoImpl>>() {
       @Override
-      public void save(DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
+      public void save(@NotNull DataOutput out, List<FileIncludeInfoImpl> value) throws IOException {
         out.writeInt(value.size());
         for (FileIncludeInfoImpl info : value) {
-          out.writeUTF(info.path);
+          IOUtil.writeUTF(out, info.path);
           out.writeInt(info.offset);
           out.writeBoolean(info.runtimeOnly);
-          out.writeUTF(info.providerId);
+          IOUtil.writeUTF(out, info.providerId);
         }
       }
 
       @Override
-      public List<FileIncludeInfoImpl> read(DataInput in) throws IOException {
+      public List<FileIncludeInfoImpl> read(@NotNull DataInput in) throws IOException {
         int size = in.readInt();
         ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
         for (int i = 0; i < size; i++) {
-          infos.add(new FileIncludeInfoImpl(in.readUTF(), in.readInt(), in.readBoolean(), in.readUTF()));
+          infos.add(new FileIncludeInfoImpl(IOUtil.readUTF(in), in.readInt(), in.readBoolean(), IOUtil.readUTF(in)));
         }
         return infos;
       }
     };
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new FileBasedIndex.FileTypeSpecificInputFilter() {
       @Override
-      public boolean acceptInput(VirtualFile file) {
+      public boolean acceptInput(@NotNull VirtualFile file) {
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
@@ -172,6 +178,13 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
           }
         }
         return false;
+      }
+
+      @Override
+      public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+        for (FileIncludeProvider provider : myProviders) {
+          provider.registerFileTypesUsedForIndexing(fileTypeSink);
+        }
       }
     };
   }
@@ -183,7 +196,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   @Override
   public int getVersion() {
-    return 1;
+    return 4;
   }
 
   interface Key {
@@ -206,7 +219,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
     @Override
     public void writeValue(DataOutput out) throws IOException {
-      out.writeUTF(myFileName);
+      IOUtil.writeUTF(out, myFileName);
     }
 
     @Override

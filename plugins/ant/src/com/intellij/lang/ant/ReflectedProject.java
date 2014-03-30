@@ -18,11 +18,11 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -106,27 +106,12 @@ public final class ReflectedProject {
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (ExceptionInInitializerError e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
     catch (Throwable e) {
+      // rethrow PCE if it was the cause
+      final Throwable cause = ExceptionUtil.getRootCause(e);
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
       LOG.info(e);
       project = null;
     }

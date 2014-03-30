@@ -17,19 +17,25 @@ package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -38,8 +44,16 @@ import java.util.List;
  * @author yole
  */
 public class TestDataLineMarkerProvider implements LineMarkerProvider {
+  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
+  public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
+  public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
+
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null || !ProjectFileIndex.SERVICE.getInstance(element.getProject()).isInTestSourceContent(file)) {
       return null;
     }
     if (element instanceof PsiMethod) {
@@ -47,6 +61,22 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
       if (isTestMethod(method)) {
         return new LineMarkerInfo<PsiMethod>(
           method, method.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new TestDataNavigationHandler(),
+          GutterIconRenderer.Alignment.LEFT);
+      }
+    } else if (element instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass)element;
+      final String basePath = getTestDataBasePath(psiClass);
+      if (basePath != null) {
+        return new LineMarkerInfo<PsiClass>(
+          psiClass, psiClass.getModifierList().getTextRange(), PlatformIcons.TEST_SOURCE_FOLDER, Pass.UPDATE_ALL, null, new GutterIconNavigationHandler<PsiClass>() {
+          @Override
+          public void navigate(MouseEvent e, PsiClass elt) {
+            final VirtualFile baseDir = VfsUtil.findFileByIoFile(new File(basePath), true);
+            if (baseDir != null) {
+              new OpenFileDescriptor(psiClass.getProject(), baseDir).navigate(true);
+            }
+          }
+        }, 
           GutterIconRenderer.Alignment.LEFT);
       }
     }
@@ -80,7 +110,8 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   public static String getTestDataBasePath(PsiClass psiClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton("com.intellij.testFramework.TestDataPath"));
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass,
+                                                                              Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiExpression) {
@@ -89,7 +120,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
         final Object constantValue = evaluationHelper.computeConstantExpression(value, false);
         if (constantValue instanceof String) {
           String path = (String) constantValue;
-          if (path.contains("$CONTENT_ROOT")) {
+          if (path.contains(CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
             if (file == null) {
@@ -97,14 +128,14 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
             }
             final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
             if (contentRoot == null) return null;
-            path = path.replace("$CONTENT_ROOT", contentRoot.getPath());
+            path = path.replace(CONTENT_ROOT_VARIABLE, contentRoot.getPath());
           }
-          if (path.contains("$PROJECT_ROOT")) {
+          if (path.contains(PROJECT_ROOT_VARIABLE)) {
             final VirtualFile baseDir = project.getBaseDir();
             if (baseDir == null) {
               return null;
             }
-            path = path.replace("$PROJECT_ROOT", baseDir.getPath());
+            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir.getPath());
           }
           return path;
         }

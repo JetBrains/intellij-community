@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -40,6 +41,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -49,7 +51,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
   private PsiDirectory myInitialTargetDirectory;
-  private VirtualFile[] mySourceRoots;
+  private List<VirtualFile> mySourceRoots;
 
   public DestinationFolderComboBox() {
     super(new ComboBoxWithWidePopup());
@@ -79,7 +81,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                       final PsiDirectory initialTargetDirectory,
                       final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {
@@ -167,8 +169,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
     VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
     if (showChooserWhenDefault &&
-        Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
-        mySourceRoots.length > 1) {
+        myInitialTargetDirectory != null && Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
+        mySourceRoots.size() > 1) {
       selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
     }
     if (selectedDestination == null) return null;
@@ -197,7 +199,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final VirtualFile initialTargetDirectorySourceRoot,
                                 final VirtualFile oldSelection,
                                 final ProjectFileIndex fileIndex,
-                                final VirtualFile[] sourceRoots,
+                                final List<VirtualFile> sourceRoots,
                                 final Project project,
                                 final boolean forceIncludeAll,
                                 final Pass<String> updateErrorMessage) {

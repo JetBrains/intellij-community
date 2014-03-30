@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.*;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -32,28 +35,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
-@SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
@@ -61,9 +60,18 @@ public class IdeaApplication {
 
   private static IdeaApplication ourInstance;
 
-  protected final String[] myArgs;
+  public static IdeaApplication getInstance() {
+    return ourInstance;
+  }
+
+  public static boolean isLoaded() {
+    return ourInstance != null && ourInstance.myLoaded;
+  }
+
+  private final String[] myArgs;
   private boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
+  private volatile boolean myLoaded = false;
 
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
@@ -73,20 +81,24 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
-    if (Main.isCommandLine(args)) {
-      boolean headless = Main.isHeadless(args);
-      if (!headless) patchSystem();
+    boolean headless = Main.isHeadless();
+    if (!headless) {
+      patchSystem();
+    }
+
+    if (Main.isCommandLine()) {
       new CommandLineApplication(isInternal, false, headless);
     }
     else {
-      patchSystem();
-      new JFrame().pack(); // this peer will prevent shutting down our application
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
-        splash = ((IdeStarter)myStarter).showSplash(myArgs);
+        if (myStarter instanceof IdeStarter) {
+          splash = ((IdeStarter)myStarter).showSplash(myArgs);
+        }
       }
-      ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea", splash);
+
+      ApplicationManagerEx.createApplication(isInternal, false, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
 
     if (myStarter == null) {
@@ -96,7 +108,7 @@ public class IdeaApplication {
   }
 
   private static void patchSystem() {
-    System.setProperty("sun.awt.noerasebackground","true");
+    System.setProperty("sun.awt.noerasebackground", "true");
 
     Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
 
@@ -104,107 +116,47 @@ public class IdeaApplication {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
-    patchWM();
+    if (SystemInfo.isXWindow) {
+      String wmName = X11UiUtil.getWmName();
+      LOG.info("WM detected: " + wmName);
+      if (wmName != null) {
+        X11UiUtil.patchDetectedWm(wmName);
+      }
+    }
 
     IconLoader.activate();
-  }
 
-  private static void patchWM() {
-    if (SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) return;
-    if (!"sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) return;
-
-    try {
-      final Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
-      final Method getWM = xwmClass.getDeclaredMethod("getWM");
-      getWM.setAccessible(true);
-      final Object xwm = getWM.invoke(null);
-      if (xwm == null) return;
-
-      final Method getNetProtocol = xwmClass.getDeclaredMethod("getNETProtocol");
-      getNetProtocol.setAccessible(true);
-      final Object netProtocol = getNetProtocol.invoke(xwm);
-      if (netProtocol == null) return;
-
-      final Method getWMName = netProtocol.getClass().getDeclaredMethod("getWMName");
-      getWMName.setAccessible(true);
-      final String wmName = (String)getWMName.invoke(netProtocol);
-      LOG.info("WM detected: " + wmName);
-      if (wmName == null) return;
-
-      if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        try {
-          setWM(xwm, "MUTTER_WM");
-        }
-        catch (NoSuchFieldException e) {
-          setWM(xwm, "METACITY_WM");
-        }
-      }
-      else if ("Marco".equals(wmName)) {
-        setWM(xwm, "METACITY_WM");
-      }
-      else if ("awesome".equals(wmName)) {
-        try {
-          xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");
-          if (System.getenv("_JAVA_AWT_WM_NONREPARENTING") == null) {
-            setWM(xwm, "OTHER_NONREPARENTING_WM");  // patch present but not activated
-          }
-        }
-        catch (NoSuchFieldException e) {
-          setWM(xwm, "LG3D_WM");  // patch absent - mimic LG3D
-        }
-      }
-    }
-    catch (Throwable e) {
-      LOG.warn(e);
-    }
-  }
-
-  private static void setWM(final Object xwm, final String wmConstant) throws NoSuchFieldException, IllegalAccessException {
-    final Field wm = xwm.getClass().getDeclaredField(wmConstant);
-    wm.setAccessible(true);
-    final Object id = wm.get(null);
-    if (id != null) {
-      final Field awtWmgr = xwm.getClass().getDeclaredField("awt_wmgr");
-      awtWmgr.setAccessible(true);
-      awtWmgr.set(null, id);
-      final Field wmID = xwm.getClass().getDeclaredField("WMID");
-      wmID.setAccessible(true);
-      wmID.set(xwm, id);
-    }
+    new JFrame().pack(); // this peer will prevent shutting down our application
   }
 
   protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
-      PluginManager.getPlugins();
+      PluginManagerCore.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
-      final ApplicationStarter[] starters = point.getExtensions();
+      ApplicationStarter[] starters = point.getExtensions();
       String key = myArgs[0];
       for (ApplicationStarter o : starters) {
         if (Comparing.equal(o.getCommandName(), key)) return o;
       }
     }
+
     return new IdeStarter();
   }
 
-  public static IdeaApplication getInstance() {
-    return ourInstance;
-  }
-
   public void run() {
-    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     try {
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       app.load(PathManager.getOptionsPath());
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    catch (InvalidDataException e) {
-      e.printStackTrace();
-    }
 
-    myStarter.main(myArgs);
-    myStarter = null; //GC it
+      myStarter.main(myArgs);
+      myStarter = null; //GC it
+
+      myLoaded = true;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -268,35 +220,28 @@ public class IdeaApplication {
 
     @Override
     public void main(String[] args) {
+      SystemDock.updateMenu();
 
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      // app.setupIdeQueue(IdeEventQueue.getInstance());
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      IdeEventQueue.getInstance().setWindowManager(windowManager);
 
-      try {
-        IdeEventQueue.getInstance().setWindowManager(windowManager);
+      Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+      AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
+      lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
-        final Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
-        final AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
-        lifecyclePublisher.appFrameCreated(args, willOpenProject);
-        LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
-        PluginManager.dumpPluginClassStatistics();
-        if (!willOpenProject.get()) {
-          WelcomeFrame.showNow();
-          lifecyclePublisher.welcomeScreenDisplayed();
-        }
-        else {
-          windowManager.showFrame();
-        }
+      LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
+      PluginManagerCore.dumpPluginClassStatistics();
+
+      if (!willOpenProject.get()) {
+        WelcomeFrame.showNow();
+        lifecyclePublisher.welcomeScreenDisplayed();
       }
-      catch (PluginException e) {
-        Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
-                                 "See the full details in the log.\n" +
-                                 e.getMessage(), "Plugin Error");
-        System.exit(-1);
+      else {
+        windowManager.showFrame();
       }
 
       app.invokeLater(new Runnable() {
@@ -316,16 +261,6 @@ public class IdeaApplication {
             loadProject();
           }
 
-          final UpdateSettings settings = UpdateSettings.getInstance();
-          if (settings != null) {
-            final ApplicationInfo appInfo = ApplicationInfo.getInstance();
-            if (StringUtil.compareVersionNumbers(settings.LAST_BUILD_CHECKED, appInfo.getBuild().asString()) < 0 ||
-                (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded())) {
-              UpdateChecker.setMyVeryFirstOpening(false);
-              UpdateChecker.updateAndShowResult();
-            }
-          }
-
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -336,12 +271,12 @@ public class IdeaApplication {
         }
       }, ModalityState.NON_MODAL);
     }
-
   }
 
   private void loadProject() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
+      LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
 

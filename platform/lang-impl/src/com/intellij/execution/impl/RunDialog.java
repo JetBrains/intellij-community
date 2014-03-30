@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
   private final Project myProject;
   private final RunConfigurable myConfigurable;
   private JComponent myCenterPanel;
-  @NonNls public static String HELP_ID = "reference.dialogs.rundebug";
+  @NonNls public static final String HELP_ID = "reference.dialogs.rundebug";
   private final Executor myExecutor;
 
   public RunDialog(final Project project, final Executor executor) {
@@ -57,23 +57,28 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
     myConfigurable.reset();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction(),getCancelAction(),new ApplyAction(),getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HELP_ID);
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.execution.impl.RunDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCenterPanel);
   }
 
+  @Override
   protected void doOKAction(){
     try{
       myConfigurable.apply();
@@ -85,6 +90,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myCenterPanel = myConfigurable.createComponent();
     return myCenterPanel;
@@ -95,6 +101,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
     super.setOKActionEnabled(isEnabled);
   }
 
+  @Override
   protected void dispose() {
     myConfigurable.disposeUIResources();
     super.dispose();
@@ -106,13 +113,13 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {
     final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
-    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable) {
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, IdeModalityType.PROJECT) {
       {
         if (executor != null) setOKButtonText(executor.getActionName());
         if (executor != null) setOKButtonIcon(executor.getIcon());
       }
     };
-    
+
     dialog.setTitle(title);
     dialog.show();
     return dialog.isOK();
@@ -123,6 +130,7 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
       super(ExecutionBundle.message("apply.action.name"));
     }
 
+    @Override
     public void actionPerformed(final ActionEvent event) {
       try{
         myConfigurable.apply();

@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -69,6 +70,18 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    for (UsageInfo info : myToInvert.keySet()) {
+      final PsiElement element = info.getElement();
+      if (element instanceof PsiMethodReferenceExpression) {
+        conflicts.putValue(element, "Method is used in method reference expression");
+      }
+    }
+
+    if (!conflicts.isEmpty())  {
+      return showConflicts(conflicts, null);
+    }
+
     if (myRenameProcessor.preprocessUsages(refUsages)) {
       prepareSuccessful();
       return true;

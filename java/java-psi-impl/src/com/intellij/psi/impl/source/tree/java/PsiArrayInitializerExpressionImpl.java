@@ -18,24 +18,23 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement implements PsiArrayInitializerExpression, Constants {
+public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement implements PsiArrayInitializerExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiArrayInitializerExpressionImpl");
 
   public PsiArrayInitializerExpressionImpl() {
-    super(ARRAY_INITIALIZER_EXPRESSION);
+    super(JavaElementType.ARRAY_INITIALIZER_EXPRESSION);
   }
 
   @Override
   @NotNull
   public PsiExpression[] getInitializers(){
-    return getChildrenAsPsiElements(EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
+    return getChildrenAsPsiElements(ElementType.EXPRESSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
   }
 
   @Override
@@ -69,10 +68,10 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
         return null;
 
       case ChildRole.LBRACE:
-        return findChildByType(LBRACE);
+        return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
-        return findChildByType(RBRACE);
+        return findChildByType(JavaTokenType.RBRACE);
     }
   }
 
@@ -80,17 +79,17 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == COMMA) {
+    if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;
     }
-    else if (i == LBRACE) {
+    else if (i == JavaTokenType.LBRACE) {
       return ChildRole.LBRACE;
     }
-    else if (i == RBRACE) {
+    else if (i == JavaTokenType.RBRACE) {
       return ChildRole.RBRACE;
     }
     else {
-      if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
         return ChildRole.EXPRESSION_IN_LIST;
       }
       return ChildRoleBase.NONE;
@@ -129,17 +128,17 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
      final CharTable charTab = SharedImplUtil.findCharTableByTree(this);
       for (ASTNode child = first.getTreeNext(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == COMMA) break;
+        if (child.getElementType() == JavaTokenType.COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, charTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, charTab, getManager());
           super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
         }
       }
       for (ASTNode child = first.getTreePrev(); child != null; child = child.getTreePrev()) {
-        if (child.getElementType() == COMMA) break;
+        if (child.getElementType() == JavaTokenType.COMMA) break;
         if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, charTab, getManager());
+          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, charTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
         }

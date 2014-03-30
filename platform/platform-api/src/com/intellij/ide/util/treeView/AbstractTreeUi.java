@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -716,8 +717,9 @@ public class AbstractTreeUi {
     Runnable update = new Runnable() {
       @Override
       public void run() {
-        if (getElementFromDescriptor(rootDescriptor.get()) != null) {
-          createMapping(getElementFromDescriptor(rootDescriptor.get()), getRootNode());
+        Object fromDescriptor = getElementFromDescriptor(rootDescriptor.get());
+        if (fromDescriptor != null) {
+          createMapping(fromDescriptor, getRootNode());
         }
 
 
@@ -901,9 +903,9 @@ public class AbstractTreeUi {
       }
     }
 
-    result.doWhenDone(new AsyncResult.Handler<Boolean>() {
+    result.doWhenDone(new Consumer<Boolean>() {
       @Override
-      public void run(final Boolean changes) {
+      public void consume(final Boolean changes) {
         if (changes) {
           invokeLaterIfNeeded(false, new Runnable() {
             @Override
@@ -1134,9 +1136,9 @@ public class AbstractTreeUi {
     final NodeDescriptor descriptor = (NodeDescriptor)userObject;
     final Object prevElement = getElementFromDescriptor(descriptor);
     if (prevElement == null) return;
-    update(descriptor, false).doWhenDone(new AsyncResult.Handler<Boolean>() {
+    update(descriptor, false).doWhenDone(new Consumer<Boolean>() {
       @Override
-      public void run(Boolean changes) {
+      public void consume(Boolean changes) {
         if (!isValid(descriptor)) {
           if (isInStructure(prevElement)) {
             getUpdater().addSubtreeToUpdateByElement(getTreeStructure().getParentElement(prevElement));
@@ -1391,9 +1393,9 @@ public class AbstractTreeUi {
           }
 
           collectNodesToInsert(descriptor, elementToIndexMap, node, expanded, loadedChildren)
-            .doWhenDone(new AsyncResult.Handler<List<TreeNode>>() {
+            .doWhenDone(new Consumer<List<TreeNode>>() {
               @Override
-              public void run(@NotNull final List<TreeNode> nodesToInsert) {
+              public void consume(@NotNull final List<TreeNode> nodesToInsert) {
                 insertNodesInto(nodesToInsert, node);
                 ActionCallback callback = updateNodesToInsert(nodesToInsert, pass, canSmartExpand, isChildNodeForceUpdate(node, forceUpdate, expanded));
                 callback.doWhenDone(new Runnable() {
@@ -2247,9 +2249,9 @@ public class AbstractTreeUi {
 
       final ActionCallback update = new ActionCallback();
       if (needToUpdate) {
-        update(childDescr, false).doWhenDone(new AsyncResult.Handler<Boolean>() {
+        update(childDescr, false).doWhenDone(new Consumer<Boolean>() {
           @Override
-          public void run(Boolean changes) {
+          public void consume(Boolean changes) {
             loadedChildren.putDescriptor(child, childDescr, changes);
             update.setDone();
           }
@@ -3009,9 +3011,9 @@ public class AbstractTreeUi {
     final ActionCallback result = new ActionCallback();
     final Ref<NodeDescriptor> childDesc = new Ref<NodeDescriptor>(childDescriptor);
 
-    update.doWhenDone(new AsyncResult.Handler<Boolean>() {
+    update.doWhenDone(new Consumer<Boolean>() {
       @Override
-      public void run(Boolean isChanged) {
+      public void consume(Boolean isChanged) {
         final AtomicBoolean changes = new AtomicBoolean(isChanged);
         final AtomicBoolean forceRemapping = new AtomicBoolean();
         final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
@@ -3036,9 +3038,9 @@ public class AbstractTreeUi {
                 childNode.setUserObject(childDesc.get());
                 newElement.set(elementFromMap);
                 forceRemapping.set(true);
-                update(childDesc.get(), false).doWhenDone(new AsyncResult.Handler<Boolean>() {
+                update(childDesc.get(), false).doWhenDone(new Consumer<Boolean>() {
                   @Override
-                  public void run(Boolean isChanged) {
+                  public void consume(Boolean isChanged) {
                     changes.set(isChanged);
                     updateIndexDone.setDone(isChanged);
                   }
@@ -3069,8 +3071,9 @@ public class AbstractTreeUi {
           public void run() {
             if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
               removeMapping(oldElement, childNode, newElement.get());
-              if (newElement.get() != null) {
-                createMapping(newElement.get(), childNode);
+              Object newE = newElement.get();
+              if (newE != null) {
+                createMapping(newE, childNode);
               }
               NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
               if (parentDescriptor != null) {
@@ -3659,7 +3662,9 @@ public class AbstractTreeUi {
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (descriptor == null) return;
     final Object element = getElementFromDescriptor(descriptor);
-    removeMapping(element, node, null);
+    if (element != null) {
+      removeMapping(element, node, null);
+    }
     myAutoExpandRoots.remove(element);
     node.setUserObject(null);
     node.removeAllChildren();
@@ -4003,9 +4008,9 @@ public class AbstractTreeUi {
     myRevalidatedObjects.add(element);
     AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
 
-    revalidated.doWhenDone(new AsyncResult.Handler<Object>() {
+    revalidated.doWhenDone(new Consumer<Object>() {
       @Override
-      public void run(final Object o) {
+      public void consume(final Object o) {
         invokeLaterIfNeeded(false, new Runnable() {
           @Override
           public void run() {
@@ -4108,7 +4113,7 @@ public class AbstractTreeUi {
         }
       }
     }
-    else if (myElementToNodeMap.get(element) instanceof List) {
+    else if (myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element)) instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();
       if (paths != null && paths.length > 0) {
         Set<DefaultMutableTreeNode> selectedNodes = new HashSet<DefaultMutableTreeNode>();
@@ -4119,7 +4124,7 @@ public class AbstractTreeUi {
         }
 
 
-        final List nodes = (List)myElementToNodeMap.get(element);
+        final List nodes = (List)myElementToNodeMap.get(TreeAnchorizer.getService().createAnchor(element));
         for (Object each : nodes) {
           DefaultMutableTreeNode eachNode = (DefaultMutableTreeNode)each;
           while (eachNode != null) {
@@ -4564,7 +4569,8 @@ public class AbstractTreeUi {
     myUpdaterState = null;
   }
 
-  private void createMapping(Object element, DefaultMutableTreeNode node) {
+  private void createMapping(@NotNull Object element, DefaultMutableTreeNode node) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     if (!myElementToNodeMap.containsKey(element)) {
       myElementToNodeMap.put(element, node);
     }
@@ -4583,7 +4589,8 @@ public class AbstractTreeUi {
     }
   }
 
-  private void removeMapping(Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
+  private void removeMapping(@NotNull Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     final Object value = myElementToNodeMap.get(element);
     if (value != null) {
       if (value instanceof DefaultMutableTreeNode) {
@@ -4638,6 +4645,7 @@ public class AbstractTreeUi {
   }
 
   protected Object findNodeByElement(Object element) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     if (myElementToNodeMap.containsKey(element)) {
       return myElementToNodeMap.get(element);
     }
@@ -4653,6 +4661,7 @@ public class AbstractTreeUi {
 
   @Nullable
   private DefaultMutableTreeNode findNodeForChildElement(@NotNull DefaultMutableTreeNode parentNode, Object element) {
+    element = TreeAnchorizer.getService().createAnchor(element);
     final Object value = myElementToNodeMap.get(element);
     if (value == null) {
       return null;
@@ -4913,12 +4922,6 @@ public class AbstractTreeUi {
   @NotNull
   public Collection<TreeUpdatePass> getYeildingPasses() {
     return myYieldingPasses;
-  }
-
-  public boolean isBuilt(Object element) {
-    if (!myElementToNodeMap.containsKey(element)) return false;
-    final Object node = myElementToNodeMap.get(element);
-    return !myUnbuiltNodes.contains(node);
   }
 
   private static class LoadedChildren {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.*;
@@ -115,6 +116,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myFocusTrackback.registerFocusComponent(myDialog.getPanel());
   }
 
+  @Override
   public synchronized void start() {
     LOG.assertTrue(!isRunning());
     LOG.assertTrue(!myStoppedAlready);
@@ -161,6 +163,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 final DialogWrapper popup = myDialog.myPopup;
                 if (popup != null) {
                   myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+                    @Override
                     public Component getComponent() {
                       return popup.getPreferredFocusedComponent();
                     }
@@ -183,6 +186,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     timer.start();
   }
 
+  @Override
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (this) {
@@ -193,6 +197,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     enterModality();
 
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
+      @Override
       public boolean value(final AWTEvent object) {
         if (myShouldShowCancel &&
             object instanceof KeyEvent &&
@@ -200,6 +205,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
             ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
             ((KeyEvent)object).getModifiers() == 0) {
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               cancel();
             }
@@ -233,11 +239,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
     update();
   }
 
+  @Override
   public synchronized void stop() {
     LOG.assertTrue(!myStoppedAlready);
 
@@ -266,7 +274,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           }
         }
 
-        myStoppedAlready = true;
+        synchronized (ProgressWindow.this) {
+          myStoppedAlready = true;
+        }
 
         Disposer.dispose(ProgressWindow.this);
       }
@@ -279,6 +289,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 
+  @Override
   public void cancel() {
     super.cancel();
     if (myDialog != null) {
@@ -312,6 +323,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return myBackgrounded;
   }
 
+  @Override
   public void setText(String text) {
     if (!Comparing.equal(text, getText())) {
       super.setText(text);
@@ -319,6 +331,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setFraction(double fraction) {
     if (fraction != getFraction()) {
       super.setFraction(fraction);
@@ -326,6 +339,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setText2(String text) {
     if (!Comparing.equal(text, getText2())) {
       super.setText2(text);
@@ -355,6 +369,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private volatile boolean myShouldShowBackground;
 
     private final Runnable myRepaintRunnable = new Runnable() {
+      @Override
       public void run() {
         String text = getText();
         double fraction = getFraction();
@@ -389,6 +404,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private final Runnable myUpdateRequest = new Runnable() {
+      @Override
       public void run() {
         update();
       }
@@ -434,12 +450,14 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
 
       myCancelButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           doCancelAction();
         }
       });
 
       myCancelButton.registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myCancelButton.isEnabled()) {
             doCancelAction();
@@ -456,6 +474,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
       myTitlePanel.setActive(true);
       myTitlePanel.addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(MouseEvent e) {
           final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
           myLastClicked = new RelativePoint(e).getScreenPoint();
@@ -465,6 +484,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       });
 
       myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
         public void mouseDragged(MouseEvent e) {
           if (myLastClicked == null) {
             return;
@@ -480,9 +500,15 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       });
     }
 
+    @Override
     public void dispose() {
       UIUtil.disposeProgress(myProgressBar);
       UIUtil.dispose(myTitlePanel);
+      final ActionListener[] listeners = myCancelButton.getActionListeners();
+      for (ActionListener listener : listeners) {
+        myCancelButton.removeActionListener(listener);
+      }
+
     }
 
     public JPanel getPanel() {
@@ -492,6 +518,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     public void setShouldShowBackground(final boolean shouldShowBackground) {
       myShouldShowBackground = shouldShowBackground;
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myBackgroundButton.setVisible(shouldShowBackground);
           myPanel.revalidate();
@@ -512,6 +539,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     public void cancel() {
       if (myShouldShowCancel) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             myCancelButton.setEnabled(false);
           }
@@ -530,6 +558,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myBackgroundButton.setVisible(myShouldShowBackground);
       myBackgroundButton.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             if (myShouldShowBackground) {
               ProgressWindow.this.background();
@@ -563,6 +592,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     public void hide() {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myPopup != null) {
             myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
@@ -583,9 +613,18 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 ? new MyDialogWrapper(myParentWindow, myShouldShowCancel)
                 : new MyDialogWrapper(myProject, myShouldShowCancel);
       myPopup.setUndecorated(true);
+      if (SystemInfo.isAppleJvm) {
+        // With Apple JDK we look for MacMessage parent by the window title.
+        // Let's set just the title as the window title for simplicity.
+        myPopup.setTitle(myTitle);
+      }
+      if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
+        ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
+      }
       myPopup.pack();
 
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myPopup != null) {
             if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
@@ -630,7 +669,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       }
 
       @Override
-      protected DialogWrapperPeer createPeer(final Component parent, final boolean canBeParent) {
+      protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
         if (System.getProperty("vintage.progress") == null) {
           try {
             return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);
@@ -645,17 +684,22 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       }
 
       @Override
-      protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean toolkitModalIfPossible) {
+      protected DialogWrapperPeer createPeer(final boolean canBeParent, final boolean applicationModalIfPossible) {
+        return createPeer(null, canBeParent, applicationModalIfPossible);
+      }
+
+      @Override
+      protected DialogWrapperPeer createPeer(final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
         if (System.getProperty("vintage.progress") == null) {
           try {
             return new GlassPaneDialogWrapperPeer(this, canBeParent);
           }
           catch (GlassPaneDialogWrapperPeer.GlasspanePeerUnavailableException e) {
-            return super.createPeer(canBeParent, toolkitModalIfPossible);
+            return super.createPeer(WindowManager.getInstance().suggestParentWindow(myProject), canBeParent, applicationModalIfPossible);
           }
         }
         else {
-          return super.createPeer(canBeParent, toolkitModalIfPossible);
+          return super.createPeer(WindowManager.getInstance().suggestParentWindow(myProject), canBeParent, applicationModalIfPossible);
         }
       }
 
@@ -674,25 +718,30 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }
 
+      @Override
       protected void init() {
         super.init();
         setUndecorated(true);
         myPanel.setBorder(PopupBorder.Factory.create(true, true));
       }
 
+      @Override
       protected boolean isProgressDialog() {
         return true;
       }
 
+      @Override
       protected JComponent createCenterPanel() {
         return myPanel;
       }
 
+      @Override
       @Nullable
       protected JComponent createSouthPanel() {
         return null;
       }
 
+      @Override
       @Nullable
       protected Border createContentPaneBorder() {
         return null;
@@ -718,9 +767,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return IdeFocusManager.getInstance(myProject);
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public boolean isPopupWasShown() {
     return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
   }

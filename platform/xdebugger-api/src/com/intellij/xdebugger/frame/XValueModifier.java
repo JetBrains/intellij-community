@@ -38,9 +38,7 @@ public abstract class XValueModifier {
     return null;
   }
 
-  public interface XModificationCallback {
+  public interface XModificationCallback extends XValueCallback {
     void valueModified();
-
-    void errorOccurred(@NotNull String errorMessage);
   }
 }

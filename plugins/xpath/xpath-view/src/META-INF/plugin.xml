@@ -99,6 +99,7 @@
     <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
     <completion.contributor language="XPath2" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
     <typedHandler implementation="org.intellij.lang.xpath.XPathTypedHandler"/>
+    <lookup.charFilter implementation="org.intellij.lang.xpath.completion.XPathCharFilter" />
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
@@ -214,9 +215,9 @@
     </action>
 
     <!-- Toolbar -->
-    <reference id="XPathView.Actions.Evaluate">
-      <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
-    </reference>
+    <!--<reference id="XPathView.Actions.Evaluate">-->
+      <!--<add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />-->
+    <!--</reference>-->
 
     <group id="XPathView.MainMenu.Search">
       <separator />

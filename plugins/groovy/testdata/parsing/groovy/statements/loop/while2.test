@@ -6,17 +6,20 @@ Groovy script
     PsiErrorElement:'(' expected
       <empty list>
   PsiWhiteSpace(' ')
-  PsiErrorElement:';' or new line expected
-    PsiElement(true)('true')
-  PsiWhiteSpace(' ')
-  Closable block
-    PsiElement({)('{')
-    Parameter list
+  Method call
+    Literal
+      PsiElement(true)('true')
+    PsiWhiteSpace(' ')
+    Arguments
       <empty list>
-    Method call
-      Reference expression
-        PsiElement(identifier)('doSomething')
-      Arguments
-        PsiElement(()('(')
-        PsiElement())(')')
-    PsiElement(})('}')
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        <empty list>
+      Method call
+        Reference expression
+          PsiElement(identifier)('doSomething')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiElement(})('}')

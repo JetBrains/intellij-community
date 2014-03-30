@@ -23,4 +23,6 @@ Groovy script
         PsiElement(Integer)('2')
       PsiElement())(')')
   PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiErrorElement:Unexpected symbol
     PsiElement())(')')

@@ -37,6 +37,11 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message(
       "replace.inheritance.with.delegation.quickfix");
   }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
   @Override
   public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
@@ -50,6 +55,7 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
       }

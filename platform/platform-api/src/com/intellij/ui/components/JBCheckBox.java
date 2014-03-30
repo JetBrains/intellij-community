@@ -1,6 +1,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.AnchorableComponent;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,9 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
    * @return true in case of success and false otherwise
    */
   public boolean setTextIcon(@NotNull Icon icon) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      return false;
+    }
     ButtonUI ui = getUI();
     if (ui instanceof BasicRadioButtonUI) {
       Icon defaultIcon = ((BasicRadioButtonUI) ui).getDefaultIcon();

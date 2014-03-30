@@ -124,7 +124,7 @@ class FilePointerPartNode {
     String pathRest = path.substring(index);
     FilePointerPartNode newNode = pathRest.isEmpty() ? this : new FilePointerPartNode(pathRest, this, fileAndUrl);
     String commonPredecessor = StringUtil.first(part, index - start, false);
-    FilePointerPartNode splittedAway = new FilePointerPartNode(part.substring(index - start), this, null);
+    FilePointerPartNode splittedAway = new FilePointerPartNode(part.substring(index - start), this, myFileAndUrl);
     splittedAway.children = children;
     for (FilePointerPartNode child : children) {
       child.parent = splittedAway;

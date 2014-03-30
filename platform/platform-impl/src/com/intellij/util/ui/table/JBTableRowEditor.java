@@ -15,8 +15,13 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,5 +65,27 @@ public abstract class JBTableRowEditor extends JPanel {
 
   public final void setMouseEvent(@Nullable MouseEvent e) {
     myMouseEvent = e;
+  }
+
+  public static JPanel createLabeledPanel(String labelText, JComponent component) {
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+    final JBLabel label = new JBLabel(labelText, UIUtil.ComponentStyle.SMALL);
+    IJSwingUtilities.adjustComponentsOnMac(label, component);
+    panel.add(label);
+    panel.add(component);
+    return panel;
+  }
+
+  public class RowEditorChangeListener extends DocumentAdapter {
+    private int myColumn;
+
+    public RowEditorChangeListener(int column) {
+      myColumn = column;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      fireDocumentChanged(e, myColumn);
+    }
   }
 }

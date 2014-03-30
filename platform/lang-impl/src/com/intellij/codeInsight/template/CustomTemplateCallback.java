@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -48,11 +47,9 @@ public class CustomTemplateCallback {
 
   private FileType myFileType;
 
-  public CustomTemplateCallback(Editor editor, PsiFile file, boolean wrapping) {
+  public CustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file, boolean wrapping) {
     myProject = file.getProject();
     myTemplateManager = TemplateManager.getInstance(myProject);
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     int offset = getOffset(wrapping, editor);
     PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
@@ -99,16 +96,9 @@ public class CustomTemplateCallback {
   public List<TemplateImpl> filterApplicableCandidates(Collection<? extends TemplateImpl> candidates) {
     List<TemplateImpl> result = new ArrayList<TemplateImpl>();
     for (TemplateImpl candidate : candidates) {
-      if (TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
+      if (!candidate.isDeactivated() && TemplateManagerImpl.isApplicable(myFile, myOffset, candidate)) {
         result.add(candidate);
       }
-      /*TemplateContext context = candidate.getTemplateContext();
-      for (TemplateContextType contextType : contextTypes) {
-        if (context.isEnabled(contextType)) {
-          result.add(candidate);
-          break;
-        }
-      }*/
     }
     return result;
   }
@@ -133,7 +123,7 @@ public class CustomTemplateCallback {
     TemplateSettings settings = TemplateSettings.getInstance();
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
-      if (!template.isDeactivated() && !template.isSelectionTemplate()) {
+      if (!template.isDeactivated()) {
         candidates.add(template);
       }
     }

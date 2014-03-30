@@ -36,12 +36,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -51,12 +50,18 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -120,6 +125,12 @@ public class CreateTestDialog extends DialogWrapper {
 
     for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
       final JRadioButton b = new JRadioButton(descriptor.getName());
+      if (descriptor instanceof JavaTestFramework) {
+        final char mnemonic = ((JavaTestFramework)descriptor).getMnemonic();
+        if (mnemonic > -1) {
+          b.setMnemonic(mnemonic);
+        }
+      }
       myLibraryButtons.add(b);
       group.add(b);
 
@@ -205,13 +216,47 @@ public class CreateTestDialog extends DialogWrapper {
     updateMethodsTable();
   }
 
+  private boolean isSuperclassSelectedManually() {
+    String superClass = mySuperClassField.getText();
+    if (StringUtil.isEmptyOrSpaces(superClass)) {
+      return false;
+    }
+
+    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensions()) {
+      if (superClass.equals(framework.getDefaultSuperClass())) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private void onLibrarySelected(TestFramework descriptor) {
-    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
-    myFixLibraryLabel.setText(text);
-    myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
+    if (descriptor.isLibraryAttached(myTargetModule)) {
+      myFixLibraryPanel.setVisible(false);
+    }
+    else {
+      myFixLibraryPanel.setVisible(true);
+      String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
+      myFixLibraryLabel.setText(text);
+
+      myFixLibraryButton.setVisible(descriptor.getLibraryPath() != null);
+    }
 
     String superClass = descriptor.getDefaultSuperClass();
-    mySuperClassField.appendItem(superClass == null ? "" : superClass);
+
+    if (isSuperclassSelectedManually()) {
+      if (superClass != null) {
+        String currentSuperClass = mySuperClassField.getText();
+        mySuperClassField.appendItem(superClass);
+        mySuperClassField.setText(currentSuperClass);
+      }
+    }
+    else {
+      mySuperClassField.appendItem(StringUtil.notNullize(superClass));
+      mySuperClassField.getChildComponent().setSelectedItem(StringUtil.notNullize(superClass));
+    }
+
     mySelectedFramework = descriptor;
   }
 
@@ -447,11 +492,18 @@ public class CreateTestDialog extends DialogWrapper {
 
     final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
       protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile[] roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
-        if (roots.length == 0) return;
+        final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
+        CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
+        List<VirtualFile> roots;
+        if (testFolders.isEmpty()) {
+          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+          if (roots.isEmpty()) return;
+        } else {
+          roots = new ArrayList<VirtualFile>(testFolders);
+        }
 
-        if (roots.length == 1) {
-          result.setResult(roots[0]);
+        if (roots.size() == 1) {
+          result.setResult(roots.get(0));
         }
         else {
           PsiDirectory defaultDir = chooseDefaultDirectory(packageName);
@@ -472,15 +524,10 @@ public class CreateTestDialog extends DialogWrapper {
   @Nullable
   private PsiDirectory chooseDefaultDirectory(String packageName) {
     List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
-    for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
-      for (SourceFolder f : e.getSourceFolders()) {
-        final VirtualFile file = f.getFile();
-        if (file != null && f.isTestSource()) {
-          final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
-          if (dir != null) {
-            dirs.add(dir);
-          }
-        }
+    for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
+      final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+      if (dir != null) {
+        dirs.add(dir);
       }
     }
     if (!dirs.isEmpty()) {
@@ -512,7 +559,10 @@ public class CreateTestDialog extends DialogWrapper {
       dialog.showDialog();
       PsiClass aClass = dialog.getSelected();
       if (aClass != null) {
-        mySuperClassField.setText(aClass.getQualifiedName());
+        String superClass = aClass.getQualifiedName();
+
+        mySuperClassField.appendItem(superClass);
+        mySuperClassField.getChildComponent().setSelectedItem(superClass);
       }
     }
   }

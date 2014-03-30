@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,12 +29,24 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 
 /**
  * @author ven
  */
 public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
+  private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = new Function<ClosureSyntheticParameter, PsiType>() {
+    @Override
+    public PsiType fun(ClosureSyntheticParameter parameter) {
+      PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
+      if (typeGroovy instanceof PsiIntersectionType) {
+        return ((PsiIntersectionType)typeGroovy).getRepresentative();
+      }
+      return typeGroovy;
+    }
+  };
+
   private final GrClosableBlock myClosure;
 
   public ClosureSyntheticParameter(GrClosableBlock closure) {
@@ -54,11 +67,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   public PsiType getTypeGroovy() {
     assert isValid();
 
-    PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(this);
-    if (typeGroovy instanceof PsiIntersectionType) {
-      return ((PsiIntersectionType)typeGroovy).getRepresentative();
-    }
-    return typeGroovy;
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   @Nullable

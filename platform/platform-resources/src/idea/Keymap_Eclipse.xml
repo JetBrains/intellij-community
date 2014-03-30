@@ -107,9 +107,6 @@
     <action id="ExtractMethod">
       <keyboard-shortcut first-keystroke="shift alt M" />
     </action>
-    <action id="Faces.Create.Model.Element">
-      <keyboard-shortcut first-keystroke="alt INSERT" />
-    </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control F3" />
       <keyboard-shortcut first-keystroke="control O" />
@@ -123,6 +120,15 @@
     </action>
     <action id="FindPrevious">
       <keyboard-shortcut first-keystroke="shift control K" />
+    </action>
+    <action id="SelectAllOccurrences">
+      <keyboard-shortcut first-keystroke="alt control Y"/>
+    </action>
+    <action id="SelectNextOccurrence">
+      <keyboard-shortcut first-keystroke="alt Y"/>
+    </action>
+    <action id="UnselectPreviousOccurrence">
+      <keyboard-shortcut first-keystroke="alt shift Y"/>
     </action>
     <action id="FindUsages">
       <keyboard-shortcut first-keystroke="control G" />
@@ -275,6 +281,9 @@
     <action id="Rerun">
       <keyboard-shortcut first-keystroke="control F11" />
     </action>
+    <action id="RerunTests">
+      <keyboard-shortcut first-keystroke="shift alt G"/>
+    </action>
     <action id="Resume">
       <keyboard-shortcut first-keystroke="F8" />
       <keyboard-shortcut first-keystroke="F9" />
@@ -335,5 +344,6 @@
     </action>
     <action id="MoveLineDown" />
     <action id="MoveLineUp" />
+    <action id="context.clear"/>
   </keymap>
 </component>

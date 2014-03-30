@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.lang;
 
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class LanguageNamesValidation extends LanguageExtension<NamesValidator> {
   public static final LanguageNamesValidation INSTANCE = new LanguageNamesValidation();
@@ -28,9 +29,10 @@ public class LanguageNamesValidation extends LanguageExtension<NamesValidator> {
   private LanguageNamesValidation() {
     super("com.intellij.lang.namesValidator", new DefaultNamesValidator());
   }
-  
+
   protected static class DefaultNamesValidator implements NamesValidator {
-    public boolean isIdentifier(final String name, final Project project) {
+    @Override
+    public boolean isIdentifier(@NotNull final String name, final Project project) {
       final int len = name.length();
       if (len == 0) return false;
 
@@ -43,7 +45,8 @@ public class LanguageNamesValidation extends LanguageExtension<NamesValidator> {
       return true;
     }
 
-    public boolean isKeyword(final String name, final Project project) {
+    @Override
+    public boolean isKeyword(@NotNull final String name, final Project project) {
       return false;
     }
   }

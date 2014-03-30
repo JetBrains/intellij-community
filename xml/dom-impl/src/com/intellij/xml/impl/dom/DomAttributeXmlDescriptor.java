@@ -20,19 +20,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.XmlName;
-import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.NamespaceAwareXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
  */
-public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
+public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDescriptor {
   private final DomAttributeChildDescription myDescription;
   private final Project myProject;
 
@@ -42,7 +44,8 @@ public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
   }
 
   public boolean isRequired() {
-    return false;
+    final Required required = myDescription.getAnnotation(Required.class);
+    return required != null && required.value();
   }
 
   public boolean isFixed() {
@@ -112,6 +115,16 @@ public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
 
   private String getLocalName() {
     return myDescription.getXmlName().getLocalName();
+  }
+
+  @Nullable
+  public String getNamespace(@NotNull XmlTag context) {
+    final DomInvocationHandler handler = DomManagerImpl.getDomManager(myProject).getDomHandler(context);
+
+    if (handler == null) {
+      return null;
+    }
+    return handler.createEvaluatedXmlName(myDescription.getXmlName()).getNamespace(context, handler.getFile());
   }
 
   public void init(final PsiElement element) {

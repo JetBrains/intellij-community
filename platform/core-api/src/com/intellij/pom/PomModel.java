@@ -19,19 +19,20 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public interface PomModel extends UserDataHolder {
-  <T extends PomModelAspect> T getModelAspect(Class<T> aClass);
+  <T extends PomModelAspect> T getModelAspect(@NotNull Class<T> aClass);
 
-  void registerAspect(Class<? extends PomModelAspect> aClass,
-                      PomModelAspect aspect,
-                      Set<PomModelAspect> dependencies);
+  void registerAspect(@NotNull Class<? extends PomModelAspect> aClass,
+                      @NotNull PomModelAspect aspect,
+                      @NotNull Set<PomModelAspect> dependencies);
 
-  void addModelListener(PomModelListener listener);
-  void addModelListener(PomModelListener listener, Disposable parentDisposable);
-  void removeModelListener(PomModelListener listener);
+  void addModelListener(@NotNull PomModelListener listener);
+  void addModelListener(@NotNull PomModelListener listener, @NotNull Disposable parentDisposable);
+  void removeModelListener(@NotNull PomModelListener listener);
 
-  void runTransaction(PomTransaction transaction) throws IncorrectOperationException;
+  void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException;
 }

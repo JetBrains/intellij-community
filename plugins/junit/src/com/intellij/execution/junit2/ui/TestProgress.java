@@ -20,6 +20,7 @@ import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.events.NewChildEvent;
 import com.intellij.execution.junit2.events.StateChangedEvent;
 import com.intellij.execution.junit2.events.TestEvent;
+import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -45,6 +46,7 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
       return test.shouldRun();
     }
   };
+  private CompletionEvent myDone;
 
   public TestProgress() {
     super(0, 0, 0, 0);
@@ -81,6 +83,14 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
   private void setCurrentState(final TestProxy currentState) {
     myCurrentState = currentState;
     fireStateChanged();
+  }
+
+  public CompletionEvent getDone() {
+    return myDone;
+  }
+
+  public void setDone(CompletionEvent done) {
+    myDone = done;
   }
 
   private class MyJUnitListener extends JUnitAdapter {

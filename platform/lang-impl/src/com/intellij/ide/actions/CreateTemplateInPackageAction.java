@@ -17,6 +17,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -29,18 +30,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
-  private final boolean myInSourceOnly;
+  private Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
-  protected CreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
+  protected CreateTemplateInPackageAction(String text, String description, Icon icon,
+                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(text, description, icon);
-    myInSourceOnly = inSourceOnly;
+    mySourceRootTypes = rootTypes;
   }
 
   @Override
@@ -54,19 +58,19 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   @Override
   protected boolean isAvailable(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null || view.getDirectories().length == 0) {
       return false;
     }
 
-    if (!myInSourceOnly) {
+    if (mySourceRootTypes == null) {
       return true;
     }
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
-      if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
+      if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), mySourceRootTypes) && checkPackageExists(dir)) {
         return true;
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
  */
 package com.intellij.core;
 
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
 
 /**
  * @author yole
  */
 public class CorePsiPackageImplementationHelper extends PsiPackageImplementationHelper {
+  private static final ModificationTracker[] EMPTY_DEPENDENCY = {ModificationTracker.NEVER_CHANGED};
+
   @Override
   public GlobalSearchScope adjustAllScope(PsiPackage psiPackage, GlobalSearchScope globalSearchScope) {
     return globalSearchScope;
@@ -50,6 +52,6 @@ public class CorePsiPackageImplementationHelper extends PsiPackageImplementation
 
   @Override
   public Object[] getDirectoryCachedValueDependencies(PsiPackage cachedValueProvider) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return EMPTY_DEPENDENCY;
   }
 }

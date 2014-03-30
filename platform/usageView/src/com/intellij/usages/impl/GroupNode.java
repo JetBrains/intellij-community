@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
@@ -43,10 +43,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final int myRuleIndex;
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
   private final List<UsageNode> myUsageNodes = new SmartList<UsageNode>();
+  @NotNull private final UsageViewTreeModelBuilder myUsageTreeModel;
   private volatile int myRecursiveUsageCount = 0;
 
   public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);
+    myUsageTreeModel = treeModel;
     setUserObject(group);
     myGroup = group;
     myRuleIndex = ruleIndex;
@@ -154,6 +156,35 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return false;
   }
 
+  public boolean removeUsagesBulk(@NotNull Set<UsageNode> usages) {
+    boolean removed;
+    synchronized (lock) {
+      removed = myUsageNodes.removeAll(usages);
+    }
+
+    Collection<GroupNode> groupNodes = mySubgroupNodes.values();
+
+    for (Iterator<GroupNode> iterator = groupNodes.iterator(); iterator.hasNext(); ) {
+      GroupNode groupNode = iterator.next();
+
+      if (groupNode.removeUsagesBulk(usages)) {
+        if (groupNode.getRecursiveUsageCount() == 0) {
+          MutableTreeNode parent = (MutableTreeNode)groupNode.getParent();
+          int childIndex = parent.getIndex(groupNode);
+          if (childIndex != -1) {
+            parent.remove(childIndex);
+          }
+          iterator.remove();
+        }
+        removed = true;
+      }
+    }
+    if (removed) {
+      --myRecursiveUsageCount;
+    }
+    return removed;
+  }
+
   private void doUpdate() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     --myRecursiveUsageCount;
@@ -163,7 +194,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   public UsageNode addUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
     final UsageNode node;
     synchronized (lock) {
-      if (UsageViewSettings.getInstance().isFilterDuplicatedLine()) {
+      if (myUsageTreeModel.isFilterDuplicatedLine()) {
         UsageNode mergedWith = tryMerge(usage);
         if (mergedWith != null) {
           return mergedWith;
@@ -300,7 +331,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  public int compareTo(GroupNode groupNode) {
+  public int compareTo(@NotNull GroupNode groupNode) {
     if (myRuleIndex == groupNode.myRuleIndex) {
       return myGroup.compareTo(groupNode.myGroup);
     }

@@ -22,19 +22,23 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.Nullable;
 
 public final class PromptMacro extends PromptingMacro implements SecondQueueExpandMacro {
+  @Override
   public String getName() {
     return "Prompt";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.prompt");
   }
 
+  @Override
   @Nullable
   protected String promptUser(DataContext dataContext) {
     return Messages.showInputDialog(IdeBundle.message("prompt.enter.parameters"), IdeBundle.message("title.input"), Messages.getQuestionIcon());
   }
 
+  @Override
   public void cachePreview(DataContext dataContext) {
     myCachedPreview = IdeBundle.message("macro.prompt.preview");
   }

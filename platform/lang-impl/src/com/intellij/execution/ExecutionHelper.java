@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -96,6 +95,7 @@ public class ExecutionHelper {
       throw new RuntimeException(errors.get(0));
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         if (errors.isEmpty() && warnings.isEmpty()) {
@@ -159,6 +159,7 @@ public class ExecutionHelper {
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
 
@@ -224,6 +225,7 @@ public class ExecutionHelper {
                                        @NotNull final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
@@ -252,23 +254,6 @@ public class ExecutionHelper {
         }
       }
     }
-  }
-
-  /** @deprecated use lookup by user data (to remove in IDEA 13) */
-  public static Collection<RunContentDescriptor> findRunningConsoleByCmdLine(final Project project,
-                                                                             @NotNull final NotNullFunction<String, Boolean> cmdLineMatcher) {
-    return findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-      @NotNull
-      @Override
-      public Boolean fun(RunContentDescriptor selectedContent) {
-        final ProcessHandler processHandler = selectedContent.getProcessHandler();
-        if (processHandler instanceof OSProcessHandler && !processHandler.isProcessTerminated()) {
-          final String commandLine = ((OSProcessHandler)processHandler).getCommandLine();
-          return cmdLineMatcher.fun(commandLine);
-        }
-        return false;
-      }
-    });
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,
@@ -317,13 +302,14 @@ public class ExecutionHelper {
     return result;
   }
 
-  public static void selectContentDescriptor(final @NotNull Editor editor,
+  public static void selectContentDescriptor(final @NotNull DataContext dataContext,
+                                             final @NotNull Project project,
                                              @NotNull Collection<RunContentDescriptor> consoles,
                                              String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);
-      descriptorToFront(editor, descriptor);
+      descriptorToFront(project, descriptor);
     }
     else if (consoles.size() > 1) {
       final JList list = new JBList(consoles);
@@ -350,16 +336,16 @@ public class ExecutionHelper {
           if (selectedValue instanceof RunContentDescriptor) {
             RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
             descriptorConsumer.consume(descriptor);
-            descriptorToFront(editor, descriptor);
+            descriptorToFront(project, descriptor);
           }
         }
-      }).createPopup().showInBestPositionFor(editor);
+      }).createPopup().showInBestPositionFor(dataContext);
     }
   }
 
-  private static void descriptorToFront(final Editor editor, final RunContentDescriptor descriptor) {
-    final Project project = editor.getProject();
+  private static void descriptorToFront(final Project project, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
 
@@ -379,6 +365,7 @@ public class ExecutionHelper {
       super(project, "reference.toolWindows.messages");
     }
 
+    @Override
     protected boolean canHideWarnings() {
       return false;
     }
@@ -406,6 +393,7 @@ public class ExecutionHelper {
     else {
       if (mode.getTimeout() <= 0) {
         process = new Runnable() {
+          @Override
           public void run() {
             processHandler.waitFor();
           }
@@ -421,6 +409,7 @@ public class ExecutionHelper {
     }
     else if (mode.inBackGround()) {
       final Task task = new Task.Backgroundable(myProject, title, mode.cancelable()) {
+        @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           process.run();
         }
@@ -444,6 +433,7 @@ public class ExecutionHelper {
       private final Semaphore mySemaphore = new Semaphore();
 
       private final Runnable myWaitThread = new Runnable() {
+        @Override
         public void run() {
           try {
             processHandler.waitFor();
@@ -455,6 +445,7 @@ public class ExecutionHelper {
       };
 
       private final Runnable myCancelListener = new Runnable() {
+        @Override
         public void run() {
           for (; ; ) {
             if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
@@ -484,6 +475,7 @@ public class ExecutionHelper {
         }
       };
 
+      @Override
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (myProgressIndicator != null && StringUtil.isEmpty(myProgressIndicator.getText())) {
@@ -508,6 +500,7 @@ public class ExecutionHelper {
       private final Semaphore mySemaphore = new Semaphore();
 
       private final Runnable myProcessThread = new Runnable() {
+        @Override
         public void run() {
           try {
             final boolean finished = processHandler.waitFor(1000 * timeout);
@@ -523,6 +516,7 @@ public class ExecutionHelper {
         }
       };
 
+      @Override
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);

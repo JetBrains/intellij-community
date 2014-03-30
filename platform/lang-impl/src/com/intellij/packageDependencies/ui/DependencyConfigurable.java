@@ -64,14 +64,17 @@ public class DependencyConfigurable extends BaseConfigurable {
     myProject = project;
   }
 
+  @Override
   public String getDisplayName() {
     return AnalysisScopeBundle.message("dependency.configurable.display.name");
   }
 
+  @Override
   public String getHelpTopic() {
     return "editing.analyzeDependencies.validation";
   }
 
+  @Override
   public JComponent createComponent() {
     myDenyRulesModel = new MyTableModel(myProject, new ColumnInfo[]{DENY_USAGES_OF, DENY_USAGES_IN}, true);
     myDenyRulesModel.setSortable(false);
@@ -95,10 +98,12 @@ public class DependencyConfigurable extends BaseConfigurable {
     return ToolbarDecorator.createDecorator(table).createPanel();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myDenyTable;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     stopTableEditing();
     DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
@@ -136,6 +141,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     myAllowTable.stopEditing();
   }
 
+  @Override
   public void reset() {
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     DependencyRule[] rules = validationManager.getAllRules();
@@ -154,6 +160,7 @@ public class DependencyConfigurable extends BaseConfigurable {
     mySkipImports.setSelected(validationManager.skipImportStatements());
   }
 
+  @Override
   public boolean isModified() {
     final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
     if (validationManager.skipImportStatements() != mySkipImports.isSelected()) return true;
@@ -163,11 +170,13 @@ public class DependencyConfigurable extends BaseConfigurable {
     return !Arrays.asList(validationManager.getAllRules()).equals(rules);
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
   private static final DefaultTableCellRenderer
     CELL_RENDERER = new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,
                                                      boolean isSelected,
@@ -185,22 +194,27 @@ public class DependencyConfigurable extends BaseConfigurable {
       super(name);
     }
 
+    @Override
     public boolean isCellEditable(DependencyRule rule) {
       return true;
     }
 
+    @Override
     public TableCellRenderer getRenderer(DependencyRule rule) {
       return CELL_RENDERER;
     }
 
+    @Override
     public TableCellEditor getEditor(DependencyRule packageSetDependencyRule) {
       return new AbstractTableCellEditor() {
         private PackageSetChooserCombo myCombo;
 
+        @Override
         public Object getCellEditorValue() {
           return myCombo.getSelectedScope();
         }
 
+        @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
           return new CellEditorComponentWithBrowseButton<JComponent>(myCombo, this);
@@ -208,6 +222,7 @@ public class DependencyConfigurable extends BaseConfigurable {
       };
     }
 
+    @Override
     public abstract void setValue(DependencyRule rule, NamedScope packageSet);
   }
 
@@ -217,10 +232,12 @@ public class DependencyConfigurable extends BaseConfigurable {
       super(name);
     }
 
+    @Override
     public NamedScope valueOf(DependencyRule rule) {
       return rule.getFromScope();
     }
 
+    @Override
     public void setValue(DependencyRule rule, NamedScope set) {
       rule.setFromScope(set);
     }
@@ -231,10 +248,12 @@ public class DependencyConfigurable extends BaseConfigurable {
       super(name);
     }
 
+    @Override
     public NamedScope valueOf(DependencyRule rule) {
       return rule.getToScope();
     }
 
+    @Override
     public void setValue(DependencyRule rule, NamedScope set) {
       rule.setToScope(set);
     }
@@ -250,6 +269,7 @@ public class DependencyConfigurable extends BaseConfigurable {
       myDenyRule = isDenyRule;
     }
 
+    @Override
     public void addRow() {
       ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
       final NamedScope scope = DefaultScopesProvider.getAllScope();
@@ -257,6 +277,7 @@ public class DependencyConfigurable extends BaseConfigurable {
       setItems(newList);
     }
 
+    @Override
     public void exchangeRows(int index1, int index2) {
       ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
       DependencyRule r1 = newList.get(index1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ interface AbstractDialog extends Disposable {
 
   void addKeyListener(KeyListener listener);
 
+  @Deprecated // Use setModalityType instead
   void setModal(boolean b);
 
   void toFront();
@@ -87,7 +88,12 @@ interface AbstractDialog extends Disposable {
 
   void setLocation(int x, int y);
 
+  @Deprecated // use getModalityTypeInstead
   boolean isModal();
+
+  void setModalityType(Dialog.ModalityType modalityType);
+
+  Dialog.ModalityType getModalityType();
 
   void show();
 

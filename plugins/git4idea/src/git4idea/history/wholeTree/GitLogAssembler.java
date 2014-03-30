@@ -76,6 +76,11 @@ public class GitLogAssembler implements GitLog {
   }
 
   @Override
+  public void selectCommit(String commitId) {
+    myGitLogUI.selectCommit(commitId);
+  }
+
+  @Override
   public void rootsChanged(List<VirtualFile> roots) {
     myGitLogUI.rootsChanged(roots);
     if (myProjectScope && ! myInitialized) {

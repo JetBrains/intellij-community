@@ -22,7 +22,7 @@
  */
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,10 +70,10 @@ public interface XPathQuickFixFactory {
                          @NotNull PsiFile file,
                          Editor editor, @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
-        if(!CodeInsightUtilBase.prepareFileForWrite(file)) {
+        if(!FileModificationService.getInstance().prepareFileForWrite(file)) {
             return;
         }
-            
+
             try {
                 invokeImpl(project, file);
             } catch (IncorrectOperationException e) {

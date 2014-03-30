@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.roots.libraries.ui.impl;
 
+import com.intellij.ide.util.ChooseElementsDialog;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,13 +28,13 @@ import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -116,12 +118,19 @@ public class RootDetectionUtil {
         }
       }
       LOG.assertTrue(!types.isEmpty(), "No allowed root types found for " + detector);
-      List<String> sortedNames = new ArrayList<String>(types.keySet());
-      Collections.sort(sortedNames, String.CASE_INSENSITIVE_ORDER);
-      final int i = Messages.showChooseDialog("Choose category for selected files:", "Attach Files",
-                                              ArrayUtil.toStringArray(sortedNames), sortedNames.get(0), null);
-      if (i != -1) {
-        final Pair<OrderRootType, Boolean> pair = types.get(sortedNames.get(i));
+      List<String> names = new ArrayList<String>(types.keySet());
+      String title = "Choose Categories of Selected Files";
+      String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
+                           "Choose the appropriate categories from the list.");
+      ChooseElementsDialog<String> dialog;
+      if (parentComponent != null) {
+        dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
+      }
+      else {
+        dialog = new ChooseRootTypeElementsDialog(project, names, title, description);
+      }
+      for (String rootType : dialog.showAndGetResult()) {
+        final Pair<OrderRootType, Boolean> pair = types.get(rootType);
         for (VirtualFile candidate : rootCandidates) {
           result.add(new OrderRoot(candidate, pair.getFirst(), pair.getSecond()));
         }
@@ -138,5 +147,26 @@ public class RootDetectionUtil {
       }
     }
     return true;
+  }
+
+  private static class ChooseRootTypeElementsDialog extends ChooseElementsDialog<String> {
+    public ChooseRootTypeElementsDialog(Project project, List<String> names, String title, String description) {
+      super(project, names, title, description, true);
+    }
+
+    private ChooseRootTypeElementsDialog(Component parent, List<String> names, String title, String description) {
+      super(parent, names, title, description, true);
+    }
+
+    @Override
+    protected String getItemText(String item) {
+      return item;
+    }
+
+    @Nullable
+    @Override
+    protected Icon getItemIcon(String item) {
+      return null;
+    }
   }
 }

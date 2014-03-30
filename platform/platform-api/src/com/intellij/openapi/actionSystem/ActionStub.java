@@ -35,25 +35,32 @@ public class ActionStub extends AnAction{
   private final PluginId myPluginId;
   private final String myIconPath;
 
-  public ActionStub(@NotNull String actionClass, @NotNull String id, @NotNull String text, ClassLoader loader, PluginId pluginId,
+  public ActionStub(@NotNull String actionClass,
+                    @NotNull String id,
+                    @NotNull String text,
+                    ClassLoader loader,
+                    PluginId pluginId,
                     String iconPath) {
     myLoader = loader;
     myClassName=actionClass;
-    LOG.assertTrue(id.length()>0);
+    LOG.assertTrue(!id.isEmpty());
     myId=id;
     myText=text;
     myPluginId = pluginId;
     myIconPath = iconPath;
   }
 
+  @NotNull
   public String getClassName(){
     return myClassName;
   }
 
+  @NotNull
   public String getId(){
     return myId;
   }
 
+  @NotNull
   public String getText(){
     return myText;
   }
@@ -70,6 +77,7 @@ public class ActionStub extends AnAction{
     return myIconPath;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     throw new UnsupportedOperationException();
   }

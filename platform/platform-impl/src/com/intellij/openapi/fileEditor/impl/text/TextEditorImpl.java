@@ -163,8 +163,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void navigateTo(@NotNull final Navigatable navigatable) {
-    OpenFileDescriptor d = (OpenFileDescriptor)navigatable;
-    d.navigateIn(getEditor());
+    ((OpenFileDescriptor)navigatable).navigateIn(getEditor());
   }
 
   @Override

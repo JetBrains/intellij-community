@@ -73,12 +73,9 @@ public class DuringChangeListManagerUpdateTestScheme {
     myChangeProvider.setTest(test);
     waiter.setControlled(test);
 
-    ChangeListManagerImpl.log("Starting delayed update..");
     myDirtyScopeManager.markEverythingDirty();
     myClManager.ensureUpToDate(false);
-    ChangeListManagerImpl.log("Starting timeout..");
     waiter.startTimeout();
-    ChangeListManagerImpl.log("Timeout waiter completed.");
 
     if (test.getException() != null) {
       test.getException().printStackTrace();
@@ -98,7 +95,6 @@ public class DuringChangeListManagerUpdateTestScheme {
     }
 
     public void run() {
-      ChangeListManagerImpl.log("DuringUpdateTest: before test execution");
       try {
         myRunnable.run();
       }
@@ -106,7 +102,6 @@ public class DuringChangeListManagerUpdateTestScheme {
         myException = e;
       }
 
-      ChangeListManagerImpl.log("DuringUpdateTest: setting done");
       myDone = myException == null;
 
       myChangeProvider.setTest(null);
@@ -130,7 +125,6 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkFilesAreInList(final String listName, final ChangeListManager manager, final VirtualFile... files) {
-    ChangeListManagerImpl.log("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();
@@ -150,7 +144,6 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkDeletedFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
-    ChangeListManagerImpl.log("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();

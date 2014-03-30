@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,18 +61,37 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   @Override
   public FileType getFileTypeByFileName(@NotNull @NonNls String fileName) {
     final String extension = FileUtilRt.getExtension(fileName);
+    return getFileTypeByExtension(extension);
+  }
+
+  @NotNull
+  @Override
+  public FileType getFileTypeByExtension(@NonNls @NotNull String extension) {
     final FileType result = myExtensionsMap.get(extension);
     return result == null ? UnknownFileType.INSTANCE : result;
   }
 
-  public void registerFileType(FileType fileType, String extension) {
+  public void registerFileType(@NotNull FileType fileType, @NotNull @NonNls String extension) {
     myAllFileTypes.add(fileType);
-    myExtensionsMap.put(extension, fileType);
+    for (final String ext : extension.split(";")) {
+      myExtensionsMap.put(ext, fileType);
+    }
   }
 
   @NotNull
   @Override
   public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
     return UnknownFileType.INSTANCE;
+  }
+
+  @Nullable
+  @Override
+  public FileType findFileTypeByName(String fileTypeName) {
+    for (FileType type : myAllFileTypes) {
+      if (type.getName().equals(fileTypeName)) {
+        return type;
+      }
+    }
+    return null;
   }
 }

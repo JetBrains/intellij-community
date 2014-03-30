@@ -2,7 +2,7 @@ package pck;
 import static pck.D.foo;
 import static pck.C.foo;
 
-public class C {
+class C {
      public static <T extends Comparable<S>, S> void foo(T x){}
 }
 

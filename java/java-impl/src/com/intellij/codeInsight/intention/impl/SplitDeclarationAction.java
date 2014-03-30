@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -42,6 +43,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
     if (element instanceof PsiCompiledElement) return false;
     if (!element.getManager().isInProject(element)) return false;
+    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);
     if (context instanceof PsiDeclarationStatement) {
@@ -91,7 +93,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
 
@@ -117,15 +119,13 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
       PsiExpression initializer = var.getInitializer();
-      PsiExpression rExpression;
-      if (initializer instanceof PsiArrayInitializerExpression) {
+      PsiExpression rExpression = initializer;
+      if (initializer instanceof PsiArrayInitializerExpression && var.getType() instanceof PsiArrayType) {
         rExpression = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(
           "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
         );
       }
-      else {
-        rExpression = initializer;
-      }
+
       assignment.getRExpression().replace(rExpression);
       initializer.delete();
 

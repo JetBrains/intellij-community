@@ -23,12 +23,13 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.DirectoryChooser;
+import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -266,7 +267,8 @@ public class MoveClassesOrPackagesImpl {
       return aPackage != null ? getTargetPackageNameForMovedElement(aPackage) : "";
     }
     else if (psiElement != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiElement.getContainingFile().getContainingDirectory());
+      PsiDirectory directory = PlatformPackageUtil.getDirectory(psiElement);
+      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
       return aPackage != null ? aPackage.getQualifiedName() : "";
     }
     else {
@@ -367,7 +369,7 @@ public class MoveClassesOrPackagesImpl {
   }
 
   private static List<PsiDirectory> buildRearrangeTargetsList(final Project project, final PsiDirectory[] directories) {
-    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
     List<PsiDirectory> sourceRootDirectories = new ArrayList<PsiDirectory>();
     sourceRoots:
     for (final VirtualFile sourceRoot : sourceRoots) {

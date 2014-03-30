@@ -21,14 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
-
-import java.util.Map;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 /**
  * User: anna
@@ -48,7 +44,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
 
-    final PsiType wrappedType = getWrappedType(field, project, JavaFxCommonClassNames.ourReadOnlyMap);
+    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourReadOnlyMap);
 
     final PsiTypeElement returnTypeElement = getter.getReturnTypeElement();
     LOG.assertTrue(returnTypeElement != null);
@@ -68,7 +64,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
     final Project project = field.getProject();
 
-    final PsiType wrappedType = getWrappedType(field, project, JavaFxCommonClassNames.ourWritableMap);
+    final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourWritableMap);
     
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiTypeElement newTypeElement = elementFactory.createTypeElement(wrappedType);
@@ -86,30 +82,29 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
   }
 
   @Override
-  public boolean isReadOnly(PsiField field) {
-    return !InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_WRITABLE_VALUE);
+  public PsiMethod[] findGetters(PsiClass psiClass, String propertyName) {
+    final String getterName = suggestGetterName(propertyName);
+    final PsiMethod specificGetter = psiClass
+      .findMethodBySignature(JavaPsiFacade.getElementFactory(psiClass.getProject()).createMethod(getterName, PsiType.VOID), false);
+    if (specificGetter != null) {
+      final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, propertyName, false, false);
+      return getter == null ? new PsiMethod[] {specificGetter} : new PsiMethod[] {getter, specificGetter};
+    }
+    return super.findGetters(psiClass, propertyName);
   }
 
-  private static PsiType getWrappedType(PsiField field, Project project, final Map<String, PsiType> typeMap) {
-    PsiType substitute = null;
-    final PsiType fieldType = field.getType();
-    for (String typeName : typeMap.keySet()) {
-      if (InheritanceUtil.isInheritor(fieldType, typeName)) {
-        substitute = typeMap.get(typeName);
-        break;
-      }
-    }
-    if (substitute == null) {
-      final PsiClass aClass = JavaPsiFacade.getInstance(project)
-        .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
-      LOG.assertTrue(aClass != null);
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
-      final PsiClass fieldClass = resolveResult.getElement();
-      LOG.assertTrue(fieldClass != null);
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, fieldClass, resolveResult.getSubstitutor());
-      final PsiMethod[] values = aClass.findMethodsByName("getValue", false);
-      substitute = substitutor.substitute(values[0].getReturnType());
-    }
-    return substitute;
+  @Override
+  public String suggestGetterName(String propertyName) {
+    return propertyName + "Property";
+  }
+
+  @Override
+  public boolean isSimpleGetter(PsiMethod method, String oldPropertyName) {
+    return method.getName().equals(suggestGetterName(oldPropertyName));
+  }
+
+  @Override
+  public boolean isReadOnly(PsiField field) {
+    return !InheritanceUtil.isInheritor(field.getType(), JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_WRITABLE_VALUE);
   }
 }

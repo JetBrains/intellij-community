@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
 import com.intellij.icons.AllIcons;
@@ -46,6 +47,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
@@ -55,6 +58,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,10 +85,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
   static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
-  
+
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;
-  
+
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
   private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
 
@@ -102,11 +106,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
-  private boolean myPopupShown = false;
+  private volatile boolean myPopupShown = false;
   private boolean myDisposed = false;
-  private ListPopup myPopup;
+  private volatile ListPopup myPopup;
   private final PsiFile myFile;
-  private static final int LIGHTBULB_OFFSET = 20;
 
   private PopupMenuListener myOuterComboboxPopupListener;
 
@@ -116,6 +119,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                          @NotNull Editor editor,
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Point position = getHintPosition(editor);
     return showIntentionHint(project, file, editor, intentions, showExpanded, position);
   }
@@ -127,6 +131,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
                                                          @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded,
                                                          @NotNull Point position) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final IntentionHintComponent component = new IntentionHintComponent(project, file, editor, intentions);
 
     component.showIntentionHintImpl(!showExpanded, position);
@@ -175,7 +180,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   //true if actions updated, there is nothing to do
   //false if has to recreate popup, no need to reshow
   //null if has to reshow
-  public synchronized Boolean updateActions(ShowIntentionsPass.IntentionsInfo intentions) {
+  public Boolean updateActions(@NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (myPopup.isDisposed()) return null;
     if (!myFile.isValid()) return null;
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
@@ -202,7 +207,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return values.get(index).getAction();
   }
 
-  public synchronized void recreate() {
+  public void recreate() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionListStep step = (IntentionListStep)myPopup.getListStep();
     recreateMyPopup(step);
   }
@@ -279,7 +285,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Point location = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
     return new Point(location.x, location.y);
   }
-  
+
   private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
     final int offset = editor.getCaretModel().getOffset();
@@ -291,36 +297,30 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
     return point.x > (AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
   }
-                                                                 
+
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull final Editor editor,
                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
     myEditor = editor;
 
     setLayout(new BorderLayout());
     setOpaque(false);
 
-    boolean showRefactoringsBulb = false;
-    for (HighlightInfo.IntentionActionDescriptor descriptor : intentions.inspectionFixesToShow) {
-      if (descriptor.getAction() instanceof BaseRefactoringIntentionAction) {
-        showRefactoringsBulb = true;
-        break;
+    boolean showRefactoringsBulb = ContainerUtil.exists(intentions.inspectionFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
+      @Override
+      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+        return descriptor.getAction() instanceof BaseRefactoringIntentionAction;
       }
-    }
-    boolean showFix = false;
-    if (!showRefactoringsBulb) {
-      showFix = false;
-      for (final HighlightInfo.IntentionActionDescriptor pairs : intentions.errorFixesToShow) {
-        IntentionAction fix = pairs.getAction();
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
-          showFix = true;
-          break;
-        }
+    });
+    boolean showFix = !showRefactoringsBulb && ContainerUtil.exists(intentions.errorFixesToShow, new Condition<HighlightInfo.IntentionActionDescriptor>() {
+      @Override
+      public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
+        return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
       }
-    }
+    });
 
     Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
@@ -402,11 +402,13 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private void closePopup() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myPopup.cancel();
     myPopupShown = false;
   }
 
   private void showPopup() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup == null || myPopup.isDisposed()) return;
 
     if (isShowing()) {
@@ -422,6 +424,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   }
 
   private void recreateMyPopup(@NotNull IntentionListStep step) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }
@@ -466,7 +469,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     });
   }
 
-  void canceled(IntentionListStep intentionListStep) {
+  void canceled(@NotNull IntentionListStep intentionListStep) {
     if (myPopup.getListStep() != intentionListStep || myDisposed) {
       return;
     }
@@ -525,36 +528,24 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
-  public static class EnableDisableIntentionAction implements IntentionAction{
-    private final String myActionFamilyName;
+  public static class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
     private final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     private final IntentionAction myAction;
 
     public EnableDisableIntentionAction(IntentionAction action) {
-      myActionFamilyName = action.getFamilyName();
+      super(action);
       myAction = action;
       // needed for checking errors in user written actions
       //noinspection ConstantConditions
-      LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
+      LOG.assertTrue(myFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
     @Override
     @NotNull
     public String getText() {
       return mySettings.isEnabled(myAction) ?
-             CodeInsightBundle.message("disable.intention.action", myActionFamilyName) :
-             CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+             CodeInsightBundle.message("disable.intention.action", myFamilyName) :
+             CodeInsightBundle.message("enable.intention.action", myFamilyName);
     }
 
     @Override
@@ -563,38 +554,20 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     public String toString() {
       return getText();
     }
   }
 
-  public static class EditIntentionSettingsAction implements IntentionAction, HighPriorityAction {
-    private String myFamilyName;
-
+  public static class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {
     public EditIntentionSettingsAction(IntentionAction action) {
-      myFamilyName = action.getFamilyName();
+      super(action);
     }
 
     @NotNull
     @Override
     public String getText() {
       return "Edit intention settings";
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
     }
 
     @Override
@@ -611,6 +584,28 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
           });
         }
       });
+    }
+  }
+
+  private static abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
+    protected final String myFamilyName;
+    private final boolean myDisabled;
+
+    public AbstractEditIntentionSettingsAction(IntentionAction action) {
+      myFamilyName = action.getFamilyName();
+      myDisabled = action instanceof IntentionActionWrapper &&
+                   Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return !myDisabled;
     }
 
     @Override

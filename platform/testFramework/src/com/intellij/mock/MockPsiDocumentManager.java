@@ -12,6 +12,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author peter
  */
@@ -52,6 +54,12 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public void commitDocument(@NotNull Document document) {
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getLastCommittedText(@NotNull Document document) {
+    return document.getImmutableCharSequence();
   }
 
   @Override
@@ -108,6 +116,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public boolean performWhenAllCommitted(@NotNull Runnable action) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void reparseFiles(@NotNull Collection<VirtualFile> files, boolean includeOpenFiles) {
     throw new UnsupportedOperationException();
   }
 }

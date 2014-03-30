@@ -20,7 +20,7 @@ class MyTest {
       System.out.println(i);
     }
 
-    private static void foo(I2 i) {  
+    private static void <warning descr="Private method 'foo(MyTest.I2)' is never used">foo</warning>(I2 i) {  
       System.out.println(i);
     }
 
@@ -29,7 +29,7 @@ class MyTest {
     }
 
     public static void main(String[] args) {
-        foo(Foo::m);
+        foo<error descr="Ambiguous method call: both 'MyTest.foo(I2)' and 'MyTest.foo(I3)' match">(Foo::m)</error>;
     }
 }
 
@@ -62,12 +62,12 @@ class MyTest1 {
         System.out.println(i);
     }
 
-    private static void m(I3 i) {
+    private static void <warning descr="Private method 'm(MyTest1.I3)' is never used">m</warning>(I3 i) {
         System.out.println(i);
     }
 
     public static void main(String[] args) {
-        m(Foo::new);
+        m<error descr="Ambiguous method call: both 'MyTest1.m(I1)' and 'MyTest1.m(I2)' match">(Foo::new)</error>;
     }
 }
 class MyTest2 {
@@ -95,7 +95,7 @@ class MyTest2 {
         System.out.println(i);
     }
 
-    private static void m(I2 i) {
+    private static void <warning descr="Private method 'm(MyTest2.I2)' is never used">m</warning>(I2 i) {
         System.out.println(i);
     }
 
@@ -104,6 +104,6 @@ class MyTest2 {
     }
 
     public static void main(String[] args) {
-        m(Foo::new);
+        m<error descr="Ambiguous method call: both 'MyTest2.m(I1)' and 'MyTest2.m(I2)' match">(Foo::new)</error>;
     }
 }

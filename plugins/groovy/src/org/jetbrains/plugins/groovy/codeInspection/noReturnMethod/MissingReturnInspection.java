@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -29,17 +30,25 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -68,7 +77,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
     public static ReturnStatus getReturnStatus(PsiElement subject) {
       if (subject instanceof GrClosableBlock) {
-        final PsiType inferredReturnType = GroovyExpectedTypesProvider.getExpectedClosureReturnType((GrClosableBlock)subject);
+        final PsiType inferredReturnType = getExpectedClosureReturnType((GrClosableBlock)subject);
         if (inferredReturnType instanceof PsiClassType) {
           PsiClass resolved = ((PsiClassType)inferredReturnType).resolve();
           if (resolved != null && !(resolved instanceof PsiTypeParameter)) return mustReturnValue;
@@ -82,6 +91,53 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
       }
       return shouldNotReturnValue;
     }
+  }
+
+  @Nullable
+  public static PsiType getExpectedClosureReturnType(GrClosableBlock closure) {
+    List<PsiType> expectedReturnTypes = new ArrayList<PsiType>();
+
+    PsiElement parent = closure.getParent();
+    if (parent instanceof GrArgumentList && parent.getParent() instanceof GrMethodCall || parent instanceof GrMethodCall) {
+      GrMethodCall call = (GrMethodCall)(parent instanceof GrArgumentList ? parent.getParent() : parent);
+
+      GroovyResolveResult[] variants = call.getCallVariants(null);
+
+      for (GroovyResolveResult variant : variants) {
+        Map<GrExpression,Pair<PsiParameter,PsiType>> map =
+          GrClosureSignatureUtil.mapArgumentsToParameters(variant, closure, true, true, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments());
+
+        if (map != null) {
+          Pair<PsiParameter, PsiType> pair = map.get(closure);
+          if (pair == null) continue;
+
+          PsiParameter parameter = pair.getFirst();
+
+          PsiType type = parameter.getType();
+          if (TypesUtil.isPsiClassTypeToClosure(type)) {
+            PsiType[] parameters = ((PsiClassType)type).getParameters();
+            if (parameters.length == 1) {
+              expectedReturnTypes.add(parameters[0]);
+            }
+          }
+        }
+      }
+    }
+    else {
+      for (PsiType expectedType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure)) {
+        if (TypesUtil.isPsiClassTypeToClosure(expectedType)) {
+          PsiType[] parameters = ((PsiClassType)expectedType).getParameters();
+          if (parameters.length == 1) {
+            expectedReturnTypes.add(parameters[0]);
+          }
+        }
+      }
+    }
+
+    for (PsiType type : expectedReturnTypes) {
+      if (PsiType.VOID.equals(type)) return PsiType.VOID;
+    }
+    return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
   }
 
   @NotNull
@@ -109,7 +165,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     }
   }
 
-  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, ReturnStatus returnStatus) {
+  public static boolean methodMissesSomeReturns(@NotNull GrControlFlowOwner block, @NotNull final ReturnStatus returnStatus) {
     if (returnStatus == ReturnStatus.shouldNotReturnValue) {
       return false;
     }
@@ -120,38 +176,29 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        if (instruction instanceof MaybeReturnInstruction) {
-          if (((MaybeReturnInstruction)instruction).mayReturnValue()) {
+        //don't modify sometimesHaveReturn  in this case:
+        // def foo() {
+        //   if (cond) throw new RuntimeException()
+        // }
+        if (instruction instanceof ThrowingInstruction) {
+          if (returnStatus == ReturnStatus.mustReturnValue) {
             sometimesHaveReturn.set(true);
-          }
-          else {
-            alwaysHaveReturn.set(false);
           }
           return true;
         }
-        final PsiElement element = instruction.getElement();
-        if (element instanceof GrReturnStatement) {
+
+        if (instruction instanceof MaybeReturnInstruction && ((MaybeReturnInstruction)instruction).mayReturnValue()) {
           sometimesHaveReturn.set(true);
-          if (returnValue != null) {
-            hasExplicitReturn.set(true);
-          }
+          return true;
         }
-        else if (instruction instanceof ThrowingInstruction) {
+
+        if (instruction.getElement() instanceof GrReturnStatement && returnValue != null) {
           sometimesHaveReturn.set(true);
+          hasExplicitReturn.set(true);
+          return true;
         }
-        else if (element instanceof GrAssertStatement) {
-          sometimesHaveReturn.set(true);
-          int count = 0;
-          for (Instruction _i : instruction.allSuccessors()) {
-            count++;
-          }
-          if (count <= 1) {
-            alwaysHaveReturn.set(false);
-          }
-        }
-        else {
-          alwaysHaveReturn.set(false);
-        }
+
+        alwaysHaveReturn.set(false);
         return true;
       }
     });

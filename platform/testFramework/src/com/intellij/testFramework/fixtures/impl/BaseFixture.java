@@ -19,17 +19,18 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import junit.framework.Assert;
 
-public class BaseFixture extends UsefulTestCase implements IdeaTestFixture {
+public class BaseFixture implements IdeaTestFixture {
   private boolean myDisposed;
   private boolean myInitialized;
 
   @Override
   public void setUp() throws Exception {
-    super.setUp();
     Assert.assertFalse("setUp() already has been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
     myInitialized = true;
@@ -39,8 +40,8 @@ public class BaseFixture extends UsefulTestCase implements IdeaTestFixture {
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
+    Disposer.dispose(myTestRootDisposable);
     myDisposed = true;
-    super.tearDown();
     resetClassFields(getClass());
   }
 
@@ -56,4 +57,12 @@ public class BaseFixture extends UsefulTestCase implements IdeaTestFixture {
     resetClassFields(aClass.getSuperclass());
   }
 
+  protected final Disposable myTestRootDisposable = Disposer.newDisposable();
+  public Disposable getTestRootDisposable() {
+    return myTestRootDisposable;
+  }
+  protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
+    Disposer.register(myTestRootDisposable, disposable);
+    return disposable;
+  }
 }

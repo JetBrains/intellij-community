@@ -31,6 +31,9 @@ public interface DownloadableFileSetVersions<F extends DownloadableFileSetDescri
    */
   void fetchVersions(@NotNull FileSetVersionsCallback<F> callback);
 
+  @NotNull
+  List<F> fetchVersions();
+
   abstract class FileSetVersionsCallback<F extends DownloadableFileSetDescription> {
     public abstract void onSuccess(@NotNull List<? extends F> versions);
 

@@ -89,12 +89,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>() {
-      @Override
-      protected Map<CompletionSorterImpl, Collection<LookupElement>> createMap() {
-        return ContainerUtil.newLinkedHashMap();
-      }
-    };
+    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
     }
@@ -139,7 +134,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
-    final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
+    final String invariant = presentation.getItemText() + "\0###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
@@ -184,7 +179,7 @@ public class CompletionLookupArranger extends LookupArranger {
                                     sortByPresentation(items, lookup) :
                                     fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter, relevantSelection);
 
-    int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
+    int toSelect = getItemToSelect((LookupImpl)lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
 
     addDummyItems(items.size() - listModel.size(), listModel);
@@ -223,15 +218,7 @@ public class CompletionLookupArranger extends LookupArranger {
     ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
-    ArrayList<LookupElement> result = new ArrayList<LookupElement>(model);
-    if (result.size() > 1) {
-      LookupElement first = result.get(0);
-      if (isLiveTemplate(first) && isPrefixItem(lookup, first, true)) {
-        ContainerUtil.swapElements(result, 0, 1);
-      }
-    }
-
-    return result;
+    return new ArrayList<LookupElement>(model);
   }
 
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
@@ -320,8 +307,8 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private static int getItemToSelect(Lookup lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
-    if (items.isEmpty() || !lookup.isFocused()) {
+  private static int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
+    if (items.isEmpty() || lookup.getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED) {
       return 0;
     }
 
@@ -332,9 +319,9 @@ public class CompletionLookupArranger extends LookupArranger {
         return old;
       }
 
-      Object selectedValue = ((LookupImpl)lookup).getList().getSelectedValue();
+      Object selectedValue = lookup.getList().getSelectedValue();
       if (selectedValue instanceof EmptyLookupItem && ((EmptyLookupItem)selectedValue).isLoading()) {
-        int index = ((LookupImpl)lookup).getList().getSelectedIndex();
+        int index = lookup.getList().getSelectedIndex();
         if (index >= 0 && index < items.size()) {
           return index;
         }
@@ -351,9 +338,13 @@ public class CompletionLookupArranger extends LookupArranger {
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      if (isPrefixItem(lookup, item, true) && !isLiveTemplate(item) ||
+      boolean isTemplate = isLiveTemplate(item);
+      if (isPrefixItem(lookup, item, true) && !isTemplate ||
           item.getLookupString().equals(selectedText)) {
         return i;
+      }
+      if (i == 0 && isTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+        return 0;
       }
     }
 
@@ -462,6 +453,9 @@ public class CompletionLookupArranger extends LookupArranger {
   private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
     for (final CompletionPreselectSkipper skipper : skippers) {
       if (skipper.skipElement(element, myLocation)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipped element " + element + " by " + skipper);
+        }
         return true;
       }
     }
@@ -495,7 +489,7 @@ public class CompletionLookupArranger extends LookupArranger {
     public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
       if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
-        textInserted = context.getDocument().getText().substring(context.getStartOffset(), context.getTailOffset());
+        textInserted = context.getDocument().getImmutableCharSequence().subSequence(context.getStartOffset(), context.getTailOffset()).toString();
       } else {
         textInserted = item.getLookupString();
       }

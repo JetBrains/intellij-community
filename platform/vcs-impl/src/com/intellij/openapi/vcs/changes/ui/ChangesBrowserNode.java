@@ -155,6 +155,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       ChangesBrowserNode child = (ChangesBrowserNode)enumeration.nextElement();
       final Object value = child.getUserObject();
       if (clazz.isAssignableFrom(value.getClass())) {
+        //noinspection unchecked
         changes.add((T) value);
       }
     }

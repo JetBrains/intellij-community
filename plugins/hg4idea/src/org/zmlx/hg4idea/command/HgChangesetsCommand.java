@@ -49,7 +49,7 @@ public abstract class HgChangesetsCommand {
   protected List<HgRevisionNumber> getRevisions(VirtualFile repo) {
     List<String> args = new ArrayList<String>(Arrays.asList(
       "--template",
-      HgChangesetUtil.makeTemplate("{rev}", "{node|short}", "{author}", "{desc|firstline}"),
+      HgChangesetUtil.makeTemplate("{rev}", "{node}", "{author}", "{desc|firstline}"),
       "--quiet"
     ));
 

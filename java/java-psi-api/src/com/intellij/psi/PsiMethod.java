@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
   ArrayFactory<PsiMethod> ARRAY_FACTORY = new ArrayFactory<PsiMethod>() {
+    @NotNull
     @Override
     public PsiMethod[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiMethod[count];
@@ -199,7 +200,4 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   HierarchicalMethodSignature getHierarchicalMethodSignature();
-
-  @Nullable
-  PsiType getReturnTypeNoResolve();
 }

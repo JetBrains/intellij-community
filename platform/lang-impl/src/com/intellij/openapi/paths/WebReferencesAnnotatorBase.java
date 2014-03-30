@@ -29,6 +29,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +78,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public MyInfo[] collectionInformation(@NotNull PsiFile file) {
+  public MyInfo[] collectInformation(@NotNull PsiFile file) {
     final WebReference[] references = collectWebReferences(file);
     final MyInfo[] infos = new MyInfo[references.length];
 
@@ -186,11 +187,13 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     final HttpClient client = new HttpClient();
     client.setTimeout(3000);
     client.setConnectionTimeout(3000);
+    // see http://hc.apache.org/httpclient-3.x/cookies.html
+    client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
     try {
       final GetMethod method = new GetMethod(url);
       final int code = client.executeMethod(method);
 
-      return code == HttpStatus.SC_OK || code == HttpStatus.SC_REQUEST_TIMEOUT 
+      return code == HttpStatus.SC_OK || code == HttpStatus.SC_REQUEST_TIMEOUT
              ? MyFetchResult.OK 
              : MyFetchResult.NONEXISTENCE;
     }

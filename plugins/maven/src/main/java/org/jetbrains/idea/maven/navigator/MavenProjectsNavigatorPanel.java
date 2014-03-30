@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -52,11 +54,24 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   private final Project myProject;
   private final SimpleTree myTree;
 
-  private Map<String, Integer> standardGoalOrder;
-
   private final Comparator<String> myGoalOrderComparator = new Comparator<String>() {
+
+    private Map<String, Integer> standardGoalOrder;
+
     public int compare(String o1, String o2) {
       return getStandardGoalOrder(o1) - getStandardGoalOrder(o2);
+    }
+
+    private int getStandardGoalOrder(String goal) {
+      if (standardGoalOrder == null) {
+        standardGoalOrder = new THashMap<String, Integer>();
+        int i = 0;
+        for (String aGoal : MavenConstants.PHASES) {
+          standardGoalOrder.put(aGoal, i++);
+        }
+      }
+      Integer order = standardGoalOrder.get(goal);
+      return order != null ? order.intValue() : standardGoalOrder.size();
     }
   };
 
@@ -112,15 +127,16 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
-    if (PlatformDataKeys.PROJECT.is(dataId)) return myProject;
+    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
 
-    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
-    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
 
     if (Location.DATA_KEY.is(dataId)) return extractLocation();
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
-    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
+    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
+    if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunSettings();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -166,14 +182,24 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
   private Object extractLocation() {
     VirtualFile file = extractVirtualFile();
-    List<String> goals = extractGoals();
-    if (file == null || goals == null) return null;
+    if (file == null) return null;
+
+    List<String> goals = extractGoals(false);
+    if (goals == null) return null;
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, extractGoals());
+    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, goals);
   }
 
-  private List<String> extractGoals() {
+  @Nullable
+  private RunnerAndConfigurationSettings extractRunSettings() {
+    SimpleNode node = myTree.getSelectedNode();
+    if (!(node instanceof MavenProjectsStructure.RunConfigurationNode)) return null;
+
+    return ((MavenProjectsStructure.RunConfigurationNode)node).getSettings();
+  }
+
+  private List<String> extractGoals(boolean qualifiedGoals) {
     final MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
     if (projectNode != null) {
       MavenProject project = projectNode.getMavenProject();
@@ -190,7 +216,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       }
       final List<String> goals = new ArrayList<String>();
       for (MavenProjectsStructure.GoalNode node : nodes) {
-        goals.add(node.getGoal());
+        goals.add(qualifiedGoals ? node.getGoal() : node.getName());
       }
       Collections.sort(goals, myGoalOrderComparator);
       return goals;
@@ -251,18 +277,6 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     return MavenProjectsStructure.getCommonProjectNode(getSelectedNodes(MavenProjectsStructure.MavenSimpleNode.class));
   }
 
-  private int getStandardGoalOrder(String goal) {
-    if (standardGoalOrder == null) {
-      standardGoalOrder = new THashMap<String, Integer>();
-      int i = 0;
-      for (String aGoal : MavenConstants.PHASES) {
-        standardGoalOrder.put(aGoal, i++);
-      }
-    }
-    Integer order = standardGoalOrder.get(goal);
-    return order != null ? order.intValue() : standardGoalOrder.size();
-  }
-
   private static class MyTransferHandler extends TransferHandler {
 
     private final Project myProject;
@@ -295,7 +309,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
           return false;
         }
 
-        manager.addManagedFiles(pomFiles);
+        manager.addManagedFilesOrUnignore(pomFiles);
 
         return true;
       }
@@ -304,7 +318,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     @Override
     public boolean canImport(final TransferSupport support) {
-      return FileCopyPasteUtil.isFileListFlavorSupported(support.getDataFlavors());
+      return FileCopyPasteUtil.isFileListFlavorAvailable(support.getDataFlavors());
     }
   }
 }

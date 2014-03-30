@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Set;
@@ -14,8 +15,8 @@ import java.util.regex.Pattern;
  * @date 10/22/10
  */
 public class GithubShareDialog extends DialogWrapper {
-  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
-  private GithubSharePanel myGithubSharePanel;
+  private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+");
+  private final GithubSharePanel myGithubSharePanel;
   private final Set<String> myAvailableNames;
 
   public GithubShareDialog(final Project project, final Set<String> availableNames, final boolean privateRepoAllowed) {
@@ -23,7 +24,7 @@ public class GithubShareDialog extends DialogWrapper {
     myAvailableNames = availableNames;
     myGithubSharePanel = new GithubSharePanel(this);
     init();
-    setTitle("Share project on GitHub");
+    setTitle("Share Project On GitHub");
     setOKButtonText("Share");
     myGithubSharePanel.setRepositoryName(project.getName());
     myGithubSharePanel.setPrivateRepoAvailable(privateRepoAllowed);
@@ -31,14 +32,14 @@ public class GithubShareDialog extends DialogWrapper {
     updateOkButton();
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
   @Override
   protected String getHelpId() {
     return "github.share";
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "Github.ShareDialog";
   }
 
   @Override
@@ -64,7 +65,7 @@ public class GithubShareDialog extends DialogWrapper {
       return;
     }
     if (!GITHUB_REPO_PATTERN.matcher(repositoryName).matches()){
-      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes and underscores");
+      setErrorText("Invalid repository name. Name should consist of letters, numbers, dashes, dots and underscores");
       setOKActionEnabled(false);
       return;
     }
@@ -82,5 +83,10 @@ public class GithubShareDialog extends DialogWrapper {
 
   public String getDescription() {
     return myGithubSharePanel.getDescription();
+  }
+
+  @TestOnly
+  public void testSetRepositoryName(@NotNull String name) {
+    myGithubSharePanel.setRepositoryName(name);
   }
 }

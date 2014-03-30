@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>B.java</file>
+    <line>3</line>
+    <description>Test-only method is called in production code</description>
+  </problem>
+  <problem>
+    <file>B.java</file>
+    <line>5</line>
+    <description>Test-only method is called in production code</description>
+  </problem>
+</problems>

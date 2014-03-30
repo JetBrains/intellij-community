@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -75,7 +75,7 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
         }
       }
     }
-    setText("Push condition '" + conditionalExpression.getCondition().getText() + "' inside " + 
+    setText("Push condition '" + conditionalExpression.getCondition().getText() + "' inside " +
             (thenMethod.isConstructor() ? "constructor" : "method") + " call");
     return true;
   }
@@ -83,7 +83,7 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class);
     final PsiExpression thenExpression = (PsiExpression)conditionalExpression.getThenExpression().copy();

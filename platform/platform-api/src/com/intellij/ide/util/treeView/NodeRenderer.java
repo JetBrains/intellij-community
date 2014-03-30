@@ -22,9 +22,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,23 +58,35 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (coloredText.isEmpty()) {
         String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
-        doAppend(text, simpleTextAttributes, selected);
+        append(text, simpleTextAttributes);
       }
       else {
+        boolean first = true;
         for (PresentableNodeDescriptor.ColoredFragment each : coloredText) {
           SimpleTextAttributes simpleTextAttributes = each.getAttributes();
           if (each.getAttributes().getFgColor() == null && presentation.getForcedTextForeground() != null) {
             simpleTextAttributes = addColorToSimpleTextAttributes(each.getAttributes(),
               presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
           }
-          doAppend(each.getText(), simpleTextAttributes, true);
+          if (first) {
+            final TextAttributesKey textAttributesKey = presentation.getTextAttributesKey();
+            if (textAttributesKey != null) {
+              final TextAttributes forcedAttributes = getColorsScheme().getAttributes(textAttributesKey);
+              if (forcedAttributes != null) {
+                simpleTextAttributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.fromTextAttributes(forcedAttributes));
+              }
+            }
+            first = false;
+          }
+          // treat grayed text as non-main
+          boolean isMain = simpleTextAttributes != SimpleTextAttributes.GRAYED_ATTRIBUTES;
+          append(each.getText(), simpleTextAttributes, isMain);
         }
       }
 
       final String location = presentation.getLocationString();
-      if (location != null && !location.isEmpty()) {
-        doAppend(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(),
-                 SimpleTextAttributes.GRAY_ATTRIBUTES, false, selected);
+      if (!StringUtil.isEmpty(location)) {
+        append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAY_ATTRIBUTES, false);
       }
 
       setToolTipText(presentation.getTooltip());
@@ -87,23 +100,14 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (text == null) {
         text = "";
       }
-      doAppend(text, selected);
+      append(text);
       setToolTipText(null);
+    }
+    if (!AbstractTreeUi.isLoadingNode(value)) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
     }
   }
 
-  protected void doAppend(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText, boolean isSelected) {
-    append(fragment, attributes, isMainText);
-  }
-  
-  public void doAppend(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isSelected) {
-    append(fragment, attributes);
-  }
-  
-  public void doAppend(String fragment, boolean isSelected) {
-    append(fragment);
-  }
-  
   @NotNull
   protected EditorColorsScheme getColorsScheme() {
     return EditorColorsManager.getInstance().getGlobalScheme();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
+public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> {
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
@@ -89,7 +88,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
     IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
     if (view == null) return;
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -108,7 +107,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
   protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
-    final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName);
+    final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName, true);
     if (fromTemplate instanceof GroovyFile) {
       CodeStyleManager.getInstance(fromTemplate.getManager()).reformat(fromTemplate);
       return ((GroovyFile)fromTemplate).getTypeDefinitions()[0];

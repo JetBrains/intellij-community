@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.editor;
 
+import com.intellij.lang.XmlCodeFoldingSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -32,12 +33,13 @@ import java.io.File;
       file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
     )}
 )
-public class XmlFoldingSettings implements PersistentStateComponent<XmlFoldingSettings>, ExportableComponent {
+public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings>, ExportableComponent {
 
   public static XmlFoldingSettings getInstance() {
     return ServiceManager.getService(XmlFoldingSettings.class);
   }
 
+  @Override
   public boolean isCollapseXmlTags() {
     return COLLAPSE_XML_TAGS;
   }
@@ -46,6 +48,7 @@ public class XmlFoldingSettings implements PersistentStateComponent<XmlFoldingSe
     COLLAPSE_XML_TAGS = value;
   }
 
+  @Override
   public boolean isCollapseHtmlStyleAttribute() {
     return COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }

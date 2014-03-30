@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -79,6 +80,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private FilterInfo[] myOutputFilters;
   private final Project myProject;
 
+  @Override
   @NotNull
   protected JPanel createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
@@ -168,11 +170,13 @@ public class ToolEditorDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(getIdForHelpAction());
   }
@@ -187,7 +191,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
-    myProject = PlatformDataKeys.PROJECT.getData(dataContext);
+    myProject = CommonDataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(title);
     init();
@@ -315,6 +319,7 @@ public class ToolEditorDialog extends DialogWrapper {
                                                  JTextField tfCommandWorkingDirectory) {
     browseDirectoryButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
           PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
@@ -336,6 +341,7 @@ public class ToolEditorDialog extends DialogWrapper {
   protected void addCommandBrowseAction(final JPanel pane, FixedSizeButton browseCommandButton, JTextField tfCommand) {
     browseCommandButton.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
           PathChooserDialog chooser = FileChooserFactory.getInstance().createPathChooser(descriptor, myProject, pane);
@@ -367,6 +373,7 @@ public class ToolEditorDialog extends DialogWrapper {
       myTextField = textField;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       MacrosDialog dialog = new MacrosDialog(myProject);
       dialog.show();
@@ -386,6 +393,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
   private void addListeners() {
     myOutputFiltersButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         OutputFiltersDialog dialog = new OutputFiltersDialog(myOutputFiltersButton, getData().getOutputFilters());
         dialog.show();
@@ -399,6 +407,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myInsertWorkingDirectoryMacroButton.addActionListener(new InsertMacroActionListener(myTfCommandWorkingDirectory));
 
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         handleOKButton();
       }
@@ -446,6 +455,7 @@ public class ToolEditorDialog extends DialogWrapper {
     return new Tool();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.tools.ToolEditorDialog";
   }
@@ -482,6 +492,7 @@ public class ToolEditorDialog extends DialogWrapper {
     handleOKButton();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }

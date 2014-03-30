@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,29 +19,25 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.hash.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -64,34 +60,23 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariabl
  */
 public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
-  private List<InstructionImpl> myInstructions;
 
-  private Deque<InstructionImpl> myProcessingStack;
+  private final List<InstructionImpl> myInstructions = new ArrayList<InstructionImpl>();
+
+  private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<InstructionImpl>();
   private final PsiConstantEvaluationHelper myConstantEvaluator;
   private GroovyPsiElement myScope;
 
-  private static class ExceptionInfo {
-    final GrCatchClause myClause;
-
-    /**
-     * list of nodes containing throw statement with corresponding exception
-     */
-    final List<InstructionImpl> myThrowers = new ArrayList<InstructionImpl>();
-
-    private ExceptionInfo(GrCatchClause clause) {
-      myClause = clause;
-    }
-  }
 
   /**
    * stack of current catch blocks
    */
-  private Deque<ExceptionInfo> myCaughtExceptionInfos;
+  private final Deque<ExceptionInfo> myCaughtExceptionInfos = new ArrayDeque<ExceptionInfo>();
 
   /**
    * stack of current conditions
    */
-  private Deque<ConditionInstruction> myConditions;
+  private final Deque<ConditionInstruction> myConditions = new ArrayDeque<ConditionInstruction>();
 
 
   /**
@@ -107,11 +92,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   /**
    * list of pending nodes and corresponding scopes sorted by scopes from the biggest to smallest.
    */
-  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
+  private List<Pair<InstructionImpl, GroovyPsiElement>> myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
 
   private int myInstructionNumber;
+  private final GrControlFlowPolicy myPolicy;
 
   public ControlFlowBuilder(Project project) {
+    this(project, GrResolverPolicy.getInstance());
+  }
+
+  public ControlFlowBuilder(Project project, GrControlFlowPolicy policy) {
+    myPolicy = policy;
     myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
   }
 
@@ -120,7 +111,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final PsiElement lbrace = block.getLBrace();
     if (lbrace != null && parent instanceof GrMethod) {
       for (GrParameter parameter : ((GrMethod)parent).getParameters()) {
-        addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+        if (myPolicy.isVariableInitialized(parameter)) {
+          addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+        }
       }
     }
     super.visitOpenBlock(block);
@@ -143,20 +136,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
 
-  private void handlePossibleReturn(@NotNull GrStatement possibleReturn) {
+  @Nullable
+  private InstructionImpl handlePossibleReturn(@NotNull GrStatement possibleReturn) {
     if (possibleReturn instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyReturnStatement(possibleReturn)) {
-      addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
+      return addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
     }
+    return null;
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope) {
-    myInstructions = new ArrayList<InstructionImpl>();
-    myProcessingStack = new ArrayDeque<InstructionImpl>();
-    myCaughtExceptionInfos = new ArrayDeque<ExceptionInfo>();
-    myConditions = new ArrayDeque<ConditionInstruction>();
-
     myFinallyCount = 0;
-    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     myInstructionNumber = 0;
 
     myScope = scope;
@@ -188,7 +177,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void buildFlowForClosure(final GrClosableBlock closure) {
     for (GrParameter parameter : closure.getAllParameters()) {
-      addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+      if (myPolicy.isVariableInitialized(parameter)) {
+        addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+      }
     }
 
     addNode(new ReadWriteVariableInstruction("owner", closure.getLBrace(), WRITE));
@@ -227,7 +218,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     begin.addSuccessor(end);
     end.addPredecessor(begin);
 
-    if (!(begin instanceof ReadWriteVariableInstruction || begin instanceof MixinTypeInstruction)) {
+    if (!(begin instanceof MixinTypeInstruction)) {
       end.addNegationsFrom(begin);
     }
   }
@@ -236,7 +227,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
       for (GrParameter parameter : closure.getAllParameters()) {
-        addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+        if (myPolicy.isVariableInitialized(parameter)) {
+          addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
+        }
       }
       addNode(new ReadWriteVariableInstruction("owner", closure.getLBrace(), WRITE));
 
@@ -244,15 +237,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return;
     }
 
-    Set<String> names = new HashSet<String>();
-
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow(), false);
     for (ReadWriteVariableInstruction read : reads) {
-      names.add(read.getVariableName());
-    }
-
-    for (String name : names) {
-      addNodeAndCheckPending(new ReadWriteVariableInstruction(name, closure, READ));
+      PsiElement element = read.getElement();
+      if (!(element instanceof GrReferenceExpression) || myPolicy.isReferenceAccepted((GrReferenceExpression)element)) {
+        addNodeAndCheckPending(new ReadWriteVariableInstruction(read.getVariableName(), closure, READ));
+      }
     }
 
     addNodeAndCheckPending(new InstructionImpl(closure));
@@ -356,13 +346,27 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static PsiType getNominalTypeNoRecursion(final GrExpression exception) {
-    return RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return exception.getNominalType();
+  private static PsiType getNominalTypeNoRecursion(@NotNull final GrExpression expression) {
+    if (expression instanceof GrNewExpression) {
+      return expression.getType();
+    }
+    else if (expression instanceof GrReferenceExpression && ((GrReferenceExpression)expression).getQualifier() == null) {
+      return getTypeByRef((GrReferenceExpression)expression);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeByRef(@NotNull GrReferenceExpression invoked) {
+
+    final GroovyResolveResult[] results = ControlFlowBuilderUtil.resolveNonQualifiedRefWithoutFlow(invoked);
+    if (results.length == 1) {
+      final PsiElement element = results[0].getElement();
+      if (element instanceof PsiVariable) {
+        return ((PsiVariable)element).getType();
       }
-    });
+    }
+    return null;
   }
 
   private void interruptFlow() {
@@ -392,8 +396,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (expression.getOperationToken() != mASSIGN) {
-      if (lValue instanceof GrReferenceExpression) {
+    if (expression.getOperationTokenType() != mASSIGN) {
+      if (lValue instanceof GrReferenceExpression && myPolicy.isReferenceAccepted((GrReferenceExpression)lValue)) {
         String referenceName = ((GrReferenceExpression)lValue).getReferenceName();
         if (referenceName != null) {
           addNodeAndCheckPending(new ReadWriteVariableInstruction(referenceName, lValue, READ));
@@ -404,8 +408,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     GrExpression rValue = expression.getRValue();
     if (rValue != null) {
       rValue.accept(this);
-      lValue.accept(this);
     }
+    lValue.accept(this);
   }
 
   @Override
@@ -489,7 +493,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitReferenceExpression(GrReferenceExpression refExpr) {
     super.visitReferenceExpression(refExpr);
-    if (refExpr.getQualifierExpression() == null) {
+
+    if (myPolicy.isReferenceAccepted(refExpr)) {
       String name = refExpr.getReferenceName();
       if (name == null) return;
 
@@ -506,7 +511,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
     }
-    else if (!(refExpr.getParent() instanceof GrCall)) {
+
+    if (refExpr.isQualified() && !(refExpr.getParent() instanceof GrCall)) {
       visitCall(refExpr);
     }
   }
@@ -608,12 +614,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addNode(new InstanceOfInstruction(expression, cond));
     NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
     addNode(negation);
-    handlePossibleReturn(expression);
-    addPendingEdge(expression, negation);
+    InstructionImpl possibleReturn = handlePossibleReturn(expression);
+    addPendingEdge(expression, possibleReturn != null ? possibleReturn : negation);
 
     myHead = cond;
     addNode(new InstanceOfInstruction(expression, cond));
-    handlePossibleReturn(expression);
+    //handlePossibleReturn(expression);
     myConditions.removeFirstOccurrence(cond);
   }
 
@@ -661,6 +667,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       handlePossibleReturn(thenBranch);
       thenEnd = myHead;
       interruptFlow();
+      readdPendingEdge(ifStatement);
     }
 
     myHead = reduceAllNegationsIntoInstruction(ifStatement, negations);
@@ -675,17 +682,20 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     if (thenBranch != null || elseBranch != null) {
-      final InstructionImpl end = new IfEndInstruction(ifStatement);
-      addNode(end);
-      if (thenEnd != null) {
-        addEdge(thenEnd, end);
-      }
+      if (thenEnd != null || elseEnd != null || elseBranch == null) {
+        final InstructionImpl end = new IfEndInstruction(ifStatement);
+        addNode(end);
 
-      if (elseEnd != null) {
-        addEdge(elseEnd, end);
-      }
-      else if (elseBranch == null) {
-        addEdge(conditionEnd != null ? conditionEnd : ifInstruction, end);
+        if (thenEnd != null) {
+          addEdge(thenEnd, end);
+        }
+
+        if (elseEnd != null) {
+          addEdge(elseEnd, end);
+        }
+        else if (elseBranch == null) {
+      //    addEdge(conditionEnd != null ? conditionEnd : ifInstruction, end);
+        }
       }
     }
 
@@ -757,34 +767,51 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void flushForeachLoopVariable(@Nullable GrForClause clause) {
     if (clause instanceof GrForInClause) {
       GrVariable variable = clause.getDeclaredVariable();
-      if (variable != null) {
+      if (variable != null && myPolicy.isVariableInitialized(variable)) {
         addNodeAndCheckPending(new ReadWriteVariableInstruction(variable.getName(), variable, WRITE));
       }
     }
   }
 
-  private void checkPending(InstructionImpl instruction) {
-    final PsiElement element = instruction.getElement();
-    if (element == null) {
-      //add all
-      for (Pair<InstructionImpl, GroovyPsiElement> pair : myPending) {
-        addEdge(pair.getFirst(), instruction);
-      }
-      myPending.clear();
+
+  @NotNull
+  private List<Pair<InstructionImpl, GroovyPsiElement>> collectCorrespondingPendingEdges(@Nullable PsiElement currentScope) {
+    if (currentScope == null) {
+      List<Pair<InstructionImpl, GroovyPsiElement>> result = myPending;
+      myPending = ContainerUtil.newArrayList();
+      return result;
     }
     else {
+      ArrayList<Pair<InstructionImpl, GroovyPsiElement>> targets = ContainerUtil.newArrayList();
+
       for (int i = myPending.size() - 1; i >= 0; i--) {
         final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
         final PsiElement scopeWhenToAdd = pair.getSecond();
         if (scopeWhenToAdd == null) continue;
-        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, element, false)) {
-          addEdge(pair.getFirst(), instruction);
+        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, currentScope, false)) {
+          targets.add(pair);
           myPending.remove(i);
         }
         else {
           break;
         }
       }
+      return targets;
+    }
+  }
+
+  private void checkPending(@NotNull InstructionImpl instruction) {
+    final PsiElement element = instruction.getElement();
+    List<Pair<InstructionImpl, GroovyPsiElement>> target = collectCorrespondingPendingEdges(element);
+    for (Pair<InstructionImpl, GroovyPsiElement> pair : target) {
+      addEdge(pair.getFirst(), instruction);
+    }
+  }
+
+  private void readdPendingEdge(@Nullable GroovyPsiElement newScope) {
+    final List<Pair<InstructionImpl, GroovyPsiElement>> targets = collectCorrespondingPendingEdges(newScope);
+    for (Pair<InstructionImpl, GroovyPsiElement> target : targets) {
+      addPendingEdge(newScope, target.getFirst());
     }
   }
 
@@ -892,7 +919,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static boolean containsAllCases(GrSwitchStatement statement) {
     final GrCaseSection[] sections = statement.getCaseSections();
     for (GrCaseSection section : sections) {
-      if (section.getCaseLabel().isDefault()) return true;
+      if (section.isDefault()) return true;
     }
 
     final GrExpression condition = statement.getCondition();
@@ -925,9 +952,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitCaseSection(GrCaseSection caseSection) {
-    GrExpression value = caseSection.getCaseLabel().getValue();
-    if (value != null) {
-      value.accept(this);
+    for (GrCaseLabel label : caseSection.getCaseLabels()) {
+      GrExpression value = label.getValue();
+      if (value != null) {
+        value.accept(this);
+      }
     }
 
     final GrStatement[] statements = caseSection.getStatements();
@@ -989,7 +1018,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
 
       final GrParameter parameter = catchClauses[i].getParameter();
-      if (parameter != null) {
+      if (parameter != null && myPolicy.isVariableInitialized(parameter)) {
         addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, WRITE));
       }
       catchClauses[i].accept(this);
@@ -1091,7 +1120,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private void finishNode(InstructionImpl instruction) {
     final InstructionImpl popped = myProcessingStack.pop();
     if (!instruction.equals(popped)) {
-      String description = "popped: " + popped.toString() + "   ,  expected: " + instruction.toString();
+      String description = "popped  : " + popped.toString() + " : " + popped.hashCode() + ", " + popped.getClass() + "\n" +
+                           "expected: " + instruction.toString() + " : " + instruction.hashCode() + ", " + instruction.getClass() + "\n" +
+                           "same objects: " + (popped == instruction) + "\n";
       error(description);
     }
   }
@@ -1115,22 +1146,23 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitTypeDefinition(final GrTypeDefinition typeDefinition) {
     if (!(typeDefinition instanceof GrAnonymousClassDefinition)) return;
 
-    final Set<String> vars = collectUsedVariableWithoutInitialization(typeDefinition);
+    final Set<ReadWriteVariableInstruction> vars = collectUsedVariableWithoutInitialization(typeDefinition);
 
-    for (String var : vars) {
-      addNodeAndCheckPending(new ReadWriteVariableInstruction(var, typeDefinition, READ));
+    for (ReadWriteVariableInstruction var : vars) {
+      PsiElement element = var.getElement();
+      if (!(element instanceof GrReferenceExpression) || myPolicy.isReferenceAccepted((GrReferenceExpression)element)) {
+        addNodeAndCheckPending(new ReadWriteVariableInstruction(var.getVariableName(), typeDefinition, READ));
+      }
     }
     addNodeAndCheckPending(new InstructionImpl(typeDefinition));
   }
 
-  private static Set<String> collectUsedVariableWithoutInitialization(GrTypeDefinition typeDefinition) {
-    final Set<String> vars = new HashSet<String>();
+  private static Set<ReadWriteVariableInstruction> collectUsedVariableWithoutInitialization(GrTypeDefinition typeDefinition) {
+    final Set<ReadWriteVariableInstruction> vars = ContainerUtil.newLinkedHashSet();
     typeDefinition.acceptChildren(new GroovyRecursiveElementVisitor() {
       private void collectVars(Instruction[] flow) {
         ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, false);
-        for (ReadWriteVariableInstruction instruction : reads) {
-          vars.add(instruction.getVariableName());
-        }
+        Collections.addAll(vars, reads);
       }
 
       @Override
@@ -1161,9 +1193,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
-    if (variable.getInitializerGroovy() != null ||
-        variable.getParent() instanceof GrVariableDeclaration &&
-        ((GrVariableDeclaration)variable.getParent()).getTupleInitializer() != null) {
+
+    if (myPolicy.isVariableInitialized(variable)) {
       ReadWriteVariableInstruction writeInst = new ReadWriteVariableInstruction(variable.getName(), variable, WRITE);
       addNodeAndCheckPending(writeInst);
     }
@@ -1185,4 +1216,16 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitElement(element);
   }
 
+  private static class ExceptionInfo {
+    final GrCatchClause myClause;
+
+    /**
+     * list of nodes containing throw statement with corresponding exception
+     */
+    final List<InstructionImpl> myThrowers = new ArrayList<InstructionImpl>();
+
+    private ExceptionInfo(GrCatchClause clause) {
+      myClause = clause;
+    }
+  }
 }

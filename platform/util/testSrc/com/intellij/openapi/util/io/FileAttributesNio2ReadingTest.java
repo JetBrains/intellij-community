@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
 
     System.setProperty(FORCE_USE_NIO_2_KEY, "true");
     FileSystemUtil.resetMediator();
-    assertEquals("NIO2", FileSystemUtil.getMediatorName());
+    assertEquals("Nio2", FileSystemUtil.getMediatorName());
   }
 
   @AfterClass

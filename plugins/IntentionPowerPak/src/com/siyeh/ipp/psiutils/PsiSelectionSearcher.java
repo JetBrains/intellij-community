@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,7 @@ public class PsiSelectionSearcher {
     if (!selectionModel.hasSelection()) {
       return Collections.emptyList();
     }
-    final TextRange selection = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+    final TextRange selection = new UnfairTextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null || file instanceof PsiCompiledElement) {
       return Collections.emptyList();

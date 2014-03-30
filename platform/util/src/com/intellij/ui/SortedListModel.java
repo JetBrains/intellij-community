@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,12 @@ public class SortedListModel<T> extends AbstractListModel {
     fireIntervalAdded(this, index, index);
   }
 
+  @Override
   public int getSize() {
     return myItems.size();
   }
 
+  @Override
   public Object getElementAt(int index) {
     return myItems.get(index);
   }
@@ -134,15 +136,18 @@ public class SortedListModel<T> extends AbstractListModel {
       myIterator = myItems.iterator();
     }
 
+    @Override
     public boolean hasNext() {
       return myIterator.hasNext();
     }
 
+    @Override
     public T next() {
       myCounter++;
       return myIterator.next();
     }
 
+    @Override
     public void remove() {
       myIterator.remove();
       fireRemoved(myCounter);

@@ -24,6 +24,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,7 @@ public class JavaStaticMemberTypeIndex extends StringStubIndexExtension<PsiMembe
   }
 
   public Collection<PsiMember> getStaticMembers(@NotNull final String shortTypeText, final Project project, @NotNull final GlobalSearchScope scope) {
-    return super.get(shortTypeText, project, new JavaSourceFilterScope(scope));
+    return StubIndex.getElements(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, shortTypeText, project,
+                                 new JavaSourceFilterScope(scope), PsiMember.class);
   }
 }

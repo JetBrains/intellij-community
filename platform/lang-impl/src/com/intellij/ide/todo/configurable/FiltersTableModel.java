@@ -38,22 +38,27 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
     myFilters=filters;
   }
 
+  @Override
   public String getColumnName(int column){
     return ourColumnNames[column];
   }
 
+  @Override
   public Class getColumnClass(int column){
     return ourColumnClasses[column];
   }
 
+  @Override
   public int getColumnCount(){
     return 2;
   }
 
+  @Override
   public int getRowCount(){
     return myFilters.size();
   }
 
+  @Override
   public Object getValueAt(int row,int column){
     TodoFilter filter=myFilters.get(row);
     switch(column){
@@ -75,6 +80,7 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
     }
   }
 
+  @Override
   public void removeRow(int index){
     myFilters.remove(index);
     fireTableRowsDeleted(index,index);

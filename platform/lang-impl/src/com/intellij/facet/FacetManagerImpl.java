@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
@@ -71,6 +72,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     myFacetTypeRegistry = facetTypeRegistry;
   }
 
+  @Override
   @NotNull
   public ModifiableFacetModel createModifiableModel() {
     FacetModelImpl model = new FacetModelImpl(this);
@@ -78,48 +80,57 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     return model;
   }
 
+  @Override
   @NotNull
   public Facet[] getAllFacets() {
     return myModel.getAllFacets();
   }
 
+  @Override
   @Nullable
   public <F extends Facet> F getFacetByType(FacetTypeId<F> typeId) {
     return myModel.getFacetByType(typeId);
   }
 
+  @Override
   @Nullable
   public <F extends Facet> F findFacet(final FacetTypeId<F> type, final String name) {
     return myModel.findFacet(type, name);
   }
 
+  @Override
   @Nullable
   public <F extends Facet> F getFacetByType(@NotNull final Facet underlyingFacet, final FacetTypeId<F> typeId) {
     return myModel.getFacetByType(underlyingFacet, typeId);
   }
 
+  @Override
   @NotNull
   public <F extends Facet> Collection<F> getFacetsByType(@NotNull final Facet underlyingFacet, final FacetTypeId<F> typeId) {
     return myModel.getFacetsByType(underlyingFacet, typeId);
   }
 
 
+  @Override
   @NotNull
   public <F extends Facet> Collection<F> getFacetsByType(FacetTypeId<F> typeId) {
     return myModel.getFacetsByType(typeId);
   }
 
 
+  @Override
   @NotNull
   public Facet[] getSortedFacets() {
     return myModel.getSortedFacets();
   }
 
+  @Override
   @NotNull
   public String getFacetName(@NotNull Facet facet) {
     return myModel.getFacetName(facet);
   }
 
+  @Override
   @NotNull
   public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @NotNull final C cofiguration,
                                                                           @Nullable final Facet underlying) {
@@ -131,12 +142,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     return facet;
   }
 
+  @Override
   @NotNull
   public <F extends Facet, C extends FacetConfiguration> F createFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet underlying) {
     C configuration = ProjectFacetManager.getInstance(myModule.getProject()).createDefaultConfiguration(type);
     return createFacet(type, name, configuration, underlying);
   }
 
+  @Override
   @NotNull
   public <F extends Facet, C extends FacetConfiguration> F addFacet(@NotNull final FacetType<F, C> type, @NotNull final String name, @Nullable final Facet underlying) {
     final ModifiableFacetModel model = createModifiableModel();
@@ -163,7 +176,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
       final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
       if (type == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId), typeId);
         continue;
       }
 
@@ -178,10 +191,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
       if (underlyingTypeId != null) {
         expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
-        if (expectedUnderlyingType == null) {
-          addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId));
-          continue;
-        }
       }
       FacetType actualUnderlyingType = underlyingFacet != null ? underlyingFacet.getType() : null;
       if (expectedUnderlyingType != null) {
@@ -208,7 +217,18 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
   }
 
-  private void addInvalidFacet(final FacetState state, ModifiableFacetModel model, final Facet underlyingFacet, final String errorMessage) {
+  private void addInvalidFacet(final FacetState state,
+                               ModifiableFacetModel model,
+                               final Facet underlyingFacet,
+                               final String errorMessage) {
+    addInvalidFacet(state, model, underlyingFacet, errorMessage, null);
+  }
+
+  private void addInvalidFacet(final FacetState state,
+                               ModifiableFacetModel model,
+                               final Facet underlyingFacet,
+                               final String errorMessage,
+                               final String typeId) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
@@ -217,6 +237,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
+      if (typeId != null) {
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      }
     }
   }
 
@@ -225,7 +248,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (type.isOnlyOneFacetAllowed() &&
         (underlyingFacet == null && !model.getFacetsByType(type.getId()).isEmpty() ||
          underlyingFacet != null && !model.getFacetsByType(underlyingFacet, type.getId()).isEmpty())) {
-      LOG.info("'" + state.getName() + "' facet removed from module " + myModule.getName() + ", because only one " 
+      LOG.info("'" + state.getName() + "' facet removed from module " + myModule.getName() + ", because only one "
                + type.getPresentableName() + " facet allowed");
       return;
     }
@@ -242,6 +265,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     addFacets(state.getSubFacets(), facet, model);
   }
 
+  @Override
   public void loadState(final FacetManagerState state) {
     ModifiableFacetModel model = new FacetModelImpl(this);
 
@@ -250,6 +274,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     commit(model, false);
   }
 
+  @Override
   public FacetManagerState getState() {
     FacetManagerState managerState = new FacetManagerState();
 
@@ -399,12 +424,15 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   public void moduleAdded() {
     if (myModuleAdded) return;
 
@@ -414,21 +442,25 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     myModuleAdded = true;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
   private static class FacetManagerModel extends FacetModelBase {
     private Facet[] myAllFacets = Facet.EMPTY_ARRAY;
 
+    @Override
     @NotNull
     public Facet[] getAllFacets() {
       return myAllFacets;

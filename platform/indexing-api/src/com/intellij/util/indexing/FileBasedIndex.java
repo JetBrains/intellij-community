@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
@@ -24,7 +25,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +58,9 @@ public abstract class FileBasedIndex implements BaseComponent {
     throw new IllegalArgumentException("Virtual file doesn't support id: " + file + ", implementation class: " + file.getClass().getName());
   }
 
+  // note: upsource implementation requires access to Project here, please don't remove
+  public abstract VirtualFile findFileById(Project project, int id);
+
   public void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
@@ -83,6 +89,18 @@ public abstract class FileBasedIndex implements BaseComponent {
                                                @NotNull FileBasedIndex.ValueProcessor<V> processor,
                                                @NotNull GlobalSearchScope filter);
 
+  /**
+   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all
+   */
+  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
+                                               @NotNull K dataKey,
+                                               @Nullable VirtualFile inFile,
+                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull GlobalSearchScope filter,
+                                               @Nullable IdFilter idFilter) {
+    return processValues(indexId, dataKey, inFile, processor, filter);
+  }
+
   public abstract <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
                                                                @NotNull Collection<K> dataKeys,
                                                                @NotNull GlobalSearchScope filter,
@@ -108,8 +126,6 @@ public abstract class FileBasedIndex implements BaseComponent {
 
   public abstract void requestReindex(@NotNull VirtualFile file);
 
-  public abstract void requestReindexExcluded(@NotNull VirtualFile file);
-
   public abstract <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
                                                  @NotNull Set<K> dataKeys,
                                                  @NotNull Processor<VirtualFile> processor,
@@ -119,7 +135,11 @@ public abstract class FileBasedIndex implements BaseComponent {
    * @param project it is guaranteed to return data which is up-to-date withing the project
    *                Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, Processor<K> processor, @Nullable Project project);
+  public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @Nullable Project project);
+
+  public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    return processAllKeys(indexId, processor, scope.getProject());
+  }
 
   public interface ValueProcessor<V> {
     /**
@@ -133,7 +153,15 @@ public abstract class FileBasedIndex implements BaseComponent {
   /**
   * Author: dmitrylomov
   */
-  public static interface InputFilter {
-    boolean acceptInput(VirtualFile file);
+  public interface InputFilter {
+    boolean acceptInput(@NotNull VirtualFile file);
   }
+
+  public interface FileTypeSpecificInputFilter extends InputFilter {
+    void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+  }
+
+  // TODO: remove once changes becomes permanent
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
+    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
 }

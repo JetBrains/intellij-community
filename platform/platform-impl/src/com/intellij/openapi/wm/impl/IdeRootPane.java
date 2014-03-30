@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,26 +23,21 @@ import com.intellij.ide.actions.ViewToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +54,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
-// Made public and non-final for Fabrique
 public class IdeRootPane extends JRootPane implements UISettingsListener {
-
   /**
    * Toolbar and status bar.
    */
@@ -76,7 +68,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    * Current <code>ToolWindowsPane</code>. If there is no such pane then this field is null.
    */
   private ToolWindowsPane myToolWindowsPane;
-  private final MyUISettingsListenerImpl myUISettingsListener;
   private JBPanel myContentPane;
   private final ActionManager myActionManager;
   private final UISettings myUISettings;
@@ -87,17 +78,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final Application myApplication;
   private MemoryUsagePanel myMemoryWidget;
   private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
-  private final Disposable myDisposable= Disposer.newDisposable();
 
-  private static final Icon BG = IconLoader.getIcon("/frame_background.png");
   private boolean myFullScreen;
 
-  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
-              final Application application, final IdeFrame frame){
+  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager, Application application, final IdeFrame frame) {
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
-    updateToolbar();
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
@@ -106,23 +93,19 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     createStatusBar(frame);
 
     updateStatusBarVisibility();
+    updateToolbar();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
-    myUISettingsListener=new MyUISettingsListenerImpl();
-    if (SystemInfo.isWindows) {
+    if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
       getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
-      if (frame instanceof IdeFrameImpl) {
-        final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getNewValue() == null) {//fullscreen state has been just changed
-              myFullScreen = ((IdeFrameImpl)frame).isInFullScreen();
-            }
+      if (frame instanceof IdeFrameEx) {
+        addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
+          @Override public void propertyChange(PropertyChangeEvent evt) {
+            myFullScreen = ((IdeFrameEx)frame).isInFullScreen();
           }
-        };
-        addPropertyChangeListener(ScreenUtil.DISPOSE_TEMPORARY, propertyChangeListener);
+        });
       }
     }
     else {
@@ -134,15 +117,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myGlassPaneInitialized = true;
 
     myGlassPane.setVisible(false);
-    Disposer.register(application, myDisposable);
   }
 
   @Override
   protected LayoutManager createRootLayout() {
-    return SystemInfo.isWindows ? new MyRootLayout() : super.createRootLayout();
+    return WindowManagerImpl.isFloatingMenuBarSupported() ? new MyRootLayout() : super.createRootLayout();
   }
 
-
+  @Override
   public void setGlassPane(final Component glass) {
     if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
     super.setGlassPane(glass);
@@ -153,13 +135,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void addNotify(){
     super.addNotify();
-    myUISettings.addUISettingsListener(myUISettingsListener, myDisposable);
+    myUISettings.addUISettingsListener(this);
   }
 
   /**
    * Invoked when enclosed frame is being disposed.
    */
   public final void removeNotify(){
+    myUISettings.removeUISettingsListener(this);
     super.removeNotify();
   }
 
@@ -188,23 +171,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return p;
   }
 
-  protected final Container createContentPane(){
-    myContentPane = new JBPanel(new BorderLayout()){
-      @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (UIUtil.isUnderDarcula()) {
-          String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-          if (icon != null) IconUtil.paintInCenterOf(this, g, IconLoader.getIcon(icon));
-        }
-      }
-    };
-    if (UIUtil.isUnderDarcula()) {
-      myContentPane.setBackgroundImage(BG);
-    }
-    myContentPane.setBackground(JBColor.GRAY);
+  @Override
+  public void setLayout(LayoutManager mgr) {
+    //First time mgr comes from createRootLayout(), it's OK. But then Alloy spoils it and breaks FullScreen mode under Windows
+    if (getLayout() != null && UIUtil.isUnderAlloyLookAndFeel()) return;
+    super.setLayout(mgr);
+  }
 
-    return myContentPane;
+  protected final Container createContentPane(){
+    return myContentPane = new IdePanePanel(new BorderLayout());
   }
 
   void updateToolbar() {
@@ -216,7 +191,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
-  
+
   void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.revalidate();
@@ -245,7 +220,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     return toolBar.getComponent();
   }
- 
+
   private void createStatusBar(IdeFrame frame) {
     myUISettings.addUISettingsListener(this, myApplication);
 
@@ -302,11 +277,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility(){
-    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR);
+    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
   }
 
   private void updateStatusBarVisibility(){
-    myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR);
+    myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR && !myUISettings.PRESENTATION_MODE);
   }
 
   public void installNorthComponents(final Project project) {
@@ -336,15 +311,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public void uiSettingsChanged(UISettings source) {
     setMemoryIndicatorVisible(source.SHOW_MEMORY_INDICATOR);
-  }
-
-  private final class MyUISettingsListenerImpl implements UISettingsListener{
-    public final void uiSettingsChanged(final UISettings source){
-      updateToolbarVisibility();
-      updateStatusBarVisibility();
-      for (IdeRootPaneNorthExtension component : myNorthComponents) {
-        component.uiSettingsChanged(source);
-      }
+    updateToolbarVisibility();
+    updateStatusBarVisibility();
+    for (IdeRootPaneNorthExtension component : myNorthComponents) {
+      component.uiSettingsChanged(source);
     }
   }
 

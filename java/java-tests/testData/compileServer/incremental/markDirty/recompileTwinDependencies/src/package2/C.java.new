@@ -1,0 +1,11 @@
+package package2;
+
+import com.B;
+
+public class C {
+    {
+        new B().get(); // should be resolved to "com/B.get:()Lpackage2/A;"
+        // but package2/C.java is first compiled when B.class still contains "public package1.A get();"
+        // and compiler returns an error
+    }
+}

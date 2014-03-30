@@ -46,7 +46,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   public final static CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();
   public final static CustomFoldingRegionSurrounder[] SURROUNDERS;
-  
+
   private final static String DEFAULT_DESC_TEXT = "Description";
 
   static {
@@ -83,7 +83,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return PsiElement.EMPTY_ARRAY;
   }
-  
+
   @Nullable
   private static PsiElement findClosestParentAfterLineBreak(PsiElement element) {
     PsiElement parent = element;
@@ -97,7 +97,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return null;
   }
-  
+
   @Nullable
   private static PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
     PsiElement parent = element;
@@ -131,7 +131,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return lineFeedFound;
   }
-  
+
   @NotNull
   @Override
   public Surrounder[] getSurrounders() {
@@ -145,7 +145,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   private static class CustomFoldingRegionSurrounder implements Surrounder {
 
-    private CustomFoldingProvider myProvider;
+    private final CustomFoldingProvider myProvider;
 
     public CustomFoldingRegionSurrounder(@NotNull CustomFoldingProvider provider) {
       myProvider = provider;
@@ -158,7 +158,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
-      return elements.length > 0 && LanguageFolding.INSTANCE.forLanguage(elements[0].getLanguage()) instanceof CompositeFoldingBuilder;
+      if (elements.length == 0) return false;
+      for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
+        if (each instanceof CustomFoldingBuilder) return true;
+      }
+      return false;
     }
 
     @Override
@@ -185,7 +189,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
       }
       String startString = linePrefix + startText + "\n";
-      String endString = "\n" + linePrefix + myProvider.getEndString(); 
+      String endString = "\n" + linePrefix + myProvider.getEndString();
       editor.getDocument().insertString(endOffset, endString);
       delta += endString.length();
       editor.getDocument().insertString(startOffset, startString);
@@ -199,7 +203,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
                        new TextRange(startOffset, startOffset + startString.length()));
       return rangeToSelect;
     }
-    
+
     private static void adjustLineIndent(@NotNull Project project, PsiFile file, Language language, TextRange range) {
       CommonCodeStyleSettings formatSettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       boolean keepAtFirstCol = formatSettings.KEEP_FIRST_COLUMN_COMMENT;

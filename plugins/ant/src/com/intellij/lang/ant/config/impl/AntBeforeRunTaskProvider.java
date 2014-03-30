@@ -19,7 +19,6 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
@@ -29,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import icons.AntIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,13 +55,13 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Ant.Target;
+    return AntIcons.Target;
   }
 
   @Override
   public Icon getTaskIcon(AntBeforeRunTask task) {
     AntBuildTarget antTarget = findTargetToExecute(task);
-    return antTarget instanceof MetaTarget ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
+    return antTarget instanceof MetaTarget ? AntIcons.MetaTarget : AntIcons.Target;
   }
 
   @Override

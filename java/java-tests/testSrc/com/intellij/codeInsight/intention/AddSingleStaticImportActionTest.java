@@ -30,6 +30,60 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testInsideParameterizedReference() {
+    myFixture.addClass("package foo; " +
+                       "public class Class1 {" +
+                       "  public static class Inner1 {}\n" +
+                       "  public static class Inner2<T> {}" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Class1.Inner2'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testAllowStaticImportWhenAlreadyImported() {
+    myFixture.addClass("package foo; " +
+                       "public class Clazz {\n" +
+                       "      public  enum Foo{\n" +
+                       "        Const_1, Const_2\n" +
+                       "    }\n" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Clazz.Foo'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testInsideParameterizedReferenceInsideParameterizedReference() {
+    myFixture.addClass("package foo; " +
+                       "public class Class1 {" +
+                       "  public static class Inner1 {}\n" +
+                       "  public static class Inner2<T> {}" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Class1.Inner1'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+ public void testDisabledInsideParameterizedReference() {
+    myFixture.addClass("package foo; " +
+                       "public class Class1 {" +
+                       "  public static <T> T foo(){return null;}\n" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.getAvailableIntention("Add static import for 'foo.Class1.foo'");
+    assertNull(intentionAction);
+  }
+
 
   @Override
   protected String getTestDataPath() {

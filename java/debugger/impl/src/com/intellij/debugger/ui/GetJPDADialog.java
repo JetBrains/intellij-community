@@ -60,7 +60,7 @@ public class GetJPDADialog extends DialogWrapper {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        BrowserUtil.launchBrowser(JPDA_URL);
+        BrowserUtil.browse(JPDA_URL);
         return true;
       }
     }.installOn(label2);

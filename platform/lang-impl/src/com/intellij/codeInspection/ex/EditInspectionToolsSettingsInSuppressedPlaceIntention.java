@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.openapi.editor.Editor;
@@ -41,11 +40,13 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
   private String myId;
   private String myDisplayName;
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("edit.inspection.options", myDisplayName);
@@ -77,31 +78,34 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
     return null;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myId = getSuppressedId(editor, file);
     if (myId != null) {
-      InspectionProfileEntry tool = getTool(project, file);
-      if (tool == null) return false;
-      myDisplayName = tool.getDisplayName();
+      InspectionToolWrapper toolWrapper = getTool(project, file);
+      if (toolWrapper == null) return false;
+      myDisplayName = toolWrapper.getDisplayName();
     }
     return myId != null;
   }
 
   @Nullable
-  private InspectionProfileEntry getTool(final Project project, final PsiFile file) {
+  private InspectionToolWrapper getTool(final Project project, final PsiFile file) {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
     return inspectionProfile.getToolById(myId, file);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionProfileEntry tool = getTool(project, file);
-    if (tool == null) return;
+    InspectionToolWrapper toolWrapper = getTool(project, file);
+    if (toolWrapper == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)projectProfileManager.getInspectionProfile();
-    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, tool.getShortName());
+    EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, false, toolWrapper.getShortName());
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

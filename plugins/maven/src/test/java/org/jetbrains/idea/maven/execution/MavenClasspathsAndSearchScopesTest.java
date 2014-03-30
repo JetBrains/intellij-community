@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,32 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
 import org.jetbrains.idea.maven.importing.MavenModuleImporter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
@@ -707,6 +716,44 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
   }
 
+  public void testLibraryScopeForTwoDependentModules() throws IOException {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m2</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>1</version>" +
+                                           "    <dependencies>" +
+                                           "        <dependency>" +
+                                           "            <groupId>junit</groupId>" +
+                                           "            <artifactId>junit</artifactId>" +
+                                           "            <version>4.0</version>" +
+                                           "            <scope>provided</scope>" +
+                                           "        </dependency>" +
+                                           "    </dependencies>");
+    importProjects(m1, m2);
+    assertModules("m1", "m2");
+
+    List<Module> modules = Arrays.asList(getModule("m1"), getModule("m2"));
+    GlobalSearchScope scope = LibraryScopeCache.getInstance(myProject).getScopeForLibraryUsedIn(modules);
+    String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
+    assertSearchScope(scope,
+                      getProjectPath() + "/m1/src/main/java",
+                      getProjectPath() + "/m1/src/test/java",
+                      getProjectPath() + "/m2/src/main/java",
+                      getProjectPath() + "/m2/src/test/java",
+                      libraryPath);
+  }
+
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -1026,7 +1073,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertSearchScope(moduleName, Scope.RUNTIME, Type.TESTS, paths);
   }
 
-  private void assertSearchScope(String moduleName, Scope scope, Type type, String... expectedPaths) throws Exception {
+  private void assertSearchScope(String moduleName, Scope scope, Type type, String... expectedPaths) {
     createOutputDirectories();
     Module module = getModule(moduleName);
 
@@ -1043,32 +1090,29 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
         break;
     }
 
-    final List<VirtualFile> entries = new ArrayList<VirtualFile>(((ModuleWithDependenciesScope)searchScope).getRoots());
+    assertSearchScope(searchScope, expectedPaths);
+  }
 
-    OrderEnumerator.orderEntries(module).recursively().compileOnly().forEach(new Processor<OrderEntry>() {
-      @Override
-      public boolean process(OrderEntry orderEntry) {
-        if (orderEntry instanceof JdkOrderEntry) {
-          entries.removeAll(Arrays.asList(((JdkOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES)));
-        }
-        return true;
-      }
-    });
+  private void assertSearchScope(GlobalSearchScope searchScope, String... expectedPaths) {
+    Collection<VirtualFile> roots;
+    if (searchScope instanceof ModuleWithDependenciesScope) {
+      roots = ((ModuleWithDependenciesScope)searchScope).getRoots();
+    }
+    else {
+      roots = ((LibraryRuntimeClasspathScope)searchScope).getRoots();
+    }
+    final List<VirtualFile> entries = new ArrayList<VirtualFile>(roots);
+    entries.removeAll(Arrays.asList(ProjectRootManager.getInstance(myProject).orderEntries().sdkOnly().classes().getRoots()));
 
     List<String> actualPaths = new ArrayList<String>();
     for (VirtualFile each : entries) {
-      if (each.getFileSystem() == JarFileSystem.getInstance()) {
-        actualPaths.add(JarFileSystem.getInstance().getVirtualFileForJar(each).getPath());
-      }
-      else {
-        actualPaths.add(each.getPath());
-      }
+      actualPaths.add(each.getPresentableUrl());
     }
 
     assertPaths(expectedPaths, actualPaths);
   }
 
-  private void assertPaths(String[] expectedPaths, List<String> actualPaths) {
+  private static void assertPaths(String[] expectedPaths, List<String> actualPaths) {
     List<String> normalizedActualPaths = new ArrayList<String>();
     List<String> normalizedExpectedPaths = new ArrayList<String>();
 
@@ -1083,7 +1127,10 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private void createRepositoryFile(String filePath) throws IOException {
-    createProjectSubFile("repo/" + filePath);
+    File f = new File(getProjectPath(), "repo/" + filePath);
+    f.getParentFile().mkdirs();
+
+    ArtifactsDownloadingTestCase.createEmptyJar(f.getParent(), f.getName());
     setRepositoryPath(createProjectSubDir("repo").getPath());
   }
 

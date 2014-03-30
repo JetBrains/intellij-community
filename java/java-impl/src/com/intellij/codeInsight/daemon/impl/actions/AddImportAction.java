@@ -20,7 +20,7 @@ import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -207,7 +207,7 @@ public class AddImportAction implements QuestionAction {
     if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
       return;
     }
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(ref.getElement())){
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(ref.getElement())){
       return;
     }
 

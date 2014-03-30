@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -136,11 +136,15 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
         VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
         if (vf == null) {
           final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
-          if (file != null && VfsUtil.isAncestor(virtualFile, file, false)) vf = file;
+          if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
         }
-        //assert vf != null : "cannot find source root: " + sourceRoot;
+//        assert vf != null : "cannot find source root: " + sourceRoot;
         if (vf != null) {
           contentEntry.addSourceFolder(vf, false);
+        }
+        else {
+          // files are not created yet
+          contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
         }
       }
     }

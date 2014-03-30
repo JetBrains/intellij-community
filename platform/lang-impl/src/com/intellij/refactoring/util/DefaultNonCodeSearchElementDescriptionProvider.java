@@ -30,7 +30,8 @@ public class DefaultNonCodeSearchElementDescriptionProvider implements ElementDe
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.DefaultNonCodeSearchElementDescriptionProvider");
 
   public static final DefaultNonCodeSearchElementDescriptionProvider INSTANCE = new DefaultNonCodeSearchElementDescriptionProvider();
-  
+
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
     final NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation)location;

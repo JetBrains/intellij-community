@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,12 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
@@ -235,7 +238,7 @@ public class ClassRepr extends Proto {
     this.myContext = context;
     myFileName = fn;
     mySuperClass = TypeRepr.createClassType(context, sup);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new THashSet<TypeRepr.AbstractType>(1));
     myFields = f;
     myMethods = m;
     this.myAnnotationTargets = targets;
@@ -250,45 +253,49 @@ public class ClassRepr extends Proto {
     super(in);
     try {
       this.myContext = context;
-      myFileName = in.readInt();
+      myFileName = DataInputOutputUtil.readINT(in);
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
-      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
-      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
+      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<TypeRepr.AbstractType>(1), in);
+      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<FieldRepr>(), in);
+      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<MethodRepr>(), in);
       myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
-      final String s = in.readUTF();
+      final String s = RW.readUTF(in);
 
       myRetentionPolicy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-      myOuterClassName = in.readInt();
-      myIsLocal = in.readBoolean();
-      myIsAnonymous = in.readBoolean();
-      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
+      myOuterClassName = DataInputOutputUtil.readINT(in);
+      int flags = DataInputOutputUtil.readINT(in);
+      myIsLocal = (flags & LOCAL_MASK) != 0;
+      myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
+      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
+
+  private static final int LOCAL_MASK = 1;
+  private static final int ANONYMOUS_MASK = 2;
 
   @Override
   public void save(final DataOutput out) {
     try {
       super.save(out);
-      out.writeInt(myFileName);
+      DataInputOutputUtil.writeINT(out, myFileName);
       mySuperClass.save(out);
       RW.save(myInterfaces, out);
       RW.save(myFields, out);
       RW.save(myMethods, out);
       RW.save(myAnnotationTargets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
-      out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
-      out.writeInt(myOuterClassName);
-      out.writeBoolean(myIsLocal);
-      out.writeBoolean(myIsAnonymous);
+      RW.writeUTF(out, myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
+      DataInputOutputUtil.writeINT(out, myOuterClassName);
+      DataInputOutputUtil.writeINT(out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0));
+
       RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new BuildDataCorruptedException(e);
     }
   }
 
@@ -315,15 +322,17 @@ public class ClassRepr extends Proto {
   }
 
   public String getPackageName() {
-    return getPackageName(name);
+    final String strValue = myContext.getValue(name);
+    return strValue != null? getPackageName(strValue) : null;
   }
 
-  public String getPackageName(final int s) {
-    return getPackageName(myContext.getValue(s));
+  public String getShortName() {
+    final String strValue = myContext.getValue(name);
+    return strValue != null? getShortName(strValue) : null;
   }
 
   @NotNull
-  public static String getPackageName(final String raw) {
+  public static String getPackageName(@NotNull final String raw) {
     final int index = raw.lastIndexOf('/');
 
     if (index == -1) {
@@ -331,6 +340,17 @@ public class ClassRepr extends Proto {
     }
 
     return raw.substring(0, index);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull final String fqName) {
+    final int index = fqName.lastIndexOf('/');
+
+    if (index == -1) {
+      return fqName;
+    }
+
+    return fqName.substring(index + 1);
   }
 
   @Nullable
@@ -360,12 +380,12 @@ public class ClassRepr extends Proto {
   public static DataExternalizer<ClassRepr> externalizer(final DependencyContext context) {
     return new DataExternalizer<ClassRepr>() {
       @Override
-      public void save(final DataOutput out, final ClassRepr value) throws IOException {
+      public void save(@NotNull final DataOutput out, final ClassRepr value) throws IOException {
         value.save(out);
       }
 
       @Override
-      public ClassRepr read(final DataInput in) throws IOException {
+      public ClassRepr read(@NotNull final DataInput in) throws IOException {
         return new ClassRepr(context, in);
       }
     };
@@ -488,8 +508,8 @@ public class ClassRepr extends Proto {
       try {
         bas.close();
       }
-      catch (final Exception e) {
-        throw new RuntimeException(e);
+      catch (final IOException e) {
+        throw new BuildDataCorruptedException(e);
       }
 
       usages.add(bas.toString());

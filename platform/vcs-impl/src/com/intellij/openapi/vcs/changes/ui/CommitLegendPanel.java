@@ -17,59 +17,26 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
-import java.awt.*;
 
 /**
  * @author max
  */
 public class CommitLegendPanel {
-  private JLabel myModifiedShown;
-  private JLabel myModifiedIncluded;
-  private JLabel myNewShown;
-  private JLabel myNewIncluded;
-  private JLabel myDeletedIncluded;
-  private JLabel myTotalShown;
-  private JLabel myTotalIncluded;
-  private JPanel myRootPanel;
-  private JLabel myDeletedShown;
-  private JPanel myModifiedPanel;
-  private JLabel myModifiedLabel;
-  private JPanel myNewPanel;
-  private JLabel myNewLabel;
-  private JPanel myDeletedPanel;
-  private JLabel myDeletedLabel;
 
+  private final SimpleColoredComponent myRootPanel;
   private final InfoCalculator myInfoCalculator;
 
   public CommitLegendPanel(InfoCalculator infoCalculator) {
     myInfoCalculator = infoCalculator;
-    final Color background = UIUtil.getListBackground();
-    myModifiedPanel.setBackground(background);
-    myNewPanel.setBackground(background);
-    myDeletedPanel.setBackground(background);
-    if (UIUtil.isUnderDarcula()) {
-      final Color color = UIUtil.getSeparatorColor();
-      final TitledBorder border = new TitledBorder(new LineBorder(color, 1));
-      myModifiedPanel.setBorder(border);
-      myNewPanel.setBorder(border);
-      myDeletedPanel.setBorder(border);
-    }
-
-    myModifiedLabel.setForeground(FileStatus.MODIFIED.getColor());
-    myNewLabel.setForeground(FileStatus.ADDED.getColor());
-    myDeletedLabel.setForeground(FileStatus.DELETED.getColor());
-
-    boldLabel(myModifiedLabel, true);
-    boldLabel(myNewLabel, true);
-    boldLabel(myDeletedLabel, true);
+    myRootPanel = new SimpleColoredComponent();
   }
 
-  public JPanel getComponent() {
+  public JComponent getComponent() {
     return myRootPanel;
   }
 
@@ -78,35 +45,32 @@ public class CommitLegendPanel {
     final int modified = myInfoCalculator.getModified();
     final int cntNew = myInfoCalculator.getNew();
 
-    final int includedDeleted = myInfoCalculator.getIncludedDeleted();
-    final int includedModified = myInfoCalculator.getIncludedModified();
-    final int includedNew = myInfoCalculator.getIncludedNew();
-
-    updateCategory(myTotalShown, myTotalIncluded, deleted + modified + cntNew, includedDeleted + includedModified + includedNew);
-    updateCategory(myModifiedShown, myModifiedIncluded, modified, includedModified);
-    updateCategory(myNewShown, myNewIncluded, cntNew, includedNew);
-    updateCategory(myDeletedShown, myDeletedIncluded, deleted, includedDeleted);
+    myRootPanel.clear();
+    if (cntNew > 0) {
+      appendText(cntNew, myInfoCalculator.getIncludedNew(), FileStatus.ADDED, "commit.legend.new");
+      if (modified > 0 || deleted > 0) {
+        appendSpace();
+      }
+    }
+    if (modified > 0) {
+      appendText(modified, myInfoCalculator.getIncludedModified(), FileStatus.MODIFIED, "commit.legend.modified");
+      if (deleted > 0) {
+        appendSpace();
+      }
+    }
+    if (deleted > 0) {
+      appendText(deleted, myInfoCalculator.getIncludedDeleted(), FileStatus.DELETED, "commit.legend.deleted");
+    }
   }
 
-  private static void updateCategory(JLabel totalLabel,
-                                     JLabel includedLabel,
-                                     int totalCnt,
-                                     int includedCnt) {
-    updateLabel(totalLabel, totalCnt, false);
-    updateLabel(includedLabel, includedCnt, totalCnt != includedCnt);
+  private void appendText(int total, int included, FileStatus fileStatus, String labelKey) {
+    String pattern = total == included ? "%s %d" : "%s %d of %d";
+    String text = String.format(pattern, VcsBundle.message(labelKey), included, total);
+    myRootPanel.append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.getColor()));
   }
 
-  private static void updateLabel(JLabel label, int count, boolean bold) {
-    label.setText(String.valueOf(count));
-    label.setEnabled(bold || count != 0);
-    boldLabel(label, bold);
-  }
-
-  private static void boldLabel(final JLabel label, final boolean bold) {
-    int style = bold ? Font.BOLD : Font.PLAIN;
-    if (label.getFont().getStyle() == style)
-      return;
-    label.setFont(label.getFont().deriveFont(style));
+  private void appendSpace() {
+    myRootPanel.append("   ");
   }
 
   public interface InfoCalculator {

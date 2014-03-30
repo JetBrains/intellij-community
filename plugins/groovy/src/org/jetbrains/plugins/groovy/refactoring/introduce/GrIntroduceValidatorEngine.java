@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -60,28 +61,41 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
   }
 
   private MultiMap<PsiElement, String> isOKImpl(String varName, boolean replaceAllOccurrences) {
-    PsiElement firstOccurence;
-    if (replaceAllOccurrences) {
-      if (myContext.getOccurrences().length > 0) {
-        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
-        firstOccurence = myContext.getOccurrences()[0];
-      }
-      else {
-        firstOccurence = myContext.getPlace();
-      }
-    }
-    else {
-      firstOccurence = myContext.getExpression();
-    }
+    PsiElement firstOccurrence = getFirstOccurrence(replaceAllOccurrences);
+
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     assert varName != null;
 
-    final int offset = firstOccurence.getTextRange().getStartOffset();
+    final int offset = firstOccurrence.getTextRange().getStartOffset();
+
     validateOccurrencesDown(myContext.getScope(), conflicts, varName, offset);
     if (!(myContext.getScope() instanceof GroovyFileBase)) {
       validateVariableOccurrencesUp(myContext.getScope(), conflicts, varName, offset);
     }
+
+    if (replaceAllOccurrences) {
+      for (PsiElement element : myContext.getOccurrences()) {
+        if (element == firstOccurrence) continue;
+        validateVariableOccurrencesUp(element, conflicts, varName, element.getTextRange().getStartOffset());
+      }
+    }
     return conflicts;
+  }
+
+  private PsiElement getFirstOccurrence(boolean replaceAllOccurrences) {
+    if (replaceAllOccurrences) {
+      if (myContext.getOccurrences().length > 0) {
+        GroovyRefactoringUtil.sortOccurrences(myContext.getOccurrences());
+        return myContext.getOccurrences()[0];
+      }
+      else {
+        return myContext.getPlace();
+      }
+    }
+    else {
+      final GrExpression expression = myContext.getExpression();
+      return expression != null ? expression : myContext.getStringPart().getLiteral();
+    }
   }
 
 
@@ -117,8 +131,8 @@ public class GrIntroduceValidatorEngine implements GrIntroduceHandlerBase.Valida
    * @param varName      Variable name
    * @param startOffset
    */
-  private void validateOccurrencesDown(PsiElement startElement,
-                                       MultiMap<PsiElement, String> conflicts,
+  private void validateOccurrencesDown(@NotNull PsiElement startElement,
+                                       @NotNull MultiMap<PsiElement, String> conflicts,
                                        @NotNull String varName,
                                        double startOffset) {
     PsiElement child = startElement.getFirstChild();

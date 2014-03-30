@@ -74,11 +74,11 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
            (ignoredStatesCount == 0 || ignoredStatesCount == projects.size());
   }
 
-  private boolean isIgnored(MavenProjectsManager projectsManager, List<MavenProject> projects) {
+  private static boolean isIgnored(MavenProjectsManager projectsManager, List<MavenProject> projects) {
     return projectsManager.getIgnoredState(projects.get(0));
   }
 
-  private boolean isIgnoredInSettings(MavenProjectsManager projectsManager, List<MavenProject> projects) {
+  private static boolean isIgnoredInSettings(MavenProjectsManager projectsManager, List<MavenProject> projects) {
     return projectsManager.isIgnored(projects.get(0)) && !isIgnored(projectsManager, projects);
   }
 

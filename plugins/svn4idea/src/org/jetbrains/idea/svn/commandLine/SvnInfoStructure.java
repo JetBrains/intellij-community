@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import org.apache.subversion.javahl.ConflictDescriptor;
-import org.jetbrains.idea.svn.portable.ConflictActionConvertor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.portable.IdeaSVNInfo;
-import org.jetbrains.idea.svn.portable.OperationConvertor;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.wc.*;
@@ -26,6 +26,7 @@ import org.xml.sax.SAXException;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,7 +35,27 @@ import java.util.Date;
  * Time: 2:11 PM
  */
 public class SvnInfoStructure {
-  public File myFile;
+
+  private static final Map<String, SVNConflictAction> ourConflictActions = ContainerUtil.newHashMap();
+  private static final Map<String, SVNConflictReason> ourConflictReasons = ContainerUtil.newHashMap();
+
+  static {
+    ourConflictActions.put("add", SVNConflictAction.ADD);
+    ourConflictActions.put("edit", SVNConflictAction.EDIT);
+    ourConflictActions.put("delete", SVNConflictAction.DELETE);
+    ourConflictActions.put("replace", SVNConflictAction.REPLACE);
+
+    ourConflictReasons.put("edit", SVNConflictReason.EDITED);
+    ourConflictReasons.put("obstruct", SVNConflictReason.OBSTRUCTED);
+    ourConflictReasons.put("delete", SVNConflictReason.DELETED);
+    ourConflictReasons.put("miss", SVNConflictReason.MISSING);
+    ourConflictReasons.put("unversion", SVNConflictReason.UNVERSIONED);
+    ourConflictReasons.put("add", SVNConflictReason.ADDED);
+    ourConflictReasons.put("replace", SVNConflictReason.REPLACED);
+  }
+
+  @Nullable public File myFile;
+  public String relativeUrl;
   public SVNURL myUrl;
   public SVNURL myRootURL;
   public long myRevision;
@@ -53,7 +74,7 @@ public class SvnInfoStructure {
   public String myConflictNew;
   public String myConflictWorking;
   public String myPropRejectFile;
-  public SVNLock myLock;
+  public SVNLockWrapper myLockWrapper;
   public SVNDepth myDepth;
   public String myChangelistName;
   public long myWcSize;
@@ -65,7 +86,18 @@ public class SvnInfoStructure {
   public SVNInfo convert() throws SAXException, SVNException {
     return new IdeaSVNInfo(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
                            myCopyFromURL, myCopyFromRevision, myTextTime, myPropTime, myChecksum, myConflictOld, myConflictNew, myConflictWorking,
-                           myPropRejectFile, myLock, myDepth, myChangelistName, myWcSize, createTreeConflict());
+                           myPropRejectFile, getLock(), myDepth, myChangelistName, myWcSize, createTreeConflict());
+  }
+
+  private SVNLock getLock() {
+    SVNLock lock = null;
+
+    if (myLockWrapper != null) {
+      myLockWrapper.setPath(relativeUrl);
+      lock = myLockWrapper.create();
+    }
+
+    return lock;
   }
 
   private SVNTreeConflictDescription createTreeConflict() throws SAXException, SVNException {
@@ -73,48 +105,38 @@ public class SvnInfoStructure {
       return null;
     }
     else {
-      final SVNConflictAction action = ConflictActionConvertor.create(ConflictDescriptor.Action.valueOf(myTreeConflict.myAction));
+      assert myFile != null;
+
+      final SVNConflictAction action = parseConflictAction(myTreeConflict.myAction);
       final SVNConflictReason reason = parseConflictReason(myTreeConflict.myReason);
-      //final SVNConflictReason reason = ConflictReasonConvertor.convert(ConflictDescriptor.Reason.valueOf(myTreeConflict.myReason));
-      final SVNOperation operation = OperationConvertor.convert(ConflictDescriptor.Operation.valueOf(myTreeConflict.myOperation));
+      SVNOperation operation = SVNOperation.fromString(myTreeConflict.myOperation);
+      operation = operation == null ? SVNOperation.NONE : operation;
       return new SVNTreeConflictDescription(myFile, myKind, action, reason, operation,
                                             createVersion(myTreeConflict.mySourceLeft),
                                             createVersion(myTreeConflict.mySourceRight));
     }
   }
 
-  private SVNConflictReason parseConflictReason(String reason) throws SAXException {
-    if (ConflictDescriptor.Reason.edited.name().equals(reason)) {
-      return SVNConflictReason.EDITED;
-    } else if (ConflictDescriptor.Reason.obstructed.name().equals(reason)) {
-      return SVNConflictReason.OBSTRUCTED;
-    } else if (ConflictDescriptor.Reason.deleted.name().equals(reason)) {
-      return SVNConflictReason.DELETED;
-    } else if (ConflictDescriptor.Reason.missing.name().equals(reason)) {
-      return SVNConflictReason.MISSING;
-    } else if (ConflictDescriptor.Reason.unversioned.name().equals(reason)) {
-      return SVNConflictReason.UNVERSIONED;
-    } else if (ConflictDescriptor.Reason.added.name().equals(reason)) {
-      return SVNConflictReason.ADDED;
-    } else if (ConflictDescriptor.Reason.replaced.name().equals(reason)) {
-      return SVNConflictReason.REPLACED;
+  private SVNConflictAction parseConflictAction(@NotNull String actionName) {
+    SVNConflictAction action = SVNConflictAction.fromString(actionName);
+    action = action != null ? action : ourConflictActions.get(actionName);
+
+    if (action == null) {
+      throw new IllegalArgumentException("Unknown conflict action " + actionName);
     }
-    if ("edit".equals(reason)) {
-      return SVNConflictReason.EDITED;
-    } else if (reason.contains("obstruct")) {
-      return SVNConflictReason.OBSTRUCTED;
-    } else if ("delete".equals(reason)) {
-      return SVNConflictReason.DELETED;
-    } else if (reason.contains("miss")) {
-      return SVNConflictReason.MISSING;
-    } else if (reason.contains("unversion")) {
-      return SVNConflictReason.UNVERSIONED;
-    } else if (reason.contains("add")) {
-      return SVNConflictReason.ADDED;
-    } else if (reason.contains("replace")) {
-      return SVNConflictReason.REPLACED;
+
+    return action;
+  }
+
+  private SVNConflictReason parseConflictReason(@NotNull String reasonName) throws SAXException {
+    SVNConflictReason reason = SVNConflictReason.fromString(reasonName);
+    reason = reason != null ? reason : ourConflictReasons.get(reasonName);
+
+    if (reason == null) {
+      throw new SAXException("Can not parse conflict reason: " + reasonName);
     }
-    throw new SAXException("Can not parse conflict reason: " + reason);
+
+    return reason;
   }
 
   private SVNConflictVersion createVersion(final ConflictVersion version) throws SVNException, SAXException {

@@ -37,10 +37,12 @@ public class RelaxedHtmlFromRngNSDescriptor extends RngNsDescriptor implements R
   public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(tag);
 
-    LOG.debug("Descriptor from rng for tag " +
-              tag.getName() +
-              " is " +
-              (elementDescriptor != null ? elementDescriptor.getClass().getCanonicalName() : "NULL"));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Descriptor from rng for tag " +
+                tag.getName() +
+                " is " +
+                (elementDescriptor != null ? elementDescriptor.getClass().getCanonicalName() : "NULL"));
+    }
 
     String namespace;
     if (elementDescriptor == null &&

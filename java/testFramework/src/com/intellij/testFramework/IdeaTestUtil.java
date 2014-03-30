@@ -15,19 +15,25 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 
@@ -71,6 +77,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return JavaSdk.getInstance().createJdk(name, getMockJdk17Path().getPath(), false);
   }
 
+  public static Sdk getMockJdk18() {
+    return JavaSdk.getInstance().createJdk("java 1.8", getMockJdk18Path().getPath(), false);
+  }
+
   public static Sdk getMockJdk14() {
     return JavaSdk.getInstance().createJdk("java 1.4", getMockJdk14Path().getPath(), false);
   }
@@ -81,6 +91,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static File getMockJdk17Path() {
     return getPathForJdkNamed("mockJDK-1.7");
+  }
+
+  public static File getMockJdk18Path() {
+    return getPathForJdkNamed("mockJDK-1.8");
   }
 
   private static File getPathForJdkNamed(String name) {
@@ -109,4 +123,21 @@ public class IdeaTestUtil extends PlatformTestUtil {
     assert jar != null : "no .jar for: " + path;
     return jar;
   }
+
+  @TestOnly
+  public static void setTestVersion(@NotNull final JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    final Sdk sdk = rootManager.getSdk();
+    final String oldVersionString = sdk.getVersionString();
+    ((ProjectJdkImpl)sdk).setVersionString(testVersion.getDescription());
+    assert JavaSdk.getInstance().getVersion(sdk) == testVersion;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        ((ProjectJdkImpl)sdk).setVersionString(oldVersionString);
+      }
+    });
+  }
+
+  
 }

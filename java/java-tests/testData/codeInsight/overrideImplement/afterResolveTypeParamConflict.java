@@ -5,6 +5,6 @@ abstract class A1<X>{
 class B1<T> extends A1<T>{
     @Override
     <T1> void foo(T1 t1, T t) {
-        <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

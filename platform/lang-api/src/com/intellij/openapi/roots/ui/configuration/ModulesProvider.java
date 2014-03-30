@@ -26,18 +26,22 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ModulesProvider extends RootModelProvider {
   ModulesProvider EMPTY_MODULES_PROVIDER = new ModulesProvider() {
+    @Override
     @NotNull
     public Module[] getModules() {
       return Module.EMPTY_ARRAY;
     }
+    @Override
     public Module getModule(String name) {
       return null;
     }
 
+    @Override
     public ModuleRootModel getRootModel(@NotNull Module module) {
       return ModuleRootManager.getInstance(module);
     }
 
+    @Override
     public FacetModel getFacetModel(@NotNull Module module) {
       return FacetManager.getInstance(module);
     }

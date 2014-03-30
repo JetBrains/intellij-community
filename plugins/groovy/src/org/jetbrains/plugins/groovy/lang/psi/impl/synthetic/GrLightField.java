@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +44,6 @@ import java.util.Map;
  * @author sergey.evdokimov
  */
 public class GrLightField extends GrLightVariable implements GrField {
-
-  protected GrAccessorMethod mySetter;
-  protected GrAccessorMethod[] myGetters;
-
-  protected boolean mySetterInitialized = false;
 
   private final PsiClass myContainingClass;
 
@@ -96,37 +94,33 @@ public class GrLightField extends GrLightVariable implements GrField {
     return PsiUtil.isProperty(this);
   }
 
+  @Nullable
   @Override
   public GrAccessorMethod getSetter() {
-    if (mySetterInitialized) return mySetter;
-
-    mySetter = GrAccessorMethodImpl.createSetterMethod(this);
-    mySetterInitialized = true;
-
-    return mySetter;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod> compute() {
+        return Result.create(GrAccessorMethodImpl.createSetterMethod(GrLightField.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
-
   @NotNull
   @Override
   public GrAccessorMethod[] getGetters() {
-    if (myGetters == null) {
-      myGetters = GrAccessorMethodImpl.createGetterMethods(this);
-    }
-
-    return myGetters;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod[]>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod[]> compute() {
+        return Result.create(GrAccessorMethodImpl.createGetterMethods(GrLightField.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
   @Override
   public Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return Collections.emptyMap();
-  }
-
-  @Override
-  public void clearCaches() {
-    mySetterInitialized = false;
-    mySetter = null;
-    myGetters = null;
   }
 
   @Override
@@ -178,7 +172,6 @@ public class GrLightField extends GrLightVariable implements GrField {
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiElement res = super.setName(name);
-    clearCaches();
     return res;
   }
 

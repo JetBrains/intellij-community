@@ -28,9 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.SetPropertyDialog;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.properties.PropertyClient;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 
@@ -73,15 +73,13 @@ public class SetPropertyAction extends BasicAction {
       String value = dialog.getPropertyValue();
       boolean recursive = dialog.isRecursive();
 
-      SVNWCClient wcClient = activeVcs.createWCClient();
       for (int i = 0; i < ioFiles.length; i++) {
         File ioFile = ioFiles[i];
-        try {
-          wcClient.doSetProperty(ioFile, name, SVNPropertyValue.create(value), false, recursive, null);
-        }
-        catch (SVNException e) {
-          throw new VcsException(e);
-        }
+        PropertyClient client = activeVcs.getFactory(ioFile).createPropertyClient();
+
+        // TODO: most likely SVNDepth.getInfinityOrEmptyDepth should be used instead of SVNDepth.fromRecursive - to have either "infinity"
+        // TODO: or "empty" depth, and not "infinity" or "files" depth. But previous logic used SVNDepth.fromRecursive implicitly
+        client.setProperty(ioFile, name, SVNPropertyValue.create(value), SVNDepth.fromRecurse(recursive), false);
       }
       for(int i = 0; i < file.length; i++) {
         if (recursive && file[i].isDirectory()) {

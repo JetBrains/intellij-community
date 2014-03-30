@@ -35,7 +35,6 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -138,14 +137,18 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     moduleExcludes.addAll(index.getModuleExcludes(myModule));
 
     roots_loop:
-    for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
+    for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
+      if (JpsPathUtil.isUnder(moduleExcludes, sourceRoot.getFile())) {
+        continue;
+      }
       for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
-        if (provider.isExcludedFromCompilation(myModule, sourceRoot) || JpsPathUtil.isUnder(moduleExcludes, sourceRoot.getFile())) {
+        if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
           continue roots_loop;
         }
       }
-      final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, computeRootExcludes(sourceRoot.getFile(), index)));
+      final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
+      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix,
+                                             computeRootExcludes(sourceRoot.getFile(), index)));
     }
     return roots;
   }

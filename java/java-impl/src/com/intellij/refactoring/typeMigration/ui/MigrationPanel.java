@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -162,7 +163,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       final MigrationNode migrationNode = (MigrationNode)userObject;
       final UsageInfo[] failedUsages = myLabeler.getFailedUsages();
       if (failedUsages.length > 0) {
-        myConflictsPanel.showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(new PsiElement[0]), failedUsages);
+        myConflictsPanel.showUsages(PsiElement.EMPTY_ARRAY, failedUsages);
       }
       final AbstractTreeNode rootNode = migrationNode.getParent();
       if (rootNode instanceof MigrationNode) {
@@ -193,28 +194,35 @@ public class MigrationPanel extends JPanel implements Disposable {
           if (userObject instanceof MigrationRootNode) {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
               public void run() {
-                new WriteCommandAction(myProject) {
-                  protected void run(Result result) throws Throwable {
-                    final Collection<? extends AbstractTreeNode> children = ((MigrationRootNode)userObject).getChildren();
-                    for (AbstractTreeNode child : children) {
-                      expandTree((MigrationNode)child);
+                final Collection<? extends AbstractTreeNode> children = ((MigrationRootNode)userObject).getChildren();
+                for (AbstractTreeNode child : children) {
+                  expandTree((MigrationNode)child);
+                }
+                final TypeMigrationUsageInfo[] usages = myLabeler.getMigratedUsages();
+                final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
+                for (TypeMigrationUsageInfo usage : usages) {
+                  if (!usage.isExcluded()) {
+                    final PsiElement element = usage.getElement();
+                    if (element != null) {
+                      files.add(element.getContainingFile().getVirtualFile());
                     }
-                    final TypeMigrationUsageInfo[] usages = myLabeler.getMigratedUsages();
-                    final HashSet<VirtualFile> files = new HashSet<VirtualFile>();
-                    for (TypeMigrationUsageInfo usage : usages) {
-                      if (!usage.isExcluded()) {
-                        final PsiElement element = usage.getElement();
-                        if (element != null) {
-                          files.add(element.getContainingFile().getVirtualFile());
-                        }
-                      }
-                    }
-                    if (ReadonlyStatusHandler.getInstance(myProject).
-                        ensureFilesWritable(VfsUtil.toVirtualFileArray(files)).hasReadonlyFiles()) return;
-
-                    TypeMigrationProcessor.change(myLabeler, usages);
                   }
-                }.execute();
+                }
+
+                ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (ReadonlyStatusHandler.getInstance(myProject).
+                      ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files)).hasReadonlyFiles()) {
+                      return;
+                    }
+                    new WriteCommandAction(myProject) {
+                      protected void run(Result result) throws Throwable {
+                        TypeMigrationProcessor.change(myLabeler, usages);
+                      }
+                    }.execute();
+                  }
+                }, myProject.getDisposed());
               }
             }, "Type Migration", false, myProject);
           }
@@ -442,7 +450,7 @@ public class MigrationPanel extends JPanel implements Disposable {
           }
           if (typeElement == null) typeElement = element;
           PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments();
-          final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(typeElement), new UsageInfo(typeElement)).getPresentation();
+          final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new PsiElement[]{typeElement}, new UsageInfo(typeElement)).getPresentation();
           boolean isPrefix = true;  //skip usage position
           for (TextChunk chunk : presentation.getText()) {
             if (!isPrefix) append(chunk.getText(), patchAttrs(usageInfo, chunk.getSimpleAttributesIgnoreBackground()));

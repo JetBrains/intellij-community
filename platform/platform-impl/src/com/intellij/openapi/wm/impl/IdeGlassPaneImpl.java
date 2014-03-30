@@ -23,6 +23,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -52,7 +54,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
-  private JPanel myFocusProxy = new JPanel();
+  private JPanel myFocusProxy = new JPanel(){
+    @Override
+    public String toString() {
+      return "FocusProxy";
+    }
+  };
 
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
@@ -139,10 +146,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       final boolean pureMouse1Event = (me.getModifiersEx() | button1) == button1;
       if (pureMouse1Event && me.getClickCount() <= 1 && !me.isPopupTrigger()) {
         final Point point = SwingUtilities.convertPoint(meComponent, me.getPoint(), myRootPane.getContentPane());
-
-        if (myRootPane.getMenuBar() != null && myRootPane.getMenuBar().isVisible()) {
-          point.y += myRootPane.getMenuBar().getHeight();
-        }
+        JMenuBar menuBar = myRootPane.getJMenuBar();
+        point.y += menuBar != null ? menuBar.getHeight() : 0;
 
         final Component target =
           SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
@@ -263,6 +268,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return false;
   }
 
+  private MouseEvent myLastRedispatchedEvent = null;
+
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
       final MouseEvent event = convertEvent(e, eventRootPane);
@@ -270,6 +277,25 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       if (!IdeGlassPaneUtil.canBePreprocessed(e)) {
         return false;
       }
+
+      Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(c);
+      if (balloon != null && myLastRedispatchedEvent != e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED
+            && IdeTooltipManager.getInstance().hasCurrent()
+            && IdeTooltipManager.getInstance().hideCurrent(event, null, null, false)) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myLastRedispatchedEvent = e;
+              IdeEventQueue.getInstance().dispatchEvent(e);
+            }
+          });
+        }
+        return false;
+      }
+      myLastRedispatchedEvent = null;
 
       for (EventListener each : myMouseListeners) {
         if (motion && each instanceof MouseMotionListener) {

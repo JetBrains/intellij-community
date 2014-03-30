@@ -59,6 +59,15 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
+  public void testReplaceAll3() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testReplaceAllMethodCalls() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
@@ -70,6 +79,14 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
   }
 
   public void testParamNameEqMethodName() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
+      }
+    });
+  }
+
+  public void testLocalInsideAnonymous() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroducePopup) {
@@ -113,7 +130,7 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
       });
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with an introduced parameter", e.getMessage());
+      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with the introduced parameter", e.getMessage());
       return;
     }
     fail("Conflict expected");

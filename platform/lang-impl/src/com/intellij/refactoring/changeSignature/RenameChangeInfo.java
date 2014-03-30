@@ -95,6 +95,7 @@ public abstract class RenameChangeInfo implements ChangeInfo {
     if (element != null) {
       final String name = element.getName();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           element.setName(myOldName);
         }

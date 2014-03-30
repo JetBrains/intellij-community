@@ -15,18 +15,19 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
@@ -35,16 +36,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHandler {
+public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
+  @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    if (stackFrame == null) return;
-    final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-    if (evaluator == null) return;
+    final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    if (evaluator == null) {
+      return;
+    }
 
-    @Nullable Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    @Nullable Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText != null) {
@@ -53,9 +55,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     String text = selectedText;
 
     if (text == null && editor != null) {
-      Document document = editor.getDocument();
-      TextRange range = evaluator.getExpressionRangeAtOffset(project, document, editor.getCaretModel().getOffset(), true);
-      text = range == null ? null : document.getText(range);
+      text = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
     }
 
     if (text == null) {
@@ -64,20 +64,28 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
         text = value.getEvaluationExpression();
       }
     }
-    if (text == null) {
-      text = "";
-    }
-    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, text,
-                                                                           stackFrame.getSourcePosition());
-    dialog.show();
+    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, StringUtil.notNullize(text), stackFrame == null ? null : stackFrame.getSourcePosition()).show();
   }
 
-  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
-    if (!super.isEnabled(session, dataContext)) {
-      return false;
+  @Nullable
+  public static String getExpressionText(@Nullable XDebuggerEvaluator evaluator, @Nullable Project project, @NotNull Editor editor) {
+    if (project == null || evaluator == null) {
+      return null;
     }
 
-    XStackFrame stackFrame = session.getCurrentStackFrame();
-    return stackFrame != null && stackFrame.getEvaluator() != null;
+    Document document = editor.getDocument();
+    return getExpressionText(evaluator.getExpressionAtOffset(project, document, editor.getCaretModel().getOffset(), true), document);
+  }
+
+  public static String getExpressionText(@Nullable Pair<TextRange, String> expressionInfo, @NotNull Document document) {
+    if (expressionInfo == null) {
+      return null;
+    }
+    return expressionInfo.second == null ? document.getText(expressionInfo.first) : expressionInfo.second;
+  }
+
+  @Override
+  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+    return session.getDebugProcess().getEvaluator() != null;
   }
 }

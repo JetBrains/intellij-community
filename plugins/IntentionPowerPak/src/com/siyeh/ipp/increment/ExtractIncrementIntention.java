@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -253,7 +254,7 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
         }
       }
     }
-    replaceExpression(operandText, (PsiExpression)element);
+    PsiReplacementUtil.replaceExpression((PsiExpression)element, operandText);
   }
 
   private static String getElementText(@NotNull PsiElement element,

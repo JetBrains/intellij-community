@@ -29,10 +29,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Mossienko
  */
 public class CustomFileTypeBraceMatcher implements BraceMatcher {
+  @Override
   public int getBraceTokenGroupId(IElementType tokenType) {
     return 777;
   }
 
+  @Override
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -42,6 +44,7 @@ public class CustomFileTypeBraceMatcher implements BraceMatcher {
            tokenType == CustomHighlighterTokenType.L_BRACE;
   }
 
+  @Override
   public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
     return isRBraceToken(iterator.getTokenType());
   }
@@ -53,6 +56,7 @@ public class CustomFileTypeBraceMatcher implements BraceMatcher {
            tokenType == CustomHighlighterTokenType.R_BRACE;
   }
 
+  @Override
   public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
     return (tokenType == CustomHighlighterTokenType.L_BRACE && tokenType2 == CustomHighlighterTokenType.R_BRACE) ||
            (tokenType == CustomHighlighterTokenType.R_BRACE && tokenType2 == CustomHighlighterTokenType.L_BRACE) ||
@@ -64,11 +68,13 @@ public class CustomFileTypeBraceMatcher implements BraceMatcher {
            (tokenType == CustomHighlighterTokenType.R_PARENTH && tokenType2 == CustomHighlighterTokenType.L_PARENTH);
   }
 
+  @Override
   public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
     final IElementType type = iterator.getTokenType();
     return type == CustomHighlighterTokenType.L_BRACE || type == CustomHighlighterTokenType.R_BRACE;
   }
 
+  @Override
   public IElementType getOppositeBraceTokenType(@NotNull IElementType type) {
     if (!(type instanceof CustomHighlighterTokenType.CustomElementType)) {
       return null;
@@ -87,12 +93,14 @@ public class CustomFileTypeBraceMatcher implements BraceMatcher {
     return null;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return contextType == CustomHighlighterTokenType.PUNCTUATION ||
            contextType == CustomHighlighterTokenType.WHITESPACE ||
            isRBraceToken(contextType);
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, final int openingBraceOffset) {
     return openingBraceOffset;
   }

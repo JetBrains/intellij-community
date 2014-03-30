@@ -62,7 +62,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   );
   private ResolveSnapshotProvider.ResolveSnapshot mySnapshot;
   private TextRange mySelectedRange;
-  private Language myLanguage;
+  protected Language myLanguage;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
     this(elementToRename, editor, elementToRename.getProject());
@@ -99,6 +99,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     if (stringToSearch != null) {
       TextOccurrencesUtil
         .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
+          @Override
           public boolean process(PsiElement psiElement, TextRange textRange) {
             if (psiElement.getContainingFile() == currentFile) {
               stringUsages.add(Pair.create(psiElement, textRange));
@@ -163,6 +164,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected int restoreCaretOffset(int offset) {
+    if (myCaretRangeMarker.isValid()) {
+      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+        return offset;
+      }
+      return myCaretRangeMarker.getEndOffset();
+    }
     return offset;
   }
 
@@ -223,6 +230,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
 
             final Runnable runnable = new Runnable() {
+              @Override
               public void run() {
                 renamer.findUsages(usages, false, false);
               }
@@ -281,11 +289,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected String getCommandName() {
-    PsiNamedElement variable = getVariable();
-    if (variable == null) {
-      LOG.error(myElementToRename);
-      return "Rename";
-    }
     return RefactoringBundle.message("renaming.command.name", myInitialName);
   }
 
@@ -307,6 +310,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         if (mySnapshot != null) {
           if (isIdentifier(myInsertedName, myLanguage)) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 mySnapshot.apply(myInsertedName);
               }

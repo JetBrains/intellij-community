@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>OverlyComplexBooleanExpression.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly complex boolean expression</problem_class>
+    <description>Overly complex boolean expression (4 terms) #loc</description>
+  </problem>
+</problems>

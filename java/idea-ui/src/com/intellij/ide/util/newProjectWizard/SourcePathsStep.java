@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,10 +257,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
         final int answer = Messages.showYesNoCancelDialog(myTfSourceDirectoryName, text, IdeBundle.message("title.mark.source.directory"),
                                                IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
                                                  CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
-        if (answer == 2) {
+        if (answer == Messages.CANCEL) {
           return false; // cancel
         }
-        if (answer == 1) { // don't mark
+        if (answer == Messages.NO) { // don't mark
           myRbNoSource.doClick();
         }
       }

@@ -19,6 +19,9 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.dvcs.test.MockVirtualFile;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -26,18 +29,21 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockContentRevision;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.impl.HashImpl;
 import cucumber.annotation.en.And;
 import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
-import git4idea.history.browser.GitCommit;
-import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.AbstractHash;
+import git4idea.config.GitVersionSpecialty;
 
 import java.util.*;
 
-import static com.intellij.dvcs.test.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.echo;
 import static git4idea.GitCucumberWorld.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertEquals;
@@ -154,13 +160,22 @@ public class GitCherryPickStepdefs {
   public void git_log_should_return(int commitNum, String messages) throws Throwable {
     List<String> expectedMessages = Arrays.asList(messages.split("-----"));
 
+
     final String RECORD_SEPARATOR = "@";
-    String output = git("log -%s --pretty=%%B%s", String.valueOf(commitNum), RECORD_SEPARATOR);
-    List<String> actualMessages = Arrays.asList(output.split("@"));
+    boolean fullBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion());
+    String data= fullBody ? "%B" : "%s%b";
+    String output = git("log -%s --pretty=%s%s", String.valueOf(commitNum), data, RECORD_SEPARATOR);
+    List<String> actualMessages = Arrays.asList(output.split(RECORD_SEPARATOR));
 
     for (int i = 0; i < expectedMessages.size(); i++) {
-      String expectedMessage = expectedMessages.get(i).trim();
-      String actualMessage = actualMessages.get(i).trim();
+      String expectedMessage = StringUtil.convertLineSeparators(expectedMessages.get(i).trim());
+      String actualMessage = StringUtil.convertLineSeparators(actualMessages.get(i).trim());
+      if (!fullBody) {
+        // the subject (%s) somehow contains both "fix #1" and "cherry-picked from <hash>" in a single line
+        // which is probably Git misbehavior, so let's compare without taking line breaks and spaces into consideration
+        expectedMessage = expectedMessage.replace("\n", "").replace(" ", "");
+        actualMessage = actualMessage.replace("\n", "").replace(" ", "");
+      }
       expectedMessage = virtualCommits.replaceVirtualHashes(expectedMessage);
       assertEquals("Commit doesn't match", expectedMessage, trimHash(actualMessage));
     }
@@ -227,7 +242,7 @@ public class GitCherryPickStepdefs {
   }
 
   private static void cherryPick(List<String> virtualHashes) {
-    List<GitCommit> commits = new ArrayList<GitCommit>();
+    List<VcsFullCommitDetails> commits = ContainerUtil.newArrayList();
     for (String virtualHash : virtualHashes) {
       commits.add(createMockCommit(virtualHash));
     }
@@ -239,17 +254,23 @@ public class GitCherryPickStepdefs {
     cherryPick(Arrays.asList(virtualHashes));
   }
 
-  private static GitCommit createMockCommit(String virtualHash) {
+  private static VcsFullCommitDetails createMockCommit(String virtualHash) {
     CommitDetails realCommit = virtualCommits.getRealCommit(virtualHash);
     return mockCommit(realCommit.getHash(), realCommit.getMessage());
   }
 
-  private static GitCommit mockCommit(String hash, String message) {
-    AbstractHash ahash = AbstractHash.create(hash);
-    List<Change> changes = new ArrayList<Change>();
+  private static VcsFullCommitDetails mockCommit(String hash, String message) {
+    final List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    return new GitCommit(NullVirtualFile.INSTANCE, ahash, SHAHash.emulate(ahash), "John Smith", null, null, message, message,
-                         null, null, null, null, null, null, null, changes, 0);
+    return ServiceManager.getService(myProject, VcsLogObjectsFactory.class).createFullDetails(
+      HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
+      "John Smith", "john@mail.com", 0, new ThrowableComputable<Collection<Change>, Exception>() {
+        @Override
+        public Collection<Change> compute() throws Exception {
+          return changes;
+        }
+      }
+    );
   }
 
 }

@@ -8,6 +8,7 @@ public class MagicNumberInspectionTest extends IGInspectionTestCase {
     final MagicNumberInspection tool = new MagicNumberInspection();
     tool.ignoreInHashCode = true;
     tool.ignoreInAnnotations = true;
+    tool.ignoreInitialCapacity = true;
     doTest("com/siyeh/igtest/abstraction/magic_number", tool);
   }
 }

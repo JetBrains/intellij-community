@@ -29,8 +29,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.VariableData;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -132,13 +132,13 @@ public class MakeStaticUtil {
     return false;
   }
 
-  public static boolean buildVariableData(PsiTypeParameterListOwner member, ArrayList<ParameterTablePanel.VariableData> result) {
+  public static boolean buildVariableData(PsiTypeParameterListOwner member, ArrayList<VariableData> result) {
     final InternalUsageInfo[] classRefsInMethod = findClassRefsInMember(member, false);
     return collectVariableData(member, classRefsInMethod, result);
   }
 
   public static boolean collectVariableData(PsiMember member, InternalUsageInfo[] internalUsages,
-                                             ArrayList<ParameterTablePanel.VariableData> variableDatum) {
+                                             ArrayList<VariableData> variableDatum) {
     HashSet<PsiField> reported = new HashSet<PsiField>();
     HashSet<PsiField> accessedForWriting = new HashSet<PsiField>();
     boolean needClassParameter = false;
@@ -165,7 +165,7 @@ public class MakeStaticUtil {
     });
     for (final PsiField field : psiFields) {
       if (accessedForWriting.contains(field)) continue;
-      ParameterTablePanel.VariableData data = new ParameterTablePanel.VariableData(field);
+      VariableData data = new VariableData(field);
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(member.getProject());
       String name = field.getName();
       name = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class GroovyCompiler extends GroovyCompilerBase {
                                                   "(you can do it yourself later in Settings | Compiler | Resource patterns)",
                                                   "AST Transformations Found",
                                                   JetgroovyIcons.Groovy.Groovy_32x32);
-      if (result == 0) {
+      if (result == Messages.YES) {
         CompilerConfiguration.getInstance(myProject).addResourceFilePattern(AST_TRANSFORM_FILE_NAME);
       } else {
         configuration.transformsOk = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,18 @@
  */
 package com.intellij.openapi.diff.impl.processing;
 
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class Formatting extends Word {
-  public Formatting(String text, TextRange range) {
+  @TestOnly
+  public Formatting(@NotNull String baseText, @NotNull TextRange range) {
+    this(DiffString.create(baseText), range);
+  }
+
+  public Formatting(@NotNull DiffString text, @NotNull TextRange range) {
     super(text, range);
   }
 
@@ -30,6 +38,7 @@ public class Formatting extends Word {
     return obj instanceof Formatting;
   }
 
+  @Override
   public boolean isWhitespace() {
     return true;
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
@@ -189,7 +190,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void setToolTipText(String s) {
-    String tooltipText = AnAction.createTooltipText(s, myAction);
+    String tooltipText = KeymapUtil.createTooltipText(s, myAction);
     super.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
   }
 
@@ -209,11 +210,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
-  
+
   public void setIconInsets(@Nullable Insets insets) {
     myInsets = insets != null ? insets : new Insets(0,0,0,0);
   }
-  
+
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
@@ -231,7 +232,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return icon;
   }
 
-  private void updateIcon() {
+  public void updateIcon() {
     myIcon = myPresentation.getIcon();
     if (myPresentation.getDisabledIcon() != null) { // set disabled icon if it is specified
       myDisabledIcon = myPresentation.getDisabledIcon();

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -57,9 +58,10 @@ class DomElementResolveProblemDescriptorImpl extends DomElementProblemDescriptor
 
     final TextRange referenceRange = reference.getRangeInElement();
     if (referenceRange.isEmpty()) {
+      int startOffset = referenceRange.getStartOffset();
       return element instanceof XmlAttributeValue
-             ? Pair.create(TextRange.from(referenceRange.getStartOffset() - 1, 2), element)
-             : Pair.create(TextRange.from(referenceRange.getStartOffset(), 1), element);
+             ? Pair.create((TextRange)new UnfairTextRange(startOffset - 1, startOffset + 1), element)
+             : Pair.create(TextRange.from(startOffset, 1), element);
     }
     return Pair.create(referenceRange, element);
   }

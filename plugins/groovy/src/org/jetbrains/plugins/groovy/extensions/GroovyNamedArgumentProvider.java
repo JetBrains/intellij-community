@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +76,7 @@ public abstract class GroovyNamedArgumentProvider {
 
     GroovyResolveResult[] callVariants = call.getCallVariants(null);
 
-    if (callVariants.length == 0) {
+    if (callVariants.length == 0 || PsiUtil.isSingleBindingVariant(callVariants)) {
       for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
         namedArgumentProvider.getNamedArguments(call, null, null, argumentName, forCompletion, namedArguments);
       }
@@ -95,14 +96,14 @@ public abstract class GroovyNamedArgumentProvider {
           mapExpected = true;
 
           for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
-            if (methodInfo.getNamedArguments() != null) {
+            if (methodInfo.getNamedArguments() != null || methodInfo.isNamedArgumentProviderDefined()) {
               if (methodInfo.isApplicable(method)) {
-                namedArguments.putAll(methodInfo.getNamedArguments());
-              }
-            }
-            else if (methodInfo.isNamedArgumentProviderDefined()) {
-              if (methodInfo.isApplicable(method)) {
-                methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
+                if (methodInfo.isNamedArgumentProviderDefined()) {
+                  methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
+                }
+                if (methodInfo.getNamedArguments() != null) {
+                  namedArguments.putAll(methodInfo.getNamedArguments());
+                }
               }
             }
           }

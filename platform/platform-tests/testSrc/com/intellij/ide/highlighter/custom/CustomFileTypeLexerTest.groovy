@@ -16,13 +16,14 @@
  */
 package com.intellij.ide.highlighter.custom
 
+import com.intellij.lang.cacheBuilder.WordOccurrence
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.impl.CancellableRunnable
-import com.intellij.psi.impl.DebugUtil
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
@@ -51,25 +52,29 @@ class CustomFileTypeLexerTest extends TestCase {
     table.addKeyword1("then");
     table.addKeyword2("return");
     table.addKeyword1("length");
-    table.addKeyword1("sysvar ");
 
     return table;
 
   }
 
   public void testSpacesInsideKeywords() {
-    doTest createGenericTable(), 'if length(variable)then return 1', '''\
+    def table = createGenericTable()
+    table.addKeyword1("sysvar ");
+    doTest table, 'if length(if_variable)then return 1 sysvar  ', '''\
 KEYWORD_1 ('if')
 WHITESPACE (' ')
 KEYWORD_1 ('length')
 CHARACTER ('(')
-IDENTIFIER ('variable')
+IDENTIFIER ('if_variable')
 CHARACTER (')')
 KEYWORD_1 ('then')
 WHITESPACE (' ')
 KEYWORD_2 ('return')
 WHITESPACE (' ')
 NUMBER ('1')
+WHITESPACE (' ')
+KEYWORD_1 ('sysvar ')
+WHITESPACE (' ')
 '''
   }
 
@@ -278,6 +283,16 @@ IDENTIFIER ('k')
 '''
   }
 
+  public void testCpp() {
+    SyntaxTable table = new SyntaxTable()
+    table.addKeyword1('->')
+    doTest table, "foo->bar", '''\
+IDENTIFIER ('foo')
+KEYWORD_1 ('->')
+IDENTIFIER ('bar')
+'''
+  }
+
   public void testNumber() {
     doTest createPropTable(), "1.23=1.24", '''\
 NUMBER ('1.23')
@@ -331,6 +346,33 @@ WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
+'''
+  }
+
+  public void testWordsScanner() {
+    SyntaxTable table = new SyntaxTable()
+    table.addKeyword1("a*")
+    def scanner = IdTableBuilding.createCustomFileTypeScanner(table)
+    def words = []
+    String text = 'a* b-c d# e$ foo{}'
+    def expectedWords = ['a', 'b', 'c', 'd', 'e$', 'foo']
+
+    scanner.processWords(text, { WordOccurrence w ->
+      words.add(w.baseText.subSequence(w.start, w.end))
+    } as Processor)
+    assert words == expectedWords
+
+    // words searched by find usages should be the same as words produced by word scanner
+    assert StringUtil.getWordsIn(text) == expectedWords 
+  }
+
+  public void "test quote block comment"() {
+    SyntaxTable table = new SyntaxTable()
+    table.startComment = '"'
+    table.endComment = 'x'
+    doTest table, '"axa', '''\
+MULTI_LINE_COMMENT ('"ax')
+IDENTIFIER ('a')
 '''
   }
 

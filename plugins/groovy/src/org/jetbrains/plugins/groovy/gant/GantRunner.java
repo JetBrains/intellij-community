@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.io.File;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.ar;
 
@@ -59,7 +61,7 @@ public class GantRunner extends GroovyScriptRunner {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",
                             JetgroovyIcons.Groovy.Gant_16x16);
-      if (result == 0) {
+      if (result == Messages.OK) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project));
       }
       if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
@@ -126,10 +128,9 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   private static void addGroovyAndAntJars(JavaParameters params, Module module, String gantHome) {
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(gantHome + "/lib/");
     if (groovyJars.length > 0) {
       params.getClassPath().add(groovyJars[0].getAbsolutePath());
-      return;
     }
 
     if (module == null) {
@@ -141,17 +142,20 @@ public class GantRunner extends GroovyScriptRunner {
       File[] libJars = GroovyUtils.getFilesInDirectoryByPattern(groovyHome + "/lib/", ".*\\.jar");
       if (libJars.length > 0) {
         params.getClassPath().addAllFiles(libJars);
-        return;
       }
     }
 
+    List<VirtualFile> classpath = params.getClassPath().getRootDirs();
+
     String[] characteristicClasses = ar(
-      LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException",
-      "org.apache.tools.ant.launch.AntMain", "org.apache.commons.cli.ParseException");
+      LibrariesUtil.SOME_GROOVY_CLASS, "org.apache.tools.ant.BuildException", "org.apache.tools.ant.launch.AntMain",
+      "org.apache.commons.cli.ParseException");
     for (String someClass : characteristicClasses) {
-      VirtualFile jar = LibrariesUtil.findJarWithClass(module, someClass);
-      if (jar != null) {
-        params.getClassPath().add(jar);
+      if (!LibraryUtil.isClassAvailableInLibrary(classpath, someClass)) {
+        VirtualFile jar = LibrariesUtil.findJarWithClass(module, someClass);
+        if (jar != null) {
+          params.getClassPath().add(jar);
+        }
       }
     }
   }

@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.provider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
@@ -26,13 +27,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,19 +85,32 @@ public class HgMergeProvider implements MergeProvider {
           mergeData.CURRENT = local.getContentAsBytes();
           // we are sure that we have a common ancestor, because otherwise we'll get "repository is unrelated" error while pulling,
           // due to different root changesets which is prohibited.
-          // Find common ancestor of two revisions : hg log -r "ancestor(rev1,ancestor(rev2,rev3))"
+          // Find common ancestor of two revisions : hg debugancestor rev1 rev2
+          // Using quotes may produce wrong escaping errors on Unix-type systems
           List<String> arguments = new ArrayList<String>();
-          arguments.add("-r");
-          arguments.add("\"ancestor(" + localRevisionNumber.getRevision() + ',' + serverRevisionNumber.getRevision() + ")\"");
-          final List<HgFileRevision> revisions;
-          try {
-            revisions = new HgLogCommand(myProject).execute(new HgFile(myProject, file), -1, false, arguments);
-            if (revisions != null && !revisions.isEmpty()) {
-              baseRevisionNumber = revisions.get(0).getRevisionNumber();
+          String localChangeset = localRevisionNumber.getChangeset();
+          String serverChangeset = serverRevisionNumber.getChangeset();
+          arguments.add(StringUtil.isEmptyOrSpaces(localChangeset) ? localRevisionNumber.getRevision() : localChangeset);
+          arguments.add(StringUtil.isEmptyOrSpaces(serverChangeset) ? serverRevisionNumber.getRevision() : serverChangeset);
+          HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, "debugancestor", arguments);
+          if (result != null) {
+            String output = result.getRawOutput();
+            final List<String> parts = StringUtil.split(output, ":");
+            if (parts.size() < 2) {
+              LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
+              new HgCommandResultNotifier(myProject)
+                .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                             HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
+            }
+            else {
+              baseRevisionNumber = HgRevisionNumber.getInstance(parts.get(0), parts.get(1));
             }
           }
-          catch (HgCommandException e) {
-            throw new VcsException(HgVcsMessages.message("hg4idea.error.log.command.execution"), e);
+          else {
+            LOG.info(HgVcsMessages.message("hg4idea.error.debugancestor.command.execution") + arguments);
+            new HgCommandResultNotifier(myProject)
+              .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                           HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
           }
         } else {
           // 2. local changes are not checked in.
@@ -112,7 +129,8 @@ public class HgMergeProvider implements MergeProvider {
 
         if (baseRevisionNumber != null) {
           final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
-          mergeData.ORIGINAL = base.getContentAsBytes();
+          //if file doesn't exist in ancestor revision the base revision should be empty
+          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : new byte[0];
         } else { // no base revision means that the file was added simultaneously with different content in both repositories
           mergeData.ORIGINAL = new byte[0];
         }
@@ -135,7 +153,7 @@ public class HgMergeProvider implements MergeProvider {
   }
 
   @Override
-  public boolean isBinary(VirtualFile file) {
+  public boolean isBinary(@NotNull VirtualFile file) {
     return file.getFileType().isBinary();
   }
 

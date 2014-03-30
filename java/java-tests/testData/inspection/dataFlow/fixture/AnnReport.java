@@ -1,6 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 
-public class ASD {
+class ASD {
   static void foo(Object any) {
     boolean a = false;
     boolean b = false;

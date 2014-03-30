@@ -47,7 +47,7 @@ public class SlowLineMarkersPassFactory extends AbstractProjectComponent impleme
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
-    return new SlowLineMarkersPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset());
+    return new SlowLineMarkersPass(myProject, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {

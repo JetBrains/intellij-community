@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
@@ -71,7 +71,8 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     if ((element instanceof PsiClass)) {
       //TODO : local & anonymous
       PsiClass psiClass = (PsiClass) element;
-      return RefactoringBundle.message("class.description", CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(psiClass)));
+      return RefactoringBundle.message("class.description", CommonRefactoringUtil.htmlEmphasize(
+        DescriptiveNameUtil.getDescriptiveName(psiClass)));
     }
     return null;
   }

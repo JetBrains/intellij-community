@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,17 +167,18 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           }
         }.setToCenterIfSmall(hintHint.isMayCenterTooltip())
           .setPreferredPosition(hintHint.getPreferredPosition())
-          .setHighlighterType(hintHint.isHightlighterType())
+          .setHighlighterType(hintHint.isHighlighterType())
           .setTextForeground(hintHint.getTextForeground())
           .setTextBackground(hintHint.getTextBackground())
           .setBorderColor(hintHint.getBorderColor())
+          .setBorderInsets(hintHint.getBorderInsets())
           .setFont(hintHint.getTextFont())
           .setCalloutShift(hintHint.getCalloutShift())
           .setPositionChangeShift(hintHint.getPositionChangeX(), hintHint.getPositionChangeY())
           .setExplicitClose(hintHint.isExplicitClose())
           .setHint(true);
         myComponent.validate();
-        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately());
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());
       }
       else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);

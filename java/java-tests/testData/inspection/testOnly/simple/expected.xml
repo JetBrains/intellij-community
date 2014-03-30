@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+<problem>
+  <file>A.java</file>
+  <line>6</line>
+  <method>
+    <name>void production()</name>
+    <display_name>production()</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>A</name>
+      <display_name>A</display_name>
+    </class>
+  </method>
+  <description>Test-only method is called in production code</description>
+</problem>
+
+<problem>
+  <file>B.java</file>
+  <line>3</line>
+  <method>
+    <name>void production()</name>
+    <display_name>production()</display_name>
+    <package>&lt;default&gt;</package>
+    <class>
+      <name>B</name>
+      <display_name>B</display_name>
+    </class>
+  </method>
+  <description>Test-only method is called in production code</description>
+</problem>
+</problems>
+

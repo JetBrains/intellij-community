@@ -30,7 +30,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
@@ -64,7 +64,7 @@ public class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
 
       classesToSearch.addAll(ClassInheritorsSearch.search(aClass, true).findAll());
 
-      myCachedScope = new LocalSearchScope(PsiUtilBase.toPsiElementArray(classesToSearch),
+      myCachedScope = new LocalSearchScope(PsiUtilCore.toPsiElementArray(classesToSearch),
                                            IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
     }
 

@@ -32,10 +32,12 @@ class DeletedTemplatesManager implements JDOMExternalizable {
     return DELETED_DEFAULT_TEMPLATES.contains(nameWithExtension);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

@@ -1,6 +1,6 @@
 /**
 * Do smth @linkplain #link}.
 */
-public class Test {
+class Test {
   private void link(){}
 }

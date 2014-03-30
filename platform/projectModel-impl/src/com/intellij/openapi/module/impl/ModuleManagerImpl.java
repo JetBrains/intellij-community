@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,14 +38,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.FilePathHashingStrategy;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -120,6 +128,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return e;
   }
 
+  private static class ModuleGroupInterner {
+    private final StringInterner groups = new StringInterner();
+    private final Map<String[], String[]> paths = new THashMap<String[], String[]>(new TObjectHashingStrategy<String[]>() {
+      @Override
+      public int computeHashCode(String[] object) {
+        return Arrays.hashCode(object);
+      }
+
+      @Override
+      public boolean equals(String[] o1, String[] o2) {
+        return Arrays.equals(o1, o2);
+      }
+    });
+
+    private void setModuleGroupPath(@NotNull ModifiableModuleModel model, Module module, @Nullable String[] group) {
+      String[] cached = group == null ? null : paths.get(group);
+      if (cached == null && group != null) {
+        cached = new String[group.length];
+        for (int i = 0; i < group.length; i++) {
+          String g = group[i];
+          cached[i] = groups.intern(g);
+        }
+        paths.put(cached, cached);
+      }
+      model.setModuleGroupPath(module, cached);
+    }
+  }
+
   @Override
   public void loadState(Element state) {
     List<ModulePath> prevPaths = myModulePaths;
@@ -129,7 +165,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       Module[] existingModules = model.getModules();
 
-
+      ModuleGroupInterner groupInterner = new ModuleGroupInterner();
       for (Module existingModule : existingModules) {
         ModulePath correspondingPath = findCorrespondingPath(existingModule);
         if (correspondingPath == null) {
@@ -139,9 +175,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           myModulePaths.remove(correspondingPath);
 
           String groupStr = correspondingPath.getModuleGroup();
-          String[] group = groupStr != null ? groupStr.split(MODULE_GROUP_SEPARATOR) : null;
+          String[] group = groupStr == null ? null : groupStr.split(MODULE_GROUP_SEPARATOR);
           if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
-            model.setModuleGroupPath(existingModule,  group);
+            groupInterner.setModuleGroupPath(model, existingModule, group);
           }
         }
       }
@@ -178,6 +214,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
+  @NotNull
   public static ModulePath[] getPathsToModuleFiles(Element element) {
     final List<ModulePath> paths = new ArrayList<ModulePath>();
     final Element modules = element.getChild(ELEMENT_MODULES);
@@ -205,46 +242,58 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void loadModules(final ModuleModelImpl moduleModel) {
-    if (myModulePaths != null && !myModulePaths.isEmpty()) {
-      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (myModulePaths == null || myModulePaths.isEmpty()) {
+      return;
+    }
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+
+    final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.setText("Loading modules...");
+      progressIndicator.setText2("");
+    }
+    myFailedModulePaths.clear();
+    myFailedModulePaths.addAll(myModulePaths);
+    final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+    List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
+
+    for (int i = 0; i < myModulePaths.size(); i++) {
+      ModulePath modulePath = myModulePaths.get(i);
       if (progressIndicator != null) {
-        progressIndicator.setText("Loading modules...");
-        progressIndicator.setText2("");
+        progressIndicator.setFraction((double) i / myModulePaths.size());
       }
-      myFailedModulePaths.clear();
-      myFailedModulePaths.addAll(myModulePaths);
-      final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-      List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
+      try {
+        final Module module = moduleModel.loadModuleInternal(modulePath.getPath());
+        if (isUnknownModuleType(module)) {
+          modulesWithUnknownTypes.add(module);
+        }
+        final String groupPathString = modulePath.getModuleGroup();
+        if (groupPathString != null) {
+          final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
 
-      for (final ModulePath modulePath : myModulePaths) {
-        try {
-          final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
-          if (isUnknownModuleType(module)) {
-            modulesWithUnknownTypes.add(module);
-          }
-          final String groupPathString = modulePath.getModuleGroup();
-          if (groupPathString != null) {
-            final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-            moduleModel.setModuleGroupPath(module, groupPath); //model should be updated too
-          }
-          myFailedModulePaths.remove(modulePath);
+          groupInterner.setModuleGroupPath(moduleModel, module, groupPath); //model should be updated too
         }
-        catch (final IOException e) {
-          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                       modulePath, this));
-        }
-        catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-          errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
-        }
-        catch (StateStorageException e) {
-          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                       modulePath, this));
-        }
+        myFailedModulePaths.remove(modulePath);
       }
+      catch (final IOException e) {
+        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                     modulePath, this));
+      }
+      catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+        errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
+      }
+      catch (StateStorageException e) {
+        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                     modulePath, this));
+      }
+    }
 
-      fireErrors(errors);
+    fireErrors(errors);
 
-      showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+    showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+
+    if (progressIndicator != null) {
+      progressIndicator.setIndeterminate(true);
     }
   }
 
@@ -267,9 +316,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
   }
 
-  protected void fireModulesRenamed(List<Module> modules) {
+  protected void fireModulesRenamed(List<Module> modules, final Map<Module, String> oldNames) {
     if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules, new Function<Module, String>() {
+        @Override
+        public String fun(Module module) {
+          return oldNames.get(module);
+        }
+      });
     }
   }
 
@@ -317,7 +371,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element(ELEMENT_MODULE);
       final String moduleFilePath = getModuleFilePath();
-      final String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, moduleFilePath);
+      final String url = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, moduleFilePath);
       moduleElement.setAttribute(ATTRIBUTE_FILEURL, url);
       // [dsl] support for older builds
       moduleElement.setAttribute(ATTRIBUTE_FILEPATH, moduleFilePath);
@@ -423,10 +477,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
   @Override
   @NotNull
-  public Module loadModule(@NotNull String filePath) throws InvalidDataException,
-                                                   IOException,
-                                                   JDOMException,
-                                                   ModuleWithNameAlreadyExists {
+  public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists {
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
@@ -552,14 +603,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected abstract ModuleEx createAndLoadModule(String filePath) throws IOException;
 
   class ModuleModelImpl implements ModifiableModuleModel {
-    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>();
+    final Map<String, Module> myPathToModule = new LinkedHashMap<String, Module>(new EqualityPolicy.ByHashingStrategy<String>(FilePathHashingStrategy.create()));
     private Module[] myModulesCache;
 
     private final List<Module> myModulesToDispose = new ArrayList<Module>();
     private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
     private final Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
     private boolean myIsWritable;
-    private Map<Module, String []> myModuleGroupPath;
+    private Map<Module, String[]> myModuleGroupPath;
 
     ModuleModelImpl() {
       myIsWritable = false;
@@ -676,13 +727,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
     @Nullable
     private ModuleEx getModuleByFilePath(String filePath) {
-      final Collection<Module> modules = myPathToModule.values();
-      for (Module module : modules) {
-        if (FileUtil.pathsEqual(filePath, module.getModuleFilePath())) {
-          return (ModuleEx)module;
-        }
-      }
-      return null;
+      return (ModuleEx)myPathToModule.get(filePath);
     }
 
     @Override
@@ -690,25 +735,21 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     public Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, ModuleWithNameAlreadyExists {
       assertWritable();
       try {
-        return loadModuleInternal(filePath, null);
+        return loadModuleInternal(filePath);
       }
       catch (StateStorageException e) {
         throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()));
       }
     }
 
-    private Module loadModuleInternal(String filePath, @Nullable ProgressIndicator progressIndicator)
-      throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
-
-      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(resolveShortWindowsName(filePath));
+    private Module loadModuleInternal(String filePath) throws ModuleWithNameAlreadyExists, IOException, StateStorageException {
+      filePath = resolveShortWindowsName(filePath);
+      final VirtualFile moduleFile = StandardFileSystems.local().findFileByPath(filePath);
       if (moduleFile == null || !moduleFile.exists()) {
         throw new IOException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
 
       final String name = moduleFile.getName();
-      if (progressIndicator != null) {
-        progressIndicator.setText2(FileUtil.getNameWithoutExtension(name));
-      }
 
       if (name.endsWith(IML_EXTENSION)) {
         final String moduleName = name.substring(0, name.length() - 4);
@@ -879,7 +920,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
-    public void setModuleGroupPath(Module module, String[] groupPath) {
+    public void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath) {
       if (myModuleGroupPath == null) {
         myModuleGroupPath = new THashMap<Module, String[]>();
       }
@@ -892,7 +933,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     @Override
-    public void setModuleFilePath(Module module, String oldPath, String newFilePath) {
+    public void setModuleFilePath(@NotNull Module module, String oldPath, String newFilePath) {
       myPathToModule.remove(oldPath);
       myPathToModule.put(newFilePath, module);
     }
@@ -931,13 +972,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         final Map<Module, String> modulesToNewNamesMap = moduleModel.myModuleToNewName;
         final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
         modulesToBeRenamed.removeAll(moduleModel.myModulesToDispose);
-        final List<Module> modules = new ArrayList<Module>();
-        for (final Module moduleToBeRenamed : modulesToBeRenamed) {
-          ModuleEx module = (ModuleEx)moduleToBeRenamed;
-          moduleModel.myPathToModule.remove(moduleToBeRenamed.getModuleFilePath());
-          modules.add(moduleToBeRenamed);
-          module.rename(modulesToNewNamesMap.get(moduleToBeRenamed));
-          moduleModel.myPathToModule.put(moduleToBeRenamed.getModuleFilePath(), module);
+
+        List<Module> modules = new ArrayList<Module>();
+        Map<Module, String> oldNames = ContainerUtil.newHashMap();
+        for (final Module module : modulesToBeRenamed) {
+          oldNames.put(module, module.getName());
+          moduleModel.myPathToModule.remove(module.getModuleFilePath());
+          modules.add(module);
+          ((ModuleEx)module).rename(modulesToNewNamesMap.get(module));
+          moduleModel.myPathToModule.put(module.getModuleFilePath(), module);
         }
 
         moduleModel.myIsWritable = false;
@@ -957,17 +1000,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           cleanCachedStuff();
         }
         cleanCachedStuff();
-        fireModulesRenamed(modules);
+        fireModulesRenamed(modules, oldNames);
         cleanCachedStuff();
       }
     }, false, true);
   }
 
-  void fireModuleRenamedByVfsEvent(@NotNull final Module module) {
+  void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {
-        fireModulesRenamed(Collections.singletonList(module));
+        fireModulesRenamed(Collections.singletonList(module), Collections.singletonMap(module, oldName));
       }
     }, false, true);
   }

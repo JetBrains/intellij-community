@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -44,15 +44,15 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
-  private final List<Request> myRequests = new ArrayList<Request>();
-  private final List<Request> myPendingRequests = new ArrayList<Request>();
+  private final List<Request> myRequests = new SmartList<Request>();
+  private final List<Request> myPendingRequests = new SmartList<Request>();
 
   private final ExecutorService myExecutorService;
 
   private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
   private final Object LOCK = new Object();
-  private final ThreadToUse myThreadToUse;
+  protected final ThreadToUse myThreadToUse;
 
   private JComponent myActivationComponent;
 
@@ -68,6 +68,10 @@ public class Alarm implements Disposable {
       myExecutorService.shutdown();
       ((ThreadPoolExecutor)myExecutorService).getQueue().clear();
     }
+  }
+
+  public void checkDisposed() {
+    LOG.assertTrue(!myDisposed, "Already disposed");
   }
 
   public enum ThreadToUse {
@@ -117,15 +121,11 @@ public class Alarm implements Disposable {
     if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
       final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
       final MessageBusConnection connection = bus.connect(this);
-      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           connection.disconnect();
           addRequest(request, delay);
-        }
-
-        @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
         }
       });
     } else {
@@ -161,9 +161,9 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  private void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
+  protected void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
-      LOG.assertTrue(!myDisposed, "Already disposed");
+      checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
 
       if (myActivationComponent == null || myActivationComponent.isShowing()) {
@@ -227,9 +227,40 @@ public class Alarm implements Disposable {
     return count;
   }
 
+  public void flush() {
+    List<Pair<Request, Runnable>> requests;
+    synchronized (LOCK) {
+      if (myRequests.isEmpty()) {
+        return;
+      }
+
+      requests = new SmartList<Pair<Request, Runnable>>();
+      for (Request request : myRequests) {
+        Runnable existingTask = request.cancel();
+        if (existingTask != null) {
+          requests.add(Pair.create(request, existingTask));
+        }
+      }
+      myRequests.clear();
+    }
+
+    for (Pair<Request, Runnable> request : requests) {
+      synchronized (LOCK) {
+        request.first.myTask = request.second;
+      }
+      request.first.run();
+    }
+  }
+
   public int getActiveRequestCount() {
     synchronized (LOCK) {
       return myRequests.size();
+    }
+  }
+
+  public boolean isEmpty() {
+    synchronized (LOCK) {
+      return myRequests.isEmpty();
     }
   }
 
@@ -243,15 +274,17 @@ public class Alarm implements Disposable {
   }
 
   private class Request implements Runnable {
-    private Runnable myTask;
+    private Runnable myTask; // guarded by LOCK
     private final ModalityState myModalityState;
-    private Future<?> myFuture;
+    private Future<?> myFuture; // guarded by LOCK
     private final long myDelay;
 
-    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
-      myTask = task;
-      myModalityState = modalityState;
-      myDelay = delayMillis;
+    private Request(@NotNull final Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+      synchronized (LOCK) {
+        myTask = task;
+        myModalityState = modalityState;
+        myDelay = delayMillis;
+      }
     }
 
     @Override
@@ -261,7 +294,9 @@ public class Alarm implements Disposable {
           return;
         }
         synchronized (LOCK) {
-          if (myTask == null) return;
+          if (myTask == null) {
+            return;
+          }
         }
 
         final Runnable scheduledTask = new Runnable() {
@@ -274,37 +309,48 @@ public class Alarm implements Disposable {
               myTask = null;
 
               myRequests.remove(Request.this);
+              myFuture = null;
             }
 
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
-              try {
-                SwingUtilities.invokeAndWait(task);
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (!myDisposed) {
+                    QueueProcessor.runSafely(task);
+                  }
+                }
+              });
             }
             else {
-              try {
-                task.run();
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+              QueueProcessor.runSafely(task);
             }
+          }
+
+          @Override
+          public String toString() {
+            return "ScheduledTask "+Request.this;
           }
         };
 
         if (myModalityState == null) {
-          myFuture = myExecutorService.submit(scheduledTask);
+          Future<?> future = myExecutorService.submit(scheduledTask);
+          synchronized (LOCK) {
+            myFuture = future;
+          }
         }
         else {
           final Application app = ApplicationManager.getApplication();
-          if (app != null) {
-            app.invokeLater(scheduledTask, myModalityState);
+          if (app == null) {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(scheduledTask);
+          }
+          else if (app.isDispatchThread() && app.getCurrentModalityState().equals(myModalityState)) {
+            scheduledTask.run();
           }
           else {
-            SwingUtilities.invokeLater(scheduledTask);
+            app.invokeLater(scheduledTask, myModalityState);
           }
         }
       }
@@ -314,30 +360,43 @@ public class Alarm implements Disposable {
     }
 
     private Runnable getTask() {
-      return myTask;
+      synchronized (LOCK) {
+        return myTask;
+      }
     }
 
     public void setFuture(@NotNull ScheduledFuture<?> future) {
-      myFuture = future;
+      synchronized (LOCK) {
+        myFuture = future;
+      }
     }
 
     public ModalityState getModalityState() {
       return myModalityState;
     }
 
-    private void cancel() {
+    /**
+     * @return task if not yet executed
+     */
+    @Nullable
+    private Runnable cancel() {
       synchronized (LOCK) {
         if (myFuture != null) {
           myFuture.cancel(false);
+          // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
+          ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
+          myFuture = null;
         }
+        Runnable task = myTask;
         myTask = null;
+        return task;
       }
     }
 
     @Override
     public String toString() {
-      Runnable task = myTask;
-      return super.toString() + (task != null ? task.toString():null);
+      Runnable task = getTask();
+      return super.toString() + (task != null ? ": "+task : "");
     }
   }
 
@@ -361,7 +420,7 @@ public class Alarm implements Disposable {
   public boolean isDisposed() {
     return myDisposed;
   }
-  
+
   private class MyExecutor extends AbstractExecutorService {
     private final AtomicBoolean isShuttingDown = new AtomicBoolean();
     private final QueueProcessor<Runnable> myProcessor = QueueProcessor.createRunnableQueueProcessor();
@@ -371,30 +430,31 @@ public class Alarm implements Disposable {
       myProcessor.clear();
       isShuttingDown.set(myDisposed);
     }
-  
+
+    @NotNull
     @Override
     public List<Runnable> shutdownNow() {
       throw new UnsupportedOperationException();
     }
-  
+
     @Override
     public boolean isShutdown() {
       return isShuttingDown.get();
     }
-  
+
     @Override
     public boolean isTerminated() {
       return isShutdown() && myProcessor.isEmpty();
     }
-  
+
     @Override
     public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
       throw new UnsupportedOperationException();
     }
-  
+
     @Override
     public void execute(@NotNull Runnable command) {
       myProcessor.add(command);
     }
-  } 
+  }
 }

@@ -28,6 +28,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -41,7 +43,18 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
   }
 
   protected PsiFile createFileFromTemplate(String name, FileTemplate template, PsiDirectory dir) {
+    return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty());
+  }
 
+  @SuppressWarnings("DialogTitleCapitalization")
+  @Nullable
+  public static PsiFile createFileFromTemplate(@Nullable String name,
+                                               @NotNull FileTemplate template,
+                                               @NotNull PsiDirectory dir,
+                                               @Nullable String defaultTemplateProperty) {
+    CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
+    name = mkdirs.newName;
+    dir = mkdirs.directory;
     PsiElement element;
     Project project = dir.getProject();
     try {
@@ -52,9 +65,8 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
         FileEditorManager.getInstance(project).openFile(virtualFile, true);
-        String property = getDefaultTemplateProperty();
-        if (property != null) {
-          PropertiesComponent.getInstance(project).setValue(property, template.getName());
+        if (defaultTemplateProperty != null) {
+          PropertiesComponent.getInstance(project).setValue(defaultTemplateProperty, template.getName());
         }
         return psiFile;
       }
@@ -72,7 +84,6 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
 
     return null;
   }
-
 
   @Override
   protected PsiFile createFile(String name, String templateName, PsiDirectory dir) {

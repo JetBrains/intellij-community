@@ -38,13 +38,15 @@ public class XmlSerializer {
   private XmlSerializer() {
   }
 
-  public static Element serialize(Object object) throws XmlSerializationException {
+  /**
+   * Consider to use {@link SkipDefaultValuesSerializationFilters}
+   */
+  public static Element serialize(@NotNull Object object) throws XmlSerializationException {
     return serialize(object, TRUE_FILTER);
   }
 
-  public static Element serialize(Object object, SerializationFilter filter) throws XmlSerializationException {
-    if (filter == null) filter = TRUE_FILTER;
-    return new XmlSerializerImpl(filter).serialize(object);
+  public static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
+    return new XmlSerializerImpl(filter == null ? TRUE_FILTER : filter).serialize(object);
   }
 
   @Nullable

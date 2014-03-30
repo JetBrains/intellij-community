@@ -25,10 +25,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +46,7 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
   public SetupSDKNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
@@ -73,7 +71,13 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
       return null;
     }
 
-    if (ProjectRootManager.getInstance(myProject).getProjectSdk() != null) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiFile);
+    if (module == null) {
+      return null;
+    }
+
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null) {
       return null;
     }
 
@@ -81,7 +85,7 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(final @NotNull Project project, final @NotNull PsiFile file) {
+  private static EditorNotificationPanel createPanel(@NotNull final Project project, @NotNull final PsiFile file) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(ProjectBundle.message("project.sdk.not.defined"));
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), new Runnable() {

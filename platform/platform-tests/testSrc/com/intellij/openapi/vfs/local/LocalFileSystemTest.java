@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,74 @@
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
+  private LocalFileSystem myFS;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable);
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override public void before(@NotNull List<? extends VFileEvent> events) { checkFiles(events, true); }
+
+      @Override public void after(@NotNull List<? extends VFileEvent> events) { checkFiles(events, false); }
+
+      private void checkFiles(List<? extends VFileEvent> events, boolean before) {
+        for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (file != null) {
+            boolean shouldBeInvalid =
+              event instanceof VFileCreateEvent && before && !((VFileCreateEvent)event).isReCreation() ||
+              event instanceof VFileDeleteEvent && !before;
+            assertEquals(event.toString(), !shouldBeInvalid, file.isValid());
+          }
+        }
+      }
+    });
+
+    myFS = LocalFileSystem.getInstance();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myFS = null;
+    super.tearDown();
+  }
+
   public void testChildrenAccessedButNotCached() throws Exception {
     File dir = createTempDirectory(false);
     ManagingFS managingFS = ManagingFS.getInstance();
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(vFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertFalse(managingFS.wereChildrenAccessed(vFile));
@@ -59,12 +100,12 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     boolean subChildCreated = subChild.createNewFile();
     assertTrue(subChildCreated);
 
-    VirtualFile childVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(child.getPath().replace(File.separatorChar, '/'));
+    VirtualFile childVFile = myFS.refreshAndFindFileByPath(child.getPath().replace(File.separatorChar, '/'));
     assertNotNull(childVFile);
     assertFalse(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
 
-    VirtualFile subdirVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subdirVFile = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(subdirVFile);
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
@@ -77,7 +118,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertFalse(managingFS.areChildrenLoaded(subdirVFile));
     assertFalse(managingFS.wereChildrenAccessed(subdirVFile));
 
-    VirtualFile subChildVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(subChild.getPath().replace(File.separatorChar, '/'));
+    VirtualFile subChildVFile = myFS.refreshAndFindFileByPath(subChild.getPath().replace(File.separatorChar, '/'));
     assertNotNull(subChildVFile);
     assertTrue(managingFS.areChildrenLoaded(vFile));
     assertTrue(managingFS.wereChildrenAccessed(vFile));
@@ -88,7 +129,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   public void testRefreshAndFindFile() throws Exception {
     File dir = createTempDirectory();
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile vFile = myFS.refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(vFile);
     vFile.getChildren();
 
@@ -100,7 +141,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     File subdir = new File(dir, "aaa");
     assertTrue(subdir.mkdir());
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile file = myFS.refreshAndFindFileByPath(subdir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(file);
   }
 
@@ -108,8 +149,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = LocalFileSystem.getInstance().findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = LocalFileSystem.getInstance().findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile fileToCopy = fromVDir.createChildData(this, "temp_file");
@@ -125,8 +166,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
 
-    VirtualFile fromVDir = LocalFileSystem.getInstance().findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
-    VirtualFile toVDir = LocalFileSystem.getInstance().findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath().replace(File.separatorChar, '/'));
+    VirtualFile toVDir = myFS.findFileByPath(toDir.getPath().replace(File.separatorChar, '/'));
     assertNotNull(fromVDir);
     assertNotNull(toVDir);
     final VirtualFile dirToCopy = fromVDir.createChildDirectory(this, "dir");
@@ -135,57 +176,64 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     final String newName = "dir";
     final VirtualFile dirCopy = dirToCopy.copy(this, toVDir, newName);
     assertEquals(newName, dirCopy.getName());
-    PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
+    PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir);
   }
 
   public void testUnicodeNames() throws Exception {
     final File dirFile = createTempDirectory();
     final String name = "te\u00dft123123123.txt";
     final File childFile = new File(dirFile, name);
-    assert childFile.createNewFile() || childFile.exists() : childFile;
+    boolean created = childFile.createNewFile();
+    assert created || childFile.exists() : childFile;
 
-    final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dirFile);
+    final VirtualFile dir = myFS.refreshAndFindFileByIoFile(dirFile);
     assertNotNull(dir);
 
-    final VirtualFile child = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(childFile);
+    final VirtualFile child = myFS.refreshAndFindFileByIoFile(childFile);
     assertNotNull(child);
 
     assertTrue(childFile.delete());
   }
 
   public void testFindRoot() throws IOException {
-    VirtualFile root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
+    VirtualFile root = myFS.findFileByPath("wrong_path");
     assertNull(root);
 
     VirtualFile root2;
     if (SystemInfo.isWindows) {
-      root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
+      root = myFS.findFileByPath("\\\\unit-133");
       assertNotNull(root);
-      root2 = LocalFileSystem.getInstance().findFileByPath("//UNIT-133");
+      root2 = myFS.findFileByPath("//UNIT-133");
       assertNotNull(root2);
       assertEquals(String.valueOf(root2), root, root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
-      root = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133"));
+      root = myFS.findFileByIoFile(new File("\\\\unit-133"));
       assertNotNull(root);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
       if (new File("c:").exists()) {
-        root = LocalFileSystem.getInstance().findFileByPath("c:");
+        root = myFS.findFileByPath("c:");
         assertNotNull(root);
         assertEquals("C:/", root.getPath());
 
-        root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
-        assertEquals(String.valueOf(root2), root, root2);
+        root2 = myFS.findFileByPath("C:\\");
+        assertSame(String.valueOf(root), root, root2);
+
+        VirtualFileManager fm = VirtualFileManager.getInstance();
+        root = fm.findFileByUrl("file://C:/");
+        assertNotNull(root);
+        root2 = fm.findFileByUrl("file:///c:/");
+        assertSame(String.valueOf(root), root, root2);
       }
     }
     else if (SystemInfo.isUnix) {
-      root = LocalFileSystem.getInstance().findFileByPath("/");
+      root = myFS.findFileByPath("/");
       assertNotNull(root);
       assertEquals(root.getPath(), "/");
     }
 
-    root = LocalFileSystem.getInstance().findFileByPath("");
+    root = myFS.findFileByPath("");
     assertNotNull(root);
 
     File jarFile = IoTestUtil.createTestJar();
@@ -204,7 +252,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   public void testFileLength() throws Exception {
     File file = FileUtil.createTempFile("test", "txt");
     FileUtil.writeToFile(file, "hello");
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
     String s = VfsUtilCore.loadText(virtualFile);
     assertEquals("hello", s);
@@ -233,12 +281,12 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       assertTrue(targetFile.createNewFile());
       final File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
 
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
+      final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
       file.setBinaryContent("hello".getBytes("UTF-8"), 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
-      final VirtualFile check = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(hardLinkFile);
+      final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
       assertNotNull(check);
       assertEquals(file.getLength(), check.getLength());
       assertEquals("hello", VfsUtilCore.loadText(check));
@@ -264,7 +312,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     String parent = FileUtil.toSystemIndependentName(file.getParent());
     VirtualDirectoryImpl.allowRootAccess(parent);
     try {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
 
       NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
@@ -283,9 +331,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     String content = "";
     FileUtil.writeToFile(new File(testDir, "Foo.java"), content);
 
-    LocalFileSystem local = LocalFileSystem.getInstance();
-    VirtualFile virtualDir = local.findFileByIoFile(testDir);
-    assert virtualDir != null : virtualDir;
+    VirtualFile virtualDir = myFS.findFileByIoFile(testDir);
+    assert virtualDir != null : testDir;
     virtualDir.getChildren();
     virtualDir.refresh(false, true);
     checkChildCount(virtualDir, 1);
@@ -308,7 +355,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
   public void testSingleFileRootRefresh() throws Exception {
     File file = FileUtil.createTempFile("test.", ".txt");
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
     assertTrue(virtualFile.exists());
     assertTrue(virtualFile.isValid());
@@ -332,14 +379,206 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     final File dir = FileUtil.createTempDirectory("test.", ".dir");
     final File file = FileUtil.createTempFile(dir, "test\\", "\\txt", true);
 
-    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    final VirtualFile vDir = myFS.refreshAndFindFileByIoFile(dir);
     assertNotNull(vDir);
     assertEquals(0, vDir.getChildren().length);
 
     ((VirtualFileSystemEntry)vDir).markDirtyRecursively();
     vDir.refresh(false, true);
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    final VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
     assertNull(vFile);
+  }
+
+  public void testNoMoreFakeRoots() throws Exception {
+    try {
+      PersistentFS.getInstance().findRoot("", myFS);
+      fail("should fail by assertion in PersistentFsImpl.findRoot()");
+    }
+    catch (AssertionError e) {
+      String message = e.getMessage();
+      assertTrue(message, message.startsWith("Invalid root"));
+    }
+  }
+
+  public void testCopyToPointDir() throws Exception {
+    File top = createTempDirectory(false);
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File file = IoTestUtil.createTestFile(top, "file.txt", "hi there");
+
+    VirtualFile topDir = myFS.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    VirtualFile sourceFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(sourceFile);
+    VirtualFile parentDir = myFS.refreshAndFindFileByIoFile(sub);
+    assertNotNull(parentDir);
+    assertEquals(2, topDir.getChildren().length);
+
+    try {
+      sourceFile.copy(this, parentDir, ".");
+      fail("Copying a file into a '.' path should have failed");
+    }
+    catch (IOException e) {
+      System.out.println(e.getMessage());
+    }
+
+    topDir.refresh(false, true);
+    assertTrue(topDir.exists());
+    assertEquals(2, topDir.getChildren().length);
+  }
+
+  public void testFileCaseChange() throws Exception {
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      System.err.println("Ignored: case-insensitive FS required");
+      return;
+    }
+
+    File top = createTempDirectory(false);
+    File file = IoTestUtil.createTestFile(top, "file.txt", "test");
+    File intermediate = new File(top, "_intermediate_");
+
+    VirtualFile topDir = myFS.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    VirtualFile sourceFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(sourceFile);
+
+    String newName = StringUtil.capitalize(file.getName());
+    FileUtil.rename(file, intermediate);
+    FileUtil.rename(intermediate, new File(top, newName));
+    topDir.refresh(false, true);
+    assertFalse(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
+    assertTrue(sourceFile.isValid());
+    assertEquals(newName, sourceFile.getName());
+
+    topDir.getChildren();
+    newName = newName.toLowerCase();
+    FileUtil.rename(file, intermediate);
+    FileUtil.rename(intermediate, new File(top, newName));
+    topDir.refresh(false, true);
+    assertTrue(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
+    assertTrue(sourceFile.isValid());
+    assertEquals(newName, sourceFile.getName());
+  }
+
+  public void testPartialRefresh() throws Exception {
+    File top = createTempDirectory(false);
+    doTestPartialRefresh(top);
+  }
+
+  public static void doTestPartialRefresh(@NotNull File top) throws IOException {
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File file = IoTestUtil.createTestFile(top, "sub.txt");
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    NewVirtualFile subDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(sub);
+    assertNotNull(subDir);
+    NewVirtualFile subFile = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file);
+    assertNotNull(subFile);
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subDir.isDirty());
+    assertFalse(subFile.isDirty());
+
+    subFile.markDirty();
+    subDir.markDirty();
+    assertTrue(topDir.isDirty());
+    assertTrue(subFile.isDirty());
+    assertTrue(subDir.isDirty());
+
+    topDir.refresh(false, false);
+    assertFalse(subFile.isDirty());
+    assertTrue(subDir.isDirty());  // should stay unvisited after non-recursive refresh
+
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subFile.isDirty());
+    assertFalse(subDir.isDirty());
+  }
+
+  public void testSymlinkTargetBlink() throws Exception {
+    if (!SystemInfo.areSymLinksSupported) {
+      System.err.println("Ignored: symlinks not supported");
+      return;
+    }
+
+    File top = createTempDirectory(true);
+    File target = IoTestUtil.createTestDir(top, "target");
+    File link = IoTestUtil.createSymLink(target.getPath(), top.getPath() + "/link");
+
+    VirtualFile vTop = myFS.refreshAndFindFileByIoFile(top);
+    assertNotNull(vTop);
+    assertTrue(vTop.isValid());
+    VirtualFile vTarget = myFS.refreshAndFindFileByIoFile(target);
+    assertNotNull(vTarget);
+    assertTrue(vTarget.isValid());
+    VirtualFile vLink = myFS.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
+
+    FileUtil.delete(target);
+    vTop.refresh(false, true);
+    assertFalse(vTarget.isValid());
+    assertFalse(vLink.isValid());
+    vLink = myFS.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertFalse(vLink.isDirectory());
+
+    FileUtil.createDirectory(target);
+    vTop.refresh(false, true);
+    assertFalse(vLink.isValid());
+    vLink = myFS.refreshAndFindFileByIoFile(link);
+    assertNotNull(vLink);
+    assertTrue(vLink.isValid());
+    assertTrue(vLink.isDirectory());
+  }
+
+  public void testInterruptedRefresh() throws Exception {
+    File top = createTempDirectory(false);
+    doTestInterruptedRefresh(top);
+  }
+
+  public static void doTestInterruptedRefresh(@NotNull File top) throws Exception {
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File subSub = IoTestUtil.createTestDir(sub, "sub_sub");
+    File file1 = IoTestUtil.createTestFile(sub, "sub_file_to_stop_at");
+    File file2 = IoTestUtil.createTestFile(subSub, "sub_sub_file");
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    NewVirtualFile subFile1 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file1);
+    assertNotNull(subFile1);
+    NewVirtualFile subFile2 = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file2);
+    assertNotNull(subFile2);
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subFile1.isDirty());
+    assertFalse(subFile2.isDirty());
+
+    try {
+      subFile1.markDirty();
+      subFile2.markDirty();
+      RefreshWorker.setCancellingCondition(new Function<VirtualFile, Boolean>() {
+        @Override
+        public Boolean fun(VirtualFile file) {
+          return "sub_file_to_stop_at".equals(file.getName());
+        }
+      });
+      topDir.refresh(false, true);
+      // should remain dirty after aborted refresh
+      assertTrue(subFile1.isDirty());
+      assertTrue(subFile2.isDirty());
+
+      RefreshWorker.setCancellingCondition(null);
+      topDir.refresh(false, true);
+      assertFalse(topDir.isDirty());
+      assertFalse(subFile1.isDirty());
+      assertFalse(subFile2.isDirty());
+    }
+    finally {
+      RefreshWorker.setCancellingCondition(null);
+    }
   }
 }

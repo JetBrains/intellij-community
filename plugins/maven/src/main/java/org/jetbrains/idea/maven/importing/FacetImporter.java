@@ -20,6 +20,7 @@ import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -67,8 +68,11 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
                          MavenProjectChanges changes,
                          MavenModifiableModelsProvider modifiableModelsProvider) {
     prepareImporter(mavenProject);
-    disableFacetAutodetection(module, modifiableModelsProvider);
-    ensureFacetExists(module, mavenProject, modifiableModelsProvider);
+
+    if (!isFacetDetectionDisabled(module.getProject())) {
+      disableFacetAutodetection(module, modifiableModelsProvider);
+      ensureFacetExists(module, mavenProject, modifiableModelsProvider);
+    }
   }
 
   private void ensureFacetExists(Module module, MavenProject mavenProject, MavenModifiableModelsProvider modifiableModelsProvider) {
@@ -109,7 +113,9 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     FACET_TYPE f = findFacet(modifiableModelsProvider.getFacetModel(module));
     if (f == null) return; // facet may has been removed between preProcess and process calls
 
-    reimportFacet(modifiableModelsProvider, module, rootModel, f, mavenModel, mavenProject, changes, mavenProjectToModuleName, postTasks);
+    if (!isFacetDetectionDisabled(module.getProject())) {
+      reimportFacet(modifiableModelsProvider, module, rootModel, f, mavenModel, mavenProject, changes, mavenProjectToModuleName, postTasks);
+    }
   }
 
   private FACET_TYPE findFacet(FacetModel model) {
@@ -169,5 +175,13 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
 
   protected String getTargetExtension(MavenProject p) {
     return p.getPackaging();
+  }
+
+  protected boolean isFacetDetectionDisabled(Project project) {
+    final DetectionExcludesConfiguration excludesConfiguration = DetectionExcludesConfiguration.getInstance(project);
+    final FrameworkType frameworkType = FrameworkDetectionUtil.findFrameworkTypeForFacetDetector(myFacetType);
+    if (frameworkType == null) return false;
+
+    return excludesConfiguration.isExcludedFromDetection(frameworkType);
   }
 }

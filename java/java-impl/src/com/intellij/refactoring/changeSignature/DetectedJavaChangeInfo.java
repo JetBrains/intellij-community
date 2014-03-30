@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -25,7 +26,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -288,7 +288,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
               temporallyRevertChanges(method, oldText);
               doRefactor(processor);
             }
-          }, RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(currentMethod)), null);
+          }, RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(currentMethod)), null);
         }
 
         private void doRefactor(BaseRefactoringProcessor processor) {

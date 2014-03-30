@@ -29,26 +29,12 @@ import org.jetbrains.git4idea.util.ScriptGenerator;
  */
 public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttpAuthenticator> {
 
-  @NotNull
-  @Override
-  protected String getScriptTempFilePrefix() {
-    return "git-askpass-";
-  }
-
-  @NotNull
-  @Override
-  protected Class<?> getScriptMainClass() {
-    return GitAskPassApp.class;
+  protected GitHttpAuthService() {
+    super("git-askpass-", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
   }
 
   @Override
   protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
-  }
-
-  @NotNull
-  @Override
-  protected String getRpcHandlerName() {
-    return GitAskPassXmlRpcHandler.HANDLER_NAME;
   }
 
   @NotNull
@@ -62,7 +48,7 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
    */
   @NotNull
   public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project, @Nullable ModalityState state,
-                                                           @NotNull GitCommand command);
+                                                           @NotNull GitCommand command, @NotNull String url);
 
   /**
    * Internal handler implementation class, it is made public to be accessible via XML RPC.

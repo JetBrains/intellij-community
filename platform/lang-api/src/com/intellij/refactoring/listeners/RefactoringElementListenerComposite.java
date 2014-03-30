@@ -29,12 +29,14 @@ public class RefactoringElementListenerComposite implements RefactoringElementLi
     myListeners.add(listener);
   }
 
+  @Override
   public void elementMoved(@NotNull final PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementMoved(newElement);
     }
   }
 
+  @Override
   public void elementRenamed(@NotNull final PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementRenamed(newElement);

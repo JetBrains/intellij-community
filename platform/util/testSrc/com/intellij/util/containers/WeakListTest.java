@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,108 +13,126 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.containers;
 
+import org.junit.Test;
+
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
-public class WeakListTest extends WeaksTestCase {
-  private final WeakList<Object> myWeakList = new WeakList<Object>(myCollection);
+import static org.junit.Assert.*;
 
+public class WeakListTest {
+  private static final String HARD_REFERENCED = "xxx";
+
+  private final WeakList<Object> myWeakList = new WeakList<Object>();
+  private final List<Object> myHolder = new ArrayList<Object>();
+
+  @Test
   public void testCompresses() {
-    for (int i = 0; i < 20; i++) {
-      addElement(new Object(), myCollection);
-    }
-    assertEquals(20, myWeakList.size());
-    checkSameElements(null);
-    String obj = "xxx";
-    myHolder.add(obj);
-    myWeakList.add(obj);
-    checkSameElements(null);
+    fillWithObjects(20);
+    assertEquals(20, myWeakList.listSize());
+    addElement(HARD_REFERENCED);
+    assertEquals(21, myWeakList.listSize());
     myHolder.clear();
-    gc();
-    assertEquals(21, myWeakList.size());
-    checkForAliveCount(1); //obj is held here in the codeblock
-
-    myWeakList.add(new Object());
-    assertTrue(String.valueOf(myWeakList.size()), myWeakList.size() < 20);
-    gc();
-    myHolder.add(obj);
-    checkSameNotNulls(null);
+    while (myWeakList.toStrongList().size() == 21) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
+    synchronized (myWeakList) {
+      boolean processed = myWeakList.processQueue();
+      assertTrue(processed); // some refs must be in the queue
+    }
+    //HARD_REFERENCED is held there
+    assertEquals(1, myWeakList.listSize());
   }
 
+  @Test
   public void testClear() {
-    for (int i = 0; i < 20; i++) {
-      addElement(new Object(), myCollection);
-    }
-    assertEquals(20, myWeakList.size());
+    fillWithObjects(20);
+    assertEquals(20, myWeakList.listSize());
     myHolder.clear();
     gc();
     myWeakList.clear();
     assertFalse(myWeakList.iterator().hasNext());
   }
-  
+
+  @Test
   public void testIterator() {
-    myCollection.add(new Object());
-    addElement(new Object(), myCollection);
-    myCollection.add(new Object());
-    addElement(new Object(), myCollection);
+    int N = 10;
+    fillWithInts(N);
     gc();
-    checkForAliveCount(2);
+    Iterator<?> iterator = myWeakList.iterator();
+    for (int i = 0; i < N; i++) {
+      assertTrue(iterator.hasNext());
+      assertTrue(iterator.hasNext());
+      int element = (Integer)iterator.next();
+      assertEquals(i, element);
+    }
+    assertFalse(iterator.hasNext());
+
     int elementCount = 0;
     for (Object element : myWeakList) {
-      assertNotNull(element);
+      assertEquals(elementCount, element);
       elementCount++;
     }
-    assertEquals(2, elementCount);
+    assertEquals(N, elementCount);
   }
-  
+
+  @Test
   public void testRemoveViaIterator() {
-    addElement(new Object(), myCollection);
-    myCollection.add(new Object());
-    addElement(new Object(), myCollection);
-    myCollection.add(new Object());
-    addElement(new Object(), myCollection);
+    addElement(new Object());
+    addElement(new Object());
+    addElement(new Object());
     Iterator<Object> iterator = myWeakList.iterator();
     assertSame(myHolder.get(0), iterator.next());
-    while (myHolder.get(1) != iterator.next());
-    gc();
-    checkForAliveCount(4);
     iterator.remove();
     gc();
-    checkForAliveCount(3);
+    assertEquals(2, myWeakList.toStrongList().size());
     iterator.next();
     gc();
-    checkForAliveCount(2);
+    assertEquals(2, myWeakList.toStrongList().size());
     assertSame(myHolder.get(2), iterator.next());
     assertFalse(iterator.hasNext());
     myHolder.remove(1);
-    checkSameNotNulls(null);
-    checkSameElements(new Runnable() {
-      @Override
-      public void run() {
-        myCollection.compress(-1);
-      }
-    });
   }
 
+  @Test
+  public void testRemoveAllViaIterator() {
+    int N = 10;
+    fillWithInts(N);
+    gc();
+    Iterator<Object> iterator = myWeakList.iterator();
+    for (int i = 0; i < N; i++) {
+      assertTrue(iterator.hasNext());
+      int element = (Integer)iterator.next();
+      assertEquals(i, element);
+      iterator.remove();
+    }
+    assertFalse(iterator.hasNext());
+    assertTrue(myWeakList.toStrongList().isEmpty());
+  }
+
+  @Test
   public void testRemoveLastViaIterator() {
-    addElement(new Object(), myCollection);
-    addElement(new Object(), myCollection);
+    addElement(new Object());
+    addElement(new Object());
     Iterator<Object> iterator = myWeakList.iterator();
     iterator.next();
     assertTrue(iterator.hasNext());
     iterator.next();
     assertFalse(iterator.hasNext());
     iterator.remove();
-    assertFalse(iterator.hasNext());
-    myHolder.remove(1);
-    checkSameNotNulls(null);
   }
 
+  @Test
   public void testIteratorKeepsFirstElement() {
-    addElement(new Object(), myCollection);
-    addElement(new Object(), myCollection);
+    addElement(new Object());
+    addElement(new Object());
     Iterator<Object> iterator = myWeakList.iterator();
     assertTrue(iterator.hasNext());
     myHolder.clear();
@@ -122,11 +140,12 @@ public class WeakListTest extends WeaksTestCase {
     assertNotNull(iterator.next());
     assertFalse(iterator.hasNext());
   }
-  
+
+  @Test
   public void testIteratorKeepsNextElement() {
-    addElement(new Object(), myCollection);
-    addElement(new Object(), myCollection);
-    addElement(new Object(), myCollection);
+    addElement(new Object());
+    addElement(new Object());
+    addElement(new Object());
     Iterator<Object> iterator = myWeakList.iterator();
     iterator.next();
     assertTrue(iterator.hasNext());
@@ -134,5 +153,82 @@ public class WeakListTest extends WeaksTestCase {
     gc();
     assertNotNull(iterator.next());
     assertFalse(iterator.hasNext());
+  }
+
+  @Test
+  public void testIteratorRemoveEmpty() {
+    Iterator<Object> iterator = myWeakList.iterator();
+    assertFalse(iterator.hasNext());
+    try {
+      iterator.next();
+      fail("must not allow to next");
+    }
+    catch (NoSuchElementException ignored) {
+    }
+    try {
+      iterator.remove();
+      fail("must not allow to remove");
+    }
+    catch (NoSuchElementException ignored) {
+    }
+  }
+
+  @Test
+  public void testElementGetsCollectedInTheMiddleAndListRebuildsItself() {
+    int N = 200;
+    fillWithObjects(N);
+    String x = new String("xxx");
+    addElement(x);
+    fillWithObjects(N);
+    gc();
+    assertEquals(N + 1 + N, myWeakList.listSize());
+    myHolder.clear();
+    while (myWeakList.toStrongList().size() == N + 1 + N) {
+      synchronized (myWeakList) {
+        gc();
+      }
+    }
+    boolean removed = myWeakList.remove("zzz");
+    assertFalse(removed);
+    assertEquals(1, myWeakList.listSize());
+    Object element = myWeakList.iterator().next();
+    assertSame(x, element);
+  }
+
+  @Test
+  public void testIsEmpty() {
+    assertTrue(myWeakList.isEmpty());
+    addElement(new Object());
+    assertFalse(myWeakList.isEmpty());
+    myHolder.clear();
+    gc();
+    assertEquals(1, myWeakList.listSize());
+    assertTrue(myWeakList.isEmpty());
+  }
+
+  private void addElement(Object element) {
+    myWeakList.add(element);
+    myHolder.add(element);
+  }
+
+  private void fillWithObjects(int n) {
+    for (int i = n - 1; i >= 0; i--) {
+      addElement(new Object());
+    }
+  }
+
+  private void fillWithInts(int n) {
+    for (int i = 0; i < n; i++) {
+      addElement(i);
+    }
+  }
+
+  private static void gc() {
+    ConcurrentMapsTest.tryGcSoftlyReachableObjects();
+    WeakReference<Object> weakReference = new WeakReference<Object>(new Object());
+    do {
+      System.gc();
+    }
+    while (weakReference.get() != null);
   }
 }

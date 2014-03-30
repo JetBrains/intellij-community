@@ -134,6 +134,14 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     doTest(true);
   }
 
+  public void testFromClassInitializer() throws Exception {
+    doTest(false);
+  }
+
+  public void testPropagatedParams() throws Exception {
+    doTest(false);
+  }
+
   public void testParameterWithWriteAccess() throws Exception {
     try {
       doTest(false);

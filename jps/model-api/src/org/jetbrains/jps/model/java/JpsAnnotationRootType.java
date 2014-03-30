@@ -22,4 +22,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
  */
 public class JpsAnnotationRootType extends JpsOrderRootType {
   public static final JpsAnnotationRootType INSTANCE = new JpsAnnotationRootType();
+
+  private JpsAnnotationRootType() {
+  }
 }

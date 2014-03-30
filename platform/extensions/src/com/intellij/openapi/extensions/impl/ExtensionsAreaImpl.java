@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
@@ -38,7 +37,7 @@ import java.util.*;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ExtensionsAreaImpl implements ExtensionsArea {
   private final LogProvider myLogger;
-  private static final String ATTRIBUTE_AREA = "area";
+  public static final String ATTRIBUTE_AREA = "area";
 
   private static final Map<String,String> ourDefaultEPs = new HashMap<String, String>();
 
@@ -51,7 +50,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaPicoContainerImpl myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
-  private final Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
+  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new HashMap<String, Throwable>():null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
@@ -69,8 +68,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     initialize();
   }
 
-  public ExtensionsAreaImpl(MutablePicoContainer picoContainer, LogProvider logger) {
-    this(null, null, picoContainer, logger);
+  @TestOnly
+  ExtensionsAreaImpl(MutablePicoContainer parentPicoContainer, @NotNull LogProvider logger) {
+    this(null, null, parentPicoContainer, logger);
   }
 
   @TestOnly
@@ -148,7 +148,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     ExtensionComponentAdapter adapter;
     final PicoContainer container = getPluginContainer(pluginId.getIdString());
-    final ExtensionPoint extensionPoint = getExtensionPoint(epName);
+    final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
@@ -161,14 +161,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);
-    getExtensionPoint(epName).registerExtensionAdapter(adapter);
+    extensionPoint.registerExtensionAdapter(adapter);
   }
 
   private static boolean shouldDeserializeInstance(Element extensionElement) {
     // has content
     if (!extensionElement.getContent().isEmpty()) return true;
     // has custom attributes
-    for (Attribute attribute : (List<Attribute>)extensionElement.getAttributes()) {
+    for (Attribute attribute : extensionElement.getAttributes()) {
       final String name = attribute.getName();
       if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name)) {
         return true;
@@ -177,7 +177,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return false;
   }
 
-  private static String extractEPName(final Element extensionElement) {
+  public static String extractEPName(final Element extensionElement) {
     String epName = extensionElement.getAttributeValue("point");
 
     if (epName == null) {
@@ -229,7 +229,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     ExtensionComponentAdapter adapter = myExtensionElement2extension.remove(extensionElement);
     if (adapter == null) return;
-    if (getExtensionPoint(epName).unregisterComponentAdapter(adapter)) {
+    if (getExtensionPoint(epName).unregisterExtensionAdapter(adapter)) {
       MutablePicoContainer pluginContainer = internalGetPluginContainer();
       pluginContainer.unregisterComponent(adapter.getComponentKey());
     }
@@ -335,35 +335,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @Override
-  public void registerAreaExtensionsAndPoints(@NotNull final PluginDescriptor pluginDescriptor,
-                                              @Nullable List<Element> extensionsPoints,
-                                              @Nullable List<Element> extensions) {
-    final String areaClass = getAreaClass();
-    if (extensionsPoints != null) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, size = extensionsPoints.size(); i < size; ++i) {
-        Element element = extensionsPoints.get(i);
-        if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
-          registerExtensionPoint(pluginDescriptor, element);
-        }
-      }
-    }
-
-    if (extensions != null) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, size = extensions.size(); i < size; ++i) {
-        Element element = extensions.get(i);
-        if (hasExtensionPoint(extractEPName(element))) {
-          registerExtension(pluginDescriptor, element);
-        }
-        else {
-          //todo check that other classes have EP
-        }
-      }
-    }
-  }
-
   private static boolean equal(final String areaClass, final String anotherAreaClass) {
     return areaClass == null ? anotherAreaClass == null : areaClass.equals(anotherAreaClass);
   }
@@ -404,6 +375,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     return extensionPoint;
   }
 
+  @NotNull
   @Override
   @SuppressWarnings({"unchecked"})
   public <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {

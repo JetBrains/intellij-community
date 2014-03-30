@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,17 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
-*/
+ */
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
-
-  @NonNls static final String[] PRIMITIVES = new String[]{"boolean", "byte",
-    "char", "double", "float", "int", "long", "short"};
+  @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
+  @Override
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     try {
@@ -48,20 +48,26 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
     }
   }
 
+  @Override
   public String toString(final PsiType t, final ConvertContext context) {
-    return t == null? null:t.getCanonicalText();
+    return t == null ? null : t.getCanonicalText();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
-    final String str = genericDomValue.getStringValue();
-    if (str == null) {
+    final String typeText = genericDomValue.getStringValue();
+    if (typeText == null) {
       return PsiReference.EMPTY_ARRAY;
     }
+    return getReferences(genericDomValue.getValue(), typeText, 0, element);
+  }
+
+  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, @NotNull final PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     assert manipulator != null;
-    String trimmed = str.trim();
-    int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
+    String trimmed = typeText.trim();
+    int offset = manipulator.getRangeInElement(element).getStartOffset() + startOffsetInText + typeText.indexOf(trimmed);
     if (trimmed.startsWith(ARRAY_PREFIX)) {
       offset += ARRAY_PREFIX.length();
       if (trimmed.endsWith(";")) {
@@ -70,28 +76,34 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
         trimmed = trimmed.substring(ARRAY_PREFIX.length());
       }
     }
+
+    if (type != null) {
+      type = type.getDeepComponentType();
+    }
+    final boolean isPrimitiveType = type instanceof PsiPrimitiveType;
+
     return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
-      protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
-                                                   final boolean staticImport) {
-        return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport) {
+      @Override
+      @NotNull
+      protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
+        return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
+          @Override
           public boolean isSoft() {
             return true;
           }
 
+          @Override
           @NotNull
           public JavaResolveResult advancedResolve(final boolean incompleteCode) {
-            PsiType type = genericDomValue.getValue();
-            if (type != null) {
-              type = type.getDeepComponentType();
-            }
-            if (type instanceof PsiPrimitiveType) {
+            if (isPrimitiveType) {
               return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
             }
 
             return super.advancedResolve(incompleteCode);
           }
 
-          public void processVariants(final PsiScopeProcessor processor) {
+          @Override
+          public void processVariants(@NotNull final PsiScopeProcessor processor) {
             if (processor instanceof JavaCompletionProcessor) {
               ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
             } else {
@@ -99,11 +111,12 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
             }
           }
 
+          @Override
           @NotNull
           public Object[] getVariants() {
             final Object[] variants = super.getVariants();
             if (myIndex == 0) {
-              return ArrayUtil.mergeArrays(variants, PRIMITIVES);
+              return ArrayUtil.mergeArrays(variants, PRIMITIVES, ArrayUtil.OBJECT_ARRAY_FACTORY);
             }
             return variants;
           }

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -36,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
@@ -53,11 +56,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
   private TablePanelActionPolicy myActionPolicy;
   private final JLabel myTitleLabel;
 
-  public PropertyTablePanel(Project project) {
+  public PropertyTablePanel(final Project project) {
     myPropertyTable = new RadPropertyTable(project);
 
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
     int gridX = 0;
 
@@ -77,7 +79,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     actionGroup.addSeparator();
 
     RestoreDefault restoreDefault = new RestoreDefault(myPropertyTable);
-    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), null);
+    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
     actionGroup.add(restoreDefault);
 
     actionGroup.add(new ShowExpert(myPropertyTable));
@@ -93,14 +95,15 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                new Insets(2, 0, 2, 2), 0, 0));
 
     myActions = actionGroup.getChildren(null);
-    for (int i = 0; i < myActions.length; i++) {
-      AnAction action = myActions[i];
-      if (!(action instanceof Separator)) {
-        Presentation presentation = action.getTemplatePresentation();
-        ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-        myActionPanel.add(button);
-        presentation.putClientProperty(BUTTON_KEY, button);
+    for (AnAction action : myActions) {
+      if (action instanceof Separator) {
+        continue;
       }
+
+      Presentation presentation = action.getTemplatePresentation();
+      ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      myActionPanel.add(button);
+      presentation.putClientProperty(BUTTON_KEY, button);
     }
 
     actionGroup.add(new ShowColumns(myPropertyTable));
@@ -119,6 +122,12 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                            new Insets(0, 0, 0, 0), 0, 0));
 
     myPropertyTable.setPropertyTablePanel(this);
+
+    addMouseListener(new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        IdeFocusManager.getInstance(project).requestFocus(myPropertyTable, true);
+      }
+    });
   }
 
   public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
@@ -149,6 +158,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
       myActionPolicy = policy;
 
       for (AnAction action : myActions) {
+        if (action instanceof Separator) {
+          continue;
+        }
+
         boolean visible = policy.showAction(action);
 
         Presentation presentation = action.getTemplatePresentation();

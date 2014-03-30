@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ExtensionPointListener<T> {
-  void extensionAdded(@NotNull T extension, @Nullable final PluginDescriptor pluginDescriptor);
-  void extensionRemoved(@NotNull T extension, @Nullable final PluginDescriptor pluginDescriptor);
+  void extensionAdded(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor);
+
+  void extensionRemoved(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor);
+
+  class Adapter<T> implements ExtensionPointListener<T> {
+    @Override
+    public void extensionAdded(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor) { }
+
+    @Override
+    public void extensionRemoved(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor) { }
+  }
 }

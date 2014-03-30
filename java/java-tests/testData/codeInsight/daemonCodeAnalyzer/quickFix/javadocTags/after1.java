@@ -3,7 +3,7 @@ class a {
 /**
  * @throws Exception
  */
-public void <caret>run() throws Exception {
+public void run() throws Exception {
 
 }
 }

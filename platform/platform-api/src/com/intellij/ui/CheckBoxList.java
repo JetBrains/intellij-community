@@ -4,6 +4,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ import java.util.Map;
 public class CheckBoxList<T> extends JBList {
   private static final int DEFAULT_CHECK_BOX_WIDTH = 20;
   private CheckBoxListListener checkBoxListListener;
-  private BidirectionalMap<Object, JCheckBox> myItemMap = new BidirectionalMap<Object, JCheckBox>();
+  private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<T, JCheckBox>();
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
     this(new DefaultListModel(), checkBoxListListener);
@@ -39,6 +40,7 @@ public class CheckBoxList<T> extends JBList {
 
   public CheckBoxList(final DefaultListModel dataModel) {
     super();
+    //noinspection unchecked
     setModel(dataModel);
     setCellRenderer(new CellRenderer());
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -47,8 +49,7 @@ public class CheckBoxList<T> extends JBList {
       @Override
       public void keyTyped(KeyEvent e) {
         if (e.getKeyChar() == ' ') {
-          int[] indices = CheckBoxList.this.getSelectedIndices();
-          for (int index : indices) {
+          for (int index : getSelectedIndices()) {
             if (index >= 0) {
               JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
               setSelected(checkbox, index);
@@ -59,7 +60,7 @@ public class CheckBoxList<T> extends JBList {
     });
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (isEnabled()) {
           int index = locationToIndex(e.getPoint());
 
@@ -88,7 +89,8 @@ public class CheckBoxList<T> extends JBList {
   public void setStringItems(final Map<String, Boolean> items) {
     clear();
     for (Map.Entry<String, Boolean> entry : items.entrySet()) {
-      addItem(entry.getKey(), entry.getKey(), entry.getValue());
+      //noinspection unchecked
+      addItem((T)entry.getKey(), entry.getKey(), entry.getValue());
     }
   }
 
@@ -100,19 +102,26 @@ public class CheckBoxList<T> extends JBList {
     }
   }
 
-  private void addItem(Object item, String text, boolean selected) {
+  public void addItem(T item, String text, boolean selected) {
     JCheckBox checkBox = new JCheckBox(text, selected);
     myItemMap.put(item, checkBox);
+    //noinspection unchecked
     ((DefaultListModel) getModel()).addElement(checkBox);
   }
 
-  public Object getItemAt(int index) {
+  public void updateItem(@NotNull T oldItem, @NotNull T newItem) {
+    JCheckBox checkBox = myItemMap.remove(oldItem);
+    myItemMap.put(newItem, checkBox);
+  }
+
+  @Nullable
+  public T getItemAt(int index) {
     JCheckBox checkBox = (JCheckBox)getModel().getElementAt(index);
-    List<Object> value = myItemMap.getKeysByValue(checkBox);
+    List<T> value = myItemMap.getKeysByValue(checkBox);
     return value == null || value.isEmpty() ? null : value.get(0);
   }
 
-  private void clear() {
+  public void clear() {
     ((DefaultListModel) getModel()).clear();
     myItemMap.clear();
   }
@@ -121,12 +130,12 @@ public class CheckBoxList<T> extends JBList {
     return ((JCheckBox)getModel().getElementAt(index)).isSelected();  
   }
 
-  public boolean isItemSelected(Object item) {
+  public boolean isItemSelected(T item) {
     JCheckBox checkBox = myItemMap.get(item);
     return checkBox != null && checkBox.isSelected();
   }
 
-  public void setItemSelected(Object item, boolean selected) {
+  public void setItemSelected(T item, boolean selected) {
     JCheckBox checkBox = myItemMap.get(item);
     if (checkBox != null) {
       checkBox.setSelected(selected);
@@ -141,6 +150,7 @@ public class CheckBoxList<T> extends JBList {
     // fire change notification in case if we've already initialized model
     final ListModel model = getModel();
     if (model instanceof DefaultListModel) {
+      //noinspection unchecked
       ((DefaultListModel)model).setElementAt(getModel().getElementAt(index), index);
     }
 
@@ -166,6 +176,7 @@ public class CheckBoxList<T> extends JBList {
       myBorder = new EmptyBorder(borderInsets);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       JCheckBox checkbox = (JCheckBox)value;
       if (!UIUtil.isUnderNimbusLookAndFeel()) {

@@ -19,8 +19,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.ListIterator;
 import java.util.Set;
 
 public class SuspendManagerUtil {
@@ -36,9 +34,8 @@ public class SuspendManagerUtil {
   }
 
   public static SuspendContextImpl findContextByThread(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (ListIterator<SuspendContextImpl> iterator = ((SuspendManagerImpl) suspendManager).getPausedContexts().listIterator(); iterator.hasNext();) {
-      SuspendContextImpl context = iterator.next();
-      if(context.getThread() == thread) {
+    for (SuspendContextImpl context : ((SuspendManagerImpl)suspendManager).getPausedContexts()) {
+      if (context.getThread() == thread) {
         return context;
       }
     }
@@ -78,8 +75,7 @@ public class SuspendManagerUtil {
     LOG.assertTrue(context.myResumedThreads == null);
 
     if(data.myResumedThreads != null) {
-      for (Iterator<ThreadReferenceProxyImpl> iterator = data.myResumedThreads.iterator(); iterator.hasNext();) {
-        ThreadReferenceProxyImpl resumedThreads = iterator.next();
+      for (ThreadReferenceProxyImpl resumedThreads : data.myResumedThreads) {
         resumedThreads.resume();
       }
       context.myResumedThreads = data.myResumedThreads;
@@ -101,8 +97,7 @@ public class SuspendManagerUtil {
       LOG.debug("Resuming SuspendContextImpl...");
     }
     if(context.myResumedThreads != null) {
-      for (Iterator<ThreadReferenceProxyImpl> iterator = context.myResumedThreads.iterator(); iterator.hasNext();) {
-        ThreadReferenceProxyImpl resumedThreads = iterator.next();
+      for (ThreadReferenceProxyImpl resumedThreads : context.myResumedThreads) {
         resumedThreads.suspend();
       }
       context.myResumedThreads = null;

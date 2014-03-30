@@ -15,8 +15,14 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * Arrangement rule which uses {@link StdArrangementEntryMatcher standard settings-based matcher}.
@@ -26,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/28/12 2:59 PM
  */
-public class StdArrangementMatchRule extends ArrangementMatchRule implements Cloneable {
+public class StdArrangementMatchRule extends ArrangementMatchRule implements Cloneable, Comparable<StdArrangementMatchRule> {
 
   public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher) {
     super(matcher);
@@ -45,5 +51,37 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
   @Override
   public StdArrangementMatchRule clone() {
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(getMatcher().getCondition().clone()), getOrderType());
+  }
+
+  @Override
+  public int compareTo(@NotNull StdArrangementMatchRule o) {
+    final Set<ArrangementSettingsToken> tokens = ArrangementUtil.extractTokens(getMatcher().getCondition()).keySet();
+    final Set<ArrangementSettingsToken> tokens1 = ArrangementUtil.extractTokens(o.getMatcher().getCondition()).keySet();
+    if (tokens1.containsAll(tokens)) {
+      return tokens.containsAll(tokens1) ? 0 : 1;
+    }
+    else {
+      if (tokens.containsAll(tokens1)) {
+        return -1;
+      }
+
+      final String entryType = getEntryType(tokens);
+      final String entryType1 = getEntryType(tokens1);
+      final int compare = StringUtil.compare(entryType, entryType1, false);
+      if (compare != 0 || tokens.size() == tokens1.size()) {
+        return compare;
+      }
+      return tokens.size() < tokens1.size() ? 1 : -1;
+    }
+  }
+
+  @Nullable
+  private static String getEntryType(@NotNull Set<ArrangementSettingsToken> tokens) {
+    for (ArrangementSettingsToken token : tokens) {
+      if (StdArrangementTokenType.ENTRY_TYPE.is(token)) {
+        return token.getId();
+      }
+    }
+    return null;
   }
 }

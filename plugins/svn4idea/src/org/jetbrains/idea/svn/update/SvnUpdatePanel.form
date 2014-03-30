@@ -57,6 +57,7 @@
                 </constraints>
                 <properties>
                   <text value="Ignore &amp;Externals"/>
+                  <visible value="true"/>
                 </properties>
               </component>
               <component id="3f0c3" class="org.jetbrains.idea.svn.DepthCombo" binding="myDepthCombo" custom-create="true">

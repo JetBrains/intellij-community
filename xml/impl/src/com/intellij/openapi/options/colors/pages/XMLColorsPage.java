@@ -24,6 +24,8 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +37,7 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
     new AttributesDescriptor(OptionsBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
@@ -70,17 +73,19 @@ public class XMLColorsPage implements ColorSettingsPage {
     return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
            "<!DOCTYPE index>\n" +
            "<!-- Some xml example -->\n" +
-           "<index version=\"1.0\">\n" +
+           "<index version=\"1.0\" xmlns:<bg><np>pf</np></bg>=\"http://test\">\n" +
            "   <name>Main Index</name>\n" +
            "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
            "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n&amp; &#x00B7;" +
-           "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
+           "   <indexitem text=\"project\" target=\"project.management\"/>" +
+           "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
            "</index>";
   }
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return null;
+    return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
+                                    Pair.create("bg", XmlHighlighterColors.XML_TAG));
   }
 }

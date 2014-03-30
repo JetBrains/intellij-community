@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,7 @@ public class StorageData {
 
   final Map<String, Element> myComponentStates;
   protected final String myRootElementName;
-  private Integer myHash;
+  private int myHash = -1;
 
   public StorageData(final String rootElementName) {
     myComponentStates = new THashMap<String, Element>();
@@ -53,39 +54,33 @@ public class StorageData {
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-
   public void load(@NotNull Element rootElement) throws IOException {
-    final Element[] elements = JDOMUtil.getElements(rootElement);
-    for (Element element : elements) {
-      if (element.getName().equals(COMPONENT)) {
-        final String name = element.getAttributeValue(NAME);
+    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
+      String name = element.getAttributeValue(NAME);
+      if (name == null) {
+        LOG.info("Broken content in file : " + this);
+        continue;
+      }
 
-        if (name == null) {
-          LOG.info("Broken content in file : " + this);
-          continue;
+      iterator.remove();
+
+      if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
+        assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+
+        Element existingElement = myComponentStates.get(name);
+        if (existingElement != null) {
+          element = mergeElements(name, element, existingElement);
         }
 
-        element.detach();
-
-        if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-          assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-
-          Element existingElement = myComponentStates.get(name);
-
-          if (existingElement != null) {
-            element = mergeElements(name, element, existingElement);
-          }
-
-          myComponentStates.put(name, element);
-        }
+        myComponentStates.put(name, element);
       }
     }
   }
 
   private static Element mergeElements(final String name, final Element element1, final Element element2) {
     ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
-    XmlConfigurationMerger[] mergers = point.getExtensions();
-    for (XmlConfigurationMerger merger : mergers) {
+    for (XmlConfigurationMerger merger : point.getExtensions()) {
       if (merger.getComponentName().equals(name)) {
         return merger.merge(element1, element2);
       }
@@ -104,7 +99,7 @@ public class StorageData {
 
       if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
 
-      rootElement.addContent((Element)element.clone());
+      rootElement.addContent(element.clone());
     }
 
     return rootElement;
@@ -112,14 +107,12 @@ public class StorageData {
 
   @Nullable
   public Element getState(final String name) {
-    final Element e = myComponentStates.get(name);
-
-    if (e != null) {
-      assert e.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-      e.removeAttribute(NAME);
+    final Element element = myComponentStates.get(name);
+    if (element != null) {
+      assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+      element.removeAttribute(NAME);
     }
-
-    return e;
+    return element;
   }
 
   void removeState(final String componentName) {
@@ -131,17 +124,15 @@ public class StorageData {
     element.setName(COMPONENT);
 
     //componentName should be first!
-    final List attributes = new ArrayList(element.getAttributes());
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.removeAttribute(attr);
+    final List<Attribute> attributes = new ArrayList<Attribute>(element.getAttributes());
+    for (Attribute attribute : attributes) {
+      element.removeAttribute(attribute);
     }
 
     element.setAttribute(NAME, componentName);
 
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.setAttribute(attr.getName(), attr.getValue());
+    for (Attribute attribute : attributes) {
+      element.setAttribute(attribute.getName(), attribute.getValue());
     }
 
     myComponentStates.put(componentName, element);
@@ -154,32 +145,33 @@ public class StorageData {
   }
 
   public final int getHash() {
-    if (myHash == null) {
+    if (myHash == -1) {
       myHash = computeHash();
+      if (myHash == -1) {
+        myHash = 0;
+      }
     }
-    return myHash.intValue();
+    return myHash;
   }
 
   protected int computeHash() {
     int result = 0;
-
     for (String name : myComponentStates.keySet()) {
-      result = 31*result + name.hashCode();
-      result = 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
+      result = 31 * result + name.hashCode();
+      result = 31 * result + JDOMUtil.getTreeHash(myComponentStates.get(name));
     }
-
     return result;
   }
 
   protected void clearHash() {
-    myHash = null;
+    myHash = -1;
   }
 
   public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-    Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
+    Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
     bothStates.retainAll(storageData.myComponentStates.keySet());
 
-    Set<String> diffs = new HashSet<String>();
+    Set<String> diffs = new THashSet<String>();
     diffs.addAll(storageData.myComponentStates.keySet());
     diffs.addAll(myComponentStates.keySet());
     diffs.removeAll(bothStates);
@@ -198,7 +190,6 @@ public class StorageData {
       }
     }
 
-
     return diffs;
   }
 
@@ -211,7 +202,9 @@ public class StorageData {
   }
 
   public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-    if (pathMacroSubstitutor == null) return;
+    if (pathMacroSubstitutor == null) {
+      return;
+    }
 
     for (String componentName : myComponentStates.keySet()) {
       final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));

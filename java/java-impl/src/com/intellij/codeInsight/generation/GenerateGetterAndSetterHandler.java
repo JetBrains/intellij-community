@@ -36,7 +36,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     GenerationInfo[] getters = myGenerateGetterHandler.generateMemberPrototypes(aClass, original);
     GenerationInfo[] setters = myGenerateSetterHandler.generateMemberPrototypes(aClass, original);
 
-    if (getters.length > 0 && setters.length > 0){
+    if (getters.length + setters.length > 0){
       Collections.addAll(array, getters);
       Collections.addAll(array, setters);
     }

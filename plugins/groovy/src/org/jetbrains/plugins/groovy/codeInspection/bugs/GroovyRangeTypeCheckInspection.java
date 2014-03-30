@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -25,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -46,7 +45,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,6 +58,7 @@ import java.util.Properties;
 public class GroovyRangeTypeCheckInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection");
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
@@ -80,7 +79,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
   }
 
   @Override
-  protected GroovyFix buildFix(PsiElement location) {
+  protected GroovyFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;
     final PsiType type = range.getType();
     final List<GroovyFix> fixes = new ArrayList<GroovyFix>(3);
@@ -305,13 +304,11 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
         final GrCodeReferenceElement _ref =
           factory.createReferenceElementFromText(myInterfaceName + (addTypeParam ? "<" + generateTypeText(myPsiClass) + ">" : ""));
         final GrCodeReferenceElement ref = (GrCodeReferenceElement)list.add(_ref);
-        GrReferenceAdjuster.shortenReferences(ref);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
       }
       if (comparable != null && !myPsiClass.isInterface()) {
         final PsiMethod baseMethod = comparable.getMethods()[0];
-        final GrMethod prototype = GroovyOverrideImplementUtil.generateMethodPrototype(myPsiClass, baseMethod, substitutor);
-        final PsiElement anchor = OverrideImplementUtil.getDefaultAnchorToOverrideOrImplement(myPsiClass, baseMethod, substitutor);
-        GenerateMembersUtil.insert(myPsiClass, prototype, anchor, true);
+        OverrideImplementUtil.overrideOrImplement(myPsiClass, baseMethod);
       }
     }
 

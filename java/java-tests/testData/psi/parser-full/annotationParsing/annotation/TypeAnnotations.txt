@@ -1404,6 +1404,57 @@ PsiJavaFile:TypeAnnotations.java
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n  ')
+    PsiMethod:m
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:int
+        PsiKeyword:int('int')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:m('m')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiWhiteSpace(' ')
+      PsiAnnotation
+        PsiJavaToken:AT('@')
+        PsiJavaCodeReferenceElement:Slowpoke
+          PsiIdentifier:Slowpoke('Slowpoke')
+          PsiReferenceParameterList
+            <empty list>
+        PsiAnnotationParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACKET('[')
+      PsiJavaToken:RBRACKET(']')
+      PsiWhiteSpace(' ')
+      PsiAnnotation
+        PsiJavaToken:AT('@')
+        PsiJavaCodeReferenceElement:Slowbro
+          PsiIdentifier:Slowbro('Slowbro')
+          PsiReferenceParameterList
+            <empty list>
+        PsiAnnotationParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:LBRACKET('[')
+      PsiJavaToken:RBRACKET(']')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace(' ')
+        PsiReturnStatement
+          PsiKeyword:return('return')
+          PsiWhiteSpace(' ')
+          PsiLiteralExpression:null
+            PsiJavaToken:NULL_KEYWORD('null')
+          PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n\n  ')
     PsiComment(END_OF_LINE_COMMENT)('//')
     PsiWhiteSpace('\n  ')
     PsiComment(END_OF_LINE_COMMENT)('// 4. A type annotation is permitted in front of a constructor declaration ...')

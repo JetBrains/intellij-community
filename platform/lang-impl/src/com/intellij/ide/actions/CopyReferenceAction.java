@@ -16,11 +16,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -33,14 +36,12 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,9 +63,10 @@ public class CopyReferenceAction extends DumbAwareAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     boolean enabled = (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) ||
                       getElementToCopy(editor, dataContext) != null;
     e.getPresentation().setEnabled(enabled);
@@ -76,13 +78,14 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
-    if (!doCopy(element, project, editor) && editor != null) {
+    if (!doCopy(element, project, editor) && editor != null && project != null) {
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
@@ -96,8 +99,8 @@ public class CopyReferenceAction extends DumbAwareAction {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (element != null && editor != null) {
-      PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
+    if (element != null && editor != null && project != null) {
+      PsiElement nameIdentifier = IdentifierUtil.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
@@ -122,11 +125,11 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null && editor == null) {
-      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (virtualFile != null && project != null) {
         element = PsiManager.getInstance(project).findFile(virtualFile);
       }
@@ -172,14 +175,17 @@ public class CopyReferenceAction extends DumbAwareAction {
       this.fqn = fqn;
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
       return new DataFlavor[]{ourFlavor, DataFlavor.stringFlavor};
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
+      return ArrayUtilRt.find(getTransferDataFlavors(), flavor) != -1;
     }
 
+    @Override
     @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (isDataFlavorSupported(flavor)) {
@@ -233,16 +239,16 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
     final Project project = file.getProject();
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    if (logicalRoot != null) {
-      String logical = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
-      String path = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(virtualFile).getPath());
-      return "/" + FileUtil.getRelativePath(logical, path, '/');
+    if (logicalRoot != null && logicalRoot.getVirtualFile() != null) {
+      String logical = FileUtil.toSystemIndependentName(VfsUtilCore.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
+      String path = FileUtil.toSystemIndependentName(VfsUtilCore.virtualToIoFile(virtualFile).getPath());
+      return ObjectUtils.assertNotNull(FileUtil.getRelativePath(logical, path, '/'));
     }
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);
     if (contentRoot != null) {
-      return "/" + FileUtil.getRelativePath(VfsUtil.virtualToIoFile(contentRoot), VfsUtil.virtualToIoFile(virtualFile));
-    }
+      return ObjectUtils.assertNotNull(FileUtil.getRelativePath(VfsUtilCore.virtualToIoFile(contentRoot), VfsUtilCore.virtualToIoFile(virtualFile)));
+    }  
     return virtualFile.getPath();
   }
 }

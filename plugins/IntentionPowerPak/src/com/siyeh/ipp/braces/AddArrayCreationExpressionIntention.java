@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.siyeh.ipp.braces;
 
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -34,27 +34,21 @@ public class AddArrayCreationExpressionIntention extends MutablyNamedIntention {
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    final PsiArrayInitializerExpression arrayInitializerExpression =
-      (PsiArrayInitializerExpression)element;
+    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     final PsiType type = arrayInitializerExpression.getType();
-    assert type != null;
-    return IntentionPowerPackBundle.message(
-      "add.array.creation.expression.intention.name",
-      type.getPresentableText());
+    return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name",
+                                            TypeConversionUtil.erasure(type).getCanonicalText());
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiArrayInitializerExpression arrayInitializerExpression =
-      (PsiArrayInitializerExpression)element;
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
     final PsiType type = arrayInitializerExpression.getType();
     if (type == null) {
       return;
     }
-    final String typeText = type.getCanonicalText();
-    final String newExpressionText =
-      "new " + typeText + arrayInitializerExpression.getText();
-    replaceExpression(newExpressionText, arrayInitializerExpression);
+    PsiReplacementUtil.replaceExpression(arrayInitializerExpression, "new " +
+                                                                     TypeConversionUtil.erasure(type).getCanonicalText() +
+                                                                     arrayInitializerExpression.getText());
   }
 }

@@ -27,7 +27,7 @@ class MyTest<E> {
        bar(MyTest<String>::new, "");
        bar(MyTest::new, "");
 
-       bar(<error descr="Cyclic inference">MyTest::new</error>);
-       bar(<error descr="Cyclic inference">MyTest<String>::new</error>);
+       bar(MyTest::new);
+       bar(MyTest<String>::new);
    }
 }

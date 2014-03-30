@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,18 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +43,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(AllIcons.General.ComboArrow);
+  private static final Icon ARROW_ICON = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
+  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   private boolean mySmallVariant = true;
   private DataContext myDataContext;
@@ -99,6 +104,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private PropertyChangeListener myButtonSynchronizer;
     private boolean myMouseInside = false;
     private JBPopup myPopup;
+    private boolean myForceTransparent = false;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -195,6 +201,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
+    public void setForceTransparent(boolean transparent) {
+      myForceTransparent = transparent;
+    }
+
     public void showPopup() {
       myForcePressed = true;
       repaint();
@@ -267,7 +277,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     private void updateTooltipText(String description) {
-      String tooltip = AnAction.createTooltipText(description, ComboBoxAction.this);
+      String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
       setToolTipText(!tooltip.isEmpty() ? tooltip : null);
     }
 
@@ -315,7 +325,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Insets getInsets() {
       final Insets insets = super.getInsets();
-      return new Insets(insets.top, insets.left, insets.bottom, insets.right + AllIcons.General.ComboArrow.getIconWidth());
+      return new Insets(insets.top, insets.left, insets.bottom, insets.right + ARROW_ICON.getIconWidth());
     }
 
     @Override
@@ -326,10 +336,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         result.top += 2;
         result.left += 8;
         result.bottom += 2;
-        result.right += 4 + AllIcons.General.ComboArrow.getIconWidth();
+        result.right += 4 + ARROW_ICON.getIconWidth();
       }
       else {
-        result.right += AllIcons.General.ComboArrow.getIconWidth();
+        result.right += ARROW_ICON.getIconWidth();
       }
 
       return result;
@@ -343,7 +353,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? 10 + AllIcons.General.ComboArrow.getIconWidth() : super.getPreferredSize().width;
+      int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
       if (isSmallVariant()) width += 4;
       return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
     }
@@ -351,9 +361,25 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void paint(Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
-
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      GraphicsUtil.setupAAPainting(g);
       final Dimension size = getSize();
+      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+
+      if (myForceTransparent) {
+        final Icon icon = getIcon();
+        int x = 7;
+        if (icon != null) {
+          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
+          x += icon.getIconWidth() + 3;
+        }
+        if (!StringUtil.isEmpty(getText())) {
+          final Font font = getFont();
+          g.setFont(font);
+          g.setColor(UIManager.getColor("Panel.foreground"));
+          g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+        }
+      } else {
+
       if (isSmallVariant()) {
         final Graphics2D g2 = (Graphics2D)g;
         g2.setColor(UIUtil.getControlColor());
@@ -363,31 +389,22 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getControlColor(), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.8)));
         }
         else {
-          g2.setPaint(
-            UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
-        }
-        g2.fillRect(2, 0, w - 2, h);
-        GraphicsUtil.setupAntialiasing(g2);
-        if (!UIUtil.isUnderDarcula()) {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
+          if (UIUtil.isUnderDarcula()) {
+            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
           } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, UIUtil.getBorderColor().darker(), 0, h, UIUtil.getBorderColor().darker().darker()));
-          }
-        } else {
-          if (!myMouseInside) {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.2), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.3)));
-          } else {
-            g2.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.4), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 1.5)));
+            g2.setPaint(UIUtil.getGradientPaint(0, 0, new JBColor(SystemInfo.isMac? Gray._226 : Gray._245, Gray._131), 0, h, new JBColor(SystemInfo.isMac? Gray._198 : Gray._208, Gray._128)));
           }
         }
+        g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
 
-        g2.drawRect(2, 0, w - 3, h - 1);
+        Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
+        g2.setPaint(borderColor);
+        g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
 
         final Icon icon = getIcon();
         int x = 7;
         if (icon != null) {
-          icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
+          icon.paintIcon(this, g, x, (size.height - icon.getIconHeight()) / 2);
           x += icon.getIconWidth() + 3;
         }
         if (!StringUtil.isEmpty(getText())) {
@@ -400,8 +417,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       else {
         paintComponent(g);
       }
+    }
       final Insets insets = super.getInsets();
-      final Icon icon = isEnabled() ? AllIcons.General.ComboArrow : DISABLED_ARROW_ICON;
+      final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
       final int x;
       if (isEmpty) {
         x = (size.width - icon.getIconWidth()) / 2;

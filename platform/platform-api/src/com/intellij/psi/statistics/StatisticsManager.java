@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StatisticsManager implements SettingsSavingComponent {
   public static final int OBLIVION_THRESHOLD = 7;
   private static final KeyedExtensionCollector<Statistician,Key> COLLECTOR = new KeyedExtensionCollector<Statistician, Key>("com.intellij.statistician") {
-    protected String keyToString(final Key key) {
+    @Override
+    @NotNull
+    protected String keyToString(@NotNull final Key key) {
       return key.toString();
     }
   };

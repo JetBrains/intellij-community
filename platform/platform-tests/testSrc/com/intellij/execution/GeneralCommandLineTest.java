@@ -152,6 +152,22 @@ public class GeneralCommandLineTest {
   }
 
   @Test
+  public void winShellCommand() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    String string = "http://localhost/wtf?a=b&c=d";
+    String echo = ExecUtil.execAndReadLine(ExecUtil.getWindowsShellName(), "/c", "echo", string);
+    assertEquals('"' + string + '"', echo);
+  }
+
+  @Test
+  public void hackyEnvMap () throws Exception {
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    //noinspection ConstantConditions
+    commandLine.getEnvironment().putAll(null);
+  }
+
+  @Test
   public void environmentPassing() throws Exception {
     Map<String, String> testEnv = new HashMap<String, String>();
     testEnv.put("VALUE_1", "some value");
@@ -220,8 +236,8 @@ public class GeneralCommandLineTest {
   }
 
   private static void checkEnvPassing(GeneralCommandLine commandLine, Map<String, String> testEnv, boolean passParentEnv) throws Exception {
-    commandLine.setEnvParams(testEnv);
-    commandLine.setPassParentEnvs(passParentEnv);
+    commandLine.getEnvironment().putAll(testEnv);
+    commandLine.setPassParentEnvironment(passParentEnv);
     String output = execAndGetOutput(commandLine, null);
 
     Set<String> lines = new HashSet<String>(Arrays.asList(StringUtil.convertLineSeparators(output).split("\n")));

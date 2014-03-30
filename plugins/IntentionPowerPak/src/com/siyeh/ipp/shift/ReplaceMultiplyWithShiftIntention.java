@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@ package com.siyeh.ipp.shift;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
@@ -91,7 +92,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     }
     final String expString =
       lhs.getText() + assignString + ShiftUtils.getLogBase2(rhs);
-    replaceExpression(expString, expression);
+    PsiReplacementUtil.replaceExpression(expression, expString);
   }
 
   private static void replaceMultiplyOrDivideWithShift(
@@ -125,6 +126,6 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
         expString = '(' + expString + ')';
       }
     }
-    replaceExpression(expString, expression);
+    PsiReplacementUtil.replaceExpression(expression, expString);
   }
 }

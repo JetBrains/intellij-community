@@ -22,6 +22,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
@@ -31,6 +32,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -44,9 +46,6 @@ public abstract class LanguageInjectionSupport {
   public static Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
   public static Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
-  @NonNls public static final String XML_SUPPORT_ID = "xml";
-  @NonNls public static final String JAVA_SUPPORT_ID = "java";
-
   @NonNls
   @NotNull
   public abstract String getId();
@@ -54,11 +53,20 @@ public abstract class LanguageInjectionSupport {
   @NotNull
   public abstract Class[] getPatternClasses();
 
-  public abstract boolean useDefaultInjector(final PsiElement host);
+  public abstract boolean isApplicableTo(PsiLanguageInjectionHost host);
+
+  public abstract boolean useDefaultInjector(PsiLanguageInjectionHost host);
+
+  @Nullable
+  public abstract BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef);
 
   public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
   public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
+
+  public boolean removeInjection(final PsiElement psiElement) {
+    return psiElement instanceof PsiLanguageInjectionHost && removeInjectionInPlace((PsiLanguageInjectionHost)psiElement);
+  }
 
   public abstract boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 

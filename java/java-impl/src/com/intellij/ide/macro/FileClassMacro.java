@@ -16,6 +16,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiClass;
@@ -44,7 +45,7 @@ public final class FileClassMacro extends Macro {
     //if (!(psiFile instanceof PsiJavaFile)) {
     //  return null;
     //}
-    final PsiFile javaFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile javaFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (!(javaFile instanceof PsiJavaFile)) return null;
     PsiClass[] classes = ((PsiJavaFile) javaFile).getClasses();
     if (classes.length == 1) {

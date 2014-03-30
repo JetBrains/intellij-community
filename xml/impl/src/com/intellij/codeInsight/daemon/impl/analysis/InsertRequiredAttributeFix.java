@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,49 +37,44 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 18-Nov-2005
  */
-public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
-  private final XmlTag myTag;
+public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private final String myAttrName;
   private final String[] myValues;
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeFix(final XmlTag tag, final String attrName,final String[] values) {
-    myTag = tag;
+  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
+    super(tag);
     myAttrName = attrName;
     myValues = values;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.text", myAttrName);
   }
 
-  @NotNull
-  public String getName() {
-    return getText();
-  }
-
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    invoke(project, null, myTag.getContainingFile());
-  }
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTag.isValid();
-  }
-
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+  @Override
+  public void invoke(@NotNull final Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") final Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    XmlTag myTag = (XmlTag)startElement;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
 
     final XmlElementDescriptor descriptor = myTag.getDescriptor();
@@ -116,21 +109,22 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
     Expression expression = new Expression() {
       TextResult result = new TextResult("");
 
+      @Override
       public Result calculateResult(ExpressionContext context) {
         return result;
       }
 
+      @Override
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
 
+      @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        final LookupElement[] items = new LookupElement[myValues == null ? 0 : myValues.length];
+        final LookupElement[] items = new LookupElement[myValues.length];
 
-        if (myValues != null) {
-          for (int i = 0; i < items.length; i++) {
-            items[i] = LookupElementBuilder.create(myValues[i]);
-          }
+        for (int i = 0; i < items.length; i++) {
+          items[i] = LookupElementBuilder.create(myValues[i]);
         }
         return items;
       }
@@ -148,9 +142,11 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
     final boolean indirectSyntax1 = indirectSyntax;
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
+            @Override
             public void run() {
               int textOffset = anchor1.getTextOffset();
               if (!anchorIsEmptyTag && indirectSyntax1) ++textOffset;
@@ -167,6 +163,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Runnable commandRunnable = new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(
             project,
@@ -184,6 +181,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

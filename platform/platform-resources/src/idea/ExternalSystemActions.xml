@@ -1,0 +1,37 @@
+<component>
+  <actions>
+    
+    
+    <action id="ExternalSystem.RefreshAllProjects"
+            class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="ExternalSystem.RefreshProject"
+            class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="ExternalSystem.AttachProject"
+            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
+    <action id="ExternalSystem.DetachProject"
+            class="com.intellij.openapi.externalSystem.action.DetachExternalProjectAction"
+            use-shortcut-of="$Delete"/>
+    <action id="ExternalSystem.OpenConfig"
+            class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
+            use-shortcut-of="EditSource"/>
+
+    <!--Tool window actions-->
+    <group id="ExternalSystem.ToolWindow.Toolbar">
+      <reference id="ExternalSystem.RefreshAllProjects"/>
+      <reference id="ExternalSystem.AttachProject"/>
+      <reference ref="ExternalSystem.DetachProject"/>
+    </group>
+
+    <!--Context menu action-->
+    <group id="ExternalSystem.Tree.Context" popup="true">
+      <reference ref="ExternalSystem.OpenConfig"/>
+      <reference id="ExternalSystem.RefreshProject"/>
+      <reference ref="ExternalSystem.DetachProject"/>
+      <separator/>
+      <reference ref="RunContextGroup"/>
+    </group>
+    
+  </actions>
+</component>

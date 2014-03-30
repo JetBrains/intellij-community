@@ -1,12 +1,15 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
 
 /**
@@ -52,5 +55,13 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
 
   public void testIdeaDev41232() throws Exception {
     doJavaCallTypeHierarchyTest("A", "main", "B.java", "A.java");
+  }
+
+  public void testActionAvailableInXml() throws Exception {
+    configureByText(XmlFileType.INSTANCE, "<foo>java.lang.Str<caret>ing</foo>");
+    BrowseTypeHierarchyAction action = new BrowseTypeHierarchyAction();
+    TestActionEvent e = new TestActionEvent(action);
+    action.beforeActionPerformedUpdate(e);
+    assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
   }
 }

@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInspection.LambdaCanBeMethReferenceInspection;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
 
-public class Lambda2MethodReferenceInspectionTest extends LightQuickFixTestCase {
+public class Lambda2MethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new LambdaCanBeMethReferenceInspection(),
+      new LambdaCanBeMethodReferenceInspection(),
     };
   }
 

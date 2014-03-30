@@ -27,7 +27,7 @@ public class LanguageSelector {
 
   private Language myLanguage;
   private final EventDispatcher<LanguageSelectorListener> myDispatcher = EventDispatcher.create(LanguageSelectorListener.class);
-  private Language[] myLanguages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+  private final Language[] myLanguages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
 
   /**
    * @return The currently selected language.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 public class AutoPopupController implements Disposable {
   private final Project myProject;
@@ -100,7 +99,7 @@ public class AutoPopupController implements Disposable {
     if (PowerSaveMode.isEnabled()) {
       return;
     }
-    
+
     if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
       return;
     }
@@ -112,37 +111,31 @@ public class AutoPopupController implements Disposable {
 
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(null, editor);
     CompletionServiceImpl.setCompletionPhase(phase);
+    phase.ignoreCurrentDocumentChange();
 
-    Runnable request = new Runnable() {
+    CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
-          @Override
-          public void run() {
-            if (phase.checkExpired()) return;
+        if (phase.checkExpired()) return;
 
-            PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-            if (file != null && condition != null && !condition.value(file)) return;
+        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+        if (file != null && condition != null && !condition.value(file)) {
+          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+          return;
+        }
 
-            CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
-          }
-        });
+        CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
       }
-    };
-    addRequest(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
+    });
   }
 
-  @TestOnly
-  public void executePendingRequests() {
-    assert !ApplicationManager.getApplication().isDispatchThread();
-    while (myAlarm.getActiveRequestCount() != 0) {
-      UIUtil.pump();
-    }
+  public void scheduleAutoPopup(final Editor editor) {
+    scheduleAutoPopup(editor, null);
   }
 
   private void addRequest(final Runnable request, final int delay) {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         myAlarm.addRequest(request, delay);
       }
@@ -158,9 +151,10 @@ public class AutoPopupController implements Disposable {
     myAlarm.cancelAllRequests();
   }
 
-  public void autoPopupParameterInfo(final Editor editor, @Nullable final PsiElement highlightedMethod){
+  public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (DumbService.isDumb(myProject)) return;
+    if (PowerSaveMode.isEnabled()) return;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -178,8 +172,9 @@ public class AutoPopupController implements Disposable {
       final Runnable request = new Runnable(){
         @Override
         public void run(){
-          if (myProject.isDisposed() || DumbService.isDumb(myProject) || editor.isDisposed()) return;
+          if (myProject.isDisposed() || DumbService.isDumb(myProject)) return;
           documentManager.commitAllDocuments();
+          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);

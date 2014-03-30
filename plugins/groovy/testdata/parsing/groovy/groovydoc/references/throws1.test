@@ -1,7 +1,7 @@
 /**
  *  @throws java.lang.NullPointerException
  */
-------
+-----
 Groovy script
   GrDocComment
     PsiElement(GDOC_COMMENT_START)('/**')

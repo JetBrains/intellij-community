@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.text.CharArrayUtil;
@@ -23,13 +24,17 @@ import com.intellij.util.text.CharSequenceHashingStrategy;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * @author max
  */
 public class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
-  private static final CharSequenceHashingStrategy HASHER = new CharSequenceHashingStrategy();
+  private static final CharSequenceHashingStrategy HASHER = CharSequenceHashingStrategy.CASE_SENSITIVE;
   private static final OpenTHashSet<CharSequence> STATIC_ENTRIES = newStaticSet();
 
   private final OpenTHashSet<CharSequence> entries = new OpenTHashSet<CharSequence>(10, 0.9f, HASHER);
@@ -44,7 +49,7 @@ public class CharTableImpl implements CharTable {
 
   @NotNull
   public CharSequence doIntern(@NotNull CharSequence text) {
-    CharSequence interned = STATIC_ENTRIES.get(text);
+    CharSequence interned = getStaticInterned(text);
     if (interned != null) {
       return interned;
     }
@@ -67,16 +72,23 @@ public class CharTableImpl implements CharTable {
   @NotNull
   @Override
   public CharSequence intern(@NotNull final CharSequence baseText, final int startOffset, final int endOffset) {
-    if (endOffset - startOffset == baseText.length()) return baseText;
+    if (endOffset - startOffset == baseText.length()) return intern(baseText);
     return intern(new CharSequenceSubSequence(baseText, startOffset, endOffset));
   }
 
   @NotNull
   private static String createSequence(@NotNull CharSequence text) {
+    if (text instanceof String) {
+      return (String)text;
+    }
     char[] buf = new char[text.length()];
     CharArrayUtil.getChars(text, buf, 0);
-
     return StringFactory.createShared(buf); // this way the .toString() doesn't create another instance (as opposed to new CharArrayCharSequence())
+  }
+
+  @Nullable
+  public static CharSequence getStaticInterned(@NotNull CharSequence text) {
+    return STATIC_ENTRIES.get(text);
   }
 
   public static void staticIntern(@NotNull String text) {
@@ -183,5 +195,23 @@ public class CharTableImpl implements CharTable {
     r.add("${");
     r.add("");
     return r;
+  }
+
+  static {
+    addStringsFromClassToStatics(CommonClassNames.class);
+  }
+  public static void addStringsFromClassToStatics(@NotNull Class aClass) {
+    for (Field field : aClass.getDeclaredFields()) {
+      if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
+      if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
+      String typeName;
+      try {
+        typeName = (String)field.get(null);
+      }
+      catch (Exception e) {
+        continue;
+      }
+      staticIntern(typeName);
+    }
   }
 }

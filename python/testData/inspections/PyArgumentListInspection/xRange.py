@@ -1,0 +1,5 @@
+print(xrange(<warning descr="Parameter 'start' unfilled">)</warning>)
+print(xrange(1))
+print(xrange(1, 2))
+print(xrange(1, 2, 3))
+print(xrange(1, 2, 3, <warning descr="Unexpected argument">4</warning>))

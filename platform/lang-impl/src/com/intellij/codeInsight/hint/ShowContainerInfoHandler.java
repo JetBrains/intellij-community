@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,20 +46,18 @@ public class ShowContainerInfoHandler implements CodeInsightActionHandler {
 
     PsiElement container = null;
     WeakReference<LightweightHint> ref = editor.getUserData(MY_LAST_HINT_KEY);
-    if (ref != null){
-      LightweightHint hint = ref.get();
-      if (hint != null && hint.isVisible()){
-        hint.hide();
-        container = hint.getUserData(CONTAINER_KEY);
-        if (container != null && !container.isValid()){
-          container = null;
-        }
+    LightweightHint hint = SoftReference.dereference(ref);
+    if (hint != null && hint.isVisible()){
+      hint.hide();
+      container = hint.getUserData(CONTAINER_KEY);
+      if (container != null && !container.isValid()){
+        container = null;
       }
     }
 
     StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file);
     if (builder instanceof TreeBasedStructureViewBuilder) {
-      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel();
+      StructureViewModel model = ((TreeBasedStructureViewBuilder) builder).createStructureViewModel(editor);
       boolean goOneLevelUp = true;
       try {
         if (container == null) {

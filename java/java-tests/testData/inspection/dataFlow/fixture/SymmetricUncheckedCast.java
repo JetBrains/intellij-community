@@ -1,6 +1,6 @@
 import java.util.Date;
 
-public class DataFlowBug {
+class DataFlowBug {
 
   private static boolean isNumberable(Object o) {
     return o instanceof Number;

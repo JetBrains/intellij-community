@@ -16,6 +16,7 @@ public class InspectionModuleNode extends InspectionTreeNode{
     myModule = module;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return myModule.isDisposed() ? null : ModuleType.get(myModule).getIcon();
   }

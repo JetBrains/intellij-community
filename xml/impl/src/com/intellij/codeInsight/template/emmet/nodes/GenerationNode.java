@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,17 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -135,23 +139,48 @@ public class GenerationNode extends UserDataHolderBase {
                                 boolean insertSurroundedText) {
     myContainsSurroundedTextMarker = !(insertSurroundedText && myInsertSurroundedTextAtTheEnd);
 
-    boolean singleLineFilterEnabled = false;
-
     GenerationNode generationNode = this;
+    if (generationNode != this) {
+      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText);
+    }
+    
+    boolean shouldNotReformatTemplate = false;
+    boolean oneLineTemplateExpanding = false;
     for (ZenCodingFilter filter : filters) {
       generationNode = filter.filterNode(generationNode);
       if(filter instanceof SingleLineEmmetFilter) {
-        singleLineFilterEnabled = true;
+        shouldNotReformatTemplate = true;
+        oneLineTemplateExpanding = true;
       }
     }
 
-    if (generationNode != this) {
-      return generationNode.generate(callback, generator, Collections.<ZenCodingFilter>emptyList(), insertSurroundedText);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
+    String indentStr;
+    if (callback.isInInjectedFragment()) {
+      Editor editor = callback.getEditor();
+      Document document = editor.getDocument();
+      if(document instanceof DocumentWindowImpl && ((DocumentWindowImpl)document).isOneLine()) {
+        /* 
+         * If document is one-line that in the moment of inserting text,
+         * new line chars will be filtered (see DocumentWindowImpl#insertString).
+         * So in this case we should filter text by SingleLineAvoid in order to avoid
+         * inconsistency of template segments.
+         */
+        oneLineTemplateExpanding = true;
+        filters.add(new SingleLineEmmetFilter());
+      }
+      indentStr = "";
+    }
+    else if (settings.useTabCharacter(callback.getFileType())) {
+      indentStr = "\t";
+    }
+    else {
+      int tabSize = settings.getTabSize(callback.getFileType());
+      indentStr = StringUtil.repeatSymbol(' ', tabSize);
     }
 
     LiveTemplateBuilder builder = new LiveTemplateBuilder();
     int end = -1;
-
     boolean hasChildren = myChildren.size() > 0;
 
     TemplateImpl parentTemplate;
@@ -188,26 +217,14 @@ public class GenerationNode extends UserDataHolderBase {
     }
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
-    String indentStr;
-    if (callback.isInInjectedFragment()) {
-      indentStr = "";
-    }
-    else if (settings.useTabCharacter(callback.getFileType())) {
-      indentStr = "\t";
-    }
-    else {
-      int tabSize = settings.getTabSize(callback.getFileType());
-      indentStr = StringUtil.repeatSymbol(' ', tabSize);
-    }
-
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
       GenerationNode child = myChildren.get(i);
       TemplateImpl childTemplate = child.generate(callback, generator, filters, !myContainsSurroundedTextMarker);
 
       boolean blockTag = child.isBlockTag();
 
-      if (!singleLineFilterEnabled && blockTag && !isNewLineBefore(builder.getText(), offset)) {
+      if (!oneLineTemplateExpanding && blockTag && !isNewLineBefore(builder.getText(), offset)) {
         builder.insertText(offset, "\n" + indentStr, false);
         offset += indentStr.length() + 1;
       }
@@ -215,7 +232,7 @@ public class GenerationNode extends UserDataHolderBase {
       int e = builder.insertTemplate(offset, childTemplate, null);
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
-      if (!singleLineFilterEnabled && ((blockTag && !isNewLineAfter(builder.getText(), offset)) || myInsertNewLineBetweenNodes)) {
+      if (!oneLineTemplateExpanding && ((blockTag && !isNewLineAfter(builder.getText(), offset)) || myInsertNewLineBetweenNodes)) {
         builder.insertText(offset, "\n" + indentStr, false);
         offset += indentStr.length() + 1;
       }
@@ -224,7 +241,7 @@ public class GenerationNode extends UserDataHolderBase {
         end = e;
       }
     }
-    if(singleLineFilterEnabled) {
+    if(shouldNotReformatTemplate) {
       builder.setIsToReformat(false);
     }
     return builder.buildTemplate();
@@ -256,28 +273,33 @@ public class GenerationNode extends UserDataHolderBase {
     assert template != null;
 
     final XmlFile xmlFile = token.getFile();
-    XmlDocument document = xmlFile.getDocument();
-    if (document != null) {
-      final XmlTag tag = document.getRootTag();
+    PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
+    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, xmlFile.getText());
+    final XmlTag tag = dummyFile.getRootTag();
+    if (tag != null) {
       for (Pair<String, String> pair : attr2value) {
         if (Strings.isNullOrEmpty(pair.second)) {
-          template.addVariable(pair.first, "", "", true);
+          template.addVariable(prepareVariableName(pair.first), "", "", true);
         }
       }
-      if (tag != null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            XmlTag tag1 = hasChildren ? expandEmptyTagIfNeccessary(tag) : tag;
-            setAttributeValues(tag1, attr2value);
-            token.setFile((XmlFile)tag1.getContainingFile());
-          }
-        });
+      XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
+      setAttributeValues(tag1, attr2value);
+      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText("dummy.xml", StdFileTypes.XML, tag1.getContainingFile().getText(),
+                                                                     LocalTimeCounter.currentTime(), true);
+      VirtualFile vFile = physicalFile.getVirtualFile();
+      if (vFile != null) {
+        vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
       }
+      token.setFile(physicalFile);
     }
     ZenCodingGenerator zenCodingGenerator = generator != null ? generator : XmlZenCodingGeneratorImpl.INSTANCE;
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);
     return template;
+  }
+
+  private static String prepareVariableName(@NotNull String attributeName) {
+    return StringUtil.replaceChar(attributeName, '-', '_');
   }
 
   @NotNull
@@ -299,7 +321,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   @NotNull
-  private static XmlTag expandEmptyTagIfNeccessary(@NotNull XmlTag tag) {
+  private static XmlTag expandEmptyTagIfNecessary(@NotNull XmlTag tag) {
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
 
@@ -393,7 +415,7 @@ public class GenerationNode extends UserDataHolderBase {
         }
         tag.setAttribute(pair.first,
                          Strings.isNullOrEmpty(pair.second)
-                         ? "$" + pair.first + "$"
+                         ? "$" + prepareVariableName(pair.first) + "$"
                          : ZenCodingUtil.getValue(pair.second, myNumberInIteration, myTotalIterations, mySurroundedText));
         iterator.remove();
       }

@@ -15,13 +15,17 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
+import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -33,10 +37,19 @@ import java.util.List;
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 
-  public FrameworksTree(List<List<FrameworkSupportNode>> groups) {
-    super(new FrameworksTreeRenderer(), new FrameworksRootNode(groups), new CheckPolicy(false, true, true, false));
+  public FrameworksTree(FrameworkSupportModelBase model) {
+    super(new FrameworksTreeRenderer(model), new CheckedTreeNode(), new CheckPolicy(false, true, true, false));
     setRootVisible(false);
     setShowsRootHandles(false);
+    putClientProperty("JTree.lineStyle", "None");
+  }
+
+  public void setRoots(List<FrameworkSupportNodeBase> roots) {
+    CheckedTreeNode root = new CheckedTreeNode(null);
+    for (FrameworkSupportNodeBase base : roots) {
+      root.add(base);
+    }
+    setModel(new DefaultTreeModel(root));
     TreeUtil.expandAll(this);
   }
 
@@ -48,6 +61,7 @@ public class FrameworksTree extends CheckboxTree {
       if (node instanceof FrameworkSupportNode) {
         final Rectangle checkboxBounds = ((CheckboxTreeCellRendererBase)getCellRenderer()).myCheckbox.getBounds();
         final Rectangle pathBounds = getPathBounds(path);
+        assert pathBounds != null;
         checkboxBounds.setLocation(pathBounds.getLocation());
         if (checkboxBounds.contains(e.getPoint())) {
           try {
@@ -71,8 +85,8 @@ public class FrameworksTree extends CheckboxTree {
       @Override
       public String convert(TreePath path) {
         final Object node = path.getLastPathComponent();
-        if (node instanceof FrameworkSupportNode) {
-          return ((FrameworkSupportNode)node).getTitle();
+        if (node instanceof FrameworkSupportNodeBase) {
+          return ((FrameworkSupportNodeBase)node).getTitle();
         }
         return "";
       }
@@ -84,28 +98,46 @@ public class FrameworksTree extends CheckboxTree {
   }
 
   private static class FrameworksTreeRenderer extends CheckboxTreeCellRenderer {
-    private FrameworksTreeRenderer() {
+    private final FrameworkSupportModelBase myModel;
+
+    private FrameworksTreeRenderer(FrameworkSupportModelBase model) {
       super(true, false);
+      myModel = model;
+      Border border = IdeBorderFactory.createEmptyBorder(2, 2, 2, 2);
+      setBorder(border);
     }
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof FrameworkSupportNode) {
-        final FrameworkSupportNode node = (FrameworkSupportNode)value;
-        getTextRenderer().append(node.getTitle());
-        getTextRenderer().setIcon(node.getProvider().getFrameworkType().getIcon());
+      if (value instanceof FrameworkSupportNodeBase) {
+        final FrameworkSupportNodeBase node = (FrameworkSupportNodeBase)value;
+        SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        getTextRenderer().append(node.getTitle(), attributes);
+        if (node.isChecked()) {
+          FrameworkOrGroup object = node.getUserObject();
+          String version = myModel.getFrameworkVersion(object.getId());
+          if (version != null) {
+            getTextRenderer().append(" (" + version + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+        getTextRenderer().setIcon(node.getIcon());
+        getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
     }
   }
 
-  private static class FrameworksRootNode extends CheckedTreeNode {
-    public FrameworksRootNode(List<List<FrameworkSupportNode>> groups) {
-      super(null);
-      for (List<FrameworkSupportNode> group : groups) {
-        for (FrameworkSupportNode node : group) {
-          add(node);
+  @TestOnly
+  public boolean selectFramework(final String id, final boolean checked) {
+    TreeNode root = (TreeNode)getModel().getRoot();
+    return !TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        if (node instanceof FrameworkSupportNode && id.equals(((FrameworkSupportNode)node).getId())) {
+          ((FrameworkSupportNode)node).setChecked(checked);
+          return false;
         }
+        return true;
       }
-    }
+    });
   }
 }

@@ -258,6 +258,16 @@
       <keyboard-shortcut first-keystroke="shift F3"/>
       <keyboard-shortcut first-keystroke="control shift L"/>
     </action>
+    
+    <action id="SelectNextOccurrence">
+      <keyboard-shortcut first-keystroke="control G"/>
+    </action>
+    <action id="UnselectPreviousOccurrence">
+      <keyboard-shortcut first-keystroke="control shift G"/>
+    </action>
+    <action id="SelectAllOccurrences">
+      <keyboard-shortcut first-keystroke="meta control G"/>
+    </action>
 
     <action id="VcsShowNextChangeMarker">
       <keyboard-shortcut first-keystroke="shift control alt DOWN"/>

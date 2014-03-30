@@ -1,4 +1,4 @@
-public class CyclicReferenceTest {
+class CyclicReferenceTest {
     void test(Match<String, Integer> match) {
         Match<String, Integer> matcher = match.or(s -> Optional.empty(), i -> 2);
         Match<String, Integer> matcher1 = match.or(s -> s.startsWith("_") ? Optional.of(1) : Optional.empty(), i -> 2);

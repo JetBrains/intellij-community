@@ -125,7 +125,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
       parameterList.add(p);
       TypeConstraint[] constraints = {SupertypeConstraint.create(argType)};
       boolean isGroovy = method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE;
-      paramTypesExpressions[i] = new ChooseTypeExpression(constraints, method.getManager(), isGroovy, method.getResolveScope());
+      paramTypesExpressions[i] = new ChooseTypeExpression(constraints, method.getManager(), method.getResolveScope(), isGroovy);
     }
     return paramTypesExpressions;
   }

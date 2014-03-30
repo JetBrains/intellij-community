@@ -32,7 +32,7 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction implements
     return customComponent;
   }
 
-  private EditorSearchComponent myEditorSearchComponent;
+  private final EditorSearchComponent myEditorSearchComponent;
 
   protected EditorHeaderToggleAction(EditorSearchComponent editorSearchComponent, String text) {
     super(text);

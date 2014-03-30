@@ -1,0 +1,15 @@
+<html>
+<body>
+<p style="font-family: verdana,serif;">
+This inspection checks for calls of a method by class while passing an instance of a different class
+as <code>self</code> parameter:</p>
+<pre>
+  foo = Foo()
+  Bar.baz(foo, *more)
+</pre>
+<p style="font-family: verdana,serif;">
+Sometimes this may be intentional and correct.
+But when unintentional, this leads to subtle bugs.
+</p>
+</body>
+</html>

@@ -16,17 +16,16 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
+import com.intellij.notification.Notification;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-
-import java.text.MessageFormat;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,11 +34,11 @@ import java.text.MessageFormat;
  * Time: 3:02 PM
  */
 public class SvnExecutableChecker extends ExecutableValidator {
-  private final static String ourPath = "Probably the path to Subversion executable is wrong.";
-  private static final String ourVersion = "Subversion command line client version is too old ({0}).";
-  
+
+  private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
+
   public SvnExecutableChecker(Project project) {
-    super(project, "Can't use Subversion command line client", ourPath);
+    super(project, getNotificationTitle(), getWrongPathMessage());
   }
 
   @Override
@@ -50,39 +49,70 @@ public class SvnExecutableChecker extends ExecutableValidator {
   @NotNull
   @Override
   protected Configurable getConfigurable() {
-    return SvnVcs.getInstance(myProject).getConfigurable();
+    return getVcs().getConfigurable();
+  }
+
+  @NotNull
+  private SvnVcs getVcs() {
+    return SvnVcs.getInstance(myProject);
+  }
+
+  @Override
+  protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
+    showSettings();
+    // always expire notification as different message could be detected
+    notification.expire();
+
+    getVcs().checkCommandLineVersion();
   }
 
   @Override
   protected boolean isExecutableValid(@NotNull String executable) {
-    setNotificationErrorDescription(ourPath);
+    setNotificationErrorDescription(getWrongPathMessage());
+
+    // Necessary executable path will be taken from settings while command execution
+    final Version version = getConfiguredClientVersion();
     try {
-      GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(executable);
-      commandLine.addParameter("--version");
-      commandLine.addParameter("--quiet");
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput result = handler.runProcess(30 * 1000);
-      if (! result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty()) {
-        final String stdout = result.getStdout().trim();
-        final String[] parts = stdout.split("\\.");
-        if (parts.length < 3 || ! "1".equals(parts[0])) {
-          setNotificationErrorDescription(MessageFormat.format(ourVersion, stdout));
-          return false;
-        }
-        try {
-          final int second = Integer.parseInt(parts[1]);
-          if (second >= 7) return true;
-        } catch (NumberFormatException e) {
-          //
-        }
-        setNotificationErrorDescription(MessageFormat.format(ourVersion, stdout));
-        return false;
-      } else {
-        return false;
-      }
-    } catch (Throwable e) {
+      return version != null && validateVersion(version);
+    }
+    catch (Throwable e) {
+      LOG.info(e);
       return false;
     }
+  }
+
+  private boolean validateVersion(@NotNull Version version) {
+    if (version.lessThan(1, 7)) {
+      setNotificationErrorDescription(getOldExecutableMessage(version));
+      return false;
+    }
+
+    return true;
+  }
+
+  @Nullable
+  private Version getConfiguredClientVersion() {
+    Version result = null;
+
+    try {
+      result = getVcs().getCommandLineFactory().createVersionClient().getVersion();
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+
+    return result;
+  }
+
+  private static String getWrongPathMessage() {
+    return SvnBundle.message("subversion.executable.notification.description");
+  }
+
+  private static String getNotificationTitle() {
+    return SvnBundle.message("subversion.executable.notification.title");
+  }
+
+  private static String getOldExecutableMessage(@NotNull Version version) {
+    return SvnBundle.message("subversion.executable.too.old", version);
   }
 }

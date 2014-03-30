@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -41,12 +42,20 @@ public class ServerSSHDialog extends DialogWrapper {
 
   public ServerSSHDialog(Project project, boolean store, @NotNull final String host, @Nullable final String algorithm,
                          @NotNull final byte[] fingerprints) {
+    this(project, store, host, algorithm, SVNSSLUtil.getFingerprint(fingerprints, "SHA1"));
+  }
+
+  public ServerSSHDialog(Project project,
+                         boolean store,
+                         @NotNull final String host,
+                         @Nullable final String algorithm,
+                         @NotNull String fingerprints) {
     super(project, true);
     myStore = store;
     myHost = host;
-    myAlgorithm = algorithm == null ? "" : algorithm;
+    myAlgorithm = StringUtil.notNullize(algorithm);
     // todo ?
-    myFingerprints = SVNSSLUtil.getFingerprint(fingerprints, "SHA1");
+    myFingerprints = fingerprints;
     myResult = ISVNAuthenticationProvider.REJECTED;
     setOKButtonText(SvnBundle.message("button.text.ssh.accept"));
     setCancelButtonText(SvnBundle.message("button.text.ssh.reject"));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,125 +15,30 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.psi.*;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
+import com.intellij.psi.PsiElement;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public class UnusedCatchParameterInspection extends UnusedCatchParameterInspectionBase {
 
-public class UnusedCatchParameterInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreCatchBlocksWithComments = false;
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreTestCases = false;
-
-  @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unused.catch.parameter.display.name");
-  }
-
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unused.catch.parameter.ignore.catch.option"),
-                             "m_ignoreCatchBlocksWithComments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unused.catch.parameter.ignore.empty.option"),
-                             "m_ignoreTestCases");
-    return optionsPanel;
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final boolean namedIgnoreButUsed = ((Boolean)infos[0]).booleanValue();
+    final PsiElement context = (PsiElement)infos[1];
+    final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
     if (namedIgnoreButUsed) {
-      return InspectionGadgetsBundle.message(
-        "used.catch.parameter.named.ignore.problem.descriptor"
-      );
+      if (fix == null) {
+        return InspectionGadgetsFix.EMPTY_ARRAY;
+      }
+      return new InspectionGadgetsFix[] {fix};
     }
-    return InspectionGadgetsBundle.message(
-      "unused.catch.parameter.problem.descriptor");
-  }
-
-  @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    final boolean namedIgnoreButUsed = ((Boolean)infos[0]).booleanValue();
-    if (namedIgnoreButUsed) {
-      return null;
+    final RenameFix renameFix = new RenameFix("ignored", false, false);
+    if (fix == null) {
+      return new InspectionGadgetsFix[] {renameFix};
     }
-    return new RenameFix("ignored", false, false);
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnusedCatchParameterVisitor();
-  }
-
-  private class UnusedCatchParameterVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
-      super.visitTryStatement(statement);
-      if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {
-        return;
-      }
-      final PsiCatchSection[] catchSections = statement.getCatchSections();
-      for (PsiCatchSection catchSection : catchSections) {
-        checkCatchSection(catchSection);
-      }
-    }
-
-    private void checkCatchSection(PsiCatchSection section) {
-      final PsiParameter parameter = section.getParameter();
-      if (parameter == null) {
-        return;
-      }
-      @NonNls final String parameterName = parameter.getName();
-      final boolean namedIgnore = parameterName.contains("ignore");
-      final PsiCodeBlock block = section.getCatchBlock();
-      if (block == null) {
-        return;
-      }
-      if (m_ignoreCatchBlocksWithComments) {
-        final PsiElement[] children = block.getChildren();
-        for (final PsiElement child : children) {
-          if (child instanceof PsiComment) {
-            return;
-          }
-        }
-      }
-      final CatchParameterUsedVisitor visitor =
-        new CatchParameterUsedVisitor(parameter);
-      block.accept(visitor);
-      if (visitor.isUsed()) {
-        if (namedIgnore) {
-          registerVariableError(parameter, Boolean.valueOf(true));
-        }
-        return;
-      }
-      else if (namedIgnore) {
-        return;
-      }
-      registerVariableError(parameter, Boolean.valueOf(false));
-    }
+    return new InspectionGadgetsFix[] {renameFix, fix};
   }
 }

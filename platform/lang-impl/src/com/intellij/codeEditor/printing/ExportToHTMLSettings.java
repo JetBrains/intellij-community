@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
   name = "ExportToHTMLSettings",
   storages = {
     @Storage(
-      file = StoragePathMacros.PROJECT_FILE
+      file = StoragePathMacros.WORKSPACE_FILE
     )}
 )
 public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
@@ -58,10 +58,12 @@ public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHT
   }
 
 
+  @Override
   public ExportToHTMLSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(ExportToHTMLSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

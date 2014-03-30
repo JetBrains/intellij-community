@@ -9,7 +9,7 @@ def call() {
 a()
 -----
 def a() {
-        {->
+        { ->
             owner.call()
         }.call()
 }

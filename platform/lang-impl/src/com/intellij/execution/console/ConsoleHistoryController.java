@@ -19,9 +19,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -58,7 +56,6 @@ import org.xmlpull.v1.XmlSerializer;
 
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -75,23 +72,12 @@ public class ConsoleHistoryController {
   private final AnAction myHistoryPrev = new MyAction(false);
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
-  private ModelHelper myHelper;
+  private final ModelHelper myHelper;
   private long myLastSaveStamp;
 
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model) {
-    this(type, persistenceId, console, model, Charset.defaultCharset());
-  }
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model,
-                                  @NotNull final Charset charset)
-  {
-    String id = persistenceId == null || StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
-    myHelper = new ModelHelper(type, id, model, charset);
+  public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
+                                  @NotNull LanguageConsoleImpl console, @NotNull ConsoleHistoryModel model) {
+    myHelper = new ModelHelper(type, StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId, model);
     myConsole = console;
   }
 
@@ -138,9 +124,16 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      EmptyAction.setupAction(myBrowseHistory, "Console.History.BrowseTW", null);
-      myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-      myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+      AnAction up = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+      AnAction down = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+      if (up != null && down != null) {
+        myHistoryNext.registerCustomShortcutSet(up.getShortcutSet(), null);
+        myHistoryPrev.registerCustomShortcutSet(down.getShortcutSet(), null);
+      }
+      else {
+        myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
+        myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+      }
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
@@ -195,6 +188,7 @@ public class ConsoleHistoryController {
   }
 
   protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command)) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction.Simple(myConsole.getProject()) {
@@ -207,25 +201,7 @@ public class ConsoleHistoryController {
         int offset;
         if (regularMode) {
           if (myMultiline) {
-            if (text.isEmpty()) return;
-            int selectionStart = editor.getSelectionModel().getSelectionStart();
-            int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-            int caretOffset = editor.getCaretModel().getOffset();
-            int line = document.getLineNumber(caretOffset);
-            int lineStartOffset = document.getLineStartOffset(line);
-            if (selectionStart == lineStartOffset) document.deleteString(selectionStart, selectionEnd);
-            String trimmedLine = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(line))).trim();
-            if (StringUtil.findFirst(trimmedLine, new CharFilter() {
-              @Override
-              public boolean accept(char ch) {
-                return ch == '\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
-              }
-            }) > -1) {
-              text += "\n";
-            }
-            document.insertString(lineStartOffset, text);
-            offset = lineStartOffset;
-            editor.getSelectionModel().setSelection(lineStartOffset, lineStartOffset + text.length());
+            offset = insertTextMultiline(text, editor, document);
           }
           else {
             document.setText(text);
@@ -248,9 +224,19 @@ public class ConsoleHistoryController {
     }.execute();
   }
 
+  protected int insertTextMultiline(String text, Editor editor, Document document) {
+    TextRange selection = EditorUtil.getSelectionInAnyMode(editor);
+
+    int start = document.getLineStartOffset(document.getLineNumber(selection.getStartOffset()));
+    int end = document.getLineEndOffset(document.getLineNumber(selection.getEndOffset()));
+
+    document.replaceString(start, end, text);
+    editor.getSelectionModel().setSelection(start, start + text.length());
+    return start;
+  }
 
   private class MyAction extends AnAction {
-    private boolean myNext;
+    private final boolean myNext;
 
     public MyAction(final boolean next) {
       myNext = next;
@@ -360,20 +346,17 @@ public class ConsoleHistoryController {
       }
     }
   }
-  
+
   public static class ModelHelper {
     private final String myType;
     private final String myId;
     private final ConsoleHistoryModel myModel;
     private String myContent;
-    @NotNull
-    private final Charset myCharset;
 
-    public ModelHelper(String type, String id, ConsoleHistoryModel model, @NotNull Charset charset) {
+    public ModelHelper(String type, String id, ConsoleHistoryModel model) {
       myType = type;
       myId = id;
       myModel = model;
-      myCharset = charset;
     }
 
     public ConsoleHistoryModel getModel() {
@@ -403,7 +386,7 @@ public class ConsoleHistoryController {
       if (!file.exists()) return false;
       HierarchicalStreamReader xmlReader = null;
       try {
-        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
+        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8));
         String text = loadHistory(xmlReader, id);
         if (text != null) {
           myContent = text;
@@ -435,10 +418,10 @@ public class ConsoleHistoryController {
         try {
           serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           // not recognized
         }
-        serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
+        serializer.setOutput(os = new SafeFileOutputStream(file), CharsetToolkit.UTF8);
         saveHistory(serializer);
       }
       catch (Exception ex) {
@@ -448,7 +431,7 @@ public class ConsoleHistoryController {
         try {
           os.close();
         }
-        catch (Exception e) {
+        catch (Exception ignored) {
           // nothing
         }
       }

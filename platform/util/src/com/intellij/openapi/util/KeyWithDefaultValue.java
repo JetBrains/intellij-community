@@ -28,4 +28,14 @@ public abstract class KeyWithDefaultValue<T> extends Key<T> {
   }
 
   public abstract T getDefaultValue();
+
+  @NotNull
+  public static <T> KeyWithDefaultValue<T> create(@NotNull @NonNls String name, final T defValue) {
+    return new KeyWithDefaultValue<T>(name) {
+      @Override
+      public T getDefaultValue() {
+        return defValue;
+      }
+    };
+  }
 }

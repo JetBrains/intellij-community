@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author ven
@@ -49,6 +51,22 @@ public class CommonRefactoringUtil {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
+  }
+
+  //order of usages accross different files is irrelevant
+  public static void sortDepthFirstRightLeftOrder(final UsageInfo[] usages) {
+    Arrays.sort(usages, new Comparator<UsageInfo>() {
+      public int compare(final UsageInfo usage1, final UsageInfo usage2) {
+        final PsiElement element1 = usage1.getElement();
+        final PsiElement element2 = usage2.getElement();
+        if (element1 == null) {
+          if (element2 == null) return 0;
+          return 1;
+        }
+        if (element2 == null) return -1;
+        return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
+      }
+    });
   }
 
   /**
@@ -66,7 +84,7 @@ public class CommonRefactoringUtil {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (editor == null) {
+        if (editor == null || editor.getComponent().getRootPane() == null) {
           showErrorMessage(title, message, helpId, project);
         }
         else {
@@ -78,7 +96,7 @@ public class CommonRefactoringUtil {
 
   @NonNls
   public static String htmlEmphasize(String text) {
-    return "<b><code>" + StringUtil.escapeXml(text) + "</code></b>";
+    return StringUtil.htmlEmphasize(text);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element) {

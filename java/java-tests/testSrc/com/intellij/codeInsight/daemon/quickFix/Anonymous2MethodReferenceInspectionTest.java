@@ -20,7 +20,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
 
-public class Anonymous2MethodReferenceInspectionTest extends LightQuickFixTestCase {
+public class Anonymous2MethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

@@ -291,5 +291,42 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert profile.getGeneratedSourcesDirectoryName(true).replace('\\', '/').endsWith("target/metamodelTest")
   }
 
+  public void testProcessorsViaBscMavenPlugin() {
+    importProject("""
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.bsc.maven</groupId>
+        <artifactId>maven-processor-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>process-entities</id>
+            <goals>
+                <goal>process</goal>
+            </goals>
+            <phase>generate-sources</phase>
+
+            <configuration>
+                <processors>
+                    <processor>com.mysema.query.apt.jpa.JPAAnnotationProcessor</processor>
+                    <processor>com.test.SourceCodeGeneratingAnnotationProcessor2</processor>
+                </processors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
+    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+
+    assert compilerConfiguration.findModuleProcessorProfile(MavenAnnotationProcessorConfigurer.PROFILE_PREFIX + 'project').getProcessors() ==
+           new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"])
+  }
 }

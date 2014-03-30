@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -49,6 +50,12 @@ public class ArtifactInstructionsBuilderContextImpl implements ArtifactInstructi
   @Override
   public boolean enterArtifact(JpsArtifact artifact) {
     return myParentArtifacts.add(artifact);
+  }
+
+  @Override
+  @NotNull
+  public Set<JpsArtifact> getParentArtifacts() {
+    return myParentArtifacts;
   }
 
   @Override

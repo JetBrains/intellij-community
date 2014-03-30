@@ -44,6 +44,7 @@ import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.*;
+import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
@@ -199,8 +200,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public Icon decorate(final CommittedChangeList list) {
-    final MergeInfoHolder.ListMergeStatus status = getStatus(list, false);
-    return (status == null) ? MergeInfoHolder.ListMergeStatus.ALIEN.getIcon() : status.getIcon();
+    final ListMergeStatus status = getStatus(list, false);
+    return (status == null) ? ListMergeStatus.ALIEN.getIcon() : status.getIcon();
   }
   
   private void createPanels(final RepositoryLocation location, final Runnable afterRefresh) {
@@ -566,16 +567,16 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   private boolean mergeEnabled(final CommittedChangeList list, final boolean forMerge) {
-    final MergeInfoHolder.ListMergeStatus mergeStatus = getStatus(list, true);
-    if ((mergeStatus == null) || (MergeInfoHolder.ListMergeStatus.ALIEN.equals(mergeStatus))) {
+    final ListMergeStatus mergeStatus = getStatus(list, true);
+    if ((mergeStatus == null) || (ListMergeStatus.ALIEN.equals(mergeStatus))) {
       return false;
-    } else if (MergeInfoHolder.ListMergeStatus.REFRESHING.equals(mergeStatus)) {
+    } else if (ListMergeStatus.REFRESHING.equals(mergeStatus)) {
       return true;
     }
     if (forMerge) {
-      return MergeInfoHolder.ListMergeStatus.NOT_MERGED.equals(mergeStatus);
+      return ListMergeStatus.NOT_MERGED.equals(mergeStatus);
     }
-    return MergeInfoHolder.ListMergeStatus.MERGED.equals(mergeStatus);
+    return ListMergeStatus.MERGED.equals(mergeStatus);
   }
 
   private class MarkAsMerged extends AbstractIntegrateChangesAction<SelectedChangeListsChecker> {
@@ -782,7 +783,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   @Nullable
-  public MergeInfoHolder.ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
+  public ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
     if (! (list instanceof SvnChangeList)) {
       return null;
     }
@@ -867,14 +868,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
       final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
       for (CommittedChangeList list : changeLists) {
-        final MergeInfoHolder.ListMergeStatus status = getStatus(list, true);
-        if (MergeInfoHolder.ListMergeStatus.REFRESHING.equals(status)) {
+        final ListMergeStatus status = getStatus(list, true);
+        if (ListMergeStatus.REFRESHING.equals(status)) {
           result.add(list);
-        } else if ((status == null) || MergeInfoHolder.ListMergeStatus.ALIEN.equals(status)) {
+        } else if ((status == null) || ListMergeStatus.ALIEN.equals(status)) {
           if (! myFilterAlien.isSelected(null)) {
             result.add(list);
           }
-        } else if (MergeInfoHolder.ListMergeStatus.MERGED.equals(status) || MergeInfoHolder.ListMergeStatus.COMMON.equals(status)) {
+        } else if (ListMergeStatus.MERGED.equals(status) || ListMergeStatus.COMMON.equals(status)) {
           if (! myFilterMerged.isSelected(null)) {
             result.add(list);
           }

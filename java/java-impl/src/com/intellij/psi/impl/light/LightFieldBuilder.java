@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> implements PsiField {
-  PsiClass myContainingClass = null;
-  PsiExpression myInitializer = null;
+  private PsiClass myContainingClass = null;
+  private PsiExpression myInitializer = null;
   private PsiDocComment myDocComment = null;
   private boolean myIsDeprecated = false;
 
@@ -41,7 +41,7 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   public LightFieldBuilder(PsiManager manager, @NotNull String name, @NotNull PsiType type) {
-    super(manager, name, type, StdLanguages.JAVA);
+    super(manager, name, type, JavaLanguage.INSTANCE);
   }
 
   public LightFieldBuilder setContainingClass(PsiClass psiClass) {

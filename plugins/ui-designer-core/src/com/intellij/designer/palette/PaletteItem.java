@@ -15,6 +15,9 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.model.MetaModel;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -30,4 +33,36 @@ public interface PaletteItem {
   String getVersion();
 
   boolean isEnabled();
+
+  /**
+   * Returns null or empty if this item is not deprecated, and otherwise returns the version
+   * the item was deprecated in.
+   *
+   * @return null or empty if the item is not deprecated, otherwise a version
+   */
+  @Nullable
+  String getDeprecatedIn();
+
+  /**
+   * Returns a hint regarding the deprecation. Can be null or empty.
+   *
+   * @return a hint describing the deprecated item.
+   */
+  @Nullable
+  String getDeprecatedHint();
+
+  /**
+   * @return the creation data to be used by {@link com.intellij.designer.model.MetaModel#getCreation()}
+   */
+  String getCreation();
+
+  /**
+   * Returns the associated {@link com.intellij.designer.model.MetaModel}, if known
+   */
+  MetaModel getMetaModel();
+
+  /**
+   * Sets the associated {@link com.intellij.designer.model.MetaModel}, if known
+   */
+  void setMetaModel(MetaModel metaModel);
 }

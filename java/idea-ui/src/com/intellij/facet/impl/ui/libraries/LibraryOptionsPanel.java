@@ -39,7 +39,9 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibrary
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,8 +51,10 @@ import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.util.ui.RadioButtonEnumModel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,26 +87,47 @@ public class LibraryOptionsPanel implements Disposable {
   private JLabel myUseLibraryLabel;
   private JLabel myHiddenLabel;
   private JPanel myRootPanel;
+  private JRadioButton myUseFromProviderRadioButton;
+  private JPanel mySimplePanel;
   private ButtonGroup myButtonGroup;
 
   private LibraryCompositionSettings mySettings;
+  private final CustomLibraryDescription myLibraryDescription;
   private final LibrariesContainer myLibrariesContainer;
   private SortedComboBoxModel<LibraryEditor> myLibraryComboBoxModel;
+  private FrameworkLibraryProvider myLibraryProvider;
   private boolean myDisposed;
 
   private enum Choice {
     USE_LIBRARY,
     DOWNLOAD,
-    SETUP_LIBRARY_LATER
+    SETUP_LIBRARY_LATER,
+    USE_FROM_PROVIDER
   }
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
   public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
-                             @NotNull final String baseDirectoryPath,
+                             @NotNull final String path,
                              @NotNull final FrameworkLibraryVersionFilter versionFilter,
                              @NotNull final LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
+
+    this(libraryDescription, new NotNullComputable<String>() {
+      @NotNull
+      @Override
+      public String compute() {
+        return path;
+      }
+    }, versionFilter, librariesContainer, showDoNotCreateOption);
+  }
+
+  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
+                             @NotNull final NotNullComputable<String> pathProvider,
+                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
+                             @NotNull final LibrariesContainer librariesContainer,
+                             final boolean showDoNotCreateOption) {
+    myLibraryDescription = libraryDescription;
     myLibrariesContainer = librariesContainer;
     final DownloadableLibraryDescription description = getDownloadableDescription(libraryDescription);
     if (description != null) {
@@ -115,7 +140,8 @@ public class LibraryOptionsPanel implements Disposable {
             @Override
             public void run() {
               if (!myDisposed) {
-                showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption, versions);
+                showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
+                onVersionChanged(getPresentableVersion());
               }
             }
           });
@@ -123,9 +149,37 @@ public class LibraryOptionsPanel implements Disposable {
       });
     }
     else {
-      showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption,
+      showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption,
                         new ArrayList<FrameworkLibraryVersion>());
     }
+  }
+
+  @Nullable
+  private String getPresentableVersion() {
+    switch (myButtonEnumModel.getSelected()) {
+      case DOWNLOAD:
+        LibraryDownloadSettings settings = mySettings.getDownloadSettings();
+        if (settings != null) {
+          return settings.getVersion().getVersionNumber();
+        }
+        break;
+      case USE_LIBRARY:
+        LibraryEditor item = myLibraryComboBoxModel.getSelectedItem();
+        if (item instanceof ExistingLibraryEditor) {
+          return item.getName();
+        }
+        break;
+      default:
+        return null;
+    }
+    return null;
+  }
+
+  protected void onVersionChanged(@Nullable String version) {
+  }
+
+  public JPanel getSimplePanel() {
+    return mySimplePanel;
   }
 
   @Nullable
@@ -143,11 +197,11 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private void showSettingsPanel(CustomLibraryDescription libraryDescription,
-                                 String baseDirectoryPath,
+                                 NotNullComputable<String> pathProvider,
                                  FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
     //todo[nik] create mySettings only in apply() method
-    mySettings = new LibraryCompositionSettings(libraryDescription, baseDirectoryPath, versionFilter, versions);
+    mySettings = new LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
 
@@ -156,6 +210,7 @@ public class LibraryOptionsPanel implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateState();
+        onVersionChanged(getPresentableVersion());
       }
     });
 
@@ -188,6 +243,7 @@ public class LibraryOptionsPanel implements Disposable {
           myButtonEnumModel.setSelected(Choice.USE_LIBRARY);
         }
         updateState();
+        onVersionChanged(getPresentableVersion());
       }
     });
     myExistingLibraryComboBox.setRenderer(new ColoredListCellRenderer() {
@@ -210,12 +266,27 @@ public class LibraryOptionsPanel implements Disposable {
     });
 
     boolean canDownload = mySettings.getDownloadSettings() != null;
+    boolean canUseFromProvider = myLibraryProvider != null;
     myDownloadRadioButton.setVisible(canDownload);
-    myButtonEnumModel.setSelected(libraries.isEmpty() && canDownload ? Choice.DOWNLOAD : Choice.USE_LIBRARY);
+    myUseFromProviderRadioButton.setVisible(canUseFromProvider);
+    Choice selectedOption;
+    if (canUseFromProvider) {
+      selectedOption = Choice.USE_FROM_PROVIDER;
+    }
+    else if (libraries.isEmpty() && canDownload) {
+      selectedOption = Choice.DOWNLOAD;
+    }
+    else {
+      selectedOption = Choice.USE_LIBRARY;
+    }
+    myButtonEnumModel.setSelected(selectedOption);
 
-    if (!canDownload && !showDoNotCreateOption) {
+    if (!canDownload && !canUseFromProvider && !showDoNotCreateOption) {
       myUseLibraryRadioButton.setVisible(false);
       myUseLibraryLabel.setVisible(true);
+    }
+    else {
+      myUseLibraryLabel.setVisible(false);
     }
 
     final Dimension minimumSize = new Dimension(-1, myMessageLabel.getFontMetrics(myMessageLabel.getFont()).getHeight() * 2);
@@ -271,16 +342,28 @@ public class LibraryOptionsPanel implements Disposable {
         }
         break;
 
+      case USE_FROM_PROVIDER:
       case SETUP_LIBRARY_LATER:
         break;
     }
     updateState();
   }
 
-  public void changeBaseDirectoryPath(@NotNull String directoryForLibrariesPath) {
-    if (mySettings != null) {
-      mySettings.changeBaseDirectoryPath(directoryForLibrariesPath);
-      updateState();
+  public void setLibraryProvider(@Nullable FrameworkLibraryProvider provider) {
+    if (provider != null && !ContainerUtil.intersects(provider.getAvailableLibraryKinds(), myLibraryDescription.getSuitableLibraryKinds())) {
+      provider = null;
+    }
+
+    if (!Comparing.equal(myLibraryProvider, provider)) {
+      myLibraryProvider = provider;
+
+      if (mySettings != null) {
+        if (provider != null && !myUseFromProviderRadioButton.isVisible()) {
+          myUseFromProviderRadioButton.setSelected(true);
+        }
+        myUseFromProviderRadioButton.setVisible(provider != null);
+        updateState();
+      }
     }
   }
 
@@ -292,7 +375,7 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private void doCreate() {
-    final NewLibraryConfiguration libraryConfiguration = mySettings.getLibraryDescription().createNewLibrary(myPanel, getBaseDirectory());
+    final NewLibraryConfiguration libraryConfiguration = myLibraryDescription.createNewLibrary(myCreateButton, getBaseDirectory());
     if (libraryConfiguration != null) {
       final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
@@ -307,12 +390,11 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private List<Library> calculateSuitableLibraries() {
-    final CustomLibraryDescription description = mySettings.getLibraryDescription();
     List<Library> suitableLibraries = new ArrayList<Library>();
     for (Library library : myLibrariesContainer.getAllLibraries()) {
-      if (description instanceof OldCustomLibraryDescription &&
-          ((OldCustomLibraryDescription)description).isSuitableLibrary(library, myLibrariesContainer)
-          || LibraryPresentationManager.getInstance().isLibraryOfKind(library, myLibrariesContainer, description.getSuitableLibraryKinds())) {
+      if (myLibraryDescription instanceof OldCustomLibraryDescription &&
+          ((OldCustomLibraryDescription)myLibraryDescription).isSuitableLibrary(library, myLibrariesContainer)
+          || LibraryPresentationManager.getInstance().isLibraryOfKind(library, myLibrariesContainer, myLibraryDescription.getSuitableLibraryKinds())) {
         suitableLibraries.add(library);
       }
     }
@@ -334,9 +416,17 @@ public class LibraryOptionsPanel implements Disposable {
     myMessageLabel.setIcon(null);
     myConfigureButton.setVisible(true);
     final LibraryDownloadSettings settings = mySettings.getDownloadSettings();
-    myDownloadRadioButton.setEnabled(settings != null);
     myDownloadRadioButton.setVisible(settings != null);
-    if (!myDownloadRadioButton.isEnabled() && myDownloadRadioButton.isSelected() && myUseLibraryRadioButton.isVisible()) {
+    myUseFromProviderRadioButton.setVisible(myLibraryProvider != null);
+    if (!myUseFromProviderRadioButton.isVisible() && myUseFromProviderRadioButton.isSelected()) {
+      if (myDownloadRadioButton.isVisible()) {
+        myDownloadRadioButton.setSelected(true);
+      }
+      else {
+        myUseLibraryRadioButton.setSelected(true);
+      }
+    }
+    if (!myDownloadRadioButton.isVisible() && myDownloadRadioButton.isSelected() && myUseLibraryRadioButton.isVisible()) {
       myUseLibraryRadioButton.setSelected(true);
     }
     String message = "";
@@ -344,6 +434,12 @@ public class LibraryOptionsPanel implements Disposable {
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD:
         message = getDownloadFilesMessage();
+        break;
+      case USE_FROM_PROVIDER:
+        if (myLibraryProvider != null) {
+          message = "Library from " + myLibraryProvider.getPresentableName() + " will be used";
+        }
+        myConfigureButton.setVisible(false);
         break;
       case USE_LIBRARY:
         final Object item = myExistingLibraryComboBox.getSelectedItem();
@@ -365,6 +461,10 @@ public class LibraryOptionsPanel implements Disposable {
         showConfigurePanel = false;
     }
 
+    if (myLibraryProvider != null) {
+      myUseFromProviderRadioButton.setText("Use library from " + myLibraryProvider.getPresentableName());
+    }
+
     //show the longest message on the hidden card to ensure that dialog won't jump if user selects another option
     if (mySettings.getDownloadSettings() != null) {
       myHiddenLabel.setText(getDownloadFilesMessage());
@@ -374,7 +474,7 @@ public class LibraryOptionsPanel implements Disposable {
                                               "name", 10));
     }
     ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");
-    myMessageLabel.setText("<html>" + message + "</html>");
+    myMessageLabel.setText(XmlStringUtil.wrapInHtml(message));
   }
 
   private String getDownloadFilesMessage() {
@@ -423,6 +523,8 @@ public class LibraryOptionsPanel implements Disposable {
     else {
       mySettings.setNewLibraryEditor(null);
     }
+
+    mySettings.setLibraryProvider(option == Choice.USE_FROM_PROVIDER ? myLibraryProvider : null);
     return mySettings;
   }
 

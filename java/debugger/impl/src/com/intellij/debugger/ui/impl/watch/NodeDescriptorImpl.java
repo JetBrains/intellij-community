@@ -52,15 +52,21 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private final List<NodeDescriptorImpl> myChildren = new ArrayList<NodeDescriptorImpl>();
   private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<Map<ObjectReference, ValueMarkup>>("ValueMarkupMap");
 
+  @Override
   public String getName() {
     return null;
   }
 
+  @Override
   public <T> T getUserData(Key<T> key) {
-    if(myUserData == null) return null;
-    return (T) myUserData.get(key);
+    if (myUserData == null) {
+      return null;
+    }
+    //noinspection unchecked
+    return (T)myUserData.get(key);
   }
 
+  @Override
   public <T> void putUserData(Key<T> key, T value) {
     if(myUserData == null) {
       myUserData = new HashMap<Key, Object>();
@@ -91,12 +97,12 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   protected abstract String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException;
 
-  private EvaluateException processException(Exception e) {
-    if(e instanceof InconsistentDebugInfoException) {
+  private static EvaluateException processException(Exception e) {
+    if (e instanceof InconsistentDebugInfoException) {
       return new EvaluateException(DebuggerBundle.message("error.inconsistent.debug.info"), null);
     }
 
-    else if(e instanceof InvalidStackFrameException) {
+    else if (e instanceof InvalidStackFrameException) {
       return new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"), null);
     }
     else {
@@ -104,6 +110,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     }
   }
 
+  @Override
   public void displayAs(NodeDescriptor descriptor) {
     if (descriptor instanceof NodeDescriptorImpl) {
       final NodeDescriptorImpl that = (NodeDescriptorImpl)descriptor;
@@ -122,6 +129,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     return myEvaluateException;
   }
 
+  @Override
   public String getLabel() {
     return myLabel;
   }
@@ -149,6 +157,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     return myChildren;
   }
 
+  @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     displayAs(oldDescriptor);
   }

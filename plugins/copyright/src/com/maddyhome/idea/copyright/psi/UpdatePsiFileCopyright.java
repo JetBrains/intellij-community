@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -30,12 +29,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private final CopyrightProfile myOptions;
@@ -246,6 +247,8 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
         addAction(new CommentAction(pos, prefix, suffix));
       }
     }
+    catch (PatternSyntaxException ignore) {
+    }
     catch (Exception e) {
       logger.error(e);
     }
@@ -254,7 +257,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   private static CommentRange getLineCopyrightComments(List<PsiComment> comments, Document doc, int i, PsiComment comment) {
     PsiElement firstComment = comment;
     PsiElement lastComment = comment;
-    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilBase.findLanguageFromElement(comment));
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilCore.findLanguageFromElement(comment));
     if (isLineComment(commenter, comment, doc)) {
       int sline = doc.getLineNumber(comment.getTextRange().getStartOffset());
       int eline = doc.getLineNumber(comment.getTextRange().getEndOffset());
@@ -313,33 +316,35 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   protected void processActions() throws IncorrectOperationException {
-    Application app = ApplicationManager.getApplication();
-    app.runWriteAction(new Runnable() {
+    new WriteCommandAction.Simple(file.getProject(), "Update copyright") {
       @Override
-      public void run() {
+      protected void run() throws Throwable {
         Document doc = FileDocumentManager.getInstance().getDocument(getRoot());
-        PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
-        for (CommentAction action : actions) {
-          int start = action.getStart();
-          int end = action.getEnd();
-
-          switch (action.getType()) {
-            case CommentAction.ACTION_INSERT:
-              String comment = getCommentText(action.getPrefix(), action.getSuffix());
-              if (!comment.isEmpty()) {
-                doc.insertString(start, comment);
-              }
-              break;
-            case CommentAction.ACTION_REPLACE:
-              doc.replaceString(start, end, getCommentText("", ""));
-              break;
-            case CommentAction.ACTION_DELETE:
-              doc.deleteString(start, end);
-              break;
+        if (doc != null) {
+          PsiDocumentManager.getInstance(file.getProject()).doPostponedOperationsAndUnblockDocument(doc);
+          for (CommentAction action : actions) {
+            int start = action.getStart();
+            int end = action.getEnd();
+  
+            switch (action.getType()) {
+              case CommentAction.ACTION_INSERT:
+                String comment = getCommentText(action.getPrefix(), action.getSuffix());
+                if (!comment.isEmpty()) {
+                  doc.insertString(start, comment);
+                }
+                break;
+              case CommentAction.ACTION_REPLACE:
+                doc.replaceString(start, end, getCommentText("", ""));
+                break;
+              case CommentAction.ACTION_DELETE:
+                doc.deleteString(start, end);
+                break;
+            }
           }
+          PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
         }
       }
-    });
+    }.execute();
   }
 
   private static class CommentRange {
@@ -420,7 +425,7 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
     }
 
     @Override
-    public int compareTo(CommentAction object) {
+    public int compareTo(@NotNull CommentAction object) {
       int s = object.getStart();
       int diff = s - start;
       if (diff == 0) {

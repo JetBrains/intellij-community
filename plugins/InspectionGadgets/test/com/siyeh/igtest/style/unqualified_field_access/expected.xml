@@ -7,11 +7,17 @@
     <description>Instance field access &lt;code&gt;field&lt;/code&gt; is not qualified with 'this' #loc</description>
   </problem>
 
-
   <problem>
     <file>UnqualifiedFieldAccess.java</file>
     <line>9</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance field access not qualified with 'this'</problem_class>
     <description>Instance field access &lt;code&gt;field&lt;/code&gt; is not qualified with 'this' #loc</description>
+  </problem>
+
+  <problem>
+    <file>UnqualifiedFieldAccess.java</file>
+    <line>31</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Instance field access not qualified with 'this'</problem_class>
+    <description>Instance field access &lt;code&gt;s&lt;/code&gt; is not qualified with 'this' #loc</description>
   </problem>
 </problems>

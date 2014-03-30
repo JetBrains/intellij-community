@@ -17,9 +17,11 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTarget;
@@ -28,7 +30,9 @@ import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactPathUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
 
 /**
@@ -36,17 +40,32 @@ import java.util.Collections;
  */
 public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
+  private FileCopyingHandler myCopyingHandler;
+
   public FileBasedArtifactRootDescriptor(@NotNull File file,
                                          @NotNull SourceFileFilter filter,
                                          int index,
                                          ArtifactBuildTarget target,
-                                         @NotNull DestinationInfo destinationInfo) {
-    super(file, filter, index, target, destinationInfo);
+                                         @NotNull DestinationInfo destinationInfo, FileCopyingHandler copyingHandler) {
+    super(file, createCompositeFilter(filter, copyingHandler.createFileFilter()), index, target, destinationInfo);
+    myCopyingHandler = copyingHandler;
+  }
+
+  @NotNull
+  private static SourceFileFilter createCompositeFilter(@NotNull final SourceFileFilter baseFilter, @NotNull final FileFilter filter) {
+    if (filter.equals(FileUtilRt.ALL_FILES)) return baseFilter;
+    return new CompositeSourceFileFilter(baseFilter, filter);
   }
 
   @Override
   protected String getFullPath() {
     return myRoot.getPath();
+  }
+
+  @Override
+  public void writeConfiguration(PrintWriter out) {
+    super.writeConfiguration(out);
+    myCopyingHandler.writeConfiguration(out);
   }
 
   public void copyFromRoot(String filePath,
@@ -78,12 +97,32 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
       if (logger.isEnabled()) {
         logger.logCompiledFiles(Collections.singletonList(file), IncArtifactBuilder.BUILDER_NAME, "Copying file:");
       }
-      FileUtil.copyContent(file, targetFile);
+      myCopyingHandler.copyFile(file, targetFile, context);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(filePath));
     }
     else if (LOG.isDebugEnabled()) {
       LOG.debug("Target path " + targetPath + " is already registered so " + filePath + " won't be copied");
     }
     outSrcMapping.appendData(targetPath, rootIndex, filePath);
+  }
+
+  private static class CompositeSourceFileFilter extends SourceFileFilter {
+    private final SourceFileFilter myBaseFilter;
+    private final FileFilter myFilter;
+
+    public CompositeSourceFileFilter(SourceFileFilter baseFilter, FileFilter filter) {
+      myBaseFilter = baseFilter;
+      myFilter = filter;
+    }
+
+    @Override
+    public boolean accept(@NotNull String fullFilePath) {
+      return myFilter.accept(new File(fullFilePath)) && myBaseFilter.accept(fullFilePath);
+    }
+
+    @Override
+    public boolean shouldBeCopied(@NotNull String fullFilePath, ProjectDescriptor projectDescriptor) throws IOException {
+      return myBaseFilter.shouldBeCopied(fullFilePath, projectDescriptor);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -49,13 +46,14 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   @Override
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
-    SearchScope searchScope = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
-
-    orderSearching(searchScope, method.getName(), queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
+    SearchScope searchScope = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getScope()).intersectWith(getUseScope(method));
+    PsiClass aClass = method.getContainingClass();
+    String className = aClass == null ? null : aClass.getName();
+    orderSearching(searchScope, method.getName(), method, queryParameters.getOptimizer(), method.getParameterList().getParametersCount());
 
     final String propName = PropertyUtil.getPropertyName(method);
     if (propName != null) {
-      orderSearching(searchScope, propName, queryParameters.getOptimizer(), -1);
+      orderSearching(searchScope, propName, method, queryParameters.getOptimizer(), -1);
     }
   }
 
@@ -73,9 +71,13 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
   }
 
 
-  private static void orderSearching(SearchScope searchScope, final String name, @NotNull SearchRequestCollector collector, final int paramCount) {
+  private static void orderSearching(SearchScope searchScope,
+                                     final String name,
+                                     @NotNull PsiMethod searchTarget,
+                                     @NotNull SearchRequestCollector collector,
+                                     final int paramCount) {
     if (StringUtil.isEmpty(name)) return;
-    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, new RequestResultProcessor("groovy.lateBound") {
+    collector.searchWord(name, searchScope, UsageSearchContext.IN_CODE, true, searchTarget, new RequestResultProcessor("groovy.lateBound") {
       @Override
       public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<PsiReference> consumer) {
         if (!(element instanceof GrReferenceExpression)) {

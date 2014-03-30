@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,23 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -48,7 +46,7 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
     final Module module = ModuleUtil.findModuleForPsiElement(aClass);
 
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiatable(aClass)) return null;
+    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
     final PsiClass base = JavaPsiFacade.getInstance(project).findClass(INTENTION, GlobalSearchScope.allScope(project));
 
@@ -69,10 +67,10 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
           ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(problem == null ? nameIdentifier : problem,
                                                                                 "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'",
                                                                                 isOnTheFly,
-                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
           return new ProblemDescriptor[]{problemDescriptor};
         }
-        
+
         return null;
       }
     }
@@ -118,20 +116,6 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
     }
 
     return hasBefore && hasAfter;
-  }
-  
-  public static List<VirtualFile> getPotentialRoots(Module module) {
-    final PsiDirectory[] dirs = getIntentionDescriptionsDirs(module);
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    if (dirs.length != 0) {
-      for (PsiDirectory dir : dirs) {
-        final PsiDirectory parent = dir.getParentDirectory();
-        if (parent != null) result.add(parent.getVirtualFile());
-      }
-    } else {
-      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
-    }
-    return result;
   }
 
   public static PsiDirectory[] getIntentionDescriptionsDirs(Module module) {

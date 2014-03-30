@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarationAssignment;
 
@@ -35,8 +36,37 @@ import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarati
  */
 public class GroovyUntypedAccessInspection extends BaseInspection {
 
+  @NotNull
   protected BaseInspectionVisitor buildVisitor() {
-    return new Visitor();
+    return new BaseInspectionVisitor() {
+      @Override
+      public void visitReferenceExpression(GrReferenceExpression refExpr) {
+        super.visitReferenceExpression(refExpr);
+
+        if (PsiUtil.isThisOrSuperRef(refExpr)) return;
+
+        GroovyResolveResult resolveResult = refExpr.advancedResolve();
+
+        PsiElement resolved = resolveResult.getElement();
+        if (resolved != null) {
+          if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
+        }
+        else {
+          GrExpression qualifier = refExpr.getQualifierExpression();
+          if (qualifier == null && isDeclarationAssignment(refExpr)) return;
+        }
+
+        final PsiType refExprType = refExpr.getType();
+        if (refExprType == null) {
+          if (resolved != null) {
+            registerError(refExpr);
+          }
+        }
+        else if (refExprType instanceof PsiClassType && ((PsiClassType)refExprType).resolve() == null) {
+          registerError(refExpr);
+        }
+      }
+    };
   }
 
   @Nls
@@ -54,32 +84,5 @@ public class GroovyUntypedAccessInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... args) {
     return "Cannot determine type of '#ref'";
-  }
-
-  private static class Visitor extends BaseInspectionVisitor {
-    @Override
-    public void visitReferenceExpression(GrReferenceExpression refExpr) {
-      super.visitReferenceExpression(refExpr);
-      GroovyResolveResult resolveResult = refExpr.advancedResolve();
-
-      PsiElement resolved = resolveResult.getElement();
-      if (resolved != null) {
-        if (isDeclarationAssignment(refExpr) || resolved instanceof PsiPackage) return;
-      }
-      else {
-        GrExpression qualifier = refExpr.getQualifierExpression();
-        if (qualifier == null && isDeclarationAssignment(refExpr)) return;
-      }
-
-      final PsiType refExprType = refExpr.getType();
-      if (refExprType == null) {
-        if (resolved != null) {
-          registerError(refExpr);
-        }
-      }
-      else if (refExprType instanceof PsiClassType && ((PsiClassType)refExprType).resolve() == null) {
-        registerError(refExpr);
-      }
-    }
   }
 }

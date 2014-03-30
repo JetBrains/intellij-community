@@ -40,8 +40,7 @@ import java.awt.*;
 import java.util.Set;
 
 
-public class SpellCheckingInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-
+public class SpellCheckingInspection extends LocalInspectionTool implements BatchSuppressableTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -58,20 +57,30 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
     return SpellCheckerBundle.message("spellchecking.inspection.name");
   }
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
-      SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
       if(strategy instanceof SuppressibleSpellcheckingStrategy) {
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
     }
-    return SuppressIntentionAction.EMPTY_ARRAY;
+    return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
+  private static SpellcheckingStrategy getSpellcheckingStrategy(@NotNull PsiElement element, @NotNull Language language) {
+    for (SpellcheckingStrategy strategy : LanguageSpellchecking.INSTANCE.allForLanguage(language)) {
+      if (strategy.isMyContext(element)) {
+        return strategy;
+      }
+    }
+    return null;
   }
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
-    SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
+    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
     return strategy instanceof SuppressibleSpellcheckingStrategy &&
            ((SuppressibleSpellcheckingStrategy)strategy).isSuppressedFor(element, getShortName());
   }
@@ -92,11 +101,6 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return SpellCheckerManager.getHighlightDisplayLevel();
-  }
-
-  @Nullable
-  private static SpellcheckingStrategy getFactoryByLanguage(@NotNull Language lang) {
-    return LanguageSpellchecking.INSTANCE.forLanguage(lang);
   }
 
   @Override
@@ -146,7 +150,7 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
    * @param consumer the consumer of tokens
    */
   public static void tokenize(@NotNull final PsiElement element, @NotNull final Language language, TokenConsumer consumer) {
-    final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
+    final SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if(factoryByLanguage==null) return;
     Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
     //noinspection unchecked
@@ -155,7 +159,7 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
 
   private static void addBatchDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder) {
-    final SpellcheckingStrategy strategy = getFactoryByLanguage(element.getLanguage());
+    final SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
 
     SpellCheckerQuickFix[] fixes = strategy != null
                                    ? strategy.getBatchFixes(element, offset, textRange)
@@ -166,7 +170,7 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
   private static void addRegularDescriptor(PsiElement element, int offset, @NotNull TextRange textRange, @NotNull ProblemsHolder holder,
                                            boolean useRename, String wordWithTypo) {
-    SpellcheckingStrategy strategy = getFactoryByLanguage(element.getLanguage());
+    SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, element.getLanguage());
 
     SpellCheckerQuickFix[] fixes = strategy != null
                                    ? strategy.getRegularFixes(element, offset, textRange, useRename, wordWithTypo)
@@ -260,12 +264,12 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
       boolean hasProblems = myManager.hasProblem(word);
       if (hasProblems) {
-        if (!myHolder.isOnTheFly()) {
-          myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
+        if (myHolder.isOnTheFly()) {
+          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
         }
         else {
-          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
+          myAlreadyChecked.add(word);
+          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
         }
       }
     }

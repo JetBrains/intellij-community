@@ -17,6 +17,7 @@ package com.intellij.ide.startupWizard;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
@@ -24,6 +25,7 @@ import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,7 +54,8 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   private static final String[] ourSuffixes = new String[] { "integration", "support", "plugin" };
 
   public SelectPluginsStep(final String title, final StartupWizardModel model, final String requirePlugin) {
-    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to Settings | Plugins.",
+    super(title, "Select the plugins to enable. Disabling unused plugins will improve IDE startup speed and performance.\n\nTo change plugin settings later, go to " +
+                 ShowSettingsUtil.getSettingsMenuName() + " | Plugins.",
           null);
     myModel = model;
     myRequirePlugin = requirePlugin;
@@ -96,7 +99,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     final int clickableArea = new JCheckBox("").getMinimumSize().width;
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (e.getX() < clickableArea) {
           toggleSelection();
         }

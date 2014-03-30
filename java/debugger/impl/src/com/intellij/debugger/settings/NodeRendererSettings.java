@@ -16,13 +16,16 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
@@ -31,7 +34,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.InternalIterator;
 import com.intellij.util.ui.ColorIcon;
 import com.sun.jdi.*;
@@ -43,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,6 +94,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
     ),
     createCompoundReferenceRenderer(
+      "List", CommonClassNames.JAVA_UTIL_LIST,
+      createLabelRenderer(" size = ", "size()", null),
+      new ListChildrenRenderer()
+    ),
+    createCompoundReferenceRenderer(
       "Collection", "java.util.Collection",
       createLabelRenderer(" size = ", "size()", null),
       createExpressionChildrenRenderer("toArray()", "!isEmpty()")
@@ -107,11 +120,17 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public static NodeRendererSettings getInstance() {
     return ServiceManager.getService(NodeRendererSettings.class);
   }
-  
+
+  /**
+   * use {@link com.intellij.debugger.ui.tree.render.NodeRenderer} extension
+   * @param renderer
+   */
+  @Deprecated
   public void addPluginRenderer(NodeRenderer renderer) {
     myPluginRenderers.add(renderer);
   }
 
+  @Deprecated
   public void removePluginRenderer(NodeRenderer renderer) {
     myPluginRenderers.remove(renderer);
   }
@@ -253,15 +272,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     allRenderers.add(myHexRenderer);
     allRenderers.add(myPrimitiveRenderer);
     allRenderers.addAll(myPluginRenderers);
+    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
       public boolean visit(final NodeRenderer renderer) {
         allRenderers.add(renderer);
         return true;
       }
     });
-    for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
-      allRenderers.add(myAlternateCollectionRenderer);
-    }
+    Collections.addAll(allRenderers, myAlternateCollectionRenderers);
     allRenderers.add(myColorRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
@@ -468,6 +486,36 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       public ExpressionEvaluator getEvaluator(Project project) throws EvaluateException {
         return super.getEvaluator(project);
       }
+    }
+  }
+
+  private static class ListChildrenRenderer extends ExpressionChildrenRenderer {
+    private static final ArrayRenderer ourChildrenRenderer = new ArrayRenderer() {
+      @Override
+      public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
+        try {
+          ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
+          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+          return elementFactory.createExpressionFromText("get(" + descriptor.getIndex() + ")", null);
+        }
+        catch (IncorrectOperationException e) {
+          // fallback to original
+          return super.getChildValueExpression(node, context);
+        }
+      }
+    };
+
+    public ListChildrenRenderer() {
+      setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "toArray()", "", StdFileTypes.JAVA));
+      setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "!isEmpty()", "", StdFileTypes.JAVA));
+    }
+
+    @Override
+    public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
+      if (getLastChildrenRenderer(builder.getParentDescriptor()) == null) {
+        setPreferableChildrenRenderer(builder.getParentDescriptor(), ourChildrenRenderer);
+      }
+      super.buildChildren(value, builder, evaluationContext);
     }
   }
 

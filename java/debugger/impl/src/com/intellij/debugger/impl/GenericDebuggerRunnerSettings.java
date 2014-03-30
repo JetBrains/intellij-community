@@ -17,13 +17,13 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.DebuggingRunnerData;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
-public class GenericDebuggerRunnerSettings implements JDOMExternalizable, DebuggingRunnerData {
+public class GenericDebuggerRunnerSettings implements RunnerSettings, DebuggingRunnerData {
   public String DEBUG_PORT = "";
   public int TRANSPORT = DebuggerSettings.SOCKET_TRANSPORT;
   public boolean LOCAL = true;
@@ -31,18 +31,22 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
   public GenericDebuggerRunnerSettings() {
   }
 
+  @Override
   public String getDebugPort() {
     return DEBUG_PORT;
   }
 
+  @Override
   public boolean isRemote() {
     return !LOCAL;
   }
 
+  @Override
   public void setLocal(boolean isLocal) {
     LOCAL = isLocal;
   }
 
+  @Override
   public void setDebugPort(String port) {
     DEBUG_PORT = port;
   }
@@ -51,10 +55,12 @@ public class GenericDebuggerRunnerSettings implements JDOMExternalizable, Debugg
     TRANSPORT = transport;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }

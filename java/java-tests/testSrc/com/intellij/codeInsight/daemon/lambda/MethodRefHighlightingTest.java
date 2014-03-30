@@ -19,8 +19,8 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +48,7 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConstructorRefsInnerClasses() { doTest(); }
   public void testVarargs() { doTest(); }
   public void testVarargs1() { doTest(); }
+  public void testVarargs2() { doTest(); }
   public void testConstructorRefInnerFromSuper() { doTest(); }
   public void testReferenceParameters() { doTest(); }
   public void testRawQualifier() { doTest(); }
@@ -78,13 +79,37 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGetClassSpecifics() { doTest(); }
   public void testAbstractMethod() { doTest(); }
   public void testMethodRefAcceptance() { doTest(); }
+  public void testVarargsMethodRef() { doTest(); }
+  public void testExprReceiver() { doTest(); }
+  public void testVoidReturnTypeAmbiguity() { doTest(true); }
+
+  public void testTypeParameterWithExtendsList() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA112323() throws Exception {
+    doTest();
+  }
+
+  public void testExactReferencesToArrayCreation() {
+    doTest();
+  }
+
+  public void testUnknownQualifierClass() throws Exception {
+    doTest();
+  }
 
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(boolean warnings) {
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_8, getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

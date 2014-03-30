@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.MultiMap;
@@ -79,9 +78,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private TextFieldWithBrowseButton myModuleFileLocation;
   private JPanel myModulePanel;
 
-  private JPanel myLeftPanel;
-  private JPanel myRightPanel;
-  private final JBSplitter mySplitter;
+  private JPanel myPanel;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -100,7 +97,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final ProjectTypesList myList;
 
   @Nullable
-  private ModuleBuilder myModuleBuilder;
+  private AbstractModuleBuilder myModuleBuilder;
 
   public SelectTemplateStep(WizardContext context, StepSequence sequence, final MultiMap<TemplatesGroup, ProjectTemplate> map) {
 
@@ -109,7 +106,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     myFormatPanel = new ProjectFormatPanel();
-    myNamePathComponent = initNamePathComponent(context);
+    myNamePathComponent = NamePathComponent.initNamePathComponent(context);
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
       addExpertPanel(myModulePanel);
@@ -142,12 +139,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     if (myWizardContext.isCreatingNewProject()) {
       addProjectFormat(myModulePanel);
     }
-
-    mySplitter = new JBSplitter(false, 0.3f, 0.3f, 0.6f);
-    mySplitter.setSplitterProportionKey("select.template.proportion");
-    myLeftPanel.setMinimumSize(new Dimension(200, 200));
-    mySplitter.setFirstComponent(myLeftPanel);
-    mySplitter.setSecondComponent(myRightPanel);
   }
 
   private JTextField getNameComponent() {
@@ -165,25 +156,16 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public String getHelpId() {
-    return myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
-  }
-
-  private static NamePathComponent initNamePathComponent(WizardContext context) {
-    NamePathComponent component = new NamePathComponent(
-      IdeBundle.message("label.project.name"),
-      IdeBundle.message("label.project.files.location"),
-      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      IdeBundle.message("description.select.project.file.directory", StringUtil
-        .capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
-      true, false
-    );
-    final String baseDir = context.getProjectFileDirectory();
-    final String projectName = context.getProjectName();
-    final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
-    component.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
-    component.setNameValue(initialProjectName);
-    component.getNameComponent().select(0, initialProjectName.length());
-    return component;
+    String helpId = myWizardContext.isCreatingNewProject() ? "New_Project_Main_Settings" : "Add_Module_Main_Settings";
+    ProjectTemplate projectTemplate = getSelectedTemplate();
+    if (projectTemplate instanceof WebProjectTemplate) {
+      WebProjectTemplate webProjectTemplate = (WebProjectTemplate) projectTemplate;
+      String subHelpId = webProjectTemplate.getHelpId();
+      if (subHelpId != null) {
+        helpId = helpId + ":" + subHelpId;
+      }
+    }
+    return helpId;
   }
 
   private void setupPanels(@Nullable ProjectTemplate template) {
@@ -191,6 +173,8 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     restorePanel(myNamePathComponent, 4);
     restorePanel(myModulePanel, myWizardContext.isCreatingNewProject() ? 8 : 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
+
+    if (mySettingsStep != null) mySettingsStep.disposeUIResources();
     mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
 
     String description = null;
@@ -270,7 +254,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public JComponent getComponent() {
-    return mySplitter;
+    return myPanel;
   }
 
   @Override
@@ -314,7 +298,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void addSettingsField(@NotNull String label, @NotNull JComponent field) {
-
     JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
     addField(label, field, panel);
   }
@@ -330,8 +313,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public void addSettingsComponent(@NotNull JComponent component) {
-    myNamePathComponent.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
-                                                        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    JPanel panel = myWizardContext.isCreatingNewProject() ? myNamePathComponent : myModulePanel;
+    panel.add(component, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
+                                                   GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   @Override
@@ -492,7 +476,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       int answer = Messages.showYesNoDialog(IdeBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
                                                               IdeBundle.message("project.new.wizard.module.identification")),
                                             IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      if (answer != 0) {
+      if (answer != Messages.YES) {
         return false;
       }
     }
@@ -535,6 +519,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     myModuleNameDocListenerEnabled = true;
   }
 
+  @Override
   @NotNull
   public JTextField getModuleNameField() {
     return myModuleName;

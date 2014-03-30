@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,31 +31,32 @@ import java.util.List;
 public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if ( project == null ) return;
 
     List<Module> pluginModules = new ArrayList<Module>();
     for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-      if (ModuleType.get(aModule) instanceof PluginModuleType) {
+      if (PluginModuleType.isOfType(aModule)) {
         pluginModules.add(aModule);
       }
     }
 
-    //TODO replace with com.intellij.openapi.roots.ui.configuration.libraryEditor.ChooseModulesDialog
-    ChooseModulesDialog dialog = new ChooseModulesDialog(project, pluginModules, DevKitBundle.message("select.plugin.modules.title"),
+    ChooseModulesDialog dialog = new ChooseModulesDialog(project,
+                                                         pluginModules,
+                                                         DevKitBundle.message("select.plugin.modules.title"),
                                                          DevKitBundle.message("select.plugin.modules.description"));
     dialog.show();
     if (dialog.isOK()) {
-      doPrepare(dialog.getSelectedModules(), project);
+      doPrepare(dialog.getChosenElements(), project);
     }
   }
 
   public void update(AnActionEvent e) {
     int moduleCount = 0;
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
-        if (ModuleType.get(aModule) instanceof PluginModuleType) {
+        if (PluginModuleType.isOfType(aModule)) {
           moduleCount++;
         }
       }
@@ -67,7 +67,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
     }
     else if (moduleCount > 0) {
       final Module module = e.getData(LangDataKeys.MODULE);
-      if (module == null || !(ModuleType.get(module) instanceof PluginModuleType)) {
+      if (module == null || !(PluginModuleType.isOfType(module))) {
         enabled = true;
       }
     }

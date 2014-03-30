@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,12 +76,12 @@ public class AnActionListEditor<T> extends JPanel {
           return Messages.showOkCancelDialog(description.getList(),
                                              AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
                                              ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == 0;
+                                             Messages.getQuestionIcon()) == Messages.OK;
         } else {
           return Messages.showOkCancelDialog(description.getList(),
                                              AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
                                              ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == 0;
+                                             Messages.getQuestionIcon()) == Messages.OK;
         }
       }
     });

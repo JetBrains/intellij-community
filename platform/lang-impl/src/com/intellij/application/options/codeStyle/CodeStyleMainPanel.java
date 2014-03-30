@@ -21,6 +21,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -192,7 +193,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     mySettingsPanels.clear();
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       if (panel.isModified()) panel.apply();

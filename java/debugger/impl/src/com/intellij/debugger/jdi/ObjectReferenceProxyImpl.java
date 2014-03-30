@@ -87,7 +87,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
       try {
         myIsCollected = Boolean.valueOf(VirtualMachineProxyImpl.isCollected(myObjectReference));
       }
-      catch (VMDisconnectedException e) {
+      catch (VMDisconnectedException ignored) {
         myIsCollected = Boolean.TRUE;
       }
     }
@@ -128,7 +128,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     if(this == o) return true;
 
     ObjectReference ref = myObjectReference;
-    return ref != null && ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
+    return ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }
 
 
@@ -139,9 +139,10 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   /**
    * The advice to the proxy to clear cached data.
    */
+  @Override
   protected void clearCaches() {
     if (Boolean.FALSE.equals(myIsCollected)) {
-      // clearing cache makes sence only if the object has not been collected yet
+      // clearing cache makes sense only if the object has not been collected yet
       myIsCollected = null;
     }
   }

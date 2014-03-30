@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * Describes logic for injecting language inside hosting PSI element.
  * E.g. "inject XPath language into all XML attributes named 'select' that sit inside XML tag prefixed with 'xsl:'".
  * @see com.intellij.psi.PsiLanguageInjectionHost
+ * @see com.intellij.lang.injection.MultiHostInjector
  */
 public interface LanguageInjector {
   ExtensionPointName<LanguageInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.languageInjector");

@@ -16,7 +16,6 @@
  */
 package com.intellij.ide.ui.laf;
 
-import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
@@ -28,7 +27,7 @@ public class DarculaMetalTheme extends DefaultMetalTheme {
 
   private final ColorUIResource myControlHighlightColor = new ColorUIResource(108, 111, 113);
   private final ColorUIResource myControlDarkShadowColor = new ColorUIResource(39, 42, 44);
-  private final ColorUIResource myControlColor = new ColorUIResource(UIManager.getColor("control"));
+  private final ColorUIResource myControlColor = new ColorUIResource(0x3c3f41);
   private static final ColorUIResource white = new ColorUIResource(255, 255, 255);
   private static final ColorUIResource darkBlue = new ColorUIResource(82, 108, 164);
   private static final ColorUIResource lightGray = new ColorUIResource(214, 214, 214);

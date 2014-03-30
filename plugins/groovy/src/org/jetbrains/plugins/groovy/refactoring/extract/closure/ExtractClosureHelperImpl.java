@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -42,6 +43,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myGenerateDelegate;
   private final int myReplaceFieldsWithGetters;
   private final boolean myForceReturn;
+  private final boolean myReplaceAllOccurrences;
 
   private PsiType myType = null;
   private boolean myForceDef;
@@ -52,9 +54,12 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
                                   TIntArrayList toRemove,
                                   boolean generateDelegate,
                                   int replaceFieldsWithGetters,
-                                  boolean forceReturn, boolean forceDef) {
+                                  boolean forceReturn,
+                                  boolean replaceAllOccurrences,
+                                  boolean forceDef) {
     super(info);
     myForceReturn = forceReturn;
+    myReplaceAllOccurrences = replaceAllOccurrences;
     myForceDef = forceDef;
     myOwner = info.getToReplaceIn();
     myToSearchFor = info.getToSearchFor();
@@ -99,7 +104,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   @Override
   public boolean replaceAllOccurrences() {
-    return false;
+    return myReplaceAllOccurrences;
   }
 
   @Override
@@ -131,6 +136,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
     return myForceReturn;
   }
 
+  @Nullable
   @Override
   public GrVariable getVar() {
     return null;

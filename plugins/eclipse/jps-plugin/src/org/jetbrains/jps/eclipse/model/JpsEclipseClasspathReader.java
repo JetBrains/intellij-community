@@ -100,11 +100,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     if (LOG.isDebugEnabled()) {
       LOG.debug("loading " + rootModel.getName() + ": set module jdk " + jdkName);
     }
-    final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
-    dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
-    if (jdkName != null) {
-      JpsSdkTableSerializer.setSdkReference(rootModel.getSdkReferencesTable(), jdkName, JpsJavaSdkType.INSTANCE);
-    }
+    rootModel.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
   }
 
   @Override

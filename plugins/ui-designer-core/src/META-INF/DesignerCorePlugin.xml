@@ -1,0 +1,19 @@
+<idea-plugin version="2">
+
+  <module value="com.intellij.ui-designer-new"/>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.designer.DesignerToolWindowManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.designer.palette.PaletteToolWindowManager</implementation-class>
+    </component>
+  </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Designer.customizations" interface="com.intellij.designer.DesignerCustomizations"/>
+  </extensionPoints>
+</idea-plugin>

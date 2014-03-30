@@ -22,7 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -105,7 +105,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveMemberViewDescriptor(PsiUtilBase.toPsiElementArray(myMembersToMove));
+    return new MoveMemberViewDescriptor(PsiUtilCore.toPsiElementArray(myMembersToMove));
   }
 
   @NotNull
@@ -116,7 +116,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         PsiElement ref = psiReference.getElement();
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(ref.getLanguage());
         MoveMembersUsageInfo usage = null;
-        if (handler != null) {
+        if (handler != null && myTargetClass != null) {
           usage = handler.getUsage(member, psiReference, myMembersToMove, myTargetClass);
         }
         if (usage != null) {
@@ -203,7 +203,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           final PsiElement anchor;
           if (anchorsInSourceClass.containsKey(member)) {
             final PsiMember memberInSourceClass = anchorsInSourceClass.get(member);
-            //anchor should be already moved as myMembersToMove contains members in order they appear in source class 
+            //anchor should be already moved as myMembersToMove contains members in order they appear in source class
             anchor = memberInSourceClass != null ? movedMembers.get(memberInSourceClass) : null;
           }
           else {
@@ -258,7 +258,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         filtered.add(usage);
       }
     }
-    VisibilityUtil.fixVisibility(filtered.toArray(new UsageInfo[filtered.size()]), newMember, myNewVisibility);
+    UsageInfo[] infos = filtered.toArray(new UsageInfo[filtered.size()]);
+    VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

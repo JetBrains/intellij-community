@@ -9,7 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gitlog" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -38,7 +38,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="git4idea-rt" />
     <orderEntry type="module" module-name="images" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module-library">
       <library name="ini4j-0.5.2-patched">
         <CLASSES>
@@ -62,11 +61,15 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="dvcs" />
+    <orderEntry type="module" module-name="dvcs" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="cucumber-test-runner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="vcs-log-api" />
+    <orderEntry type="module" module-name="vcs-log-impl" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
   </component>
 </module>
 

@@ -238,11 +238,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return null;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
@@ -297,9 +297,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
           myNext = treeNode.getFilePointer();
           myStatus = FileStatus.MODIFIED;
 
-          final TreeNode parent = treeNode.getParent();
-          if (parent instanceof GroupTreeNode) {
-            final String id = ((GroupTreeNode)parent).getFileGroupId();
+          final GroupTreeNode parent = findParentGroupTreeNode(treeNode.getParent());
+          if (parent != null) {
+            final String id = parent.getFileGroupId();
             if (FileGroup.CREATED_ID.equals(id)) {
               myStatus = FileStatus.ADDED;
             } else if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(id)) {
@@ -309,6 +309,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
           break;
         }
       }
+    }
+
+    @Nullable
+    private GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
+      TreeNode currentNode = treeNode;
+      while (currentNode != null && !(currentNode instanceof GroupTreeNode)) {
+        currentNode = currentNode.getParent();
+      }
+      return (GroupTreeNode)currentNode;
     }
 
     public void remove() {
@@ -388,12 +397,14 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES;
+      return !myProject.isDisposed() && VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
-      updateTreeModel();
+      if (!myProject.isDisposed()) {
+        VcsConfiguration.getInstance(myProject).UPDATE_GROUP_BY_PACKAGES = state;
+        updateTreeModel();
+      }
     }
 
     public void update(final AnActionEvent e) {

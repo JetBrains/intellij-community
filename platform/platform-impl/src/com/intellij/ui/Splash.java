@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class Splash extends JDialog implements StartupProgress {
+  @Nullable public static Rectangle BOUNDS;
   private final Icon myImage;
   private int myProgressHeight = 2;
   private Color myProgressColor = null;
@@ -52,12 +54,13 @@ public class Splash extends JDialog implements StartupProgress {
   private final JLabel myLabel;
   private Icon myProgressTail;
 
-
-
   public Splash(String imageName, final Color textColor) {
+    super((Frame)null, false);
+
     setUndecorated(true);
-    setResizable(false);
-    setModal(false);
+    if (!(SystemInfo.isLinux && SystemInfo.isJavaVersionAtLeast("1.7"))) {
+      setResizable(false);
+    }
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
@@ -77,7 +80,12 @@ public class Splash extends JDialog implements StartupProgress {
     Dimension size = getPreferredSize();
     setSize(size);
     pack();
-    setLocationRelativeTo(null);
+    setLocationInTheCenterOfScreen();
+  }
+
+  private void setLocationInTheCenterOfScreen() {
+    Rectangle deviceBounds = getGraphicsConfiguration().getBounds();
+    setLocation((deviceBounds.width - getWidth()) / 2, (deviceBounds.height - getHeight()) / 2);
   }
 
   public Splash(ApplicationInfoEx info) {
@@ -95,6 +103,8 @@ public class Splash extends JDialog implements StartupProgress {
   public void show() {
     super.show();
     toFront();
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    BOUNDS = getBounds();
     //Sometimes this causes deadlock in EDT
     // http://bugs.sun.com/view_bug.do?bug_id=6724890
     //

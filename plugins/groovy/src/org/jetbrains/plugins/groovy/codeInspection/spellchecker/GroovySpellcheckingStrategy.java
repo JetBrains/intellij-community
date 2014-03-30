@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.spellchecker;
 
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
  */
 public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
   private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
-  private Tokenizer<PsiElement> myStringTokenizer = new Tokenizer<PsiElement>() {
+  private final Tokenizer<PsiElement> myStringTokenizer = new Tokenizer<PsiElement>() {
     @Override
     public void tokenize(@NotNull PsiElement literal, TokenConsumer consumer) {
       String text = GrStringUtil.removeQuotes(literal.getText());
@@ -73,7 +73,7 @@ public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrate
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
     return GroovySuppressableInspectionTool.getSuppressActions(name);
   }
 }

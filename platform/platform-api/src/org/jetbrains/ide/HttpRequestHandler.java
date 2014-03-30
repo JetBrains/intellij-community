@@ -15,18 +15,36 @@
  */
 package org.jetbrains.ide;
 
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public abstract class HttpRequestHandler {
-  public boolean isSupported(HttpRequest request) {
-    return request.getMethod() == HttpMethod.GET;
+  // Your handler will be instantiated on first user request
+  public static final ExtensionPointName<HttpRequestHandler> EP_NAME = ExtensionPointName.create("com.intellij.httpRequestHandler");
+
+  public boolean isSupported(FullHttpRequest request) {
+    return request.getMethod() == HttpMethod.GET || request.getMethod() == HttpMethod.HEAD;
   }
 
-  public abstract boolean process(QueryStringDecoder urlDecoder, HttpRequest request, ChannelHandlerContext context)
+  public abstract boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context)
     throws IOException;
+
+  protected static boolean checkPrefix(@NotNull String uri, @NotNull String prefix) {
+    if (uri.length() > prefix.length() && uri.charAt(0) == '/' && uri.regionMatches(true, 1, prefix, 0, prefix.length())) {
+      if ((uri.length() - prefix.length()) == 1) {
+        return true;
+      }
+      else {
+        char c = uri.charAt(prefix.length() + 1);
+        return c == '/' || c == '?';
+      }
+    }
+    return false;
+  }
 }

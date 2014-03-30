@@ -24,10 +24,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.MessageType;
@@ -110,7 +107,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().saveAll();
         }
         Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles);
-        ProgressManager.getInstance().run(task);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          task.run(new EmptyProgressIndicator());
+        }
+        else {
+          ProgressManager.getInstance().run(task);
+        }
       }
       catch (ProcessCanceledException e1) {
         //ignore

@@ -60,6 +60,7 @@
         </options>
         <keywords keywords="#define;#else;#endif;#error;#if;#ifdef;#ifndef;#include;#line;#undef;auto;bool;break;case;char;const;continue;default;delete;do;double;else;enum;extern;false;float;for;goto;if;int;long;register;return;short;signed;sizeof;static;struct;switch;typedef;union;unsigned;void;volatile;while" ignore_case="false" />
         <keywords2 keywords="asm;catch;class;const_cast;dynamic_cast;explicit;friend;inline;mutable;namespace;new;operator;private;protected;public;reinterpret_cast;static_cast;this;throw;true;try;typeid;typename;using;virtual;wchar_t" />
+        <keywords3 keywords="->" />
       </highlighting>
     </filetype>
 

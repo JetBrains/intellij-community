@@ -39,7 +39,8 @@ public abstract class FileEditorManager {
    *
    * @return array of opened editors
    */
-  @NotNull public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
+  @NotNull
+  public abstract FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
 
   /**
@@ -48,28 +49,28 @@ public abstract class FileEditorManager {
    *
    * @param file file to open
    * @param focusEditor <code>true</code> if need to focus
-   * @param searchForOpen
    * @return array of opened editors
    */
-  @NotNull public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
+  @NotNull
+  public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   /**
    * Closes all editors opened for the file.
-   * 
-   * @param file file to be closed. Cannot be null. 
+   *
+   * @param file file to be closed. Cannot be null.
    */
   public abstract void closeFile(@NotNull VirtualFile file);
 
   /**
-   * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor. 
+   * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor.
    * This method ignores {@link FileEditorPolicy#HIDE_DEFAULT_EDITOR} policy.
    *
    * @return opened text editor. The method returns <code>null</code> in case if text editor wasn't opened.
    */
   @Nullable
-  public abstract Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor);
+  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
    * @return currently selected text editor. The method returns <code>null</code> in case
@@ -86,22 +87,25 @@ public abstract class FileEditorManager {
   /**
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
-  @NotNull public abstract VirtualFile[] getOpenFiles();
+  @NotNull
+  public abstract VirtualFile[] getOpenFiles();
 
   /**
-   * @return files currently selected. The method returns empty array if there are no selected files. 
-   * If more than one file is selected (split), the file with most recent focused editor is returned first.  
+   * @return files currently selected. The method returns empty array if there are no selected files.
+   * If more than one file is selected (split), the file with most recent focused editor is returned first.
    */
-  @NotNull public abstract VirtualFile[] getSelectedFiles();
+  @NotNull
+  public abstract VirtualFile[] getSelectedFiles();
 
   /**
    * @return editors currently selected. The method returns empty array if no editors are open.
    */
-  @NotNull public abstract FileEditor[] getSelectedEditors();
+  @NotNull
+  public abstract FileEditor[] getSelectedEditors();
 
   /**
    * @param file cannot be null
-   * 
+   *
    * @return editor which is currently selected in the currently selected file.
    * The method returns <code>null</code> if <code>file</code> is not opened.
    */
@@ -113,28 +117,31 @@ public abstract class FileEditorManager {
    *
    * @return current editors for the specified <code>file</code>
    */
-  @NotNull public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
+  @NotNull
+  public abstract FileEditor[] getEditors(@NotNull VirtualFile file);
 
   /**
    * @param file cannot be null
    *
    * @return all editors for the specified <code>file</code>
    */
-  @NotNull public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
+  @NotNull
+  public abstract FileEditor[] getAllEditors(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
    */
-  @NotNull public abstract FileEditor[] getAllEditors();
+  @NotNull
+  public abstract FileEditor[] getAllEditors();
 
   /**
    * @deprecated use addTopComponent
    */
-  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
+  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
   /**
    * @deprecated use removeTopComponent
    */
-  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComoponent);
+  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
 
   public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
   public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
@@ -176,4 +183,11 @@ public abstract class FileEditorManager {
 
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
 
+  /**
+   * Selects a specified file editor tab for the specified editor.
+   * @param file a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
+   * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
+   * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
+   */
+  public abstract void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId);
 }

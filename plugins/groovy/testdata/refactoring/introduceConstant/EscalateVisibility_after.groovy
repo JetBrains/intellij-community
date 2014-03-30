@@ -1,6 +1,6 @@
 class A {
   def foo() {
-    print <selection>Other.CONST</selection>
+    print Other.CONST<caret>
   }
 }
 

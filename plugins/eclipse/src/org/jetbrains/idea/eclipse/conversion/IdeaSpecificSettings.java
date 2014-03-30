@@ -22,15 +22,13 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
@@ -39,10 +37,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -77,7 +74,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml).getRootElement(), model, null, new HashMap<String, String>());
+    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml, false).getRootElement(), model, null, new HashMap<String, String>());
   }
 
   @Override
@@ -309,18 +306,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
 
       final VirtualFile entryFile = entry.getFile();
-      exclude: for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
+      for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
         final String exludeFolderUrl = excludeFolder.getUrl();
         final VirtualFile excludeFile = excludeFolder.getFile();
-        for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, model.getModule().getProject())) {
-          final VirtualFilePointer[] excludeRootsForModule = excludePolicy.getExcludeRootsForModule(model);
-          for (VirtualFilePointer pointer : excludeRootsForModule) {
-            if (Comparing.strEqual(pointer.getUrl(), exludeFolderUrl)) {
-              continue exclude;
-            }
-          }
-        }
-        if (entryFile == null || excludeFile == null || VfsUtil.isAncestor(entryFile, excludeFile, false)) {
+        if (entryFile == null || excludeFile == null || VfsUtilCore.isAncestor(entryFile, excludeFile, false)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
           contentEntryElement.addContent(element);
           element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
@@ -453,13 +442,13 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
+    final Project project = model.getModule().getProject();
     if (file != null) {
       if (file.getFileSystem() instanceof JarFileSystem) {
         file = JarFileSystem.getInstance().getVirtualFileForJar(file);
         assert file != null;
       }
-      final Project project = model.getModule().getProject();
-      final Module module = ModuleUtil.findModuleForFile(file, project);
+      final Module module = ModuleUtilCore.findModuleForFile(file, project);
       if (module != null) {
         return appendRelatedToModule(element, classesUrl, rootName, file, module);
       } else if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
@@ -474,7 +463,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   private static boolean appendRelatedToModule(Element element, String classesUrl, String rootName, VirtualFile file, Module module) {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile contentRoot : contentRoots) {
-      if (VfsUtil.isAncestor(contentRoot, file, false)) {
+      if (VfsUtilCore.isAncestor(contentRoot, file, false)) {
         final Element clsElement = new Element(rootName);
         clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
         element.addContent(clsElement);

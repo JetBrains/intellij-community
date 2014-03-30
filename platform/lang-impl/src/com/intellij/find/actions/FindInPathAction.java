@@ -29,12 +29,16 @@ import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 
 public class FindInPathAction extends AnAction implements DumbAware {
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Find in Path", ToolWindowId.FIND, false);
+
+  { // enabled in modal content for find in path <-> replace in path modal dialog transition
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
 
     FindInProjectManager findManager = FindInProjectManager.getInstance(project);
     if (!findManager.isEnabled()) {
@@ -57,7 +61,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
 
   static void doUpdate(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(isValidSearchScope(e));
@@ -69,7 +73,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiDirectoryContainer) {
       return true;
     }
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return virtualFiles != null && virtualFiles.length == 1 && virtualFiles[0].isDirectory();
   }
 }

@@ -59,8 +59,15 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
   }
 
   public JComponent createComponent() {
-    myPanel = new TemplateCommentPanel(null, null, null, myProject);
+    getOrCreateMainPanel();
     return myPanel.createComponent();
+  }
+
+  private TemplateCommentPanel getOrCreateMainPanel() {
+    if (myPanel == null) {
+      myPanel = new TemplateCommentPanel(null, null, null, myProject);
+    }
+    return myPanel;
   }
 
   public boolean isModified() {
@@ -89,7 +96,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     final Configurable[] children = new Configurable[types.length];
     Arrays.sort(types, new FileTypeUtil.SortByName());
     for (int i = 0; i < types.length; i++) {
-      children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], myPanel);
+      children[i] = FileTypeCopyrightConfigurableFactory.createFileTypeConfigurable(myProject, types[i], getOrCreateMainPanel());
     }
     return children;
   }

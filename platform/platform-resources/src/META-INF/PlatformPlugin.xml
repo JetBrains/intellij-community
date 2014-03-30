@@ -4,15 +4,22 @@
 
   <xi:include href="/componentSets/PlatformComponents.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/idea/PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/META-INF/vcs-log.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManagerBase"
+                        serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManager"/>
 
     <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                         serviceImplementation="com.intellij.codeStyle.DefaultCodeStyleFacade"/>
@@ -25,6 +32,9 @@
 
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessages"
                         serviceImplementation="com.intellij.ui.mac.MacMessagesImpl"/>
+
+    <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
+                        serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
     
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultFileIndexFacade"/>

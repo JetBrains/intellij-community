@@ -47,6 +47,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     }
   }
 
+  @Override
   @Nullable
   public PsiElement getPsiElement() {
     if (myPsiElementPointer == null) return null;
@@ -54,6 +55,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return element != null && element.isValid() ? element : null;
   }
 
+  @Override
   public Icon getIcon() {
     final PsiElement element = getPsiElement();
     if (myIcon == null) {
@@ -62,6 +64,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return myIcon;
   }
 
+  @Override
   @Nullable
   public Color getColor() {
     if (myColor == null && getContainingFile() != null) {
@@ -73,10 +76,12 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return myColor == NOT_CHANGED ? null : myColor;
   }
 
+  @Override
   public int getWeight() {
     return 4;
   }
 
+  @Override
   public int getContainingFiles() {
     return 0;
   }
@@ -104,6 +109,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return myPsiElementPointer.getContainingFile();
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement element = getPsiElement();
     return element != null && element.isValid();

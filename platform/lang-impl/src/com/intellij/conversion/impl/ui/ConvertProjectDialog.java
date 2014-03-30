@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class ConvertProjectDialog extends DialogWrapper {
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
-    StringBuilder message = new StringBuilder("<html>");
+    StringBuilder message = new StringBuilder();
     if (myConversionRunners.size() == 1 && myConversionRunners.get(0).getProvider().getConversionDialogText(context) != null) {
       message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
     }
@@ -76,10 +77,10 @@ public class ConvertProjectDialog extends DialogWrapper {
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
-    message.append("</html>");
-    Messages.configureMessagePaneUi(myTextPane, message.toString(), false);
+    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           @NonNls StringBuilder descriptions = new StringBuilder("<html>The following conversions will be performed:<br>");
@@ -109,7 +110,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                                                                    filesString),
                                                                  IdeBundle.message("dialog.title.convert.project"),
                                                                  Messages.getQuestionIcon());
-      if (res != 0) {
+      if (res != Messages.YES) {
         super.doOKAction();
         return;
       }
@@ -161,7 +162,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                                ApplicationNamesInfo.getInstance().getFullProductName(),
                                                getFilesString(files));
       final String[] options = {CommonBundle.getContinueButtonText(), CommonBundle.getCancelButtonText()};
-      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != 0) {
+      if (Messages.showOkCancelDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"), options[0], options[1], null) != Messages.OK) {
         return false;
       }
       unlockFiles(files);

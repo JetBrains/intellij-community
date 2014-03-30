@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 public class StatusBarUpdater implements Disposable {
   private final Project myProject;
@@ -52,19 +52,15 @@ public class StatusBarUpdater implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updateLater();
       }
     });
 
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
       @Override
       public void daemonFinished() {
         updateLater();
-      }
-
-      @Override
-      public void daemonCancelEventOccurred() {
       }
     });
   }
@@ -96,14 +92,11 @@ public class StatusBarUpdater implements Disposable {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, HighlightSeverity.WARNING);
-    String text = info != null && info.description != null ? info.description : "";
+    String text = info != null && info.getDescription() != null ? info.getDescription() : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent(), myProject);
-    if (statusBar instanceof StatusBarEx) {
-      StatusBarEx barEx = (StatusBarEx)statusBar;
-      if (!text.equals(barEx.getInfo())){
-        statusBar.setInfo(text, "updater");
-      }
+    if (statusBar != null && !text.equals(statusBar.getInfo())) {
+      statusBar.setInfo(text, "updater");
     }
   }
 }

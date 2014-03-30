@@ -19,6 +19,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
@@ -86,7 +87,12 @@ public class LightTreeUtil {
 
   @NotNull
   public static String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
-    StringBuilder buffer = new StringBuilder(node.getEndOffset() - node.getStartOffset());
+    int length = node.getEndOffset() - node.getStartOffset();
+    if (length < 0) {
+      length = 0;
+      Logger.getInstance(LightTreeUtil.class).error("tree=" + tree + " node=" + node);
+    }
+    StringBuilder buffer = new StringBuilder(length);
     toBuffer(tree, node, buffer, skipTypes);
     return buffer.toString();
   }

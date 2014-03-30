@@ -23,13 +23,12 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.NameSuggestionsField;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -39,8 +38,7 @@ import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedHashSet;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
@@ -49,6 +47,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private final GrExpression myExpression;
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
+  private final GrIntroduceContext myContext;
 
   private NameSuggestionsField myNameField;
   private JCheckBox myCbIsFinal;
@@ -57,8 +56,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   public GroovyIntroduceVariableDialog(GrIntroduceContext context, GrIntroduceVariableHandler.Validator validator) {
     super(context.getProject(), true);
+    myContext = context;
     myProject = context.getProject();
-    myExpression = context.getExpression();
+    myExpression = context.getStringPart() != null ? context.getStringPart().getLiteral() : context.getExpression();
     myOccurrencesCount = context.getOccurrences().length;
     myValidator = validator;
     init();
@@ -161,9 +161,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   }
 
   private NameSuggestionsField setUpNameComboBox() {
-    List<String> possibleNames = Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator));
-
-    return new NameSuggestionsField(ArrayUtil.toStringArray(possibleNames), myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    LinkedHashSet<String> names = suggestNames();
+    return new NameSuggestionsField(names.toArray(new String[names.size()]), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -192,6 +191,12 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   public GroovyIntroduceVariableSettings getSettings() {
     return new MyGroovyIntroduceVariableSettings(this);
+  }
+
+  @NotNull
+  @Override
+  public LinkedHashSet<String> suggestNames() {
+    return new GrVariableNameSuggester(myContext, myValidator).suggestNames();
   }
 
   private static class MyGroovyIntroduceVariableSettings implements GroovyIntroduceVariableSettings {

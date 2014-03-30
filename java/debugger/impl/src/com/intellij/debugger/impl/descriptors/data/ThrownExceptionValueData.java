@@ -28,7 +28,7 @@ public final class ThrownExceptionValueData extends DescriptorData<ThrownExcepti
     myExceptionObj = exceptionObj;
   }
 
-  protected ThrownExceptionValueDescriptorImpl createDescriptorImpl(Project project) {
+  protected ThrownExceptionValueDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThrownExceptionValueDescriptorImpl(project, myExceptionObj);
   }
 

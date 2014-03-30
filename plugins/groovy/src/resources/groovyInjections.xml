@@ -46,4 +46,8 @@
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.lang.String[]").definedInClass("groovy.lang.GroovyShell"))]]></place>
     <place><![CDATA[groovyElement().methodCallParameter(0, psiMethod().withName("run").withParameters("java.lang.String", "java.lang.String", "java.util.List").definedInClass("groovy.lang.GroovyShell"))]]></place>
   </injection>
+  <injection language="RegExp" injector-id="groovy">
+    <display-name>RegExp</display-name>
+    <place><![CDATA[groovyLiteralExpression().regExpOperatorArgument()]]></place>
+  </injection>
 </component>

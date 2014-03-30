@@ -40,6 +40,7 @@ public class ArrangementTextFieldUiComponent extends AbstractArrangementUiCompon
   @NotNull private final ArrangementSettingsToken myToken;
 
   public ArrangementTextFieldUiComponent(@NotNull ArrangementSettingsToken token) {
+    super(token);
     myToken = token;
     myTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -109,6 +110,11 @@ public class ArrangementTextFieldUiComponent extends AbstractArrangementUiCompon
   @Override
   public void setEnabled(boolean enabled) {
     myTextField.setEnabled(enabled); 
+  }
+
+  @Override
+  public void setData(@NotNull Object data) {
+    myTextField.setText(data.toString());
   }
 
   @Override

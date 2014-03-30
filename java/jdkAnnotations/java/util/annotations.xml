@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.util.AbstractCollection T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.ArrayList java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.Arrays T[] copyOf(T[], int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -459,7 +475,92 @@
   <item name="java.util.Arrays void sort(short[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.util.Calendar boolean isSet(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
   <item name="java.util.Calendar int get(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getActualMaximum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getActualMinimum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getFirstDayOfWeek()">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.SUNDAY, java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY, java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getGreatestMinimum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getLeastMaximum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getMaximum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar int getMinimum(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar java.lang.String getDisplayName(int, int, java.util.Locale) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar java.lang.String getDisplayName(int, int, java.util.Locale) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.SHORT, java.util.Calendar.LONG}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar java.util.Map&lt;java.lang.String,java.lang.Integer&gt; getDisplayNames(int, int, java.util.Locale) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar java.util.Map&lt;java.lang.String,java.lang.Integer&gt; getDisplayNames(int, int, java.util.Locale) 1">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.SHORT, java.util.Calendar.LONG, java.util.Calendar.ALL_STYLES}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar void add(int, int) 0" >
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar void clear(int) 0" >
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar void roll(int, boolean) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar void roll(int, int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
+    </annotation>
+  </item>
+  <item name="java.util.Calendar void set(int, int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.ERA, java.util.Calendar.YEAR, java.util.Calendar.MONTH, java.util.Calendar.WEEK_OF_YEAR, java.util.Calendar.WEEK_OF_MONTH, java.util.Calendar.DATE, java.util.Calendar.DAY_OF_MONTH, java.util.Calendar.DAY_OF_YEAR, java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.DAY_OF_WEEK_IN_MONTH, java.util.Calendar.AM_PM, java.util.Calendar.HOUR, java.util.Calendar.HOUR_OF_DAY, java.util.Calendar.MINUTE, java.util.Calendar.SECOND, java.util.Calendar.MILLISECOND, java.util.Calendar.ZONE_OFFSET, java.util.Calendar.DST_OFFSET}" />
     </annotation>
@@ -479,26 +580,32 @@
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
   </item>
-  <item name="java.util.Collection Iterator&lt;E&gt; iterator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item name="java.util.Calendar void setFirstDayOfWeek(int) 0">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.SUNDAY, java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY, java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY}" />
+    </annotation>
   </item>
-  <item name="java.util.Collection Object[] toArray()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name="java.util.Collection T[] toArray(T[] a)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item name="java.util.Calendar void setWeekDate(int, int, int) 2">
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{java.util.Calendar.SUNDAY, java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY, java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY}" />
+    </annotation>
   </item>
   <item name="java.util.Collection T[] toArray(T[])">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collection T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.Collection boolean addAll(java.util.Collection&lt;? extends E&gt; c) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.util.Collection boolean addAll(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collection boolean containsAll(java.util.Collection&lt;?&gt; c) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -520,6 +627,10 @@
   </item>
   <item name="java.util.Collection java.lang.Object[] toArray()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collection java.util.Iterator&lt;E&gt; iterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -770,6 +881,101 @@
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Formatter Formatter(java.io.File) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.File, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.OutputStream, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.io.PrintStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.util.Formatter java.util.Formatter format(java.lang.String, java.lang.Object...) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Formatter java.util.Formatter format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedHashSet LinkedHashSet(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.LinkedList LinkedList(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List E get(int)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List E remove(int)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List E set(int, E)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.List E set(int, E) 1'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.List List&lt;E&gt; subList(int fromIndex, int toIndex)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -782,14 +988,24 @@
   <item name="java.util.List T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.List boolean addAll(int index, java.util.Collection&lt;? extends E&gt; c) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item name='java.util.List boolean add(E) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.List boolean addAll(int, java.util.Collection&lt;? extends E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.List boolean addAll(java.util.Collection&lt;? extends E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.List boolean containsAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -808,6 +1024,10 @@
   </item>
   <item name="java.util.List java.util.List&lt;E&gt; subList(int, int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.List java.util.ListIterator&lt;E&gt; listIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -815,11 +1035,56 @@
   <item name="java.util.List java.util.ListIterator&lt;E&gt; listIterator(int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.List void add(int, E) 1'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map V get(java.lang.Object)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="source" val="&quot;this.values&quot;"/>
+      <val name="sourceIsContainer" val="true" />
+    </annotation>
+  </item>
+  <item name='java.util.Map V put(K, V)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="source" val="&quot;this.values&quot;"/>
+      <val name="sourceIsContainer" val="true" />
+    </annotation>
+  </item>
+  <item name='java.util.Map V put(K, V) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="target" val="&quot;this.keys&quot;"/>
+      <val name="targetIsContainer" val="true" />
+    </annotation>
+  </item>
+  <item name='java.util.Map V put(K, V) 1'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="target" val="&quot;this.values&quot;"/>
+      <val name="targetIsContainer" val="true" />
+    </annotation>
+  </item>
+  <item name='java.util.Map V remove(java.lang.Object)'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="source" val="&quot;this.values&quot;"/>
+      <val name="sourceIsContainer" val="true" />
+    </annotation>
+  </item>
   <item name="java.util.Map java.util.Collection&lt;V&gt; values()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="source" val="&quot;this.values&quot;"/>
+      <val name="sourceIsContainer" val="true" />
+      <val name="targetIsContainer" val="true" />
+    </annotation>
   </item>
   <item name="java.util.Map java.util.Set&lt;K&gt; keySet()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="source" val="&quot;this.keys&quot;"/>
+      <val name="sourceIsContainer" val="true" />
+      <val name="targetIsContainer" val="true" />
+    </annotation>
   </item>
   <item name="java.util.Map java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -842,8 +1107,199 @@
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.SortedMap java.util.Comparator&lt;? super K&gt; comparator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item name='java.util.Objects T requireNonNull(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null,_-&gt;fail&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.ResourceBundle boolean containsKey(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.Object getObject(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.Object handleGetObject(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.lang.String[] getStringArray(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Enumeration&lt;java.lang.String&gt; getKeys()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader, java.util.ResourceBundle.Control) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.Locale, java.util.ResourceBundle.Control) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.ResourceBundle.Control) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.ResourceBundle getBundle(java.lang.String, java.util.ResourceBundle.Control) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Set&lt;java.lang.String&gt; handleKeySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle java.util.Set&lt;java.lang.String&gt; keySet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ResourceBundle void clearCache(java.lang.ClassLoader) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.File, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.io.InputStream, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.lang.Readable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.channels.ReadableByteChannel, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner Scanner(java.nio.file.Path, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner boolean hasNext(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner boolean hasNext(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findInLine(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findInLine(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findWithinHorizon(java.lang.String, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String findWithinHorizon(java.util.regex.Pattern, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String next(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.lang.String next(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner skip(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner skip(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useDelimiter(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useDelimiter(java.util.regex.Pattern) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Scanner java.util.Scanner useLocale(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set T[] toArray(T[])'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set T[] toArray(T[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set java.lang.Object[] toArray()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Set java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.SortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -855,7 +1311,7 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.SortedSet java.util.Comparator&lt;? super E&gt; comparator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name="java.util.SortedSet java.util.SortedSet&lt;E&gt; headSet(E)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -866,8 +1322,25 @@
   <item name="java.util.SortedSet java.util.SortedSet&lt;E&gt; tailSet(E)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.util.TreeSet TreeSet(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.UUID">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.util.Vector Vector(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
 </root>
 

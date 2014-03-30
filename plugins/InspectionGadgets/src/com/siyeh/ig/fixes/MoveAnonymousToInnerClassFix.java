@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
 
+  public static final String NAME = InspectionGadgetsBundle.message(
+    "move.anonymous.to.inner.quickfix");
   private final String name;
 
   public MoveAnonymousToInnerClassFix(String name) {
@@ -37,15 +39,22 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
   }
 
   public MoveAnonymousToInnerClassFix() {
-    name = InspectionGadgetsBundle.message(
-      "move.anonymous.to.inner.quickfix");
+    name = NAME;
   }
 
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return NAME;
+  }
+
+  @Override
   @NotNull
   public String getName() {
     return name;
   }
 
+  @Override
   public void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiAnonymousClass aClass =
@@ -57,6 +66,7 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
       }

@@ -16,13 +16,14 @@
 package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.PsiElement;
+import org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.util.StringMatcher;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.jaxen.JaxenException;
 import org.jaxen.XPath;
 import org.jdom.Element;
@@ -42,7 +43,7 @@ import java.util.TreeSet;
  *
  * @see org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy
  */
-public class AbstractTagInjection extends BaseInjection {
+public abstract class AbstractTagInjection extends BaseInjection {
 
   private static final Logger LOG = Logger.getInstance("org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection");
 
@@ -55,10 +56,10 @@ public class AbstractTagInjection extends BaseInjection {
   private String myXPathCondition = "";
 
   private XPath myCompiledXPathCondition;
-  private boolean myApplyToSubTagTexts;
+  private boolean myApplyToSubTags;
 
   public AbstractTagInjection() {
-    super(LanguageInjectionSupport.XML_SUPPORT_ID);
+    super(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
   }
 
   @NotNull
@@ -132,9 +133,7 @@ public class AbstractTagInjection extends BaseInjection {
   }
 
   @Override
-  public AbstractTagInjection copy() {
-    return new AbstractTagInjection().copyFrom(this);
-  }
+  public abstract AbstractTagInjection copy();
 
   public AbstractTagInjection copyFrom(@NotNull BaseInjection o) {
     super.copyFrom(o);
@@ -144,30 +143,21 @@ public class AbstractTagInjection extends BaseInjection {
       myTagNamespace = other.myTagNamespace;
       setXPathCondition(other.getXPathCondition());
 
-      setApplyToSubTagTexts(other.isApplyToSubTagTexts());
+      setApplyToSubTags(other.isApplyToSubTags());
     }
     return this;
   }
 
   protected void readExternalImpl(Element e) {
-    if (e.getAttribute("injector-id") == null) {
-      setTagName(JDOMExternalizer.readString(e, "TAGNAME"));
-      setTagNamespace(JDOMExternalizer.readString(e, "TAGNAMESPACE"));
-      setXPathCondition(JDOMExternalizer.readString(e, "XPATH_CONDITION"));
-
-      myApplyToSubTagTexts = JDOMExternalizer.readBoolean(e, "APPLY_TO_SUBTAGS");
-    }
-    else {
-      setXPathCondition(e.getChildText("xpath-condition"));
-      myApplyToSubTagTexts = e.getChild("apply-to-subtags") != null;
-    }
+    setXPathCondition(e.getChildText("xpath-condition"));
+    myApplyToSubTags = e.getChild("apply-to-subtags") != null;
   }
 
   protected void writeExternalImpl(Element e) {
     if (StringUtil.isNotEmpty(myXPathCondition)) {
       e.addContent(new Element("xpath-condition").setText(myXPathCondition));
     }
-    if (myApplyToSubTagTexts) {
+    if (myApplyToSubTags) {
       e.addContent(new Element("apply-to-subtags"));
     }
   }
@@ -184,7 +174,7 @@ public class AbstractTagInjection extends BaseInjection {
     if (!myTagNamespace.equals(that.myTagNamespace)) return false;
     if (!myXPathCondition.equals(that.myXPathCondition)) return false;
 
-    if (myApplyToSubTagTexts != that.myApplyToSubTagTexts) return false;
+    if (myApplyToSubTags != that.myApplyToSubTags) return false;
     return true;
   }
 
@@ -194,7 +184,7 @@ public class AbstractTagInjection extends BaseInjection {
     result = 31 * result + myTagNamespace.hashCode();
     result = 31 * result + myXPathCondition.hashCode();
 
-    result = 31 * result + (myApplyToSubTagTexts ? 1 : 0);
+    result = 31 * result + (myApplyToSubTags ? 1 : 0);
     return result;
   }
 
@@ -213,11 +203,20 @@ public class AbstractTagInjection extends BaseInjection {
     return myXPathCondition.length() == 0;
   }
 
-  public boolean isApplyToSubTagTexts() {
-    return myApplyToSubTagTexts;
+  public boolean isApplyToSubTags() {
+    return myApplyToSubTags;
   }
 
-  public void setApplyToSubTagTexts(final boolean applyToSubTagTexts) {
-    myApplyToSubTagTexts = applyToSubTagTexts;
+  public void setApplyToSubTags(final boolean applyToSubTagTexts) {
+    myApplyToSubTags = applyToSubTagTexts;
+  }
+
+  @Override
+  public boolean acceptForReference(PsiElement element) {
+    if (element instanceof XmlAttributeValue) {
+      PsiElement parent = element.getParent();
+      return parent instanceof XmlAttribute && acceptsPsiElement(parent);
+    }
+    else return element instanceof XmlTag && acceptsPsiElement(element);
   }
 }

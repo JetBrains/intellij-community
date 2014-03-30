@@ -16,7 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
   private final PsiVariable myVariable;
 
-  public AddVariableInitializerFix(PsiVariable variable) {
+  public AddVariableInitializerFix(@NotNull PsiVariable variable) {
     myVariable = variable;
   }
 
@@ -50,17 +51,16 @@ public class AddVariableInitializerFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myVariable != null
-        && myVariable.isValid()
-        && myVariable.getManager().isInProject(myVariable)
-        && !myVariable.hasInitializer()
-        && !(myVariable instanceof PsiParameter)
+    return myVariable.isValid() &&
+           myVariable.getManager().isInProject(myVariable) &&
+           !myVariable.hasInitializer() &&
+           !(myVariable instanceof PsiParameter)
         ;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
 
     String initializerText = suggestInitializer();
     PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
@@ -74,7 +74,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     else {
       LOG.error("Unknown variable type: "+myVariable);
     }
-    PsiVariable var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myVariable);
+    PsiVariable var = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myVariable);
     TextRange range = var.getInitializer().getTextRange();
     int offset = range.getStartOffset();
     editor.getCaretModel().moveToOffset(offset);

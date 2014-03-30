@@ -20,18 +20,15 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -64,6 +61,7 @@ public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final boolean DUMP_COMPONENT_STATES = SystemProperties.getBooleanProperty("idea.log.externally.changed.component.states", false);
+  @SuppressWarnings("SpellCheckingInspection")
   private static final SimpleDateFormat LOG_DIR_FORMAT = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
   private StorageUtil() { }
@@ -77,6 +75,7 @@ public class StorageUtil {
     }
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         macros.removeAll(getMacrosFromExistingNotifications(project));
 
@@ -91,6 +90,7 @@ public class StorageUtil {
                            "and " + productName + " cannot restore those paths.";
           new UnknownMacroNotification("Load Error", "Load error: undefined path variables", content, NotificationType.ERROR,
                                        new NotificationListener() {
+                                         @Override
                                          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                                            ((ProjectEx)project).checkUnknownMacros(true);
                                          }
@@ -168,32 +168,25 @@ public class StorageUtil {
     return LocalFileSystem.getInstance().findFileByIoFile(ioFile);
   }
 
-  public static byte[] printDocument(final Document document) throws StateStorageException {
-    try {
-      return printDocumentToString(document, SystemProperties.getLineSeparator()).getBytes(CharsetToolkit.UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new StateStorageException(e);
-    }
-  }
-
   /**
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
-  public static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
-    if (file == null || !file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
+  private static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
+    if (file == null || !file.exists()) {
+      return Pair.create(null, SystemProperties.getLineSeparator());
+    }
 
     String fileText = new String(file.contentsToByteArray(), CharsetToolkit.UTF8);
-    final int ndx = fileText.indexOf('\n');
-    return Pair.create(fileText, ndx == -1
+    final int index = fileText.indexOf('\n');
+    return Pair.create(fileText, index == -1
                                  ? SystemProperties.getLineSeparator()
-                                 : ndx - 1 >= 0 ? fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n" : "\n");
+                                 : index - 1 >= 0 ? fileText.charAt(index - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
   public static boolean contentEquals(@NotNull final Document document, @NotNull final VirtualFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
-      return pair.first != null && pair.first.equals(printDocumentToString(document, pair.second));
+      return pair.first != null && pair.first.equals(JDOMUtil.writeDocument(document, pair.second));
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -210,10 +203,6 @@ public class StorageUtil {
       LOG.debug(e);
       return false;
     }
-  }
-
-  public static String printDocumentToString(final Document document, final String lineSeparator) {
-    return JDOMUtil.writeDocument(document, lineSeparator);
   }
 
   static String printElement(final Element element, final String lineSeparator) throws StateStorageException {
@@ -234,7 +223,7 @@ public class StorageUtil {
   }
 
   @Nullable
-  public static Document loadDocument(final InputStream stream) {
+  public static Document loadDocument(@Nullable InputStream stream) {
     if (stream == null) {
       return null;
     }
@@ -255,20 +244,48 @@ public class StorageUtil {
     }
   }
 
-  public static void sendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
-    byte[] content = printDocument(copy);
-    ByteArrayInputStream in = new ByteArrayInputStream(content);
+  public static BufferExposingByteArrayOutputStream documentToBytes(@NotNull Document document, boolean useSystemLineSeparator) throws IOException {
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(512);
+    OutputStreamWriter writer = new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET);
     try {
-      if (provider.isEnabled()) {
-        provider.saveContent(fileSpec, in, content.length, type, async);
-      }
+      JDOMUtil.writeDocument(document, writer, useSystemLineSeparator ? SystemProperties.getLineSeparator() : "\n");
+      return out;
     }
     finally {
-      in.close();
+      writer.close();
     }
   }
 
-  public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {
+  public static boolean sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
+    if (!provider.isApplicable(fileSpec, type)) {
+      return false;
+    }
+
+    try {
+      return doSendContent(provider, fileSpec, copy, type, async);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+      return false;
+    }
+  }
+
+  public static void deleteContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
+    if (provider.isApplicable(fileSpec, type)) {
+      provider.deleteFile(fileSpec, type);
+    }
+  }
+
+  /**
+   * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
+   */
+  public static boolean doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
+    // we should use standard line-separator (\n) - stream provider can share file content on any OS
+    BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
+    return provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
+  }
+
+  public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) {
     if (componentNames.isEmpty() || !(DUMP_COMPONENT_STATES || ApplicationManager.getApplication().isInternal())) {
       return;
     }
@@ -332,5 +349,9 @@ public class StorageUtil {
 
     String name = "state-" + LOG_DIR_FORMAT.format(new Date()) + "-" + ApplicationInfo.getInstance().getBuild().asString();
     return new File(statesDir, namesProvider.suggestName(name));
+  }
+
+  public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
+    return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals("$MODULE_FILE$");
   }
 }

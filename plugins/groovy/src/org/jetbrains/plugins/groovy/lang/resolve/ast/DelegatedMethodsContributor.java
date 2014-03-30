@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightParameter;
+import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -31,11 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -57,7 +59,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     initializeSignatures(clazz, PsiSubstitutor.EMPTY, signatures, processed);
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    process(clazz, PsiSubstitutor.EMPTY, true, new HashSet<PsiClass>(), processed, methods, clazz);
+    process(clazz, PsiSubstitutor.EMPTY, true, new HashSet<PsiClass>(), processed, methods, clazz, false);
 
     final Set<PsiMethod> result = new LinkedHashSet<PsiMethod>();
     for (PsiMethod method : methods) {
@@ -114,10 +116,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       final List<PsiMethod> methods;
       if (clazz instanceof GrTypeDefinition) {
         methods = new ArrayList<PsiMethod>();
-        final GrTypeDefinitionBody body = ((GrTypeDefinition)clazz).getBody();
-        if (body != null) {
-          GrClassImplUtil.collectMethodsFromBody(body, methods);
-        }
+        GrClassImplUtil.collectMethodsFromBody((GrTypeDefinition)clazz, methods);
       }
       else {
         methods = Arrays.asList(clazz.getMethods());
@@ -151,12 +150,14 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
                               Set<PsiClass> processedWithoutDeprecated,
                               Set<PsiClass> processedAll,
                               List<PsiMethod> collector,
-                              GrTypeDefinition classToDelegateTo) {
+                              GrTypeDefinition classToDelegateTo,
+                              boolean keepParameterAnnotations) {
     final List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     //process super methods before delegated methods
     for (PsiClassType superType : getSuperTypes(clazz)) {
-      processClassInner(superType, superClassSubstitutor, shouldProcessDeprecated, result, classToDelegateTo, processedWithoutDeprecated, processedAll);
+      processClassInner(superType, superClassSubstitutor, shouldProcessDeprecated, result, classToDelegateTo, processedWithoutDeprecated,
+                        processedAll, keepParameterAnnotations);
     }
 
     if (clazz instanceof GrTypeDefinition) {
@@ -168,7 +169,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         final PsiType type = field.getDeclaredType();
         if (!(type instanceof PsiClassType)) continue;
 
-        processClassInner((PsiClassType)type, superClassSubstitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processedWithoutDeprecated, processedAll);
+        processClassInner((PsiClassType)type, superClassSubstitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo,
+                          processedWithoutDeprecated, processedAll, shouldKeepParameterAnnotations(delegate));
       }
     }
 
@@ -183,8 +185,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       if (elist == null && ilist == null) return ContainerUtil.emptyList();
 
       final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
-      if (elist != null) ContainerUtil.addAll(types, elist.getReferenceTypes());
-      if (ilist != null) ContainerUtil.addAll(types, ilist.getReferenceTypes());
+      if (elist != null) ContainerUtil.addAll(types, elist.getReferencedTypes());
+      if (ilist != null) ContainerUtil.addAll(types, ilist.getReferencedTypes());
       return types;
     }
     else {
@@ -206,7 +208,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
                                         List<PsiMethod> result,
                                         GrTypeDefinition classToDelegateTo,
                                         Set<PsiClass> processedWithoutDeprecated,
-                                        Set<PsiClass> processedAll) {
+                                        Set<PsiClass> processedAll, boolean keepParameterAnnotationsNew) {
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) return;
@@ -228,22 +230,20 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       processedWithoutDeprecated.add(psiClass);
     }
 
-    collectMethods(psiClass, substitutor, shouldProcessDeprecated, classToDelegateTo, result);
-    process(psiClass, substitutor, shouldProcessDeprecated, processedWithoutDeprecated, processedAll, result, classToDelegateTo);
+    collectMethods(psiClass, substitutor, shouldProcessDeprecated, classToDelegateTo, result, keepParameterAnnotationsNew);
+    process(psiClass, substitutor, shouldProcessDeprecated, processedWithoutDeprecated, processedAll, result, classToDelegateTo, keepParameterAnnotationsNew);
   }
 
   private static void collectMethods(PsiClass currentClass,
                                      PsiSubstitutor currentClassSubstitutor,
                                      boolean shouldProcessDeprecated,
                                      GrTypeDefinition classToDelegateTo,
-                                     Collection<PsiMethod> collector) {
+                                     Collection<PsiMethod> collector,
+                                     boolean keepParameterAnnotations) {
     final List<PsiMethod> methods;
     if (currentClass instanceof GrTypeDefinition) {
       methods = new ArrayList<PsiMethod>();
-      final GrTypeDefinitionBody body = ((GrTypeDefinition)currentClass).getBody();
-      if (body != null) {
-        GrClassImplUtil.collectMethodsFromBody(body, methods);
-      }
+      GrClassImplUtil.collectMethodsFromBody((GrTypeDefinition)currentClass, methods);
     }
     else {
       methods = Arrays.asList(currentClass.getMethods());
@@ -253,7 +253,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (overridesObjectOrGroovyObject(method)) continue;
       if (!shouldProcessDeprecated && PsiImplUtil.getAnnotation(method, CommonClassNames.JAVA_LANG_DEPRECATED) != null) continue;
-      collector.add(generateDelegateMethod(method, classToDelegateTo, currentClassSubstitutor));
+      collector.add(generateDelegateMethod(method, classToDelegateTo, currentClassSubstitutor, keepParameterAnnotations));
     }
   }
 
@@ -272,24 +272,20 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
   }
 
   private static boolean shouldDelegateDeprecated(PsiAnnotation delegate) {
-    final PsiAnnotationParameterList parameterList = delegate.getParameterList();
-    final PsiNameValuePair[] attributes = parameterList.getAttributes();
-    for (PsiNameValuePair attribute : attributes) {
-      final String name = attribute.getName();
-      if ("deprecated".equals(name)) {
-        final PsiAnnotationMemberValue value = attribute.getValue();
-        if (value instanceof GrLiteral) {
-          final Object innerValue = ((GrLiteral)value).getValue();
-          if (innerValue instanceof Boolean) {
-            return (Boolean)innerValue;
-          }
-        }
-      }
-    }
-    return false;
+    final Boolean result = GrAnnotationUtil.inferBooleanAttribute(delegate, "deprecated");
+    return result != null && result.booleanValue();
   }
 
-  private static PsiMethod generateDelegateMethod(PsiMethod method, PsiClass superClass, PsiSubstitutor substitutor) {
+  private static boolean shouldKeepParameterAnnotations(PsiAnnotation delegate) {
+    final Boolean keepParameterAnnotations = GrAnnotationUtil.inferBooleanAttribute(delegate, "parameterAnnotations");
+    return keepParameterAnnotations != null && keepParameterAnnotations.booleanValue();
+  }
+
+
+  private static PsiMethod generateDelegateMethod(PsiMethod method,
+                                                  PsiClass superClass,
+                                                  PsiSubstitutor substitutor,
+                                                  boolean keepParameterAnnotations) {
     final LightMethodBuilder builder = new LightMethodBuilder(superClass.getManager(), GroovyFileType.GROOVY_LANGUAGE, method.getName());
     builder.setContainingClass(superClass);
     builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
@@ -324,7 +320,12 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       if (type == null) {
         type = PsiType.getJavaLangObject(superClass.getManager(), superClass.getResolveScope());
       }
-      builder.addParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type);
+      final LightParameter lightParameter = new LightParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type, builder, JavaLanguage.INSTANCE);
+      if (keepParameterAnnotations) {
+        final PsiCompositeModifierList delegatingModifierList = new PsiCompositeModifierList(method.getManager(), Collections.singletonList(originalParameter.getModifierList()));
+        lightParameter.setModifierList(delegatingModifierList);
+      }
+      builder.addParameter(lightParameter);
     }
     builder.setBaseIcon(JetgroovyIcons.Groovy.Method);
 

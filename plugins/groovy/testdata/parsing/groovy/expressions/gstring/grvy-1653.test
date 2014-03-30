@@ -3,10 +3,12 @@
 Groovy script
   Compound Gstring
     PsiElement(Gstring begin)('"')
-    PsiElement(Gstring content)('aaaa ')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('aaaa ')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('str')
-    PsiElement(Gstring content)('... bbb')
+    GrStringContentImpl(GString content element)
+      PsiElement(Gstring content)('... bbb')
     PsiElement(Gstring end)('"')

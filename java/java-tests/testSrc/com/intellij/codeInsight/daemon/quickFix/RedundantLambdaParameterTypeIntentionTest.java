@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixTestCase {
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
+
+public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override
@@ -23,4 +26,8 @@ public class RedundantLambdaParameterTypeIntentionTest extends LightQuickFixTest
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantLambdaParameterType";
   }
 
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
+  }
 }

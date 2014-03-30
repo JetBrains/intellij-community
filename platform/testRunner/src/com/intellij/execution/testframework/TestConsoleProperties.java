@@ -21,7 +21,8 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -47,13 +48,16 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public static final BooleanProperty HIDE_IGNORED_TEST = new BooleanProperty("hideIgnoredTests", false);
   public static final BooleanProperty HIDE_PASSED_TESTS = new BooleanProperty("hidePassedTests", true);
   public static final BooleanProperty SCROLL_TO_SOURCE = new BooleanProperty("scrollToSource", false);
-  public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", false);
+  public static final BooleanProperty OPEN_FAILURE_LINE = new BooleanProperty("openFailureLine", true);
   public static final BooleanProperty TRACK_CODE_COVERAGE = new BooleanProperty("trackCodeCoverage", false);
   public static final BooleanProperty SHOW_STATISTICS = new BooleanProperty("showStatistics", false);
+  public static final BooleanProperty INCLUDE_NON_STARTED_IN_RERUN_FAILED = new BooleanProperty("includeNonStarted", true);
 
   private final Project myProject;
   private final Executor myExecutor;
   private ConsoleView myConsole;
+  private boolean myUsePredefinedMessageFilter = true;
+  private GlobalSearchScope myScope;
 
   protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
     new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
@@ -69,7 +73,18 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public GlobalSearchScope getScope() {
-    Module[] modules = getConfiguration().getModules();
+    if (myScope == null) {
+      myScope = initScope();
+    }
+    return myScope;
+  }
+
+  protected GlobalSearchScope initScope() {
+    RunConfiguration configuration = getConfiguration();
+    if (!(configuration instanceof ModuleRunProfile)) {
+      return GlobalSearchScope.allScope(myProject);
+    }
+    Module[] modules = ((ModuleRunProfile) configuration).getModules();
     if (modules.length == 0) return GlobalSearchScope.allScope(myProject);
 
     GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
@@ -132,7 +147,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     myListeners.clear();
   }
 
-  public abstract RuntimeConfiguration getConfiguration();
+  public abstract RunConfiguration getConfiguration();
 
   /**
    * Allows to make console editable and disable/enable input sending in process stdin stream.
@@ -154,5 +169,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected ExecutionConsole getConsole() {
     return myConsole;
+  }
+
+  public boolean isUsePredefinedMessageFilter() {
+    return myUsePredefinedMessageFilter;
+  }
+
+  public void setUsePredefinedMessageFilter(boolean usePredefinedMessageFilter) {
+    myUsePredefinedMessageFilter = usePredefinedMessageFilter;
   }
 }

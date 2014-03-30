@@ -183,6 +183,7 @@ public class Restarter {
       myOut = out;
     }
 
+    @Override
     public void run() {
       try {
         StreamUtil.copyStreamContent(myIn, myOut);

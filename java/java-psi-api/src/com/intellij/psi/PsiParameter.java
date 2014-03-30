@@ -29,6 +29,7 @@ public interface PsiParameter extends PsiVariable {
   PsiParameter[] EMPTY_ARRAY = new PsiParameter[0];
 
   ArrayFactory<PsiParameter> ARRAY_FACTORY = new ArrayFactory<PsiParameter>() {
+    @NotNull
     @Override
     public PsiParameter[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiParameter[count];

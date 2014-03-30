@@ -35,47 +35,37 @@ import java.util.*;
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 
-  protected static <K, V> void cacheResult(@Nullable final DomElement context,
-                                           final Key<Map<K, V>> cacheKind,
-                                           K key,
-                                           V value) {
+  protected static <K, V> void cacheResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key, V value) {
     if (context != null) {
-      Map<K, V> cachemap = context.getUserData(cacheKind);
+      Map<K, V> cachemap = cacheKind.get(context);
       if (cachemap == null) {
-        context.putUserData(cacheKind, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
+        cacheKind.set(context, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
       }
       cachemap.put(key, value);
     }
   }
 
   @Nullable
-  protected static <K, V> V getCachedResult(@Nullable final DomElement context,
-                                            final Key<Map<K, V>> cacheKind,
-                                            K key) {
-    if (context != null) {
-      final Map<K, V> cached = context.getUserData(cacheKind);
-      if (cached != null) {
-        return cached.get(key);
-      }
-    }
-    return null;
+  protected static <K, V> V getCachedResult(@Nullable final DomElement context, final Key<Map<K, V>> cacheKind, K key) {
+    final Map<K, V> cached = cacheKind.get(context);
+    return cached != null? cached.get(key) : null;
   }
 
-  public static enum Stage {
+  public enum Stage {
     RESOLVE_MAP_BUILDING_STAGE, TARGETS_WALKUP_STAGE
   }
   private Stage myStage = Stage.RESOLVE_MAP_BUILDING_STAGE;
 
-  private Stack<String> myCurrentTargetEffectiveName = new Stack<String>();
+  private final Stack<String> myCurrentTargetEffectiveName = new Stack<String>();
 
   private final AntDomElement myContextElement;
   private boolean myStopped;
-  private TargetsNameContext myNameContext = new TargetsNameContext();
-  private Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>(); // target effective name -> ant target
-  private Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
+  private final TargetsNameContext myNameContext = new TargetsNameContext();
+  private final Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>(); // target effective name -> ant target
+  private final Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
 
-  private Set<String> myProcessedTargets = new HashSet<String>();
-  private Set<AntDomProject> myVisitedProjects = new HashSet<AntDomProject>();
+  private final Set<String> myProcessedTargets = new HashSet<String>();
+  private final Set<AntDomProject> myVisitedProjects = new HashSet<AntDomProject>();
 
   protected PropertyProviderFinder(DomElement contextElement) {
     myContextElement = contextElement != null? contextElement.getParentOfType(AntDomElement.class, false) : null;
@@ -121,8 +111,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   public void visitTarget(AntDomTarget target) {
     if (myStage == Stage.TARGETS_WALKUP_STAGE) {
       final String targetEffectiveName = myCurrentTargetEffectiveName.peek();
-      if (!myProcessedTargets.contains(targetEffectiveName)) {
-        myProcessedTargets.add(targetEffectiveName);
+      if (myProcessedTargets.add(targetEffectiveName)) {
         final List<String> depsList = myDependenciesMap.get(targetEffectiveName);
         if (depsList != null) {
           for (String dependencyName : depsList) {
@@ -248,8 +237,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   public void visitProject(AntDomProject project) {
-    if (!myVisitedProjects.contains(project)) {
-      myVisitedProjects.add(project);
+    if (myVisitedProjects.add(project)) {
       try {
         super.visitProject(project);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ abstract class AbstractCollectionBinding implements Binding {
     myAnnotation = accessor == null ? null : XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), AbstractCollection.class);
   }
 
+  @Override
   public void init() {
     if (myAnnotation != null) {
       if (!myAnnotation.surroundWithTag()) {
@@ -103,6 +104,7 @@ abstract class AbstractCollectionBinding implements Binding {
   abstract Object processResult(Collection result, Object target);
   abstract Iterable getIterable(Object o);
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Iterable iterable = getIterable(o);
     if (iterable == null) return context;
@@ -131,6 +133,7 @@ abstract class AbstractCollectionBinding implements Binding {
     }
   }
 
+  @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
     Collection result;
 
@@ -167,6 +170,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return new ArrayList();
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
 
@@ -180,6 +184,7 @@ abstract class AbstractCollectionBinding implements Binding {
     return ((Element)node).getName().equals(tagName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Element.class;
   }

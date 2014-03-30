@@ -77,6 +77,10 @@ public class XPathHighlightingTest extends TestBase {
       doXPathHighlighting();
     }
 
+    public void testMalformedStringLiteral2() throws Throwable {
+      doXPathHighlighting();
+    }
+
     public void testMalformedEmptyStringLiteral() throws Throwable {
       doXPathHighlighting();
     }
@@ -87,6 +91,11 @@ public class XPathHighlightingTest extends TestBase {
 
     // IDEA-67413
     public void testUnionSubExpression() throws Throwable {
+      doXPathHighlighting();
+    }
+
+    // IDEA-102422
+    public void testPrefixedNameAnd() throws Throwable {
       doXPathHighlighting();
     }
 

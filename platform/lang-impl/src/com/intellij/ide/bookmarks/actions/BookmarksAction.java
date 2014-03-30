@@ -54,14 +54,14 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     if (myPopup != null && myPopup.isVisible()) return;
@@ -83,8 +83,22 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       .setList(list)
       .setDetailView(new DetailViewImpl(project))
       .setCloseOnEnter(false)
+      .setDoneRunnable(new Runnable() {
+        @Override
+        public void run() {
+          myPopup.cancel();
+        }
+      })
       .setDelegate(this).createMasterDetailPopup();
-
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Object selectedValue = list.getSelectedValue();
+        if (selectedValue instanceof BookmarkItem) {
+          itemChosen((BookmarkItem)selectedValue, project, myPopup, true);
+        }
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list);
     editDescriptionAction.setPopup(myPopup);
     myPopup.showCenteredInCurrentWindow(project);
     //todo[zaec] selection mode shouldn't be set in builder.setList() method
@@ -103,6 +117,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (bookmark != null) {
       popup.cancel();
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+        @Override
         public void run() {
           bookmark.navigate(true);
         }
@@ -110,6 +125,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     }
   }
 
+  @Override
   @Nullable
   public JComponent createAccessoryView(Project project) {
     if (!BookmarkManager.getInstance(project).hasBookmarksWithMnemonics()) {
@@ -184,7 +200,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
       BookmarkManager bookmarkManager = BookmarkManager.getInstance(myProject);
       if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(myDataContext);
+        Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
         if (editor != null) {
           Document document = editor.getDocument();
           myLine = editor.getCaretModel().getLogicalPosition().line;
@@ -194,7 +210,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       }
 
       if (myFile == null) {
-        myFile = PlatformDataKeys.VIRTUAL_FILE.getData(myDataContext);
+        myFile = CommonDataKeys.VIRTUAL_FILE.getData(myDataContext);
         myLine = -1;
 
         if (myBookmarkAtPlace == null && myFile != null) {

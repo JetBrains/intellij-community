@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,76 +16,110 @@
 package com.intellij.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings({"deprecation", "UnusedDeclaration"})
 public class PlatformUtils {
-  public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
+  public static final String PLATFORM_PREFIX_KEY = PlatformUtilsCore.PLATFORM_PREFIX_KEY;
 
-  public static final String IDEA_PREFIX = "idea";
-  public static final String COMMUNITY_PREFIX = "Idea";
-  public static final String APPCODE_PREFIX = "AppCode";
-  public static final String PYCHARM_PREFIX = "Python";
-  public static final String RUBY_PREFIX = "Ruby";
-  public static final String PHP_PREFIX = "PhpStorm";
-  public static final String WEB_PREFIX = "WebStorm";
-  public static final String FLEX_PREFIX = "Flex";
+  public static final String IDEA_PREFIX = PlatformUtilsCore.IDEA_PREFIX;
+  public static final String IDEA_CE_PREFIX = PlatformUtilsCore.COMMUNITY_PREFIX;
+  public static final String APPCODE_PREFIX = PlatformUtilsCore.APPCODE_PREFIX;
+  public static final String CPP_PREFIX = PlatformUtilsCore.CPP_PREFIX;
+  public static final String PYCHARM_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX;
+  public static final String PYCHARM_CE_PREFIX = PlatformUtilsCore.PYCHARM_PREFIX2;
+  public static final String RUBY_PREFIX = PlatformUtilsCore.RUBY_PREFIX;
+  public static final String PHP_PREFIX = PlatformUtilsCore.PHP_PREFIX;
+  public static final String WEB_PREFIX = PlatformUtilsCore.WEB_PREFIX;
 
-  private PlatformUtils() {
-  }
+  private PlatformUtils() { }
 
   public static String getPlatformPrefix() {
-    return getPlatformPrefix(IDEA_PREFIX);
+    return PlatformUtilsCore.getPlatformPrefix();
   }
 
   public static String getPlatformPrefix(String defaultPrefix) {
-    return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
-  }
-
-  public static boolean isIdea() {
-    return IDEA_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isCommunity() {
-    return COMMUNITY_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isRubyMine() {
-    return RUBY_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isAppCode() {
-    return APPCODE_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isPyCharm() {
-    return PYCHARM_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isPhpStorm() {
-    return PHP_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isWebStorm() {
-    return WEB_PREFIX.equals(getPlatformPrefix());
-  }
-
-  public static boolean isFlexIde() {
-    return FLEX_PREFIX.equals(getPlatformPrefix());
+    return PlatformUtilsCore.getPlatformPrefix(defaultPrefix);
   }
 
   public static boolean isIntelliJ() {
-    return isIdea() || isCommunity();
+    return PlatformUtilsCore.isIntelliJ();
   }
 
-  public static boolean isIdeaProject(@Nullable Project project) {
-    final VirtualFile baseDir;
-    return project != null
-           && ("IDEA".equals(project.getName()) || "community".equals(project.getName()))
-           && (baseDir = project.getBaseDir()) != null
-           && baseDir.findFileByRelativePath("plugins") != null;
+  public static boolean isIdeaUltimate() {
+    return PlatformUtilsCore.isIdea();
   }
+
+  public static boolean isIdeaCommunity() {
+    return PlatformUtilsCore.isCommunity();
+  }
+
+  public static boolean isRubyMine() {
+    return PlatformUtilsCore.isRubyMine();
+  }
+
+  public static boolean isAppCode() {
+    return PlatformUtilsCore.isAppCode();
+  }
+
+  public static boolean isCppIde() {
+    return PlatformUtilsCore.isCppIde();
+  }
+
+  public static boolean isCidr() {
+    return isAppCode() || isCppIde();
+  }
+
+  public static boolean isPyCharm() {
+    return PlatformUtilsCore.isPyCharm();
+  }
+
+  public static boolean isPyCharmPro() {
+    return PlatformUtilsCore.isPyCharmPro();
+  }
+
+  public static boolean isPyCharmCommunity() {
+    return PlatformUtilsCore.isPyCharmCommunity();
+  }
+
+  public static boolean isPhpStorm() {
+    return PlatformUtilsCore.isPhpStorm();
+  }
+
+  public static boolean isWebStorm() {
+    return PlatformUtilsCore.isWebStorm();
+  }
+
+  /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isIdeaProject(@Nullable Project project) {
+    return false;
+  }
+
+  /** @deprecated use {@link #IDEA_CE_PREFIX} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String COMMUNITY_PREFIX = IDEA_CE_PREFIX;
+
+  /** @deprecated use {@link #isIdeaUltimate()} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isIdea() { return isIdeaUltimate(); }
+
+  /** @deprecated use {@link #isIdeaCommunity()} (to remove in IDEA 15) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isCommunity() { return isIdeaCommunity(); }
+
+  /** @deprecated use {@link #PYCHARM_CE_PREFIX} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String PYCHARM_PREFIX2 = PYCHARM_CE_PREFIX;
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public static final String FLEX_PREFIX = PlatformUtilsCore.FLEX_PREFIX;
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isFlexIde() { return false; }
 }

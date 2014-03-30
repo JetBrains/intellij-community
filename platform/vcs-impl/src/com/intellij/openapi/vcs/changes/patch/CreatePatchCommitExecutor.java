@@ -144,7 +144,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       if (ProjectLevelVcsManager.getInstance(myProject).dvcsUsedInProject()) {
         for (Change change : changes) {
           final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
-          if (vcs != null && VcsType.distibuted.equals(vcs.getType())) {
+          if (vcs != null && VcsType.distributed.equals(vcs.getType())) {
             dvcsIsUsed = true;
             break;
           }

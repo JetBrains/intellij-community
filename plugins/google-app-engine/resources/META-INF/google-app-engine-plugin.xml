@@ -1,0 +1,38 @@
+<idea-plugin>
+  <depends optional="true" config-file="google-app-engine-maven-support.xml">org.jetbrains.idea.maven</depends>
+
+  <extensionPoints>
+    <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
+                        serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.appengine.facet.AppEngineWebIntegration"
+                        serviceImplementation="com.intellij.appengine.facet.impl.AppEngineCommunityWebIntegration"/>
+
+    <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
+    <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
+    <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
+    <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider"/>
+    <framework.detector implementation="com.intellij.appengine.facet.AppEngineFrameworkDetector"/>
+    <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
+    <compileServer.plugin classpath="google-app-engine-jps-plugin.jar;appEngine-runtime.jar"/>
+
+    <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
+    <dom.fileDescription implementation="com.intellij.appengine.descriptor.dom.AppEngineWebFileDescription"/>
+
+    <localInspection language="JAVA" shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
+                     groupName="Google App Engine" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
+
+    <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
+  </extensions>
+
+  <actions>
+    <action class="com.intellij.appengine.actions.UploadApplicationAction" id="AppEngine.UploadApplication"
+            text="Upload App Engine Application" icon="GoogleAppEngineIcons.AppEngine">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
+
+</idea-plugin>

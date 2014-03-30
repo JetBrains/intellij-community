@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -46,6 +46,7 @@ import java.util.*;
  */
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
+    @Override
     public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
                                final PsiExpression[] parameters) throws IncorrectOperationException {
       JavaI18nUtil.createProperty(project, propertiesFiles, key, value);
@@ -74,7 +75,7 @@ public class JavaI18nUtil extends I18nUtil {
     if (parent instanceof PsiVariable) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
-        return processAnnotationAttributes(annotationAttributeValues, annotation); 
+        return processAnnotationAttributes(annotationAttributeValues, annotation);
       }
     }
     return isPassedToAnnotatedParam(project, expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
@@ -251,7 +252,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   public static boolean isPropertyRef(final PsiLiteralExpression expression, final String key, final String resourceBundleName) {
     if (resourceBundleName == null) {
-      return !PropertiesUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
+      return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
     else {
       final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
@@ -285,7 +286,8 @@ public class JavaI18nUtil extends I18nUtil {
 
   private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiType returnType = method.getReturnType();
@@ -297,11 +299,13 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
 
+      @Override
       public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 
-      public void handleEvent(Event event, Object associated) {
+      @Override
+      public void handleEvent(@NotNull Event event, Object associated) {
 
       }
     }, context, null);

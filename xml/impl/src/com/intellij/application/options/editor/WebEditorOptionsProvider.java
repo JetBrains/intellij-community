@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
   private JCheckBox myAutomaticallyInsertRequiredSubTagsCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
+  private JBCheckBox mySelectWholeCssIdentifierOnDoubleClick;
+  private JBCheckBox myAddQuotasForAttributeValue;
 
 
   public String getDisplayName() {
@@ -44,14 +47,14 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     return myWholePanel;
   }
 
-
-
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
-           xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected();
+           xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick() != mySelectWholeCssIdentifierOnDoubleClick.isSelected() ||
+           xmlEditorOptions.isAutomaticallyInsertRequiredSubTags() != myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected() ||
+           xmlEditorOptions.isInsertQuotesForAttributeValue() != myAddQuotasForAttributeValue.isSelected();
   }
 
   public void apply() throws ConfigurationException {
@@ -60,6 +63,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredSubTags(myAutomaticallyInsertRequiredSubTagsCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
+    xmlEditorOptions.setSelectWholeCssIdentifierOnDoubleClick(mySelectWholeCssIdentifierOnDoubleClick.isSelected());
+    xmlEditorOptions.setInsertQuotesForAttributeValue(myAddQuotasForAttributeValue.isSelected());
   }
 
   public void reset() {
@@ -68,6 +73,8 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
     myAutomaticallyInsertRequiredSubTagsCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredSubTags());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
+    mySelectWholeCssIdentifierOnDoubleClick.setSelected(xmlEditorOptions.isSelectWholeCssIdentifierOnDoubleClick());
+    myAddQuotasForAttributeValue.setSelected(xmlEditorOptions.isInsertQuotesForAttributeValue());
   }
 
   public void disposeUIResources() {

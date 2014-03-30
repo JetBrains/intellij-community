@@ -61,15 +61,16 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
                            GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
-  public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrFieldStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     serializeFieldStub(stub, dataStream);
   }
 
-  public GrFieldStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return deserializeFieldStub(dataStream, parentStub);
   }
 
-  public void indexStub(GrFieldStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrFieldStub stub, @NotNull IndexSink sink) {
     indexFieldStub(stub, sink);
   }
 

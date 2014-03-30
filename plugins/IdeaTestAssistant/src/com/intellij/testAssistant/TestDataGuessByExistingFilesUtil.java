@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -265,6 +266,14 @@ public class TestDataGuessByExistingFilesUtil {
   //  return result;
   //}
 
+  public static List<String> suggestTestDataFiles(@NotNull ProjectFileIndex fileIndex,
+                                                  @NotNull String testName,
+                                                  String testDataPath, 
+                                                  @NotNull PsiClass psiClass){
+    return buildDescriptor(fileIndex, Collections.singletonList(testName), psiClass).generate(testName, testDataPath);
+  }
+
+    
   @NotNull
   private static TestDataDescriptor buildDescriptor(@NotNull ProjectFileIndex fileIndex,
                                                     @NotNull Collection<String> testNames,
@@ -446,6 +455,9 @@ public class TestDataGuessByExistingFilesUtil {
     }
 
     public void populate(@NotNull String testName, @NotNull VirtualFile matched) {
+      final String withoutExtension = FileUtil.getNameWithoutExtension(testName);
+      boolean excludeExtension = !withoutExtension.equals(testName);
+      testName = withoutExtension;
       final String fileName = matched.getNameWithoutExtension();
       int i = fileName.indexOf(testName);
       final char firstChar = testName.charAt(0);
@@ -465,7 +477,7 @@ public class TestDataGuessByExistingFilesUtil {
 
       filePrefix = fileName.substring(0, i);
       fileSuffix = fileName.substring(i + testName.length());
-      ext = matched.getExtension();
+      ext = excludeExtension ? "" : matched.getExtension();
       dir = matched.getParent().getPath();
     }
 
@@ -523,11 +535,17 @@ public class TestDataGuessByExistingFilesUtil {
 
     @NotNull
     public List<String> generate(@NotNull final String testName) {
+      return generate(testName, null);
+    }
+
+    @NotNull
+    public List<String> generate(@NotNull final String testName, String root) {
       List<String> result = new ArrayList<String>();
       if (StringUtil.isEmpty(testName)) {
         return result;
       }
       for (TestLocationDescriptor descriptor : myDescriptors) {
+        if (root != null && !root.equals(descriptor.dir)) continue;
         result.add(String.format(
           "%s/%s%c%s%s.%s",
           descriptor.dir, descriptor.filePrefix,

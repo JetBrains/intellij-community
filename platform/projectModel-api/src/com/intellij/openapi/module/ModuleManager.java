@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public abstract class ModuleManager {
    * @param module the module for which the list of dependent modules is requested.
    * @return list of <i>modules that depend on</i> given module.
    *
-   * @see ModuleUtil#getAllDependentModules(Module)
+   * @see ModuleUtilCore#getAllDependentModules(Module)
    */
   @NotNull public abstract List<Module> getModuleDependentModules(@NotNull Module module);
 

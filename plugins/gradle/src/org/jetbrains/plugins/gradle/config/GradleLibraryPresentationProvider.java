@@ -25,9 +25,8 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
 
 import javax.swing.*;
@@ -90,7 +89,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return GradleBundle.message("gradle.name");
+    return "Gradle";
   }
 
   @Override

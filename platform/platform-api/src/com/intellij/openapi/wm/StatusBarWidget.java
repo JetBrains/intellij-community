@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ public interface StatusBarWidget extends Disposable {
     String getText();
 
     @NotNull
+    @Deprecated
     String getMaxPossibleText();
 
     float getAlignment();
@@ -80,6 +81,7 @@ public interface StatusBarWidget extends Disposable {
     String getSelectedValue();
 
     @NotNull
+    @Deprecated
     String getMaxValue();
   }
 
@@ -120,7 +122,7 @@ public interface StatusBarWidget extends Disposable {
           g2.drawLine(x, y, x, y + height);
         }
       } else {
-        g2.setColor(SEPARATOR_COLOR);
+        g2.setColor(UIUtil.isUnderIntelliJLaF() ? Gray._200 : SEPARATOR_COLOR);
         g2.drawLine(x, y, x, y + height);
       }
 
@@ -128,7 +130,7 @@ public interface StatusBarWidget extends Disposable {
     }
 
     public Insets getBorderInsets(Component c) {
-      return new Insets(2, 4, 2, 2);
+      return new Insets(0, 4, 0, 2);
     }
 
     public boolean isBorderOpaque() {

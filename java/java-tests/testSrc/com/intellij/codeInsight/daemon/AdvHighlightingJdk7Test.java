@@ -18,13 +18,12 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class intended for "heavily-loaded" tests only, e.g. those need to setup separate project directory structure to run.
@@ -70,9 +69,9 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   }
 
   //ambiguous method calls
-  private void doTestAmbiguous(JavaSdkVersion javaSdkVersion) throws Exception {
+  private void doTestAmbiguous(@NotNull JavaSdkVersion javaSdkVersion) throws Exception {
     final String name = getTestName(true);
-    ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(javaSdkVersion, myTestRootDisposable);
+    IdeaTestUtil.setTestVersion(javaSdkVersion, getModule(), myTestRootDisposable);
     doTest(BASE_PATH + name + "/pck/AmbiguousMethodCall.java", BASE_PATH + "/" + name, false, false);
   }
 
@@ -152,6 +151,10 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
     doTestAmbiguous();
   }
 
+  public void testAmbiguousIDEA67841() throws Exception {
+    doTestAmbiguous();
+  }
+
   public void testAmbiguousIDEA57535() throws Exception {
     doTestAmbiguous();
   }
@@ -192,7 +195,35 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
     doTestAmbiguous();
   }
 
+  public void testAmbiguousIDEA57500() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67864() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67836() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67576() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67519() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57569() throws Exception {
+    doTestAmbiguous();
+  }
+
   public void testAmbiguousMethodsFromSameClassAccess() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57633() throws Exception {
     doTestAmbiguous();
   }
 }

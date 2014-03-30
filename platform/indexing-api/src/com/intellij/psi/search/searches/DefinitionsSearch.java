@@ -22,17 +22,14 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 
 /**
- * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
- * Quick View Definition (Ctrl+Shift+I). Default searchers produce implementing/overriding methods if the method
- * have been searched and class inheritors for the class.
- *
- * @author max
+ * Use {@link DefinitionsScopedSearch} instead
  */
+@Deprecated()
 public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiElement> {
   public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
-    return INSTANCE.createUniqueResultsQuery(definitionsOf);
+    return DefinitionsScopedSearch.search(definitionsOf);
   }
 }

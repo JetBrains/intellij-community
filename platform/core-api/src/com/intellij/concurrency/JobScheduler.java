@@ -19,119 +19,83 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.Patches;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.*;
+
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public abstract class JobScheduler {
   private static final ScheduledThreadPoolExecutor ourScheduledExecutorService;
+  private static final int TASK_LIMIT = 50;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobScheduler");
+  private static final ThreadLocal<Long> START = new ThreadLocal<Long>();
+  private static final boolean DO_TIMING = true;
 
   static {
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-      public Thread newThread(final Runnable r) {
-        final Thread thread = new Thread(r, "Periodic tasks thread");
-        thread.setDaemon(true);
-        thread.setPriority(Thread.NORM_PRIORITY);
-        return thread;
-      }
-    }) {
-      private final boolean doTiming = true;
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, ConcurrencyUtil.newNamedThreadFactory("Periodic tasks thread", true, Thread.NORM_PRIORITY)) {
       @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(final Runnable runnable, final RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(runnable, task);
+      protected void beforeExecute(Thread t, Runnable r) {
+        if (DO_TIMING) {
+          START.set(System.currentTimeMillis());
         }
-        return new ExecutionTimeCheckedTask<V>(task, runnable, ExecutionTimeCheckedTask.TASK_LIMIT);
       }
 
       @Override
-      protected <V> RunnableScheduledFuture<V> decorateTask(Callable<V> callable, RunnableScheduledFuture<V> task) {
-        if (!doTiming) {
-          return super.decorateTask(callable, task);
+      protected void afterExecute(Runnable r, Throwable t) {
+        if (DO_TIMING) {
+          long elapsed = System.currentTimeMillis() - START.get();
+          Object unwrapped;
+          if (elapsed > TASK_LIMIT && (unwrapped = info(r)) != null) {
+            @NonNls String msg = TASK_LIMIT + " ms execution limit failed for: " + unwrapped + "; elapsed time was " + elapsed +"ms";
+            LOG.info(msg);
+          }
         }
-        return new ExecutionTimeCheckedTask<V>(task, callable, ExecutionTimeCheckedTask.TASK_LIMIT);
       }
     };
     executor.setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
     executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+    enableRemoveOnCancelPolicy(executor);
     ourScheduledExecutorService = executor;
+  }
+
+  private static Object info(Runnable r) {
+    if (!(r instanceof FutureTask)) return r;
+    Object sync = ReflectionUtil.getField(FutureTask.class, r, Object.class, "sync"); // FutureTask.sync in <=JDK7
+    Object o = sync == null ? r : sync;
+    Object callable = ReflectionUtil.getField(o.getClass(), o, Callable.class, "callable"); // FutureTask.callable or Sync.callable
+    if (callable == null) return null;
+    Object task = ReflectionUtil.getField(callable.getClass(), callable, Object.class, "task"); // java.util.concurrent.Executors.RunnableAdapter.task
+    return task == null ? callable : task;
+  }
+
+  private static void enableRemoveOnCancelPolicy(ScheduledThreadPoolExecutor executor) {
+    if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
+      try {
+        Method setRemoveOnCancelPolicy = ScheduledThreadPoolExecutor.class.getDeclaredMethod("setRemoveOnCancelPolicy", boolean.class);
+        setRemoveOnCancelPolicy.setAccessible(true);
+        setRemoveOnCancelPolicy.invoke(executor, true);
+      }
+      catch (Exception ignored) {
+      }
+    }
   }
 
   public static JobScheduler getInstance() {
     return ServiceManager.getService(JobScheduler.class);
   }
 
+  @NotNull
   public static ScheduledExecutorService getScheduler() {
     return ourScheduledExecutorService;
-  }
-
-  private static class ExecutionTimeCheckedTask<V> implements RunnableScheduledFuture<V> {
-    private static final int TASK_LIMIT = 50;
-    private static final Logger LOG = Logger.getInstance("#" + ExecutionTimeCheckedTask.class.getName());
-    private final RunnableScheduledFuture<V> task;
-    private final int limit;
-    private final Object traceRunnableOrCallable;
-
-    ExecutionTimeCheckedTask(RunnableScheduledFuture<V> _task, Object _traceRunnableOrCallable, int _limit) {
-      task = _task;
-      traceRunnableOrCallable = _traceRunnableOrCallable;
-      limit = _limit;
-    }
-
-    @Override
-    public boolean isPeriodic() {
-      return task.isPeriodic();
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return task.getDelay(unit);
-    }
-
-    @Override
-    public int compareTo(Delayed o) {
-      return task.compareTo(o);
-    }
-
-    @Override
-    public void run() {
-      long started = System.currentTimeMillis();
-      try {
-        task.run();
-      } finally {
-        long executionTime = System.currentTimeMillis() - started;
-        if (executionTime > limit) {
-          String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
-          LOG.info(msg);
-          System.err.println(msg);
-        }
-      }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return task.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return task.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return task.isDone();
-    }
-
-    @Override
-    public V get() throws InterruptedException, ExecutionException {
-      return task.get();
-    }
-
-    @Override
-    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return task.get(timeout, unit);
-    }
   }
 }

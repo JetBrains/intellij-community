@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
-import com.intellij.util.BeforeAfter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -64,13 +65,14 @@ public class EditorHyperlinkSupport {
   };
 
   private final Editor myEditor;
+  @NotNull private final Project myProject;
   private final SortedMap<RangeHighlighter, HyperlinkInfo> myHighlighterToMessageInfoMap = new TreeMap<RangeHighlighter, HyperlinkInfo>(START_OFFSET_COMPARATOR);
   private int myLastIndex = NO_INDEX;
-  private final Consumer<BeforeAfter<Filter.Result>> myRefresher;
   private final List<RangeHighlighter> myHighlighters;
 
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = editor;
+    myProject = project;
     myHighlighters = new SmartList<RangeHighlighter>();
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
@@ -78,18 +80,9 @@ public class EditorHyperlinkSupport {
       public void mouseClicked(EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (mouseEvent.getButton() == MouseEvent.BUTTON1 && !mouseEvent.isPopupTrigger()) {
-          LogicalPosition logical = myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint());
-          if (EditorUtil.inVirtualSpace(editor, logical)) {
-            return;
-          }
-
-          RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
-          if (range != null) {
-            final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
-            if (info != null) {
-              info.navigate(project);
-              linkFollowed(editor, getHyperlinks().keySet(), range);
-            }
+          Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          if (runnable != null) {
+            runnable.run();
           }
         }
       }
@@ -110,38 +103,36 @@ public class EditorHyperlinkSupport {
       }
     }
     );
-
-    myRefresher = new Consumer<BeforeAfter<Filter.Result>>() {
-      @Override
-      public void consume(BeforeAfter<Filter.Result> resultBeforeAfter) {
-        if (resultBeforeAfter.getBefore() == null) return;
-        final RangeHighlighter hyperlinkRange = findHyperlinkRange(resultBeforeAfter.getBefore().hyperlinkInfo);
-        if (hyperlinkRange != null) {
-          myHighlighterToMessageInfoMap.remove(hyperlinkRange);
-        } else {
-          final Iterator<RangeHighlighter> iterator = myHighlighters.iterator();
-          while (iterator.hasNext()) {
-            final RangeHighlighter highlighter = iterator.next();
-            if (highlighter.isValid() && containsOffset(resultBeforeAfter.getBefore().highlightStartOffset, highlighter)) {
-              iterator.remove();
-              break;
-            }
-          }
-        }
-
-        if (resultBeforeAfter.getAfter() != null) {
-          if (resultBeforeAfter.getAfter().hyperlinkInfo != null) {
-            addHyperlink(resultBeforeAfter.getAfter().highlightStartOffset, resultBeforeAfter.getAfter().highlightEndOffset,
-                         resultBeforeAfter.getAfter().highlightAttributes, resultBeforeAfter.getAfter().hyperlinkInfo);
-          } else if (resultBeforeAfter.getAfter().highlightAttributes != null) {
-            addHighlighter(resultBeforeAfter.getAfter().highlightStartOffset, resultBeforeAfter.getAfter().highlightEndOffset,
-                           resultBeforeAfter.getAfter().highlightAttributes);
-          }
-        }
-      }
-    };
   }
-  
+
+  @Nullable
+  public Runnable getLinkNavigationRunnable(final LogicalPosition logical) {
+    if (EditorUtil.inVirtualSpace(myEditor, logical)) {
+      return null;
+    }
+
+    final RangeHighlighter range = findLinkRangeAt(this.myEditor.logicalPositionToOffset(logical));
+    if (range != null) {
+      final HyperlinkInfo info = myHighlighterToMessageInfoMap.get(range);
+      if (info != null) {
+        return new Runnable() {
+          @Override
+          public void run() {
+            if (info instanceof HyperlinkInfoBase) {
+              RelativePoint point = new RelativePoint(myEditor.getContentComponent(), myEditor.logicalPositionToXY(logical));
+              ((HyperlinkInfoBase)info).navigate(myProject, point);
+            }
+            else {
+              info.navigate(myProject);
+            }
+            linkFollowed(myEditor, getHyperlinks().keySet(), range);
+          }
+        };
+      }
+    }
+    return null;
+  }
+
   public void adjustHighlighters(final List<FilterMixin.AdditionalHighlight> highlights) {
     for (FilterMixin.AdditionalHighlight highlight : highlights) {
       RangeHighlighter found = null;
@@ -322,13 +313,11 @@ public class EditorHyperlinkSupport {
                                                                    Collection<RangeHighlighter> sortedHighlighters,
                                                                    final int delta,
                                                                    final Consumer<RangeHighlighter> action) {
-    final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
-    for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
-      RangeHighlighter highlighter = iterator.next();
-      if (editor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
-        iterator.remove();
-      }
+    if (sortedHighlighters.isEmpty()) {
+      return null;
     }
+
+    final List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(sortedHighlighters);
     int i;
     for (i = 0; i < ranges.size(); i++) {
       RangeHighlighter range = ranges.get(i);
@@ -336,15 +325,24 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    int newIndex = ranges.isEmpty() ? -1 : i == ranges.size() ? 0 : (i + delta + ranges.size()) % ranges.size();
-    final RangeHighlighter next = newIndex < ranges.size() && newIndex >= 0 ? ranges.get(newIndex) : null;
-    if (next == null) return null;
-    return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
-      public void navigate(final boolean requestFocus) {
-        action.consume(next);
-        linkFollowed(editor, ranges, next);
+    i = i % ranges.size();
+    int newIndex = i;
+    while (newIndex < ranges.size() && newIndex >= 0) {
+      newIndex = (newIndex + delta + ranges.size()) % ranges.size();
+      final RangeHighlighter next = ranges.get(newIndex);
+      if (editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) == null) {
+        return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
+          public void navigate(final boolean requestFocus) {
+            action.consume(next);
+            linkFollowed(editor, ranges, next);
+          }
+        }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
       }
-    }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+      if (newIndex == i) {
+        break; // cycled through everything, found no next/prev hyperlink
+      }
+    }
+    return null;
   }
 
   // todo fix link followed here!
@@ -357,16 +355,8 @@ public class EditorHyperlinkSupport {
         range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, null);
       }
       if (range == link) {
-        TextAttributes oldAttributes = range.getTextAttributes();
-        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, oldAttributes);
-        TextAttributes attributes = getFollowedHyperlinkAttributes().clone();
-        assert oldAttributes != null;
-        attributes.setFontType(oldAttributes.getFontType());
-        attributes.setEffectType(oldAttributes.getEffectType());
-        attributes.setEffectColor(oldAttributes.getEffectColor());
-        attributes.setForegroundColor(oldAttributes.getForegroundColor());
-        attributes.setBackgroundColor(oldAttributes.getBackgroundColor());
-        markupModel.setRangeHighlighterAttributes(range, attributes);
+        range.putUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES, range.getTextAttributes());
+        markupModel.setRangeHighlighterAttributes(range, getFollowedHyperlinkAttributes());
       }
     }
     //refresh highlighter text attributes

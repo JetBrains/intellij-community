@@ -16,9 +16,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPullCommand;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
 import java.util.Collection;
@@ -28,9 +29,9 @@ public class HgPullAction extends HgAbstractGlobalAction {
     super(AllIcons.Actions.CheckOut);
   }
 
-  protected void execute(final Project project, Collection<VirtualFile> repos) {
-    final HgPullDialog dialog = new HgPullDialog(project);
-    dialog.setRoots(repos);
+  @Override
+  protected void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
+    final HgPullDialog dialog = new HgPullDialog(project, repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       dialog.rememberSettings();
@@ -50,8 +51,6 @@ public class HgPullAction extends HgAbstractGlobalAction {
       project, dialog.getRepository()
     );
     command.setSource(dialog.getSource());
-    command.setRebase(false);
-    command.setUpdate(false);
 
     command.execute();
   }

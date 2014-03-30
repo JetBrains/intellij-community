@@ -26,12 +26,15 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -83,12 +86,15 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     });
 
     final ActionListener browseAction = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        String oldPath = myPathPanel.getText();
-        String path = chooseSettingsFile(oldPath, getWindow(), IdeBundle.message("title.export.file.location"),
-                                         IdeBundle.message("prompt.choose.export.settings.file.path"));
-        if (path == null) return;
-        myPathPanel.setText(FileUtil.toSystemDependentName(path));
+        chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
+          .doWhenDone(new Consumer<String>() {
+            @Override
+            public void consume(String path) {
+              myPathPanel.setText(FileUtil.toSystemDependentName(path));
+            }
+          });
       }
     };
 
@@ -112,6 +118,30 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));    
   }
 
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    AbstractAction selectAll = new AbstractAction("Select &All") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.setAllElementsMarked(true);
+      }
+    };
+    AbstractAction selectNone = new AbstractAction("Select &None") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.setAllElementsMarked(false);
+      }
+    };
+    AbstractAction invert = new AbstractAction("&Invert") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myChooser.invertSelection();
+      }
+    };
+    return new Action[]{selectAll, selectNone, invert};
+  }
+
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText());
@@ -129,7 +159,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       for (final ExportableComponent tiedComponent : tiedComponents) {
         if (tiedComponent == component) continue;
         final ComponentElementProperties elementProperties = componentToContainingListElement.get(tiedComponent);
-        if (elementProperties != null && !exportFile.equals(file)) {
+        if (elementProperties != null && !FileUtil.filesEqual(exportFile, file)) {
           LOG.assertTrue(file == null, "Component " + component + " serialize itself into " + file + " and " + exportFile);
           // found
           elementProperties.addComponent(component);
@@ -141,8 +171,8 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return file != null;
   }
 
-  @Nullable
-  public static String chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
+  @NotNull
+  public static AsyncResult<String> chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
     FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
@@ -159,33 +189,43 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     else {
       initialDir = null;
     }
-    final VirtualFile file = FileChooser.chooseFile(chooserDescriptor, parent, null, initialDir);
-    if (file == null) {
-      return null;
-    }
-    String path;
-    if (file.isDirectory()) {
-      String defaultName = new File(DEFAULT_PATH).getName();
-      path = file.getPath() + "/" + defaultName;
-    }
-    else {
-      path = file.getPath();
-    }
-    return path;
+    final AsyncResult<String> result = new AsyncResult<String>();
+    FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, new FileChooser.FileChooserConsumer() {
+      @Override
+      public void consume(List<VirtualFile> files) {
+        VirtualFile file = files.get(0);
+        if (file.isDirectory()) {
+          result.setDone(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+        }
+        else {
+          result.setDone(file.getPath());
+        }
+      }
+
+      @Override
+      public void cancelled() {
+        result.setRejected();
+      }
+    });
+    return result;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myPathPanel.getTextField();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return new JLabel(myDescription);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myChooser;
   }
 
+  @Override
   protected JComponent createSouthPanel() {
     final JComponent buttons = super.createSouthPanel();
     if (!myShowFilePath) return buttons;
@@ -211,11 +251,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       return myComponents.add(component);
     }
 
+    @Override
     @Nullable
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     @Nullable
     public Color getColor() {
       return null;
@@ -236,6 +278,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     return new File(myPathPanel.getText());
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ide.actions.ChooseComponentsToExportDialog";
   }

@@ -18,6 +18,7 @@ package com.intellij.psi.util.proximity;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
@@ -29,6 +30,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ReferenceListWeigher extends ProximityWeigher {
 
+  private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
+    PlatformPatterns.psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiReferenceList.class);
+
   protected enum Preference {
     Interfaces, Classes, Exceptions
   }
@@ -36,7 +40,7 @@ public class ReferenceListWeigher extends ProximityWeigher {
   @Nullable
   protected Preference getPreferredCondition(@NotNull ProximityLocation location) {
     PsiElement position = location.getPosition();
-    if (PlatformPatterns.psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiReferenceList.class).accepts(position)) {
+    if (INSIDE_REFERENCE_LIST.accepts(position)) {
       assert position != null;
       PsiReferenceList list = (PsiReferenceList)position.getParent().getParent();
       PsiReferenceList.Role role = list.getRole();

@@ -17,9 +17,11 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
+import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -39,6 +41,11 @@ public class XsltIncludeProvider extends FileIncludeProvider {
 
   public boolean acceptFile(VirtualFile file) {
     return file.getFileType() == XmlFileType.INSTANCE;
+  }
+
+  @Override
+  public void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink) {
+    fileTypeSink.consume(XmlFileType.INSTANCE);
   }
 
   @NotNull

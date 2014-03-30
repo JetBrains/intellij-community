@@ -4,14 +4,18 @@
                     interface="com.intellij.util.xml.DomFileDescription"/>
 
     <extensionPoint name="dom.implementation"
-                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
+                    beanClass="com.intellij.util.xml.impl.DomImplementationClassEP">
+      <with attribute="interfaceName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="implementationName" implements="com.intellij.util.xml.DomElement"/>
+    </extensionPoint>
 
     <extensionPoint name="dom.converter"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"/>
 
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP">
-      <with attribute="myDomClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
+      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="extenderClassName" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
 
     <extensionPoint name="dom.customAnnotationChecker"
@@ -28,6 +32,8 @@
 
     <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
     <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder"/>
+    <stubIndex implementation="com.intellij.util.xml.stubs.index.DomNamespaceKeyIndex"/>
+    <stubIndex implementation="com.intellij.util.xml.stubs.index.DomElementClassIndex"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"
                         serviceImplementation="com.intellij.util.xml.impl.DomApplicationComponent"/>
@@ -63,7 +69,7 @@
     <semContributor implementation="com.intellij.util.xml.impl.DomSemContributor"/>
 
     <annotator language="XML" implementationClass="com.intellij.util.xml.impl.DefaultDomAnnotator"/>
-    <lang.documentationProvider language="XML" implementationClass="com.intellij.util.xml.DomDocumentationProvider"/>
+    <lang.documentationProvider language="XML" implementationClass="com.intellij.util.xml.DomDocumentationProvider" id="dom"/>
 
     <usageTypeProvider implementation="com.intellij.util.xml.DomUsageTypeProvider"/>
 

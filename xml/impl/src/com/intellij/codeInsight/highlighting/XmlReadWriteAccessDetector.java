@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlTag;
 
 /**
  * @author yole
  */
 public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
+  @Override
   public boolean isReadWriteAccessible(final PsiElement element) {
     return element instanceof XmlAttributeValue ||
         element instanceof XmlTag ||
@@ -33,21 +34,23 @@ public class XmlReadWriteAccessDetector extends ReadWriteAccessDetector {
         element instanceof XmlComment; // e.g. <!--@elvariable name="xxx" type="yyy"-->
   }
 
+  @Override
   public boolean isDeclarationWriteAccess(final PsiElement element) {
     return false;
   }
 
+  @Override
   public Access getReferenceAccess(final PsiElement referencedElement, final PsiReference reference) {
     PsiElement refElement = reference.getElement();
-    return ( refElement instanceof XmlAttributeValue &&
-              (!(referencedElement instanceof XmlTag) || refElement.getParent().getParent() == referencedElement)
-            ) ||
+    return refElement instanceof XmlAttributeValue &&
+           (!(referencedElement instanceof XmlTag) || refElement.getParent().getParent() == referencedElement) ||
             refElement instanceof XmlElementDecl ||
             refElement instanceof XmlComment   // e.g. <!--@elvariable name="xxx" type="yyy"-->
            ? Access.Write : Access.Read;
 
   }
 
+  @Override
   public Access getExpressionAccess(final PsiElement expression) {
     return expression instanceof XmlAttributeValue ? Access.Write : Access.Read;
   }

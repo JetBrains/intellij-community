@@ -35,15 +35,18 @@ public class FramesList extends DebuggerFramesList {
     doInit();
   }
 
+  @Override
   protected FramesListRenderer createListRenderer() {
     return new FramesListRenderer();
   }
 
+  @Override
   protected void onFrameChanged(final Object selectedValue) {
     final StackFrameDescriptorImpl descriptor = selectedValue instanceof StackFrameDescriptorImpl? (StackFrameDescriptorImpl)selectedValue : null;
     final Method newMethod = descriptor != null? descriptor.getMethod() : null;
     if (!Comparing.equal(mySelectedMethod, newMethod)) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           repaint();
         }

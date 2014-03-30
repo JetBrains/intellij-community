@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,8 +23,11 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.Consumer;
@@ -89,7 +92,7 @@ public class AllClassesGetter {
             context.setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
-              final PsiElement psiElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newUnderlying);
+              final PsiElement psiElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newUnderlying);
               if (psiElement != null) {
                 for (final PsiReference reference : psiElement.getReferences()) {
                   if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {
@@ -140,9 +143,10 @@ public class AllClassesGetter {
     }
   };
 
-  public static void processJavaClasses(final CompletionParameters parameters,
-                                        final PrefixMatcher prefixMatcher, final boolean filterByScope,
-                                        final Consumer<PsiClass> consumer) {
+  public static void processJavaClasses(@NotNull final CompletionParameters parameters,
+                                        @NotNull final PrefixMatcher prefixMatcher,
+                                        final boolean filterByScope,
+                                        @NotNull final Consumer<PsiClass> consumer) {
     final PsiElement context = parameters.getPosition();
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
@@ -154,6 +158,15 @@ public class AllClassesGetter {
 
       @Override
       public boolean process(PsiClass psiClass) {
+        if (parameters.getInvocationCount() < 2) {
+          if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
+            return true;
+          }
+          if (!StringUtil.isCapitalized(psiClass.getName()) && !Registry.is("ide.completion.show.lower.case.classes")) {
+            return true;
+          }
+        }
+
         assert psiClass != null;
         if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
           String qName = psiClass.getQualifiedName();
@@ -167,10 +180,10 @@ public class AllClassesGetter {
     processJavaClasses(prefixMatcher, project, scope, processor);
   }
 
-  public static void processJavaClasses(final PrefixMatcher prefixMatcher,
-                                        Project project,
-                                        GlobalSearchScope scope,
-                                        Processor<PsiClass> processor) {
+  public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
+                                        @NotNull Project project,
+                                        @NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<PsiClass> processor) {
     AllClassesSearch.search(scope, project, new Condition<String>() {
       @Override
       public boolean value(String s) {
@@ -187,14 +200,14 @@ public class AllClassesGetter {
 
 
   private static String getPackagePrefix(final PsiElement context, final int offset) {
-    final String fileText = context.getContainingFile().getText();
+    final CharSequence fileText = context.getContainingFile().getViewProvider().getContents();
     int i = offset - 1;
     while (i >= 0) {
       final char c = fileText.charAt(i);
       if (!Character.isJavaIdentifierPart(c) && c != '.') break;
       i--;
     }
-    String prefix = fileText.substring(i + 1, offset);
+    String prefix = fileText.subSequence(i + 1, offset).toString();
     final int j = prefix.lastIndexOf('.');
     return j > 0 ? prefix.substring(0, j) : "";
   }

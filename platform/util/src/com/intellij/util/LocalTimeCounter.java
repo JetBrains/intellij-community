@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package com.intellij.util;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LocalTimeCounter {
-  private static final AtomicLong ourCurrentTime = new AtomicLong();
-
-  private LocalTimeCounter() {
-  }
+  /**
+   * VirtualFile.modificationStamp is kept modulo this mask, and is compared with other stamps. Let's avoid accidental stamp inequalities 
+   * by normalizing all of them. 
+   */
+  public static final int TIME_MASK = 0x00ffffff;
+  private static final AtomicInteger ourCurrentTime = new AtomicInteger();
 
   public static long currentTime() {
-    return ourCurrentTime.incrementAndGet();
+    return TIME_MASK & ourCurrentTime.incrementAndGet();
   }
 }

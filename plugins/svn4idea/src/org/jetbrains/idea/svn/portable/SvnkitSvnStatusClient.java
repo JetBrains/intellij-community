@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
@@ -32,16 +35,19 @@ import java.util.Collection;
  * Time: 9:47 AM
  */
 public class SvnkitSvnStatusClient implements SvnStatusClientI {
-  private final SVNStatusClient myStatusClient;
 
-  public SvnkitSvnStatusClient(SVNStatusClient statusClient) {
+  @Nullable private final SVNStatusClient myStatusClient;
+  @NotNull private final SvnVcs myVcs;
+
+  public SvnkitSvnStatusClient(@NotNull SvnVcs vcs, @Nullable SVNStatusClient statusClient) {
+    myVcs = vcs;
     myStatusClient = statusClient;
   }
 
   @Override
   public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler)
     throws SVNException {
-    return myStatusClient.doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
+    return getStatusClient().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
   }
 
   @Override
@@ -52,7 +58,7 @@ public class SvnkitSvnStatusClient implements SvnStatusClientI {
                        boolean includeIgnored,
                        boolean collectParentExternals,
                        ISVNStatusHandler handler) throws SVNException {
-    return myStatusClient.doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+    return getStatusClient().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
   }
 
   @Override
@@ -64,7 +70,7 @@ public class SvnkitSvnStatusClient implements SvnStatusClientI {
                        boolean includeIgnored,
                        boolean collectParentExternals,
                        ISVNStatusHandler handler) throws SVNException {
-    return myStatusClient.doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+    return getStatusClient().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
   }
 
   @Override
@@ -77,16 +83,22 @@ public class SvnkitSvnStatusClient implements SvnStatusClientI {
                        boolean collectParentExternals,
                        ISVNStatusHandler handler,
                        Collection changeLists) throws SVNException {
-    return myStatusClient.doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
+    return getStatusClient()
+      .doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
   }
 
   @Override
   public SVNStatus doStatus(File path, boolean remote) throws SVNException {
-    return myStatusClient.doStatus(path, remote);
+    return getStatusClient().doStatus(path, remote);
   }
 
   @Override
   public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-    return myStatusClient.doStatus(path, remote, collectParentExternals);
+    return getStatusClient().doStatus(path, remote, collectParentExternals);
+  }
+
+  @NotNull
+  private SVNStatusClient getStatusClient() {
+    return myStatusClient != null ? myStatusClient : myVcs.createStatusClient();
   }
 }

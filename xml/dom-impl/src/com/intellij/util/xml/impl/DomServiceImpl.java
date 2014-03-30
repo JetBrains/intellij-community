@@ -72,7 +72,7 @@ public class DomServiceImpl extends DomService {
       return computeHeaderByPsi(file);
     }
 
-    if (!XmlUtil.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
+    if (!XmlUtil.isStubBuilding() && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
@@ -86,6 +86,7 @@ public class DomServiceImpl extends DomService {
     }
 
     if (!file.isValid()) return XmlFileHeader.EMPTY;
+
     return NanoXmlUtil.parseHeader(file);
   }
 

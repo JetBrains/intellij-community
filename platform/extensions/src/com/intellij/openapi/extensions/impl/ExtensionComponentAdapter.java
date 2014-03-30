@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
-import org.picocontainer.defaults.AssignabilityRegistrationException;
 import org.picocontainer.defaults.CachingComponentAdapter;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
-import org.picocontainer.defaults.NotConcreteRegistrationException;
 
 /**
  * @author Alexander Kireyev
@@ -32,6 +31,7 @@ import org.picocontainer.defaults.NotConcreteRegistrationException;
  */
 public class ExtensionComponentAdapter implements LoadingOrder.Orderable, AssignableToComponentAdapter {
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
+
   private Object myComponentInstance;
   private final String myImplementationClassName;
   private final Element myExtensionElement;
@@ -40,6 +40,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final boolean myDeserializeInstance;
   private ComponentAdapter myDelegate;
   private Class myImplementationClass;
+  private boolean myNotificationSent = false;
 
   public ExtensionComponentAdapter(@NotNull String implementationClass,
                                    Element extensionElement,
@@ -64,32 +65,42 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   }
 
   @Override
-  public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
-    //assert myContainer == container : "Different containers: " + myContainer + " - " + container;
+  public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
     if (myComponentInstance == null) {
-      if (Element.class.equals(getComponentImplementation())) {
-        myComponentInstance = myExtensionElement;
-      }
-      else {
-        Object componentInstance = getDelegate().getComponentInstance(container);
-
-        if (myDeserializeInstance) {
-          try {
-            XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
-          }
-          catch (Exception e) {
-            throw new PicoInitializationException(e);
-          }
+      try {
+        if (Element.class.equals(getComponentImplementation())) {
+          myComponentInstance = myExtensionElement;
         }
+        else {
+          Object componentInstance = getDelegate().getComponentInstance(container);
 
-        ExtensionInitializer initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
-        if (initializer != null) {
-          initializer.initExtension(componentInstance);
+          if (myDeserializeInstance) {
+            try {
+              XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
+            }
+            catch (Exception e) {
+              throw new PicoInitializationException(e);
+            }
+          }
+
+          ExtensionInitializer initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
+          if (initializer != null) {
+            initializer.initExtension(componentInstance);
+          }
+
+          myComponentInstance = componentInstance;
         }
-        myComponentInstance = componentInstance;
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable t) {
+        PluginId pluginId = myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null;
+        throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
+      }
+
       if (myComponentInstance instanceof PluginAware) {
-        PluginAware pluginAware = (PluginAware) myComponentInstance;
+        PluginAware pluginAware = (PluginAware)myComponentInstance;
         pluginAware.setPluginDescriptor(myPluginDescriptor);
       }
     }
@@ -145,7 +156,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        myImplementationClass = Class.forName(className, true, classLoader);
+        myImplementationClass = Class.forName(className, false, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -156,7 +167,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   private synchronized ComponentAdapter getDelegate() {
     if (myDelegate == null) {
-      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myImplementationClassName), null, true));
+      Class impl = loadClass(myImplementationClassName);
+      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true));
     }
 
     return myDelegate;
@@ -170,5 +182,13 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   @Override
   public String getAssignableToClassName() {
     return myImplementationClassName;
+  }
+
+  public boolean isNotificationSent() {
+    return myNotificationSent;
+  }
+
+  public void setNotificationSent(boolean notificationSent) {
+    myNotificationSent = notificationSent;
   }
 }

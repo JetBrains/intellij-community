@@ -15,26 +15,17 @@
  */
 package com.intellij.application.options.emmet;
 
-import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
-import org.jdom.Document;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
-
-import static com.google.common.collect.Lists.newLinkedList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.io.Resources.getResource;
 
 /**
  * User: zolotov
@@ -48,39 +39,22 @@ import static com.google.common.io.Resources.getResource;
     )}
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
-  private boolean myEnableBemFilterByDefault = false;
-  private boolean myEmmetEnabled = WebEditorOptions.getInstance().isZenCodingEnabled();
-  private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+  private boolean myBemFilterEnabledByDefault = false;
+  private boolean myEmmetEnabled = true;
+  private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
-  @Nullable
-  private Map<String, Integer> prefixes = null;
+  private boolean myPreviewEnabled = false;
+  @NotNull
+  private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
 
-  public void setPrefixInfo(List<CssPrefixInfo> prefixInfos) {
-    prefixes = newHashMap();
-    for (CssPrefixInfo state : prefixInfos) {
-      prefixes.put(state.getPropertyName(), state.toIntegerValue());
-    }
-  }
-
-  public CssPrefixInfo getPrefixStateForProperty(String propertyName) {
-    return CssPrefixInfo.fromIntegerValue(propertyName, getPrefixes().get(propertyName));
-  }
-
-  public List<CssPrefixInfo> getAllPrefixInfo() {
-    List<CssPrefixInfo> result = newLinkedList();
-    for (Map.Entry<String, Integer> entry : getPrefixes().entrySet()) {
-      result.add(CssPrefixInfo.fromIntegerValue(entry.getKey(), entry.getValue()));
-    }
-    return result;
-  }
 
   public boolean isBemFilterEnabledByDefault() {
-    return myEnableBemFilterByDefault;
+    return myBemFilterEnabledByDefault;
   }
 
-  public void setEnableBemFilterByDefault(boolean enableBemFilterByDefault) {
-    myEnableBemFilterByDefault = enableBemFilterByDefault;
+  public void setBemFilterEnabledByDefault(boolean enableBemFilterByDefault) {
+    myBemFilterEnabledByDefault = enableBemFilterByDefault;
   }
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
@@ -91,6 +65,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return myEmmetExpandShortcut;
   }
 
+  public boolean isPreviewEnabled() {
+    return myPreviewEnabled;
+  }
+
+  public void setPreviewEnabled(boolean previewEnabled) {
+    myPreviewEnabled = previewEnabled;
+  }
+  
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
@@ -99,18 +81,26 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     myEmmetEnabled = emmetEnabled;
   }
 
+  @Deprecated
+  //use {@link CssEmmetOptions}
   public boolean isAutoInsertCssPrefixedEnabled() {
     return myAutoInsertCssPrefixedEnabled;
   }
 
+  @Deprecated
+  //use {@link CssEmmetOptions}
   public void setAutoInsertCssPrefixedEnabled(boolean autoInsertCssPrefixedEnabled) {
     myAutoInsertCssPrefixedEnabled = autoInsertCssPrefixedEnabled;
   }
 
+  @Deprecated
+  //use {@link CssEmmetOptions}
   public void setFuzzySearchEnabled(boolean fuzzySearchEnabled) {
     myFuzzySearchEnabled = fuzzySearchEnabled;
   }
 
+  @Deprecated
+  //use {@link CssEmmetOptions}
   public boolean isFuzzySearchEnabled() {
     return myFuzzySearchEnabled;
   }
@@ -133,6 +123,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return this;
   }
 
+  @Override
   public void loadState(final EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
@@ -141,38 +132,17 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return ServiceManager.getService(EmmetOptions.class);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @NotNull
+  @Deprecated
+  //use {@link CssEmmetOptions}
   public Map<String, Integer> getPrefixes() {
-    if (prefixes == null) {
-      prefixes = loadDefaultPrefixes();
-    }
     return prefixes;
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void setPrefixes(@Nullable Map<String, Integer> prefixes) {
+  @Deprecated
+  //use {@link CssEmmetOptions}
+  public void setPrefixes(@NotNull Map<String, Integer> prefixes) {
     this.prefixes = prefixes;
-  }
-
-  public static Map<String, Integer> loadDefaultPrefixes() {
-    Map<String, Integer> result = newHashMap();
-    try {
-      Document document = JDOMUtil.loadDocument(getResource(EmmetOptions.class, "emmet_default_options.xml"));
-      Element prefixesElement = document.getRootElement().getChild("prefixes");
-      if (prefixesElement != null) {
-        for (Object entry : prefixesElement.getChildren("entry")) {
-          Element entryElement = (Element)entry;
-          String propertyName = entryElement.getAttributeValue("key");
-          Integer value = StringUtil.parseInt(entryElement.getAttributeValue("value"), 0);
-          result.put(propertyName, value);
-        }
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(EmmetOptions.class).warn(e);
-      return result;
-    }
-    return result;
   }
 }

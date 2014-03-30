@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -61,6 +61,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
   public void testSCR37254() { doTest(); }
 
   public void testTypeAnnotatedRef() {
+    myFixture.configureByFile("pkg/TA.java");
     doTest();
     for (PsiParameter parameter : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiParameter.class)) {
       PsiTypeElement typeElement = parameter.getTypeElement();
@@ -77,7 +78,7 @@ public class ShortenClassReferencesTest extends LightCodeInsightFixtureTestCase 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());

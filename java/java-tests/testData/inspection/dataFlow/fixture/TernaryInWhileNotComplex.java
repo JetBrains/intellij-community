@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class Foo {
+class Foo {
   public void matchAfterFragment(int patternIndex, int matchLen) {
     int star = patternIndex < matchLen ? matchLen : -1;
     while (matchLen > 0) {

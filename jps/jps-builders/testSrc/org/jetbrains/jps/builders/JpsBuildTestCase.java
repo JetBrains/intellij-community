@@ -17,7 +17,6 @@ package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +66,6 @@ import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
  * @author nik
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
-  protected static final long TIMESTAMP_ACCURACY = SystemInfo.isMac ? 1000 : 1;
   private File myProjectDir;
   protected JpsProject myProject;
   protected JpsModel myModel;
@@ -76,6 +74,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   private TestProjectBuilderLogger myLogger;
 
   protected Map<String, String> myBuildParams;
+
+  protected static void rename(String path, String newName) {
+    try {
+      File file = new File(FileUtil.toSystemDependentName(path));
+      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+      final File tempFile = new File(file.getParentFile(), "__" + newName);
+      FileUtil.rename(file, tempFile);
+      File newFile = new File(file.getParentFile(), newName);
+      FileUtil.copyContent(tempFile, newFile);
+      FileUtil.delete(tempFile);
+      change(newFile.getPath());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -118,23 +132,32 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       long time = System.currentTimeMillis();
       setLastModified(file, time);
       if (FileSystemUtil.lastModified(file) <= oldTimestamp) {
-        setLastModified(file, time + TIMESTAMP_ACCURACY);
+        setLastModified(file, time + 1);
         long newTimeStamp = FileSystemUtil.lastModified(file);
-        assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
-        long delta;
-        while ((delta = newTimeStamp - System.currentTimeMillis()) > 0) {
-          try {
-            //we need this to ensure that the file won't be treated as changed by user during compilation and marked for recompilation
-            //noinspection BusyWait
-            Thread.sleep(delta);
-          }
-          catch (InterruptedException ignored) {
-          }
+        if (newTimeStamp <= oldTimestamp) {
+          //Mac OS and some versions of Linux truncates timestamp to nearest second
+          setLastModified(file, time + 1000);
+          newTimeStamp = FileSystemUtil.lastModified(file);
+          assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
         }
+        sleepUntil(newTimeStamp);
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  protected static void sleepUntil(long time) {
+    //we need this to ensure that the file won't be treated as changed by user during compilation and therefore marked for recompilation
+    long delta;
+    while ((delta = time - System.currentTimeMillis()) > 0) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(delta);
+      }
+      catch (InterruptedException ignored) {
+      }
     }
   }
 
@@ -283,7 +306,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
-    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, null);
+    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, null, true);
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {

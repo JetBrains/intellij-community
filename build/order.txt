@@ -9083,7 +9083,6 @@ inspectionDescriptions/ReplaceAssignmentWithOperatorAssignment.html:/plugins/Ins
 inspectionDescriptions/IncompatibleMask.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/PointlessBitwiseExpression.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ShiftOutOfRange.html:/plugins/InspectionGadgets/lib/resources_en.jar
-inspectionDescriptions/ArchaicSystemPropertyAccess.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ArrayEquals.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/AssertWithSideEffects.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/ConstantAssertCondition.html:/plugins/InspectionGadgets/lib/resources_en.jar
@@ -9343,7 +9342,6 @@ inspectionDescriptions/FinalizeNotProtected.html:/plugins/InspectionGadgets/lib/
 inspectionDescriptions/NoExplicitFinalizeCalls.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/JavaLangImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/OnDemandImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
-inspectionDescriptions/RedundantImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/SamePackageImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/SingleClassImport.html:/plugins/InspectionGadgets/lib/resources_en.jar
 inspectionDescriptions/StaticImport.html:/plugins/InspectionGadgets/lib/resources_en.jar

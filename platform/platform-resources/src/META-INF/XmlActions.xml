@@ -2,7 +2,7 @@
   <actions>
 
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
-      <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>
+      <action id="ValidateXml" class="com.intellij.xml.actions.validate.ValidateXmlAction"/>
       <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
       <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction" text="Generate XSD Schema from XML File..."/>
       <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction" text="Generate XML Document from XSD Schema..."/>
@@ -62,7 +62,7 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonEmptyActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
+    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -72,13 +72,25 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </action>
 
-    <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
-            text="Open in _Browser" description="Open a selected file in browser"
+    <!-- id should be "OpenInDefaultBrowser", but existing name preserved to keep compatibility - if user configured shortcut for action, it should not be lost -->
+    <action id="OpenInBrowser" class="com.intellij.ide.browsers.actions.OpenFileInDefaultBrowserAction"
+            text="Open in default _browser" description="Open selected file in default browser"
             icon="AllIcons.Nodes.PpWeb">
-      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
-      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>
     </action>
 
+    <group id="OpenInBrowserGroup"
+           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction"
+           text="Open in _Browser" description="Open selected file in browser" icon="AllIcons.Nodes.PpWeb">
+      <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </group>
+    <group id="OpenInBrowserEditorContextBarGroupAction"
+           class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction"
+           description="Open In...">
+      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
+    </group>
+
+    <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction" 
+            text="Surround with Emmet" description="Surround selected code with Emmet abbreviation"/>
   </actions>
 </component>

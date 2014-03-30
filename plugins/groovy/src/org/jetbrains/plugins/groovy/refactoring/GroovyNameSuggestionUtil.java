@@ -117,12 +117,16 @@ public class GroovyNameSuggestionUtil {
     if (expr instanceof GrLiteral) {
       final Object value = ((GrLiteral)expr).getValue();
       if (value instanceof String) {
-        generateNameByString(possibleNames, (String)value, forStaticVariable, expr.getProject());
+        generateNameByString(possibleNames, (String)value, validator, forStaticVariable, expr.getProject());
       }
     }
   }
 
-  private static void generateNameByString(Set<String> possibleNames, String value, boolean forStaticVariable, Project project) {
+  private static void generateNameByString(Set<String> possibleNames,
+                                           String value,
+                                           NameValidator validator,
+                                           boolean forStaticVariable,
+                                           Project project) {
     if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(value)) return;
     if (forStaticVariable) {
       StringBuilder buffer = new StringBuilder(value.length() + 10);
@@ -144,10 +148,10 @@ public class GroovyNameSuggestionUtil {
 
         buffer.append(Character.toUpperCase(chars[i]));
       }
-      possibleNames.add(buffer.toString());
+      possibleNames.add(validator.validateName(buffer.toString(), true));
     }
     else {
-      possibleNames.add(value);
+      possibleNames.add(validator.validateName(value, true));
     }
   }
 

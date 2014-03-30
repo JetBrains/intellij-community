@@ -90,6 +90,7 @@ public class ExecutionModes {
       this(true);
     }
 
+    @Override
     public int getTimeout() {
       return myTimeout;
     }

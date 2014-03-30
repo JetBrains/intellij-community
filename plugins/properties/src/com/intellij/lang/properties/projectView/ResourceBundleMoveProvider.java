@@ -17,6 +17,7 @@ package com.intellij.lang.properties.projectView;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +57,7 @@ public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     LOG.assertTrue(bundles != null);
     for (ResourceBundle bundle : bundles) {
-      List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(PlatformDataKeys.PROJECT.getData(dataContext));
+      List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(CommonDataKeys.PROJECT.getData(dataContext));
       for (PropertiesFile propertiesFile : propertiesFiles) {
         filesOrDirs.add(propertiesFile.getContainingFile());
       }

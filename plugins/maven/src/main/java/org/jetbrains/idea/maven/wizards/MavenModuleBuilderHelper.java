@@ -117,7 +117,7 @@ public class MavenModuleBuilderHelper {
 
     if (myAggregatorProject == null) {
       MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-      manager.addManagedFiles(Collections.singletonList(pom));
+      manager.addManagedFilesOrUnignore(Collections.singletonList(pom));
     }
 
     if (myArchetype == null) {
@@ -147,6 +147,8 @@ public class MavenModuleBuilderHelper {
 
     new WriteCommandAction.Simple(project, myCommandName) {
       protected void run() throws Throwable {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
         if (model == null) return;
 
@@ -176,7 +178,7 @@ public class MavenModuleBuilderHelper {
     }.execute();
   }
 
-  private PsiFile getPsiFile(Project project, VirtualFile pom) {
+  private static PsiFile getPsiFile(Project project, VirtualFile pom) {
     return PsiManager.getInstance(project).findFile(pom);
   }
 
@@ -234,7 +236,7 @@ public class MavenModuleBuilderHelper {
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
   }
 
-  private void showError(Project project, Throwable e) {
+  private static void showError(Project project, Throwable e) {
     MavenUtil.showError(project, "Failed to create a Maven project", e);
   }
 }

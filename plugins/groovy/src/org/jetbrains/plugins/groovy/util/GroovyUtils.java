@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +78,27 @@ public abstract class GroovyUtils {
   }
 
   @Nullable
+  public static GrTypeDefinition getPublicClass(@Nullable VirtualFile virtualFile, PsiManager manager) {
+    if (virtualFile == null) return null;
+
+    PsiFile psiFile = manager.findFile(virtualFile);
+    if ((psiFile instanceof GroovyFile)) {
+      return getClassDefinition((GroovyFile)psiFile);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static GrTypeDefinition getClassDefinition(@NotNull GroovyFile groovyFile) {
+    String fileName = groovyFile.getName();
+    int idx = fileName.lastIndexOf('.');
+    if (idx < 0) return null;
+
+    return getClassDefinition(groovyFile, fileName.substring(0, idx));
+  }
+
+  @Nullable
   public static GrTypeDefinition getClassDefinition(@NotNull GroovyFile groovyFile, @NotNull String classSimpleName) {
     for (GrTypeDefinition definition : (groovyFile).getTypeDefinitions()) {
       if (classSimpleName.equals(definition.getName())) {
@@ -88,7 +112,7 @@ public abstract class GroovyUtils {
   public static File getBundledGroovyJar() {
     String root = new File(PathUtil.getJarPathForClass(GroovyUtils.class)).isDirectory() ?
                   PluginPathManager.getPluginHomePath("groovy") + "/../../lib/" : PathManager.getHomePath() + "/lib/";
-    final File[] groovyJars = getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(root);
     assert groovyJars.length == 1;
     return groovyJars[0];
   }

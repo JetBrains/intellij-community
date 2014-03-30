@@ -16,7 +16,9 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.timeTracking.model.WorkItem;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,12 +46,38 @@ public abstract class LocalTask extends Task {
     return false;
   }
 
+  // VCS interface
+
   @NotNull
   public abstract List<ChangeListInfo> getChangeLists();
 
   public abstract void addChangelist(ChangeListInfo info);
 
   public abstract void removeChangelist(final ChangeListInfo info);
+
+  /**
+   * For serialization only.
+   * @return two branches per repository: feature-branch itself and original branch to merge into
+   * @see #getBranches(boolean)
+   */
+  @NotNull
+  public abstract List<BranchInfo> getBranches();
+
+  @NotNull
+  public List<BranchInfo> getBranches(final boolean original) {
+    return ContainerUtil.filter(getBranches(), new Condition<BranchInfo>() {
+      @Override
+      public boolean value(BranchInfo info) {
+        return info.original == original;
+      }
+    });
+  }
+
+  public abstract void addBranch(BranchInfo info);
+
+  public abstract void removeBranch(final BranchInfo info);
+
+  // time tracking interface
 
   public abstract long getTotalTimeSpent();
 

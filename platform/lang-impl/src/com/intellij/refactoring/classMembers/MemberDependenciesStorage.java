@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extends PsiElement> {
   protected final C myClass;
-  private final C mySuperClass;
+  private C mySuperClass;
   private final Map<T, Set<T>> myDependencyGraph;
 
   public MemberDependenciesStorage(C aClass, C superClass) {
@@ -37,11 +37,15 @@ public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extend
     myDependencyGraph = new HashMap<T, Set<T>>();
   }
 
+  public void setSuperClass(C superClass) {
+    mySuperClass = superClass;
+  }
+
   @Nullable
   protected Set<T> getMemberDependencies(T member) {
     Set<T> result = myDependencyGraph.get(member);
     if (result == null) {
-      DependentMembersCollectorBase<T, C> collector = getCollector();
+      DependentMembersCollectorBase<T, C> collector = getCollector(member);
       if (collector != null) {
         collector.collect(member);
         result = collector.getCollection();
@@ -51,8 +55,8 @@ public class MemberDependenciesStorage<T extends NavigatablePsiElement, C extend
     return result;
   }
 
-  private DependentMembersCollectorBase<T, C> getCollector() {
-    final ClassMembersRefactoringSupport factory = LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(myClass.getLanguage());
+  private DependentMembersCollectorBase<T, C> getCollector(T member) {
+    final ClassMembersRefactoringSupport factory = LanguageDependentMembersRefactoringSupport.INSTANCE.forLanguage(member.getLanguage());
     return factory != null ? factory.createDependentMembersCollector(myClass, mySuperClass) : null;
   }
 }

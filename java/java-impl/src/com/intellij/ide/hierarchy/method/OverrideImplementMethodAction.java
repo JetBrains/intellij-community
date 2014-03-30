@@ -28,11 +28,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.IncorrectOperationException;
 
@@ -47,7 +43,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final DataContext dataContext = event.getDataContext();
     final MethodHierarchyBrowser methodHierarchyBrowser = (MethodHierarchyBrowser)MethodHierarchyBrowserBase.DATA_KEY.getData(dataContext);
     if (methodHierarchyBrowser == null) return;
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     final String commandName = event.getPresentation().getText();
@@ -104,7 +100,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
       presentation.setVisible(false);
       return;
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
@@ -151,7 +147,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
   private static boolean canImplementOverride(final MethodHierarchyNodeDescriptor descriptor, final MethodHierarchyBrowser methodHierarchyBrowser, final boolean toImplement) {
     final PsiClass psiClass = descriptor.getPsiClass();
-    if (psiClass == null || psiClass instanceof JspClass) return false;
+    if (psiClass == null || psiClass instanceof PsiSyntheticClass) return false;
     final PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
     if (baseMethod == null) return false;
     final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -442,10 +443,8 @@ public class TreeState implements JDOMExternalizable {
     @Override
     public ActionCallback getInitialized() {
       final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
-      if (ref != null) {
-        final ActionCallback callback = ref.get();
-        if (callback != null) return callback;
-      }
+      final ActionCallback callback = SoftReference.dereference(ref);
+      if (callback != null) return callback;
       return new ActionCallback.Done();
     }
 

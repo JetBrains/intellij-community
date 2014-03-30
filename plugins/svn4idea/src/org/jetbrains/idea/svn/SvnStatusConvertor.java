@@ -16,7 +16,9 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -24,11 +26,18 @@ public class SvnStatusConvertor {
   private SvnStatusConvertor() {
   }
 
-  public static FileStatus convertStatus(final SVNStatus status) throws SVNException {
-    return convertStatus(status, true);
+  @NotNull
+  public static FileStatus convertStatus(@Nullable SVNStatusType itemStatus, @Nullable SVNStatusType propertiesStatus) {
+    PortableStatus status = new PortableStatus();
+
+    status.setContentsStatus(itemStatus);
+    status.setPropertiesStatus(propertiesStatus);
+
+    return convertStatus(status);
   }
 
-  public static FileStatus convertStatus(final SVNStatus status, final boolean noticeProperties) throws SVNException {
+  @NotNull
+  public static FileStatus convertStatus(@Nullable final SVNStatus status) {
     if (status == null) {
       return FileStatus.UNKNOWN;
     }
@@ -57,17 +66,18 @@ public class SvnStatusConvertor {
       return SvnFileStatus.REPLACED;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED ||
-             noticeProperties && status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+             status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
       if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED &&
-          noticeProperties && status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
+          status.getPropertiesStatus() == SVNStatusType.STATUS_CONFLICTED) {
         return FileStatus.MERGED_WITH_BOTH_CONFLICTS;
-      } else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
+      }
+      else if (status.getContentsStatus() == SVNStatusType.STATUS_CONFLICTED) {
         return FileStatus.MERGED_WITH_CONFLICTS;
       }
       return FileStatus.MERGED_WITH_PROPERTY_CONFLICTS;
     }
     else if (status.getContentsStatus() == SVNStatusType.STATUS_MODIFIED ||
-             noticeProperties && status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
+             status.getPropertiesStatus() == SVNStatusType.STATUS_MODIFIED) {
       return FileStatus.MODIFIED;
     }
     else if (status.isSwitched()) {
@@ -79,15 +89,8 @@ public class SvnStatusConvertor {
     return FileStatus.NOT_CHANGED;
   }
 
-  public static FileStatus convertPropertyStatus(final SVNStatusType status) throws SVNException {
-    return convertSingleStatus(status, FileStatus.MERGED_WITH_PROPERTY_CONFLICTS);
-  }
-
-  public static FileStatus convertContentsStatus(final SVNStatus status) throws SVNException {
-    return convertStatus(status, false);
-  }
-
-  private static FileStatus convertSingleStatus(final SVNStatusType status, final FileStatus defaultConflictStatus) throws SVNException {
+  @NotNull
+  public static FileStatus convertPropertyStatus(final SVNStatusType status) {
     if (status == null) {
       return FileStatus.UNKNOWN;
     }
@@ -116,7 +119,7 @@ public class SvnStatusConvertor {
       return SvnFileStatus.REPLACED;
     }
     else if (status == SVNStatusType.STATUS_CONFLICTED) {
-      return defaultConflictStatus;
+      return FileStatus.MERGED_WITH_PROPERTY_CONFLICTS;
     }
     else if (status == SVNStatusType.STATUS_MODIFIED) {
       return FileStatus.MODIFIED;

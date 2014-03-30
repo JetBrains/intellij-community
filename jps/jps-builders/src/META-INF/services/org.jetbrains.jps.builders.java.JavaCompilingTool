@@ -1,0 +1,2 @@
+org.jetbrains.jps.builders.impl.java.JavacCompilerTool
+org.jetbrains.jps.builders.impl.java.EclipseCompilerTool

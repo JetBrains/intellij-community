@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ValidationResult {
   public static final ValidationResult OK = new ValidationResult(null, null);
-  private String myErrorMessage;
-  private FacetConfigurationQuickFix myQuickFix;
+  private final String myErrorMessage;
+  private final FacetConfigurationQuickFix myQuickFix;
 
   public ValidationResult(String errorMessage) {
     this(errorMessage, null);

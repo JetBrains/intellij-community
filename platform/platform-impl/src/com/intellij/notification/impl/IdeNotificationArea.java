@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.notification.EventLog;
 import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -63,8 +63,8 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     }, this);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        EventLog.toggleLog(getProject());
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        EventLog.toggleLog(getProject(), null);
         return true;
       }
     }.installOn(this);
@@ -96,7 +96,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   @Nullable
   private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
+    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
   }
 
   @NotNull
@@ -116,7 +116,8 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
-    if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE) {
+      setVisible(true);
       setIcon(icon);
     }
     else {
@@ -124,7 +125,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       if (eventLog != null) {
         eventLog.setIcon(icon);
       }
-      setIcon(null);
+      setVisible(false);
     }
   }
 
@@ -208,6 +209,8 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
+      UIUtil.applyRenderingHints(g);
+
       Font originalFont = g.getFont();
       Color originalColor = g.getColor();
       g.setFont(calcFont());

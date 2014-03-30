@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,7 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
     return true;
   }
 
-
-
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
@@ -71,14 +70,14 @@ public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
         final PsiElement resolved = referenceExpression.resolve();
         if (!GroovyRefactoringUtil.isLocalVariable(resolved)) return;
 
-        final PsiType checked = GrReassignedLocalVarsChecker.checkReassignedVar(referenceExpression, false);
+        final PsiType checked = GrReassignedLocalVarsChecker.getReassignedVarType(referenceExpression, false);
         if (checked == null) return;
 
         final GrControlFlowOwner varFlowOwner = ControlFlowUtils.findControlFlowOwner(resolved);
         final GrControlFlowOwner refFlorOwner = ControlFlowUtils.findControlFlowOwner(referenceExpression);
         if (isOtherScopeAndType(referenceExpression, checked, varFlowOwner, refFlorOwner)) {
           String flowDescription = getFlowDescription(refFlorOwner);
-          final String message = message("local.var.0.is.reassigned.in.closure", ((GrNamedElement)resolved).getName(), flowDescription);
+          final String message = message("local.var.0.is.reassigned", ((GrNamedElement)resolved).getName(), flowDescription);
           registerError(referenceExpression, message, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }

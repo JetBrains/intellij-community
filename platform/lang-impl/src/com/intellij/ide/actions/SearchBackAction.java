@@ -21,6 +21,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
@@ -35,12 +36,14 @@ public class SearchBackAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
         project, new Runnable() {
+        @Override
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           if(FindManager.getInstance(project).findPreviousUsageInEditor(editor)) {
@@ -54,9 +57,10 @@ public class SearchBackAction extends AnAction implements DumbAware {
     );
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

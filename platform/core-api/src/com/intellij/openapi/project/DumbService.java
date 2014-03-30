@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,6 +42,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DumbService {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbService");
 
   /**
    * @see com.intellij.openapi.project.Project#getMessageBus()
@@ -51,17 +55,93 @@ public abstract class DumbService {
    */
   public abstract boolean isDumb();
 
-  public static boolean isDumb(Project project) {
+  public static boolean isDumb(@NotNull Project project) {
     return getInstance(project).isDumb();
   }
 
   /**
-   * Run the runnable when dumb mode ends
+   * Executes the runnable immediately if not in dumb mode, or on AWT Event Dispatch thread when the dumb mode ends.
    * @param runnable runnable to run
    */
-  public abstract void runWhenSmart(Runnable runnable);
+  public abstract void runWhenSmart(@NotNull Runnable runnable);
 
+  /**
+   * Pause the current thread until dumb mode ends and then continue execution.
+   * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
+   * Hence: use with care. Consider using {@link #runWhenSmart(Runnable)}, {@link #runReadActionInSmartMode(Runnable)} or {@link #repeatUntilPassesInSmartMode(Runnable)} instead
+   */
   public abstract void waitForSmartMode();
+
+  /**
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   */
+  public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
+    final Ref<T> result = new Ref<T>();
+    runReadActionInSmartMode(new Runnable() {
+      @Override
+      public void run() {
+        result.set(r.compute());
+      }
+    });
+    return result.get();
+  }
+
+  @Nullable
+  public <T> T tryRunReadActionInSmartMode(@NotNull Computable<T> task, @NotNull String notification) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      try {
+        return task.compute();
+      }
+      catch (IndexNotReadyException e) {
+        showDumbModeNotification(notification);
+        return null;
+      }
+    }
+    else {
+      return runReadActionInSmartMode(task);
+    }
+  }
+
+  /**
+   * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action.
+   */
+  public void runReadActionInSmartMode(@NotNull final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (isDumb()) {
+            return false;
+          }
+          r.run();
+          return true;
+        }
+      });
+      if (success) break;
+    }
+  }
+
+  /**
+   * Pause the current thread until dumb mode ends, and then attempt to execute the runnable. If it fails due to another dumb mode having started,
+   * try again until the runnable is able to complete successfully.
+   * It makes sense to use this method when you have a long-running activity consisting of many small read actions, and you don't want to
+   * use a single long read action in order to keep the IDE responsive.
+   * 
+   * @see #runReadActionInSmartMode(Runnable) 
+   */
+  public void repeatUntilPassesInSmartMode(@NotNull final Runnable r) {
+    while (true) {
+      waitForSmartMode();
+      try {
+        r.run();
+        return;
+      }
+      catch (IndexNotReadyException e) {
+        LOG.info(e);
+      }
+    }
+  }
 
   /**
    * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
@@ -76,7 +156,7 @@ public abstract class DumbService {
     });
   }
 
-  public void smartInvokeLater(@NotNull final Runnable runnable, ModalityState modalityState) {
+  public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -94,10 +174,10 @@ public abstract class DumbService {
   @NotNull
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<T> collection) {
     if (isDumb()) {
-      final ArrayList<T> result = new ArrayList<T>(collection);
-      for (Iterator<T> iterator = result.iterator(); iterator.hasNext();) {
-        if (!isDumbAware(iterator.next())) {
-          iterator.remove();
+      final ArrayList<T> result = new ArrayList<T>(collection.size());
+      for (T element : collection) {
+        if (isDumbAware(element)) {
+          result.add(element);
         }
       }
       return result;
@@ -127,7 +207,7 @@ public abstract class DumbService {
     });
   }
 
-  public abstract void showDumbModeNotification(String message);
+  public abstract void showDumbModeNotification(@NotNull String message);
 
   public abstract Project getProject();
 

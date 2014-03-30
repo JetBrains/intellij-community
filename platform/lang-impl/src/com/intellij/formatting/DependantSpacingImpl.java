@@ -47,11 +47,12 @@ public class DependantSpacingImpl extends SpacingImpl {
   /**
    * @return    <code>1</code> if dependency has line feeds; <code>0</code> otherwise
    */
+  @Override
   public int getMinLineFeeds() {
     if (!isTriggered()) {
       return super.getMinLineFeeds();
     }
-    
+
     if (myRule.hasData(DependentSpacingRule.Anchor.MIN_LINE_FEEDS)) {
       return myRule.getData(DependentSpacingRule.Anchor.MIN_LINE_FEEDS);
     }
@@ -67,10 +68,11 @@ public class DependantSpacingImpl extends SpacingImpl {
     if (!isTriggered() || !myRule.hasData(DependentSpacingRule.Anchor.MAX_LINE_FEEDS)) {
       return super.getKeepBlankLines();
     }
-    
+
     return 0;
   }
 
+  @Override
   public void refresh(FormatProcessor formatter) {
     if (isDependentRegionChanged()) {
       return;
@@ -87,7 +89,7 @@ public class DependantSpacingImpl extends SpacingImpl {
 
   /**
    * Allows to answer whether 'contains line feed' status has been changed for the target dependent region during formatting.
-   * 
+   *
    * @return    <code>true</code> if target 'contains line feed' status has been changed for the target dependent region during formatting;
    *            <code>false</code> otherwise
    */

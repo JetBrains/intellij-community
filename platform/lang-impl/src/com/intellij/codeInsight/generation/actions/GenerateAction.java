@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class GenerateAction extends DumbAwareAction implements PreloadableAction {
   @Override
@@ -33,7 +35,7 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
     final ListPopup popup =
       JBPopupFactory.getInstance().createActionGroupPopup(
           CodeInsightBundle.message("generate.list.popup.title"),
-                                                          getGroup(),
+                                                          wrapGroup(getGroup(), dataContext),
                                                           dataContext,
                                                           JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                           false);
@@ -45,13 +47,13 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
       return;
@@ -65,8 +67,56 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 
+  private static DefaultActionGroup wrapGroup(DefaultActionGroup actionGroup, DataContext dataContext) {
+    final DefaultActionGroup copy = new DefaultActionGroup();
+    for (final AnAction action : actionGroup.getChildren(null)) {
+      if (action instanceof GenerateActionPopupTemplateInjector) {
+        final AnAction editTemplateAction = ((GenerateActionPopupTemplateInjector)action).createEditTemplateAction(dataContext);
+        if (editTemplateAction != null) {
+          copy.add(new GenerateWrappingGroup(action, editTemplateAction));
+          continue;
+        }
+      }
+      if (action instanceof DefaultActionGroup) {
+        copy.add(wrapGroup((DefaultActionGroup)action, dataContext));
+      } else {
+        copy.add(action);
+      }
+    }
+    return copy;
+  }
+
   @Override
   public void preload() {
     ((ActionManagerImpl) ActionManager.getInstance()).preloadActionGroup(IdeActions.GROUP_GENERATE);
+  }
+
+  private static class GenerateWrappingGroup extends ActionGroup {
+
+    private final AnAction myAction;
+    private final AnAction myEditTemplateAction;
+
+    public GenerateWrappingGroup(AnAction action, AnAction editTemplateAction) {
+      myAction = action;
+      myEditTemplateAction = editTemplateAction;
+      copyFrom(action);
+      setPopup(true);
+    }
+
+    @Override
+    public boolean canBePerformed(DataContext context) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return new AnAction[] {myEditTemplateAction};
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myAction.actionPerformed(e);
+    }
   }
 }

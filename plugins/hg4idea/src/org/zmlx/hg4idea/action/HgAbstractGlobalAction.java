@@ -12,15 +12,25 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 
 abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction(Icon icon) {
@@ -34,34 +44,40 @@ abstract class HgAbstractGlobalAction extends AnAction {
 
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
-    execute(project, HgUtil.getHgRepositories(project));
+    VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    HgRepository repo = file != null ? repositoryManager.getRepositoryForFile(file): HgUtil.getCurrentRepository(project);
+    List<HgRepository> repositories = repositoryManager.getRepositories();
+    if (!repositories.isEmpty()) {
+      execute(project, repositories, repo);
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-
-    Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
-
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-    }
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setEnabled(enabled);
   }
 
-  protected abstract void execute(Project project, Collection<VirtualFile> repositories);
+  protected abstract void execute(@NotNull Project project,
+                                  @NotNull Collection<HgRepository> repositories,
+                                  @Nullable HgRepository selectedRepo);
 
-  protected static void handleException(Project project, Exception e) {
+  public static void handleException(@Nullable Project project, @NotNull Exception e) {
+    handleException(project, "Error", e);
+  }
+
+  public static void handleException(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.info(e);
-    new HgCommandResultNotifier(project).notifyError(null, "Error", e.getMessage());
+    new HgCommandResultNotifier(project).notifyError(null, title, e.getMessage());
   }
 
-  protected void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
+  static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     try {
       HgUtil.markDirectoryDirty(project, repository);
     }
@@ -71,6 +87,31 @@ abstract class HgAbstractGlobalAction extends AnAction {
     catch (InterruptedException e) {
       handleException(project, e);
     }
+  }
+
+  public boolean isEnabled(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) {
+      return false;
+    }
+    HgVcs vcs = HgVcs.getInstance(project);
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    if (roots == null || roots.length == 0) {
+      return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public static HgRepository getSelectedRepositoryFromEvent(AnActionEvent e) {
+    final DataContext dataContext = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return null;
+    }
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
+    return file != null ? repositoryManager.getRepositoryForFile(file) : HgUtil.getCurrentRepository(project);
   }
 
 }

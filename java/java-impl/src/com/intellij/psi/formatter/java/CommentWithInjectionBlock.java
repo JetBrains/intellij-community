@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +31,15 @@ import java.util.List;
  * @author nik
  */
 public class CommentWithInjectionBlock extends AbstractJavaBlock {
-  private InjectedLanguageBlockBuilder myInjectedBlockBuilder;
+  private final InjectedLanguageBlockBuilder myInjectedBlockBuilder;
 
-  public CommentWithInjectionBlock(ASTNode node, Wrap wrap, Alignment alignment, Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public CommentWithInjectionBlock(ASTNode node,
+                                   Wrap wrap,
+                                   Alignment alignment,
+                                   Indent indent,
+                                   CommonCodeStyleSettings settings,
+                                   JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, alignment, indent, settings, javaSettings);
     myInjectedBlockBuilder = new JavaCommentInjectedBlockBuilder();
   }
 

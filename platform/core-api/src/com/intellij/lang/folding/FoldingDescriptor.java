@@ -101,6 +101,7 @@ public class FoldingDescriptor {
     myGroup = group;
     assert getRange().getLength() >= 2 : "range:" + getRange();
     myDependencies = dependencies;
+    assert !myDependencies.contains(null);
     myNeverExpands = neverExpands;
   }
 

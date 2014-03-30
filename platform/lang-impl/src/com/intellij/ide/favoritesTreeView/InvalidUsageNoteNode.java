@@ -27,7 +27,7 @@ import java.util.Set;
  * Time: 1:26 PM
  */
 public class InvalidUsageNoteNode {
-  private PercentDone myPercentDone = PercentDone._0;
+  private final PercentDone myPercentDone = PercentDone._0;
   private Set<Flag> myFlags;
   private Set<Concept> myConcepts;
 

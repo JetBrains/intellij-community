@@ -27,6 +27,7 @@ public class SearchingPolicy extends RootPolicy<OrderEntry>{
     myCondition = condition;
   }
 
+  @Override
   public OrderEntry visitOrderEntry(OrderEntry orderEntry, OrderEntry found) {
     if (found != null) return found;
     if (myCondition.value(orderEntry)) return orderEntry;

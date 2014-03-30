@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract String getName();
 
-  public abstract Location getLocation(final Project project);
+  public abstract Location getLocation(final Project project, GlobalSearchScope searchScope);
 
   public abstract Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties);
 

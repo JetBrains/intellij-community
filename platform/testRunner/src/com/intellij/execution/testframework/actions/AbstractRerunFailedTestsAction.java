@@ -27,6 +27,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
@@ -39,7 +40,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -126,13 +131,14 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   private boolean isActive(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;
     final List<? extends AbstractTestProxy> myAllTests = model.getRoot().getAllTests();
+    final GlobalSearchScope searchScope = model.getProperties().getScope();
     for (Object test : myAllTests) {
-      if (getFilter(project).shouldAccept((AbstractTestProxy)test)) return true;
+      if (getFilter(project, searchScope).shouldAccept((AbstractTestProxy)test)) return true;
     }
     return false;
   }
@@ -143,11 +149,14 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     final List<? extends AbstractTestProxy> myAllTests = model != null
                                                          ? model.getRoot().getAllTests()
                                                          : Collections.<AbstractTestProxy>emptyList();
-    return getFilter(project).select(myAllTests);
+    return getFilter(project, model != null ? model.getProperties().getScope() : GlobalSearchScope.allScope(project)).select(myAllTests);
   }
 
   @NotNull
-  protected Filter getFilter(Project project) {
+  protected Filter getFilter(Project project, GlobalSearchScope searchScope) {
+    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(myConsoleProperties)) {
+      return Filter.NOT_PASSED.or(Filter.FAILED_OR_INTERRUPTED);
+    }
     return Filter.FAILED_OR_INTERRUPTED;
   }
 
@@ -164,13 +173,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(executor, new ExecutionEnvironment(profile,
-                                                        myEnvironment.getExecutionTarget(),
-                                                        profile.getProject(),
-                                                        myEnvironment.getRunnerSettings(),
-                                                        myEnvironment.getConfigurationSettings(),
-                                                        myEnvironment.getContentToReuse(),
-                                                        null));
+      runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setRunProfile(profile).build());
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
@@ -231,6 +234,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       myConfiguration.writeExternal(element);
     }
 
+    @NotNull
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }
@@ -240,11 +244,11 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getType();
     }
 
-    public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
+    public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
 
-    public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
+    public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(final ProgramRunner runner) {
       return myConfiguration.getRunnerSettingsEditor(runner);
     }
 

@@ -33,7 +33,7 @@ import java.util.*;
 public class CacheUpdateSession {
   private static final Logger LOG = Logger.getInstance("#" + CacheUpdateSession.class.getName());
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
-  private final Collection<VirtualFile> myFilesToUpdate;
+  private final List<VirtualFile> myFilesToUpdate;
   private final int myJobsToDo;
   private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles =
     new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
@@ -41,7 +41,7 @@ public class CacheUpdateSession {
   public CacheUpdateSession(Collection<CacheUpdater> updaters, ProgressIndicator indicator) {
     List<CacheUpdater> processedUpdaters = new ArrayList<CacheUpdater>();
 
-    myFilesToUpdate = new LinkedHashSet<VirtualFile>();
+    LinkedHashSet<VirtualFile> set = ContainerUtil.newLinkedHashSet();
     try {
       int jobsCount = 0;
       for (CacheUpdater each : updaters) {
@@ -50,7 +50,7 @@ public class CacheUpdateSession {
           jobsCount += each.getNumberOfPendingUpdateJobs();
           List<VirtualFile> updaterFiles = Arrays.asList(each.queryNeededFiles(indicator));
           processedUpdaters.add(each);
-          myFilesToUpdate.addAll(updaterFiles);
+          set.addAll(updaterFiles);
           myUpdatersWithFiles.add(Pair.create(each, (Collection<VirtualFile>)new THashSet<VirtualFile>(updaterFiles)));
         }
         catch (ProcessCanceledException e) {
@@ -68,6 +68,7 @@ public class CacheUpdateSession {
       }
       throw e;
     }
+    myFilesToUpdate = ContainerUtil.newArrayList(set);
   }
 
   public int getNumberOfPendingUpdateJobs() {

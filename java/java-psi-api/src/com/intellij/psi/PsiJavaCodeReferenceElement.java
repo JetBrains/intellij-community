@@ -23,13 +23,14 @@ import org.jetbrains.annotations.Nullable;
  * Represents a reference found in Java code (either an identifier or a sequence of identifiers
  * separated by periods, optionally with generic type arguments).
  */
-public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualifiedReference {
+public interface PsiJavaCodeReferenceElement extends PsiJavaReference, PsiQualifiedReferenceElement {
   /**
    * The empty array of PSI Java code references which can be reused to avoid unnecessary allocations.
    */
   PsiJavaCodeReferenceElement[] EMPTY_ARRAY = new PsiJavaCodeReferenceElement[0];
 
   ArrayFactory<PsiJavaCodeReferenceElement> ARRAY_FACTORY = new ArrayFactory<PsiJavaCodeReferenceElement>() {
+    @NotNull
     @Override
     public PsiJavaCodeReferenceElement[] create(int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiJavaCodeReferenceElement[count];

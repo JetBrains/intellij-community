@@ -37,9 +37,10 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * Gets the component by its name
    *
    * @param name the name of the component
-   * @return component that matches interface class or null if there is no such component
+   * @return component with given name or null if there is no such component
+   * @see com.intellij.openapi.components.NamedComponent#getComponentName()
    */
-  BaseComponent getComponent(String name);
+  BaseComponent getComponent(@NotNull String name);
 
   /**
    * Gets the component by its interface class.
@@ -47,7 +48,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param interfaceClass the interface class of the component
    * @return component that matches interface class or null if there is no such component
    */
-  <T> T getComponent(Class<T> interfaceClass);
+  <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**
    * Gets the component by its interface class but returns a specified default implementation
@@ -57,7 +58,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * @param defaultImplementationIfAbsent the default implementation
    * @return component that matches interface class or default if there is no such component
    */
-  <T> T getComponent(Class<T> interfaceClass, T defaultImplementationIfAbsent);
+  <T> T getComponent(@NotNull Class<T> interfaceClass, T defaultImplementationIfAbsent);
 
   /**
    * Checks whether there is a component with the specified interface class.
@@ -71,21 +72,22 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   /**
    * Gets all components whose implementation class is derived from <code>baseClass</code>.
    *
-   * @param baseClass
    * @return array of components
    * @deprecated use extension points instead
    */
   @NotNull
-  <T> T[] getComponents(Class<T> baseClass);
+  <T> T[] getComponents(@NotNull Class<T> baseClass);
 
   @NotNull
   PicoContainer getPicoContainer();
 
+  @NotNull
   MessageBus getMessageBus();
 
   boolean isDisposed();
 
-  <T> T[] getExtensions(ExtensionPointName<T> extensionPointName);
+  @NotNull
+  <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName);
 
   /**
    * @return condition for this component being disposed.

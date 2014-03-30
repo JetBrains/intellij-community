@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 
 public class VirtualFileRule implements GetDataRule {
+  @Override
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
@@ -35,16 +37,16 @@ public class VirtualFileRule implements GetDataRule {
       }
     }
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (virtualFiles != null && virtualFiles.length == 1) {
       return virtualFiles[0];
     }
 
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataProvider);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataProvider);
     if (psiFile != null) {
       return psiFile.getVirtualFile();
     }
-    PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem == null) {
       return null;
     }

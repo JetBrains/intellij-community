@@ -1,0 +1,24 @@
+@Anno
+public <caret>
+-----
+abstract
+boolean
+byte
+char
+class
+def
+double
+enum
+final
+float
+int
+interface
+long
+native
+short
+static
+strictfp
+synchronized
+transient
+void
+volatile

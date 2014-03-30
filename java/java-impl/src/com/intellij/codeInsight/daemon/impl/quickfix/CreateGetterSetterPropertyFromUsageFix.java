@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PropertyUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ import java.util.List;
  * Date: 7/12/12
  */
 public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUsageFix {
-  public CreateGetterSetterPropertyFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 
@@ -55,13 +57,13 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
 
   @Override
   protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
-    PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(field);
+    PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(field);
     if (aClass.findMethodsBySignature(getterPrototype, false).length == 0) {
       aClass.add(getterPrototype);
     }
 
 
-    PsiMethod setterPrototype = PropertyUtil.generateSetterPrototype(field);
+    PsiMethod setterPrototype = GenerateMembersUtil.generateSetterPrototype(field);
     if (aClass.findMethodsBySignature(setterPrototype, false).length == 0) {
       aClass.add(setterPrototype);
     }

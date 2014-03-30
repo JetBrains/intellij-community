@@ -6,6 +6,6 @@ class A {
     }
 
     private String bar() {
-        <caret><selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return null;</selection>
     }
 }

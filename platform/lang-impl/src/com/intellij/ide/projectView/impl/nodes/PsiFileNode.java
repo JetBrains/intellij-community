@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiDirectory;
@@ -74,7 +75,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
 
     VirtualFile file = getVirtualFile();
-    if (file != null && file.isSymLink()) {
+    if (file != null && file.is(VFileProperty.SYMLINK)) {
       String target = file.getCanonicalPath();
       if (target == null) {
         data.setAttributesKey(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);

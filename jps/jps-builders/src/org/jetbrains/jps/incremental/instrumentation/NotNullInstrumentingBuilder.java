@@ -73,9 +73,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-      reader.accept(instrumenter, 0);
-      if (instrumenter.isModification()) {
+      if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
         return new BinaryContent(writer.toByteArray());
       }
     }

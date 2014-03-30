@@ -39,13 +39,16 @@ public class ToolProcessAdapter extends ProcessAdapter {
     myName = name;
   }
 
+  @Override
   public void processTerminated(ProcessEvent event) {
     final String message = ToolsBundle.message("tools.completed.message", myName, event.getExitCode());
 
     if (mySynchronizeAfterExecution) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
+            @Override
             public void run() {
               if (ProjectManagerEx.getInstanceEx().isProjectOpened(myProject)) {
                 StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);

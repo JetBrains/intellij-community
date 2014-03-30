@@ -16,16 +16,18 @@
 package git4idea;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.dvcs.test.Executor.echo;
-import static com.intellij.dvcs.test.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
+import static org.junit.Assert.assertTrue;
 
 /**
  * 
@@ -117,7 +119,7 @@ public class CommitDetails {
     StringBuilder message = new StringBuilder();
     Collection<Change> changes = new ArrayList<Change>();
     ParsingStage stage = ParsingStage.MESSAGE;
-    for (String line : details.split("\n")) {
+    for (String line : StringUtil.splitByLines(details)) {
       Pair<Data, String> data = checkDataLine(line);
       if (data != null) {
         stage = ParsingStage.DATA;
@@ -202,7 +204,8 @@ public class CommitDetails {
     Pattern reg = Pattern.compile("^\\s*\\[.+ ([a-fA-F0-9]+)\\] (.+)$");
     Matcher matcher = reg.matcher(line);
     boolean matches = matcher.matches();
-    assert matches;
+    assertTrue(String.format("The output of the commit command doesn't match the expected pattern: %nLine: [%s]%nWhole output: [%s]",
+                             StringUtil.escapeLineBreak(line), StringUtil.escapeLineBreak(commitOutput)), matches);
     return new CommitDetails().hash(matcher.group(1)).message(matcher.group(2));
   }
 

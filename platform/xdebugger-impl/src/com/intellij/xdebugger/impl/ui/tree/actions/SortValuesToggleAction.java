@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -36,7 +37,7 @@ public class SortValuesToggleAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     XDebuggerSettingsManager.getInstance().getDataViewSettings().setSortValues(state);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final XDebugSession[] sessions = XDebuggerManager.getInstance(project).getDebugSessions();
       for (XDebugSession session : sessions) {

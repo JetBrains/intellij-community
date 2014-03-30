@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,15 @@ public interface Group extends Actions {
 	 * @return the value of the popup child.
 	 */
 	@NotNull
-	GenericAttributeValue<String> getPopup();
+	GenericAttributeValue<Boolean> getPopup();
+
+	/**
+	 * Returns the value of the compact child.
+	 * Attribute popup
+	 * @return the value of the compact child.
+	 */
+	@NotNull
+	GenericAttributeValue<Boolean> getCompact();
 
 
 	/**
@@ -79,9 +87,21 @@ public interface Group extends Actions {
 	@NotNull
 	GenericAttributeValue<String> getText();
 
-
+ 	/**
+	 * Returns the value of the id child.
+	 * Attribute id
+	 * @return the value of the id child.
+	 */
         @NotNull
         GenericAttributeValue<String> getId();
+
+  	///**
+	// * Returns the value of the overrides child.
+	// * Attribute overrides
+	// * @return the value of the overrides child.
+	// */
+	//@NotNull
+	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of reference children.

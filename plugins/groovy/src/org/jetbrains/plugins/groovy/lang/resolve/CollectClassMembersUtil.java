@@ -17,10 +17,11 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -37,28 +38,59 @@ import java.util.Set;
  * @author ven
  */
 public class CollectClassMembersUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil");
-  private static final Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
+  private static class ClassMembers {
+    private final Map<String, CandidateInfo> myFields;
+    private final Map<String, List<CandidateInfo>> myMethods;
+    private final Map<String, CandidateInfo> myInnerClasses;
 
-  private static final Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
+    private ClassMembers(@NotNull Map<String, CandidateInfo> fields,
+                         @NotNull Map<String, List<CandidateInfo>> methods,
+                         @NotNull Map<String, CandidateInfo> innerClasses) {
+      myFields = fields;
+      myMethods = methods;
+      myInnerClasses = innerClasses;
+    }
+
+    public static ClassMembers create(@NotNull Map<String, CandidateInfo> first,
+                                      @NotNull Map<String, List<CandidateInfo>> second,
+                                      @NotNull Map<String, CandidateInfo> third) {
+      return new ClassMembers(first, second, third);
+    }
+
+    private Map<String, CandidateInfo> getFields() {
+      return myFields;
+    }
+
+    private Map<String, List<CandidateInfo>> getMethods() {
+      return myMethods;
+    }
+
+    private Map<String, CandidateInfo> getInnerClasses() {
+      return myInnerClasses;
+    }
+  }
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil");
+  private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
+
+  private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
 
   private CollectClassMembersUtil() {
   }
 
 
   public static Map<String, List<CandidateInfo>> getAllMethods(final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getSecond();
+    return getCachedMembers(aClass, includeSynthetic).getMethods();
   }
 
   @NotNull
-  private static Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> getCachedMembers(
-    PsiClass aClass,
-    boolean includeSynthetic) {
-    LOG.assertTrue(aClass.isValid());
-    Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> key =
-      includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue =
-      aClass.getUserData(key);
+  private static ClassMembers getCachedMembers(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    PsiUtilCore.ensureValid(aClass);
+    Key<CachedValue<ClassMembers>> key = includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
+    CachedValue<ClassMembers> cachedValue = aClass.getUserData(key);
+    if (isCyclicDependence(aClass)) {
+      includeSynthetic = false;
+    }
     if (cachedValue == null) {
       cachedValue = buildCache(aClass, includeSynthetic);
       aClass.putUserData(key, cachedValue);
@@ -66,39 +98,59 @@ public class CollectClassMembersUtil {
     return cachedValue.getValue();
   }
 
-  public static Map<String, CandidateInfo> getAllInnerClasses(final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getThird();
+  private static boolean isCyclicDependence(PsiClass aClass) {
+    return !processCyclicDependence(aClass, ContainerUtil.<PsiClass>newHashSet());
   }
 
-  public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getFirst();
+  private static boolean processCyclicDependence(PsiClass aClass, Set<PsiClass> classes) {
+    if (!classes.add(aClass)) {
+      return aClass.isInterface() || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
+    }
+
+    if (aClass instanceof ClsClassImpl) return true; //optimization
+
+    for (PsiClass psiClass : aClass.getSupers()) {
+      if (!processCyclicDependence(psiClass, classes)) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass) {
+  public static Map<String, CandidateInfo> getAllInnerClasses(@NotNull final PsiClass aClass, boolean includeSynthetic) {
+    return getCachedMembers(aClass, includeSynthetic).getInnerClasses();
+  }
+
+  public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass, boolean includeSynthetic) {
+    return getCachedMembers(aClass, includeSynthetic).getFields();
+  }
+
+  public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass) {
     return getAllFields(aClass, true);
   }
 
-  private static CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> buildCache(final PsiClass aClass, final boolean includeSynthetic) {
-    return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>() {
-      public Result<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> compute() {
+  private static CachedValue<ClassMembers> buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
+    return CachedValuesManager.getManager(aClass.getProject()).createCachedValue(new CachedValueProvider<ClassMembers>() {
+      public Result<ClassMembers> compute() {
         Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();
         Map<String, CandidateInfo> allInnerClasses = new HashMap<String, CandidateInfo>();
 
         processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
-        return Result.create(Trinity.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(ClassMembers.create(allFields, allMethods, allInnerClasses),
+                             PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
 
-  private static void processClass(PsiClass aClass,
-                                   Map<String, CandidateInfo> allFields,
-                                   Map<String, List<CandidateInfo>> allMethods,
-                                   Map<String, CandidateInfo> allInnerClasses,
-                                   Set<PsiClass> visitedClasses,
-                                   PsiSubstitutor substitutor,
+  private static void processClass(@NotNull PsiClass aClass,
+                                   @NotNull Map<String, CandidateInfo> allFields,
+                                   @NotNull Map<String, List<CandidateInfo>> allMethods,
+                                   @NotNull Map<String, CandidateInfo> allInnerClasses,
+                                   @NotNull Set<PsiClass> visitedClasses,
+                                   @NotNull PsiSubstitutor substitutor,
                                    boolean includeSynthetic) {
-    LOG.assertTrue(aClass.isValid());
+    PsiUtilCore.ensureValid(aClass);
 
     if (!visitedClasses.add(aClass)) return;
 
@@ -110,11 +162,12 @@ public class CollectClassMembersUtil {
       else if (hasExplicitVisibilityModifiers(field)) {
         final CandidateInfo candidateInfo = allFields.get(name);
         final PsiElement element = candidateInfo.getElement();
-        if (element instanceof GrField && (((GrField)element).getModifierList() == null ||
-                                           !(((GrField)element).getModifierList()).hasExplicitVisibilityModifiers()) &&
-            aClass == ((GrField)element).getContainingClass()) {
-          //replace property-field with field with explicit visibilityModifier
-          allFields.put(name, new CandidateInfo(field, substitutor));
+        if (element instanceof GrField) {
+          final GrModifierList modifierList = ((GrField)element).getModifierList();
+          if ((modifierList == null || !modifierList.hasExplicitVisibilityModifiers()) && aClass == ((GrField)element).getContainingClass()) {
+            //replace property-field with field with explicit visibilityModifier
+            allFields.put(name, new CandidateInfo(field, substitutor));
+          }
         }
       }
     }
@@ -139,15 +192,15 @@ public class CollectClassMembersUtil {
     }
   }
 
-  public static PsiField[] getFields(PsiClass aClass, boolean includeSynthetic) {
+  public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getFields() : ((GrTypeDefinition)aClass).getCodeFields();
   }
 
-  public static PsiMethod[] getMethods(PsiClass aClass, boolean includeSynthetic) {
+  public static PsiMethod[] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
   }
 
-  private static boolean hasExplicitVisibilityModifiers(PsiField field) {
+  private static boolean hasExplicitVisibilityModifiers(@NotNull PsiField field) {
     if (field instanceof GrField) {
       final GrModifierList list = (GrModifierList)field.getModifierList();
       return list == null || list.hasExplicitVisibilityModifiers();
@@ -157,7 +210,9 @@ public class CollectClassMembersUtil {
     }
   }
 
-  private static void addMethod(Map<String, List<CandidateInfo>> allMethods, PsiMethod method, PsiSubstitutor substitutor) {
+  private static void addMethod(@NotNull Map<String, List<CandidateInfo>> allMethods,
+                                @NotNull PsiMethod method,
+                                @NotNull PsiSubstitutor substitutor) {
     String name = method.getName();
     List<CandidateInfo> methods = allMethods.get(name);
     if (methods == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public interface Action extends DomElement {
 	 * @return the value of the popup child.
 	 */
 	@NotNull
-	GenericAttributeValue<String> getPopup();
+	GenericAttributeValue<Boolean> getPopup();
 
 
 	/**
@@ -80,7 +80,6 @@ public interface Action extends DomElement {
 	@NotNull
 	GenericAttributeValue<String> getText();
 
-
 	/**
 	 * Returns the value of the id child.
 	 * Attribute id
@@ -90,6 +89,13 @@ public interface Action extends DomElement {
 	@Required
 	GenericAttributeValue<String> getId();
 
+	///**
+	// * Returns the value of the overrides child.
+	// * Attribute overrides
+	// * @return the value of the overrides child.
+	// */
+	//@NotNull
+	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.
@@ -129,6 +135,18 @@ public interface Action extends DomElement {
 	 */
 	Shortcut addShortcut();
 
+        /**
+ 	 * Returns the list of abbreviation children.
+ 	 * @return the list of abbreviation children.
+ 	 */
+ 	@NotNull
+ 	List<Abbreviation> getAbbreviations();
+
+ 	/**
+ 	 * Adds new child to the list of abbreviation children.
+ 	 * @return created child
+ 	 */
+        Abbreviation addAbbreviation();
 
 	/**
 	 * Returns the list of add-to-group children.

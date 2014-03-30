@@ -20,12 +20,11 @@
  */
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.inline.JavaInlineActionHandler;
@@ -67,6 +66,23 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
       }
     }
 
-    new InlineSuperClassRefactoringDialog(project, superClass, inheritors.toArray(new PsiClass[inheritors.size()])).show();
+    PsiClass chosen = null;
+    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    if (reference != null) {
+      final PsiElement resolve = reference.resolve();
+      if (resolve == superClass) {
+        final PsiElement referenceElement = reference.getElement();
+        if (referenceElement != null) {
+          final PsiElement parent = referenceElement.getParent();
+          if (parent instanceof PsiReferenceList) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiClass && inheritors.contains(gParent)) {
+              chosen = (PsiClass)gParent;
+            }
+          }
+        }
+      }
+    }
+    new InlineSuperClassRefactoringDialog(project, superClass, chosen, inheritors.toArray(new PsiClass[inheritors.size()])).show();
   }
 }

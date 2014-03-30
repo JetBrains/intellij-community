@@ -247,7 +247,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     ActionManager.getInstance().getAction("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
     ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
     ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
-    ActionManager.getInstance().getAction("ChangesView.Move").registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
+    ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
     ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
     ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
@@ -439,6 +439,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   @Override
+  public void setShowFlattenMode(boolean state) {
+    SHOW_FLATTEN_MODE = state;
+    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    refreshView();
+  }
+
+  @Override
   public void selectFile(final VirtualFile vFile) {
     if (vFile == null) return;
     Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
@@ -550,9 +557,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_FLATTEN_MODE = !state;
-      myView.setShowFlatten(SHOW_FLATTEN_MODE);
-      refreshView();
+      setShowFlattenMode(!state);
     }
   }
 

@@ -24,23 +24,54 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Describes a specific way of executing any possible run configuration. The three default executors provided by the IntelliJ Platform
+ * by default are Run, Debug and (in IntelliJ IDEA Ultimate and certain platform-based IDEs) Run with Coverage. Each executor gets its
+ * own toolbar button, which starts the selected run configuration using this executor, and its own context menu item for starting
+ * a configuration using this executor.
+ *
  * @author spleaner
  */
 public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = ExtensionPointName.create("com.intellij.executor");
 
+  /**
+   * Returns the ID of the toolwindow in which the run tabs created by this executor will be displayed.
+   *
+   * @return the ID of the toolwindow (usually {@link com.intellij.openapi.wm.ToolWindowId#RUN} or
+   * {@link com.intellij.openapi.wm.ToolWindowId#DEBUG}).
+   */
   public abstract String getToolWindowId();
   public abstract Icon getToolWindowIcon();
 
+  /**
+   * Returns the 16x16 icon for the toolbar button corresponding to the executor.
+   *
+   * @return the icon.
+   */
   @NotNull
   public abstract Icon getIcon();
+
+  /**
+   * Returns the 16x16 icon for the disabled toolbar button corresponding to the executor.
+   *
+   * @return the icon for the disabled button.
+   */
   public abstract Icon getDisabledIcon();
 
+  /**
+   * Returns the action description (text displayed in the status bar) for the toolbar button corresponding to the executor.
+   *
+   * @return the executor action description.
+   */
   public abstract String getDescription();
 
   @NotNull
   public abstract String getActionName();
 
+  /**
+   * Returns the unique ID of the executor.
+   * @return the ID of the executor.
+   */
   @NotNull
   @NonNls
   public abstract String getId();

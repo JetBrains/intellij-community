@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.project.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +31,7 @@ import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -41,10 +41,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -73,40 +71,36 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
+public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
   private static final String PLUGIN_SETTINGS_ERROR = "Plugin Settings Error";
+
   public static final String NAME_FILE = ".name";
+  public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  private ProjectManagerImpl myManager;
-
+  private ProjectManager myManager;
   private volatile IProjectStore myComponentStore;
-
   private MyProjectManagerListener myProjectManagerListener;
-
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
-
   public boolean myOptimiseTestLoadSpeed;
-  @NonNls public static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
-
   private String myName;
   private String myOldName;
 
-  public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
+  protected ProjectImpl(@NotNull ProjectManager manager, @NotNull String filePath, boolean optimiseTestLoadSpeed, @Nullable String projectName) {
+    super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
-  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
-    super(ApplicationManager.getApplication());
     putUserData(CREATION_TIME, System.nanoTime());
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
-    getStateStore().setProjectFilePath(filePath);
+    if (!isDefault()) {
+      getStateStore().setProjectFilePath(filePath);
+    }
 
-    myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
-
+    myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
     myManager = manager;
 
-    myName = isDefault() ? TEMPLATE_PROJECT_NAME : projectName == null ? getStateStore().getProjectName() : projectName;
+    myName = projectName == null ? getStateStore().getProjectName() : projectName;
     if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
       myOldName = "";  // new project
     }
@@ -133,25 +127,22 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @Override
-  protected void bootstrapPicoContainer() {
+  protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    super.bootstrapPicoContainer();
+    super.bootstrapPicoContainer(name);
     final MutablePicoContainer picoContainer = getPicoContainer();
 
-    final ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
-
+    final ProjectStoreClassProvider projectStoreClassProvider =
+      (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);
 
     picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
       ComponentAdapter myDelegate;
 
-
       public ComponentAdapter getDelegate() {
         if (myDelegate == null) {
-
           final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingComponentAdapter(
-            new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
+          myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
         }
 
         return myDelegate;
@@ -183,7 +174,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         getDelegate().accept(visitor);
       }
     });
-
   }
 
   @NotNull
@@ -191,6 +181,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   public IProjectStore getStateStore() {
     IProjectStore componentStore = myComponentStore;
     if (componentStore != null) return componentStore;
+
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       componentStore = myComponentStore;
       if (componentStore == null) {
@@ -205,9 +197,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     if (!service) {
       ProgressIndicator indicator = getProgressIndicator();
       if (indicator != null) {
-        indicator.setText2(getComponentName(component));
-  //      indicator.setIndeterminate(false);
-  //      indicator.setFraction(myComponentsRegistry.getPercentageOfComponentsLoaded());
+  //      indicator.setText2(getComponentName(component));
+        indicator.setIndeterminate(false);
+        indicator.setFraction(getPercentageOfComponentsLoaded());
       }
     }
 
@@ -225,9 +217,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   public void loadProjectComponents() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
       loadComponentsConfiguration(plugin.getProjectComponents(), plugin, isDefault());
     }
   }
@@ -277,15 +269,6 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return prefix + Integer.toHexString(str.hashCode());
   }
 
-  @SuppressWarnings("deprecation")
-  @Nullable
-  @NonNls
-  @Override
-  public String getLocation() {
-    if (myName == null) return null; // was called before initialized
-    return isDisposed() ? null : getStateStore().getLocation();
-  }
-
   @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
@@ -305,15 +288,26 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Override
   public void init() {
     long start = System.currentTimeMillis();
-//    ProfilingUtil.startCPUProfiling();
+
+    final ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.pushState();
+    }
     super.init();
-//    ProfilingUtil.captureCPUSnapshot();
+    if (progressIndicator != null) {
+      progressIndicator.popState();
+    }
+
     long time = System.currentTimeMillis() - start;
     LOG.info(getComponentConfigurations().length + " project components initialized in " + time + " ms");
+
     getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
-    myProjectManagerListener = new MyProjectManagerListener();
-    myManager.addProjectManagerListener(this, myProjectManagerListener);
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      myProjectManagerListener = new MyProjectManagerListener();
+      myManager.addProjectManagerListener(this, myProjectManagerListener);
+    }
   }
 
   public boolean isToSaveProjectName() {
@@ -363,11 +357,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
       LOG.info(e);
     }
     catch (PluginException e) {
-      PluginManager.disablePlugin(e.getPluginId().getIdString());
+      PluginManagerCore.disablePlugin(e.getPluginId().getIdString());
       Notification notification = new Notification(
         PLUGIN_SETTINGS_ERROR,
         "Unable to save plugin settings!",
-        "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
+        "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart " +
         ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
         (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
         NotificationType.ERROR);
@@ -436,15 +430,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
   public String getDefaultName() {
-    if (isDefault()) return TEMPLATE_PROJECT_NAME;
-
-    return getStateStore().getProjectName();    
+    return isDefault() ? myName : getStateStore().getProjectName();
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
@@ -519,7 +512,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
           }
           else {
             if (Messages.showYesNoDialog(this, "Component could not be reloaded. Reload project?", "Configuration Changed",
-                                         Messages.getQuestionIcon()) == 0) {
+                                         Messages.getQuestionIcon()) == Messages.YES) {
               ProjectManagerEx.getInstanceEx().reloadProject(this);
             }
           }
@@ -583,9 +576,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
 
     private static String buildMessage() {
-      final StringBuilder sb = new StringBuilder(
-        "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them.");
-      return sb.append(" <a href=\"\">Try to save project again</a>.</p>").toString();
+      return "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
+             " <a href=\"\">Try to save project again</a>.</p>";
     }
 
     public Project getProject() {

@@ -19,7 +19,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ModuleRunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -58,6 +61,7 @@ public class ToolRunProfile implements ModuleRunProfile{
     //}
   }
 
+  @Override
   public String getName() {
     return expandMacrosInName(myTool, myContext);
   }
@@ -73,21 +77,21 @@ public class ToolRunProfile implements ModuleRunProfile{
     }
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
-  public void checkConfiguration() throws RuntimeConfigurationException {
-  }
-
+  @Override
   @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final Project project = env.getProject();
-    if (project == null || myCommandLine == null) {
+    if (myCommandLine == null) {
       // can return null if creation of cmd line has been cancelled
       return null;
     }
@@ -97,6 +101,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         return myCommandLine;
       }
 
+      @Override
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
@@ -105,6 +110,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         return processHandler;
       }
 
+      @Override
       @NotNull
       public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);
@@ -126,8 +132,8 @@ public class ToolRunProfile implements ModuleRunProfile{
     };
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     final FilterInfo[] outputFilters = myTool.getOutputFilters();
-    for (int i = 0; i < outputFilters.length; i++) {
-      builder.addFilter(new RegexpFilter(project, outputFilters[i].getRegExp()));
+    for (FilterInfo outputFilter : outputFilters) {
+      builder.addFilter(new RegexpFilter(project, outputFilter.getRegExp()));
     }
 
     commandLineState.setConsoleBuilder(builder);

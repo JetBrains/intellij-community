@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -47,7 +48,7 @@ import java.util.Collections;
  * User: anna
  * Date: Feb 15, 2005
  */
-public class AddToFavoritesAction extends AnAction {
+public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 
   private final String myFavoritesListName;
@@ -57,19 +58,20 @@ public class AddToFavoritesAction extends AnAction {
     myFavoritesListName = choosenList;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
     Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
 
     if (nodesToAdd != null && !nodesToAdd.isEmpty()) {
-      Project project = e.getData(PlatformDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
       FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
     }
   }
 
   public static Collection<AbstractTreeNode> getNodesToAdd(final DataContext dataContext, final boolean inProjectView) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project == null) return Collections.emptyList();
 
@@ -92,6 +94,7 @@ public class AddToFavoritesAction extends AnAction {
     return nodesToAdd;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(canCreateNodes(e));
   }
@@ -117,15 +120,15 @@ public class AddToFavoritesAction extends AnAction {
   }
 
   private static Object collectSelectedElements(final DataContext dataContext) {
-    Object elements = retrieveData(null, LangDataKeys.PSI_ELEMENT.getData(dataContext));
+    Object elements = retrieveData(null, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
     elements = retrieveData(elements, LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, LangDataKeys.PSI_FILE.getData(dataContext));
+    elements = retrieveData(elements, CommonDataKeys.PSI_FILE.getData(dataContext));
     elements = retrieveData(elements, ModuleGroup.ARRAY_DATA_KEY.getData(dataContext));
     elements = retrieveData(elements, LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
     elements = retrieveData(elements, LibraryGroupElement.ARRAY_DATA_KEY.getData(dataContext));
     elements = retrieveData(elements, NamedLibraryElement.ARRAY_DATA_KEY.getData(dataContext));
-    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE.getData(dataContext));
-    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
+    elements = retrieveData(elements, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     return elements;
   }
 

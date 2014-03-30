@@ -76,7 +76,7 @@
       <keyboard-shortcut first-keystroke="control INSERT"/>
     </action>
     <action id="GotoClass">
-      <keyboard-shortcut first-keystroke="control G"/>
+      <keyboard-shortcut first-keystroke="control COMMA"/>
     </action>
     <action id="$Redo">
       <keyboard-shortcut first-keystroke="control Y"/>
@@ -101,7 +101,6 @@
       <keyboard-shortcut first-keystroke="shift control I"/>
     </action>
     <action id="SmartTypeCompletion">
-      <keyboard-shortcut first-keystroke="alt SPACE"/>
       <keyboard-shortcut first-keystroke="shift alt SPACE"/>
     </action>
     <action id="GotoDeclaration">
@@ -124,7 +123,9 @@
     <action id="CompileDirty">
       <keyboard-shortcut first-keystroke="F7"/>
     </action>
-    <action id="GotoLine"/>
+    <action id="GotoLine">
+      <keyboard-shortcut first-keystroke="control G"/>
+    </action>
     <action id="JumpToLastChange">
       <keyboard-shortcut first-keystroke="shift control F2"/>
     </action>
@@ -162,7 +163,6 @@
     </action>
     <action id="QuickJavaDoc">
       <keyboard-shortcut first-keystroke="control Q"/>
-      <keyboard-shortcut first-keystroke="shift F1"/>
     </action>
     <action id="ShowBookmarks">
       <keyboard-shortcut first-keystroke="alt F2"/>
@@ -204,5 +204,7 @@
     <action id="VcsShowPrevChangeMarker">
       <keyboard-shortcut first-keystroke="shift control alt UP"/>
     </action>
+    <action id="CopyElement"/>
+    <action id="CloneElement"/>
   </keymap>
 </component>

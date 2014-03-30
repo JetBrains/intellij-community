@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,7 @@ public class ExecutionPointHighlighter {
   private OpenFileDescriptor myOpenFileDescriptor;
   private boolean myUseSelection;
   private GutterIconRenderer myGutterIconRenderer;
+  private static final Key<Boolean> EXECUTION_POINT_HIGHLIGHTER_KEY = Key.create("EXECUTION_POINT_HIGHLIGHTER_KEY");
 
   public ExecutionPointHighlighter(final Project project) {
     myProject = project;
@@ -50,15 +53,17 @@ public class ExecutionPointHighlighter {
 
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
-    DebuggerUIUtil.invokeOnEventDispatchIfProjectNotDisposed(new Runnable() {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+      @Override
       public void run() {
         doShow(position, useSelection, gutterIconRenderer);
       }
-    }, myProject);
+    });
   }
 
   public void hide() {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
+      @Override
       public void run() {
         doHide();
       }
@@ -67,7 +72,7 @@ public class ExecutionPointHighlighter {
 
   public void navigateTo() {
     if (myOpenFileDescriptor != null) {
-      FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false);
+      FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, true);
     }
   }
 
@@ -81,7 +86,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
-    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+    AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
         if (myRangeHighlighter != null && myGutterIconRenderer != null) {
@@ -96,26 +101,13 @@ public class ExecutionPointHighlighter {
     removeHighlighter();
 
     mySourcePosition = position;
-    myEditor = openEditor();
+    myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, mySourcePosition);
+    myEditor = myOpenFileDescriptor.getFile().isValid() ? FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false) : null;
     myUseSelection = useSelection;
     myGutterIconRenderer = renderer;
     if (myEditor != null) {
       addHighlighter();
     }
-  }
-
-  @Nullable
-  private Editor openEditor() {
-    VirtualFile file = mySourcePosition.getFile();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    int offset = mySourcePosition.getOffset();
-    if (offset < 0 || offset >= document.getTextLength()) {
-      myOpenFileDescriptor = new OpenFileDescriptor(myProject, file, mySourcePosition.getLine(), 0);
-    }
-    else {
-      myOpenFileDescriptor = new OpenFileDescriptor(myProject, file, offset);
-    }
-    return FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false);
   }
 
   private void doHide() {
@@ -150,6 +142,7 @@ public class ExecutionPointHighlighter {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myRangeHighlighter = myEditor.getMarkupModel().addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
                                                                       scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
+    myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 }

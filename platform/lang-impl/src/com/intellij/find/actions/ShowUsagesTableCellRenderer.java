@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,7 +66,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (usage == null || usageNode instanceof ShowUsagesAction.StringNode) {
       panel.setLayout(new BorderLayout());
       if (column == 0) {
-        panel.add(new JLabel("<html><body><b>" + value + "</b></body></html>", SwingConstants.CENTER));
+        panel.add(new JLabel(XmlStringUtil.wrapInHtml("<b>" + value + "</b>"), SwingConstants.CENTER));
       }
       return panel;
     }

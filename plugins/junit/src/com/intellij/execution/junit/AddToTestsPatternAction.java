@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,20 +40,20 @@ public class AddToTestsPatternAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-    final Set<PsiMember> classes = PatternConfigurationProducer.collectTestMembers(psiElements);
+    final Set<PsiElement> classes = PatternConfigurationProducer.collectTestMembers(psiElements, true);
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
-      for (PsiMember aClass : classes) {
+      for (PsiElement aClass : classes) {
         configuration.getPersistentData().getPatterns().add(PatternConfigurationProducer.getQName(aClass));
       }
     } else {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<JUnitConfiguration>("Choose suite to add", patternConfigurations) {
         @Override
         public PopupStep onChosen(JUnitConfiguration configuration, boolean finalChoice) {
-          for (PsiMember aClass : classes) {
+          for (PsiElement aClass : classes) {
             configuration.getPersistentData().getPatterns().add(PatternConfigurationProducer.getQName(aClass));
           }
           return FINAL_CHOICE;
@@ -81,9 +80,9 @@ public class AddToTestsPatternAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
-      final Set<PsiMember> foundMembers = PatternConfigurationProducer.collectTestMembers(psiElements);
+      final Set<PsiElement> foundMembers = PatternConfigurationProducer.collectTestMembers(psiElements, true);
       if (foundMembers.isEmpty()) return;
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         final List<JUnitConfiguration> foundConfigurations = collectPatternConfigurations(foundMembers, project);
         if (!foundConfigurations.isEmpty()) {
@@ -96,8 +95,9 @@ public class AddToTestsPatternAction extends AnAction {
     }
   }
 
-  private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiMember> foundClasses, Project project) {
-    final RunConfiguration[] configurations = RunManager.getInstance(project).getConfigurations(JUnitConfigurationType.getInstance());
+  private static List<JUnitConfiguration> collectPatternConfigurations(Set<PsiElement> foundClasses, Project project) {
+    final List<RunConfiguration> configurations = RunManager.getInstance(project).getConfigurationsList(
+      JUnitConfigurationType.getInstance());
     final List<JUnitConfiguration> foundConfigurations = new ArrayList<JUnitConfiguration>();
     for (RunConfiguration configuration : configurations) {
       final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();

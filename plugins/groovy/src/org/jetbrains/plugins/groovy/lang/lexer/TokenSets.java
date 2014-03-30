@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 public abstract class TokenSets {
 
   public static final TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
+      mSH_COMMENT,
       mSL_COMMENT,
       mML_COMMENT,
       GROOVY_DOC_COMMENT
@@ -74,7 +75,7 @@ public abstract class TokenSets {
       mDOLLAR_SLASH_REGEX_LITERAL
   );
 
-  public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
+  public static final TokenSet BUILT_IN_TYPES = TokenSet.create(
       kVOID,
       kBOOLEAN,
       kBYTE,
@@ -98,6 +99,8 @@ public abstract class TokenSets {
 
   public static final TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   public static final TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
+
+  public static final TokenSet REFERENCE_NAME_PREFIXES = TokenSet.orSet(NUMBERS, KEYWORDS, TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL, mGSTRING_BEGIN, mREGEX_BEGIN, mDOLLAR_SLASH_REGEX_BEGIN, mAT));
 
 
   public static final TokenSet VISIBILITY_MODIFIERS = TokenSet.create(
@@ -125,15 +128,21 @@ public abstract class TokenSets {
 
   public static final TokenSet STRING_LITERALS = TokenSet.create(
       mSTRING_LITERAL,
-      mREGEX_CONTENT,
-      mDOLLAR_SLASH_REGEX_CONTENT,
       mGSTRING_LITERAL,
-      mGSTRING_CONTENT,
       mGSTRING_BEGIN,
+      mGSTRING_CONTENT,
       mGSTRING_END,
       mREGEX_LITERAL,
-      mDOLLAR_SLASH_REGEX_LITERAL
+      mREGEX_BEGIN,
+      mREGEX_CONTENT,
+      mREGEX_END,
+      mDOLLAR_SLASH_REGEX_LITERAL,
+      mDOLLAR_SLASH_REGEX_BEGIN,
+      mDOLLAR_SLASH_REGEX_CONTENT,
+      mDOLLAR_SLASH_REGEX_END
   );
+
+  public static final TokenSet GSTRING_CONTENT_PARTS = TokenSet.create(GSTRING_CONTENT, GSTRING_INJECTION);
 
   public static final TokenSet FOR_IN_DELIMITERS = TokenSet.create(kIN, mCOLON);
 
@@ -164,6 +173,15 @@ public abstract class TokenSets {
                                                                mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL, mCOMPARE_TO, mLAND, kINSTANCEOF,
                                                                COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN,
                                                                mREGEX_FIND, mREGEX_MATCH, mRANGE_INCLUSIVE, mRANGE_EXCLUSIVE);
+
+  public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mEQUAL, mLOR, mPLUS, mSTAR, mNOT_EQUAL, mLAND);
+
+
+  public static final TokenSet BINARY_EXPRESSIONS = TokenSet.create(ADDITIVE_EXPRESSION, MULTIPLICATIVE_EXPRESSION, POWER_EXPRESSION,
+                                                                    POWER_EXPRESSION_SIMPLE, LOGICAL_OR_EXPRESSION, LOGICAL_AND_EXPRESSION,
+                                                                    INCLUSIVE_OR_EXPRESSION, EXCLUSIVE_OR_EXPRESSION, AND_EXPRESSION,
+                                                                    REGEX_FIND_EXPRESSION, REGEX_MATCH_EXPRESSION, EQUALITY_EXPRESSION,
+                                                                    RELATIONAL_EXPRESSION, SHIFT_EXPRESSION, RANGE_EXPRESSION);
 
   public static final TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 
@@ -203,4 +221,12 @@ public abstract class TokenSets {
 
   public static final TokenSet SHIFT_SIGNS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
   public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF,  kIN, kAS);
+
+  public static final TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY);
+  public static final TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
+  public static final TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
+  public static final TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT, DISJUNCTION_TYPE_ELEMENT);
+
+
+  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(CLASS_DEFINITION, ENUM_DEFINITION, INTERFACE_DEFINITION, ANNOTATION_DEFINITION);
 }

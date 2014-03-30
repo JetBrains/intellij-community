@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,9 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     return mySeparator;
   }
 
+  @Override
   @NotNull
-  public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
+  public Collection<Group> group(@NotNull final AbstractTreeNode parent, @NotNull Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<Key>();
 
     String parentPrefix;
@@ -78,6 +79,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
       keys.add(new Key(words, element));
     }
     Collections.sort(keys, new Comparator<Key>() {
+      @Override
       public int compare(final Key k1, final Key k2) {
         List<String> o1 = k1.words;
         List<String> o2 = k2.words;
@@ -146,6 +148,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     return !Comparing.strEqual(words.get(parentPrefixLength), prevWords.get(parentPrefixLength));
   }
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
@@ -153,11 +156,13 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
                                       AllIcons.Actions.GroupByPrefix);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;
   }
 
+  @NotNull
   @Override
   public Comparator getComparator() {
     return Sorter.ALPHA_SORTER.getComparator();

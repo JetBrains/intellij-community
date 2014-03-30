@@ -136,12 +136,16 @@ public class FrameDiffTool implements DiffTool {
   @Nullable
   private DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable,
                                                            final boolean showMessage) {
-    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
+    DiffPanelImpl diffPanel = createDiffPanelImpl(request, window, parentDisposable);
     if (checkNoDifferenceAndNotify(diffPanel, request, window, showMessage)) {
       Disposer.dispose(diffPanel);
       diffPanel = null;
     }
     return diffPanel;
+  }
+
+  protected DiffPanelImpl createDiffPanelImpl(@NotNull DiffRequest request, @Nullable Window window, @NotNull Disposable parentDisposable) {
+    return (DiffPanelImpl) DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
   }
 
   static void showDiffDialog(DialogBuilder builder, Collection hints) {
@@ -155,6 +159,7 @@ public class FrameDiffTool implements DiffTool {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
   }
 
+  // TODO remove check?
   private boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
     if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
       DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
@@ -193,10 +198,8 @@ public class FrameDiffTool implements DiffTool {
     String message = Arrays.equals(bytes1, bytes2)
                      ? DiffBundle.message("diff.contents.are.identical.message.text")
                      : DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text");
-    Messages.showInfoMessage(data.getProject(), message, DiffBundle.message("no.differences.dialog.title"));
-    return false;
-    //return Messages.showDialog(data.getProject(), message + "\nShow diff anyway?", "No Differences", new String[]{"Yes", "No"}, 1,
-    //                    Messages.getQuestionIcon()) == 0;
+    return Messages.showYesNoDialog(data.getProject(), message + "\n" + DiffBundle.message("show.diff.anyway.dialog.message"),
+                                    DiffBundle.message("no.differences.dialog.title"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public boolean canShow(DiffRequest data) {
@@ -216,6 +219,6 @@ public class FrameDiffTool implements DiffTool {
 
   @Override
   public DiffViewer createComponent(String title, DiffRequest request, Window window, @NotNull Disposable parentDisposable) {
-    return createDiffPanelIfShouldShow(request, window, parentDisposable, false);
+    return createDiffPanelImpl(request, window, parentDisposable);
   }
 }

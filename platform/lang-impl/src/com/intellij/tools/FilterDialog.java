@@ -61,10 +61,12 @@ class FilterDialog extends DialogWrapper {
     return true;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myRegexpField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -130,6 +132,7 @@ class FilterDialog extends DialogWrapper {
     myRegexpField.addMouseListener(new PopupListener());
   }
 
+  @Override
   protected void doOKAction() {
     String errorMessage = null;
     if (noText(myNameField.getText())) {
@@ -160,6 +163,7 @@ class FilterDialog extends DialogWrapper {
     return "".equals(text);
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return "#com.intellij.tools.FilterDialog";
   }
@@ -176,6 +180,7 @@ class FilterDialog extends DialogWrapper {
       myMacrosName = macrosName;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       int position = myRegexpField.getCaretPosition();
       try {
@@ -190,6 +195,7 @@ class FilterDialog extends DialogWrapper {
   }
 
   private class PopupListener extends PopupHandler {
+    @Override
     public void invokePopup(Component comp, int x, int y) {
       myPopup.show(comp, x, y);
     }

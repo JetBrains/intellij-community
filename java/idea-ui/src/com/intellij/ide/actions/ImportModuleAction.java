@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,9 +69,9 @@ public class ImportModuleAction extends AnAction {
     return createFromWizard(project, wizard);
   }
 
-  public static List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+  public static List<Module> createFromWizard(Project project, AbstractProjectWizard wizard) {
     if (project == null && wizard.getStepCount() > 0) {
-      Project newProject = NewProjectUtil.createFromWizard(wizard, project);
+      Project newProject = NewProjectUtil.createFromWizard(wizard, null);
       return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
 
@@ -106,6 +108,15 @@ public class ImportModuleAction extends AnAction {
     String description = getFileChooserDescription(project);
     descriptor.setDescription(description);
 
+    return selectFileAndCreateWizard(project, dialogParent, descriptor, providers);
+  }
+
+  @Nullable
+  public static AddModuleWizard selectFileAndCreateWizard(final Project project,
+                                                          @Nullable Component dialogParent,
+                                                          @NotNull FileChooserDescriptor descriptor,
+                                                          ProjectImportProvider[] providers)
+  {
     FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, dialogParent);
     VirtualFile toSelect = null;
     String lastLocation = PropertiesComponent.getInstance().getValue(LAST_IMPORTED_LOCATION);
@@ -150,8 +161,9 @@ public class ImportModuleAction extends AnAction {
     return builder.toString();
   }
 
+  @Nullable
   public static AddModuleWizard createImportWizard(final Project project,
-                                                   Component dialogParent,
+                                                   @Nullable Component dialogParent,
                                                    final VirtualFile file,
                                                    ProjectImportProvider... providers) {
     List<ProjectImportProvider> available = ContainerUtil.filter(providers, new Condition<ProjectImportProvider>() {

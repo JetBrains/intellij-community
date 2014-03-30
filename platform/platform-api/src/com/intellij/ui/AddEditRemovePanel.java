@@ -27,6 +27,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -198,23 +199,24 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
 
     final int[] selected = myTable.getSelectedRows();
     if (selected == null || selected.length == 0) return;
-    for (int i = selected.length - 1; i >= 0; i--) {
-      int idx = selected[i];
-      if (!removeItem(myData.get(idx))) return;
-      myData.remove(idx);
-    }
+
+    Arrays.sort(selected);
 
     for (int i = selected.length - 1; i >= 0; i--) {
       int idx = selected[i];
-      myTableModel.fireTableRowsDeleted(idx, idx);
+      if (!removeItem(myData.get(idx))) continue;
+      myData.remove(idx);
     }
+
+    myTableModel.fireTableDataChanged();
+
     int selection = selected[0];
     if (selection >= myData.size()) {
       selection = myData.size() - 1;
     }
     if (selection >= 0) {
       myTable.setRowSelectionInterval(selection, selection);
-    }   
+    }
   }
 
   public void setData(List<T> data) {

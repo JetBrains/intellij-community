@@ -26,9 +26,9 @@ public interface PsiJavaReference extends PsiPolyVariantReference {
    * Passes all variants to which the reference may resolve to the specified
    * processor.
    *
-   * @param processor the processor accepting the variants.s
+   * @param processor the processor accepting the variants
    */
-  void processVariants(PsiScopeProcessor processor);
+  void processVariants(@NotNull PsiScopeProcessor processor);
 
   /**
    * Resolves the reference and returns the result as a {@link JavaResolveResult}
@@ -41,7 +41,7 @@ public interface PsiJavaReference extends PsiPolyVariantReference {
    */
   @NotNull
   JavaResolveResult advancedResolve(boolean incompleteCode);
-  
+
   @Override
   @NotNull
   JavaResolveResult[] multiResolve(boolean incompleteCode);

@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class ChangeStringLiteralToCharInMethodCallTest extends LightQuickFixTestCase {
+public class ChangeStringLiteralToCharInMethodCallTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

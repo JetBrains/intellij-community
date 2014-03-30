@@ -8,4 +8,11 @@
     <description>&lt;code&gt;convertMe()&lt;/code&gt; can be converted to variable arity method</description>
   </problem>
 
+  <problem>
+    <file>MethodCanBeVariableArity.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Method can be variable arity method</problem_class>
+    <description>&lt;code&gt;m()&lt;/code&gt; can be converted to variable arity method #loc</description>
+  </problem>
+
 </problems>

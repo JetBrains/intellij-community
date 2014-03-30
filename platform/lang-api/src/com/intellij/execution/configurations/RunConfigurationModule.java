@@ -42,6 +42,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     myProject = project;
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public void readExternal(final Element element) throws InvalidDataException {
     final List<Element> modules = (List<Element>)element.getChildren(ELEMENT);
@@ -55,6 +56,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void writeExternal(final Element parent) throws WriteExternalException {
     final Element element = new Element(ELEMENT);
     element.setAttribute(ATTRIBUTE, getModuleName());

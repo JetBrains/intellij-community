@@ -457,10 +457,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           String selectedText = myComments.getSelectedText();
           final Transferable t;
           if (selectedText == null) {
-            t = new TextTransferrable(myComments.getText(), myOriginalComment);
+            t = new TextTransferable(myComments.getText(), myOriginalComment);
           }
           else {
-            t = new TextTransferrable(selectedText, selectedText);
+            t = new TextTransferable(selectedText);
           }
           try {
             clip.setContents(t, null);
@@ -782,7 +782,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     });
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
-        result.add(additionalAction);
+        if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
+          result.add(additionalAction);
+        }
       }
     }
     result.add(new RefreshFileHistoryAction());
@@ -1190,7 +1192,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   public Object getData(String dataId) {
     VcsFileRevision firstSelectedRevision = getFirstSelectedRevision();
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       List selectedItems = getSelection();
       if (selectedItems.size() != 1) return null;
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
@@ -1204,7 +1206,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         return null;
       }
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myVcs.getProject();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
@@ -1236,7 +1238,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else if (VcsDataKeys.IO_FILE.is(dataId)) {
       return myFilePath.getIOFile();
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       if (getVirtualFile() == null) return null;
       if (getVirtualFile().isValid()) {
         return getVirtualFile();

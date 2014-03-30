@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
@@ -51,8 +52,9 @@ public class JavaFormattingModelBuilder implements FormattingModelBuilder {
     public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
-    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    Block block = AbstractJavaBlock.createJavaBlock(fileElement, javaSettings);
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings customJavaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    Block block = AbstractJavaBlock.createJavaBlock(fileElement, commonSettings, customJavaSettings);
     FormattingDocumentModelImpl model = FormattingDocumentModelImpl.createOn(element.getContainingFile());
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), block, model);
   }

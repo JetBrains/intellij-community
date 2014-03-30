@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
-  public CreateAbstractMethodFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

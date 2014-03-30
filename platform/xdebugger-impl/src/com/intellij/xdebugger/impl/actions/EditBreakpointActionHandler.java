@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -25,19 +25,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 04.05.12
- * Time: 4:03
- * To change this template use File | Settings | File Templates.
- */
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
   protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint);
@@ -45,7 +39,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   @Override
   public void perform(@NotNull Project project, AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
     final Pair<GutterIconRenderer,Object> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
@@ -58,16 +52,16 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
-    if (BreakpointsMasterDetailPopupFactory.getInstance(project).isBreakpointPopupShowing()) return;
+    if (BreakpointsDialogFactory.getInstance(project).isBreakpointPopupShowing()) return;
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
     Point point = gutterComponent.getPoint(breakpointGutterRenderer);
     if (point == null) return;
     final Icon icon = breakpointGutterRenderer.getIcon();
-    Point whereToShow = new Point(point.x + icon.getIconWidth() / 2 + gutterComponent.getIconsAreaWidth(), point.y + icon.getIconHeight() / 2);
+    Point whereToShow = new Point(point.x + icon.getIconWidth() / 2, point.y + icon.getIconHeight() / 2);
     doShowPopup(project, gutterComponent, whereToShow, breakpoint);
   }
 
-  public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull Object breakpoint) {
-    doShowPopup(project, parent, whereToShow, breakpoint);
+  public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull BreakpointItem breakpoint) {
+    doShowPopup(project, parent, whereToShow, breakpoint.getBreakpoint());
   }
 }

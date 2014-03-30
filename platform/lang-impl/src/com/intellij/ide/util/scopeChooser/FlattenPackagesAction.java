@@ -35,10 +35,12 @@ public final class FlattenPackagesAction extends ToggleAction {
     myUpdate = update;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent event) {
     return DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES;
   }
 
+  @Override
   public void setSelected(AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
     myUpdate.run();

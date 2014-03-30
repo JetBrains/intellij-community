@@ -15,12 +15,13 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -49,15 +50,15 @@ import java.util.regex.Pattern;
 public class ToggleHighlightingMarkupAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();
@@ -117,7 +118,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     else {
       final int[] offset = new int[] {0};
       final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
-      DaemonCodeAnalyzerImpl.processHighlights(
+      DaemonCodeAnalyzerEx.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
         new Processor<HighlightInfo>() {
           @Override
@@ -211,14 +212,14 @@ public class ToggleHighlightingMarkupAction extends AnAction {
   private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening, final boolean compact) {
     sb.append("<");
     if (!opening) sb.append("/");
-    if (cur.isAfterEndOfLine) {
+    if (cur.isAfterEndOfLine()) {
       sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "EOLWarning" : "EOLError");
     }
     else {
       sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "warning" : "error");
     }
     if (opening && !compact) {
-      sb.append(" descr=\"").append(cur.description).append("\"");
+      sb.append(" descr=\"").append(cur.getDescription()).append("\"");
 
     }
     sb.append(">");

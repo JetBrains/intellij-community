@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
@@ -37,7 +38,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -49,6 +49,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +82,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     if (usageTargets == null) {
       PsiElement targetElement = getTargetElement(editor, file);
-      if (targetElement != null) {
+      if (targetElement != null && targetElement != file) {
         if (!(targetElement instanceof NavigationItem)) {
           targetElement = targetElement.getNavigationElement();
         }
@@ -97,10 +99,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
 
         if (results.length > 0) {
-          usageTargets = new UsageTarget[results.length];
-          for (int i = 0; i < results.length; ++i) {
-            usageTargets[i] = new PsiElement2UsageTargetAdapter(results[i].getElement());
-          }
+          usageTargets = ContainerUtil.mapNotNull(results, new Function<ResolveResult, UsageTarget>() {
+            @Override
+            public UsageTarget fun(ResolveResult result) {
+              PsiElement element = result.getElement();
+              return element == null ? null : new PsiElement2UsageTargetAdapter(element);
+            }
+          }, UsageTarget.EMPTY_ARRAY);
         }
       }
     }
@@ -159,7 +164,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (text == null) return;
 
     if (editor instanceof EditorWindow) {
-      // highlight selection in the whole editor, not injected fragment only  
+      // highlight selection in the whole editor, not injected fragment only
       editor = ((EditorWindow)editor).getDelegate();
     }
 
@@ -286,7 +291,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return null;
     }
 
-    PsiElement identifier = getNameIdentifier(element);
+    PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
       return injectedManager.injectedToHost(identifier, identifier.getTextRange());
     }
@@ -402,26 +407,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     int start = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getStartOffset());
     int end = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getEndOffset());
     return new TextRange(start, end);
-  }
-
-  @Nullable
-  public static PsiElement getNameIdentifier(@NotNull PsiElement element) {
-    if (element instanceof PsiNameIdentifierOwner) {
-      return ((PsiNameIdentifierOwner)element).getNameIdentifier();
-    }
-
-    if (element.isPhysical() &&
-        element instanceof PsiNamedElement &&
-        element.getContainingFile() != null &&
-        element.getTextRange() != null) {
-      // Quite hacky way to get name identifier. Depends on getTextOffset overriden properly.
-      final PsiElement potentialIdentifier = element.findElementAt(element.getTextOffset() - element.getTextRange().getStartOffset());
-      if (potentialIdentifier != null && Comparing.equal(potentialIdentifier.getText(), ((PsiNamedElement)element).getName(), false)) {
-        return potentialIdentifier;
-      }
-    }
-
-    return null;
   }
 
   public static void setStatusText(Project project, final String elementName, int refCount, boolean clearHighlights) {

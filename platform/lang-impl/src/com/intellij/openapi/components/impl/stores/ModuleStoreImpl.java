@@ -119,10 +119,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     public void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
-      final List attributes = rootElement.getAttributes();
-      for (Object attribute : attributes) {
-        final Attribute attr = (Attribute)attribute;
-        myOptions.put(attr.getName(), attr.getValue());
+      for (Attribute attribute : rootElement.getAttributes()) {
+        myOptions.put(attribute.getName(), attribute.getValue());
       }
     }
 
@@ -157,7 +155,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     @Override
     protected int computeHash() {
-      return super.computeHash()*31 + myOptions.hashCode();
+      return super.computeHash() * 31 + myOptions.hashCode();
     }
 
     @Override
@@ -252,6 +250,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);

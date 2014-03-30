@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,13 @@ public class CompositeFilter implements Filter, FilterMixin {
       Filter filter = filters.get(i);
       if (!dumb || DumbService.isDumbAware(filter)) {
         long t0 = System.currentTimeMillis();
-        Result result = filter.applyFilter(line, entireLength);
+        Result result = null;
+        try {
+          result = filter.applyFilter(line, entireLength);
+        }
+        catch (Throwable t) {
+          throw new RuntimeException("Error while applying " + filter + " to '"+line+"'", t);
+        }
         finalResult = merge(finalResult, result);
         t0 = System.currentTimeMillis() - t0;
         if (t0 > 1000) {

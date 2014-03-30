@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,31 +42,46 @@ public class ScreenUtil {
 
   private ScreenUtil() { }
 
-  public static boolean isVisible(Rectangle bounds) {
-    final Rectangle intersection = getScreenBounds().intersection(bounds);
-    final int sq1 = intersection.width * intersection.height;
-    final int sq2 = bounds.width * bounds.height;
-    if (sq1 == 0 || sq2 == 0) return false;
-    return (double)sq1 / (double)sq2 > 0.1;
+  public static boolean isVisible(@NotNull Rectangle bounds) {
+    if (bounds.isEmpty()) return false;
+    Rectangle[] allScreenBounds = getAllScreenBounds();
+    for (Rectangle screenBounds : allScreenBounds) {
+      final Rectangle intersection = screenBounds.intersection(bounds);
+      if (intersection.isEmpty()) continue;
+      final int sq1 = intersection.width * intersection.height;
+      final int sq2 = bounds.width * bounds.height;
+      return (double)sq1 / (double)sq2 > 0.1;
+    }
+    return false;
   }
 
-  public static Rectangle getScreenBounds() {
-    Rectangle screenBounds = new Rectangle();
+  public static Rectangle getMainScreenBounds() {
+    GraphicsConfiguration graphicsConfiguration =
+      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    Rectangle bounds = graphicsConfiguration.getBounds();
+    applyInsets(bounds, getScreenInsets(graphicsConfiguration));
+    return bounds;
+  }
+
+  private static Rectangle[] getAllScreenBounds() {
     final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     final GraphicsDevice[] devices = env.getScreenDevices();
-    for (final GraphicsDevice device : devices) {
-      screenBounds = screenBounds.union(device.getDefaultConfiguration().getBounds());
+    Rectangle[] result = new Rectangle[devices.length];
+    for (int i = 0; i < devices.length; i++) {
+      GraphicsDevice device = devices[i];
+      GraphicsConfiguration configuration = device.getDefaultConfiguration();
+      result[i] = new Rectangle(configuration.getBounds());
+      applyInsets(result[i], getScreenInsets(configuration));
     }
-    return screenBounds;
+    return result;
   }
 
-  public static Rectangle getScreenRectangle(Point p) {
+  public static Rectangle getScreenRectangle(@NotNull Point p) {
     double distance = -1;
     Rectangle answer = null;
 
-    for (GraphicsDevice device : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-      GraphicsConfiguration config = device.getDefaultConfiguration();
-      final Rectangle rect = applyInsets(config.getBounds(), getScreenInsets(config));
+    Rectangle[] allScreenBounds = getAllScreenBounds();
+    for (Rectangle rect : allScreenBounds) {
       if (rect.contains(p)) {
         return rect;
       }
@@ -149,7 +165,7 @@ public class ScreenUtil {
   }
 
   private static Insets calcInsets(GraphicsConfiguration gc) {
-    if (Patches.SUN_BUG_ID_9000030 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
+    if (Patches.SUN_BUG_ID_7172665 && GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices().length > 1) {
       return new Insets(0, 0, 0, 0);
     }
 

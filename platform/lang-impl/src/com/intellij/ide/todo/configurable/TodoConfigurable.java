@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -95,6 +96,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return false;
   }
 
+  @Override
   public boolean isModified() {
     // This method is always invoked before close configuration dialog or leave "ToDo" page.
     // So it's a good place to commit all changes.
@@ -102,6 +104,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     return arePatternsModified() || areFiltersModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     stopEditing();
     if (arePatternsModified()) {
@@ -114,6 +117,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
     myPatternsModel.removeTableModelListener(myPatternsTable);
@@ -123,6 +127,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     myFiltersTable = null;
   }
 
+  @Override
   public JComponent createComponent() {
     // Panel with patterns
     PanelWithButtons patternsPanel = new PanelWithButtons() {
@@ -130,10 +135,12 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         initPanel();
       }
 
+      @Override
       protected String getLabelText() {
         return IdeBundle.message("label.todo.patterns");
       }
 
+      @Override
       protected JComponent createMainComponent() {
         // JTable with TodoPaterns
         myPatternsTable = new Table(myPatternsModel);
@@ -175,7 +182,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
             @Override
             public void run(AnActionButton button) {
               stopEditing();
-              TodoPattern pattern = new TodoPattern();
+              TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
               PatternDialog dialog = new PatternDialog(myPanel, pattern);
               dialog.setTitle(IdeBundle.message("title.add.todo.pattern"));
               dialog.show();
@@ -216,6 +223,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         return panel;
       }
 
+      @Override
       protected JButton[] createButtons() {
         return new JButton[]{};
       }
@@ -236,10 +244,12 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         initPanel();
       }
 
+      @Override
       protected String getLabelText() {
         return IdeBundle.message("label.todo.filters");
       }
 
+      @Override
       protected JComponent createMainComponent() {
         myFiltersTable = new Table(myFiltersModel);
         myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
@@ -289,6 +299,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         return panel;
       }
 
+      @Override
       protected JButton[] createButtons() {
         return new JButton[]{};
       }
@@ -373,15 +384,18 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.todo");
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "preferences.toDoOptions";
   }
 
+  @Override
   public void reset() {
     // Patterns
     myPatterns.clear();
@@ -401,6 +415,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   private final class MyFilterNameTableCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       TodoFilter filter = myFilters.get(row);
@@ -419,11 +434,13 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

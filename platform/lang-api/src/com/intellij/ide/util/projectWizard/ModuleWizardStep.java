@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
@@ -31,8 +32,16 @@ public abstract class ModuleWizardStep extends StepAdapter {
   protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
   public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
 
+  @Override
   public abstract JComponent getComponent();
+
+  /** Commits data from UI into ModuleBuilder and WizardContext */
   public abstract void updateDataModel();
+
+  /** Update UI from ModuleBuilder and WizardContext */
+  public void updateStep() {
+    // empty by default
+  }
 
   @NonNls public String getHelpId() {
     return null;
@@ -43,13 +52,12 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void onStepLeaving() {
-    // empty by default
   }
 
-  public void updateStep() {
-    // empty by default
+  public void onWizardFinished() throws CommitStepException {
   }
 
+  @Override
   public Icon getIcon() {
     return ICON;
   }

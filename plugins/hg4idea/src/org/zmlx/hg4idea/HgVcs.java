@@ -12,8 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -22,9 +27,9 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -34,9 +39,10 @@ import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
@@ -49,14 +55,17 @@ import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
+import org.zmlx.hg4idea.roots.HgIntegrationEnabler;
 import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
-import org.zmlx.hg4idea.status.ui.HgCurrentBranchStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgHideableWidget;
 import org.zmlx.hg4idea.status.ui.HgIncomingOutgoingWidget;
 import org.zmlx.hg4idea.status.ui.HgStatusWidget;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,11 +79,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
-  public static final String HG_EXECUTABLE_FILE_NAME = (SystemInfo.isWindows ? "hg.exe" : "hg");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   private static final String ORIG_FILE_PATTERN = "*.orig";
+  @Nullable public static final String HGENCODING = System.getenv("HGENCODING");
 
   private final HgChangeProvider changeProvider;
   private final HgRollbackEnvironment rollbackEnvironment;
@@ -83,7 +92,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
-  private final HgCachingCommitedChangesProvider commitedChangesProvider;
+  private final HgCachingCommittedChangesProvider committedChangesProvider;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -97,10 +106,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private CommitExecutor myCommitAndPushExecutor;
 
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
-  private HgCurrentBranchStatusUpdater myHgCurrentBranchStatusUpdater;
   private HgStatusWidget myStatusWidget;
   private HgIncomingOutgoingWidget myIncomingWidget;
   private HgIncomingOutgoingWidget myOutgoingWidget;
+  @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
   public HgVcs(Project project,
                @NotNull HgGlobalSettings globalSettings,
@@ -117,7 +126,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
-    commitedChangesProvider = new HgCachingCommitedChangesProvider(project, this);
+    committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }
@@ -189,8 +198,13 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public boolean fileListenerIsSynchronous() {
+    return false;
+  }
+
+  @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return commitedChangesProvider;
+    return committedChangesProvider;
   }
 
   @Override
@@ -213,7 +227,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
         final S sParent = in.get(j);
         final VirtualFile parent = convertor.convert(sParent);
         // if the parent is an ancestor of the child and that they share common root, the child is removed
-        if (VfsUtil.isAncestor(parent, child, false) && VfsUtil.isAncestor(childRoot, parent, false)) {
+        if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
           //noinspection AssignmentToForLoopParameter
           --i;
@@ -223,7 +237,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
     return in;
   }
-
 
   @Override
   public RootsConvertor getCustomConvertor() {
@@ -253,22 +266,23 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
-    super.activate();
-
-    // validate hg executable on start
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getExecutableValidator().checkExecutableAndNotifyIfNeeded();
-    }
+    // validate hg executable on start and update hg version
+    checkExecutableAndVersion();
 
     // status bar
     myStatusWidget = new HgStatusWidget(this, getProject(), projectSettings);
     myStatusWidget.activate();
 
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
-    myIncomingWidget.activate();
-
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
-    myOutgoingWidget.activate();
+
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        myIncomingWidget.activate();
+        myOutgoingWidget.activate();
+      }
+    }, ModalityState.NON_MODAL);
 
     // updaters and listeners
     myHgRemoteStatusUpdater =
@@ -276,13 +290,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
                                 projectSettings);
     myHgRemoteStatusUpdater.activate();
 
-    myHgCurrentBranchStatusUpdater = new HgCurrentBranchStatusUpdater(this, myStatusWidget.getCurrentBranchStatus());
-    myHgCurrentBranchStatusUpdater.activate();
-
     messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         Project project = event.getManager().getProject();
         project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project, null);
       }
@@ -305,25 +316,27 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myProject.getMessageBus().syncPublisher(BRANCH_TOPIC).update(myProject, null);
   }
 
+  private void checkExecutableAndVersion() {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+      checkVersion();
+    }
+  }
+
   @Override
   public void deactivate() {
-    if (null != myHgRemoteStatusUpdater) {
+    if (myHgRemoteStatusUpdater != null) {
       myHgRemoteStatusUpdater.deactivate();
       myHgRemoteStatusUpdater = null;
     }
-    if (null != myHgCurrentBranchStatusUpdater) {
-      myHgCurrentBranchStatusUpdater.deactivate();
-      myHgCurrentBranchStatusUpdater = null;
-    }
-    if (null != myStatusWidget) {
+    if (myStatusWidget != null) {
       myStatusWidget.deactivate();
       myStatusWidget = null;
     }
-    if (null != myIncomingWidget) {
+    if (myIncomingWidget != null) {
       myIncomingWidget.deactivate();
       myIncomingWidget = null;
     }
-    if (null != myOutgoingWidget) {
+    if (myOutgoingWidget != null) {
       myOutgoingWidget.deactivate();
       myOutgoingWidget = null;
     }
@@ -349,15 +362,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
       return null;
     }
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
-  }
-
-  private static String ourTestHgExecutablePath; // path to hg in test mode
-
-  /**
-   * Sets the path to hg executable used in the test mode.
-   */
-  public static void setTestHgExecutablePath(String path) {
-    ourTestHgExecutablePath = path;
   }
 
   @NotNull
@@ -396,7 +400,90 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public VcsType getType() {
+    return VcsType.distributed;
+  }
+
+  @Override
+  @CalledInAwt
+  public void enableIntegration() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        new HgIntegrationEnabler(HgVcs.this).enable(roots);
+      }
+    });
+  }
+
+  @Override
   public CheckoutProvider getCheckoutProvider() {
     return new HgCheckoutProvider();
+  }
+
+  /**
+   * Checks Hg version and updates the myVersion variable.
+   * In the case of nullable or unsupported version reports the problem.
+   */
+  public void checkVersion() {
+    final String executable = getGlobalSettings().getHgExecutable();
+    VcsNotifier vcsNotifier = VcsNotifier.getInstance(myProject);
+    final String SETTINGS_LINK = "settings";
+    final String UPDATE_LINK = "update";
+    NotificationListener linkAdapter = new NotificationListener.Adapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull Notification notification,
+                                        @NotNull HyperlinkEvent e) {
+        if (SETTINGS_LINK.equals(e.getDescription())) {
+          ShowSettingsUtil.getInstance()
+            .showSettingsDialog(myProject, getConfigurable().getDisplayName());
+        }
+        else if (UPDATE_LINK.equals(e.getDescription())) {
+          BrowserUtil.browse("http://mercurial.selenic.com");
+        }
+      }
+    };
+    try {
+      myVersion = HgVersion.identifyVersion(executable);
+      //if version is not supported, but have valid hg executable
+      if (!myVersion.isSupported()) {
+        LOG.info("Unsupported Hg version: " + myVersion);
+        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
+                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
+                                       myVersion, HgVersion.MIN);
+        vcsNotifier.notifyError("Unsupported Hg version", message, linkAdapter);
+      }
+      else if (myVersion.hasUnsupportedExtensions()) {
+        String unsupportedExtensionsAsString = myVersion.getUnsupportedExtensions().toString();
+        LOG.warn("Unsupported Hg extensions: " + unsupportedExtensionsAsString);
+        String message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
+                                       "Please, update your hgrc or Mercurial.ini file", unsupportedExtensionsAsString);
+        vcsNotifier.notifyWarning("Unsupported Hg version", message);
+      }
+    }
+    catch (Exception e) {
+      if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        //sometimes not hg application has version command, but we couldn't parse an answer as valid hg,
+        // so parse(output) throw ParseException, but hg and git executable seems to be valid in this case
+        final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
+        String message = HgVcsMessages.message("hg4idea.unable.to.run.hg", executable);
+        vcsNotifier.notifyError(message,
+                                  String.format(
+                                    reason +
+                                    "<br/> Please check your hg executable path in <a href='" +
+                                    SETTINGS_LINK +
+                                    "'> settings </a>"
+                                  ),
+                                  linkAdapter
+        );
+      }
+    }
+  }
+
+  /**
+   * @return the version number of Hg, which is used by IDEA. Or {@link HgVersion#NULL} if version info is unavailable.
+   */
+  @NotNull
+  public HgVersion getVersion() {
+    return myVersion;
   }
 }

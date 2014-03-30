@@ -40,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -50,9 +51,11 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +82,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private final VirtualFile myHostVirtualFile;
   private final PsiElement myContextElement;
   private final PsiFile myHostPsiFile;
+  private ReferenceInjector myReferenceInjector;
 
   MultiHostRegistrarImpl(@NotNull Project project,
                          @NotNull PsiFile hostPsiFile,
@@ -115,7 +119,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     }
 
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
-      throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
+      ReferenceInjector injector = ReferenceInjector.findById(language.getID());
+      if (injector == null) {
+        throw new UnsupportedOperationException("Cannot inject language '" + language + "' since its getParserDefinition() returns null");
+      }
+      myLanguage = null;
+      myReferenceInjector = injector;
     }
     myLanguage = language;
 
@@ -148,7 +157,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       throw new IllegalArgumentException("rangeInsideHost must lie within host text range. rangeInsideHost:"+rangeInsideHost+"; host textRange:"+
                                          hostTextRange);
     }
-    if (myLanguage == null) {
+    if (myLanguage == null && myReferenceInjector == null) {
       clear();
       throw new IllegalStateException("Seems you haven't called startInjecting()");
     }
@@ -172,7 +181,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       assert after >= before : "Escaper " + textEscaper + "("+textEscaper.getClass()+") must not mangle char buffer";
       if (!result) {
         // if there are invalid chars, adjust the range
-        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
+        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, rangeInsideHost);
         relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
       }
     }
@@ -192,6 +201,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       if (shreds.isEmpty()) {
         throw new IllegalStateException("Seems you haven't called addPlace()");
       }
+      if (myReferenceInjector != null) {
+        addToResults(new Place(shreds), null);
+        return;
+      }
       PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
       //todo restore
       //assert !documentManager.getUncommittedDocumentsUnsafe().contains(myHostDocument) : "document is uncommitted: "+myHostDocument;
@@ -202,16 +215,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
       myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
 
-      DocumentImpl decodedDocument;
-      if (StringUtil.indexOf(outChars, '\r') == -1) {
-        decodedDocument = new DocumentImpl(outChars);
-      }
-      else {
-        decodedDocument = new DocumentImpl("", true);
-        decodedDocument.setAcceptSlashR(true);
-        decodedDocument.replaceString(0,0,outChars);
-      }
-      FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);
+      createDocument(virtualFile);
 
       InjectedFileViewProvider viewProvider = new InjectedFileViewProvider(myPsiManager, virtualFile, documentWindow, myLanguage);
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
@@ -295,6 +299,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     }
   }
 
+  @NotNull
+  private static DocumentEx createDocument(@NotNull LightVirtualFile virtualFile) {
+    CharSequence content = virtualFile.getContent();
+    DocumentImpl document = new DocumentImpl(content, StringUtil.indexOf(content, '\r') >= 0, false);
+    FileDocumentManagerImpl.registerDocument(document, virtualFile);
+    return document;
+  }
+
   // returns true if shreds were set, false if old ones were reused
   private static boolean cacheEverything(@NotNull Place place,
                                          @NotNull DocumentWindowImpl documentWindow,
@@ -354,7 +366,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
 
-  void addToResults(Place place, PsiFile psiFile) {
+  void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
+    addToResults(place, psiFile);
+    myReferenceInjector = from.myReferenceInjector;
+  }
+
+  private void addToResults(Place place, PsiFile psiFile) {
     if (result == null) {
       result = new SmartList<Pair<Place, PsiFile>>();
     }
@@ -375,10 +392,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                   "\nLanguage: "+parsedNode.getPsi().getLanguage()+
                                                   "\nHost file: "+ shreds.get(0).getHost().getContainingFile().getVirtualFile()
         ;
-    for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
-      LeafElement leaf = entry.getKey();
-      String newText = entry.getValue();
-      leaf.rawReplaceWithText(newText);
+    DebugUtil.startPsiModification("injection leaf patching");
+    try {
+      for (Map.Entry<LeafElement, String> entry : patcher.newTexts.entrySet()) {
+        LeafElement leaf = entry.getKey();
+        String newText = entry.getValue();
+        leaf.rawReplaceWithText(newText);
+      }
+    }
+    finally {
+      DebugUtil.finishPsiModification();
     }
 
     TreeUtil.clearCaches((TreeElement)parsedNode);
@@ -481,12 +504,12 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         }
         //in prefix/suffix or spills over to next fragment
         if (range.getStartOffset() < prevHostEndOffset + prefixLength) {
-          range = new TextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
+          range = new UnfairTextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
         }
         TextRange spilled = null;
         if (range.getEndOffset() > shredEndOffset - suffixLength) {
-          spilled = new TextRange(shredEndOffset, range.getEndOffset());
-          range = new TextRange(range.getStartOffset(), shredEndOffset-suffixLength);
+          spilled = new UnfairTextRange(shredEndOffset, range.getEndOffset());
+          range = new UnfairTextRange(range.getStartOffset(), shredEndOffset-suffixLength);
         }
         if (!range.isEmpty()) {
           int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
@@ -520,6 +543,15 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
   @Override
   public String toString() {
-    return result.toString();
+    return String.valueOf(result);
+  }
+
+  @NotNull
+  public PsiFile getHostPsiFile() {
+    return myHostPsiFile;
+  }
+
+  public ReferenceInjector getReferenceInjector() {
+    return myReferenceInjector;
   }
 }

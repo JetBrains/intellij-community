@@ -60,6 +60,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     return myComboBox;
   }
 
+  @Override
   public JComponent getComponent() {
     return myComboBox;
   }
@@ -70,7 +71,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   public JComponent getEditorComponent() {
-    return (JComponent)myEditor.getEditorComponent();
+    return myEditor.getEditorComponent();
   }
 
   public void setEnabled(boolean enable) {
@@ -89,13 +90,12 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   private void initEditor() {
     myEditor = new EditorComboBoxEditor(getProject(), myDebuggerEditorsProvider.getFileType()) {
+      @Override
       public void setItem(Object anObject) {
-        if (anObject == null) {
-          anObject = "";
-        }
-        super.setItem(createDocument((String)anObject));
+        super.setItem(createDocument(StringUtil.notNullize((String)anObject)));
       }
 
+      @Override
       public Object getItem() {
         return ((Document)super.getItem()).getText();
       }
@@ -106,6 +106,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMaximumRowCount(XDebuggerHistoryManager.MAX_RECENT_EXPRESSIONS);
   }
 
+  @Override
   protected void onHistoryChanged() {
     fillComboBox();
   }
@@ -120,6 +121,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     }
   }
 
+  @Override
   protected void doSetText(String text) {
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
@@ -133,15 +135,18 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     }
   }
 
+  @Override
   public String getText() {
     final Object value = myComboBox.isPopupVisible() ? myComboBox.getPopup().getList().getSelectedValue() : myEditor.getItem();
     return StringUtil.notNullize((String)value);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return (JComponent)myComboBox.getEditor().getEditorComponent();
   }
 
+  @Override
   public void selectAll() {
     myComboBox.getEditor().selectAll();
   }

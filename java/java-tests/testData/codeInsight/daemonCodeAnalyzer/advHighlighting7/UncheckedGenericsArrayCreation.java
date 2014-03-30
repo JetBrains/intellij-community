@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Test {
+class Test {
   static <T> List<T> asList(T... tt) {
     System.out.println(tt);
     return null;

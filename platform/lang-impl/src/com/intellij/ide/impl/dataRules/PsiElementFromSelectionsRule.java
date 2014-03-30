@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.psi.PsiElement;
 
 public class PsiElementFromSelectionsRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     final Object[] objects = (Object[])dataProvider.getData(PlatformDataKeys.SELECTED_ITEMS.getName());
     if (objects != null) {

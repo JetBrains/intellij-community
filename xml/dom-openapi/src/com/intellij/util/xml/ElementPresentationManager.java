@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author peter
@@ -43,7 +45,7 @@ public abstract class ElementPresentationManager {
   private static final ConcurrentFactoryMap<Class,Method> ourNameValueMethods = new ConcurrentFactoryMap<Class, Method>() {
     @Nullable
     protected Method create(final Class key) {
-      for (final Method method : ReflectionCache.getMethods(key)) {
+      for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
       if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
         return method;
       }
@@ -132,7 +134,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  public static String getElementName(Object element) {
+  public static String getElementName(@NotNull Object element) {
     for (final Function<Object, String> function : ourNameProviders) {
       final String s = function.fun(element);
       if (s != null) {
@@ -167,7 +169,7 @@ public abstract class ElementPresentationManager {
   }
 
   @Nullable
-  public static Object invokeNameValueMethod(final Object element) {
+  public static Object invokeNameValueMethod(@NotNull final Object element) {
     final Method nameValueMethod = findNameValueMethod(element.getClass());
     if (nameValueMethod == null) {
       return null;

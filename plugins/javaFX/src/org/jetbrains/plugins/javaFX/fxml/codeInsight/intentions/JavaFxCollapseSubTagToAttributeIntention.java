@@ -15,15 +15,21 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
@@ -34,9 +40,25 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescri
 public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseIntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlTag tag = (XmlTag)element.getParent();
-    final XmlAttribute attribute = XmlElementFactory.getInstance(project).createXmlAttribute(tag.getName(), tag.getValue().getText().trim());
+    final String value;
+    if (tag.getSubTags().length == 0) {
+      value = tag.getValue().getText().trim();
+    }
+    else {
+      value = StringUtil.join(tag.getSubTags(), new Function<XmlTag, String>() {
+        @Override
+        public String fun(XmlTag childTag) {
+          final XmlAttribute valueAttr = childTag.getAttribute(FxmlConstants.FX_VALUE);
+          if (valueAttr != null) {
+            return valueAttr.getValue();
+          }
+          return "";
+        }
+      }, ", ");
+    }
+    final XmlAttribute attribute = XmlElementFactory.getInstance(project).createXmlAttribute(tag.getName(), value);
     final XmlTag parentTag = tag.getParentTag();
     parentTag.add(attribute);
     tag.delete();
@@ -46,15 +68,16 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME && element.getParent() instanceof XmlTag) {
       final XmlTag tag = (XmlTag)element.getParent();
-      if (tag.getSubTags().length == 0) {
-        final XmlTag parentTag = tag.getParentTag();
-        if (parentTag != null &&
-            tag.getDescriptor() instanceof JavaFxPropertyElementDescriptor &&
-            parentTag.getDescriptor() instanceof JavaFxClassBackedElementDescriptor) {
-  
-          setText("Collapse tag '" + tag.getName() + "' to attribute");
-          return true;
-        }
+      for (XmlTag xmlTag : tag.getSubTags()) {
+        if (xmlTag.getAttribute(FxmlConstants.FX_VALUE) == null) return false;
+      }
+      final XmlTag parentTag = tag.getParentTag();
+      if (parentTag != null &&
+          tag.getDescriptor() instanceof JavaFxPropertyElementDescriptor &&
+          parentTag.getDescriptor() instanceof JavaFxClassBackedElementDescriptor) {
+
+        setText("Collapse tag '" + tag.getName() + "' to attribute");
+        return true;
       }
     }
     return false;

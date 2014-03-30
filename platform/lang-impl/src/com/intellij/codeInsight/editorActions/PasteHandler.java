@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorTextInsertHandler;
+import com.intellij.openapi.editor.actions.PasteAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,6 +48,7 @@ import com.intellij.util.Producer;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -55,48 +56,48 @@ import java.util.Map;
 
 public class PasteHandler extends EditorActionHandler implements EditorTextInsertHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
-
-  public static final String TRANSFERABLE_PROVIDER = "PasteTransferableProvider";
-  
-  private final EditorActionHandler myOriginalHandler;
-
   private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
+
+  private final EditorActionHandler myOriginalHandler;
 
   public PasteHandler(EditorActionHandler originalAction) {
     myOriginalHandler = originalAction;
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext, final Producer<Transferable> transferableProvider) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-    final Document document = editor.getDocument();
+  public void execute(final Editor editor, final DataContext dataContext) {
+    execute(editor, dataContext, null);
+  }
 
-    if (!FileDocumentManager.getInstance().requestWriting(document, PlatformDataKeys.PROJECT.getData(dataContext))) {
+  @Override
+  public void execute(final Editor editor, final DataContext dataContext, @Nullable final Producer<Transferable> producer) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+
+    final Document document = editor.getDocument();
+    if (!FileDocumentManager.getInstance().requestWriting(document, CommonDataKeys.PROJECT.getData(dataContext))) {
       return;
     }
 
-    DataContext context = new DataContext() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (TRANSFERABLE_PROVIDER.equals(dataId)) {
-          return transferableProvider;
+    DataContext context = dataContext;
+    if (producer != null) {
+      context = new DataContext() {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? producer : dataContext.getData(dataId);
         }
-
-        return dataContext.getData(dataId);
-      }
-    };
-
+      };
+    }
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()) {
+    if (project == null || editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection()
+        || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, context);
       }
       return;
     }
-    
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
+    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, context);
@@ -106,13 +107,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
     document.startGuardedBlockChecking();
     try {
-      for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
+      for (PasteProvider provider : Extensions.getExtensions(EP_NAME)) {
         if (provider.isPasteEnabled(context)) {
           provider.performPaste(context);
           return;
         }
       }
-      doPaste(editor, project, file, document, transferableProvider);
+      doPaste(editor, project, file, document, producer);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -122,28 +123,26 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  @Override
-  public void execute(final Editor editor, final DataContext dataContext) {
-    execute(editor, dataContext, new Producer<Transferable>() {
-      @Override
-      public Transferable produce() {
-        CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-        Transferable contents = copyPasteManager.getContents();
-        if (contents != null) {
-          copyPasteManager.stopKillRings();
-        }
-        
-        return contents;
-      }
-    });
-  }
-
   private static void doPaste(final Editor editor,
                               final Project project,
                               final PsiFile file,
                               final Document document,
-                              final Producer<Transferable> transferableFunction) {
-    Transferable content = transferableFunction.produce();
+                              final Producer<Transferable> producer) {
+    Transferable content = null;
+
+    if (producer != null) {
+      content = producer.produce();
+    }
+    else {
+      CopyPasteManager manager = CopyPasteManager.getInstance();
+      if (manager.areDataFlavorsAvailable(DataFlavor.stringFlavor)) {
+        content = manager.getContents();
+        if (content != null) {
+          manager.stopKillRings();
+        }
+      }
+    }
+
     if (content != null) {
       String text = null;
       try {
@@ -157,7 +156,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
       final Map<CopyPastePostProcessor, TextBlockTransferableData> extraData = new HashMap<CopyPastePostProcessor, TextBlockTransferableData>();
-      for(CopyPastePostProcessor processor: Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+      for (CopyPastePostProcessor processor : Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
         TextBlockTransferableData data = processor.extractTransferableData(content);
         if (data != null) {
           extraData.put(processor, data);
@@ -169,7 +168,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       final CaretModel caretModel = editor.getCaretModel();
       final SelectionModel selectionModel = editor.getSelectionModel();
       final int col = caretModel.getLogicalPosition().column;
-      
+
       // There is a possible case that we want to perform paste while there is an active selection at the editor and caret is located
       // inside it (e.g. Ctrl+A is pressed while caret is not at the zero column). We want to insert the text at selection start column
       // then, hence, inserted block of text should be indented according to the selection start as well.
@@ -181,24 +180,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       else {
         blockIndentAnchorColumn = col;
       }
-      
-      // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to understand that text that is currently
-      // selected at editor (if any) should be removed.
-      //
-      //if (selectionModel.hasSelection()) {
-      //  ApplicationManager.getApplication().runWriteAction(
-      //    new Runnable() {
-      //      public void run() {
-      //        EditorModificationUtil.deleteSelectedText(editor);
-      //      }
-      //    }
-      //  );
-      //}
+
+      // We assume that EditorModificationUtil.insertStringAtCaret() is smart enough to remove currently selected text (if any).
 
       RawText rawText = RawText.fromTransferable(content);
-
       String newText = text;
-      for(CopyPastePreProcessor preProcessor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+      for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
         newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
       }
       int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
@@ -208,18 +195,17 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         indentOptions = CodeInsightSettings.INDENT_BLOCK;
       }
 
-      int length = text.length();
-      final String text1 = text;
-
+      final String _text = text;
       ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           @Override
           public void run() {
-            EditorModificationUtil.insertStringAtCaret(editor, text1, false, true);
+            EditorModificationUtil.insertStringAtCaret(editor, _text, false, true);
           }
         }
       );
 
+      int length = text.length();
       int offset = caretModel.getOffset() - length;
       if (offset < 0) {
         length += offset;
@@ -232,12 +218,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       selectionModel.removeSelection();
 
       final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
-      for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
+      for (Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e : extraData.entrySet()) {
         //noinspection unchecked
         e.getKey().processTransferableData(project, editor, bounds, caretOffset, indented, e.getValue());
       }
 
-      boolean pastedTextContainsWhiteSpacesOnly = 
+      boolean pastedTextContainsWhiteSpacesOnly =
         CharArrayUtil.shiftForward(document.getCharsSequence(), bounds.getStartOffset(), " \n\t") >= bounds.getEndOffset();
 
       VirtualFile virtualFile = file.getVirtualFile();
@@ -253,13 +239,13 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                     indentBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn);
                   }
                   break;
-  
+
                 case CodeInsightSettings.INDENT_EACH_LINE:
                   if (!indented.get()) {
                     indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
                   }
                   break;
-  
+
                 case CodeInsightSettings.REFORMAT_BLOCK:
                   indentEachLine(project, editor, bounds.getStartOffset(), bounds.getEndOffset()); // this is needed for example when inserting a comment before method
                   reformatBlock(project, editor, bounds.getStartOffset(), bounds.getEndOffset());
@@ -293,42 +279,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     else {
       indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
-    } 
-    
-    
-    //boolean hasNewLine = false;
-    //for (int i = endOffset - 1; i >= startOffset; i--) {
-    //  char c = chars.charAt(i);
-    //  if (c == '\n' || c == '\r') {
-    //    hasNewLine = true;
-    //    break;
-    //  }
-    //  if (c != ' ' && c != '\t') return; // do not indent if does not end with line separator
-    //}
-    //
-    //if (!hasNewLine) return;
-    //int lineStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
-    //int spaceEnd = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    //if (startOffset <= spaceEnd) { // we are in starting spaces
-    //  if (lineStart != startOffset) {
-    //    String deletedS = chars.subSequence(lineStart, startOffset).toString();
-    //    document.deleteString(lineStart, startOffset);
-    //    startOffset = lineStart;
-    //    endOffset -= deletedS.length();
-    //    document.insertString(endOffset, deletedS);
-    //    LogicalPosition pos = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line, originalCaretCol);
-    //    editor.getCaretModel().moveToLogicalPosition(pos);
-    //  }
-    //
-    //  PsiDocumentManager.getInstance(project).commitAllDocuments();
-    //  PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    //  if (LanguageFormatting.INSTANCE.forContext(file) != null) {
-    //    indentBlockWithFormatter(project, document, startOffset, endOffset, file);
-    //  }
-    //  else {
-    //    indentPlainTextBlock(document, startOffset, endOffset, originalCaretCol);
-    //  }
-    //}
+    }
   }
 
   private static void indentEachLine(Project project, Editor editor, int startOffset, int endOffset) {
@@ -349,7 +300,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       //     int i = 1;
       //     int j = 1;
       // }
-      // 
+      //
       //
       // We get the following on paste then:
       // if (true) {
@@ -408,17 +359,17 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       linesToAdjustIndent++;
     }
-    
+
     String indentString = StringUtil.repeatSymbol(' ', indentLevel);
 
     for (; linesToAdjustIndent > 0; linesToAdjustIndent--) {
       int lineStartOffset = document.getLineStartOffset(++line);
       document.insertString(lineStartOffset, indentString);
-    } 
+    }
   }
 
   private static void indentBlockWithFormatter(Project project, Document document, int startOffset, int endOffset, PsiFile file) {
-    
+
     // Algorithm: the main idea is to process the first line of the pasted block, adjust its indent if necessary, calculate indent
     // adjustment string and apply to each line of the pasted block starting from the second one.
     //
@@ -448,12 +399,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     //       Example:
     //           [pasted line 1
     //         pasted line 2]
-    //       We adjust the first line via formatter then and apply first line's indent to all subsequent pasted lines. 
-    
+    //       We adjust the first line via formatter then and apply first line's indent to all subsequent pasted lines.
+
     CharSequence chars = document.getCharsSequence();
     final int firstLine = document.getLineNumber(startOffset);
     final int firstLineStart = document.getLineStartOffset(firstLine);
-    
+
     // There is a possible case that we paste block that ends with new line that is empty or contains only white space symbols.
     // We want to preserve indent for the original document line where paste was performed.
     // Example:
@@ -477,7 +428,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         break;
       }
     }
-    
+
     final int lastLine;
     if (saveLastLineIndent) {
       lastLine = document.getLineNumber(endOffset) - 1;
@@ -490,7 +441,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
           document.deleteString(start, i);
         }
       }
-      
+
       // Insert white space from the start line of the pasted block.
       int indentToKeepEndOffset = Math.min(startOffset, CharArrayUtil.shiftForward(chars, firstLineStart, " \t"));
       if (indentToKeepEndOffset > firstLineStart) {
@@ -499,10 +450,10 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
     else {
       lastLine = document.getLineNumber(endOffset);
-    } 
-    
+    }
+
     final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
-    
+
     // Handle a situation when pasted block doesn't start a new line.
     if (chars.charAt(startOffset) != '\n' && i > 0 && chars.charAt(i) != '\n') {
       int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
@@ -510,7 +461,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         CharSequence toInsert = chars.subSequence(firstLineStart, firstNonWsOffset);
         for (int line = firstLine + 1; line <= lastLine; line++) {
           document.insertString(document.getLineStartOffset(line), toInsert);
-        } 
+        }
       }
       return;
     }
@@ -521,7 +472,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       return;
     }
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    
+
     final int j = CharArrayUtil.shiftForward(chars, startOffset, " \t\n");
     if (j >= endOffset) {
       // Pasted text contains white space/line feed symbols only, do nothing.
@@ -531,7 +482,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     final int anchorLine = document.getLineNumber(j);
     final int anchorLineStart = document.getLineStartOffset(anchorLine);
     codeStyleManager.adjustLineIndent(file, j);
-    
+
     // Handle situation when pasted block starts with non-white space symbols.
     if (anchorLine == firstLine && j == startOffset) {
       int indentOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
@@ -543,7 +494,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       return;
     }
-    
+
     // Handle situation when pasted block starts from white space symbols. Assume that the pasted text started at the line start,
     // i.e. correct indentation level is stored at the blocks structure.
     final int firstNonWsOffset = CharArrayUtil.shiftForward(chars, anchorLineStart, " \t");
@@ -558,7 +509,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       return;
     }
-    
+
     // We've pasted text to the non-first column and exact white space between the line start and caret position on the moment of paste
     // has been removed by formatter during 'adjust line indent'
     // Example:
@@ -581,8 +532,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
       else {
         desiredSymbolsToRemove = -diff;
-      }  
-        
+      }
+
       for (int line = anchorLine + 1; line <= lastLine; line++) {
         int currentLineStart = document.getLineStartOffset(line);
         int currentLineIndentOffset = CharArrayUtil.shiftForward(chars, currentLineStart, " \t");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.braces;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -57,59 +56,21 @@ public abstract class BaseBracesIntention extends MutablyNamedIntention {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiIfStatement) {
       final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-      if (isBetweenThen(ifStatement, element)) {
-        return ifStatement.getThenBranch();
-      }
-
-      if (isBetweenElse(ifStatement, element)) {
+      final PsiStatement thenBranch = ifStatement.getThenBranch();
+      final int offset = element.getTextOffset();
+      if (thenBranch != null && offset > thenBranch.getTextOffset()) {
+        final PsiKeyword elseElement = ifStatement.getElseElement();
+        if (elseElement == null || offset < elseElement.getTextOffset()) {
+          // no 'else' branch or after 'then' branch but before 'else' keyword
+          return null;
+        }
         return ifStatement.getElseBranch();
       }
+      return thenBranch;
     }
-    if (parent instanceof PsiWhileStatement) {
-      return ((PsiWhileStatement)parent).getBody();
-    }
-    if (parent instanceof PsiDoWhileStatement) {
-      return ((PsiDoWhileStatement)parent).getBody();
-    }
-    if (parent instanceof PsiForStatement) {
-      return ((PsiForStatement)parent).getBody();
-    }
-    if (parent instanceof PsiForeachStatement) {
-      return ((PsiForeachStatement)parent).getBody();
+    if (parent instanceof PsiLoopStatement) {
+      return ((PsiLoopStatement)parent).getBody();
     }
     return null;
-  }
-
-  private static boolean isBetweenThen(@NotNull PsiIfStatement ifStatement, @NotNull PsiElement element) {
-    final PsiElement rParenth = ifStatement.getRParenth();
-    final PsiElement elseElement = ifStatement.getElseElement();
-
-    if (rParenth == null) {
-      return false;
-    }
-
-    if (elseElement == null) {
-      return true;
-    }
-
-    final TextRange rParenthTextRangeTextRange = rParenth.getTextRange();
-    final TextRange elseElementTextRange = elseElement.getTextRange();
-    final TextRange elementTextRange = element.getTextRange();
-
-    return new TextRange(rParenthTextRangeTextRange.getEndOffset(), elseElementTextRange.getStartOffset()).contains(elementTextRange);
-  }
-
-  private static boolean isBetweenElse(@NotNull PsiIfStatement ifStatement, @NotNull PsiElement element) {
-    final PsiElement elseElement = ifStatement.getElseElement();
-
-    if (elseElement == null) {
-      return false;
-    }
-
-    final TextRange ifStatementTextRange = ifStatement.getTextRange();
-    final TextRange elseElementTextRange = elseElement.getTextRange();
-    final TextRange elementTextRange = element.getTextRange();
-
-    return new TextRange(elseElementTextRange.getStartOffset(), ifStatementTextRange.getEndOffset()).contains(elementTextRange);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,6 @@ import java.util.Map;
  */
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   protected final PsiManager myManager;
-  private PsiJavaFile myDummyJavaFile;
 
   private static final String DUMMY_FILE_NAME = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
 
@@ -255,7 +255,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   public PsiType createTypeFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, false);
   }
- 
+
   @NotNull
   @Override
   public PsiTypeElement createTypeElementFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
@@ -327,7 +327,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     return (PsiExpression)element;
   }
 
-  protected PsiJavaFile createDummyJavaFile(final String text) {
+  protected PsiJavaFile createDummyJavaFile(@NonNls final String text) {
     final FileType type = JavaFileType.INSTANCE;
     return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(DUMMY_FILE_NAME, type, text);
   }
@@ -381,14 +381,6 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       throw new IncorrectOperationException("Incorrect primitive type \"" + text + "\".");
     }
     return annotations.length == 0 ? primitiveType : new PsiPrimitiveType(text, annotations);
-  }
-
-  public PsiJavaFile getDummyJavaFile() {
-    if (myDummyJavaFile == null) {
-      myDummyJavaFile = createDummyJavaFile("");
-    }
-
-    return myDummyJavaFile;
   }
 
   public static PsiPrimitiveType getPrimitiveType(final String text) {

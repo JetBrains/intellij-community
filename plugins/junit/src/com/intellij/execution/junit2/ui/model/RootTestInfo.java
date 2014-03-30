@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.segments.ObjectReader;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 /**
 * User: anna
@@ -47,7 +48,7 @@ public class RootTestInfo extends TestInfo {
   public void readFrom(ObjectReader reader) {
   }
 
-  public Location getLocation(final Project project) {
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
     return null;
   }
 

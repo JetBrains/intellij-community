@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,6 +171,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return startOffsetOfNextLine == 0 || getText().charAt(startOffsetOfNextLine - 1) != '\n' ? startOffsetOfNextLine : startOffsetOfNextLine - 1;
   }
 
+  @NotNull
   @Override
   public String getText() {
     CachedText cachedText = myCachedText;
@@ -208,6 +210,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @NotNull
   public CharSequence getCharsSequence() {
     return getText();
+  }
+
+  @NotNull
+  @Override
+  public CharSequence getImmutableCharSequence() {
+    return ImmutableCharSequence.asImmutable(getText());
   }
 
   @Override
@@ -614,6 +622,16 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                  int start,
+                                  int end,
+                                  boolean greedyToLeft,
+                                  boolean greedyToRight,
+                                  int layer) {
+    throw new IllegalStateException();
+  }
+
+  @Override
   public boolean isInBulkUpdate() {
     return false;
   }
@@ -734,11 +752,12 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     synchronized (myLock) {
       Segment hostRangeMarker = myShreds.get(0).getHostRangeMarker();
       if (hostRangeMarker == null || end - start > hostRangeMarker.getEndOffset() - hostRangeMarker.getStartOffset()) return false;
+      ProperTextRange query = new ProperTextRange(start, end);
       for (PsiLanguageInjectionHost.Shred shred : myShreds) {
         Segment hostRange = shred.getHostRangeMarker();
         if (hostRange == null) continue;
         TextRange textRange = ProperTextRange.create(hostRange);
-        if (textRange.contains(new ProperTextRange(start, end))) return true;
+        if (textRange.contains(query)) return true;
       }
       return false;
     }

@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +41,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +56,8 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
   @NotNull private final String mySupportId;
-  private String myDisplayName;
+
+  private String myDisplayName = "";
 
   private String myInjectedLanguageId = "";
   private String myPrefix = "";
@@ -65,7 +68,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   private Pattern myCompiledValuePattern;
   private boolean mySingleFile;
 
-  public BaseInjection(final String id) {
+  public BaseInjection(@NotNull final String id) {
     mySupportId = id;
   }
 
@@ -96,7 +99,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return myDisplayName;
   }
 
-  public void setDisplayName(String displayName) {
+  public void setDisplayName(@NotNull String displayName) {
     myDisplayName = displayName;
   }
 
@@ -188,6 +191,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
     final BaseInjection that = (BaseInjection)o;
 
+    if (!Comparing.equal(getDisplayName(), that.getDisplayName())) return false;
     if (!sameLanguageParameters(that)) return false;
     if (myPlaces.length != that.myPlaces.length) return false;
     for (int i = 0, len = myPlaces.length; i < len; i++) {
@@ -227,31 +231,20 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public void loadState(Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
-    final Element e = element.getChild(getClass().getSimpleName());
-    if (e != null) {
-      myInjectedLanguageId = JDOMExternalizer.readString(e, "LANGUAGE");
-      myPrefix = JDOMExternalizer.readString(e, "PREFIX");
-      mySuffix = JDOMExternalizer.readString(e, "SUFFIX");
-      setValuePattern(JDOMExternalizer.readString(e, "VALUE_PATTERN"));
-      mySingleFile = JDOMExternalizer.readBoolean(e, "SINGLE_FILE");
-      readExternalImpl(e);
-    }
-    else {
-      myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
-      myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
-      myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
-      mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
-      setValuePattern(element.getChildText("value-pattern"));
-      mySingleFile = element.getChild("single-file") != null;
-      readExternalImpl(element);
-      final List<Element> placeElements = (List<Element>)element.getChildren("place");
-      myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
-      for (int i = 0, placeElementsSize = placeElements.size(); i < placeElementsSize; i++) {
-        Element placeElement = placeElements.get(i);
-        final boolean enabled = !Boolean.parseBoolean(placeElement.getAttributeValue("disabled"));
-        final String text = placeElement.getText();
-        myPlaces[i] = new InjectionPlace(helper.createElementPattern(text, getDisplayName()), enabled);
-      }
+    myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
+    myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
+    myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
+    mySuffix = StringUtil.notNullize(element.getChildText("suffix"));
+    setValuePattern(element.getChildText("value-pattern"));
+    mySingleFile = element.getChild("single-file") != null;
+    readExternalImpl(element);
+    final List<Element> placeElements = element.getChildren("place");
+    myPlaces = InjectionPlace.ARRAY_FACTORY.create(placeElements.size());
+    for (int i = 0, placeElementsSize = placeElements.size(); i < placeElementsSize; i++) {
+      Element placeElement = placeElements.get(i);
+      final boolean enabled = !Boolean.parseBoolean(placeElement.getAttributeValue("disabled"));
+      final String text = placeElement.getText();
+      myPlaces[i] = new InjectionPlace(helper.createElementPattern(text, getDisplayName()), enabled);
     }
     if (myPlaces.length == 0) {
       generatePlaces();
@@ -382,6 +375,10 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
         }
       }
     }
+  }
+
+  public boolean acceptForReference(PsiElement element) {
+    return acceptsPsiElement(element);
   }
 
   @Override

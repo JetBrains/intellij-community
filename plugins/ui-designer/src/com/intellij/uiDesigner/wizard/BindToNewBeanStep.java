@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.wizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -109,10 +108,6 @@ final class BindToNewBeanStep extends StepAdapter{
     }
 
     myData.myGenerateIsModified = myChkIsModified.isSelected();
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/com/intellij/uiDesigner/icons/dataBinding.png");
   }
 
   private final class MyTableModel extends AbstractTableModel{

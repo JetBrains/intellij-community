@@ -18,43 +18,39 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 
-public abstract class JUnitConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
-  public static final RuntimeConfigurationProducer[] PROTOTYPES = new RuntimeConfigurationProducer[]{
-        new AllInPackageConfigurationProducer(),
-        new TestMethodConfigurationProducer(),
-        new TestClassConfigurationProducer()};
+public abstract class JUnitConfigurationProducer extends JavaRunConfigurationProducerBase<JUnitConfiguration> implements Cloneable {
 
   public JUnitConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }
 
-  
-  public int compareTo(final Object o) {
-    if (o instanceof TestMethodConfigurationProducer) return -PREFERED;
-    return PREFERED;
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return !other.isProducedBy(TestMethodConfigurationProducer.class);
   }
 
   @Override
-  protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
-                                                                 ConfigurationContext context) {
+  public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
-      return null;
+      return false;
     }
-    final Module predefinedModule =
-      ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
-        .getConfigurationTemplate(getConfigurationFactory())
-        .getConfiguration()).getConfigurationModule().getModule();
-    location = JavaExecutionUtil.stepIntoSingleClass(location);
+    final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(JUnitConfigurationType.getInstance());
+    final Location contextLocation = context.getLocation();
+
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? ((PsiMemberParameterizedLocation)contextLocation).getParamSetName() : null;
+    assert contextLocation != null;
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     final PsiElement element = location.getPsiElement();
     final PsiClass testClass = JUnitUtil.getTestClass(element);
     final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
@@ -66,19 +62,26 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     } else {
       testPackage = null;
     }
-    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-      final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
-      final TestObject testobject = unitConfiguration.getTestObject();
-      if (testobject != null) {
-        if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage)) {
-          final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
-          if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
-          if (Comparing.equal(predefinedModule, configurationModule)) {
-            return existingConfiguration;
-          }
+    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+    RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject())
+      .getConfigurationTemplate(getConfigurationFactory());
+    final Module predefinedModule =
+      ((JUnitConfiguration)template
+        .getConfiguration()).getConfigurationModule().getModule();
+    final String vmParameters = predefinedConfiguration instanceof JUnitConfiguration ? ((JUnitConfiguration)predefinedConfiguration).getVMParameters() : null;
+
+    if (vmParameters != null && !Comparing.strEqual(vmParameters, unitConfiguration.getVMParameters())) return false;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, unitConfiguration.getProgramParameters())) return false;
+    final TestObject testobject = unitConfiguration.getTestObject();
+    if (testobject != null) {
+      if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage, testDir)) {
+        final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
+        if (Comparing.equal(location.getModule(), configurationModule)) return true;
+        if (Comparing.equal(predefinedModule, configurationModule)) {
+          return true;
         }
       }
     }
-    return null;
+    return false;
   }
 }

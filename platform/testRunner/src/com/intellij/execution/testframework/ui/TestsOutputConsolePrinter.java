@@ -130,7 +130,8 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   private boolean isRoot() {
-    return myCurrentTest != null && myCurrentTest.getParent() == myUnboundOutputRoot;
+    final AbstractTestProxy currentTest = myCurrentTest;
+    return currentTest != null && currentTest.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {

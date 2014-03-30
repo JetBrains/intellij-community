@@ -71,13 +71,13 @@ public class PluginBuildParticipant extends BuildParticipant {
 
   @Override
   public Artifact createArtifact(CompileContext context) {
-    Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(myModule).getSdk());
-    if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
+    Sdk sdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(myModule).getSdk());
+    if (sdk != null && IdeaJdk.isFromIDEAProject(sdk.getHomePath())) {
       return null;
     }
 
-    if (jdk == null) {
-      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("jdk.type.incorrect", myModule.getName()), null, -1, -1);
+    if (sdk == null) {
+      context.addMessage(CompilerMessageCategory.ERROR, DevKitBundle.message("sdk.type.incorrect", myModule.getName()), null, -1, -1);
       return null;
     }
 
@@ -138,7 +138,7 @@ public class PluginBuildParticipant extends BuildParticipant {
 
 
     // libraries
-    final VirtualFile libDir = jdk.getHomeDirectory().findFileByRelativePath(LIB_DIRECTORY);
+    final VirtualFile libDir = sdk.getHomeDirectory().findFileByRelativePath(LIB_DIRECTORY);
     for (Library library : libs) {
       boolean hasDirsOnly = true;
       VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);

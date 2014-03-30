@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,39 +15,38 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
+import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public class StringFactory {
-  private static final Constructor<String> sharingCtr;    // String(char[], boolean). Works since JDK1.7, earlier jdks have too slow reflection anyway
+  // String(char[], boolean). Works since JDK1.7, earlier JDKs have too slow reflection anyway
+  private static final ConstructorAccessor ourConstructorAccessor;
 
   static {
-    Constructor<String> newC = null;
+    ConstructorAccessor constructorAccessor = null;
     try {
-      newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
-      newC.setAccessible(true);
+      Constructor<String> newC = String.class.getDeclaredConstructor(char[].class, boolean.class);
+      constructorAccessor = ReflectionUtil.getConstructorAccessor(newC);
     }
-    catch (NoSuchMethodException ignored) {
+    catch (Exception ignored) {
     }
-    sharingCtr = newC;
+    ourConstructorAccessor = constructorAccessor;
   }
 
+
   /**
-   * @return new instance of String which backed by chars array.
+   * @return new instance of String which backed by 'chars' array.
    *
    * CAUTION. EXTREMELY DANGEROUS.
    * DO NOT USE THIS METHOD UNLESS YOU ARE TOO DESPERATE
    */
   @NotNull
   public static String createShared(@NotNull char[] chars) {
-    if (sharingCtr != null) {
-      try {
-        return sharingCtr.newInstance(chars, true);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    if (ourConstructorAccessor != null) {
+      return ReflectionUtil.createInstanceViaConstructorAccessor(ourConstructorAccessor, chars, Boolean.TRUE);
     }
     return new String(chars);
   }

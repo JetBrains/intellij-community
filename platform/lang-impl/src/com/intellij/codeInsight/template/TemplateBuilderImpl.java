@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +59,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageUtil.getTopLevelFile(element);
+    myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
@@ -116,7 +115,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   public void replaceElement(PsiElement element, TextRange textRange, String primaryVariableName, String otherVariableName, boolean alwaysStopAt) {
-    final RangeMarker key = myDocument.createRangeMarker(textRange.shiftRight(element.getTextRange().getStartOffset()));
+    final TextRange elementTextRange = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
+    final RangeMarker key = myDocument.createRangeMarker(textRange.shiftRight(elementTextRange.getStartOffset()));
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, primaryVariableName);
     myVariableExpressions.put(key, otherVariableName);
@@ -195,13 +195,18 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     int start = 0;
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
-      LOG.assertTrue(start <= offset,"container: " + myContainerElement + " markers: " +
-                                     StringUtil.join(myElements, new Function<RangeMarker, String>() {
-                                                       @Override
-                                                       public String fun(RangeMarker rangeMarker) {
-                                                         return "[" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
-                                                       }
-                                                     }, ", "));
+      if (start > offset) {
+        LOG.error("file: " + myFile +
+                  " container: " + myContainerElement +
+                  " markers: " + StringUtil.join(myElements, new Function<RangeMarker, String>() {
+                                    @Override
+                                    public String fun(RangeMarker rangeMarker) {
+                                      final String docString =
+                                        myDocument.getText(new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+                                      return "[[" + docString + "]" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
+                                    }
+                                  }, ", "));
+      }
       template.addTextSegment(text.substring(start, offset));
 
       if (element == mySelection) {
@@ -274,7 +279,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public void run() {
     final Project project = myFile.getProject();
     VirtualFile file = myFile.getVirtualFile();
-    assert file != null;
+    assert file != null: "Virtual file is null for " + myFile;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
 

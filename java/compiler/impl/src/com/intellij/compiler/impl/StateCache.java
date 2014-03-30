@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -92,11 +93,11 @@ public abstract class StateCache<T> {
 
   private PersistentHashMap<String, T> createMap(final File file) throws IOException {
     return new PersistentHashMap<String,T>(file, new EnumeratorStringDescriptor(), new DataExternalizer<T>() {
-      public void save(final DataOutput out, final T value) throws IOException {
+      public void save(@NotNull final DataOutput out, final T value) throws IOException {
         StateCache.this.write(value, out);
       }
 
-      public T read(final DataInput in) throws IOException {
+      public T read(@NotNull final DataInput in) throws IOException {
         return StateCache.this.read(in);
       }
     });

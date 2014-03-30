@@ -24,9 +24,9 @@ import org.jetbrains.jps.model.java.compiler.RmicCompilerOptions;
 @State(
   name = "RmicSettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class RmicConfiguration implements PersistentStateComponent<RmicCompilerOptions> {
   private final RmicCompilerOptions mySettings = new RmicCompilerOptions();

@@ -1,17 +1,32 @@
 /*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * User: anna
  * Date: 27-Jun-2007
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -35,6 +50,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +101,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     addLibrary("/content/anno");
   }
 
-  private void addLibrary(final @NotNull String... annotationsDirs) {
+  private void addLibrary(@NotNull final String... annotationsDirs) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -106,13 +122,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
   @NotNull
   private PsiModifierListOwner getOwner() {
-    CaretModel caretModel = myFixture.getEditor().getCaretModel();
-    int position = caretModel.getOffset();
-    PsiElement element = myFixture.getFile().findElementAt(position);
-    assert element != null;
-    PsiModifierListOwner container = AddAnnotationFix.getContainer(element);
-    assert container != null;
-    return container;
+    return ObjectUtils.assertNotNull(AddAnnotationPsiFix.getContainer(myFixture.getFile(), myFixture.getCaretOffset()));
   }
 
   private void startListening(@NotNull final List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence) {
@@ -275,25 +285,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotNull(fix);
 
     assertFalse(deannotateFix.isAvailable(myProject, editor, file));
-  }
-
-  public void testReadingOldPersistenceFormat() throws Throwable {
-    addDefaultLibrary();
-    myFixture.configureByFiles("content/anno/persistence/annotations.xml");
-    myFixture.configureByFiles("lib/persistence/Test.java");
-
-
-    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myProject);
-    PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
-    PsiParameter parameter = method.getParameterList().getParameters()[0];
-
-    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NULLABLE));
-    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NLS));
-    assertEquals(2, manager.findExternalAnnotations(method).length);
-
-    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL));
-    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NON_NLS));
-    assertEquals(2, manager.findExternalAnnotations(parameter).length);
   }
 
   private static void assertMethodAndParameterAnnotationsValues(ExternalAnnotationsManager manager,

@@ -33,14 +33,18 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
     doTest(false);
   }
   private void doTest(boolean lowercase) {
-    doTest("dataFlow/" + getTestName(lowercase), new DataFlowInspection());
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    doTest("dataFlow/" + getTestName(lowercase), inspection);
   }
 
   private void doTest15() {
     doTest15(false);
   }
   private void doTest15(boolean lowercase) {
-    doTest("dataFlow/" + getTestName(lowercase), new DataFlowInspection(), "java 1.5");
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = false;
+    doTest("dataFlow/" + getTestName(lowercase), inspection, "java 1.5");
   }
 
   public void testNpe1() { doTest(true); }
@@ -81,7 +85,6 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testNullableProblemThroughCast() { doTest15(); }
   public void testNullableThroughVariable() { doTest15(); }
   public void testNullableThroughVariableShouldNotBeReported() { doTest15(); }
-  public void testNullableAssignment() { doTest15(); }
   public void testNullableLocalVariable() { doTest15(); }
   public void testNotNullLocalVariable() { doTest15(); }
   public void testNullableReturn() { doTest15(); }
@@ -115,5 +118,5 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testSwitchEnumCases() { doTest15(); }
 
   public void testSCR15406() { doTest(); }
-  //public void testIDEADEV11033() { doTest15(); }  // added by max, 2007
+  public void testIDEADEV11033() { doTest15(); }
 }

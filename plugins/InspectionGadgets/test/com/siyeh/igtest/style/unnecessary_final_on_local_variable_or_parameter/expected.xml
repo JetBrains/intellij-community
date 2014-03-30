@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>UnnecessaryFinalOnLocalVariableOrParameter.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary 'final' on local variable or parameter</problem_class>
+    <description>Unnecessary &lt;code&gt;final&lt;/code&gt; on parameter 'o' #loc</description>
+  </problem>
+</problems>

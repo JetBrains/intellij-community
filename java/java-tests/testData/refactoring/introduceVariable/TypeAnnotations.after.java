@@ -1,9 +1,7 @@
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE_USE/*, ElementType.TYPE*/})
-@interface TA {
-
-}
+@Target({ElementType.TYPE_USE})
+@interface TA { }
 
 class C {
     void foo () {

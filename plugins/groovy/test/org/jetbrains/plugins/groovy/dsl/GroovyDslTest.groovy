@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.dsl
+
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -32,15 +33,23 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
-  static def descriptor = new DefaultLightProjectDescriptor() {
-    @Override def void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+  private static descriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovyLibraryHome(), TestUtils.GROOVY_JAR);
     }
   }
 
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    descriptor
+  }
+
+
   @Override
   protected String getBasePath() {
-    TestUtils.getTestDataPath() + "groovy/dsl"
+    TestUtils.testDataPath + "groovy/dsl"
   }
 
   private def doCustomTest(String s) {
@@ -151,11 +160,6 @@ class Foo<T> {
      }
     """)
     myFixture.testCompletionTyping(getTestName(false) + ".groovy", '\n', getTestName(false) + "_after.groovy")
-  }
-
-  @NotNull
-  @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
   }
 
   public void testCategoryWhenMethodRenamed() {
@@ -276,6 +280,37 @@ public class MyCategory {
       ensures{re<caret>sult == 2}
     ''')
 
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void testScriptSuperClass() {
+    myFixture.addClass('''\
+      public class Abc {
+        public void foo() {}
+      }
+    ''')
+    addGdsl('''
+      scriptSuperClass(pattern: 'a.groovy', superClass: 'Abc')
+    ''')
+
+    myFixture.configureByText('a.groovy', '''\
+      fo<caret>o()
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
+
+  void testEnumConstructor() {
+    myFixture.configureByText('a.groovy', '''\
+enum Myenum {
+    a<caret>b(1, 2, 4)
+}
+''')
+
+    addGdsl('''
+contribute(currentType("Myenum")) {
+    constructor params:[foo:Integer, bar:Integer, goo:Integer]
+}''')
     assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
   }
 }

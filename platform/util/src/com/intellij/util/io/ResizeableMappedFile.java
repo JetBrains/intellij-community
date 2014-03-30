@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -34,7 +35,16 @@ public class ResizeableMappedFile implements Forceable {
 
   public ResizeableMappedFile(final File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) throws IOException {
-    myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned);
+    this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
+  }
+
+  public ResizeableMappedFile(final File file,
+                              int initialSize,
+                              @Nullable PagedFileStorage.StorageLockContext lockContext,
+                              int pageSize,
+                              boolean valuesAreBufferAligned,
+                              boolean nativeBytesOrder) throws IOException {
+    myStorage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
     boolean exists = file.exists();
     if (!exists || file.length() == 0) {
       if (!exists) FileUtil.createParentDirs(file);
@@ -45,7 +55,8 @@ public class ResizeableMappedFile implements Forceable {
     if (myLogicalSize == 0) {
       try {
         getPagedFileStorage().lock();
-        resize(initialSize);
+        // use direct call to storage.resize() so that IOException is not masked with RuntimeException
+        myStorage.resize(initialSize);
       }
       finally {
         getPagedFileStorage().unlock();
@@ -69,7 +80,7 @@ public class ResizeableMappedFile implements Forceable {
     return myStorage.length();
   }
 
-  private void resize(final int size) {
+  private void resize(final long size) {
     try {
       myStorage.resize(size);
     }
@@ -96,14 +107,22 @@ public class ResizeableMappedFile implements Forceable {
   }
 
   private void writeLength(final long len) {
-    File lengthFile = getLengthFile();
+    final File lengthFile = getLengthFile();
     DataOutputStream stream = null;
     try {
-      stream = new DataOutputStream(new FileOutputStream(lengthFile));
-      stream.writeLong(len);
-    }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
+      stream = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+        @Nullable
+        @Override
+        public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
+          try {
+            return new DataOutputStream(new FileOutputStream(lengthFile));
+          } catch (FileNotFoundException ex) {
+            if (!lastAttempt) return null;
+            throw ex;
+          }
+        }
+      });
+      if (stream != null) stream.writeLong(len);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -120,10 +139,12 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     return myStorage.isDirty();
   }
 
+  @Override
   public void force() {
     if (isDirty()) {
       writeLength(myLogicalSize);
@@ -154,47 +175,47 @@ public class ResizeableMappedFile implements Forceable {
     }
   }
 
-  public int getInt(int index) {
+  public int getInt(long index) {
     return myStorage.getInt(index);
   }
 
-  public void putInt(int index, int value) {
+  public void putInt(long index, int value) {
     ensureSize(index + 4);
     myStorage.putInt(index, value);
   }
 
-  public short getShort(int index) {
+  public short getShort(long index) {
     return myStorage.getShort(index);
   }
 
-  public void putShort(int index, short value) {
+  public void putShort(long index, short value) {
     ensureSize(index + 2);
     myStorage.putShort(index, value);
   }
 
-  public long getLong(int index) {
+  public long getLong(long index) {
     return myStorage.getLong(index);
   }
 
-  public void putLong(int index, long value) {
+  public void putLong(long index, long value) {
     ensureSize(index + 8);
     myStorage.putLong(index, value);
   }
 
-  public byte get(int index) {
+  public byte get(long index) {
     return myStorage.get(index);
   }
 
-  public void put(int index, byte value) {
+  public void put(long index, byte value) {
     ensureSize(index + 1);
     myStorage.put(index, value);
   }
 
-  public void get(int index, byte[] dst, int offset, int length) {
+  public void get(long index, byte[] dst, int offset, int length) {
     myStorage.get(index, dst, offset, length);
   }
 
-  public void put(int index, byte[] src, int offset, int length) {
+  public void put(long index, byte[] src, int offset, int length) {
     ensureSize(index + length);
     myStorage.put(index, src, offset, length);
   }

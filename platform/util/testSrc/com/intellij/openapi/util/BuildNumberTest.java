@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -30,8 +31,19 @@ public class BuildNumberTest {
   }
 
   @Test
+  public void isSnapshot() {
+    assertTrue(BuildNumber.fromString("__BUILD_NUMBER__").isSnapshot());
+    assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").isSnapshot());
+    assertTrue(BuildNumber.fromString("IC-90.*").isSnapshot());
+    assertFalse(BuildNumber.fromString("90.9999999").isSnapshot());
+  }
+
+  @Test
   public void snapshotDomination() {
     assertTrue(BuildNumber.fromString("90.SNAPSHOT").compareTo(BuildNumber.fromString("90.12345")) > 0);
     assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-90.12345")) > 0);
+    assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-100.12345")) < 0);
+    assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-100.SNAPSHOT")) < 0);
+    assertTrue(BuildNumber.fromString("IU-90.SNAPSHOT").compareTo(BuildNumber.fromString("RM-90.SNAPSHOT")) == 0);
   }
 }

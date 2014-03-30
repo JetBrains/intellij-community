@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,15 @@ public class HintHint {
   private Color myTextFg;
   private Color myTextBg;
   private Color myBorderColor;
+  private Insets myBorderInsets;
   private Font myFont;
   private int myCalloutShift;
-  private boolean myExplicitClose;
 
+  private boolean myExplicitClose;
   private int myPositionChangeX;
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
+  private boolean myAnimationEnabled;
 
   public HintHint() {
   }
@@ -124,6 +126,10 @@ public class HintHint {
     return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
   }
 
+  public Insets getBorderInsets() {
+    return myBorderInsets;
+  }
+
   public boolean isOpaqueAllowed() {
     return getTooltipManager().isOpaqueAllowed(myAwtTooltip);
   }
@@ -154,7 +160,7 @@ public class HintHint {
     return this;
   }
 
-  public boolean isHightlighterType() {
+  public boolean isHighlighterType() {
     return myQuickHint;
   }
 
@@ -214,6 +220,12 @@ public class HintHint {
     return this;
   }
 
+  public HintHint setBorderInsets(Insets insets) {
+    myBorderInsets = insets;
+    return this;
+  }
+
+
   public int getCalloutShift() {
     return myCalloutShift;
   }
@@ -254,6 +266,20 @@ public class HintHint {
    */
   public HintHint setShowImmediately(boolean showImmediately) {
     myShowImmediately = showImmediately;
+    return this;
+  }
+
+  public boolean isAnimationEnabled() {
+    return myAnimationEnabled;
+  }
+
+  /**
+   *
+   * @param enabled is <code>true</code> by default and balloon appears with transparency animation. <code>false</code> means instant opaque showing.
+   * @return current instance of HintHint
+   */
+  public HintHint setAnimationEnabled(boolean enabled){
+    myAnimationEnabled = enabled;
     return this;
   }
 }

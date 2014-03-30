@@ -9,6 +9,6 @@ public abstract class Foo {
   };
 
   protected Foo() {
-    IBar bar = anonymou<caret>s;
+    IBar bar = anonymous;
   }
 }

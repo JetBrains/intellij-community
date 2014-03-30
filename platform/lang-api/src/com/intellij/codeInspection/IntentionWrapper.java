@@ -32,11 +32,11 @@ import org.jetbrains.annotations.NotNull;
  * Date: 4/20/11
  * Time: 9:27 PM
  */
-public class IntentionWrapper implements LocalQuickFix, IntentionAction {
-  private IntentionAction myAction;
-  private PsiFile myFile;
+public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder {
+  private final IntentionAction myAction;
+  private final PsiFile myFile;
 
-  public IntentionWrapper(IntentionAction action, PsiFile file) {
+  public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
     myFile = file;
   }
@@ -74,6 +74,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction {
     return myAction.startInWriteAction();
   }
 
+  @NotNull
   public IntentionAction getAction() {
     return myAction;
   }
@@ -86,6 +87,12 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction {
       FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       myAction.invoke(project, editor instanceof TextEditor ? ((TextEditor) editor).getEditor() : null, myFile);
     }
+  }
+
+  @NotNull
+  @Override
+  public Class getActionClass() {
+    return getAction().getClass();
   }
 }
 

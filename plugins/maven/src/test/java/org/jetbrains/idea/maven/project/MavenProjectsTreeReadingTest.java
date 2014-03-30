@@ -1602,13 +1602,13 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenProject parentNode = roots.get(0);
     MavenProject childNode = myTree.getModules(roots.get(0)).get(0);
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     updateAll(Arrays.asList("two"), myProjectPom);
 
-    assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   public void testUpdatingModelWhenProfilesXmlChange() throws Exception {
@@ -1636,7 +1636,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     List<MavenProject> roots = myTree.getRootProjects();
 
     MavenProject project = roots.get(0);
-    assertUnorderedElementsAreEqual(project.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
+    assertUnorderedPathsAreEqual(project.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
 
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -1650,7 +1650,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     updateAll(myProjectPom);
 
-    assertUnorderedElementsAreEqual(project.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value2"));
+    assertUnorderedPathsAreEqual(project.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
   }
 
   public void testUpdatingModelWhenParentProfilesXmlChange() throws Exception {
@@ -1691,7 +1691,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     List<MavenProject> roots = myTree.getRootProjects();
 
     MavenProject childProject = roots.get(1);
-    assertUnorderedElementsAreEqual(childProject.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("parent",
                               "<profile>" +
@@ -1705,7 +1705,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                               "</profile>");
 
     update(parent);
-    assertUnorderedElementsAreEqual(childProject.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   public void testUpdatingModelWhenParentProfilesXmlChangeAndItIsAModuleAlso() throws Exception {
@@ -1746,7 +1746,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     updateAll(myProjectPom);
 
     MavenProject childNode = myTree.getModules(myTree.getRootProjects().get(0)).get(0);
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
@@ -1759,7 +1759,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                               "</profile>");
 
     updateAll(myProjectPom);
-    assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value2"));
+    assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
   public void testDoNotUpdateModelWhenAggregatorProfilesXmlChange() throws Exception {

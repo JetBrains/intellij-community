@@ -16,10 +16,20 @@
 
 package com.intellij.tasks.context;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -64,6 +74,40 @@ public class ContextTest extends TaskManagerTestCase {
     assertTrue(file.length() > 0);
     FileUtil.writeToFile(file, "123");   // corrupt it
     manager.saveContext("foo", "bar");
+  }
+
+  public void testXDebugger() throws Exception {
+    final WorkingContextManager manager = getContextManager();
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+
+    final XsltBreakpointType type = XBreakpointType.EXTENSION_POINT_NAME.findExtension(XsltBreakpointType.class);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        XLineBreakpointImpl<XBreakpointProperties> breakpoint =
+          (XLineBreakpointImpl<XBreakpointProperties>)breakpointManager.addLineBreakpoint(type, "foo", 0, null);
+
+        final String name = "foo";
+        manager.saveContext(name, null);
+        breakpointManager.removeBreakpoint(breakpoint);
+      }
+    });
+    manager.loadContext("foo");
+    Collection<? extends XLineBreakpoint<XBreakpointProperties>> breakpoints = breakpointManager.getBreakpoints(type);
+    assertEquals(1, breakpoints.size());
+    manager.clearContext();
+  }
+
+  public void testContextFileName() throws Exception {
+    ProjectImpl project = (ProjectImpl)getProject();
+    String name = project.getName();
+    try {
+      project.setProjectName("invalid | name");
+      getContextManager().saveContext("foo", "bar");
+    }
+    finally {
+      project.setProjectName(name);
+    }
   }
 
   private WorkingContextManager getContextManager() {

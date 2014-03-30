@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,102 +15,75 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 
 /**
+ * Contrary to the name, this class doesn't do any caching. So the usages may be safely dropped in favor of plain reflection calls.
+ * 
+ * Consider caching higher-level things, if you see reflection in your snapshots.
+ *
+ * @deprecated
  * @author peter
  */
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
 public class ReflectionCache {
-  private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
-    @Override
-    protected Class create(final Class key) {
-      return key.getSuperclass();
-    }
-  };
-  private static final ConcurrentFactoryMap<Class,Class[]> ourInterfaces = new ConcurrentFactoryMap<Class, Class[]>() {
-    @Override
-    @NotNull
-    protected Class[] create(final Class key) {
-      Class[] classes = key.getInterfaces();
-      return classes.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : classes;
-    }
-  };
 
-  private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
-    @Override
-    @NotNull
-    protected Boolean create(final Class key) {
-      return key.isInterface();
-    }
-  };
-  private static final ConcurrentFactoryMap<Class, TypeVariable[]> ourTypeParameters = new ConcurrentFactoryMap<Class, TypeVariable[]>() {
-    @Override
-    @NotNull
-    protected TypeVariable[] create(final Class key) {
-      return key.getTypeParameters();
-    }
-  };
-  private static final ConcurrentFactoryMap<Class, Type[]> ourGenericInterfaces = new ConcurrentFactoryMap<Class, Type[]>() {
-    @Override
-    @NotNull
-    protected Type[] create(final Class key) {
-      return key.getGenericInterfaces();
-    }
-  };
-  private static final ConcurrentFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new ConcurrentFactoryMap<ParameterizedType, Type[]>() {
-    @Override
-    @NotNull
-    protected Type[] create(final ParameterizedType key) {
-      return key.getActualTypeArguments();
-    }
-  };
-
-  private ReflectionCache() {
-  }
-
+  @Deprecated
   public static Class getSuperClass(@NotNull Class aClass) {
-    return ourSuperClasses.get(aClass);
+    return aClass.getSuperclass();
   }
 
   @NotNull
+  @Deprecated
   public static Class[] getInterfaces(@NotNull Class aClass) {
-    return ourInterfaces.get(aClass);
+    return aClass.getInterfaces();
   }
 
   @NotNull
+  @Deprecated
   public static Method[] getMethods(@NotNull Class aClass) {
     return aClass.getMethods();
   }
 
+  /**
+   * @deprecated
+   * @see com.intellij.util.ReflectionUtil#isAssignable(Class, Class)
+   */
   public static boolean isAssignable(@NotNull Class ancestor, Class descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
 
+  @Deprecated
   public static boolean isInstance(Object instance, @NotNull Class clazz) {
     return clazz.isInstance(instance);
   }
 
+  @Deprecated
   public static boolean isInterface(@NotNull Class aClass) {
-    return ourIsInterfaces.get(aClass);
+    return aClass.isInterface();
   }
 
   @NotNull
+  @Deprecated
   public static <T> TypeVariable<Class<T>>[] getTypeParameters(@NotNull Class<T> aClass) {
-    return ourTypeParameters.get(aClass);
+    return aClass.getTypeParameters();
   }
 
   @NotNull
+  @Deprecated
   public static Type[] getGenericInterfaces(@NotNull Class aClass) {
-    return ourGenericInterfaces.get(aClass);
+    return aClass.getGenericInterfaces();
   }
 
   @NotNull
+  @Deprecated
   public static Type[] getActualTypeArguments(@NotNull ParameterizedType type) {
-    return ourActualTypeArguments.get(type);
+    return type.getActualTypeArguments();
   }
 
 }

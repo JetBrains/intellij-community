@@ -8,6 +8,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 /**
@@ -21,10 +22,10 @@ public class LabeledTextComponent {
   private LabeledComponent<JPanel> myComponent;
   private JPanel myContentPane;
 
-  private final JTextPane myTextPane;
+  private final JTextArea myTextPane;
 
   public LabeledTextComponent() {
-    myTextPane = new JTextPane();
+    myTextPane = new JTextArea();
 
     myComponent.getLabel().setMinimumSize(new Dimension(0, -1));
     myComponent.getComponent().setLayout(new BorderLayout());
@@ -41,11 +42,11 @@ public class LabeledTextComponent {
     return myContentPane;
   }
 
-  public JTextPane getTextComponent() {
+  public JTextArea getTextComponent() {
     return myTextPane;
   }
 
-  static void setText(JTextPane pane, String text, boolean caretToTheEnd) {
+  static void setText(JTextComponent pane, String text, boolean caretToTheEnd) {
     pane.setText(text);
     if (text != null && !caretToTheEnd && pane.getCaret() != null) {
       // Upon some strange circumstances caret may be missing from the text component making the following line fail with NPE.

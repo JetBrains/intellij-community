@@ -58,7 +58,7 @@ public class ImportImlMode extends WizardMode {
 
 
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+  protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
     return null;
   }
 

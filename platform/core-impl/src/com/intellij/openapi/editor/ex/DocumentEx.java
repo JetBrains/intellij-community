@@ -60,6 +60,13 @@ public interface DocumentEx extends Document {
 
   boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
+  void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                           int start,
+                           int end,
+                           boolean greedyToLeft,
+                           boolean greedyToRight,
+                           int layer);
+
   boolean isInBulkUpdate();
 
   void setInBulkUpdate(boolean value);

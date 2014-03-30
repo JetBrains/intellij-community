@@ -19,6 +19,7 @@ package com.intellij.util.xml.tree.actions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,6 +33,7 @@ public class AddDomElementActionGroup extends ActionGroup {
     }
   };
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myAction.getChildren(e);
   }

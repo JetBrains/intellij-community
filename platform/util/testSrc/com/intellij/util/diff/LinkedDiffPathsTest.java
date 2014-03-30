@@ -18,6 +18,8 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
+import java.util.BitSet;
+
 /**
  * @author dyoma
  */
@@ -67,10 +69,12 @@ public class LinkedDiffPathsTest extends TestCase {
   }
 
   private Diff.Change decode(LinkedDiffPaths paths) {
+    BitSet[] changes = new BitSet[]{new BitSet(), new BitSet()};
+    paths.applyChanges(0, 0, changes[0], changes[1]);
     Reindexer reindexer = new Reindexer();
     reindexer.idInit(paths.getXSize(), paths.getYSize());
     Diff.ChangeBuilder builder = new Diff.ChangeBuilder(0);
-    reindexer.reindex(paths, builder);
+    reindexer.reindex(changes, builder);
     return builder.getFirstChange();
   }
 }

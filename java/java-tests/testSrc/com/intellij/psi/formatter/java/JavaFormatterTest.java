@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -320,18 +320,20 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testClassComment() throws Exception {
-    doTextTest("/**\n" +
-                "* @author smbd\n" +
-                "* @param <T> some param\n" +
-                "* @since 1.9\n" +
-                "*/\n" +
-                "class Test<T>{}",
-               "/**\n" +
-                " * @param <T> some param\n" +
-                " * @author smbd\n" +
-                " * @since 1.9\n" +
-                " */\n" +
-                "class Test<T> {\n}");
+    String before = "/**\n" +
+                  "* @author smbd\n" +
+                  "* @param <T> some param\n" +
+                  "* @since 1.9\n" +
+                  "*/\n" +
+                  "class Test<T>{}";
+    String after = "/**\n" +
+                   " * @param <T> some param\n" +
+                   " * @author smbd\n" +
+                   " * @since 1.9\n" +
+                   " */\n" +
+                   "class Test<T> {\n" +
+                   "}";
+    doTextTest(before,after);
   }
 
   public void testStringBinaryOperation() throws Exception {
@@ -1148,7 +1150,7 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
           @Override
           public void run() {
             try {
@@ -1166,23 +1168,27 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   }
 
   public void testNewLineAfterJavaDocs() throws Exception {
-    doTextTest("/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
-               "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
-"/** @noinspection InstanceVariableNamingConvention*/ void foo(){}}", "/**\n" +
-                                                                      " * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      " */\n" +
-                                                                      "class Foo {\n" +
-                                                                      "    /**\n" +
-                                                                      "     * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      "     */\n" +
-                                                                      "    int myFoo;\n" +
-                                                                      "\n" +
-                                                                      "    /**\n" +
-                                                                      "     * @noinspection InstanceVariableNamingConvention\n" +
-                                                                      "     */\n" +
-                                                                      "    void foo() {\n" +
-                                                                      "    }\n" +
-                                                                      "}");
+    String before = "/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
+                    "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
+                    "/** @noinspection InstanceVariableNamingConvention*/ void foo(){}}";
+
+    String after = "/**\n" +
+                   " * @noinspection InstanceVariableNamingConvention\n" +
+                   " */\n" +
+                   "class Foo {\n" +
+                   "    /**\n" +
+                   "     * @noinspection InstanceVariableNamingConvention\n" +
+                   "     */\n" +
+                   "    int myFoo;\n" +
+                   "\n" +
+                   "    /**\n" +
+                   "     * @noinspection InstanceVariableNamingConvention\n" +
+                   "     */\n" +
+                   "    void foo() {\n" +
+                   "    }\n" +
+                   "}";
+
+    doTextTest(before, after);
   }
 
   public void testArrayInitializerWrapping() throws Exception {
@@ -2965,5 +2971,81 @@ public void testSCR260() throws Exception {
                "        ;\n" +
                "    }\n" +
                "}");
+  }
+
+  public void testCommaInMethodDeclParamsList() {
+    getSettings().SPACE_AFTER_COMMA = true;
+    String before = "public class Test {\n" +
+                    "    public static void act(   int a   ,    int b   ,    int c   ,      int d) {\n" +
+                    "        act(1,2,3,4);\n" +
+                    "    }\n" +
+                    "}\n";
+    String after = "public class Test {\n" +
+                   "    public static void act(int a, int b, int c, int d) {\n" +
+                   "        act(1, 2, 3, 4);\n" +
+                   "    }\n" +
+                   "}\n";
+    doTextTest(before, after);
+    getSettings().SPACE_AFTER_COMMA = false;
+    before = "public class Test {\n" +
+             "    public static void act(   int a   ,    int b   ,      int c   ,      int d) {\n" +
+             "        act(1 ,   2 , 3 ,            4);\n" +
+             "    }\n" +
+             "}\n";
+    after = "public class Test {\n" +
+            "    public static void act(int a,int b,int c,int d) {\n" +
+            "        act(1,2,3,4);\n" +
+            "    }\n" +
+            "}\n";
+    doTextTest(before, after);
+  }
+
+
+
+  public void testFormatterOnOffTags() throws Exception {
+    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    getSettings().IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    doTest();
+  }
+
+  public void testFormatterOnOffTagsWithRegexp() throws Exception {
+    CodeStyleSettings settings = getSettings().getRootSettings();
+    settings.FORMATTER_TAGS_ENABLED = true;
+    settings.FORMATTER_TAGS_ACCEPT_REGEXP = true;
+    settings.FORMATTER_OFF_TAG = "not.*format";
+    settings.FORMATTER_ON_TAG = "end.*fragment";
+    doTest();
+  }
+
+  public void testDoNotIndentNotSelectedStatement_AfterSelectedOne() {
+    myTextRange = new TextRange(0, 73);
+    doTextTest(
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "    int a = 3;\n" +
+      "    System.out.println(\"AAA\");\n" +
+      "    }\n" +
+      "}",
+      "class Test {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        int a = 3;\n" +
+      "    System.out.println(\"AAA\");\n" +
+      "    }\n" +
+      "}"
+    );
+
+    myTextRange = new TextRange(0, 67);
+    doTextTest(
+      "    import java.lang.Override;\n" +
+      "    import java.lang.Exception;\n" +
+      "    \n" +
+      "    class Foo {\n" +
+      "}",
+      "import java.lang.Override;\n" +
+      "import java.lang.Exception;\n" +
+      "    \n" +
+      "    class Foo {\n" +
+      "}"
+    );
   }
 }

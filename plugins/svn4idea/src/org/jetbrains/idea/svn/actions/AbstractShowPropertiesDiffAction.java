@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -40,14 +41,12 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.idea.svn.properties.PropertyClient;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
@@ -70,7 +69,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   @Override
   public void update(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final Presentation presentation = e.getPresentation();
     final Change[] data = VcsDataKeys.CHANGES.getData(dataContext);
@@ -124,7 +123,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Change[] changes = e.getData(getChangesKey());
 
     if (! checkThatChangesAreUnderSvn(changes)) {
@@ -143,7 +142,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     private String myAfterContent;
     private SVNRevision myBeforeRevisionValue;
     private SVNRevision myAfterRevision;
-    private SVNException myException;
+    private Exception myException;
     private final String myErrorTitle;
 
     private CalculateAndShow(@Nullable final Project project, final Change change, final String errorTitle) {
@@ -154,18 +153,20 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
     public void run(@NotNull final ProgressIndicator indicator) {
       final SvnVcs vcs = SvnVcs.getInstance(myProject);
-      final SVNWCClient client = vcs.createWCClient();
 
       try {
         myBeforeRevisionValue = getBeforeRevisionValue(myChange, vcs);
         myAfterRevision = getAfterRevisionValue(myChange, vcs);
 
-        myBeforeContent = getPropertyList(myChange.getBeforeRevision(), myBeforeRevisionValue, client);
+        myBeforeContent = getPropertyList(vcs, myChange.getBeforeRevision(), myBeforeRevisionValue);
         indicator.checkCanceled();
         // gets exactly WORKING revision property
-        myAfterContent = getPropertyList(myChange.getAfterRevision(), myAfterRevision, client);
+        myAfterContent = getPropertyList(vcs, myChange.getAfterRevision(), myAfterRevision);
       }
-      catch (SVNException exc) {
+      catch(SVNException exc) {
+        myException = exc;
+      }
+      catch (VcsException exc) {
         myException = exc;
       }
 
@@ -235,33 +236,49 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private final static String ourPropertiesDelimiter = "\n";
 
-  private static String getPropertyList(final ContentRevision contentRevision, final SVNRevision revision, final SVNWCClient client) throws SVNException {
+  private static String getPropertyList(@NotNull SvnVcs vcs,
+                                        @Nullable final ContentRevision contentRevision,
+                                        @Nullable final SVNRevision revision)
+  throws SVNException, VcsException {
     if (contentRevision == null) {
       return "";
     }
 
-    final StringBuilder sb = new StringBuilder();
-    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
+    SvnTarget target;
+    if (contentRevision instanceof SvnRepositoryContentRevision) {
+      final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision)contentRevision;
+      target = SvnTarget.fromURL(SVNURL.parseURIEncoded(svnRevision.getFullPath()), revision);
+    } else {
+      final File ioFile = contentRevision.getFile().getIOFile();
+      target = SvnTarget.fromFile(ioFile, revision);
+    }
 
-    final File ioFile = contentRevision.getFile().getIOFile();
+    return getPropertyList(vcs, target, revision);
+  }
+
+  public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final SVNURL url, @Nullable final SVNRevision revision)
+    throws VcsException {
+    return getPropertyList(vcs, SvnTarget.fromURL(url, revision), revision);
+  }
+
+  public static String getPropertyList(@NotNull SvnVcs vcs, @NotNull final File ioFile, @Nullable final SVNRevision revision)
+    throws SVNException {
+    try {
+      return getPropertyList(vcs, SvnTarget.fromFile(ioFile, revision), revision);
+    }
+    catch (VcsException e) {
+      throw new SVNException(SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, e), e);
+    }
+  }
+
+  private static String getPropertyList(@NotNull SvnVcs vcs, @NotNull SvnTarget target, @Nullable SVNRevision revision)
+    throws VcsException {
+    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
     final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
 
-    if (contentRevision instanceof SvnRepositoryContentRevision) {
-      final SvnRepositoryContentRevision svnRevision = (SvnRepositoryContentRevision) contentRevision;
-      client.doGetProperty(SVNURL.parseURIEncoded(svnRevision.getFullPath()), null, revision, revision, SVNDepth.EMPTY, propertyHandler);
-    } else {
-      client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
-    }
+    vcs.getFactory(target).createPropertyClient().list(target, revision, SVNDepth.EMPTY, propertyHandler);
 
-    Collections.sort(lines, new Comparator<SVNPropertyData>() {
-      public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-    for (SVNPropertyData line : lines) {
-      addPropertyPresentation(line, sb);
-    }
-    return sb.toString();
+    return toSortedStringPresentation(lines);
   }
 
   private static ISVNPropertyHandler createHandler(SVNRevision revision, final List<SVNPropertyData> lines) {
@@ -273,60 +290,36 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
     return new ISVNPropertyHandler() {
       public void handleProperty(final File path, final SVNPropertyData property) throws SVNException {
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
-        }
-        lines.add(property);
+        registerProperty(property);
       }
 
       public void handleProperty(final SVNURL url, final SVNPropertyData property) throws SVNException {
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
-        }
-        lines.add(property);
+        registerProperty(property);
       }
 
       public void handleProperty(final long revision, final SVNPropertyData property) throws SVNException {
         // revision properties here
       }
+
+      private void registerProperty(@NotNull SVNPropertyData property) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
+        }
+        lines.add(property);
+      }
     };
   }
 
-  public static String getPropertyList(final SVNURL url, final SVNRevision revision, final SVNWCClient client) throws SVNException {
-    final StringBuilder sb = new StringBuilder();
-    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
-
-    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
-
-    client.doGetProperty(url, null, revision, revision, SVNDepth.EMPTY, propertyHandler);
+  private static String toSortedStringPresentation(List<SVNPropertyData> lines) {
+    StringBuilder sb = new StringBuilder();
 
     Collections.sort(lines, new Comparator<SVNPropertyData>() {
       public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
         return o1.getName().compareTo(o2.getName());
       }
     });
-    for (SVNPropertyData line : lines) {
-      addPropertyPresentation(line, sb);
-    }
 
-    return sb.toString();
-  }
-
-  public static String getPropertyList(final File ioFile, final SVNRevision revision, final SVNWCClient client) throws SVNException {
-    final StringBuilder sb = new StringBuilder();
-    final List<SVNPropertyData> lines = new ArrayList<SVNPropertyData>();
-
-    final ISVNPropertyHandler propertyHandler = createHandler(revision, lines);
-
-    client.doGetProperty(ioFile, null, revision, revision, SVNDepth.EMPTY, propertyHandler, null);
-
-    Collections.sort(lines, new Comparator<SVNPropertyData>() {
-      public int compare(final SVNPropertyData o1, final SVNPropertyData o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
     for (SVNPropertyData line : lines) {
       addPropertyPresentation(line, sb);
     }
@@ -340,5 +333,4 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     }
     sb.append(property.getName()).append("=").append((property.getValue() == null) ? "" : SVNPropertyValue.getPropertyAsString(property.getValue()));
   }
-
 }

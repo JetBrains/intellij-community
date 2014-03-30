@@ -18,7 +18,7 @@ package com.intellij.openapi.projectRoots.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -58,7 +58,7 @@ public class PathEditor {
 
   protected JPanel myPanel;
   private JBList myList;
-  private DefaultListModel myModel;
+  private final DefaultListModel myModel;
   private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
   protected boolean myEnabled = false;
@@ -177,7 +177,7 @@ public class PathEditor {
 
   private VirtualFile[] doAdd() {
     VirtualFile baseDir = myAddBaseDir;
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (baseDir == null && project != null) {
       baseDir = project.getBaseDir();
     }
@@ -292,6 +292,7 @@ public class PathEditor {
     final Object[] selectedItems = getSelectedRoots();
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (selectedItems != null) {
           setSelectedRoots(selectedItems);
@@ -320,6 +321,7 @@ public class PathEditor {
 
   private static boolean isJarFile(final VirtualFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
         VirtualFile tempFile = file;
         if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
@@ -366,6 +368,7 @@ public class PathEditor {
   private final class MyCellRenderer extends DefaultListCellRenderer {
     private String getPresentableString(final Object value) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           //noinspection HardCodedStringLiteral
           return (value instanceof VirtualFile) ? ((VirtualFile)value).getPresentableUrl() : "UNKNOWN OBJECT";
@@ -373,6 +376,7 @@ public class PathEditor {
       });
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, getPresentableString(value), index, isSelected, cellHasFocus);
       if (isSelected) {

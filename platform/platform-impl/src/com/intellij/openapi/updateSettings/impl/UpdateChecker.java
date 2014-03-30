@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,161 +20,169 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * XML sample:
- * <pre>{@code
- * <idea>
- *   <build>456</build>
- *   <version>4.5.2</version>
- *   <title>New Intellij IDEA Version</title>
- *   <message>
- *     New version of IntelliJ IDEA is available.
- *     Please visit http://www.intellij.com/ for more info.
- *   </message>
- * </idea>
- * }</pre>
+ * See XML file by {@link com.intellij.openapi.application.ex.ApplicationInfoEx#getUpdateUrls()} for reference.
  *
  * @author mike
- * Date: Oct 31, 2002
+ * @since Oct 31, 2002
  */
 public final class UpdateChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
-
-  private static Map<String, String> ADDITIONAL_REQUEST_OPTIONS = new HashMap<String, String>();
-
-  @NonNls private static final String INSTALLATION_UID = "installation.uid";
-
-  private UpdateChecker() {
-  }
-
-  public static void showConnectionErrorDialog() {
-    Messages.showErrorDialog(IdeBundle.message("error.checkforupdates.connection.failed"),
-                             IdeBundle.message("title.connection.error"));
-  }
 
   public enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
 
-  private static boolean myVeryFirstOpening = true;
+  private static final NotNullLazyValue<NotificationGroup> GROUP = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return new NotificationGroup(IdeBundle.message("update.available.group"), NotificationDisplayType.STICKY_BALLOON, true);
+    }
+  };
 
-  @NonNls
-  private static final String DISABLED_UPDATE = "disabled_update.txt";
-  private static TreeSet<String> ourDisabledToUpdatePlugins;
+  @NonNls private static final String INSTALLATION_UID = "installation.uid";
+  @NonNls private static final String DISABLED_UPDATE = "disabled_update.txt";
 
-  private static class StringHolder {
+  private static Set<String> ourDisabledToUpdatePlugins;
+  private static Map<String, String> ourAdditionalRequestOptions = new HashMap<String, String>();
+
+  private static class Holder {
     private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
     private static final String PATCHES_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getPatchesUrl();
-    private StringHolder() { }
   }
+
+  private UpdateChecker() { }
 
   private static String getUpdateUrl() {
     String url = System.getProperty("idea.updates.url");
-    if (url != null) {
-      return url;
-    }
-    return StringHolder.UPDATE_URL;
+    return url != null ? url : Holder.UPDATE_URL;
   }
 
   private static String getPatchesUrl() {
     String url = System.getProperty("idea.patches.url");
-    if (url != null) {
-      return url;
-    }
-    return StringHolder.PATCHES_URL;
+    return url != null ? url : Holder.PATCHES_URL;
   }
 
-  public static boolean isMyVeryFirstOpening() {
-    return myVeryFirstOpening;
-  }
-
-  public static void setMyVeryFirstOpening(final boolean myVeryFirstProjectOpening) {
-    myVeryFirstOpening = myVeryFirstProjectOpening;
-  }
-
-  public static boolean checkNeeded() {
-    final UpdateSettings settings = UpdateSettings.getInstance();
-    if (settings == null || getUpdateUrl() == null) return false;
-
-    final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
-
-    return settings.CHECK_NEEDED;
-  }
-
+  // for scheduled update checks
   public static ActionCallback updateAndShowResult() {
-    final ActionCallback result = new ActionCallback();
-    final Application app = ApplicationManager.getApplication();
-    final UpdateSettings updateSettings = UpdateSettings.getInstance();
-    if (!updateSettings.CHECK_NEEDED) {
-      result.setDone();
-      return result;
-    }
-    app.executeOnPooledThread(new Runnable() {
+    final ActionCallback callback = new ActionCallback();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        final CheckForUpdateResult checkForUpdateResult = checkForUpdates(updateSettings, false);
-
-        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null, null);
-        app.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showUpdateResult(checkForUpdateResult, updatedPlugins, true, true, false);
-            result.setDone();
-          }
-        });
+        doUpdateAndShowResult(null, true, false, null, UpdateSettings.getInstance(), null, callback);
       }
     });
-    return result;
+    return callback;
   }
 
-  public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
-                                                     final @Nullable PluginHostsConfigurable hostsConfigurable, 
-                                                     @Nullable ProgressIndicator indicator) {
+  // for manual update checks (Help | Check for Updates)
+  public static void updateAndShowResult(final @Nullable Project project,
+                                         final boolean fromSettings,
+                                         final @Nullable PluginHostsConfigurable hostsConfigurable,
+                                         final UpdateSettings settings) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        doUpdateAndShowResult(project, !fromSettings, true, hostsConfigurable, settings, indicator, null);
+      }
+
+      @Override
+      public boolean isConditionalModal() {
+        return fromSettings;
+      }
+
+      @Override
+      public boolean shouldStartInBackground() {
+        return !fromSettings;
+      }
+    });
+  }
+
+  private static void doUpdateAndShowResult(final @Nullable Project project,
+                                            final boolean enableLink,
+                                            final boolean manualCheck,
+                                            final @Nullable PluginHostsConfigurable hostsConfigurable,
+                                            final UpdateSettings updateSettings,
+                                            final @Nullable ProgressIndicator indicator,
+                                            final @Nullable ActionCallback callback) {
+    final CheckForUpdateResult result = checkForUpdates(updateSettings);
+
+    if (result.getState() == UpdateStrategy.State.LOADED) {
+      UpdateSettings settings = UpdateSettings.getInstance();
+      settings.saveLastCheckedInfo();
+      settings.setKnownChannelIds(result.getAllChannelsIds());
+    }
+    else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
+      showErrorMessage(manualCheck, project, IdeBundle.message("updates.error.connection.failed"));
+      return;
+    }
+
+    boolean platformUpdate = newChannelReady(result.getChannelToPropose()) || result.getUpdatedChannel() != null;
+    final List<PluginDownloader> updatedPlugins = platformUpdate ? null : updatePlugins(manualCheck, project, hostsConfigurable, indicator);
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        showUpdateResult(project, result, updatedPlugins, enableLink, manualCheck);
+        if (callback != null) {
+          callback.setDone();
+        }
+      }
+    });
+  }
+
+  private static List<PluginDownloader> updatePlugins(boolean manualCheck,
+                                                      @Nullable Project project,
+                                                      @Nullable PluginHostsConfigurable hostsConfigurable,
+                                                      @Nullable ProgressIndicator indicator) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
@@ -191,10 +199,16 @@ public final class UpdateChecker {
     }
 
     final Map<String, IdeaPluginDescriptor> toUpdate = new HashMap<String, IdeaPluginDescriptor>();
-    final IdeaPluginDescriptor[] installedPlugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] installedPlugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor installedPlugin : installedPlugins) {
       if (!installedPlugin.isBundled()) {
         toUpdate.put(installedPlugin.getPluginId().getIdString(), installedPlugin);
+      }
+    }
+
+    for (Iterator<PluginDownloader> iterator = downloaded.iterator(); iterator.hasNext(); ) {
+      if (!toUpdate.containsKey(iterator.next().getPluginId())) {
+        iterator.remove();
       }
     }
 
@@ -216,8 +230,8 @@ public final class UpdateChecker {
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
-        final List<String> disabledPlugins = PluginManager.getDisabledPlugins();
+        final List<IdeaPluginDescriptor> process = RepositoryHelper.loadPluginsFromRepository(indicator);
+        final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
           if (!toUpdate.containsKey(idString)) continue;
@@ -236,13 +250,14 @@ public final class UpdateChecker {
         return null;
       }
       catch (Exception e) {
-        showErrorMessage(showErrorDialog, e.getMessage());
+        showErrorMessage(manualCheck, project, e.getMessage());
       }
     }
 
     if (!failed.isEmpty()) {
-      showErrorMessage(showErrorDialog, IdeBundle.message("connection.failed.message", StringUtil.join(failed, ",")));
+      showErrorMessage(manualCheck, project, IdeBundle.message("updates.error.plugin.description.failed", StringUtil.join(failed, ",")));
     }
+
     return downloaded.isEmpty() ? null : downloaded;
   }
 
@@ -253,17 +268,17 @@ public final class UpdateChecker {
     }
   }
 
-  private static void showErrorMessage(boolean showErrorDialog, final String failedMessage) {
-    if (showErrorDialog) {
+  private static void showErrorMessage(boolean showDialog, Project project, final String message) {
+    if (showDialog) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
+          Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title"));
         }
       });
     }
     else {
-      LOG.info(failedMessage);
+      LOG.warn(message);
     }
   }
 
@@ -306,7 +321,7 @@ public final class UpdateChecker {
 
     inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
-    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
+    final List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       downloaded.add(PluginDownloader.createDownloader(descriptor));
@@ -325,7 +340,7 @@ public final class UpdateChecker {
       } else {
         description = null;
       }
-      
+
       final List<PluginId> dependsPlugins = new ArrayList<PluginId>();
       final List depends = pluginElement.getChildren("depends");
       for (Object depend : depends) {
@@ -367,7 +382,8 @@ public final class UpdateChecker {
           }
         };
         if (ApplicationManager.getApplication().isDispatchThread()) {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
+          String title = IdeBundle.message("update.uploading.plugin.progress.title");
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(updatePluginRunnable, title, true, null);
         }
         else {
           updatePluginRunnable.run();
@@ -396,13 +412,10 @@ public final class UpdateChecker {
   }
 
   @NotNull
-  public static CheckForUpdateResult doCheckForUpdates(final UpdateSettings settings) {
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    BuildNumber currentBuild = appInfo.getBuild();
-    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    final UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl());
-    final UpdatesInfo info;
+  private static CheckForUpdateResult checkForUpdates(final UpdateSettings settings) {
+    UpdatesInfo info;
     try {
+      UpdatesXmlLoader loader = new UpdatesXmlLoader(getUpdateUrl());
       info = loader.loadUpdatesInfo();
       if (info == null) {
         return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
@@ -412,7 +425,9 @@ public final class UpdateChecker {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
 
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, currentBuild, info, settings);
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), info, settings);
     return strategy.checkForUpdates();
   }
 
@@ -421,104 +436,96 @@ public final class UpdateChecker {
   }
 
   public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
-    ADDITIONAL_REQUEST_OPTIONS.put(name, value);
+    ourAdditionalRequestOptions.put(name, value);
   }
 
-  @NotNull
-  public static CheckForUpdateResult checkForUpdates(final UpdateSettings updateSettings,
-                                                     final boolean disregardIgnoredBuilds) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: auto checkForUpdates()");
-    }
-
-    UserUpdateSettings settings = updateSettings;
-    if (disregardIgnoredBuilds) {
-      settings = new UserUpdateSettings() {
-        @NotNull
-        @Override
-        public List<String> getKnownChannelsIds() {
-          return updateSettings.getKnownChannelsIds();
-        }
-
-        @Override
-        public List<String> getIgnoredBuildNumbers() {
-          return Collections.emptyList();
-        }
-
-        @Override
-        public void setKnownChannelIds(List<String> ids) {
-          updateSettings.setKnownChannelIds(ids);
-        }
-
-        @NotNull
-        @Override
-        public ChannelStatus getSelectedChannelStatus() {
-          return updateSettings.getSelectedChannelStatus();
-        }
-      };
-    }
-
-    final CheckForUpdateResult result = doCheckForUpdates(updateSettings);
-
-    if (result.getState() == UpdateStrategy.State.LOADED) {
-      updateSettings.saveLastCheckedInfo();
-      settings.setKnownChannelIds(result.getAllChannelsIds());
-    }
-
-    return result;
+  @Contract("null -> false")
+  private static boolean newChannelReady(@Nullable UpdateChannel channelToPropose) {
+    return channelToPropose != null && channelToPropose.getLatestBuild() != null;
   }
 
-  private static boolean ourUpdateInfoDialogShown = false;
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  private static void showUpdateResult(@Nullable final Project project,
+                                       final CheckForUpdateResult checkForUpdateResult,
+                                       final List<PluginDownloader> updatedPlugins,
+                                       final boolean enableLink,
+                                       final boolean alwaysShowResults) {
+    final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
+    final UpdateChannel updatedChannel = checkForUpdateResult.getUpdatedChannel();
 
-  public static void showUpdateResult(CheckForUpdateResult checkForUpdateResult,
-                                      List<PluginDownloader> updatedPlugins,
-                                      boolean showConfirmation,
-                                      boolean enableLink,
-                                      final boolean alwaysShowResults) {
-    UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
-    if (channelToPropose != null && channelToPropose.getLatestBuild() != null) {
-      NewChannelDialog dialog = new NewChannelDialog(channelToPropose);
-      dialog.setModal(alwaysShowResults);
-      dialog.show();
-    }
-    else if (checkForUpdateResult.hasNewBuildInSelectedChannel() && !ourUpdateInfoDialogShown) {
-      UpdateInfoDialog dialog = new UpdateInfoDialog(true, checkForUpdateResult.getUpdatedChannel(), updatedPlugins, enableLink) {
-        @Override
-        protected void dispose() {
-          ourUpdateInfoDialogShown = false;
-          super.dispose();
+    if (newChannelReady(channelToPropose)) {
+      Runnable runnable = new Runnable() {
+        public void run() {
+          new NewChannelDialog(channelToPropose).show();
         }
       };
-      dialog.setModal(alwaysShowResults);
-      ourUpdateInfoDialogShown = true;
-      dialog.show();
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
+        showNotification(project, message, false, runnable);
+      }
     }
-    else if ((updatedPlugins != null || alwaysShowResults && ProjectManager.getInstance().getOpenProjects().length == 0) && !ourUpdateInfoDialogShown) {
-      NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink) {
+    else if (updatedChannel != null) {
+      Runnable runnable = new Runnable() {
         @Override
-        protected void dispose() {
-          ourUpdateInfoDialogShown = false;
-          super.dispose();
+        public void run() {
+          new UpdateInfoDialog(updatedChannel, enableLink).show();
         }
       };
-      dialog.setShowConfirmation(showConfirmation);
-      ourUpdateInfoDialogShown = true;
-      dialog.show();
-    } else if (alwaysShowResults) {
-      final String title = IdeBundle.message("updates.info.dialog.title");
-      final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +
-                             "To configure automatic update settings, see the <a href=\"updates\">Updates</a> dialog of your IDE settings";
-      new NotificationGroup("update.available.group", NotificationDisplayType.STICKY_BALLOON, true)
-        .createNotification(title, message, NotificationType.INFORMATION, new NotificationListener() {
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
+        showNotification(project, message, false, runnable);
+      }
+    }
+    else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          new PluginUpdateInfoDialog(updatedPlugins, enableLink).show();
+        }
+      };
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String plugins = StringUtil.join(updatedPlugins, new Function<PluginDownloader, String>() {
           @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            notification.expire();
-            final UpdateSettingsConfigurable configurable = new UpdateSettingsConfigurable();
-            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-            ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, configurable);
+          public String fun(PluginDownloader downloader) {
+            return downloader.getPluginName();
           }
-        }).notify(null);
+        }, ", ");
+        String message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size(), plugins);
+        showNotification(project, message, false, runnable);
+      }
     }
+    else if (alwaysShowResults) {
+      new NoUpdatesDialog(enableLink).show();
+    }
+  }
+
+  private static void showNotification(@Nullable Project project, String message, boolean error, final @Nullable Runnable runnable) {
+    NotificationListener listener = null;
+    if (runnable != null) {
+      listener = new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          notification.expire();
+          runnable.run();
+        }
+      };
+    }
+
+    String title = IdeBundle.message("updates.info.dialog.title");
+    NotificationType type = error ? NotificationType.ERROR : NotificationType.INFORMATION;
+    Notifications.Bus.notify(GROUP.getValue().createNotification(title, message, type, listener), project);
   }
 
   public static String prepareUpdateCheckArgs() {
@@ -532,14 +539,14 @@ public final class UpdateChecker {
     StringBuilder args = new StringBuilder();
 
     try {
-      for (String name : ADDITIONAL_REQUEST_OPTIONS.keySet()) {
+      for (String name : ourAdditionalRequestOptions.keySet()) {
         if (args.length() > 0) {
           args.append('&');
         }
 
         args.append(URLEncoder.encode(name, "UTF-8"));
 
-        String value = ADDITIONAL_REQUEST_OPTIONS.get(name);
+        String value = ourAdditionalRequestOptions.get(name);
         if (!StringUtil.isEmpty(value)) {
           args.append('=').append(URLEncoder.encode(value, "UTF-8"));
         }
@@ -553,9 +560,6 @@ public final class UpdateChecker {
   }
 
   private static InputStream loadVersionInfo(final String url) throws Exception {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + url + "' )");
-    }
     final InputStream[] inputStreams = new InputStream[]{null};
     final Exception[] exception = new Exception[]{null};
     Future<?> downloadThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -564,7 +568,7 @@ public final class UpdateChecker {
           URL requestUrl = new URL(url);
           if (!StandardFileSystems.FILE_PROTOCOL.equals(requestUrl.getProtocol())) {
             HttpConfigurable.getInstance().prepareURL(url);
-            requestUrl = new URL(url + "?build=" + ApplicationInfo.getInstance().getBuild().asString());
+            requestUrl = new URL(url + (url.contains("?") ? "&" : "?") + "build=" + ApplicationInfo.getInstance().getBuild().asString());
           }
           inputStreams[0] = requestUrl.openStream();
         }
@@ -577,9 +581,7 @@ public final class UpdateChecker {
     try {
       downloadThreadFuture.get(5, TimeUnit.SECONDS);
     }
-    catch (TimeoutException e) {
-      // ignore
-    }
+    catch (TimeoutException ignored) { }
 
     if (!downloadThreadFuture.isDone()) {
       downloadThreadFuture.cancel(true);
@@ -619,6 +621,7 @@ public final class UpdateChecker {
           if (permanentIdFile.exists()) {
             return FileUtil.loadFile(permanentIdFile).trim();
           }
+
           String uuid;
           if (propertiesComponent.isValueSet(INSTALLATION_UID)) {
             uuid = propertiesComponent.getValue(INSTALLATION_UID);
@@ -629,11 +632,10 @@ public final class UpdateChecker {
           FileUtil.writeToFile(permanentIdFile, uuid);
           return uuid;
         }
-        catch (IOException e) {
-          // ignore
-        }
+        catch (IOException ignored) { }
       }
     }
+
     return null;
   }
 
@@ -641,10 +643,9 @@ public final class UpdateChecker {
     try {
       return UUID.randomUUID().toString();
     }
-    catch (Exception ignored) {
-    }
-    catch (InternalError ignored) {
-    }
+    catch (Exception ignored) { }
+    catch (InternalError ignored) { }
+
     return "";
   }
 
@@ -666,7 +667,6 @@ public final class UpdateChecker {
     }
     return installed;
   }
-
 
   public static DownloadPatchResult downloadAndInstallPatch(final BuildInfo newVersion) {
     final DownloadPatchResult[] result = new DownloadPatchResult[]{DownloadPatchResult.CANCELED};
@@ -700,7 +700,9 @@ public final class UpdateChecker {
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
-    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + osSuffix + ".jar";
+    String bundledJdk = "jdk-bundled".equals(System.getProperty("idea.java.redist")) ? "-jdk-bundled" : "";
+
+    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
 
     String platform = PlatformUtils.getPlatformPrefix();
 
@@ -708,12 +710,12 @@ public final class UpdateChecker {
 
     OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
     try {
-      URLConnection connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
+      URLConnection connection = HttpConfigurable.getInstance().openConnection(new URL(new URL(getPatchesUrl()), fileName).toString());
       try {
         InputStream in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
         try {
           int total = connection.getContentLength();
-          i.setIndeterminate(total > 0);
+          i.setIndeterminate(total <= 0);
 
           byte[] buffer = new byte[10 * 1024];
           int count;
@@ -778,7 +780,7 @@ public final class UpdateChecker {
   public static void saveDisabledToUpdatePlugins() {
     final File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
     try {
-      PluginManager.savePluginsList(getDisabledToUpdatePlugins(), false, plugins);
+      PluginManagerCore.savePluginsList(getDisabledToUpdatePlugins(), false, plugins);
     }
     catch (IOException e) {
       LOG.error(e);

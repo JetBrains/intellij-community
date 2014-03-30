@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(myElement)) {
+      if (myElement instanceof PsiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;
@@ -83,7 +84,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     return super.getNarrowedComplementaryScope(defaultProject);
   }
 
-  
+
 
   @Override
   public String getShortenName() {

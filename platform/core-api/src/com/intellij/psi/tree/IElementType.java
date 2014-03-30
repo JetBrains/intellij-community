@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Interface for token types returned from lexical analysis and for types
@@ -53,8 +54,15 @@ public class IElementType {
   public static final short MAX_INDEXED_TYPES = 15000;
 
   private static short ourCounter = FIRST_TOKEN_INDEX;
-  private static final List<IElementType> ourRegistry = new ArrayList<IElementType>(700);
+  private static IElementType[] ourRegistry = new IElementType[700];
+  private static final ReentrantReadWriteLock.ReadLock ourRegistryReadLock;
+  private static final ReentrantReadWriteLock.WriteLock ourRegistryWriteLock;
 
+  static {
+    ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
+    ourRegistryReadLock = ourLock.readLock();
+    ourRegistryWriteLock = ourLock.writeLock();
+  }
   private final short myIndex;
   @NotNull private final String myDebugName;
   @NotNull private final Language myLanguage;
@@ -74,10 +82,20 @@ public class IElementType {
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      myIndex = ourCounter++;
-      LOG.assertTrue(ourCounter < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
-      synchronized (ourRegistry) {
-        ourRegistry.add(this);
+      ourRegistryWriteLock.lock();
+      try {
+        myIndex = ourCounter++;
+        LOG.assertTrue(myIndex < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
+        final int registryIndex = myIndex - FIRST_TOKEN_INDEX;
+
+        if (ourRegistry.length == registryIndex) {
+          IElementType[] newRegistry = new IElementType[ourRegistry.length << 1];
+          System.arraycopy(ourRegistry, 0, newRegistry, 0, ourRegistry.length);
+          ourRegistry = newRegistry;
+        }
+        ourRegistry[registryIndex] = this; // overflow
+      } finally {
+        ourRegistryWriteLock.unlock();
       }
     }
     else {
@@ -142,10 +160,13 @@ public class IElementType {
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
   public static IElementType find(short idx) {
-    synchronized (ourRegistry) {
-      if (idx == 0) return ourRegistry.get(0); // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.
-      if (idx >= ourRegistry.size() + FIRST_TOKEN_INDEX) return null;
-      return ourRegistry.get(idx - FIRST_TOKEN_INDEX);
+    ourRegistryReadLock.lock();
+    try {
+      if (idx == 0) return ourRegistry[0]; // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.
+      if (idx >= ourCounter) return null;
+      return ourRegistry[idx - FIRST_TOKEN_INDEX];
+    } finally {
+      ourRegistryReadLock.unlock();
     }
   }
 
@@ -171,8 +192,12 @@ public class IElementType {
   @NotNull
   public static IElementType[] enumerate(@NotNull Predicate p) {
     IElementType[] copy;
-    synchronized (ourRegistry) {
-      copy = ourRegistry.toArray(new IElementType[ourRegistry.size()]);
+    ourRegistryReadLock.lock();
+    try {
+      copy = new IElementType[ourCounter - FIRST_TOKEN_INDEX];
+      System.arraycopy(ourRegistry, 0, copy, 0, ourCounter - FIRST_TOKEN_INDEX);
+    } finally {
+      ourRegistryReadLock.unlock();
     }
 
     List<IElementType> matches = new ArrayList<IElementType>();

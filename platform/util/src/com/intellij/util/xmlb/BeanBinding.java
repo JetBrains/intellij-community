@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
@@ -37,12 +37,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
 
-  private static final ConcurrentHashMap<Class, SoftReference<List<Accessor>>> ourAccessorCache = new ConcurrentHashMap<Class, SoftReference<List<Accessor>>>();
+  private static final Map<Class, List<Accessor>> ourAccessorCache = new ConcurrentSoftValueHashMap<Class, List<Accessor>>();
 
   private final String myTagName;
   private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
@@ -51,7 +50,7 @@ class BeanBinding implements Binding {
   @NonNls private static final String CLASS_PROPERTY = "class";
   private final Accessor myAccessor;
 
-  public BeanBinding(Class<?> beanClass, final Accessor accessor) {
+  public BeanBinding(Class<?> beanClass, @Nullable Accessor accessor) {
     myAccessor = accessor;
     assert !beanClass.isArray() : "Bean is an array: " + beanClass;
     assert !beanClass.isPrimitive() : "Bean is primitive type: " + beanClass;
@@ -74,7 +73,7 @@ class BeanBinding implements Binding {
   }
 
   @Override
-  public Object serialize(Object o, Object context, SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, Object context, SerializationFilter filter) {
     Element element = new Element(myTagName);
 
     serializeInto(o, element, filter);
@@ -82,7 +81,7 @@ class BeanBinding implements Binding {
     return element;
   }
 
-  public void serializeInto(final Object o, final Element element, SerializationFilter filter) {
+  public void serializeInto(@NotNull final Object o, final Element element, SerializationFilter filter) {
     for (Binding binding : myPropertyBindingsList) {
       Accessor accessor = myPropertyBindings.get(binding);
       if (!filter.accepts(accessor, o)) continue;
@@ -170,18 +169,7 @@ class BeanBinding implements Binding {
   }
 
   private Object instantiateBean() {
-    Object result;
-
-    try {
-      result = myBeanClass.newInstance();
-    }
-    catch (InstantiationException e) {
-      throw new XmlSerializationException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
-    }
-    return result;
+    return XmlSerializerImpl.newInstance(myBeanClass);
   }
 
   @Override
@@ -195,15 +183,24 @@ class BeanBinding implements Binding {
   }
 
   private static String getTagName(Class<?> aClass) {
-    Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && tag.value().length() != 0) return tag.value();
+    for (Class<?> c = aClass; c != null; c = c.getSuperclass()) {
+      String name = getTagNameFromAnnotation(c);
+      if (name != null) {
+        return name;
+      }
+    }
     return aClass.getSimpleName();
+  }
+
+  private static String getTagNameFromAnnotation(Class<?> aClass) {
+    Tag tag = aClass.getAnnotation(Tag.class);
+    if (tag != null && !tag.value().isEmpty()) return tag.value();
+    return null;
   }
 
   @NotNull
   static List<Accessor> getAccessors(Class<?> aClass) {
-    final SoftReference<List<Accessor>> reference = ourAccessorCache.get(aClass);
-    List<Accessor> accessors = reference == null ? null : reference.get();
+    List<Accessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
     }
@@ -215,7 +212,7 @@ class BeanBinding implements Binding {
     }
     collectFieldAccessors(aClass, accessors);
 
-    ourAccessorCache.put(aClass, new SoftReference<List<Accessor>>(accessors));
+    ourAccessorCache.put(aClass, accessors);
 
     return accessors;
   }
@@ -270,7 +267,7 @@ class BeanBinding implements Binding {
       part = methodName.substring(3, methodName.length());
       isSetter = true;
     }
-    return part.length() > 0 ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
+    return !part.isEmpty() ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
   }
 
   public String toString() {
@@ -300,7 +297,7 @@ class BeanBinding implements Binding {
     }
 
     if (tag != null) {
-      if (tag.value().length() > 0) return new TagBinding(accessor, tag);
+      if (!tag.value().isEmpty()) return new TagBinding(accessor, tag);
     }
 
     boolean surroundWithTag = true;

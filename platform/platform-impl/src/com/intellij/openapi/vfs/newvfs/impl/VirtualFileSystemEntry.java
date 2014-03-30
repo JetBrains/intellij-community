@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -32,11 +31,12 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.IOUtil;
+import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -53,180 +53,83 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
-  private static final int DIRTY_FLAG = 0x0100;
-  private static final int IS_SYMLINK_FLAG = 0x0200;
-  private static final int HAS_SYMLINK_FLAG = 0x0400;
-  private static final int IS_SPECIAL_FLAG = 0x0800;
-  private static final int INT_FLAGS_MASK = 0xff00;
+  private static final int IS_WRITABLE_FLAG = 0x01000000;
+  private static final int IS_HIDDEN_FLAG =   0x02000000;
+  private static final int INDEXED_FLAG =     0x04000000;
+          static final int CHILDREN_CACHED =  0x08000000; // makes sense for directory only
+  private static final int DIRTY_FLAG =       0x10000000;
+  private static final int IS_SYMLINK_FLAG =  0x20000000;
+  private static final int HAS_SYMLINK_FLAG = 0x40000000;
+  private static final int IS_SPECIAL_FLAG =  0x80000000;
+          static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense only for non-directory file
 
-  private static final String EMPTY = "";
-  @NonNls private static final String[] WELL_KNOWN_SUFFIXES = {
-    "$1.class", "$2.class", "Test.java", "List.java", "tion.java", ".class",
-    ".java", ".html", ".txt", ".xml", ".php", ".gif", ".svn", ".css", ".js"
-  };
-  private static final byte[][] WELL_KNOWN_SUFFIXES_BYTES;
-  private static final int[] WELL_KNOWN_SUFFIXES_LENGTH;
-  private static final int SUFFIX_BITS = 4;
-  private static final int SUFFIX_MASK = (1 << SUFFIX_BITS) - 1;
-  private static final int SUFFIX_SHIFT = Short.SIZE - SUFFIX_BITS;
+  private static final int ALL_FLAGS_MASK =
+    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
+  private volatile int myNameId;
+  private volatile VirtualDirectoryImpl myParent;
+  private volatile int myFlags;
+  private volatile int myId;
+  
   static {
-    WELL_KNOWN_SUFFIXES_BYTES = new byte[WELL_KNOWN_SUFFIXES.length][];
-    WELL_KNOWN_SUFFIXES_LENGTH = new int[WELL_KNOWN_SUFFIXES.length];
-    for (int i = 0; i < WELL_KNOWN_SUFFIXES.length; i++) {
-      String suffix = WELL_KNOWN_SUFFIXES[i];
-      WELL_KNOWN_SUFFIXES_BYTES[i] = suffix.getBytes(CharsetToolkit.UTF8_CHARSET);
-      WELL_KNOWN_SUFFIXES_LENGTH[i] = suffix.length();
-    }
-
-    assert 1 << SUFFIX_BITS == WELL_KNOWN_SUFFIXES.length + 1;
+    assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #WELL_KNOWN_SUFFIXES}. */
-  private volatile Object myName;
-  private volatile VirtualDirectoryImpl myParent;
-  /** Also, high four bits are used as an index into the {@link #WELL_KNOWN_SUFFIXES} array. */
-  private volatile short myFlags = 0;
-  private volatile int myId;
-
-  public VirtualFileSystemEntry(@NotNull String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
+  public VirtualFileSystemEntry(int nameId, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes int attributes) {
     myParent = parent;
     myId = id;
-
-    storeName(name);
+    myNameId = nameId;
 
     if (parent != null && parent != VirtualDirectoryImpl.NULL_VIRTUAL_FILE) {
       setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
       setFlagInt(IS_SPECIAL_FLAG, PersistentFS.isSpecialFile(attributes));
       updateLinkStatus();
     }
-  }
 
-  private void storeName(@NotNull String name) {
-    myFlags &= (1<<SUFFIX_SHIFT)-1;
-    for (int i = 0; i < WELL_KNOWN_SUFFIXES.length; i++) {
-      String suffix = WELL_KNOWN_SUFFIXES[i];
-      if (name.endsWith(suffix)) {
-        name = StringUtil.trimEnd(name, suffix);
-        int mask = (i+1) << SUFFIX_SHIFT;
-        myFlags |= mask;
-        break;
-      }
-    }
+    setFlagInt(IS_WRITABLE_FLAG, PersistentFS.isWritable(attributes));
+    setFlagInt(IS_HIDDEN_FLAG, PersistentFS.isHidden(attributes));
 
-    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
+    setModificationStamp(LocalTimeCounter.currentTime());
   }
 
   private void updateLinkStatus() {
-    boolean isSymLink = isSymLink();
+    boolean isSymLink = is(VFileProperty.SYMLINK);
     if (isSymLink) {
       String target = myParent.getFileSystem().resolveSymLink(this);
-      putUserData(SYMLINK_TARGET, target != null ? FileUtil.toSystemIndependentName(target) : target);
+      setLinkTarget(target != null ? FileUtil.toSystemIndependentName(target) : null);
     }
-    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
-  }
-
-  @NotNull
-  private static Object encodeName(@NotNull String name) {
-    int length = name.length();
-    if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      char c = name.charAt(i);
-      if (!IOUtil.isAscii(c)) {
-        return name;
-      }
-      bytes[i] = (byte)c;
-    }
-    return bytes;
-  }
-
-  @NotNull
-  private String getEncodedSuffix() {
-    int index = getSuffixIndex();
-    if (index == 0) return EMPTY;
-    return WELL_KNOWN_SUFFIXES[index-1];
-  }
-  @NotNull
-  private byte[] getEncodedSuffixBytes() {
-    int index = getSuffixIndex();
-    if (index == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
-    return WELL_KNOWN_SUFFIXES_BYTES[index-1];
-  }
-  private int getEncodedSuffixLength() {
-    int index = getSuffixIndex();
-    if (index == 0) return 0;
-    return WELL_KNOWN_SUFFIXES_LENGTH[index-1];
-  }
-
-  private int getSuffixIndex() {
-    return (myFlags >> SUFFIX_SHIFT) & SUFFIX_MASK;
+    setFlagInt(HAS_SYMLINK_FLAG, isSymLink || myParent.getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   @Override
   @NotNull
   public String getName() {
-    Object name = rawName();
-    String suffix = getEncodedSuffix();
-    if (name instanceof String) {
-      //noinspection StringEquality
-      return suffix == EMPTY ? (String)name : name + suffix;
-    }
-
-    byte[] bytes = (byte[])name;
-    int length = bytes.length;
-    char[] chars = new char[length + suffix.length()];
-    for (int i = 0; i < length; i++) {
-      chars[i] = (char)bytes[i];
-    }
-    copyString(chars, length, suffix);
-    return StringFactory.createShared(chars);
+    return getNameSequence().toString();
   }
 
-  int compareNameTo(@NotNull String name, boolean ignoreCase) {
-    Object rawName = rawName();
-    if (rawName instanceof String) {
-      String thisName = getName();
-      return compareNames(thisName, name, ignoreCase);
-    }
-
-    byte[] bytes = (byte[])rawName;
-    int suffixLength = getEncodedSuffixLength();
-    int bytesLength = bytes.length;
-    int d = bytesLength + suffixLength - name.length();
-    if (d != 0) return d;
-    d = compare(bytes, 0, name, 0, bytesLength, ignoreCase);
-    if (d != 0) return d;
-    byte[] suffix = getEncodedSuffixBytes();
-    d = compare(suffix, 0, name, bytesLength, suffixLength, ignoreCase);
-    return d;
+  @NotNull
+  @Override
+  public CharSequence getNameSequence() {
+    return FileNameCache.getVFileName(myNameId);
   }
 
-  static int compareNames(@NotNull String name1, @NotNull String name2, boolean ignoreCase) {
-    int d = name1.length() - name2.length();
+  public int compareNameTo(@NotNull CharSequence name, boolean ignoreCase) {
+    return FileNameCache.compareNameTo(myNameId, name, ignoreCase);
+  }
+
+  protected static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase) {
+    return compareNames(name1, name2, ignoreCase, 0);
+  }
+
+  static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean ignoreCase, int offset2) {
+    int d = name1.length() - name2.length() + offset2;
     if (d != 0) return d;
     for (int i=0; i<name1.length(); i++) {
       // com.intellij.openapi.util.text.StringUtil.compare(String,String,boolean) inconsistent
-      d = StringUtil.compare(name1.charAt(i), name2.charAt(i), ignoreCase);
+      d = StringUtil.compare(name1.charAt(i), name2.charAt(i + offset2), ignoreCase);
       if (d != 0) return d;
     }
     return 0;
-  }
-
-
-  private static int compare(@NotNull byte[] name1, int offset1, @NotNull String name2, int offset2, int len, boolean ignoreCase) {
-    for (int i1 = offset1, i2=offset2; i1 < offset1 + len; i1++, i2++) {
-      char c1 = (char)name1[i1];
-      char c2 = name2.charAt(i2);
-      int d = StringUtil.compare(c1, c2, ignoreCase);
-      if (d != 0) return d;
-    }
-    return 0;
-  }
-
-  protected Object rawName() {
-    return myName;
   }
 
   @Override
@@ -240,28 +143,35 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean getFlag(int mask) {
-    assert (mask & INT_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is in reserved range.";
-    return getFlagInt(mask);
+  public long getModificationStamp() {
+    return myFlags & ~ALL_FLAGS_MASK;
   }
 
-  private boolean getFlagInt(int mask) {
+  public synchronized void setModificationStamp(long modificationStamp) {
+    myFlags = (myFlags & ALL_FLAGS_MASK) | ((int)modificationStamp & ~ALL_FLAGS_MASK);
+  }
+
+  boolean getFlagInt(int mask) {
+    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
     return (myFlags & mask) != 0;
   }
 
-  @Override
-  public void setFlag(int mask, boolean value) {
-    assert (mask & INT_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is in reserved range.";
-    setFlagInt(mask, value);
-  }
-
-  private void setFlagInt(int mask, boolean value) {
+  synchronized void setFlagInt(int mask, boolean value) {
+    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
     if (value) {
       myFlags |= mask;
     }
     else {
       myFlags &= ~mask;
     }
+  }
+
+  public boolean isFileIndexed() {
+    return getFlagInt(INDEXED_FLAG);
+  }
+
+  public void setFileIndexed(boolean indexed) {
+    setFlagInt(INDEXED_FLAG, indexed);
   }
 
   @Override
@@ -290,53 +200,13 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-    Object o = rawName();
-    String suffix = getEncodedSuffix();
-    int rawNameLength = o instanceof String ? ((String)o).length() : ((byte[])o).length;
-    int nameLength = rawNameLength + suffix.length();
-    boolean appendSlash = SystemInfo.isWindows && myParent == null && suffix.isEmpty() && rawNameLength == 2 &&
-                          (o instanceof String ? ((String)o).charAt(1) : (char)((byte[])o)[1]) == ':';
-
-    char[] chars;
-    if (myParent != null) {
-      chars = myParent.appendPathOnFileSystem(pathLength + 1 + nameLength, position);
-      if (position[0] > 0 && chars[position[0] - 1] != '/') {
-        chars[position[0]++] = '/';
-      }
-    }
-    else {
-      int rootPathLength = pathLength + nameLength;
-      if (appendSlash) ++rootPathLength;
-      chars = new char[rootPathLength];
-    }
-
-    if (o instanceof String) {
-      position[0] = copyString(chars, position[0], (String)o);
-    }
-    else {
-      byte[] bytes = (byte[])o;
-      int pos = position[0];
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0, len = bytes.length; i < len; i++) {
-        chars[pos++] = (char)bytes[i];
-      }
-      position[0] = pos;
-    }
-
-    if (appendSlash) {
-      chars[position[0]++] = '/';
-    }
-    else {
-      position[0] = copyString(chars, position[0], suffix);
-    }
-
-    return chars;
+  protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+    return FileNameCache.appendPathOnFileSystem(myNameId, myParent, accumulatedPathLength, positionRef);
   }
 
-  private static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
+  protected static int copyString(@NotNull char[] chars, int pos, @NotNull CharSequence s) {
     int length = s.length();
-    s.getChars(0, length, chars, pos);
+    CharArrayUtil.getChars(s, chars, 0, pos, length);
     return pos + length;
   }
 
@@ -383,7 +253,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean isWritable() {
-    return ourPersistence.isWritable(this);
+    return getFlagInt(IS_WRITABLE_FLAG);
   }
 
   @Override
@@ -484,7 +354,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
 
     myParent.removeChild(this);
-    storeName(newName);
+    myNameId = FileNameCache.storeName(newName);
     myParent.addChild(this);
   }
 
@@ -551,19 +421,26 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public boolean isSymLink() {
-    return getFlagInt(IS_SYMLINK_FLAG);
+  public boolean is(@NotNull VFileProperty property) {
+    if (property == VFileProperty.SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
+    if (property == VFileProperty.HIDDEN) return getFlagInt(IS_HIDDEN_FLAG);
+    if (property == VFileProperty.SYMLINK) return getFlagInt(IS_SYMLINK_FLAG);
+    return super.is(property);
   }
 
-  @Override
-  public boolean isSpecialFile() {
-    return getFlagInt(IS_SPECIAL_FLAG);
+  public void updateProperty(String property, boolean value) {
+    if (property == PROP_WRITABLE) setFlagInt(IS_WRITABLE_FLAG, value);
+    if (property == PROP_HIDDEN) setFlagInt(IS_HIDDEN_FLAG, value);
+  }
+
+  public void setLinkTarget(@Nullable String target) {
+    putUserData(SYMLINK_TARGET, target);
   }
 
   @Override
   public String getCanonicalPath() {
     if (getFlagInt(HAS_SYMLINK_FLAG)) {
-      if (isSymLink()) {
+      if (is(VFileProperty.SYMLINK)) {
         return getUserData(SYMLINK_TARGET);
       }
       VirtualDirectoryImpl parent = myParent;

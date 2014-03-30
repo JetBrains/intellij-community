@@ -39,16 +39,19 @@ public class GenerateToStringQuickFix implements LocalQuickFix {
     return INSTANCE;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Generate toString()";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Generate";
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor desc) {
     final PsiClass clazz = PsiTreeUtil.getParentOfType(desc.getPsiElement(), PsiClass.class);
     if (clazz == null) {

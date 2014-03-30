@@ -15,90 +15,20 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
-import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.ExternalizableStringSet;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonSerializableFieldInSerializableClassInspection extends SerializableInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-
+public class NonSerializableFieldInSerializableClassInspection extends NonSerializableFieldInSerializableClassInspectionBase {
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.problem.descriptor");
+  public JComponent createOptionsPanel() {
+    return SerializableInspectionUtil.createOptions(this);
   }
 
   @Override
   protected JComponent[] createAdditionalOptions() {
     return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
-  }
-
-  @NotNull
-  @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
-    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonSerializableFieldInSerializableClassVisitor();
-  }
-
-  private class NonSerializableFieldInSerializableClassVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitField(@NotNull PsiField field) {
-      if (field.hasModifierProperty(PsiModifier.TRANSIENT) || field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final PsiClass aClass = field.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
-        return;
-      }
-      if (!SerializationUtils.isSerializable(aClass)) {
-        return;
-      }
-      if (SerializationUtils.isProbablySerializable(field.getType())) {
-        return;
-      }
-      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
-      if (hasWriteObject) {
-        return;
-      }
-      if (isIgnoredSubclass(aClass)) {
-        return;
-      }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
-        return;
-      }
-      registerFieldError(field, field);
-    }
   }
 }

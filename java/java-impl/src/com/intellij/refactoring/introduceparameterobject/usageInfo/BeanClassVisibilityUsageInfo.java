@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 
@@ -46,9 +47,9 @@ public class BeanClassVisibilityUsageInfo extends FixableUsageInfo {
 
   @Override
   public void fixUsage() throws IncorrectOperationException {
-    VisibilityUtil.fixVisibility(usages, existingClass, myNewVisibility);
+    VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), existingClass, myNewVisibility);
     if (myExistingClassCompatibleConstructor != null) {
-      VisibilityUtil.fixVisibility(usages, myExistingClassCompatibleConstructor, myNewVisibility);
+      VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), myExistingClassCompatibleConstructor, myNewVisibility);
     }
   }
 }

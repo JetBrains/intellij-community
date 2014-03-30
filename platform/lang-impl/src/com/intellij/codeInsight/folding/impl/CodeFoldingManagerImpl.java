@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,12 @@ import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,7 +155,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
             // Show only the non-displayed top part of the target fold region
             int endOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(endVisualLine, 0)));
-            TextRange textRange = new TextRange(textOffset, endOffset);
+            TextRange textRange = new UnfairTextRange(textOffset, endOffset);
             hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true, true);
             myCurrentFold = fold;
             myCurrentHint = hint;
@@ -187,9 +183,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
     final Project project = editor.getProject();
-    if (project != null && !project.equals(myProject)) return;
+    if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
 
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -220,32 +216,26 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
-    Runnable operation = new Runnable() {
+    Runnable runnable = updateFoldRegions(editor, true, true);
+    if (runnable != null) {
+      runnable.run();
+    }
+    if (myProject.isDisposed() || editor.isDisposed()) return;
+    foldingModel.runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
-        Runnable runnable = updateFoldRegions(editor, true, true);
-        if (runnable != null) {
-          runnable.run();
+        DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
+        Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
+        for (Editor otherEditor : editors) {
+          if (otherEditor == editor) continue;
+          documentFoldingInfo.loadFromEditor(otherEditor);
+          break;
         }
-        if (myProject.isDisposed() || editor.isDisposed()) return;
-        foldingModel.runBatchFoldingOperation(new Runnable() {
-          @Override
-          public void run() {
-            DocumentFoldingInfo documentFoldingInfo = getDocumentFoldingInfo(document);
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, myProject);
-            for (Editor otherEditor : editors) {
-              if (otherEditor == editor) continue;
-              documentFoldingInfo.loadFromEditor(otherEditor);
-              break;
-            }
-            documentFoldingInfo.setToEditor(editor);
+        documentFoldingInfo.setToEditor(editor);
 
-            documentFoldingInfo.clear();
-          }
-        });
+        documentFoldingInfo.clear();
       }
-    };
-    UIUtil.invokeLaterIfNeeded(operation);
+    });
   }
 
   @Override

@@ -22,7 +22,7 @@ class MyTest1 {
         I i2 = MyTest1 :: m2;
         i2.m(42,42);
 
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I'">I i3 = MyTest1 :: m3;</error>  
+        I i3 = MyTest1 :: m3;  
     }
 }
 
@@ -55,7 +55,7 @@ class MyTest {
 
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_1 = MyTest::_1;</error>
+        I1 i_1 = <error descr="Non-static method cannot be referenced from a static context">MyTest::_1</error>;
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_2 = MyTest::_2;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_3 = MyTest::_3;</error>
         <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I1'">I1 i_4 = MyTest::_4;</error>

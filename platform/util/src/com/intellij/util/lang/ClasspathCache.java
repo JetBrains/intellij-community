@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BloomFilterBase;
 import com.intellij.util.SmartList;
@@ -35,8 +33,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author max
+ */
 public class ClasspathCache {
-  private static final boolean doDebug = false;
+  static final Logger LOG = Logger.getInstance(ClasspathCache.class);
+  static final boolean doDebug = LOG.isDebugEnabled();
+
   private final DebugInfo myDebugInfo;
 
   private final TIntObjectHashMap<Object> myResourcePackagesCache = new TIntObjectHashMap<Object>();
@@ -114,9 +117,9 @@ public class ClasspathCache {
       Set<Loader> loaders = myResources2LoadersTempMap.get(name);
       if (loaders == null) myResources2LoadersTempMap.put(name, loaders = new THashSet<Loader>());
       boolean added = loaders.add(loader);
-      if (UrlClassLoader.doDebug && added) ++registeredBeforeClose;
+      if (doDebug && added) ++registeredBeforeClose;
     } else {
-      if (UrlClassLoader.doDebug) {
+      if (doDebug) {
         if (!myNameFilter.maybeContains(name, loader)) ++registeredAfterClose;
       }
 
@@ -125,6 +128,8 @@ public class ClasspathCache {
   }
 
   public boolean loaderHasName(String name, Loader loader) {
+    if (StringUtil.isEmpty(name)) return true;
+    
     String origName = name;
     name = transformName(name);
 
@@ -137,7 +142,7 @@ public class ClasspathCache {
       if (!result) ++hits;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(name, loader);
         if (result2 != result) {
           ++diffs3;
         }
@@ -147,8 +152,8 @@ public class ClasspathCache {
         }
       }
 
-      if (requests % 1000 == 0 && UrlClassLoader.doDebug) {
-        UrlClassLoader.debug("Avoided disk hits: "+hits + " from " + requests + (doDebug ? ", false hits:" + falseHits + ", bitmap diffs:"+diffs3:""));
+      if (requests % 1000 == 0 && doDebug) {
+        LOG.debug("Avoided disk hits: " + hits + " from " + requests + ", false hits:" + falseHits + ", bitmap diffs:" + diffs3);
       }
     }
     else {
@@ -157,7 +162,7 @@ public class ClasspathCache {
       if (!result) ++hits2;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(name, loader);
         if (result2 != result) {
           ++diffs2;
         }
@@ -176,8 +181,8 @@ public class ClasspathCache {
         }
       }
 
-      if (requests2 % 1000 == 0 && UrlClassLoader.doDebug) {
-        UrlClassLoader.debug("Avoided disk hits2: "+hits2 + " from " + requests2 + (doDebug ? "," + diffs + ", false hits:" + falseHits2 + ", bitmap diffs:"+diffs2:""));
+      if (requests2 % 1000 == 0 && doDebug) {
+        LOG.debug("Avoided disk hits2: " + hits2 + " from " + requests2 + "," + diffs + ", false hits:" + falseHits2 + ", bitmap diffs:" + diffs2);
       }
     }
 
@@ -215,14 +220,14 @@ public class ClasspathCache {
 
   void nameSymbolsLoaded() {
     if (!myTempMapMode) {
-      if (UrlClassLoader.doDebug && registeredAfterClose > 0) {
-        UrlClassLoader.debug("Registered number of classes after close "+registeredAfterClose + " "+toString());
+      if (doDebug && registeredAfterClose > 0) {
+        LOG.debug("Registered number of classes after close " + registeredAfterClose + " " + toString());
       }
       return;
     }
 
-    if (UrlClassLoader.doDebug) {
-      UrlClassLoader.debug("Registered number of classes before classes "+registeredBeforeClose + " "+toString());
+    if (doDebug) {
+      LOG.debug("Registered number of classes before classes " + registeredBeforeClose + " " + toString());
     }
 
     myTempMapMode = false;
@@ -338,7 +343,7 @@ public class ClasspathCache {
       }
     }
 
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return myResourceIndex.contains(hashFromNameAndLoader(name, loader));
     }
   }
@@ -357,7 +362,7 @@ public class ClasspathCache {
     }
 
     @Override
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return false;
     }
   }

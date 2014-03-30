@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -60,7 +57,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File dotLinkFile = createSymLink(".", myTempDir + "/dot_link");
     VirtualFile dotLinkVFile = refreshAndFind(dotLinkFile);
     assertNotNull(dotLinkVFile);
-    assertTrue(dotLinkVFile.isSymLink());
+    assertTrue(dotLinkVFile.is(VFileProperty.SYMLINK));
     assertTrue(dotLinkVFile.isDirectory());
     assertPathsEqual(myTempDir.getPath(), dotLinkVFile.getCanonicalPath());
     assertVisitedPaths(dotLinkVFile.getPath());
@@ -71,7 +68,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File upLinkFile = createSymLink(upDir.getPath(), upDir.getPath() + "/up_link");
     VirtualFile upLinkVFile = refreshAndFind(upLinkFile);
     assertNotNull(upLinkVFile);
-    assertTrue(upLinkVFile.isSymLink());
+    assertTrue(upLinkVFile.is(VFileProperty.SYMLINK));
     assertTrue(upLinkVFile.isDirectory());
     assertPathsEqual(upDir.getPath(), upLinkVFile.getCanonicalPath());
     assertVisitedPaths(upDir.getPath(), upLinkVFile.getPath());
@@ -80,7 +77,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertTrue(repeatedLinksFile.getPath(), repeatedLinksFile.isDirectory());
     VirtualFile repeatedLinksVFile = refreshAndFind(repeatedLinksFile);
     assertNotNull(repeatedLinksFile.getPath(), repeatedLinksVFile);
-    assertTrue(repeatedLinksVFile.isSymLink());
+    assertTrue(repeatedLinksVFile.is(VFileProperty.SYMLINK));
     assertTrue(repeatedLinksVFile.isDirectory());
     assertPathsEqual(upDir.getPath(), repeatedLinksVFile.getCanonicalPath());
     assertEquals(upLinkVFile.getCanonicalFile(), repeatedLinksVFile.getCanonicalFile());
@@ -110,7 +107,8 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File targetFile = createTestFile(myTempDir, "target.txt");
     File linkFile = createSymLink(targetFile.getPath(), myTempDir + "/link");
     VirtualFile linkVFile = refreshAndFind(linkFile);
-    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
+    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() &&
+                                                            linkVFile.is(VFileProperty.SYMLINK));
 
     setWritableAndCheck(targetFile, true);
     refresh();
@@ -122,7 +120,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File targetDir = createTestDir(myTempDir, "target");
     File linkDir = createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
     VirtualFile linkVDir = refreshAndFind(linkDir);
-    assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink());
+    assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK));
 
     if (!SystemInfo.isWindows) {
       setWritableAndCheck(targetDir, true);
@@ -146,7 +144,8 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File targetFile = createTestFile(myTempDir, "target");
     File linkFile = createSymLink(targetFile.getPath(), myTempDir + "/link");
     VirtualFile linkVFile = refreshAndFind(linkFile);
-    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
+    assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() &&
+                                                            linkVFile.is(VFileProperty.SYMLINK));
 
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
@@ -165,7 +164,7 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File linkDir = createSymLink(targetDir.getPath(), myTempDir + "/linkDir");
     VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir,
-               linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink() && linkVDir.getChildren().length == 1);
+               linkVDir != null && linkVDir.isDirectory() && linkVDir.is(VFileProperty.SYMLINK) && linkVDir.getChildren().length == 1);
 
     token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
     try {
@@ -188,33 +187,33 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File link = createSymLink(targetFile.getPath(), myTempDir + "/link");
     VirtualFile vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
-               vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
+               vFile1 != null && !vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
 
     // file link => dir
     assertTrue(link.getPath(), link.delete() && link.mkdir() && link.isDirectory());
     VirtualFile vFile2 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile2,
-               !vFile1.isValid() && vFile2 != null && vFile2.isDirectory() && !vFile2.isSymLink());
+               !vFile1.isValid() && vFile2 != null && vFile2.isDirectory() && !vFile2.is(VFileProperty.SYMLINK));
 
     // dir => dir link
     assertTrue(link.getPath(), link.delete());
     link = createSymLink(targetDir.getPath(), myTempDir + "/link");
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
-               !vFile2.isValid() && vFile1 != null && vFile1.isDirectory() && vFile1.isSymLink());
+               !vFile2.isValid() && vFile1 != null && vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
 
     // dir link => file
     assertTrue(link.getPath(), link.delete() && link.createNewFile() && link.isFile());
     vFile2 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
-               !vFile1.isValid() && vFile2 != null && !vFile2.isDirectory() && !vFile2.isSymLink());
+               !vFile1.isValid() && vFile2 != null && !vFile2.isDirectory() && !vFile2.is(VFileProperty.SYMLINK));
 
     // file => file link
     assertTrue(link.getPath(), link.delete());
     link = createSymLink(targetFile.getPath(), myTempDir + "/link");
     vFile1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vFile1,
-               !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
+               !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.is(VFileProperty.SYMLINK));
   }
 
   public void testDirLinkSwitch() throws Exception {
@@ -227,18 +226,20 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File link = createSymLink(targetDir1.getPath(), myTempDir + "/link");
     VirtualFile vLink1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vLink1,
-               vLink1 != null && vLink1.isDirectory() && vLink1.isSymLink());
+               vLink1 != null && vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
     assertEquals(1, vLink1.getChildren().length);
+    assertPathsEqual(targetDir1.getPath(), vLink1.getCanonicalPath());
 
     assertTrue(link.toString(), link.delete());
     createSymLink(targetDir2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
-    assertFalse(vLink1.isValid());
+    assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && vLink2.isDirectory() && vLink2.isSymLink());
+               vLink2 == vLink1 && vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(2, vLink2.getChildren().length);
+    assertPathsEqual(targetDir2.getPath(), vLink1.getCanonicalPath());
   }
 
   public void testFileLinkSwitch() throws Exception {
@@ -250,18 +251,20 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     File link = createSymLink(target1.getPath(), myTempDir + "/link");
     VirtualFile vLink1 = refreshAndFind(link);
     assertTrue("link=" + link + ", vLink=" + vLink1,
-               vLink1 != null && !vLink1.isDirectory() && vLink1.isSymLink());
+               vLink1 != null && !vLink1.isDirectory() && vLink1.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target1), VfsUtilCore.loadText(vLink1));
+    assertPathsEqual(target1.getPath(), vLink1.getCanonicalPath());
 
     assertTrue(link.toString(), link.delete());
     createSymLink(target2.getPath(), myTempDir + "/" + link.getName());
 
     refresh();
-    assertFalse(vLink1.isValid());
+    assertTrue(vLink1.isValid());
     VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
     assertTrue("link=" + link + ", vLink=" + vLink2,
-               vLink2 != null && !vLink2.isDirectory() && vLink2.isSymLink());
+               vLink2 == vLink1 && !vLink2.isDirectory() && vLink2.is(VFileProperty.SYMLINK));
     assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
+    assertPathsEqual(target2.getPath(), vLink1.getCanonicalPath());
   }
 
 /*
@@ -335,13 +338,13 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
   }
 
   private static void assertBrokenLink(@NotNull VirtualFile link) {
-    assertTrue(link.isSymLink());
+    assertTrue(link.is(VFileProperty.SYMLINK));
     assertEquals(0, link.getLength());
     assertNull(link.getCanonicalPath(), link.getCanonicalPath());
   }
 
   private void assertVisitedPaths(String... expected) {
-    VirtualFile vDir = myFileSystem.findFileByIoFile(myTempDir);
+    VirtualFile vDir = refreshAndFind(myTempDir);
     assertNotNull(vDir);
 
     Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);

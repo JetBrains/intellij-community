@@ -20,11 +20,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -43,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
   private final PsiMethodCallExpression myMethodCall;
 
-  public ReplaceAddAllArrayToCollectionFix(final PsiMethodCallExpression methodCall) {
+  public ReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 
@@ -61,7 +60,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (myMethodCall == null || !myMethodCall.isValid()) return false;
+    if (!myMethodCall.isValid()) return false;
 
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module == null) return false;
@@ -96,7 +95,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getCollectionsMethodCall(), myMethodCall);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(myMethodCall.replace(toReplace));

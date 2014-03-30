@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
-import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
+  @NotNull
   @Override
   protected String getTestRoot() {
     return "/refactoring/introduceParameterObject/";
@@ -46,9 +48,9 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   private void doTest(final boolean delegate, final boolean createInner) throws Exception {
-    doTest(delegate, createInner, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+    doTest(delegate, createInner, new Function<PsiMethod, VariableData[]>() {
       @Override
-      public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
+      public VariableData[] fun(PsiMethod psiMethod) {
         return generateParams(psiMethod);
       }
     });
@@ -56,7 +58,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   private void doTest(final boolean delegate,
                       final boolean createInner,
-                      final Function<PsiMethod, ParameterTablePanel.VariableData[]> function) throws Exception {
+                      final Function<PsiMethod, VariableData[]> function) throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
@@ -65,7 +67,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        final ParameterTablePanel.VariableData[] datas = function.fun(method);
+        final VariableData[] datas = function.fun(method);
 
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", null, method, datas, delegate, false,
                                                                                             createInner, null, false);
@@ -74,13 +76,13 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
     });
   }
 
-  private static ParameterTablePanel.VariableData[] generateParams(final PsiMethod method) {
+  private static VariableData[] generateParams(final PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-    final ParameterTablePanel.VariableData[] datas = new ParameterTablePanel.VariableData[parameters.length];
+    final VariableData[] datas = new VariableData[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      datas[i] = new ParameterTablePanel.VariableData(parameter);
+      datas[i] = new VariableData(parameter);
       datas[i].name = parameter.getName();
       datas[i].passAsParameter = true;
     }
@@ -132,15 +134,33 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testSameTypeAndVarargs() throws Exception {
-    doTest(false, false, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+    doTest(false, false, new Function<PsiMethod, VariableData[]>() {
       @Override
-      public ParameterTablePanel.VariableData[] fun(PsiMethod method) {
+      public VariableData[] fun(PsiMethod method) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-        final ParameterTablePanel.VariableData[] datas = new ParameterTablePanel.VariableData[parameters.length - 1];
+        final VariableData[] datas = new VariableData[parameters.length - 1];
         for (int i = 0; i < parameters.length - 1; i++) {
           PsiParameter parameter = parameters[i];
-          datas[i] = new ParameterTablePanel.VariableData(parameter);
+          datas[i] = new VariableData(parameter);
+          datas[i].name = parameter.getName();
+          datas[i].passAsParameter = true;
+        }
+        return datas;
+      }
+    });
+  }
+
+  public void testCopyJavadoc1() throws Exception {
+    doTest(false, true, new Function<PsiMethod, VariableData[]>() {
+      @Override
+      public VariableData[] fun(PsiMethod method) {
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        final VariableData[] datas = new VariableData[parameters.length - 1];
+        for (int i = 0; i < parameters.length - 1; i++) {
+          PsiParameter parameter = parameters[i];
+          datas[i] = new VariableData(parameter);
           datas[i].name = parameter.getName();
           datas[i].passAsParameter = true;
         }
@@ -150,16 +170,16 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   public void testTypeParametersWithChosenSubtype() throws Exception {
-    doTest(false, true, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+    doTest(false, true, new Function<PsiMethod, VariableData[]>() {
       @Override
-      public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
+      public VariableData[] fun(PsiMethod psiMethod) {
         final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
         final PsiClass collectionClass = getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
-        final ParameterTablePanel.VariableData variableData =
-          new ParameterTablePanel.VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
+        final VariableData variableData =
+          new VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
         variableData.name = parameter.getName();
         variableData.passAsParameter = true;
-        return new ParameterTablePanel.VariableData[]{variableData};
+        return new VariableData[]{variableData};
       }
     });
   }

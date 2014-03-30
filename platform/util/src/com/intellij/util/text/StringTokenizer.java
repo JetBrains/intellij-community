@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
 /**
- * Copy of java.util.StringTokenizer with getCurrentPosition method.
+ * Copy of {@link java.util.StringTokenizer} with added {@link #getCurrentPosition()} and {@link #reset(String)} methods.
  */
 public class StringTokenizer implements Enumeration<String> {
   private int currentPosition;
@@ -134,10 +134,12 @@ public class StringTokenizer implements Enumeration<String> {
     return nextToken();
   }
 
+  @Override
   public boolean hasMoreElements() {
     return hasMoreTokens();
   }
 
+  @Override
   public String nextElement() {
     return nextToken();
   }

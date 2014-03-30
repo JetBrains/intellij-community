@@ -119,25 +119,17 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   @SuppressWarnings("AssignmentToForLoopParameter")
   public void updateBlankLines(@NotNull Document document) {
-    int startLine = document.getLineNumber(getStartOffset());
     myBlankLinesBefore = 0;
-    if (startLine <= 0) {
-      return;
-    }
-    
+    int lineFeeds = 0;
     CharSequence text = document.getCharsSequence();
-    int lastLineFeed = document.getLineStartOffset(startLine) - 1;
-    for (int i = lastLineFeed - 1; i >= 0; i--) {
-      i = CharArrayUtil.shiftBackward(text, i, " \t");
-      if (text.charAt(i) == '\n') {
-        ++myBlankLinesBefore;
-      }
-      else {
-        break;
-      }
+    for (int current = getStartOffset() - 1; current >= 0; current--) {
+      current = CharArrayUtil.shiftBackward(text, current, " \t");
+      if (text.charAt(current) == '\n') lineFeeds++;
+      else break;
     }
+    if (lineFeeds > 0) myBlankLinesBefore = lineFeeds - 1;
   }
-  
+
   public void setNext(@Nullable ArrangementEntryWrapper<E> next) {
     myNext = next;
   }

@@ -1,9 +1,0 @@
-<resources>
-     <declare-styleable name="LabelView">
-        <attr name="text" format="string" />
-        <attr name="textColor" format="color" />
-        <attr name="textSize" format="dimension" />
-        <attr name="intAttr" format="integer"/>
-        <attr name="intAttr1" format="integer|reference"/>
-    </declare-styleable>
-</resources>

@@ -46,10 +46,10 @@ public abstract class XDebuggerTreeActionBase extends AnAction {
   @Override
   public void update(final AnActionEvent e) {
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
-    e.getPresentation().setEnabled(node != null && isEnabled(node));
+    e.getPresentation().setEnabled(node != null && isEnabled(node, e));
   }
 
-  protected boolean isEnabled(final XValueNodeImpl node) {
+  protected boolean isEnabled(final @NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return node.getName() != null;
   }
 

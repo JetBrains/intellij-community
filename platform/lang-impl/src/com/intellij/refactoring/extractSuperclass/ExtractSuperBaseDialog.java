@@ -44,7 +44,7 @@ import java.util.List;
  * @author dsl
  */
 public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, MemberInfoType extends MemberInfoBase> extends RefactoringDialog {
-  private String myRefactoringName;
+  private final String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
   protected final List<MemberInfoType> myMemberInfos;
@@ -61,7 +61,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private JPanel myDestinationRootPanel;
 
   protected abstract ComponentWithBrowseButton createPackageNameField();
-  
+
   protected JPanel createDestinationRootPanel() {
     return null;
   }
@@ -78,6 +78,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract void setDocCommentPolicySetting(int policy);
 
+  @Override
   protected abstract String getHelpId();
 
   @Nullable
@@ -141,6 +142,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     myRbExtractSuperclass.setSelected(true);
 
     ItemListener listener = new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         updateDialog();
       }
@@ -153,6 +155,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected void customizeRadiobuttons(Box box, ButtonGroup buttonGroup) {
   }
 
+  @Override
   protected JComponent createNorthPanel() {
       Box box = Box.createVerticalBox();
 
@@ -220,6 +223,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     return myRbExtractSuperclass != null && myRbExtractSuperclass.isSelected();
   }
 
+  @Override
   protected void doAction() {
     final String[] errorString = new String[]{null};
     final String extractedSuperName = getExtractedSuperName();
@@ -239,6 +243,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
       }
       else {
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
           public void run() {
             try {
               preparePackage();

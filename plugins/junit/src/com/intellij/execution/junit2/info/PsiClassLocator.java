@@ -41,8 +41,8 @@ public class PsiClassLocator implements PsiLocator {
       return new PsiClassLocator(name.substring(lastDot + 1), name.substring(0, lastDot));
   }
 
-  public Location<PsiClass> getLocation(final Project project) {
-    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, getQualifiedName(), GlobalSearchScope.allScope(project));
+  public Location<PsiClass> getLocation(final Project project, GlobalSearchScope searchScope) {
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, getQualifiedName(), searchScope);
     return psiClass != null ? new PsiLocation<PsiClass>(project, psiClass) : null;
   }
 

@@ -189,7 +189,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     ModuleConfigurationEditorProvider[] providers = collectProviders(module);
     ModuleConfigurationState state = createModuleConfigurationState();
     for (ModuleConfigurationEditorProvider provider : providers) {
-      ContainerUtil.addAll(myEditors, provider.createEditors(state));
+      ModuleConfigurationEditor[] editors = provider.createEditors(state);
+      if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
+          ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
+        myEditors.clear();
+        ContainerUtil.addAll(myEditors, editors);
+        break;
+      }
+      else {
+        ContainerUtil.addAll(myEditors, editors);
+      }
     }
 
     for (final Configurable moduleConfigurable : myModule.getComponents(Configurable.class)) {

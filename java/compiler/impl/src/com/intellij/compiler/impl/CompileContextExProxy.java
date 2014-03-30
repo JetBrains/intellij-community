@@ -112,6 +112,15 @@ public class CompileContextExProxy implements CompileContextEx {
     myDelegate.requestRebuildNextTime(message);
   }
 
+  public boolean isRebuildRequested() {
+    return myDelegate.isRebuildRequested();
+  }
+
+  @Nullable
+  public String getRebuildReason() {
+    return myDelegate.getRebuildReason();
+  }
+
   public Module getModuleByFile(final VirtualFile file) {
     return myDelegate.getModuleByFile(file);
   }

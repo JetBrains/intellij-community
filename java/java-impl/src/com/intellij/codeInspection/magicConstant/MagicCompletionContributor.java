@@ -51,6 +51,10 @@ public class MagicCompletionContributor extends CompletionContributor {
     PsiElement pos = parameters.getPosition();
     MagicConstantInspection.AllowedValues allowedValues = null;
 
+    if (JavaCompletionData.AFTER_DOT.accepts(pos)) {
+      return;
+    }
+
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
       if (!(call instanceof PsiExpression)) return;

@@ -17,14 +17,18 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -70,8 +74,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
 
   @Override
   protected JPanel createDestinationRootPanel() {
-    final VirtualFile[] sourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots();
-    if (sourceRoots.length <= 1) return super.createDestinationRootPanel();
+    final List<VirtualFile> sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
+    if (sourceRoots.size() <= 1) return super.createDestinationRootPanel();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
@@ -94,7 +98,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected JTextField createSourceClassField() {
     JTextField result = new JTextField();
     result.setEditable(false);
-    result.setText(mySourceClass.getQualifiedName());
+    final String qualifiedName = mySourceClass.getQualifiedName();
+    result.setText(qualifiedName != null ? qualifiedName : SymbolPresentationUtil.getSymbolPresentableText(mySourceClass));
     return result;
   }
 
@@ -127,7 +132,9 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected void preparePackage() throws OperationFailedException {
     final String targetPackageName = getTargetPackageName();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    if (!psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
+    final PsiFile containingFile = mySourceClass.getContainingFile();
+    final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty(); 
+    if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
       throw new OperationFailedException("Invalid package name: " + targetPackageName);
     }
     final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);

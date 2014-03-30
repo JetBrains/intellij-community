@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestStatusListener;
 import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
@@ -74,7 +75,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         type = MessageType.ERROR;
         break;
       case COMPLETE_INDEX:
-        if (testsRoot.getChildren().size() == 0) {
+        if (testsRoot.getChildren().size() == 0 && !testsRoot.isLeaf()) {
           msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
                                       : testsRoot.isTestsReporterAttached()
                                          ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")

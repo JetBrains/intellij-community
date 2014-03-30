@@ -48,10 +48,12 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
   public ApplicationStoreImpl(final ApplicationImpl application, PathMacroManager pathMacroManager) {
     myApplication = application;
     myStateStorageManager = new StateStorageManagerImpl(pathMacroManager.createTrackingSubstitutor(), ROOT_ELEMENT_NAME, application, application.getPicoContainer()) {
+      @Override
       protected StorageData createStorageData(String storageSpec) {
         return new FileBasedStorage.FileStorageData(ROOT_ELEMENT_NAME);
       }
 
+      @Override
       protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) {
         final String fileName;
 
@@ -65,10 +67,12 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
         return fileName;
       }
 
+      @Override
       protected String getVersionsFilePath() {
-        return PathManager.getConfigPath() + "/options/" + "appComponentVersions.xml";
+        return PathManager.getConfigPath() + "/options/appComponentVersions.xml";
       }
 
+      @Override
       protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
         if (fileSpec.equals(StoragePathMacros.APP_CONFIG + "/" + PathMacrosImpl.EXT_FILE_NAME + XML_EXTENSION)) return null;
         return super.getMacroSubstitutor(fileSpec);
@@ -77,23 +81,28 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     myDefaultsStateStorage = new DefaultsStateStorage(null);
   }
 
+  @Override
   public void load() throws IOException {
-    long start = System.currentTimeMillis();
-    myApplication.initComponents();
-    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + (System.currentTimeMillis() - start) + " ms");
+    long t = System.currentTimeMillis();
+    myApplication.init();
+    t = System.currentTimeMillis() - t;
+    LOG.info(myApplication.getComponentConfigurations().length + " application components initialized in " + t + " ms");
   }
 
+  @Override
   public void setOptionsPath(final String path) {
     myStateStorageManager.addMacro(StoragePathMacros.getMacroName(StoragePathMacros.APP_CONFIG), path);
     myStateStorageManager.addMacro(OPTIONS_MACRO, path);
   }
 
-  public void setConfigPath(final String configPath) {
+  @Override
+  public void setConfigPath(@NotNull final String configPath) {
     myStateStorageManager.addMacro(CONFIG_MACRO, configPath);
   }
 
-  public boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles,
-                        final Collection<String> notReloadableComponents) throws StateStorageException, IOException {
+  @Override
+  public boolean reload(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles,
+                        @NotNull final Collection<String> notReloadableComponents) throws StateStorageException, IOException {
     final SaveSession saveSession = startSave();
     final Set<String> componentNames = saveSession.analyzeExternalChanges(changedFiles);
 
@@ -135,6 +144,8 @@ class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationSto
     return true;
   }
 
+  @NotNull
+  @Override
   public StateStorageManager getStateStorageManager() {
     return myStateStorageManager;
   }

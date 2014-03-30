@@ -9,6 +9,6 @@ class T<R, D> {
 
 
     public R foo(Test test, D data) {
-        <selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 }

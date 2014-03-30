@@ -15,10 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
@@ -36,8 +33,8 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   private Element myPropertiesElement;
   private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
   private boolean myLogMessage;
-  private String myLogExpression;
-  private String myCondition;
+  private LogExpression myLogExpression;
+  private Condition myCondition;
   private XBreakpointDependencyState myDependencyState;
   private long myTimeStamp;
 
@@ -104,22 +101,52 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
     myLogMessage = logMessage;
   }
 
-  @Tag("log-expression")
+  @Transient
   public String getLogExpression() {
+    return myLogExpression != null ? myLogExpression.myExpression : null;
+  }
+
+  public void setLogExpression(String expression) {
+    if (expression != null) {
+      myLogExpression = new LogExpression();
+      myLogExpression.myExpression = expression;
+    }
+    else {
+      myLogExpression = null;
+    }
+  }
+
+  @Property(surroundWithTag = false)
+  public LogExpression getLogExpressionObject() {
     return myLogExpression;
   }
 
-  public void setLogExpression(final String logExpression) {
-    myLogExpression = logExpression;
+  public void setLogExpressionObject(final LogExpression logExpression) {
+    setLogExpression(logExpression.myOldExpression != null ? logExpression.myOldExpression : logExpression.myExpression);
   }
 
-  @Tag("condition")
+  @Transient
   public String getCondition() {
+    return myCondition != null ? myCondition.myExpression : null;
+  }
+
+  public void setCondition(String condition) {
+    if (condition != null) {
+      myCondition = new Condition();
+      myCondition.myExpression = condition;
+    }
+    else {
+      myCondition = null;
+    }
+  }
+
+  @Property(surroundWithTag = false)
+  public Condition getConditionObject() {
     return myCondition;
   }
 
-  public void setCondition(final String condition) {
-    myCondition = condition;
+  public void setConditionObject(final Condition condition) {
+    setCondition(condition.myOldExpression != null ? condition.myOldExpression : condition.myExpression);
   }
 
   @Property(surroundWithTag = false)
@@ -141,5 +168,25 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   public void setTimeStamp(long timeStamp) {
     myTimeStamp = timeStamp;
+  }
+
+  void applyDefaults(BreakpointState state) {
+    state.mySuspendPolicy = mySuspendPolicy;
+  }
+
+  @Tag("condition")
+  public static class Condition {
+    @Attribute("expression")
+    public String myExpression;
+    @Text
+    public String myOldExpression;
+  }
+
+  @Tag("log-expression")
+  public static class LogExpression {
+    @Attribute("expression")
+    public String myExpression;
+    @Text
+    public String myOldExpression;
   }
 }

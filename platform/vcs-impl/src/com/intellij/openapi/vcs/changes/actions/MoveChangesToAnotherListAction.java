@@ -17,10 +17,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -42,9 +39,10 @@ import java.util.*;
  * @author max
  */
 public class MoveChangesToAnotherListAction extends AnAction implements DumbAware {
+
   public MoveChangesToAnotherListAction() {
-    super(ActionsBundle.actionText("ChangesView.Move"),
-          ActionsBundle.actionDescription("ChangesView.Move"),
+    super(ActionsBundle.actionText(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
+          ActionsBundle.actionDescription(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
           AllIcons.Actions.MoveToAnotherChangelist);
   }
 
@@ -57,9 +55,9 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
       e.getPresentation().setEnabled(isEnabled);
     }
   }
-  
+
   private static boolean isEnabled(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
 
@@ -72,7 +70,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     if (changes != null && changes.length > 0) {
       return true;
     }
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files != null && files.length > 0;
   }
 
@@ -82,9 +80,9 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     if (ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length == 0) {
       return null;
     }
-    
+
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) {
       List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
@@ -130,7 +128,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);

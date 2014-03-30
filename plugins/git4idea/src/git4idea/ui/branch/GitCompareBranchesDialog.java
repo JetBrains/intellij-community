@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -22,7 +23,6 @@ import com.intellij.ui.TabbedPaneImpl;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitCommitCompareInfo;
-import git4idea.util.GitUIUtil;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +52,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
 
     String rootString;
     if (compareInfo.getRepositories().size() == 1 && GitUtil.getRepositoryManager(myProject).moreThanOneRoot()) {
-      rootString = " in root " + GitUIUtil.getShortRepositoryName(initialRepo);
+      rootString = " in root " + DvcsUtil.getShortRepositoryName(initialRepo);
     }
     else {
       rootString = "";

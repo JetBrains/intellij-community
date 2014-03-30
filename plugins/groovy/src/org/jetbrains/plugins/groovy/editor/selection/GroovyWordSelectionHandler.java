@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +42,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyWordSelectionHandler implements ExtendWordSelectionHandler {
+public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
   private static final Logger LOG = Logger.getInstance(GroovyWordSelectionHandler.class);
 
   @Override

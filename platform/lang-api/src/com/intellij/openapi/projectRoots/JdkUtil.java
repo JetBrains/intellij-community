@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,6 +117,7 @@ public class JdkUtil {
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
+      @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         if (f.isDirectory()) return false;
@@ -136,6 +137,7 @@ public class JdkUtil {
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
+      @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         return !f.isDirectory() && Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java");
@@ -162,8 +164,8 @@ public class JdkUtil {
     commandLine.setExePath(exePath);
 
     final ParametersList vmParametersList = javaParameters.getVMParametersList();
-    commandLine.setEnvParams(javaParameters.getEnv());
-    commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
+    commandLine.getEnvironment().putAll(javaParameters.getEnv());
+    commandLine.setPassParentEnvironment(javaParameters.isPassParentEnvs());
 
     final Class commandLineWrapper;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {
@@ -210,7 +212,7 @@ public class JdkUtil {
             finally {
               writer.close();
             }
-  
+
             String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
             final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
             if (!classpath.equals(utilRtPath)) {
@@ -221,7 +223,7 @@ public class JdkUtil {
               classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);
               classpath += File.pathSeparator + PathUtil.getJarPathForClass(THashMap.class);
             }
-  
+
             commandLine.addParameter("-classpath");
             commandLine.addParameter(classpath);
           }
@@ -229,7 +231,7 @@ public class JdkUtil {
             LOG.error(e);
           }
         }
-  
+
         appendEncoding(javaParameters, commandLine, vmParametersList);
         if (classpathFile != null) {
           commandLine.addParameter(commandLineWrapper.getName());

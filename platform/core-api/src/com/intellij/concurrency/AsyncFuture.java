@@ -15,8 +15,7 @@
  */
 package com.intellij.concurrency;
 
-import com.intellij.util.Consumer;
-
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -25,5 +24,5 @@ import java.util.concurrent.Future;
  * Author: dmitrylomov
  */
 public interface AsyncFuture<V> extends Future<V> {
-  void addConsumer(Executor executor, ResultConsumer<V> consumer);
+  void addConsumer(@NotNull Executor executor, @NotNull ResultConsumer<V> consumer);
 }

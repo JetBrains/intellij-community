@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNamespaceHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,6 +53,7 @@ public class ImportNSAction implements QuestionAction {
     myTitle = title;
   }
 
+  @Override
   public boolean execute() {
     final Object[] objects = myNamespaces.toArray();
     Arrays.sort(objects);
@@ -63,20 +64,23 @@ public class ImportNSAction implements QuestionAction {
     final RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
     final Runnable runnable = new Runnable() {
 
+      @Override
       public void run() {
         final String namespace = (String)list.getSelectedValue();
         if (namespace != null) {
             final Project project = myFile.getProject();
             new WriteCommandAction.Simple(project, myFile) {
 
+              @Override
               protected void run() throws Throwable {
-                final XmlExtension extension = XmlExtension.getExtension(myFile);
+                final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
                 final String prefix = extension.getNamespacePrefix(myElement);
                 extension.insertNamespaceDeclaration(myFile,
                                                      myEditor,
                                                      Collections.singleton(namespace),
                                                      prefix,
-                                                     new XmlExtension.Runner<String, IncorrectOperationException>() {
+                                                     new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                    @Override
                     public void run(final String s) throws IncorrectOperationException {
                       PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
                       PsiElement element = myFile.findElementAt(marker.getStartOffset());

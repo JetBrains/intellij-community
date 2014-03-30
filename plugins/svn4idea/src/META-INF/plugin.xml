@@ -72,11 +72,11 @@
       <reference id="Compare.SameVersion" text="Compare with BASE revision"/>
       <reference id="Compare.LastVersion" text="Compare with revision at HEAD"/>
       <reference id="Compare.Selected"/>
-      <action id="Subversion.CompareWithBranch" class="org.jetbrains.idea.svn.actions.CompareWithBranchAction"/>
+      <action id="Subversion.CompareWithBranch" class="org.jetbrains.idea.svn.diff.CompareWithBranchAction"/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
       <reference id="Annotate"/>
-      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CopyAction"/>
+      <action id="Subversion.Copy" class="org.jetbrains.idea.svn.actions.CreateBranchOrTagAction"/>
       <separator/>
       <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
       <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
@@ -138,8 +138,8 @@
                     serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn" crawlUpToCheckUnderVcs="true"/>
-
-    <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
+
+    <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
   </extensions>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,11 +31,13 @@ import java.util.List;
 */
 public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
+  private final List<BuildMessage> myWarnMessages;
   private final List<BuildMessage> myInfoMessages;
   private boolean myUpToDate = true;
 
   public BuildResult() {
     myErrorMessages = new ArrayList<BuildMessage>();
+    myWarnMessages = new ArrayList<BuildMessage>();
     myInfoMessages = new ArrayList<BuildMessage>();
   }
 
@@ -45,6 +46,9 @@ public class BuildResult implements MessageHandler {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       myErrorMessages.add(msg);
       myUpToDate = false;
+    }
+    else if (msg.getKind() == BuildMessage.Kind.WARNING) {
+      myWarnMessages.add(msg);
     }
     else {
       myInfoMessages.add(msg);
@@ -73,7 +77,9 @@ public class BuildResult implements MessageHandler {
   }
 
   @NotNull
-  public List<BuildMessage> getErrorMessages() {
-    return Collections.unmodifiableList(myErrorMessages);
+  public List<BuildMessage> getMessages(@NotNull BuildMessage.Kind kind) {
+    if (kind == BuildMessage.Kind.ERROR) return myErrorMessages;
+    else if (kind == BuildMessage.Kind.WARNING) return myWarnMessages;
+    else return myInfoMessages;
   }
 }

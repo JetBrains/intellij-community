@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.plugins.groovy
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 
 /**
  * @author Sergey Evdokimov
@@ -113,6 +114,122 @@ class MavenGroovyInjectionTest extends LightCodeInsightFixtureTestCase {
 
     def lookups = myFixture.lookupElementStrings
     assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
+  }
+
+  public void testCompletion3() {
+    myFixture.configureByText("pom.xml", """
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>groovy-maven-plugin</artifactId>
+                <version>1.3</version>
+                <configuration>
+                    <!-- http://groovy.codehaus.org/The+groovydoc+Ant+task -->
+                    <source>
+                        String<caret>
+                    </source>
+                </configuration>
+            </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    myFixture.completeBasic()
+
+    def lookups = myFixture.lookupElementStrings
+    assert lookups.containsAll(["String", "StringBuffer", "StringBuilder"])
+  }
+
+  public void testInjectionVariables() {
+    myFixture.configureByText("pom.xml", """
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.3</version>
+                <configuration>
+                    <!-- http://groovy.codehaus.org/The+groovydoc+Ant+task -->
+                    <source>
+                        println project<caret>
+                    </source>
+                </configuration>
+            </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    def element = myFixture.getElementAtCaret()
+
+    assert element instanceof GrVariable
+    assert element.getDeclaredType().getPresentableText() == "MavenProject"
+  }
+
+  public void testHighlighting() {
+    myFixture.configureByText("pom.xml", """<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>simpleMaven</groupId>
+  <artifactId>simpleMaven</artifactId>
+  <version>1.0</version>
+
+  <packaging>jar</packaging>
+
+  <build>
+    <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.3</version>
+                <configuration>
+                    <!-- http://groovy.codehaus.org/The+groovydoc+Ant+task -->
+                    <source>
+                        import java.lang.String;
+
+                        class SomeClass { public static String buildHi() { return "Hi 2!" } }
+                        println SomeClass.buildHi()
+                    </source>
+                </configuration>
+            </plugin>
+    </plugins>
+  </build>
+
+</project>
+""")
+
+    myFixture.checkHighlighting(true, false, true)
   }
 
 }

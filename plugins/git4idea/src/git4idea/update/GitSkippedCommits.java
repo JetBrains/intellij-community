@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -153,7 +154,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     TreePath selectionPath = myTree.getSelectionPath();

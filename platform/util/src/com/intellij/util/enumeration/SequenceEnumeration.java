@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public class SequenceEnumeration implements Enumeration {
     myCurrentIndex = 0;
   }
 
+  @Override
   public boolean hasMoreElements() {
     if (myCurrentIndex == 3)
       return false;
@@ -54,6 +55,7 @@ public class SequenceEnumeration implements Enumeration {
     return hasMoreElements();
   }
 
+  @Override
   public Object nextElement() {
     if (!hasMoreElements()) {
       throw new NoSuchElementException();

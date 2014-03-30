@@ -45,7 +45,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   private final List<PsiElement> myDeclarations = new ArrayList<PsiElement>();
 
   public static NonCodeMembersHolder generateMembers(List<Map> methods, final PsiFile place) {
-    Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
+    Map<List<Map>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
       place, new CachedValueProvider<Map<List<Map>, NonCodeMembersHolder>>() {
       public Result<Map<List<Map>, NonCodeMembersHolder>> compute() {
         final Map<List<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<List<Map>, NonCodeMembersHolder>();

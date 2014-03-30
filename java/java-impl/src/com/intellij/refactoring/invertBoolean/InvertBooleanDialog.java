@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.invertBoolean;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiNamedElement;
@@ -47,7 +48,7 @@ public class InvertBooleanDialog extends RefactoringDialog {
     myLabel.setText(RefactoringBundle.message("invert.boolean.name.of.inverted.element", typeString));
     myCaptionLabel.setText(RefactoringBundle.message("invert.0.1",
                                                      typeString,
-                                                     UsageViewUtil.getDescriptiveName(myElement)));
+                                                     DescriptiveNameUtil.getDescriptiveName(myElement)));
 
     setTitle(InvertBooleanHandler.REFACTORING_NAME);
     init();

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -47,7 +48,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
 
   @Override
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    match.changeSignature(myMethod);
+    MatchUtil.changeSignature(match, myMethod);
     final PsiClass containingClass = myMethod.getContainingClass();
     if (isEssentialStaticContextAbsent(match)) {
       PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
@@ -83,9 +84,9 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
       } else {
         final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
         if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
-          qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), null));
+          qualifierExpression.replace(RefactoringChangeUtil.createSuperExpression(containingClass.getManager(), null));
         } else {
-          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          qualifierExpression.replace(RefactoringChangeUtil.createThisExpression(containingClass.getManager(), containingClass));
         }
       }
     }
@@ -158,7 +159,8 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final PsiElement matchStart = match.getMatchStart();
     String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
     final boolean shouldBeStatic = isEssentialStaticContextAbsent(match);
-    final String signature = match.getChangedSignature(myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
+    final String signature = MatchUtil
+      .getChangedSignature(match, myMethod, myMethod.hasModifierProperty(PsiModifier.STATIC) || shouldBeStatic, visibility);
     if (signature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", signature);
     }

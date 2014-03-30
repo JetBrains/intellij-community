@@ -30,4 +30,7 @@ public interface GitLog extends Disposable {
   @CalledInAwt
   JComponent getVisualComponent();
   void setModalityState(ModalityState state);
+
+  /** Find and select commit in git log UI */
+  void selectCommit(String commitId);
 }

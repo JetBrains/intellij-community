@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -37,14 +39,12 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceSearchingScanner;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
@@ -90,7 +90,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   public InheritanceToDelegationProcessor(Project project,
                                           PsiClass aClass,
-                                          PsiClass targetBaseClass,
+                                          @NotNull PsiClass targetBaseClass,
                                           String fieldName,
                                           String innerClassName,
                                           PsiClass[] delegatedInterfaces,
@@ -107,9 +107,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     myBaseClass = targetBaseClass;
     LOG.assertTrue(
-            myBaseClass != null // && !myBaseClass.isInterface()
-            && (myBaseClass.getQualifiedName() == null || !myBaseClass.getQualifiedName().equals(CommonClassNames.JAVA_LANG_OBJECT))
-    );
+             // && !myBaseClass.isInterface()
+            myBaseClass.getQualifiedName() == null || !myBaseClass.getQualifiedName().equals(CommonClassNames.JAVA_LANG_OBJECT), myBaseClass);
     myBaseClassMembers = getAllBaseClassMembers();
     myBaseClassBases = getAllBases();
     myBaseClassType = myFactory.createType(myBaseClass, getSuperSubstitutor (myBaseClass));
@@ -682,7 +681,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
       }
       final @NonNls String assignmentText = fieldQualifier + myFieldName + "= new " + defaultClassFieldType() + "()";
-      if (statements.length < 1 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
+      if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
         PsiExpressionStatement assignmentStatement =
           (PsiExpressionStatement)myFactory.createStatementFromText(
             assignmentText, body
@@ -698,7 +697,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
         assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myProject).reformat(assignmentStatement);
         if (statements.length > 0) {
-          if (!RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
+          if (!JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) {
             body.addBefore(assignmentStatement, statements[0]);
           }
           else {
@@ -711,7 +710,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
       else {
         final PsiExpressionStatement callStatement = ((PsiExpressionStatement)statements[0]);
-        if (!RefactoringUtil.isSuperOrThisCall(callStatement, false, true)) {
+        if (!JavaHighlightUtil.isSuperOrThisCall(callStatement, false, true)) {
           final PsiMethodCallExpression superConstructorCall =
             (PsiMethodCallExpression)callStatement.getExpression();
           PsiAssignmentExpression assignmentExpression =
@@ -736,7 +735,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiMethod[] constructors = myClass.getConstructors();
     for (PsiMethod constructor : constructors) {
       final PsiStatement[] statements = constructor.getBody().getStatements();
-      if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) return false;
+      if (statements.length > 0 && JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) return false;
     }
     return true;
   }
@@ -749,7 +748,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       PsiMethod[] constructors = myClass.getConstructors();
       for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
-        if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
+        if (statements.length > 0 && JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) {
           final PsiMethodCallExpression superConstructorCall =
             (PsiMethodCallExpression)((PsiExpressionStatement)statements[0]).getExpression();
           PsiElement superConstructor = superConstructorCall.getMethodExpression().resolve();
@@ -852,7 +851,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
     manager.showUsages(
       new UsageTarget[]{new PsiElement2UsageTargetAdapter(myClass)},
-      UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myClass), usages),
+      UsageInfoToUsageConverter.convert(new PsiElement[]{myClass}, usages),
       presentation
     );
 
@@ -906,7 +905,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
 
   protected String getCommandName() {
-    return RefactoringBundle.message("replace.inheritance.with.delegation.command", UsageViewUtil.getDescriptiveName(myClass));
+    return RefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
   private Set<PsiMember> getAllBaseClassMembers() {

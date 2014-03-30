@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.devkit.build;
 
+import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -26,24 +27,29 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.io.*;
@@ -66,12 +72,10 @@ public class PrepareToDeployAction extends AnAction {
   @NonNls private static final String TEMP_PREFIX = "temp";
   @NonNls private static final String MIDDLE_LIB_DIR = "lib";
 
-  private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
-
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
-    if (module != null && ModuleType.get(module) instanceof PluginModuleType) {
-      doPrepare(Arrays.asList(module), PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+    if (module != null && PluginModuleType.isOfType(module)) {
+      doPrepare(Arrays.asList(module), CommonDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 
@@ -117,23 +121,27 @@ public class PrepareToDeployAction extends AnAction {
                          });
   }
 
-  private boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
+  public static boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
     final String pluginName = module.getName();
     final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + pluginName;
     final HashSet<Module> modules = new HashSet<Module>();
     PluginBuildUtil.getDependencies(module, modules);
     modules.add(module);
     final Set<Library> libs = new HashSet<Library>();
-    for (Module module1 : modules) {
-      PluginBuildUtil.getLibraries(module1, libs);
+    for (Module dep : modules) {
+      PluginBuildUtil.getLibraries(dep, libs);
     }
-    final boolean isZip = libs.size() != 0;
+
+    final Map<Module, String> jpsModules = collectJpsPluginModules(module);
+    modules.removeAll(jpsModules.keySet());
+
+    final boolean isZip = !libs.isEmpty() || !jpsModules.isEmpty();
     final String oldPath = defaultPath + (isZip ? JAR_EXTENSION : ZIP_EXTENSION);
     final File oldFile = new File(oldPath);
     if (oldFile.exists()) {
       if (Messages
         .showYesNoDialog(module.getProject(), DevKitBundle.message("suggest.to.delete", oldPath), DevKitBundle.message("info.message"),
-                         Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                         Messages.getInformationIcon()) == Messages.YES) {
         FileUtil.delete(oldFile);
       }
     }
@@ -151,7 +159,7 @@ public class PrepareToDeployAction extends AnAction {
         try {
           File jarFile = preparePluginsJar(module, modules);
           if (isZip) {
-            processLibraries(jarFile, dstFile, pluginName, libs, progressIndicator);
+            processLibrariesAndJpsPlugins(jarFile, dstFile, pluginName, libs, jpsModules, progressIndicator);
           }
           else {
             FileUtil.copy(jarFile, dstFile);
@@ -164,6 +172,40 @@ public class PrepareToDeployAction extends AnAction {
       }
     }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
 
+  }
+
+  @NotNull
+  private static Map<Module, String> collectJpsPluginModules(@NotNull Module module) {
+    XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+    if (pluginXml == null) return Collections.emptyMap();
+
+    DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(module.getProject()).getFileElement(pluginXml, IdeaPlugin.class);
+    if (fileElement == null) return Collections.emptyMap();
+
+    Map<Module, String> jpsPluginToOutputPath = new HashMap<Module, String>();
+    IdeaPlugin plugin = fileElement.getRootElement();
+    List<Extensions> extensions = plugin.getExtensions();
+    for (Extensions extensionGroup : extensions) {
+      XmlTag extensionsTag = extensionGroup.getXmlTag();
+      String defaultExtensionNs = extensionsTag.getAttributeValue("defaultExtensionNs");
+      for (XmlTag tag : extensionsTag.getSubTags()) {
+        String name = tag.getLocalName();
+        String qualifiedName = defaultExtensionNs != null ? defaultExtensionNs + "." + name : name;
+        if (CompileServerPlugin.EP_NAME.getName().equals(qualifiedName)) {
+          String classpath = tag.getAttributeValue("classpath");
+          if (classpath != null) {
+            for (String path : StringUtil.split(classpath, ";")) {
+              String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(path));
+              Module jpsModule = ModuleManager.getInstance(module.getProject()).findModuleByName(moduleName);
+              if (jpsModule != null) {
+                jpsPluginToOutputPath.put(jpsModule, path);
+              }
+            }
+          }
+        }
+      }
+    }
+    return jpsPluginToOutputPath;
   }
 
   private static boolean clearReadOnly(final Project project, final File dstFile) {
@@ -190,11 +232,9 @@ public class PrepareToDeployAction extends AnAction {
     };
   }
 
-  private void processLibraries(final File jarFile,
-                                final File zipFile,
-                                final String pluginName,
-                                final Set<Library> libs,
-                                final ProgressIndicator progressIndicator) throws IOException {
+  private static void processLibrariesAndJpsPlugins(final File jarFile, final File zipFile, final String pluginName,
+                                                    final Set<Library> libs,
+                                                    Map<Module, String> jpsModules, final ProgressIndicator progressIndicator) throws IOException {
     if (FileUtil.ensureCanCreateFile(zipFile)) {
       ZipOutputStream zos = null;
       try {
@@ -203,7 +243,11 @@ public class PrepareToDeployAction extends AnAction {
         addStructure(pluginName + "/" + MIDDLE_LIB_DIR, zos);
         final String entryName = pluginName + JAR_EXTENSION;
         ZipUtil.addFileToZip(zos, jarFile, getZipPath(pluginName, entryName), new HashSet<String>(),
-                             createFilter(progressIndicator, myFileTypeManager));
+                             createFilter(progressIndicator, FileTypeManager.getInstance()));
+        for (Map.Entry<Module, String> entry : jpsModules.entrySet()) {
+          File jpsPluginJar = jarModulesOutput(Collections.singleton(entry.getKey()), null, null);
+          ZipUtil.addFileToZip(zos, jpsPluginJar, getZipPath(pluginName, entry.getValue()), null, null);
+        }
         Set<String> usedJarNames = new HashSet<String>();
         usedJarNames.add(entryName);
         Set<VirtualFile> jarredVirtualFiles = new HashSet<VirtualFile>();
@@ -231,20 +275,20 @@ public class PrepareToDeployAction extends AnAction {
     return "/" + pluginName + "/" + MIDDLE_LIB_DIR + "/" + entryName;
   }
 
-  private void makeAndAddLibraryJar(final VirtualFile virtualFile,
-                                    final File zipFile,
-                                    final String pluginName,
-                                    final ZipOutputStream zos,
-                                    final Set<String> usedJarNames,
-                                    final ProgressIndicator progressIndicator,
-                                    final String preferredName) throws IOException {
+  private static void makeAndAddLibraryJar(final VirtualFile virtualFile,
+                                           final File zipFile,
+                                           final String pluginName,
+                                           final ZipOutputStream zos,
+                                           final Set<String> usedJarNames,
+                                           final ProgressIndicator progressIndicator,
+                                           final String preferredName) throws IOException {
     File libraryJar = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     libraryJar.deleteOnExit();
     ZipOutputStream jar = null;
     try {
       jar = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(libraryJar)));
-      ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "",
-                                      createFilter(progressIndicator, myFileTypeManager), null);
+      ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtilCore.virtualToIoFile(virtualFile), "",
+                                      createFilter(progressIndicator, FileTypeManager.getInstance()), null);
     }
     finally {
       if (jar != null) jar.close();
@@ -298,25 +342,32 @@ public class PrepareToDeployAction extends AnAction {
     zos.closeEntry();
   }
 
-  private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
+  private static File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
     final PluginBuildConfiguration pluginModuleBuildProperties = PluginBuildConfiguration.getInstance(module);
+    final Manifest manifest = createOrFindManifest(pluginModuleBuildProperties);
+
+    return jarModulesOutput(modules, manifest, pluginModuleBuildProperties.getPluginXmlPath());
+  }
+
+  private static File jarModulesOutput(@NotNull Set<Module> modules, @Nullable Manifest manifest, final @Nullable String pluginXmlPath) throws IOException {
     File jarFile = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     jarFile.deleteOnExit();
-    final Manifest manifest = createOrFindManifest(pluginModuleBuildProperties);
     ZipOutputStream jarPlugin = null;
     try {
-      jarPlugin = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
+      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(jarFile));
+      jarPlugin = manifest != null ? new JarOutputStream(out, manifest) : new JarOutputStream(out);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
-      for (Module module1 : modules) {
-        final VirtualFile compilerOutputPath = CompilerModuleExtension.getInstance(module1).getCompilerOutputPath();
+      final Set<String> writtenItemRelativePaths = new HashSet<String>();
+      for (Module module : modules) {
+        final VirtualFile compilerOutputPath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
         if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date
         ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "",
-                                       createFilter(progressIndicator, myFileTypeManager), writtenItemRelativePaths);
+                                       createFilter(progressIndicator, FileTypeManager.getInstance()), writtenItemRelativePaths);
       }
-      final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
-      @NonNls final String metaInf = "/META-INF/plugin.xml";
-      ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), metaInf, writtenItemRelativePaths, createFilter(progressIndicator, null));
+      if (pluginXmlPath != null) {
+        ZipUtil.addFileToZip(jarPlugin, new File(pluginXmlPath), "/META-INF/plugin.xml", writtenItemRelativePaths,
+                             createFilter(progressIndicator, null));
+      }
     }
     finally {
       if (jarPlugin != null) jarPlugin.close();
@@ -346,7 +397,7 @@ public class PrepareToDeployAction extends AnAction {
 
   public void update(AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
-    boolean enabled = module != null && ModuleType.get(module) instanceof PluginModuleType;
+    boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
     if (enabled) {

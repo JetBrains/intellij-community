@@ -17,13 +17,13 @@ package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -37,7 +37,6 @@ class ProcessProxyImpl implements ProcessProxy {
   @NonNls public static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
   @NonNls public static final String LAUNCH_MAIN_CLASS = "com.intellij.rt.execution.application.AppMain";
 
-  @NonNls protected static final String LOCALHOST = "localhost";
   @NonNls private static final String DONT_USE_LAUNCHER_PROPERTY = "idea.no.launcher";
   private static final int SOCKET_NUMBER_START = 7532;
   private static final int SOCKET_NUMBER = 100;
@@ -71,10 +70,12 @@ class ProcessProxyImpl implements ProcessProxy {
     return -1;
   }
 
+  @Override
   public int getPortNumber() {
     return myPortNumber;
   }
 
+  @Override
   @SuppressWarnings("FinalizeDeclaration")
   protected synchronized void finalize() throws Throwable {
     if (myWriter != null) {
@@ -84,6 +85,7 @@ class ProcessProxyImpl implements ProcessProxy {
     super.finalize();
   }
 
+  @Override
   public void attach(final ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
   }
@@ -93,7 +95,7 @@ class ProcessProxyImpl implements ProcessProxy {
     if (myWriter == null) {
       try {
         if (mySocket == null) {
-          mySocket = new Socket(InetAddress.getByName(LOCALHOST), myPortNumber);
+          mySocket = new Socket(NetUtils.getLoopbackAddress(), myPortNumber);
         }
         myWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream())));
       }
@@ -105,10 +107,12 @@ class ProcessProxyImpl implements ProcessProxy {
     myWriter.flush();
   }
 
+  @Override
   public void sendBreak() {
     writeLine("BREAK");
   }
 
+  @Override
   public void sendStop() {
     writeLine("STOP");
   }

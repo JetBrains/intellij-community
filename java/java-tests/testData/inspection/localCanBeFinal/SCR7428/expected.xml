@@ -17,6 +17,11 @@
   </problem>
   <problem>
     <file>Junk.java</file>
+    <line>13</line>
+    <description>e final</description>
+  </problem>
+  <problem>
+    <file>Junk.java</file>
     <line>15</line>
     <description>j final</description>
   </problem>

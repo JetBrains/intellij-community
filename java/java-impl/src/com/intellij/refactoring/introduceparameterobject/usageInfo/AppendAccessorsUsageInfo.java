@@ -20,12 +20,12 @@
  */
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -70,8 +70,8 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
         final PsiField field = parameterChunk.getField();
         if (field != null) {
           element.add(isGetter
-                      ? PropertyUtil.generateGetterPrototype(field)
-                      : PropertyUtil.generateSetterPrototype(field));
+                      ? GenerateMembersUtil.generateGetterPrototype(field)
+                      : GenerateMembersUtil.generateSetterPrototype(field));
         }
 
       }

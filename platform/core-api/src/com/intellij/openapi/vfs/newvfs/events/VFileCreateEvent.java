@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,10 @@ public class VFileCreateEvent extends VFileEvent {
     return myParent;
   }
 
+  public boolean isReCreation() {
+    return myReCreation;
+  }
+
   @NonNls
   @Override
   public String toString() {
@@ -79,6 +83,10 @@ public class VFileCreateEvent extends VFileEvent {
   public VirtualFile getFile() {
     if (myCreatedFile != null) return myCreatedFile;
     return myCreatedFile = myParent.findChild(myChildName);
+  }
+
+  public void resetCache() {
+    myCreatedFile = null;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -59,27 +59,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBAND_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mBXOR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mDIV_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMINUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMOD_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mPLUS_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_ASSIGN;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTAR_STAR_ASSIGN;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 
@@ -226,7 +205,7 @@ public class GenerationUtil {
     }
     else {
       addParentheses =
-        context != null && (context.shouldInsertCurlyBrackets() || context.myStatements.size() > 0) && parent instanceof GrControlStatement;
+        context != null && (context.shouldInsertCurlyBrackets() || !context.myStatements.isEmpty()) && parent instanceof GrControlStatement;
     }
 
     if (addParentheses) {
@@ -248,7 +227,7 @@ public class GenerationUtil {
     }
   }
 
-  public static void writeStatement(final StringBuilder builder, ExpressionContext context, @Nullable GrStatement statement, StatementWriter writer) {
+  public static void writeStatement(@NotNull StringBuilder builder, @NotNull ExpressionContext context, @Nullable GrStatement statement, @NotNull StatementWriter writer) {
     StringBuilder statementBuilder = new StringBuilder();
     ExpressionContext statementContext = context.copy();
     writer.writeStatement(statementBuilder, statementContext);
@@ -267,15 +246,6 @@ public class GenerationUtil {
       visitedClasses.add(curClass);
     }
     return curClass;
-  }
-
-  static boolean isAbstractInJava(PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return true;
-    }
-
-    final PsiClass psiClass = method.getContainingClass();
-    return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
   }
 
   static void writeTypeParameters(StringBuilder text,
@@ -314,7 +284,9 @@ public class GenerationUtil {
     while (i < parameters.length) {
       PsiParameter parameter = parameters[i];
       if (parameter == null) continue;
-      if (parameter instanceof PsiCompiledElement) parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+      if (parameter instanceof PsiCompiledElement) {
+        parameter = (PsiParameter)((PsiCompiledElement)parameter).getMirror();
+      }
 
       if (i > 0) text.append(", ");  //append ','
       if (!classNameProvider.forStubs()) {
@@ -545,23 +517,49 @@ public class GenerationUtil {
     PsiType declared = getDeclaredType(qualifier, context);
     if (declared == null) return false;
 
-    final PsiManager manager = PsiManager.getInstance(context.project);
-    return ResolveUtil.processAllDeclarations(declared, new PsiScopeProcessor() {
+    final CheckProcessElement checker = new CheckProcessElement(member);
+    ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        if (manager.areElementsEquivalent(element, member)) return false;
-        return true;
-      }
-
-      @Override
-      public <T> T getHint(@NotNull Key<T> hintKey) {
-        return null;
-      }
-
-      @Override
-      public void handleEvent(Event event, Object associated) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        return false;
       }
     }, ResolveState.initial(), qualifier);
+    return !checker.isFound();
+  }
+
+  static class CheckProcessElement implements PsiScopeProcessor {
+
+    private final PsiElement myMember;
+    private final PsiManager myManager;
+
+    private boolean myResult = false;
+
+    public CheckProcessElement(@NotNull PsiElement member) {
+      myMember = member;
+      myManager = member.getManager();
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+      if (myManager.areElementsEquivalent(element, myMember)) {
+        myResult = true;
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public <T> T getHint(@NotNull Key<T> hintKey) {
+      return null;
+    }
+
+    @Override
+    public void handleEvent(@NotNull Event event, Object associated) {
+    }
+
+    public boolean isFound() {
+      return myResult;
+    }
   }
 
   @Nullable

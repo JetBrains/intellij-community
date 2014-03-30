@@ -21,7 +21,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -33,14 +32,19 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class VariableTypeFromCallFix implements IntentionAction {
   private final PsiType myExpressionType;
   private final PsiVariable myVar;
 
-  public VariableTypeFromCallFix(PsiClassType type, PsiVariable var) {
+  private VariableTypeFromCallFix(@NotNull PsiClassType type, @NotNull PsiVariable var) {
     myExpressionType = type;
     myVar = var;
   }
@@ -49,6 +53,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
+                                  UsageViewUtil.getType(myVar),
                                   myVar.getName(),
                                   myExpressionType.getCanonicalText());
   }
@@ -79,13 +84,16 @@ public class VariableTypeFromCallFix implements IntentionAction {
   }
 
 
-   public static void registerQuickFixActions(PsiMethodCallExpression methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
+  @NotNull
+  public static List<IntentionAction> getQuickFixActions(@NotNull PsiMethodCallExpression methodCall,
+                                                         @NotNull PsiExpressionList list) {
     final JavaResolveResult result = methodCall.getMethodExpression().advancedResolve(false);
     PsiMethod method = (PsiMethod) result.getElement();
     final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
-    if (method == null || method.getParameterList().getParametersCount() != expressions.length) return;
+    if (method == null || method.getParameterList().getParametersCount() != expressions.length) return Collections.emptyList();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
+    List<IntentionAction> actions = new ArrayList<IntentionAction>();
     for (int i = 0; i < expressions.length; i++) {
       final PsiExpression expression = expressions[i];
       PsiType expressionType = expression.getType();
@@ -113,32 +121,35 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
             final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
             if (!varType.equals(appropriateVarType)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFromCallFix(appropriateVarType, (PsiVariable) resolved));
+              actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
             }
             break;
           }
         }
       }
-      registerParameterTypeChange(highlightInfo, method, expression, parameterType);
+      actions.addAll(getParameterTypeChangeFixes(method, expression, parameterType));
     }
+    return actions;
   }
 
-  private static void registerParameterTypeChange(HighlightInfo highlightInfo,
-                                                  PsiMethod method,
-                                                  PsiExpression expression,
-                                                  PsiType parameterType) {
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiManager manager = method.getManager();
-      if (manager.isInProject(method)) {
-        final PsiMethod[] superMethods = method.findDeepestSuperMethods();
-        for (PsiMethod superMethod : superMethods) {
-          if (!manager.isInProject(superMethod)) return;
-        }
-        final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-        if (resolve instanceof PsiVariable) {
-          HighlightUtil.registerChangeVariableTypeFixes((PsiVariable)resolve, parameterType, highlightInfo);
-        }
+  private static List<IntentionAction> getParameterTypeChangeFixes(@NotNull PsiMethod method,
+                                                                   @NotNull PsiExpression expression,
+                                                                   PsiType parameterType) {
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return Collections.emptyList();
+    }
+    List<IntentionAction> result = new ArrayList<IntentionAction>();
+    final PsiManager manager = method.getManager();
+    if (manager.isInProject(method)) {
+      final PsiMethod[] superMethods = method.findDeepestSuperMethods();
+      for (PsiMethod superMethod : superMethods) {
+        if (!manager.isInProject(superMethod)) return Collections.emptyList();
+      }
+      final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+      if (resolve instanceof PsiVariable) {
+        result.addAll(HighlightUtil.getChangeVariableTypeFixes((PsiVariable)resolve, parameterType));
       }
     }
+    return result;
   }
 }

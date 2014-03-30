@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.SmartList;
@@ -56,45 +55,6 @@ public class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implement
     if (oldTable != null) {
       throw new IllegalArgumentException("Library table '" + tableLevel + "' already registered.");
     }
-  }
-
-  @Override
-  @NotNull
-  public LibraryTable registerLibraryTable(final String customLevel) {
-    LibraryTable table = new LibraryTableBase() {
-      @Override
-      public String getTableLevel() {
-        return customLevel;
-      }
-
-      @Override
-      public LibraryTablePresentation getPresentation() {
-        return new LibraryTablePresentation() {
-          @Override
-          public String getDisplayName(boolean plural) {
-            return customLevel;
-          }
-
-          @Override
-          public String getDescription() {
-            throw new UnsupportedOperationException("Method getDescription is not yet implemented in " + getClass().getName());
-          }
-
-          @Override
-          public String getLibraryTableEditorTitle() {
-            throw new UnsupportedOperationException("Method getLibraryTableEditorTitle is not yet implemented in " + getClass().getName());
-          }
-        };
-      }
-
-      @Override
-      public boolean isEditable() {
-        return false;
-      }
-    };
-
-    registerLibraryTable(table);
-    return table;
   }
 
   @Override

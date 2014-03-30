@@ -26,7 +26,7 @@ import java.util.List;
  */
 public abstract class ArtifactBuildTaskProvider {
   public enum ArtifactBuildPhase {
-    PRE_PROCESSING, POST_PROCESSING
+    PRE_PROCESSING, FINISHING_BUILD, POST_PROCESSING
   }
 
   @NotNull

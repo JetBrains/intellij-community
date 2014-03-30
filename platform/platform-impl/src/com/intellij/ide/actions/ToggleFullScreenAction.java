@@ -22,8 +22,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,44 +32,41 @@ import java.awt.*;
  * @author pegov
  */
 public class ToggleFullScreenAction extends AnAction implements DumbAware {
-
-  private static final String TEXT_ENTER_FULLSCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
+  private static final String TEXT_ENTER_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
   private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Frame frame = getFrame();
-    if (frame instanceof IdeFrameImpl) {
-      WindowManagerEx.getInstanceEx().setFullScreen((IdeFrameImpl)frame, !((IdeFrameImpl)frame).isInFullScreen());
+    IdeFrameEx frame = getFrame();
+    if (frame != null) {
+      frame.toggleFullScreen(!frame.isInFullScreen());
     }
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    final Presentation p = e.getPresentation();
+    Presentation p = e.getPresentation();
 
-    final boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS();
+    IdeFrameEx frame = null;
+    boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && (frame = getFrame()) != null;
 
     p.setVisible(isApplicable);
     p.setEnabled(isApplicable);
 
     if (isApplicable) {
-      final Frame frame = getFrame();
-      final boolean isInFullScreen = frame != null && WindowManagerEx.getInstanceEx().isFullScreen(frame);
-      p.setText(isInFullScreen ? TEXT_EXIT_FULL_SCREEN : TEXT_ENTER_FULLSCREEN);
+      p.setText(frame.isInFullScreen() ? TEXT_EXIT_FULL_SCREEN : TEXT_ENTER_FULL_SCREEN);
     }
   }
 
   @Nullable
-  private static Frame getFrame() {
-    final Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
+  private static IdeFrameEx getFrame() {
+    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
-      final Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window instanceof JFrame) {
-        return (Frame)window;
+      Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
+      if (window instanceof IdeFrameEx) {
+        return (IdeFrameEx)window;
       }
     }
     return null;
   }
-
 }

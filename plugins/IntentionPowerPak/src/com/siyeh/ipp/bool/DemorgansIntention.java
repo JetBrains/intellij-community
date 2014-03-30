@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.ipp.psiutils.ComparisonUtils;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class DemorgansIntention extends MutablyNamedIntention {
@@ -52,9 +52,8 @@ public class DemorgansIntention extends MutablyNamedIntention {
 
   private static String convertConjunctionExpression(PsiPolyadicExpression polyadicExpression) {
     final IElementType tokenType = polyadicExpression.getOperationTokenType();
-    final String flippedConjunction;
     final boolean tokenTypeAndAnd = tokenType.equals(JavaTokenType.ANDAND);
-    flippedConjunction = tokenTypeAndAnd ? "||" : "&&";
+    final String flippedConjunction = tokenTypeAndAnd ? "||" : "&&";
     final StringBuilder result = new StringBuilder();
     for (PsiExpression operand : polyadicExpression.getOperands()) {
       if (result.length() != 0) {

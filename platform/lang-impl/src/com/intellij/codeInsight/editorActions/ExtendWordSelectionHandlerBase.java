@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -48,6 +49,25 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
     }
 
     return ranges;
+  }
+
+  /**
+   * Returns minimal selection length for given element.
+   * 
+   * Sometimes the length of word selection should be bounded below. 
+   * E.g. it is useful in languages that requires prefixes for variable (php, less, etc.).
+   * By default this kind of variables will be selected without prefix: @<selection>variable</selection>,
+   * but it make sense to exclude this range from selection list. 
+   * So if this method returns 9 as a minimal length of selection
+   * then first selection range for @variable will be: <selection>@variable</selection>.
+   * 
+   * @param element element at caret
+   * @param text text in editor
+   * @param cursorOffset current caret offset in editor
+   * @return minimal selection length for given element
+   */
+  public int getMinimalTextRangeLength(@NotNull PsiElement element, @NotNull CharSequence text, int cursorOffset) {
+    return 0;
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
@@ -113,7 +133,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   public static List<TextRange> expandToWholeLinesWithBlanks(CharSequence text, TextRange range) {
-    List<TextRange> result = CollectionFactory.arrayList();
+    List<TextRange> result = ContainerUtil.newArrayList();
     result.addAll(expandToWholeLine(text, range, true));
 
     TextRange last = result.isEmpty() ? range : result.get(result.size() - 1);

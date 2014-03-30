@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -25,6 +27,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
+import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
@@ -32,6 +35,7 @@ import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.DiffPanelState;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.diff.impl.processing.HorizontalDiffSplitter;
 import com.intellij.openapi.diff.impl.settings.DiffMergeEditorSetting;
 import com.intellij.openapi.diff.impl.settings.DiffMergeSettings;
@@ -109,10 +113,24 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       public void customize(DiffToolbar toolbar) {
         ActionManager actionManager = ActionManager.getInstance();
         toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addSeparator();
+        toolbar.addAction(new ToggleAutoScrollAction());
+        toolbar.addSeparator();
         toolbar.addAction(actionManager.getAction("ContextHelp"));
+        toolbar.addAction(getEditSourceAction());
         toolbar.addSeparator();
         toolbar.addAction(new DiffMergeSettingsAction(Arrays.asList(getEditor1(), getEditor2()),
                                                       ServiceManager.getService(myProject, DiffToolSettings.class)));
+      }
+
+      @NotNull
+      private AnAction getEditSourceAction() {
+        AnAction editSourceAction = new EditSourceAction();
+        editSourceAction.getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
+        editSourceAction.getTemplatePresentation().setText(ActionsBundle.actionText("EditSource"));
+        editSourceAction.getTemplatePresentation().setDescription(ActionsBundle.actionText("EditSource"));
+        editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel, DiffPanelImpl.this);
+        return editSourceAction;
       }
     };
   }
@@ -122,7 +140,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final Project myProject;
   private final boolean myIsHorizontal;
   private final DiffTool myParentTool;
-  private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
+  private EditorNotificationPanel myTopMessageDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
 
   public DiffPanelImpl(final Window owner,
@@ -162,9 +180,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
     final ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+    final HighlightMode highlightMode = getHighlightMode();
+    final HighlightMode defaultHighlightMode = DiffManagerImpl.getInstanceEx().getHighlightMode();
 
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
+    }
+    if (defaultHighlightMode != null && highlightMode != defaultHighlightMode) {
+      setHighlightMode(defaultHighlightMode);
     }
     myVisibleAreaListener = new VisibleAreaListener() {
       @Override
@@ -183,9 +206,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private void registerActions() {
-    // EditSourceAction is not enabled in modal context, so we need to register it here explicitly
-    new EditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), myPanel, this);
-
     //control+tab switches editors
     new AnAction(){
       @Override
@@ -266,6 +286,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public void setContents(DiffContent content1, DiffContent content2) {
+    LOG.assertTrue(content1 != null && content2 != null);
     LOG.assertTrue(!myDisposed);
     myData.setContents(content1, content2);
     Project project = myData.getProject();
@@ -322,10 +343,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   void rediff() {
     try {
-      if (myNotCalculateDiffPanel != null) {
-        myPanel.removeTopComponent(myNotCalculateDiffPanel);
+      if (myTopMessageDiffPanel != null) {
+        myPanel.removeTopComponent(myTopMessageDiffPanel);
       }
-      setLineBlocks(myData.updateEditors());
+      LineBlocks blocks = myData.updateEditors();
+      setLineBlocks(blocks);
+      if (blocks.getCount() == 0) {
+        if (myData.isContentsEqual()) {
+          setFileContentsAreIdentical();
+        }
+      }
     }
     catch (FilesTooBigForDiffException e) {
       setTooBigFileErrorContents();
@@ -334,13 +361,29 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void setTooBigFileErrorContents() {
     setLineBlocks(LineBlocks.EMPTY);
-    myNotCalculateDiffPanel = new CanNotCalculateDiffPanel();
-    myPanel.insertTopComponent(myNotCalculateDiffPanel);
+    myTopMessageDiffPanel = new CanNotCalculateDiffPanel();
+    myPanel.insertTopComponent(myTopMessageDiffPanel);
   }
 
   public void setPatchAppliedApproximately() {
-    if (myNotCalculateDiffPanel == null) {
-      myPanel.insertTopComponent(new DiffIsApproximate());
+    if (!(myTopMessageDiffPanel instanceof CanNotCalculateDiffPanel)) {
+      myTopMessageDiffPanel = new DiffIsApproximate();
+      myPanel.insertTopComponent(myTopMessageDiffPanel);
+    }
+  }
+
+  public void setFileContentsAreIdentical() {
+    if (myTopMessageDiffPanel == null || myTopMessageDiffPanel instanceof FileContentsAreIdenticalDiffPanel) {
+      LineSeparator sep1 = myData.getContent1() == null ? null : myData.getContent1().getLineSeparator();
+      LineSeparator sep2 = myData.getContent2() == null ? null : myData.getContent2().getLineSeparator();
+
+      if (LineSeparator.knownAndDifferent(sep1, sep2)) {
+        myTopMessageDiffPanel = new LineSeparatorsOnlyDiffPanel();
+      }
+      else {
+        myTopMessageDiffPanel = new FileContentsAreIdenticalDiffPanel();
+      }
+      myPanel.insertTopComponent(myTopMessageDiffPanel);
     }
   }
 
@@ -428,7 +471,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public boolean hasDifferences() {
-    return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
+    return getLineBlocks().getCount() > 0 || myTopMessageDiffPanel != null;
   }
 
   @Nullable
@@ -449,6 +492,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getComparisonPolicy();
   }
 
+  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
+    setComparisonPolicy(comparisonPolicy, true);
+  }
+
   private void setComparisonPolicy(ComparisonPolicy policy, boolean notifyManager) {
     myData.setComparisonPolicy(policy);
     rediff();
@@ -458,8 +505,30 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
-  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
-    setComparisonPolicy(comparisonPolicy, true);
+  @NotNull
+  public HighlightMode getHighlightMode() {
+    return myData.getHighlightMode();
+  }
+
+  public void setHighlightMode(@NotNull HighlightMode mode) {
+    setHighlightMode(mode, true);
+  }
+
+  public void setHighlightMode(@NotNull HighlightMode mode, boolean notifyManager) {
+    myData.setHighlightMode(mode);
+    rediff();
+
+    if (notifyManager) {
+      DiffManagerImpl.getInstanceEx().setHighlightMode(mode);
+    }
+  }
+
+  public void setAutoScrollEnabled(boolean enabled) {
+    myScrollSupport.setEnabled(enabled);
+  }
+
+  public boolean isAutoScrollEnabled() {
+    return myScrollSupport.isEnabled();
   }
 
   public Rediffers getDiffUpdater() {
@@ -553,16 +622,25 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
-  static JComponent createComponentForTitle(@Nullable String title, @NotNull final LineSeparator separator, boolean left) {
-    JPanel bottomPanel = new JPanel(new BorderLayout());
-    JLabel sepLabel = new JLabel(separator.name());
-    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? JBColor.RED : PlatformColors.BLUE);
-    bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
+  static JComponent createComponentForTitle(@Nullable String title,
+                                            @Nullable final LineSeparator sep1,
+                                            @Nullable final LineSeparator sep2,
+                                            boolean left) {
+    if (sep1 != null && sep2 != null && !sep1.equals(sep2)) {
+      LineSeparator separator = left ? sep1 : sep2;
+      JPanel bottomPanel = new JPanel(new BorderLayout());
+      JLabel sepLabel = new JLabel(separator.name());
+      sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? JBColor.RED : PlatformColors.BLUE);
+      bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(title == null ? "" : title));
-    panel.add(bottomPanel, BorderLayout.SOUTH);
-    return panel;
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(new JLabel(title == null ? "" : title));
+      panel.add(bottomPanel, BorderLayout.SOUTH);
+      return panel;
+    }
+    else {
+      return new JBLabel(title == null ? "" : title);
+    }
   }
 
   @Override
@@ -637,14 +715,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     String title1 = addReadOnly(data.getContentTitles()[0], myLeftSide.getEditor());
     String title2 = addReadOnly(data.getContentTitles()[1], myRightSide.getEditor());
 
-    if (title1 != null && title2 != null && sep1 != null && sep2 != null && !sep1.equals(sep2)) {
-      setTitle1(createComponentForTitle(title1, sep1, true));
-      setTitle2(createComponentForTitle(title2, sep2, false));
-    }
-    else {
-      setTitle1(new JBLabel(title1 == null ? "" : title1));
-      setTitle2(new JBLabel(title2 == null ? "" : title2));
-    }
+    setTitle1(createComponentForTitle(title1, sep1, sep2, true));
+    setTitle2(createComponentForTitle(title2, sep1, sep2, false));
   }
 
   private void setTitle1(JComponent title) {
@@ -868,7 +940,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       if (FocusDiffSide.DATA_KEY.is(dataId)) {
         return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
       }
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final DiffSideView currentSide = myDiffPanel.myCurrentSide;
         if (currentSide != null) {
           return new DiffNavigatable(currentSide);
@@ -879,6 +951,18 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       }
 
       return super.getData(dataId);
+    }
+  }
+
+  public static class FileContentsAreIdenticalDiffPanel extends EditorNotificationPanel {
+    public FileContentsAreIdenticalDiffPanel() {
+      myLabel.setText(DiffBundle.message("diff.contents.are.identical.message.text"));
+    }
+  }
+
+  public static class LineSeparatorsOnlyDiffPanel extends FileContentsAreIdenticalDiffPanel {
+    public LineSeparatorsOnlyDiffPanel() {
+      myLabel.setText(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"));
     }
   }
 

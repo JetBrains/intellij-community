@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -23,7 +24,7 @@ import java.io.File;
 
 public interface IMerger {
   boolean hasNext();
-  void mergeNext() throws SVNException;
+  void mergeNext() throws SVNException, VcsException;
   void getInfo(Consumer<String> holder, boolean getLatest);
   void getSkipped(final Consumer<String> holder);
   String getComment();

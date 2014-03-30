@@ -38,7 +38,7 @@ public class StepAdapter implements Step {
 
   @Nullable
   public Icon getIcon() {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public void registerStepListener(StepListener listener) {

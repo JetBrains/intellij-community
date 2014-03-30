@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /** similar to java.util.ConcurrentHashMap except:
- keys are ints 
+ keys are ints
  conserved as much memory as possible by
    -- using only one Segment
    -- eliminating unnecessary fields
@@ -127,6 +127,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
 
   // inherit Map javadoc
 
+  @Override
   public int size() {
     return count;
   }
@@ -347,8 +348,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
 
     @Override
     public int hashCode() {
-      return key ^
-             (value == null ? 0 : value.hashCode());
+      return key ^ value.hashCode();
     }
 
     @Override
@@ -428,7 +428,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
    * The table is rehashed when its size exceeds this threshold.
    */
   private int threshold() {
-    return (int)(table.length * StripedLockIntObjectConcurrentHashMap.DEFAULT_LOAD_FACTOR);
+    return (int)(table.length * DEFAULT_LOAD_FACTOR);
   }
 
   /**
@@ -453,23 +453,6 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
     return tab[hash & tab.length - 1];
   }
 
-  /**
-   * Read value field of an entry under lock. Called if value
-   * field ever appears to be null. This is possible only if a
-   * compiler happens to reorder a IntHashEntry initialization with
-   * its table assignment, which is legal under memory model
-   * but is not known to ever occur.
-   */
-  private V readValueUnderLock(IntHashEntry<V> e) {
-    lock();
-    try {
-      return e.value;
-    }
-    finally {
-      unlock();
-    }
-  }
-
   /* Specialized implementations of map methods */
 
   @Override
@@ -478,11 +461,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
       IntHashEntry<V> e = getFirst(key);
       while (e != null) {
         if (key == e.key) {
-          V v = e.value;
-          if (v != null) {
-            return v;
-          }
-          return readValueUnderLock(e); // recheck
+          return e.value;
         }
         e = e.next;
       }
@@ -584,11 +563,9 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
 
     IntHashEntry[] newTable = new IntHashEntry[oldCapacity << 1];
     int sizeMask = newTable.length - 1;
-    for (int i = 0; i < oldCapacity; i++) {
+    for (IntHashEntry e : oldTable) {
       // We need to guarantee that any existing reads of old Map can
       //  proceed. So we cannot yet null out each bin.
-      IntHashEntry<V> e = oldTable[i];
-
       if (e != null) {
         IntHashEntry<V> next = e.next;
         int idx = e.key & sizeMask;
@@ -689,6 +666,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntOb
     }
   }
 
+  @Override
   @NotNull
   public int[] keys() {
     TIntArrayList keys = new TIntArrayList(size());

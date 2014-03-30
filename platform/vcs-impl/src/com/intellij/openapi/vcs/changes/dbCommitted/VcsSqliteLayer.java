@@ -186,7 +186,7 @@ public class VcsSqliteLayer {
             final long id = set.getLong(SqliteTables.ROOT.ID);
             final String url = set.getString(SqliteTables.ROOT.URL);
             myKnownRepositoryLocations.add(vcsName, url, id);
-            copy.removeValue(vcsName, url);
+            copy.remove(vcsName, url);
             if (myKnownRepositoryLocations.getLastRevision(id) == null) {
               idsToCheck.add(id);
             }

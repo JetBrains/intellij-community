@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -55,7 +55,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
                             SystemProperties.getUserName() + "_" + myDateFormat.format(new Date()) + ".zip";
     final File reportPath = new File(SystemProperties.getUserHome(), reportFileName);
     final File logDir = new File(PathManager.getLogPath());
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     final boolean[] archiveCreated = new boolean[1];
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -93,7 +93,7 @@ public class SubmitPerformanceReportAction extends AnAction implements DumbAware
     int rc = Messages.showYesNoDialog(project, "The performance report has been saved to\n" + reportPath +
                                                "\n\nWould you like to submit it to JetBrains?", MESSAGE_TITLE,
                                       Messages.getQuestionIcon());
-    if (rc == 0) {
+    if (rc == Messages.YES) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Uploading Performance Report") {
         public void run(@NotNull final ProgressIndicator indicator) {
           final String error = uploadFileToFTP(reportPath, "ftp.intellij.net", ".uploads", indicator);

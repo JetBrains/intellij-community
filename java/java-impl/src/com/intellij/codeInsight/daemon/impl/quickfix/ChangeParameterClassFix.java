@@ -24,19 +24,20 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class ChangeParameterClassFix extends ExtendsListFix {
-  private ChangeParameterClassFix(PsiClass aClassToExtend, PsiClassType parameterClass) {
+  public ChangeParameterClassFix(@NotNull PsiClass aClassToExtend, @NotNull PsiClassType parameterClass) {
     super(aClassToExtend, parameterClass, true);
   }
 
@@ -75,7 +76,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         @Override
@@ -86,7 +87,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     );
     final Editor editor1 = CodeInsightUtil.positionCursor(project, myClass.getContainingFile(), myClass);
     if (editor1 == null) return;
-    final Collection<CandidateInfo> toImplement = OverrideImplementUtil.getMethodsToOverrideImplement(myClass, true);
+    final Collection<CandidateInfo> toImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(myClass, true);
     if (!toImplement.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
@@ -112,44 +113,6 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       }
     }
     UndoUtil.markPsiFileForUndo(file);
-  }
-
-  public static void registerQuickFixAction(PsiType lType, PsiType rType, HighlightInfo info) {
-    final PsiClass lClass = PsiUtil.resolveClassInClassTypeOnly(lType);
-    final PsiClass rClass = PsiUtil.resolveClassInClassTypeOnly(rType);
-
-    if (rClass == null || lClass == null) return;
-    if (rClass instanceof PsiAnonymousClass) return;
-    if (rClass.isInheritor(lClass, true)) return;
-    if (lClass.isInheritor(rClass, true)) return;
-    if (lClass == rClass) return;
-
-    QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(rClass, (PsiClassType)lType));
-  }
-
-  public static void registerQuickFixActions(PsiCall methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
-    final JavaResolveResult result = methodCall.resolveMethodGenerics();
-    PsiMethod method = (PsiMethod)result.getElement();
-    final PsiSubstitutor substitutor = result.getSubstitutor();
-    PsiExpression[] expressions = list.getExpressions();
-    if (method == null) return;
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != expressions.length) return;
-    for (int i = 0; i < expressions.length; i++) {
-      final PsiExpression expression = expressions[i];
-      final PsiParameter parameter = parameters[i];
-      final PsiType expressionType = expression.getType();
-      final PsiType parameterType = substitutor.substitute(parameter.getType());
-      if (expressionType == null || expressionType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(expressionType) || expressionType instanceof PsiArrayType) continue;
-      if (parameterType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(parameterType) || parameterType instanceof PsiArrayType) continue;
-      if (parameterType.isAssignableFrom(expressionType)) continue;
-      PsiClass parameterClass = PsiUtil.resolveClassInType(parameterType);
-      PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
-      if (parameterClass == null || expressionClass == null) continue;
-      if (expressionClass instanceof PsiAnonymousClass) continue;
-      if (parameterClass.isInheritor(expressionClass, true)) continue;
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeParameterClassFix(expressionClass, (PsiClassType)parameterType));
-    }
   }
 
   @Override

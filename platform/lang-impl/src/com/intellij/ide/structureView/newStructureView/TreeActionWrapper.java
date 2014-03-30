@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,19 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class TreeActionWrapper extends ToggleAction implements DumbAware {
   private final TreeAction myAction;
   private final TreeActionsOwner myStructureView;
 
 
-  public TreeActionWrapper(TreeAction action, TreeActionsOwner structureView) {
+  public TreeActionWrapper(@NotNull TreeAction action, @NotNull TreeActionsOwner structureView) {
     myAction = action;
     myStructureView = structureView;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
@@ -44,10 +46,12 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware {
     presentation.setText(actionPresentation.getText());
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return TreeModelWrapper.isActive(myAction, myStructureView);
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) ?  !state : state);
   }

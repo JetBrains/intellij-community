@@ -8,3 +8,6 @@ class NonFinalUtilityClass {
 final class FinalUtilityClass {
   public static void foo() {}
 }
+abstract class NoUtilityClass {
+  public static void foo() {}
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
@@ -263,12 +264,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   public void addItemsChangeListener(ItemsChangeListener l) {
     myListeners.add(l);
-  }
-
-  /** @deprecated use {@linkplain #getPanelPreferredSize()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected Dimension getPanelPrefferedSize() {
-    return getPanelPreferredSize();
   }
 
   protected Dimension getPanelPreferredSize() {
@@ -546,7 +541,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected Comparator<MyNode> getNodeComparator() {
     return new Comparator<MyNode>() {
       public int compare(final MyNode o1, final MyNode o2) {
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+        return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
       }
     };
   }
@@ -581,13 +576,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       return configurable.getEditableObject();
     }
     return null;
-  }
-
-  /** @deprecated use {@linkplain #getSelectedConfigurable()} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public NamedConfigurable getSelectedConfugurable() {
-    return getSelectedConfigurable();
   }
 
   @Nullable
@@ -778,6 +766,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected class MyDeleteAction extends AnAction implements DumbAware {
     private final Condition<Object[]> myCondition;
+
+    public MyDeleteAction() {
+      this(Conditions.<Object[]>alwaysTrue());
+    }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), PlatformIcons.DELETE_ICON);

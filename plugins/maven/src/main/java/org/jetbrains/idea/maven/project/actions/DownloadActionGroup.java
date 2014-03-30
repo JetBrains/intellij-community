@@ -27,7 +27,7 @@ public class DownloadActionGroup extends DefaultActionGroup implements DumbAware
     e.getPresentation().setEnabled(isEnabled(e));
   }
 
-  private boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(AnActionEvent e) {
     return MavenActionUtil.hasProject(e.getDataContext())
            && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject();
   }

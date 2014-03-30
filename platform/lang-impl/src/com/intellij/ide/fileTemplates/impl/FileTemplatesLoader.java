@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +45,7 @@ public class FileTemplatesLoader {
   private static final String TEMPLATES_DIR = "fileTemplates";
   private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
   public static final String DESCRIPTION_FILE_EXTENSION = "html";
-  static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
+  private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
   //static final String DESCRIPTION_FILE_NAME = "default." + DESCRIPTION_FILE_EXTENSION;
 
   private final FTManager myDefaultTemplatesManager;
@@ -62,10 +64,13 @@ public class FileTemplatesLoader {
   private static final String ROOT_DIR = ".";
   private final FileTypeManagerEx myTypeManager;
 
+  private URL myDefaultTemplateDescription;
+  private URL myDefaultIncludeDescription;
+
   public FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager) {
     myTypeManager = typeManager;
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
-    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR);
+    myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR, true);
     myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, INCLUDES_DIR);
     myCodeTemplatesManager = new FTManager(FileTemplateManager.CODE_TEMPLATES_CATEGORY, CODETEMPLATES_DIR);
     myJ2eeTemplatesManager = new FTManager(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, J2EE_TEMPLATES_DIR);
@@ -115,9 +120,17 @@ public class FileTemplatesLoader {
     return myJ2eeTemplatesManager;
   }
 
+  public URL getDefaultTemplateDescription() {
+    return myDefaultTemplateDescription;
+  }
+
+  public URL getDefaultIncludeDescription() {
+    return myDefaultIncludeDescription;
+  }
+
   private void loadDefaultTemplates() {
     final Set<URL> processedUrls = new HashSet<URL>();
-    for (PluginDescriptor plugin : PluginManager.getPlugins()) {
+    for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
         if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) {
@@ -150,7 +163,13 @@ public class FileTemplatesLoader {
     }
     final Set<String> descriptionPaths = new HashSet<String>();
     for (String path : children) {
-      if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
+      if (path.equals("default.html")) {
+        myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+      }
+      else if (path.equals("includes/default.html")) {
+        myDefaultIncludeDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+      }
+      else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
       }
     }
@@ -162,9 +181,9 @@ public class FileTemplatesLoader {
             final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
             final String extension = myTypeManager.getExtension(filename);
             final String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-            final URL templateUrl = new URL(root.toExternalForm() + "/" + path);
+            final URL templateUrl = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
             final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath != null ? new URL(root.toExternalForm() + "/" + descriptionPath) : null;
+            final URL descriptionUrl = descriptionPath != null ? UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + descriptionPath)) : null;
             entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           }
           break; // FTManagers loop
@@ -173,9 +192,9 @@ public class FileTemplatesLoader {
     }
   }
 
-  private void loadCustomizedContent(FTManager manager) {
+  void loadCustomizedContent(FTManager manager) {
     final File configRoot = manager.getConfigRoot(false);
-    File[] configFiles = configRoot.listFiles();
+    final File[] configFiles = configRoot.listFiles();
     if (configFiles == null) {
       return;
     }
@@ -208,9 +227,10 @@ public class FileTemplatesLoader {
     }
   }
 
-  private void addTemplateFromFile(FTManager manager, String templateQName, File file) {
-    final String extension = myTypeManager.getExtension(templateQName);
-    templateQName = templateQName.substring(0, templateQName.length() - extension.length() - 1);
+  private static void addTemplateFromFile(FTManager manager, String fileName, File file) {
+    Pair<String,String> nameExt = FTManager.decodeFileName(fileName);
+    final String extension = nameExt.second;
+    final String templateQName = nameExt.first;
     if (templateQName.length() == 0) {
       return;
     }

@@ -26,7 +26,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightServicesUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +82,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
 
@@ -217,7 +218,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
             PsiElement firstElement = statements [0];
             while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
               firstElement = firstElement.getPrevSibling();
-            }              
+            }
             ifStatement.getParent().addRangeAfter(firstElement, statements[len - 1], ifStatement);
           }
         }
@@ -304,8 +305,21 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     codeStyle.reformat(statement);
   }
 
-  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow) throws IncorrectOperationException {
+  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow)
+    throws IncorrectOperationException {
     if (flow.getEndOffset(ifStatement) == flow.getEndOffset(thenBranch)) {
+      final PsiLoopStatement loopStmt = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class);
+      if (loopStmt != null) {
+        final PsiStatement body = loopStmt.getBody();
+        if (body instanceof PsiBlockStatement) {
+          final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
+          if (statements.length > 0 && !PsiTreeUtil.isAncestor(statements[statements.length - 1], ifStatement, false) &&
+              ArrayUtilRt.find(statements, ifStatement) < 0) {
+            ifStatement.setElseBranch(thenBranch);
+            return;
+          }
+        }
+      }
       if (thenBranch instanceof PsiContinueStatement) {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != null) {

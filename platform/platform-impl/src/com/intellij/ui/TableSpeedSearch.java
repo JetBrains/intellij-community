@@ -25,8 +25,9 @@ import java.util.ListIterator;
 
 public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = new PairFunction<Object, Cell, String>() {
+    @Override
     public String fun(Object o, Cell cell) {
-      return o == null ? "" : o.toString();
+      return o == null || o instanceof Boolean ? "" : o.toString();
     }
   };
   private final PairFunction<Object, Cell, String> myToStringConvertor;
@@ -46,9 +47,13 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {
     super(table);
+
     myToStringConvertor = toStringConvertor;
+    // edit on F2 & double click, do not interfere with quick search
+    table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
   }
 
+  @Override
   protected boolean isSpeedSearchEnabled() {
     return !getComponent().isEditing() && super.isSpeedSearchEnabled();
   }
@@ -58,11 +63,13 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return new MyListIterator(startingIndex);
   }
 
+  @Override
   protected int getElementCount() {
     final TableModel tableModel = myComponent.getModel();
     return tableModel.getRowCount() * tableModel.getColumnCount();
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
     final int index = ((Integer)element).intValue();
     final TableModel model = myComponent.getModel();
@@ -73,6 +80,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     TableUtil.scrollSelectionToVisible(myComponent);
   }
 
+  @Override
   protected int getSelectedIndex() {
     final int row = myComponent.getSelectedRow();
     final int col = myComponent.getSelectedColumn();
@@ -80,10 +88,12 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     return row > -1 && col > -1 ? row * myComponent.getModel().getColumnCount() + col : -1;
   }
 
+  @Override
   protected Object[] getAllElements() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
+  @Override
   protected String getElementText(Object element) {
     final int index = ((Integer)element).intValue();
     final TableModel model = myComponent.getModel();
@@ -102,38 +112,47 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
       myCursor = startingIndex < 0 ? total : startingIndex;
     }
 
+    @Override
     public boolean hasNext() {
       return myCursor < getElementCount();
     }
 
+    @Override
     public Object next() {
       return myCursor++;
     }
 
+    @Override
     public boolean hasPrevious() {
       return myCursor > 0;
     }
 
+    @Override
     public Object previous() {
       return (myCursor--) - 1;
     }
 
+    @Override
     public int nextIndex() {
       return myCursor;
     }
 
+    @Override
     public int previousIndex() {
       return myCursor - 1;
     }
 
+    @Override
     public void remove() {
       throw new AssertionError("Not Implemented");
     }
 
+    @Override
     public void set(Object o) {
       throw new AssertionError("Not Implemented");
     }
 
+    @Override
     public void add(Object o) {
       throw new AssertionError("Not Implemented");
     }

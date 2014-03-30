@@ -16,6 +16,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
@@ -26,13 +27,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -67,6 +68,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     myManager = PsiManager.getInstance(project);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> infos = new ArrayList<UsageInfo>();
@@ -112,12 +114,36 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return super.isPreviewUsages(usages);
   }
 
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.changeSignature";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(getChangeInfo().getMethod());
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(getChangeInfo().getMethod());
+    return data;
+  }
+
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     RefactoringTransaction transaction = getTransaction();
     final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(myChangeInfo.getMethod());
     final String fqn = CopyReferenceAction.elementToFqn(myChangeInfo.getMethod());
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
+        @Override
         public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
             ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(myChangeInfo.getMethod(), fqn);
@@ -177,8 +203,9 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
   }
 
+  @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
+    return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 
   public ChangeInfo getChangeInfo() {

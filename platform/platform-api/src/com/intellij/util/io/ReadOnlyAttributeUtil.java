@@ -17,7 +17,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 
 import java.io.IOException;
 
@@ -42,14 +41,7 @@ public class ReadOnlyAttributeUtil {
       return;
     }
 
-    if (file instanceof NewVirtualFile) {
-      ((NewVirtualFile)file).setWritable(!readOnlyStatus);
-    }
-    else {
-      String path = file.getPresentableUrl();
-      setReadOnlyAttribute(path, readOnlyStatus);
-      file.refresh(false, false);
-    }
+    file.setWritable(!readOnlyStatus);
   }
 
   public static void setReadOnlyAttribute(String path, boolean readOnlyStatus) throws IOException {

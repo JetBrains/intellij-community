@@ -270,7 +270,7 @@ public class ReferenceParser {
       return false;
     }
 
-    final int flags = set(set(EAT_LAST_DOT, WILDCARD, wildcard), DIAMONDS, diamonds);
+    int flags = set(set(EAT_LAST_DOT, WILDCARD, wildcard), DIAMONDS, diamonds);
     boolean isOk = true;
     while (true) {
       if (parseTypeInfo(builder, flags, true) == null) {
@@ -290,6 +290,7 @@ public class ReferenceParser {
         isOk = false;
         break;
       }
+      flags = set(flags, DIAMONDS, false);
     }
 
     list.done(JavaElementType.REFERENCE_PARAMETER_LIST);

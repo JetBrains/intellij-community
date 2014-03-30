@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   @NonNls private static final String KEYSTROKE_ATTRIBUTE = "keystroke";
   @NonNls private static final String FIRST_KEYSTROKE_ATTRIBUTE = "first-keystroke";
   @NonNls private static final String SECOND_KEYSTROKE_ATTRIBUTE = "second-keystroke";
+  @NonNls private static final String ABBREVIATION = "abbreviation";
   @NonNls private static final String ACTION = "action";
   @NonNls private static final String VERSION_ATTRIBUTE = "version";
   @NonNls private static final String PARENT_ATTRIBUTE = "parent";
@@ -497,12 +498,17 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
   public Shortcut[] getShortcuts(String actionId) {
+    LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
+
+    // Shortcuts of bounded action has more priority than keystrokes of given action,
+    // and likely this behaviour can't be changed completely because of IDEA-58896.
+    // But. If shortcuts for actionId has been explicitly defined in current keymap
+    // then shortcuts of bounded action won't be used.
     KeymapManagerEx keymapManager = getKeymapManager();
-    if (keymapManager.getBoundActions().contains(actionId)) {
+    boolean hasBoundedAction = keymapManager.getBoundActions().contains(actionId);
+    if (hasBoundedAction && (shortcuts == null || shortcuts.isEmpty())) {
       return getShortcuts(keymapManager.getActionBinding(actionId));
     }
-
-    LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
 
     if (shortcuts == null) {
       if (myParent != null) {
@@ -893,6 +899,21 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     for (Listener listener : myListeners) {
       listener.onShortcutChanged(actionId);
     }
+  }
+
+  @Override
+  public String[] getAbbreviations() {
+    return new String[0];
+  }
+
+  @Override
+  public void addAbbreviation(String actionId, String abbreviation) {
+
+  }
+
+  @Override
+  public void removeAbbreviation(String actionId, String abbreviation) {
+
   }
 
   @NotNull

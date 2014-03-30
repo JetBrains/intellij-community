@@ -6,9 +6,13 @@
 '''commands to sign and verify changesets'''
 
 import os, tempfile, binascii
-from mercurial import util, commands, match
+from mercurial import util, commands, match, cmdutil
 from mercurial import node as hgnode
 from mercurial.i18n import _
+
+cmdtable = {}
+command = cmdutil.command(cmdtable)
+testedwith = 'internal'
 
 class gpg(object):
     def __init__(self, path, key=None):
@@ -40,7 +44,7 @@ class gpg(object):
                 try:
                     if f:
                         os.unlink(f)
-                except:
+                except OSError:
                     pass
         keys = []
         key, fingerprint = None, None
@@ -135,6 +139,7 @@ def getkeys(ui, repo, mygpg, sigdata, context):
         validkeys.append((key[1], key[2], key[3]))
     return validkeys
 
+@command("sigs", [], _('hg sigs'))
 def sigs(ui, repo):
     """list signed changesets"""
     mygpg = newgpg(ui)
@@ -159,6 +164,7 @@ def sigs(ui, repo):
             r = "%5d:%s" % (rev, hgnode.hex(repo.changelog.node(rev)))
             ui.write("%-30s %s\n" % (keystr(ui, k), r))
 
+@command("sigcheck", [], _('hg sigcheck REV'))
 def check(ui, repo, rev):
     """verify all the signatures there may be for a particular revision"""
     mygpg = newgpg(ui)
@@ -174,7 +180,7 @@ def check(ui, repo, rev):
                 keys.extend(k)
 
     if not keys:
-        ui.write(_("No valid signature for %s\n") % hgnode.short(rev))
+        ui.write(_("no valid signature for %s\n") % hgnode.short(rev))
         return
 
     # print summary
@@ -191,13 +197,23 @@ def keystr(ui, key):
     else:
         return user
 
+@command("sign",
+         [('l', 'local', None, _('make the signature local')),
+          ('f', 'force', None, _('sign even if the sigfile is modified')),
+          ('', 'no-commit', None, _('do not commit the sigfile after signing')),
+          ('k', 'key', '',
+           _('the key id to sign with'), _('ID')),
+          ('m', 'message', '',
+           _('commit message'), _('TEXT')),
+         ] + commands.commitopts2,
+         _('hg sign [OPTION]... [REV]...'))
 def sign(ui, repo, *revs, **opts):
     """add a signature for the current or given revision
 
     If no revision is given, the parent of the working directory is used,
     or tip if no revision is checked out.
 
-    See 'hg help dates' for a list of formats valid for -d/--date.
+    See :hg:`help dates` for a list of formats valid for -d/--date.
     """
 
     mygpg = newgpg(ui, **opts)
@@ -221,20 +237,20 @@ def sign(ui, repo, *revs, **opts):
 
     for n in nodes:
         hexnode = hgnode.hex(n)
-        ui.write(_("Signing %d:%s\n") % (repo.changelog.rev(n),
+        ui.write(_("signing %d:%s\n") % (repo.changelog.rev(n),
                                          hgnode.short(n)))
         # build data
         data = node2txt(repo, n, sigver)
         sig = mygpg.sign(data)
         if not sig:
-            raise util.Abort(_("Error while signing"))
+            raise util.Abort(_("error while signing"))
         sig = binascii.b2a_base64(sig)
         sig = sig.replace("\n", "")
         sigmessage += "%s %s %s\n" % (hexnode, sigver, sig)
 
     # write it
     if opts['local']:
-        repo.opener("localsigs", "ab").write(sigmessage)
+        repo.opener.append("localsigs", sigmessage)
         return
 
     msigs = match.exact(repo.root, '', ['.hgsigs'])
@@ -244,10 +260,12 @@ def sign(ui, repo, *revs, **opts):
                            "(please commit .hgsigs manually "
                            "or use --force)"))
 
-    repo.wfile(".hgsigs", "ab").write(sigmessage)
+    sigsfile = repo.wfile(".hgsigs", "ab")
+    sigsfile.write(sigmessage)
+    sigsfile.close()
 
     if '.hgsigs' not in repo.dirstate:
-        repo.add([".hgsigs"])
+        repo[None].add([".hgsigs"])
 
     if opts["no_commit"]:
         return
@@ -269,18 +287,3 @@ def node2txt(repo, node, ver):
         return "%s\n" % hgnode.hex(node)
     else:
         raise util.Abort(_("unknown signature version"))
-
-cmdtable = {
-    "sign":
-        (sign,
-         [('l', 'local', None, _('make the signature local')),
-          ('f', 'force', None, _('sign even if the sigfile is modified')),
-          ('', 'no-commit', None, _('do not commit the sigfile after signing')),
-          ('k', 'key', '', _('the key id to sign with')),
-          ('m', 'message', '', _('commit message')),
-         ] + commands.commitopts2,
-         _('hg sign [OPTION]... [REVISION]...')),
-    "sigcheck": (check, [], _('hg sigcheck REVISION')),
-    "sigs": (sigs, [], _('hg sigs')),
-}
-

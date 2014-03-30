@@ -1,0 +1,12 @@
+0(1) element: null
+1(2) element: PyReturnStatement
+2(3) READ ACCESS: dict
+3(4) element: PyGeneratorExpression
+4(5,11) element: PyDictLiteralExpression
+5(6) element: PyTupleExpression
+6(7) WRITE ACCESS: name
+7(8) WRITE ACCESS: val
+8(9) element: PyParenthesizedExpression
+9(10) READ ACCESS: name
+10(5,11) READ ACCESS: val
+11() element: null

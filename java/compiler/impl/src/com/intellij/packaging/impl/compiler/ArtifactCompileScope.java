@@ -17,7 +17,6 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -76,9 +75,6 @@ public class ArtifactCompileScope {
                                                       boolean useCustomContentId,
                                                       final boolean forceArtifactBuild) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
-    if (useCustomContentId) {
-      baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
-    }
     if (forceArtifactBuild) {
       baseScope.putUserData(FORCE_ARTIFACT_BUILD, Boolean.TRUE);
     }

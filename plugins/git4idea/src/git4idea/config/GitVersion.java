@@ -69,7 +69,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   public static final GitVersion NULL = new GitVersion(0, 0, 0, 0, Type.NULL);
 
   private static final Pattern FORMAT = Pattern.compile(
-    "git version (\\d+)\\.(\\d+)\\.(\\d+)(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
+    "git version (\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final Logger LOG = Logger.getInstance(GitVersion.class.getName());
 

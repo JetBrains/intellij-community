@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ui.Gray;
-
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
@@ -30,10 +29,10 @@ public class DarculaMenuBarBorder implements Border, UIResource {
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     g.translate(x, y);
     w--;h--;
-    g.setColor(Gray._85);
+    g.setColor(UIManager.getColor("MenuBar.darcula.borderColor"));
     g.drawLine(0, h, w, h);
     h--;
-    g.setColor(Gray._40);
+    g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
     g.drawLine(0, h, w, h);
     g.translate(-x, -y);
   }

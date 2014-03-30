@@ -1,0 +1,2 @@
+<caret>a = "aaaaA"\
+    "Bbbbb"

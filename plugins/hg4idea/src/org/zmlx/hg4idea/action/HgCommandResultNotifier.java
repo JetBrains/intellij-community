@@ -12,14 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -30,21 +28,9 @@ public final class HgCommandResultNotifier {
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(HgCommandResultNotifier.class);
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
-    "Mercurial Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Mercurial Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
 
   public HgCommandResultNotifier(Project project) {
     myProject = project;
-  }
-
-  public void notifySuccess(@NotNull String title, @NotNull String successDescription) {
-    NOTIFICATION_GROUP.createNotification(title, successDescription, NotificationType.INFORMATION, null).notify(myProject);
-  }
-
-  public void notifyWarning(@NotNull String title, @NotNull String warningDescription) {
-    NOTIFICATION_GROUP.createNotification(title, warningDescription, NotificationType.WARNING, null).notify(myProject);
   }
 
   public void notifyError(@Nullable HgCommandResult result, @NotNull String failureTitle, @NotNull String failureDescription) {
@@ -69,13 +55,11 @@ public final class HgCommandResultNotifier {
                        "Failure title, failure description and errors log can not be empty at the same time");
         errorMessage = failureDescription;
       } else if (failureDescription.isEmpty()) {
-        errorMessage = "<html>" + StringUtil.join(err, "<br>") + "</html>";
+        errorMessage = XmlStringUtil.wrapInHtml(StringUtil.join(err, "<br>"));
       } else {
-        errorMessage = "<html>" + failureDescription + "<br>" + StringUtil.join(err, "<br>") + "</html>";
+        errorMessage = XmlStringUtil.wrapInHtml(failureDescription + "<br>" + StringUtil.join(err, "<br>"));
       }
     }
-    IMPORTANT_ERROR_NOTIFICATION
-      .createNotification(failureTitle, errorMessage, NotificationType.ERROR, listener)
-      .notify(myProject);
+    VcsNotifier.getInstance(myProject).notifyError(failureTitle, errorMessage, listener);
   }
 }

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-class JavaWithCastSurrounder extends JavaExpressionSurrounder {
+public class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   @NonNls private static final String TYPE_TEMPLATE_VARIABLE = "type";
 
   @Override

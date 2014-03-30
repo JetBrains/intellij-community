@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -51,7 +50,6 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
-import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,14 +72,13 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeSignatureDialogBase<
-    ParamInfo extends ParameterInfo,
-    Method extends PsiElement,
-    Visibility,
-    Descriptor extends MethodDescriptor<ParamInfo, Visibility>,
-    ParameterTableModelItem extends ParameterTableModelItemBase<ParamInfo>,
-    ParameterTableModel extends ParameterTableModelBase<ParamInfo, ParameterTableModelItem>
-  > extends RefactoringDialog {
+public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
+                                                Method extends PsiElement,
+                                                Visibility,
+                                                Descriptor extends MethodDescriptor<ParamInfo, Visibility>,
+                                                ParameterTableModelItem extends ParameterTableModelItemBase<ParamInfo>,
+                                                ParameterTableModel extends ParameterTableModelBase<ParamInfo, ParameterTableModelItem>>
+  extends RefactoringDialog {
 
   private static final Logger LOG = Logger.getInstance(ChangeSignatureDialogBase.class);
 
@@ -143,6 +140,7 @@ public abstract class ChangeSignatureDialogBase<
     init();
     doUpdateSignature();
     Disposer.register(myDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myUpdateSignatureAlarm.cancelAllRequests();
         myDisposed = true;
@@ -186,6 +184,7 @@ public abstract class ChangeSignatureDialogBase<
     return myAllowDelegation && myDelegationPanel.isGenerateDelegate();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     final JTable table = getTableComponent();
 
@@ -211,11 +210,16 @@ public abstract class ChangeSignatureDialogBase<
   }
 
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
+    GridBagConstraints gbc = new GridBagConstraints(0, 0, 1, 1, 0, 1,
+                                                    GridBagConstraints.WEST,
+                                                    GridBagConstraints.HORIZONTAL,
+                                                    new Insets(0, 0, 0, 0),
+                                                    0, 0);
 
-    myNamePanel = new JPanel(new BorderLayout(0,2));
+    myNamePanel = new JPanel(new BorderLayout(0, 2));
     myNameField = new EditorTextField(myMethod.getName());
     final JLabel nameLabel = new JLabel(RefactoringBundle.message("changeSignature.name.prompt"));
     nameLabel.setLabelFor(myNameField);
@@ -232,7 +236,7 @@ public abstract class ChangeSignatureDialogBase<
 
     if (myMethod.canChangeVisibility() && myVisibilityPanel instanceof ComboBoxVisibilityPanel) {
       ((ComboBoxVisibilityPanel)myVisibilityPanel).registerUpDownActionsFor(myNameField);
-      myVisibilityPanel.setBorder(new EmptyBorder(0,0,0,8));
+      myVisibilityPanel.setBorder(new EmptyBorder(0, 0, 0, 8));
       panel.add(myVisibilityPanel, gbc);
       gbc.gridx++;
     }
@@ -240,8 +244,8 @@ public abstract class ChangeSignatureDialogBase<
     gbc.weightx = 1;
 
     if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
-      JPanel typePanel = new JPanel(new BorderLayout(0,2));
-      typePanel.setBorder(new EmptyBorder(0,0,0,8));
+      JPanel typePanel = new JPanel(new BorderLayout(0, 2));
+      typePanel.setBorder(new EmptyBorder(0, 0, 0, 8));
       final JLabel typeLabel = new JLabel(RefactoringBundle.message("changeSignature.return.type.prompt"));
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
@@ -275,6 +279,7 @@ public abstract class ChangeSignatureDialogBase<
 
   private DelegationPanel createDelegationPanel() {
     return new DelegationPanel() {
+      @Override
       protected void stateModified() {
         myParametersTableModel.fireTableDataChanged();
         myParametersTable.repaint();
@@ -282,6 +287,7 @@ public abstract class ChangeSignatureDialogBase<
     };
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
 
@@ -293,7 +299,7 @@ public abstract class ChangeSignatureDialogBase<
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
-        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder(0));
+        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder());
       }
       subPanel.add(parametersPanel, BorderLayout.CENTER);
     }
@@ -379,6 +385,7 @@ public abstract class ChangeSignatureDialogBase<
     return Collections.emptyList();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "refactoring.ChangeSignatureDialog";
   }
@@ -391,6 +398,7 @@ public abstract class ChangeSignatureDialogBase<
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
     myParametersTable = new TableView<ParameterTableModelItem>(myParametersTableModel) {
 
+      @Override
       public void removeEditor() {
         clearEditorListeners();
         super.removeEditor();
@@ -413,6 +421,7 @@ public abstract class ChangeSignatureDialogBase<
         }
       }
 
+      @Override
       public Component prepareEditor(final TableCellEditor editor, final int row, final int column) {
         final DocumentAdapter listener = new DocumentAdapter() {
           @Override
@@ -420,8 +429,7 @@ public abstract class ChangeSignatureDialogBase<
             final TableCellEditor ed = myParametersTable.getCellEditor();
             if (ed != null) {
               Object editorValue = ed.getCellEditorValue();
-              myParametersTableModel
-                .setValueAtWithoutUpdate(editorValue, row, column);
+              myParametersTableModel.setValueAtWithoutUpdate(editorValue, row, column);
               updateSignature();
             }
           }
@@ -436,6 +444,11 @@ public abstract class ChangeSignatureDialogBase<
         }
         return super.prepareEditor(editor, row, column);
       }
+
+      @Override
+      public void editingCanceled(ChangeEvent e) {
+        super.editingCanceled(e);
+      }
     };
 
     myParametersTable.setCellSelectionEnabled(true);
@@ -449,16 +462,7 @@ public abstract class ChangeSignatureDialogBase<
         @Override
         protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
           final List<ParameterTableModelItem> items = myParametersTable.getItems();
-          final JComponent component = getRowPresentation(items.get(row), selected, focused);
-          for (EditorTextField editorTextField : UIUtil.findComponentsOfType(component, EditorTextField.class)) {
-            editorTextField.addSettingsProvider(new EditorSettingsProvider() {
-              @Override
-              public void customizeSettings(EditorEx editor) {
-                editor.getSettings().setWhitespacesShown(false);
-              }
-            });
-          }
-          return component;
+          return getRowPresentation(items.get(row), selected, focused);
         }
 
         @Override
@@ -483,16 +487,6 @@ public abstract class ChangeSignatureDialogBase<
             }
           });
           return editor;
-        }
-
-        @Override
-        protected JBTableRow getRowAt(final int row) {
-          return new JBTableRow() {
-            @Override
-            public Object getValueAt(int column) {
-              return myInternalTable.getValueAt(row, column);
-            }
-          };
         }
       };
       final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
@@ -587,16 +581,19 @@ public abstract class ChangeSignatureDialogBase<
     if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = new Runnable() {
+      @Override
       public void run() {
         if (myDisposed) return;
         myUpdateSignatureAlarm.cancelAllRequests();
         myUpdateSignatureAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
             updateSignatureAlarmFired();
           }
         }, 100);
       }
     };
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(updateRunnable);
   }
 
@@ -625,6 +622,7 @@ public abstract class ChangeSignatureDialogBase<
     return true;
   }
 
+  @Override
   protected void doAction() {
     if (myParametersTable != null) {
       TableUtil.stopEditing(myParametersTable);

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -26,31 +27,31 @@ public interface FileEditorManagerListener extends EventListener{
   /**
    * TODO[vova] write javadoc
    */
-  void fileOpened(FileEditorManager source, VirtualFile file);
-  
-  /**
-   * TODO[vova] write javadoc
-   */
-  void fileClosed(FileEditorManager source, VirtualFile file);
+  void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
   /**
    * TODO[vova] write javadoc
    */
-  void selectionChanged(FileEditorManagerEvent event);
+  void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);
+
+  /**
+   * TODO[vova] write javadoc
+   */
+  void selectionChanged(@NotNull FileEditorManagerEvent event);
 
   interface Before extends EventListener {
     Topic<Before> FILE_EDITOR_MANAGER = new Topic<Before>("file editor before events", Before.class);
 
-    void beforeFileOpened(FileEditorManager source, VirtualFile file);
-    void beforeFileClosed(FileEditorManager source, VirtualFile file);
+    void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file);
+    void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file);
 
     class Adapter implements Before {
       @Override
-      public void beforeFileOpened(FileEditorManager source, VirtualFile file) {
+      public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       }
 
       @Override
-      public void beforeFileClosed(FileEditorManager source, VirtualFile file) {
+      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       }
     }
 

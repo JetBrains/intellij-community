@@ -115,6 +115,9 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", ApplicationBundle.message("checkbox.spaces.after.comma"), SPACES_WITHIN_TYPE_ARGUMENTS);
     initCustomOptions(SPACES_WITHIN_TYPE_ARGUMENTS);
 
+    initCustomOptions(SPACES_IN_TYPE_ARGUMENTS);
+    initCustomOptions(SPACES_IN_TYPE_PARAMETERS);
+
     initBooleanField("SPACE_BEFORE_COMMA", ApplicationBundle.message("checkbox.spaces.before.comma"), SPACES_OTHER);
     initBooleanField("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma"), SPACES_OTHER);
     initBooleanField("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon"), SPACES_OTHER);

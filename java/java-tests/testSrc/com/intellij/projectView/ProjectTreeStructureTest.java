@@ -49,12 +49,12 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
   public void testShowClassMembers() {
     useStandardProviders();
 
-    myShowMembers = false;
+    myStructure.setShowMembers(false);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
                                                 " Class1\n" +
                                                 " Class2\n");
 
-    myShowMembers = true;
+    myStructure.setShowMembers(true);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
                                                 " Class1\n" +
                                                 "  InnerClass\n" +
@@ -92,7 +92,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
   public void testGetParentObject() {
     useStandardProviders();
-    myShowMembers = true;
+    myStructure.setShowMembers(true);
     assertStructureEqual(getContentDirectory(), "getParentObject\n" +
                                                 " src\n" +
                                                 "  com\n" +

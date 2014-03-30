@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -38,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -91,13 +90,13 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            && field.getManager().isInProject(field)
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
-           && !(containingClass instanceof JspClass)
+           && !(containingClass instanceof PsiSyntheticClass)
            && containingClass.getName() != null;
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     PsiMethod[] constructors = myClass.getConstructors();
     if (constructors.length == 0) {
@@ -199,6 +198,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         return finalFields.put(psiVariable, Boolean.TRUE) == null;
       }
 
+      @NotNull
       @Override
       public Iterator<SmartPsiElementPointer<PsiField>> iterator() {
         return finalFields.keySet().iterator();
@@ -238,7 +238,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final List<PsiVariable> params = new ArrayList<PsiVariable>(Arrays.asList(parameters));
     Collections.addAll(params, fields);
     Collections.sort(params, new FieldParameterComparator(parameterList));
-    
+
     int i = 0;
     final HashMap<PsiField, String> usedFields = new HashMap<PsiField, String>();
     for (PsiVariable param : params) {
@@ -261,7 +261,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     final int minUsagesNumber = containingClass.findMethodsBySignature(fromText, false).length > 0 ? 0 : 1;
     final List<ParameterInfoImpl> parameterInfos =
       ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true);
-    
+
     final ParameterInfoImpl[] resultParams = parameterInfos != null ? parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]) :
                                              newParamInfos;
     return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
@@ -284,7 +284,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static String getUniqueParameterName(PsiParameter[] parameters, PsiVariable variable, HashMap<PsiField, String> usedNames) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(variable.getProject());
     final SuggestedNameInfo nameInfo = styleManager
-      .suggestVariableName(VariableKind.PARAMETER, 
+      .suggestVariableName(VariableKind.PARAMETER,
                            styleManager.variableNameToPropertyName(variable.getName(), VariableKind.FIELD),
                            null, variable.getType());
     String newName = nameInfo.names[0];
@@ -316,12 +316,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (newParameters == parameters) return false; //user must have canceled dialog
     boolean created = false;
     // do not introduce assignment in chanined constructor
-    if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-
+    if (JavaHighlightUtil.getChainedConstructors(constructor) == null) {
       for (PsiField field : fields.keySet()) {
         final String defaultParamName = fields.get(field);
-        PsiParameter parameter = findParamByName(defaultParamName, newParameters);
+        PsiParameter parameter = findParamByName(defaultParamName, field.getType(), newParameters, parameterInfos);
         if (parameter == null) {
           continue;
         }
@@ -342,15 +340,25 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   @Nullable
-  private static PsiParameter findParamByName(String newName, PsiParameter[] newParameters) {
-    PsiParameter parameter = null;
+  private static PsiParameter findParamByName(String newName,
+                                              PsiType type,
+                                              PsiParameter[] newParameters,
+                                              ParameterInfoImpl[] parameterInfos) {
     for (PsiParameter newParameter : newParameters) {
       if (Comparing.strEqual(newName, newParameter.getName())) {
-        parameter = newParameter;
-        break;
+        return newParameter;
       }
     }
-    return parameter;
+    for (int i = 0; i < newParameters.length; i++) {
+      if (parameterInfos[i].getOldIndex() == -1) {
+        final PsiParameter parameter = newParameters[i];
+        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter, parameter.getManager());
+        if (type.isAssignableFrom(paramType)){
+          return parameter;
+        }
+      }
+    }
+    return null;
   }
 
   private PsiField getField() {

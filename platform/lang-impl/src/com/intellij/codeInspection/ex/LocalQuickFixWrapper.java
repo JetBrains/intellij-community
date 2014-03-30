@@ -21,14 +21,17 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,42 +41,45 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix myFix;
   private String myText;
 
-  public LocalQuickFixWrapper(QuickFix fix, DescriptorProviderInspection tool) {
-    super(fix.getName(), tool);
-    myTool = tool;
+  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
+    super(fix.getName(), toolWrapper);
     myFix = fix;
     myText = myFix.getName();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     getTemplatePresentation().setText(myText);
     e.getPresentation().setText(myText);
   }
 
+  @Override
   public String getText(RefEntity where) {
     return myText;
   }
 
-  public void setText(final String text) {
+  public void setText(@NotNull String text) {
     myText = text;
   }
 
 
+  @Override
   protected boolean isProblemDescriptorsAcceptable() {
     return true;
   }
 
+  @NotNull
   public QuickFix getFix() {
     return myFix;
   }
 
   @Nullable
-  protected QuickFix getWorkingQuickFix(QuickFix[] fixes) {
+  protected QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
     for (QuickFix fix : fixes) {
       if (!myFix.getClass().isInstance(fix)) continue;
       if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
-          !(((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction()))) {
+          !((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction())) {
         continue;
       }
       return fix;
@@ -81,30 +87,34 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return null;
   }
 
-  protected boolean applyFix(RefElement[] refElements) {
-    throw new UnsupportedOperationException("");
+  @Override
+  protected boolean applyFix(@NotNull RefEntity[] refElements) {
+    return true;
   }
 
   @Override
-  protected void applyFix(final Project project, final CommonProblemDescriptor[] descriptors, final Set<PsiElement> ignoredElements) {
+  protected void applyFix(@NotNull final Project project,
+                          @NotNull final GlobalInspectionContextImpl context,
+                          @NotNull final CommonProblemDescriptor[] descriptors,
+                          @NotNull final Set<PsiElement> ignoredElements) {
     final PsiModificationTracker tracker = PsiManager.getInstance(project).getModificationTracker();
     if (myFix instanceof BatchQuickFix) {
-      final ArrayList<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
+      final List<PsiElement> collectedElementsToIgnore = new ArrayList<PsiElement>();
       final Runnable refreshViews = new Runnable() {
         @Override
         public void run() {
           DaemonCodeAnalyzer.getInstance(project).restart();
           for (CommonProblemDescriptor descriptor : descriptors) {
-            ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()));
+            ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()), context);
           }
 
-          final RefManager refManager = myTool.getContext().getRefManager();
+          final RefManager refManager = context.getRefManager();
           final RefElement[] refElements = new RefElement[collectedElementsToIgnore.size()];
           for (int i = 0, collectedElementsToIgnoreSize = collectedElementsToIgnore.size(); i < collectedElementsToIgnoreSize; i++) {
             refElements[i] = refManager.getReference(collectedElementsToIgnore.get(i));
           }
 
-          removeElements(refElements, project, myTool);
+          removeElements(refElements, project, myToolWrapper);
         }
       };
 
@@ -124,7 +134,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
           fix.applyFix(project, descriptor);
           if (startCount != tracker.getModificationCount()) {
             restart = true;
-            ignore(ignoredElements, descriptor, fix);
+            ignore(ignoredElements, descriptor, fix, context);
           }
         }
       }
@@ -134,9 +144,13 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
   }
 
-  private void ignore(Set<PsiElement> ignoredElements, CommonProblemDescriptor descriptor, QuickFix fix) {
+  private void ignore(@NotNull Set<PsiElement> ignoredElements,
+                      @NotNull CommonProblemDescriptor descriptor,
+                      @Nullable QuickFix fix,
+                      @NotNull GlobalInspectionContextImpl context) {
     if (fix != null) {
-      ((DescriptorProviderInspection)myTool).ignoreProblem(descriptor, fix);
+      InspectionToolPresentation presentation = context.getPresentation(myToolWrapper);
+      presentation.ignoreProblem(descriptor, fix);
     }
     if (descriptor instanceof ProblemDescriptor) {
       ignoredElements.add(((ProblemDescriptor)descriptor).getPsiElement());

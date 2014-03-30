@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.injection.*;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ import java.util.List;
  * but is used by IDEA for highlighting, completion and other code insight actions.
  * In order to do the injection, you have to
  * <ul>
- * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>  
+ * <li>Implement {@link com.intellij.psi.LanguageInjector} to describe exact place where injection should occur.</li>
  * <li>Register injection in {@link com.intellij.psi.LanguageInjector#EXTENSION_POINT_NAME} extension point.</li>
  * </ul>
  * Currently, language can be injected into string literals, XML tag contents and XML attributes.
@@ -40,7 +41,7 @@ public interface PsiLanguageInjectionHost extends PsiElement {
   boolean isValidHost();
 
   PsiLanguageInjectionHost updateText(@NotNull String text);
-  
+
   @NotNull
   LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper();
 

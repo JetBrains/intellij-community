@@ -17,12 +17,12 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -30,39 +30,42 @@ import com.intellij.psi.PsiMethod;
 import java.util.List;
 
 public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
-  private PsiClass myTestClass;
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    final Location contextLocation = context.getLocation();
+    assert contextLocation != null;
+    final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) return false;
 
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
-    location = JavaExecutionUtil.stepIntoSingleClass(location);
-    if (location == null) return null;
-    final Project project = location.getProject();
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = ((PsiMemberParameterizedLocation)contextLocation).getParamSetName();
+      if (paramSetName != null) {
+        configuration.setProgramParameters(paramSetName);
+      }
+    }
 
     if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
-      return null;
+      return false;
     }
-    myTestClass = JUnitUtil.getTestClass(location);
-    if (myTestClass == null) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    PsiClass testClass = JUnitUtil.getTestClass(location);
+    if (testClass == null) return false;
+    sourceElement.set(testClass);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
-    configuration.beClassConfiguration(myTestClass);
+    configuration.beClassConfiguration(testClass);
     configuration.restoreOriginalModule(originalModule);
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
-  }
-
-  public PsiElement getSourceElement() {
-    return myTestClass;
+    return true;
   }
 
   @Override
-  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
+  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
 
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+        ((JUnitConfiguration)fromContext.getConfiguration()).bePatternConfiguration(classes, method);
         super.runForClasses(classes, method, context, performRunnable);
       }
 
@@ -71,11 +74,11 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
                                  PsiMethod psiMethod,
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
-        ((JUnitConfiguration)context.getConfiguration().getConfiguration()).beClassConfiguration(aClass);
+        ((JUnitConfiguration)fromContext.getConfiguration()).beClassConfiguration(aClass);
         super.runForClass(aClass, psiMethod, context, performRunnable);
       }
     };
-    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, myTestClass)) return;
-    super.perform(context, performRunnable);
+    if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, null, (PsiClass)fromContext.getSourceElement())) return;
+    super.onFirstRun(fromContext, context, performRunnable);
   }
 }

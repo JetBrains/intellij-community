@@ -17,38 +17,25 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.NonNls;
 
 public class PersistentFSConstants {
   public static final long FILE_LENGTH_TO_CACHE_THRESHOLD = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
   /**
    * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
    */
-  private static int ourMaxIntellisenseFilesize = computeMaxIntellisenseFileSize();
-  @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
+  private static int ourMaxIntellisenseFileSize = Math.min(FileUtilRt.getUserFileSizeLimit(), (int)FILE_LENGTH_TO_CACHE_THRESHOLD);
 
   public static int getMaxIntellisenseFileSize() {
-    return ourMaxIntellisenseFilesize;
+    return ourMaxIntellisenseFileSize;
   }
 
   public static void setMaxIntellisenseFileSize(int sizeInBytes) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       throw new IllegalStateException("cannot change max setMaxIntellisenseFileSize while running");
     }
-    ourMaxIntellisenseFilesize = sizeInBytes;
+    ourMaxIntellisenseFileSize = sizeInBytes;
   }
 
   private PersistentFSConstants() {
-  }
-
-  private static int computeMaxIntellisenseFileSize() {
-    final int maxLimitBytes = (int)FILE_LENGTH_TO_CACHE_THRESHOLD;
-    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
-    try {
-      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
-    }
-    catch (NumberFormatException ignored) {
-      return maxLimitBytes;
-    }
   }
 }

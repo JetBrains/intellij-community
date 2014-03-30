@@ -41,13 +41,17 @@ import java.util.List;
 /**
  * @author max
  */
-public class SameParameterValueInspection extends GlobalJavaInspectionTool {
+public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + SameParameterValueInspection.class.getName());
 
+  @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
-                                                ProblemDescriptionsProcessor processor) {
-    ArrayList<ProblemDescriptor> problems = null;
+  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
+                                                @NotNull AnalysisScope scope,
+                                                @NotNull InspectionManager manager,
+                                                @NotNull GlobalInspectionContext globalContext,
+                                                @NotNull ProblemDescriptionsProcessor processor) {
+    List<ProblemDescriptor> problems = null;
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
@@ -73,14 +77,16 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
   }
 
 
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  @Override
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+                @Override
                 public boolean process(PsiReference psiReference) {
                   processor.ignoreElement(refMethod);
                   return false;
@@ -95,21 +101,25 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.same.parameter.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "SameParameterValue";
   }
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     if (hint == null) return null;
@@ -120,8 +130,9 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
     return new InlineParameterValueFix(paramName, value);
   }
 
+  @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     final InlineParameterValueFix valueFix = (InlineParameterValueFix)fix;
     return valueFix.getParamName() + " " + valueFix.getValue();
   }
@@ -135,16 +146,19 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
       myParameterName = parameterName;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, myValue);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -177,6 +191,7 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
       final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           try {
             PsiExpression[] exprs = new PsiExpression[refsToInline.size()];

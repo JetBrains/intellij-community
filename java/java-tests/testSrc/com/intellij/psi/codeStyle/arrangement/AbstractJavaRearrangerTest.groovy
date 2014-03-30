@@ -18,11 +18,30 @@ package com.intellij.psi.codeStyle.arrangement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.INTERFACE
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.METHOD
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.STATIC
+
 /**
  * @author Denis Zhdanov
  * @since 8/30/12 12:15 PM
  */
 abstract class AbstractJavaRearrangerTest extends AbstractRearrangerTest {
+
+  def classic = [rule(INTERFACE),
+                 rule(CLASS),
+                 rule(FIELD, STATIC),
+                 rule(FIELD, PUBLIC),
+                 rule(FIELD),
+                 rule(METHOD, PUBLIC),
+                 rule(METHOD)]
 
   AbstractJavaRearrangerTest() {
     fileType = JavaFileType.INSTANCE

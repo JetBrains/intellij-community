@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
@@ -56,7 +57,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final Change[] changes = myForPerformConvertor.convert(e);
@@ -104,7 +105,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final Change[] changes = myForUpdateConvertor.convert(e);
     e.getPresentation().setEnabled(project != null && changes != null && changes.length > 0);
   }

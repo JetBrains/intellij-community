@@ -17,22 +17,23 @@ package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
+import java.util.Collection;
+import java.util.Collections;
+
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
     return ServiceManager.getService(WebBrowserService.class);
   }
 
-  public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
+  @NotNull
+  public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 
-  @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement);
-
-  @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  @NotNull
+  public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
+    OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
+    return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
+  }
 }

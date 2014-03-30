@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.browsers.impl;
 
-import com.intellij.ide.browsers.BrowsersConfiguration;
+import com.intellij.ide.browsers.BrowserFamily;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +32,13 @@ public class BrowserConfigurationHelper {
    * Read data from Windows registry (may take some time to run).
    */
   @NotNull
-  public static Map<BrowsersConfiguration.BrowserFamily, String> getBrowserPathsFromRegistry() {
-    Map<BrowsersConfiguration.BrowserFamily, String> map =
-      new EnumMap<BrowsersConfiguration.BrowserFamily, String>(BrowsersConfiguration.BrowserFamily.class);
+  public static Map<BrowserFamily, String> getBrowserPathsFromRegistry() {
+    Map<BrowserFamily, String> map =
+      new EnumMap<BrowserFamily, String>(BrowserFamily.class);
 
     List<String> sections = WindowsRegistryUtil.readRegistryBranch(START_MENU_KEY);
     for (String section : sections) {
-      BrowsersConfiguration.BrowserFamily family = getFamily(section);
+      BrowserFamily family = getFamily(section);
       if (family != null) {
         String pathToExe = WindowsRegistryUtil.readRegistryDefault(START_MENU_KEY + "\\" + section + "\\shell\\open\\command");
         if (pathToExe != null) {
@@ -51,9 +51,9 @@ public class BrowserConfigurationHelper {
   }
 
   @Nullable
-  private static BrowsersConfiguration.BrowserFamily getFamily(String registryName) {
+  private static BrowserFamily getFamily(String registryName) {
     registryName = registryName.toLowerCase();
-    for (BrowsersConfiguration.BrowserFamily family : BrowsersConfiguration.BrowserFamily.values()) {
+    for (BrowserFamily family : BrowserFamily.values()) {
       if (registryName.contains(family.getName().toLowerCase(Locale.US))) {
         return family;
       }

@@ -75,7 +75,7 @@ public class IntentionManagerImpl extends IntentionManager {
     });
   }
 
-  private void registerIntentionFromBean(final IntentionActionBean extension) {
+  private void registerIntentionFromBean(@NotNull final IntentionActionBean extension) {
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -97,7 +97,7 @@ public class IntentionManagerImpl extends IntentionManager {
       }
     };
     //todo temporary hack, need smarter logic:
-    // * on the first request, wait until all the initialization is finished  
+    // * on the first request, wait until all the initialization is finished
     // * ensure this request doesn't come on EDT
     // * while waiting, check for ProcessCanceledException
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -108,7 +108,7 @@ public class IntentionManagerImpl extends IntentionManager {
     }
   }
 
-  private static IntentionAction createIntentionActionWrapper(final IntentionActionBean intentionActionBean, final String[] categories) {
+  private static IntentionAction createIntentionActionWrapper(@NotNull IntentionActionBean intentionActionBean, String[] categories) {
     return new IntentionActionWrapper(intentionActionBean, categories);
   }
 
@@ -237,6 +237,6 @@ public class IntentionManagerImpl extends IntentionManager {
   }
 
   public boolean hasActiveRequests() {
-    return myInitActionsAlarm.getActiveRequestCount() > 0;
+    return !myInitActionsAlarm.isEmpty();
   }
 }

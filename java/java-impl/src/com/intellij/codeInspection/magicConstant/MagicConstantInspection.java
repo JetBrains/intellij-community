@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
+  public static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+
   @Nls
   @NotNull
   @Override
@@ -152,8 +154,19 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
+  @Override
+  public void cleanup(Project project) {
+    super.cleanup(project);
+    project.putUserData(NO_ANNOTATIONS_FOUND, null);
+  }
+
   private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
     final Project project = file.getProject();
+    if (!holder.isOnTheFly()) {
+      final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
+      if (found != null) return;
+    }
+
     PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (event == null) return; // no jdk to attach
     PsiMethod[] methods = event.findMethodsByName("getModifiers", false);
@@ -172,6 +185,11 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       }
     }
     if (jdk == null) return; // no jdk to attach
+
+    if (!holder.isOnTheFly()) {
+      project.putUserData(NO_ANNOTATIONS_FOUND, Boolean.TRUE);
+    }
+
     final Sdk finalJdk = jdk;
 
     String path = finalJdk.getHomePath();
@@ -407,7 +425,9 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         PsiMethod setter = PropertyUtil.findPropertySetter(method.getContainingClass(), (String)val, false, false);
         if (setter == null) return null;
         // try the @beaninfo of the corresponding setter
-        method = (PsiMethod)setter.getNavigationElement();
+        PsiElement navigationElement = setter.getNavigationElement();
+        if (!(navigationElement instanceof PsiMethod)) return null;
+        method = (PsiMethod)navigationElement;
       }
     }
     else if (owner instanceof PsiMethod) {
@@ -605,7 +625,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     params.dataFlowToThis = true;
     params.scope = new AnalysisScope(new LocalSearchScope(scope), manager.getProject());
 
-    SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), SliceManager.createRootUsage(argument, params));
+    SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), SliceUsage.createRootUsage(argument, params));
 
     Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
     for (AbstractTreeNode child : children) {

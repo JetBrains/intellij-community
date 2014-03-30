@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -258,21 +260,21 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testLangImmutableConstructor() {
-    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTransformImmutableConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Immutable {}")
+    addImmutable()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Immutable class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testTupleConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+    addTupleConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; final int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     def target = ((GrNewExpression) ref.element.parent).advancedResolve().element
@@ -282,14 +284,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testCanonicalConstructor() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    addCanonical()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Canonical class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
   public void testInheritConstructors() {
-    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+    addInheritConstructor()
     myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
     def ref = configureByText('new Cu<caret>stomException("msg")')
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
@@ -334,7 +336,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testGrvy179() {
     PsiReference ref = configureByFile("grvy179/A.groovy");
-    assertNull(ref.resolve());
+    assertInstanceOf(ref.resolve(), GrBindingVariable);
   }
 
   public void testPrivateScriptMethod() {
@@ -904,7 +906,7 @@ class A {
 
     def resolved = ref.resolve()
     assertInstanceOf resolved, PsiMethod
-    assertEquals 'Other', resolved.containingClass.name
+    assertEquals 'A', resolved.containingClass.name
   }
 
   public void testInapplicableStaticallyImportedMethodsVsCurrentClassMethod() {
@@ -1429,6 +1431,30 @@ class _a {
 ''', PsiMethod)
   }
 
+  void testRuntimeMixin22() {
+    assertNull resolveByText('''\
+class ReentrantLock {}
+
+ReentrantLock.metaClass.withLock = { nestedCode -> }
+
+new ReentrantLock().withLock {
+    fo<caret>o(3)
+}
+''')
+  }
+
+  void testRuntimeMixin23() {
+    assertNotNull resolveByText('''\
+class ReentrantLock {}
+
+ReentrantLock.metaClass.withLock = { nestedCode -> }
+
+new ReentrantLock().withLock {
+    withL<caret>ock(2)
+}
+''')
+  }
+
   void testRunnableVsCallable() {
     final PsiMethod method = resolveByText('''\
 import java.util.concurrent.Callable
@@ -1561,6 +1587,339 @@ new A().f<caret>oo = 2
 
 
     assertInstanceOf(method, GrMethodImpl)
+  }
+
+  void testResoleAnonymousMethod() {
+    resolveByText('''\
+def anon = new Object() {
+  def foo() {
+    print 2
+  }
+}
+
+anon.fo<caret>o()
+''', GrMethod)
+  }
+
+  void testMapAccess() {
+    resolveByText('''
+      Map<String, List<String>> foo() {}
+
+      foo().bar.first().subs<caret>tring(1, 2)
+    ''', PsiMethod)
+  }
+
+  void testMixinClosure() {
+    resolveByText('''
+def foo() {
+    def x = { a -> print a}
+    Integer.metaClass.abc = { print 'something' }
+    1.a<caret>bc()
+}
+''', PsiMethod)
+  }
+
+  void testPreferCategoryMethods() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration()
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date() - new Date()
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
+  void testPreferCategoryMethods2() {
+    def resolved = resolveByText('''
+class TimeCategory {
+    public static TimeDuration minus(final Date lhs, final Date rhs) {
+        return new TimeDuration((int) days, hours, minutes, seconds, (int) milliseconds);
+    }
+}
+
+class TimeDuration {}
+
+void bug() {
+    use (TimeCategory) {
+        def duration = new Date().minus(new Date())
+        print durat<caret>ion
+    }
+}
+''', GrVariable)
+
+    assertEquals("TimeDuration", resolved.typeGroovy.canonicalText)
+  }
+
+
+  void testNegatedIf() {
+    resolveByText('''\
+def foo(x) {
+  if (!(x instanceof String)) return
+
+  x.subst<caret>ring(1)
+}
+''', PsiMethod)
+
+  }
+
+  void testInferredTypeInsideGStringInjection() {
+    resolveByText('''\
+class A {}
+class B extends A {
+    String bar() {'bar'}
+}
+
+def foo(A b) {
+    if (b instanceof B) {
+        doSomethingElse("Message: ${b.ba<caret>r()}")
+
+    }
+}
+''', PsiMethod)
+  }
+
+  void 'test IDEA-110562'() {
+    assertNotResolved('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (!(subclass instanceof GrTypeDefinition)) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''')
+  }
+
+  private void assertNotResolved(String text) {
+    final ref = configureByText(text)
+    assertNotNull(ref)
+    final resolved = ref.resolve()
+    assertNull(resolved)
+  }
+
+  void 'test IDEA-110562 2'() {
+    resolveByText('''\
+interface GrTypeDefinition {
+    def baz()
+}
+
+class Foo {
+    private static void extractSuperInterfaces(Object subclass) {
+        if (subclass instanceof GrTypeDefinition) {
+            foo()
+            subclass.b<caret>az()
+        }
+    }
+
+    static def foo() {}
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf1() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf2() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.ba<caret>r()) {
+    print o.foo()
+  }
+}
+''')
+  }
+
+  void testInstanceOf3() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf4() {
+    resolveByText('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+    print o.foo()
+  }
+}
+''', PsiMethod)
+  }
+
+  void testInstanceOf5() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf6() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.fo<caret>o()
+  }
+}
+''')
+  }
+
+  void testInstanceOf7() {
+    assertNotResolved('''\
+class Foo {
+  def foo(){}
+}
+
+class Bar {
+  def bar()
+}
+
+def bar(Object o) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.bar()) {
+    print o.foo()
+  }
+  else {
+    print o.ba<caret>r()
+  }
+}
+''')
+  }
+
+  void testBinaryWithQualifiedRefsInArgs() {
+    GrBinaryExpression expr = configureByText('_.groovy', '''\
+class Base {
+    def or(String s) {}
+    def or(Base b) {}
+
+    public static Base SHOW_NAME = new Base()
+    public static Base SHOW_TYPE = new Base()
+}
+
+class GrTypeDefinition  {
+    def foo() {
+        print (Base.SHOW_NAME <caret>| Base.SHOW_TYPE)
+
+    }
+}
+''', GrBinaryExpression)
+
+    assert expr.multiResolve(false).length == 1
+    assert expr.multiResolve(true).length > 1
+  }
+
+  void testStaticMethodInInstanceContext() {
+    GrMethod resolved = resolveByText('''\
+class Foo {
+    def foo(String s){}
+    static def foo(File f){}
+}
+
+new Foo().f<caret>oo(new File(''))
+''', GrMethod)
+
+    assertTrue(resolved.hasModifierProperty(PsiModifier.STATIC))
+  }
+
+  void testBaseScript() {
+    addBaseScript()
+
+    myFixture.addClass '''
+class CustomScript extends Script {
+  void foo() {}
+}'''
+
+    resolveByText('''
+import groovy.transform.BaseScript
+
+@BaseScript
+CustomScript myScript;
+
+f<caret>oo()
+''', PsiMethod)
   }
 
 }

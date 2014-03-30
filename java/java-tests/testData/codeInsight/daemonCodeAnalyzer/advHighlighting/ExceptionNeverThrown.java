@@ -61,7 +61,7 @@ class b1 extends a1 {
 }
 
 ////////////////////////////////
-public class FooThrow
+class FooThrow
 {
   final Foo foo = new Foo();  // Can throw FooException
   FooThrow() throws Foo {

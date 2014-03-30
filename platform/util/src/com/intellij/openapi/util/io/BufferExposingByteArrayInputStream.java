@@ -23,6 +23,10 @@ public class BufferExposingByteArrayInputStream extends UnsyncByteArrayInputStre
     super(bytes);
   }
 
+  public BufferExposingByteArrayInputStream(@NotNull byte[] buf, int length) {
+    super(buf, 0, length);
+  }
+
   @NotNull
   public byte[] getInternalBuffer() {
     return myBuffer;

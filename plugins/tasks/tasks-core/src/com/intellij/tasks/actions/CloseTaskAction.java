@@ -17,11 +17,18 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.TaskManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.tasks.*;
+import com.intellij.tasks.impl.TaskManagerImpl;
+
+import java.util.ArrayList;
 
 /**
  * @author Dmitry Avdeev
@@ -29,22 +36,43 @@ import com.intellij.tasks.TaskManager;
 public class CloseTaskAction extends BaseTaskAction {
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     assert project != null;
-    LocalTask task = TaskManager.getManager(project).getActiveTask();
+    TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
+    LocalTask task = taskManager.getActiveTask();
     CloseTaskDialog dialog = new CloseTaskDialog(project, task);
     dialog.show();
     if (dialog.isOK()) {
+      if (dialog.isCloseIssue()) {
+        try {
+          TaskRepository repository = task.getRepository();
+          assert repository != null;
+          repository.setTaskState(task, TaskState.RESOLVED);
+        }
+        catch (Exception e1) {
+          Messages.showErrorDialog(project, e1.getMessage(), "Cannot Resolve Issue");
+        }
+      }
+      if (dialog.isCommitChanges()) {
+        ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+        for (ChangeListInfo info : task.getChangeLists()) {
+          LocalChangeList list = changeListManager.getChangeList(info.id);
+          if (list != null) {
+            changeListManager.commitChanges(list, new ArrayList<Change>(list.getChanges()));
+          }
+        }
+      }
+      if (dialog.isMergeBranch()) {
+        taskManager.mergeBranch(task);
+      }
     }
   }
 
   @Override
   public void update(AnActionEvent event) {
-    super.update(event);
-    if (event.getPresentation().isEnabled()) {
-      Presentation presentation = event.getPresentation();
-      Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-      presentation.setEnabled(project != null && !TaskManager.getManager(project).getActiveTask().isDefault());
-    }
+    Presentation presentation = event.getPresentation();
+    Project project = getProject(event);
+    boolean enabled = project != null && !TaskManager.getManager(project).getActiveTask().isDefault();
+    presentation.setEnabled(enabled);
   }
 }

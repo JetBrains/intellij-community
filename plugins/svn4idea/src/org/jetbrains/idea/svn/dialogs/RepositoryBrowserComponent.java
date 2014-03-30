@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -261,14 +262,14 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
       if (project == null || project.isDefault()) {
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();
       return vcsFile != null ? new OpenFileDescriptor(project, vcsFile) : null;
-    } else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    } else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myVCS.getProject();
     }
     return null;

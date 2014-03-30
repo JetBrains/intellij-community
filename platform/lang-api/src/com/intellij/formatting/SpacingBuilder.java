@@ -1,8 +1,11 @@
 package com.intellij.formatting;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -13,14 +16,14 @@ import java.util.List;
  */
 public class SpacingBuilder {
   private static class SpacingRule {
-    private TokenSet myParentType;
-    private TokenSet myChild1Type;
-    private TokenSet myChild2Type;
-    private int myMinSpaces;
-    private int myMaxSpaces;
-    private int myMinLF;
-    private boolean myKeepLineBreaks;
-    private int myKeepBlankLines;
+    private final TokenSet myParentType;
+    private final TokenSet myChild1Type;
+    private final TokenSet myChild2Type;
+    private final int myMinSpaces;
+    private final int myMaxSpaces;
+    private final int myMinLF;
+    private final boolean myKeepLineBreaks;
+    private final int myKeepBlankLines;
 
     private SpacingRule(RuleCondition condition, int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
       myParentType = condition.myParentType;
@@ -43,7 +46,7 @@ public class SpacingBuilder {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
     }
   }
-  
+
   private static class RuleCondition {
     private final TokenSet myParentType;
     private final TokenSet myChild1Type;
@@ -55,7 +58,7 @@ public class SpacingBuilder {
       myChild2Type = child2Type;
     }
   }
-  
+
   public class RuleBuilder {
     RuleCondition[] myConditions;
 
@@ -66,7 +69,7 @@ public class SpacingBuilder {
     public SpacingBuilder none() {
       return spaces(0);
     }
-    
+
     public SpacingBuilder spaceIf(boolean option) {
       return spaces(option ? 1 : 0);
     }
@@ -108,12 +111,37 @@ public class SpacingBuilder {
       return SpacingBuilder.this;
     }
   }
-  
-  private final CodeStyleSettings myCodeStyleSettings;
+
+  private final CommonCodeStyleSettings myCodeStyleSettings;
   private final List<SpacingRule> myRules = new ArrayList<SpacingRule>();
 
+  /**
+   * @param codeStyleSettings
+   * @deprecated Use other constructors!
+   */
+  @Deprecated
   public SpacingBuilder(CodeStyleSettings codeStyleSettings) {
+    // TODO: remove deprecated method (v.14)
     myCodeStyleSettings = codeStyleSettings;
+  }
+
+  /**
+   * Creates SpacingBuilder with given code style settings and language whose settings must be used. 
+   * @param codeStyleSettings The root code style settings.
+   * @param language          The language to obtain settings for.
+   */
+  public SpacingBuilder(@NotNull CodeStyleSettings codeStyleSettings, @NotNull Language language) {
+    myCodeStyleSettings = codeStyleSettings.getCommonSettings(language);
+  }
+
+  /**
+   * Creates SpacingBuilder with given language code style settings.
+   * @param languageCodeStyleSettings The language code style settings. Note that <code>getLanguage()</code> method must not 
+   *                                  return null!
+   */
+  public SpacingBuilder(@NotNull CommonCodeStyleSettings languageCodeStyleSettings) {
+    assert languageCodeStyleSettings.getLanguage() != null : "Only language code style settings are accepted (getLanguage() != null)";
+    myCodeStyleSettings = languageCodeStyleSettings;
   }
 
   public RuleBuilder after(IElementType elementType) {
@@ -190,7 +218,7 @@ public class SpacingBuilder {
     RuleCondition after = new RuleCondition(null, tokenSet, null);
     return new RuleBuilder(before, after);
   }
-  
+
   public RuleBuilder aroundInside(TokenSet tokenSet, TokenSet parent) {
     RuleCondition before = new RuleCondition(parent, null, tokenSet);
     RuleCondition after = new RuleCondition(parent, tokenSet, null);

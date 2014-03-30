@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import java.util.*;
 public class FormClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FormClassIndex");
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
-  private final MyInputFilter myInputFilter = new MyInputFilter();
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
@@ -56,14 +55,16 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.GUI_DESIGNER_FORM);
   }
 
   @Override
@@ -91,13 +92,6 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
         return Collections.singletonMap(className, null);
       }
       return Collections.emptyMap();
-    }
-  }
-
-  private static class MyInputFilter implements FileBasedIndex.InputFilter {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
     }
   }
 

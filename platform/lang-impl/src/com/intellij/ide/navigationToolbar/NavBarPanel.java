@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,15 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.DnDActionInfo;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -62,6 +63,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +115,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myPresentation = new NavBarPresentation(myProject);
     myUpdateQueue = new NavBarUpdateQueue(this);
 
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
+    CustomizationUtil.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
     setOpaque(false);
     if (!docked && UIUtil.isUnderDarcula()) {
       setBorder(new LineBorder(Gray._120, 1));
@@ -521,7 +523,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myNodePopup != null && myNodePopup.isVisible();
   }
 
-  void navigateInsideBar(final Object object) {
+  protected void navigateInsideBar(final Object object) {
     final Object obj = optimizeTarget(object);
     myContextObject = null;
 
@@ -591,7 +593,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
     if (LangDataKeys.MODULE.is(dataId)) {
@@ -613,7 +615,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       return null;
     }
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? element : null;
     }
@@ -629,7 +631,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
-    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
       Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
@@ -647,7 +649,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
     }
     
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> elements = getSelectedElements(Navigatable.class);
       return elements == null || elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
     }
@@ -773,9 +775,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.rebuildUi();
     if (editor == null) {
       myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
         @Override
-        public void run(RelativePoint relativePoint) {
+        public void consume(RelativePoint relativePoint) {
           final Component owner = focusManager.getFocusOwner();
           final Component cmp = relativePoint.getComponent();
           if (cmp instanceof JComponent && cmp.isShowing()) {
@@ -788,9 +790,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     else {
       myHintContainer = editor.getContentComponent();
-      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
         @Override
-        public void run(RelativePoint rp) {
+        public void consume(RelativePoint rp) {
           Point p = rp.getPointOn(myHintContainer).getPoint();
           final HintHint hintInfo = new HintHint(editor, p);
           HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
@@ -812,9 +814,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         if (myContextComponent != null) {
           myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
             @Override
-            public void run(DataContext dataContext) {
+            public void consume(DataContext dataContext) {
               myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
               myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
             }

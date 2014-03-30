@@ -9,6 +9,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -20,6 +24,10 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('b')
         PsiElement(new line)('\n')
+        Extends clause
+          <empty list>
+        Implements clause
+          <empty list>
         PsiErrorElement:'{' expected
           <empty list>
       PsiElement(})('}')

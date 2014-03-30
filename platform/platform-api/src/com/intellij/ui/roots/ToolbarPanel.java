@@ -29,12 +29,16 @@ import java.awt.*;
  */
 public class ToolbarPanel extends JPanel{
   public ToolbarPanel(JComponent contentComponent, ActionGroup actions) {
+    this(contentComponent, actions, ActionPlaces.UNKNOWN);
+  }
+
+  public ToolbarPanel(JComponent contentComponent, ActionGroup actions, final String toolbarPlace) {
     super(new GridBagLayout());
     setBorder(BorderFactory.createEtchedBorder());
     if (contentComponent.getBorder() != null) {
       contentComponent.setBorder(BorderFactory.createEmptyBorder());
     }
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(toolbarPlace, actions, true);
     add(actionToolbar.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     add(contentComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
   }

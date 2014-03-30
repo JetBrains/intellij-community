@@ -28,6 +28,7 @@ public class BasicFuture<T> implements Future<T> {
   private final AtomicBoolean myCanceledState = new AtomicBoolean(false);
 
   public BasicFuture() {
+    mySemaphore.acquireUninterruptibly();
   }
 
   public void setDone() {
@@ -65,7 +66,9 @@ public class BasicFuture<T> implements Future<T> {
   public void waitFor() {
     try {
       while (!isDone()) {
-        mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS);
+        if (mySemaphore.tryAcquire(100L, TimeUnit.MILLISECONDS)) {
+          mySemaphore.release();
+        }
       }
     }
     catch (InterruptedException ignored) {
@@ -75,7 +78,9 @@ public class BasicFuture<T> implements Future<T> {
   public boolean waitFor(long timeout, TimeUnit unit) {
     try {
       if (!isDone()) {
-        mySemaphore.tryAcquire(timeout, unit);
+        if (mySemaphore.tryAcquire(timeout, unit)) {
+          mySemaphore.release();
+        }
       }
     }
     catch (InterruptedException ignored) {

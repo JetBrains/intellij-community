@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -63,8 +62,8 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(LangDataKeys.PSI_FILE) != null
-                                   && e.getData(PlatformDataKeys.EDITOR) != null);
+    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(CommonDataKeys.PSI_FILE) != null
+                                   && e.getData(CommonDataKeys.EDITOR) != null);
   }
 
   @Override
@@ -99,9 +98,9 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
         LOG.info(e1);
       }
     }
-    
+
     final Project project = module.getProject();
-    UrlClassLoader loader = new UrlClassLoader(urls, XmlSerializer.class.getClassLoader());
+    UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(XmlSerializer.class.getClassLoader()).get();
     final Class<?> aClass;
     try {
       aClass = Class.forName(className, true, loader);
@@ -124,13 +123,14 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     final Element element = XmlSerializer.serialize(o);
     final String text = JDOMUtil.writeElement(element, "\n");
-    Messages.showInfoMessage(project, text, "Serialized XML for '" + className + "'");
+    Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
+                                   new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }
 
   @Nullable
   private static PsiClass getPsiClass(AnActionEvent e) {
-    final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null || psiFile == null) return null;
     final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     return PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -182,7 +182,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     public Object createObject(Class<?> aClass, FList<Type> processedTypes) throws Exception {
-      final Object o = aClass.newInstance();
+      final Object o = aClass.getDeclaredConstructor().newInstance();
       for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         final Type type = accessor.getGenericType();
         Object value = createValue(type, processedTypes);

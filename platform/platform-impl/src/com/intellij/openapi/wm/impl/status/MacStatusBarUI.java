@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class MacStatusBarUI extends StatusBarUI implements Activatable {
       Image img = getCachedImage(c, g2d);
       int step = img.getWidth(null);
       for (int i = r.x; i < r.x + r.width; i += step) {
-        g2d.drawImage(img, i, y, null);
+        UIUtil.drawImage(g2d, img, i, y, null);
       }
     }
     

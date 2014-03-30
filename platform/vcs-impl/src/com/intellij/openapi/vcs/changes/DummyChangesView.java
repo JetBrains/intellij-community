@@ -44,4 +44,8 @@ class DummyChangesView implements ChangesViewI {
   @Override
   public void setBusy(boolean b) {
   }
+
+  @Override
+  public void setShowFlattenMode(boolean state) {
+  }
 }

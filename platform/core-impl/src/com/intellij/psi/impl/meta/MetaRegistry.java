@@ -32,6 +32,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +90,7 @@ public class MetaRegistry extends MetaDataRegistrar {
                   throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
                 }
                 data.init(element);
-                return new Result<PsiMetaData>(data, data.getDependences());
+                return new Result<PsiMetaData>(data, ArrayUtil.append(data.getDependences(), element));
               }
             }
             return new Result<PsiMetaData>(null, element);

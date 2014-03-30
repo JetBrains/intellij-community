@@ -51,8 +51,8 @@ public class IdeaWin32PerformanceTest {
   private void doTest(File file) {
     final String path = file.getPath();
 
-    assertNotNull(file.listFiles());
-    assertNotNull(myDriver.listChildren(path));
+    assertNotNull(path, file.listFiles());
+    assertNotNull(path, myDriver.listChildren(path));
 
     long t1 = System.nanoTime();
     final File[] children1 = file.listFiles();
@@ -64,7 +64,7 @@ public class IdeaWin32PerformanceTest {
 
     assertNotNull(path, children1);
     assertNotNull(path, children2);
-    assertEquals(children1.length, children2.length);
+    assertEquals(path, children1.length, children2.length);
 
     for (File child : children1) {
       if (child.isDirectory()) {

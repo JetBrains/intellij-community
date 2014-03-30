@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -28,12 +29,19 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
     MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings(myProject);
     s.myRunnerParameters.setWorkingDirPath("some path");
     s.myRunnerParameters.setGoals(Arrays.asList("clean", "validate"));
-    s.myRunnerParameters.setProfilesMap(ImmutableMap.of("prof1", true, "prof2", true, "prof3", false, "aaa", true));
+    s.myRunnerParameters.setProfilesMap(ImmutableMap.<String, Boolean>builder()
+                                          .put("prof1", true)
+                                          .put("prof2", true)
+                                          .put("prof3", false)
+                                          .put("aaa", true)
+                                          .put("tomcat (local)", false)
+                                          .put("tomcat (local) ", true).build());
 
     s.myGeneralSettings = new MavenGeneralSettings();
     s.myGeneralSettings.setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy.WARN);
     s.myGeneralSettings.setFailureBehavior(MavenExecutionOptions.FailureMode.AT_END);
     s.myGeneralSettings.setOutputLevel(MavenExecutionOptions.LoggingLevel.FATAL);
+    s.myGeneralSettings.setThreads("1.5C");
 
     s.myRunnerSettings = new MavenRunnerSettings();
     s.myRunnerSettings.setMavenProperties(ImmutableMap.of("a", "1", "b", "2", "c", "3"));
@@ -49,5 +57,31 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
 
     assertEquals(s.myGeneralSettings, loaded.myGeneralSettings);
     assertEquals(s.myRunnerSettings, loaded.myRunnerSettings);
+  }
+
+  public void testMavenParametersEditing() throws ConfigurationException {
+    ImmutableMap<String, Boolean> profilesMap = ImmutableMap.<String, Boolean>builder()
+      .put("prof1", true)
+      .put("prof2", true)
+      .put("prof3", false)
+      .put("aaa", true)
+      .put("tomcat (local)", false)
+      .put("tomcat (local) ", true).build();
+
+    final MavenRunnerParameters params = new MavenRunnerParameters();
+    params.setProfilesMap(profilesMap);
+
+    MavenRunnerParametersConfigurable cfg = new MavenRunnerParametersConfigurable(getProject()) {
+      @Override
+      protected MavenRunnerParameters getParameters() {
+        return params;
+      }
+    };
+
+    cfg.reset();
+
+    cfg.apply();
+
+    assertEquals(profilesMap, cfg.getParameters().getProfilesMap());
   }
 }

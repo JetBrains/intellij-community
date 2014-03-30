@@ -17,6 +17,7 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
@@ -30,7 +31,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
     if (parent instanceof PsiExpressionStatement) {
       return false;
     }
-    if (JspPsiUtil.isInJspFile(element)) {
+    if (FileTypeUtils.isInServerPageFile(element)) {
       return false;
     }
     final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);

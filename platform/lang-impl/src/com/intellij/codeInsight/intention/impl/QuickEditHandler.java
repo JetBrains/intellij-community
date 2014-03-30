@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -42,6 +39,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -105,7 +103,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
   private final RangeMarker myAltFullRange;
   private static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
 
-  QuickEditHandler(Project project, PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
+  QuickEditHandler(Project project, @NotNull PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
     myProject = project;
     myEditor = editor;
     myAction = action;
@@ -119,9 +117,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String newFileName =
       StringUtil.notNullize(language.getDisplayName(), "Injected") + " Fragment " + "(" +
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
+
+    // preserve \r\n as it is done in MultiHostRegistrarImpl
     myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
-    myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
-    assert myNewVirtualFile != null;
+    myNewVirtualFile = ObjectUtils.assertNotNull((LightVirtualFile)myNewFile.getVirtualFile());
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
+
+    assert myNewFile != null : "PSI file is null";
+    assert myNewFile.getTextLength() == myNewVirtualFile.getContent().length() : "PSI / Virtual file text mismatch";
+
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
@@ -147,8 +152,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         new AnAction() {
           @Override
           public void update(AnActionEvent e) {
-            Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+            Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
             e.getPresentation().setEnabled(
+              !myAction.isShowInBalloon() &&
               editor != null && LookupManager.getActiveLookup(editor) == null &&
               TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
               (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
@@ -165,6 +171,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         if (event.getEditor().getDocument() != myNewDocument) return;
         if (-- myEditorCount > 0) return;
+
+        if (Boolean.TRUE.equals(myNewVirtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
+
         Disposer.dispose(QuickEditHandler.this);
       }
     }, this);
@@ -231,8 +240,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
           public void run() {
             for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
               String replacement = o.getUserData(REPLACEMENT_KEY);
+              if (StringUtil.isEmpty(replacement)) continue;
               FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
-              region.setExpanded(false);
+              if (region != null) region.setExpanded(false);
             }
           }
         });
@@ -293,23 +303,26 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   public void initMarkers(Place shreds) {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    int curOffset = -1;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
         shred.getRange().getStartOffset() + shred.getPrefix().length(),
         shred.getRange().getEndOffset() - shred.getSuffix().length());
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
-      // todo fixme: char literal update will throw exceptions
-      boolean oneCharOnly = host.getText().startsWith("'") && "JAVA".equals(host.getLanguage().getID());
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
         Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer);
       myMarkers.add(markers);
-      markers.first.setGreedyToRight(true);
-      markers.second.setGreedyToRight(true);
-      markers.first.setGreedyToLeft(true);
-      markers.second.setGreedyToLeft(true);
+
+      origMarker.setGreedyToRight(true);
+      rangeMarker.setGreedyToRight(true);
+      if (origMarker.getStartOffset() > curOffset) {
+        origMarker.setGreedyToLeft(true);
+        rangeMarker.setGreedyToLeft(true);
+      }
+      curOffset = origMarker.getEndOffset();
     }
     initGuardedBlocks(shreds);
   }

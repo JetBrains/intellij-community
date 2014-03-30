@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.CommandLineProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,9 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class CustomProtocolHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.CustomProtocolHandler");
   public boolean openLink(@NotNull URI uri) {
+    LOG.info("CustomProtocolHandler.openLink");
     final List<String> args = getOpenArgs(uri);
     return !args.isEmpty() && CommandLineProcessor.processExternalCommandLine(args, null) != null;
   }

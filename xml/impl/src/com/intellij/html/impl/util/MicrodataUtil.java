@@ -15,13 +15,6 @@
  */
 package com.intellij.html.impl.util;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -37,10 +30,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairFunction;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.xml.util.HtmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -55,9 +48,6 @@ public class MicrodataUtil {
   public static final String ITEM_TYPE = "itemtype";
   public static final String ITEM_PROP = "itemprop";
   public static final String ITEM_ID = "itemid";
-
-  @NonNls private static final String HTTP = "http://";
-  @NonNls private static final String HTTPS = "https://";
 
   public static boolean hasScopeTag(@Nullable XmlTag tag) {
     return findScopeTag(tag) != null;
@@ -130,17 +120,10 @@ public class MicrodataUtil {
       @Nullable
       @Override
       public PsiReference fun(String token, Integer offset) {
-        if (isUrl(token)) {
+        if (HtmlUtil.hasHtmlPrefix(token)) {
           final TextRange range = TextRange.from(offset, token.length());
           final URLReference urlReference = new URLReference(element, range, true);
-          return new URIReferenceProvider.DependentNSReference(element, range, urlReference) {
-            @Override
-            public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-              QuickFixAction.registerQuickFixAction(info, new FetchMicrodataResourceAction());
-              QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
-              QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
-            }
-          };
+          return new DependentNSReference(element, range, urlReference, true);
         }
         return null;
       }
@@ -165,10 +148,6 @@ public class MicrodataUtil {
       }
     }
     return result.toArray(new PsiReference[result.size()]);
-  }
-
-  private static boolean isUrl(String url) {
-    return url.startsWith(HTTP) || url.startsWith(HTTPS);
   }
 
   @Nullable
@@ -223,16 +202,6 @@ public class MicrodataUtil {
           myValues.add(code);
         }
       }
-    }
-  }
-
-  private static class FetchMicrodataResourceAction extends FetchExtResourceAction {
-    @Override
-    protected boolean resultIsValid(Project project,
-                                    ProgressIndicator indicator,
-                                    String resourceUrl,
-                                    FetchExtResourceAction.FetchResult result) {
-      return true;
     }
   }
 }

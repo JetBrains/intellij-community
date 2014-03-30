@@ -32,17 +32,16 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author mike
@@ -171,6 +170,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     method.getBody().add(stmt);
 
     for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
+      if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
       method.getModifierList().add(annotation.copy());
     }
 
@@ -238,7 +238,17 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     List<PsiMethodMember> methodInstances = new ArrayList<PsiMethodMember>();
 
-    final PsiMethod[] allMethods = targetClass.getAllMethods();
+    final PsiMethod[] allMethods;
+    if (targetClass instanceof PsiTypeParameter) {
+      LinkedHashSet<PsiMethod> meths = new LinkedHashSet<PsiMethod>();
+      for (PsiClass superClass : targetClass.getSupers()) {
+        meths.addAll(Arrays.asList(superClass.getAllMethods()));
+      }
+      allMethods = meths.toArray(new PsiMethod[meths.size()]);
+    }
+    else {
+      allMethods = targetClass.getAllMethods();
+    }
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
     final Set<MethodSignature> existingSignatures = new HashSet<MethodSignature>(aClass.getVisibleSignatures());
     final Set<PsiMethodMember> selection = new HashSet<PsiMethodMember>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +80,7 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final JComponent editorComponent = editor.getComponent();
     if (isInsideDecodeOrGetColorMethod(element)) {
@@ -191,7 +191,7 @@ public class ColorChooserIntentionAction extends BaseColorIntentionAction {
       final PsiManager manager = expression.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiExpression newCall = factory.createExpressionFromText(
-        "new " + JAVA_AWT_COLOR + "("
+        "new " + getFqn(expression.getClassOrAnonymousClassReference()) + "("
         + color.getRed() + ", "
         + color.getGreen() + ", "
         + color.getBlue()

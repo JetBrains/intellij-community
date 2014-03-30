@@ -20,8 +20,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,10 +43,9 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -63,25 +60,22 @@ public class NewProjectUtil {
   private NewProjectUtil() {
   }
 
-  public static void createNewProject(Project projectToClose, @Nullable final String defaultPath) {
+  public static void createNewProject(Project projectToClose, AbstractProjectWizard wizard) {
     final boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ProjectManager.getInstance().getDefaultProject(); //warm up components
       }
     }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
     if (!proceed) return;
-    final AddModuleWizard dialog = Registry.is("new.project.wizard")
-                                   ? new AddModuleWizardPro(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath)
-                                   : new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
-    dialog.show();
-    if (!dialog.isOK()) {
+    wizard.show();
+    if (!wizard.isOK()) {
       return;
     }
 
-    createFromWizard(dialog, projectToClose);
+    createFromWizard(wizard, projectToClose);
   }
 
-  public static Project createFromWizard(AddModuleWizard dialog, Project projectToClose) {
+  public static Project createFromWizard(AbstractProjectWizard dialog, Project projectToClose) {
     try {
       return doCreate(dialog, projectToClose);
     }
@@ -96,7 +90,7 @@ public class NewProjectUtil {
     }
   }
 
-  private static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
+  private static Project doCreate(final AbstractProjectWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
@@ -175,6 +169,7 @@ public class NewProjectUtil {
       StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           // ensure the dialog is shown after all startup activities are done
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -201,8 +196,8 @@ public class NewProjectUtil {
         if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-          if (lastFocusedFrame != null) {
-            boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
+          if (lastFocusedFrame instanceof IdeFrameEx) {
+            boolean fullScreen = ((IdeFrameEx)lastFocusedFrame).isInFullScreen();
             if (fullScreen) {
               newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
             }

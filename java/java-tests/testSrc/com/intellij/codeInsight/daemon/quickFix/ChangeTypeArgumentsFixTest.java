@@ -15,12 +15,19 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class ChangeTypeArgumentsFixTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class ChangeTypeArgumentsFixTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/changeTypeArgs";
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
   }
 }

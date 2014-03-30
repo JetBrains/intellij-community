@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CompositeLexer extends LexerBase {
   private final Lexer myLexer1;
@@ -29,16 +30,20 @@ public abstract class CompositeLexer extends LexerBase {
 
   protected abstract IElementType getCompositeTokenType(IElementType type1, IElementType type2);
 
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
     myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
     myCurOffset = startOffset;
   }
 
+  @NotNull
+  @Override
   public CharSequence getBufferSequence() {
     return myLexer1.getBufferSequence();
   }
 
+  @Override
   public int getState() {
     final int state = myLexer1.getState();
     final int state2 = myLexer2.getState();
@@ -51,6 +56,7 @@ public abstract class CompositeLexer extends LexerBase {
     return 0;
   }
 
+  @Override
   public IElementType getTokenType() {
     IElementType type1 = myLexer1.getTokenType();
     if (type1 == null) return null;
@@ -58,14 +64,17 @@ public abstract class CompositeLexer extends LexerBase {
     return getCompositeTokenType(type1, type2);
   }
 
+  @Override
   public int getTokenStart() {
     return myCurOffset;
   }
 
+  @Override
   public int getTokenEnd() {
     return Math.min(myLexer1.getTokenEnd(), myLexer2.getTokenEnd());
   }
 
+  @Override
   public void advance() {
     int end1 = myLexer1.getTokenEnd();
     int end2 = myLexer2.getTokenEnd();
@@ -78,6 +87,7 @@ public abstract class CompositeLexer extends LexerBase {
     }
   }
 
+  @Override
   public int getBufferEnd() {
     return myLexer1.getBufferEnd();
   }

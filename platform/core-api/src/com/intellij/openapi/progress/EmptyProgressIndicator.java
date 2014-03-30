@@ -20,82 +20,103 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyProgressIndicator implements ProgressIndicator {
-  private boolean myIsRunning = false;
+  private volatile boolean myIsRunning = false;
   private volatile boolean myIsCanceled = false;
 
+  @Override
   public void start() {
     myIsRunning = true;
     myIsCanceled = false;
   }
 
+  @Override
   public void stop() {
     myIsRunning = false;
   }
 
+  @Override
   public boolean isRunning() {
     return myIsRunning;
   }
 
+  @Override
   public void cancel() {
     myIsCanceled = true;
   }
 
+  @Override
   public boolean isCanceled() {
     return myIsCanceled;
   }
 
+  @Override
   public void setText(String text) {
   }
 
+  @Override
   public String getText() {
     return "";
   }
 
+  @Override
   public void setText2(String text) {
   }
 
+  @Override
   public String getText2() {
     return "";
   }
 
+  @Override
   public double getFraction() {
     return 1;
   }
 
+  @Override
   public void setFraction(double fraction) {
   }
 
+  @Override
   public void pushState() {
   }
 
+  @Override
   public void popState() {
   }
 
+  @Override
   public void startNonCancelableSection() {
   }
 
+  @Override
   public void finishNonCancelableSection() {
   }
 
+  @Override
   public boolean isModal() {
     return false;
   }
 
+  @Override
   @NotNull
   public ModalityState getModalityState() {
     return ModalityState.NON_MODAL;
   }
 
+  @Override
   public void setModalityProgress(ProgressIndicator modalityProgress) {
   }
 
+  @Override
   public boolean isIndeterminate() {
     return false;
   }
 
+  @Override
   public void setIndeterminate(boolean indeterminate) {
   }
 
+  @Override
   public void checkCanceled() {
     if (myIsCanceled) {
       throw new ProcessCanceledException();

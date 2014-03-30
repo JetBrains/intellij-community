@@ -104,6 +104,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         token.finish();
       }
       final Module newModule = ModuleManager.getInstance(project).findModuleByName(module.getName());
+      assert newModule != null;
       final Module primaryModule = addPrimaryModuleDependency(project, newModule);
       if (primaryModule != null) {
         VirtualFile dotIdeaDir = imlFile.getParent();
@@ -160,6 +161,11 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     if (!canAttachToProject()) {
       return null;
     }
+    return findModuleInBaseDir(project);
+  }
+
+  @Nullable
+  public static Module findModuleInBaseDir(Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile root : roots) {
@@ -191,4 +197,37 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
     return result;
   }
+
+  /**
+   * @param project the project
+   * @return null if either multi-projects are not enabled or the project has only one module
+   */
+  @Nullable
+  public static String getMultiProjectDisplayName(@NotNull Project project) {
+    if (!ProjectAttachProcessor.canAttachToProject()) {
+      return null;
+    }
+
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    if (modules.length <= 1) {
+      return null;
+    }
+
+    Module primaryModule = getPrimaryModule(project);
+    if (primaryModule == null) {
+      primaryModule = modules [0];
+    }
+    final StringBuilder result = new StringBuilder(primaryModule.getName());
+    result.append(", ");
+    for (Module module : modules) {
+      if (module == primaryModule) continue;
+      result.append(module.getName());
+      break;
+    }
+    if (modules.length > 2) {
+      result.append("...");
+    }
+    return result.toString();
+  }
+
 }

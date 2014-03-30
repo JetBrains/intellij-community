@@ -16,8 +16,6 @@
 
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.SyntaxTableCompletionData;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.FileTypeRegistrator;
@@ -28,6 +26,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 
 public class StandardFileTypeRegistrator implements FileTypeRegistrator {
+  @Override
   public void initFileType(final FileType fileType) {
     if (fileType instanceof AbstractFileType) {
       init(((AbstractFileType)fileType));
@@ -36,7 +35,6 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
 
   private static void init(final AbstractFileType abstractFileType) {
     SyntaxTable table = abstractFileType.getSyntaxTable();
-    CompletionUtil.registerCompletionData(abstractFileType,new SyntaxTableCompletionData(table));
 
     if (!isEmpty(table.getStartComment()) && !isEmpty(table.getEndComment()) ||
         !isEmpty(table.getLineComment())) {
@@ -59,22 +57,27 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
       myAbstractFileType = abstractFileType;
     }
 
+    @Override
     public String getLineCommentPrefix() {
       return myAbstractFileType.getSyntaxTable().getLineComment();
     }
 
+    @Override
     public String getBlockCommentPrefix() {
       return myAbstractFileType.getSyntaxTable().getStartComment();
     }
 
+    @Override
     public String getBlockCommentSuffix() {
       return myAbstractFileType.getSyntaxTable().getEndComment();
     }
 
+    @Override
     public String getCommentedBlockCommentPrefix() {
       return null;
     }
 
+    @Override
     public String getCommentedBlockCommentSuffix() {
       return null;
     }

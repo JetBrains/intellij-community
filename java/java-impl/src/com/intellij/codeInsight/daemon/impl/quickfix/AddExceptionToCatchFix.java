@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -46,13 +46,15 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement element = findElement(file, offset);
-    PsiTryStatement tryStatement = (PsiTryStatement) element.getParent();
+    if (element == null) return;
+
+    PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     List<PsiClassType> unhandledExceptions = new ArrayList<PsiClassType>(ExceptionUtil.collectUnhandledExceptions(element, null));
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
 
@@ -86,7 +88,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     }
   }
 
-  private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
+  private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement,
+                                                PsiClassType exceptionType,
+                                                PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(tryStatement.getProject()).getElementFactory();
 
     if (tryStatement.getTryBlock() == null) {
@@ -108,9 +112,12 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     }
 
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-    parameters[parameters.length - 1].getTypeElement().replace(factory.createTypeElement(exceptionType));
-    PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
+    PsiTypeElement typeElement = parameters[parameters.length - 1].getTypeElement();
+    if (typeElement != null) {
+      JavaCodeStyleManager.getInstance(file.getProject()).shortenClassReferences(typeElement);
+    }
 
+    PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
     return catchBlocks[catchBlocks.length - 1];
   }
 

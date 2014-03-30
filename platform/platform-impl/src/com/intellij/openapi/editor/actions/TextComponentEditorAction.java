@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.JTextComponent;
@@ -29,23 +31,23 @@ import javax.swing.text.JTextComponent;
  * @author yole
  */
 public abstract class TextComponentEditorAction extends EditorAction {
-  protected TextComponentEditorAction(final EditorActionHandler defaultHandler) {
+  protected TextComponentEditorAction(@NotNull EditorActionHandler defaultHandler) {
     super(defaultHandler);
   }
 
   @Override
   @Nullable
-  protected Editor getEditor(final DataContext dataContext) {
+  protected Editor getEditor(@NotNull final DataContext dataContext) {
     return getEditorFromContext(dataContext);
   }
 
   @Nullable
-  public static Editor getEditorFromContext(final DataContext dataContext) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+  public static Editor getEditorFromContext(@NotNull DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) return editor;
     final Object data = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof JTextComponent) {
-      return new TextComponentEditor(PlatformDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
+      return new TextComponentEditor(CommonDataKeys.PROJECT.getData(dataContext), (JTextComponent) data);
     }
     return null;
   }

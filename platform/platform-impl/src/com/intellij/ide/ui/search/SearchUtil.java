@@ -676,6 +676,9 @@ public class SearchUtil {
       }
       keySetList.add(keySet);
     }
+    if (keySetList.isEmpty() && !StringUtil.isEmptyOrSpaces(filter)) {
+      keySetList.add(Collections.singleton(filter));
+    }
     return keySetList;
   }
 

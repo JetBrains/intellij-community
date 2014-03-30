@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,39 @@
  */
 package com.siyeh.ipp.expression;
 
-import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiPolyadicExpression;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ComparisonUtils;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ExpressionPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiBinaryExpression)) {
+    if (!(element instanceof PsiJavaToken)) {
       return false;
     }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    final PsiExpression rhs = expression.getROperand();
-    if (rhs == null) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
-    return !ComparisonUtils.isComparison((PsiExpression)element);
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
+    final PsiExpression[] operands = expression.getOperands();
+    if (operands.length < 2) {
+      return false;
+    }
+    PsiExpression prevOperand = null;
+    for (PsiExpression operand : operands) {
+      final PsiJavaToken token = expression.getTokenBeforeOperand(operand);
+      if (element == token) {
+        if (prevOperand == null || operand.getText().equals(prevOperand.getText())) {
+          return false;
+        }
+        break;
+      }
+      prevOperand = operand;
+    }
+    return !ComparisonUtils.isComparison(expression);
   }
 }

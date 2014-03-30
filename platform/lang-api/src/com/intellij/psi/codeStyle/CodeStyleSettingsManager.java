@@ -32,10 +32,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS = null;
   public volatile boolean USE_PER_PROJECT_SETTINGS = false;
+  public volatile String PREFERRED_PROJECT_CODE_STYLE = null;
   private volatile CodeStyleSettings myTemporarySettings;
   private volatile boolean myIsLoaded = false;
 
-  public static CodeStyleSettingsManager getInstance(@NotNull Project project) {
+  public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
+    if (project == null || project.isDefault()) return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
     if (!projectSettingsManager.isLoaded()) {
       synchronized (projectSettingsManager) {
@@ -62,8 +64,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   @NotNull
   public static CodeStyleSettings getSettings(@Nullable final Project project) {
-    final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
-    return instance.getCurrentSettings();
+    return getInstance(project).getCurrentSettings();
   }
 
   @NotNull
@@ -72,7 +73,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     if (temporarySettings != null) return temporarySettings;
     CodeStyleSettings projectSettings = PER_PROJECT_SETTINGS;
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
-    return CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();
   }
 
   private void readExternal(Element element) throws InvalidDataException {
@@ -104,6 +105,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     catch (InvalidDataException e) {
       LOG.error(e);
     }
+  }
+
+  public CodeStyleSettings getTemporarySettings() {
+    return myTemporarySettings;
   }
 
   public void setTemporarySettings(@NotNull CodeStyleSettings settings) {

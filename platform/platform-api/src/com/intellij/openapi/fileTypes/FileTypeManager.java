@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
+  @NotNull
   public static final Topic<FileTypeListener> TOPIC = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
 
   /**
@@ -54,11 +55,12 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @return the instance of FileTypeManager
    */
   public static FileTypeManager getInstance() {
-    if (ourInstance == null) {
+    FileTypeManager instance = ourInstance;
+    if (instance == null) {
       Application app = ApplicationManager.getApplication();
-      ourInstance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
+      ourInstance = instance = app != null ? app.getComponent(FileTypeManager.class) : new MockFileTypeManager();
     }
-    return ourInstance;
+    return instance;
   }
 
   /**
@@ -85,16 +87,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   }
 
   /**
-   * Returns the file type for the specified extension.
-   * Note that a more general way of obtaining file type is with {@link #getFileTypeByFile(VirtualFile)}
-   *
-   * @param extension The extension for which the file type is requested, not including the leading '.'.
-   * @return The file type instance, or {@link UnknownFileType#INSTANCE} if corresponding file type not found
-   */
-  @NotNull
-  public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
-
-  /**
    * Checks if the specified file is ignored by IDEA. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
    *
@@ -118,7 +110,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   @NotNull
   public abstract List<FileNameMatcher> getAssociations(@NotNull FileType type);
 
-  public abstract boolean isFileOfType(VirtualFile file, FileType type);
+  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
   /**
    * Adds a listener for receiving notifications about changes in the list of
@@ -201,7 +193,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   public abstract void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
-  public static FileNameMatcher parseFromString(String pattern) {
+  @NotNull
+  public static FileNameMatcher parseFromString(@NotNull String pattern) {
     return FileNameMatcherFactory.getInstance().createMatcher(pattern);
   }
 

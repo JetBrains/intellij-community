@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@ import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
@@ -43,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
@@ -57,10 +62,6 @@ import java.util.Map;
  * Date: 25.05.2007
  */
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
-  private GrAccessorMethod mySetter;
-  private GrAccessorMethod[] myGetters;
-
-  private boolean mySetterInitialized = false;
 
   public GrFieldImpl(@NotNull ASTNode node) {
     super(node);
@@ -142,12 +143,23 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public PsiType getTypeGroovy() {
-    if (getDeclaredType() == null && getInitializerGroovy() == null) {
-      final PsiType type = GrVariableEnhancer.getEnhancedType(this);
-      if (type != null) {
-        return type;
+    PsiType type = TypeInferenceHelper.getCurrentContext().getExpressionType(this, new Function<GrFieldImpl, PsiType>() {
+      @Override
+      public PsiType fun(GrFieldImpl field) {
+        if (getDeclaredType() == null && getInitializerGroovy() == null) {
+          final PsiType type = GrVariableEnhancer.getEnhancedType(field);
+          if (type != null) {
+            return type;
+          }
+        }
+        return null;
       }
+    });
+
+    if (type != null) {
+      return type;
     }
+
     return super.getTypeGroovy();
   }
 
@@ -177,27 +189,24 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   public GrAccessorMethod getSetter() {
-    if (mySetterInitialized) return mySetter;
-
-    mySetter = GrAccessorMethodImpl.createSetterMethod(this);
-    mySetterInitialized = true;
-
-    return mySetter;
-  }
-
-  public void clearCaches() {
-    mySetterInitialized = false;
-    mySetter = null;
-    myGetters = null;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod> compute() {
+        return Result.create(GrAccessorMethodImpl.createSetterMethod(GrFieldImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
   public GrAccessorMethod[] getGetters() {
-    if (myGetters == null) {
-      myGetters = GrAccessorMethodImpl.createGetterMethods(this);
-    }
-
-    return myGetters;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod[]>() {
+      @Nullable
+      @Override
+      public Result<GrAccessorMethod[]> compute() {
+        return Result.create(GrAccessorMethodImpl.createGetterMethods(GrFieldImpl.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @NotNull
@@ -232,7 +241,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Nullable
-  public Icon getIcon(int flags) {
+  @Override
+  protected Icon getElementIcon(@IconFlags int flags) {
     Icon superIcon = JetgroovyIcons.Groovy.Field;
     if (!isProperty()) return superIcon;
     LayeredIcon rowIcon = new LayeredIcon(2);

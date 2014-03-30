@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,16 +52,16 @@ import java.util.Set;
 public class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
-  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
-                                        PsiClass subclass,
-                                        @Nullable PsiClass superClass,
-                                        @NotNull PsiPackage targetPackage,
-                                        @NotNull PsiDirectory targetDirectory,
-                                        final InterfaceContainmentVerifier interfaceContainmentVerifier) {
+  public static MultiMap<PsiElement, String> checkConflicts(MemberInfoBase<? extends PsiMember>[] infos,
+                                                            PsiClass subclass,
+                                                            @Nullable PsiClass superClass,
+                                                            @NotNull PsiPackage targetPackage,
+                                                            @NotNull PsiDirectory targetDirectory,
+                                                            final InterfaceContainmentVerifier interfaceContainmentVerifier) {
     return checkConflicts(infos, subclass, superClass, targetPackage, targetDirectory, interfaceContainmentVerifier, true);
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfo[] infos,
+  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfoBase<? extends PsiMember>[] infos,
                                                             @NotNull final PsiClass subclass,
                                                             @Nullable PsiClass superClass,
                                                             @NotNull final PsiPackage targetPackage,
@@ -79,7 +80,7 @@ public class PullUpConflictsUtil {
       isInterfaceTarget = false;
       targetRepresentativeElement = targetDirectory;
     }
-    for (MemberInfo info : infos) {
+    for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiMember member = info.getMember();
       if (member instanceof PsiMethod) {
         if (!info.isToAbstract() && !isInterfaceTarget) {
@@ -129,15 +130,15 @@ public class PullUpConflictsUtil {
           movedMembers2Super? new ConflictingUsagesOfSubClassMembers(member, movedMembers, abstractMethods, subclass, superClass,
                                                  superClass != null ? null : targetPackage, conflicts,
                                                  interfaceContainmentVerifier)
-                            : new ConflictingUsagesOfSuperClassMemebers(member, subclass, targetPackage, movedMembers, conflicts);
+                            : new ConflictingUsagesOfSuperClassMembers(member, subclass, targetPackage, movedMembers, conflicts);
         member.accept(visitor);
       }
-      checkModuleConflictsList.add(member);
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, member);
     }
     for (final PsiMethod method : abstractMethods) {
-      checkModuleConflictsList.add(method.getParameterList());
-      checkModuleConflictsList.add(method.getReturnTypeElement());
-      checkModuleConflictsList.add(method.getTypeParameterList());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getParameterList());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
@@ -190,8 +191,8 @@ public class PullUpConflictsUtil {
     return conflicts;
   }
 
-  private static void checkInterfaceTarget(MemberInfo[] infos, MultiMap<PsiElement, String> conflictsList) {
-    for (MemberInfo info : infos) {
+  private static void checkInterfaceTarget(MemberInfoBase<? extends PsiMember>[] infos, MultiMap<PsiElement, String> conflictsList) {
+    for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiElement member = info.getMember();
 
       if (member instanceof PsiField || member instanceof PsiClass) {
@@ -214,9 +215,9 @@ public class PullUpConflictsUtil {
   }
 
   private static void checkSuperclassMembers(PsiClass superClass,
-                                             MemberInfo[] infos,
+                                             MemberInfoBase<? extends PsiMember>[] infos,
                                              MultiMap<PsiElement, String> conflictsList) {
-    for (MemberInfo info : infos) {
+    for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiMember member = info.getMember();
       boolean isConflict = false;
       if (member instanceof PsiField) {
@@ -268,7 +269,7 @@ public class PullUpConflictsUtil {
     return false;
   }
 
-  private static class ConflictingUsagesOfSuperClassMemebers extends ClassMemberReferencesVisitor {
+  private static class ConflictingUsagesOfSuperClassMembers extends ClassMemberReferencesVisitor {
 
     private PsiMember myMember;
     private PsiClass mySubClass;
@@ -276,10 +277,10 @@ public class PullUpConflictsUtil {
     private Set<PsiMember> myMovedMembers;
     private MultiMap<PsiElement, String> myConflicts;
 
-    public ConflictingUsagesOfSuperClassMemebers(PsiMember member, PsiClass aClass,
-                                                 PsiPackage targetPackage,
-                                                 Set<PsiMember> movedMembers,
-                                                 MultiMap<PsiElement, String> conflicts) {
+    public ConflictingUsagesOfSuperClassMembers(PsiMember member, PsiClass aClass,
+                                                PsiPackage targetPackage,
+                                                Set<PsiMember> movedMembers,
+                                                MultiMap<PsiElement, String> conflicts) {
       super(aClass);
       myMember = member;
       mySubClass = aClass;

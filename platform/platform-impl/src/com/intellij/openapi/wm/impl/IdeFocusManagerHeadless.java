@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,20 +33,24 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
 
   public static final IdeFocusManagerHeadless INSTANCE = new IdeFocusManagerHeadless();
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return new ActionCallback.Done();
   }
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return new ActionCallback.Done();
   }
 
+  @Override
   public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
     return null;
   }
 
+  @Override
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
     runnable.run();
   }
@@ -58,11 +62,13 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
     }
   }
 
+  @Override
   public Component getFocusedDescendantFor(final Component c) {
     return null;
   }
 
-  public boolean dispatch(KeyEvent e) {
+  @Override
+  public boolean dispatch(@NotNull KeyEvent e) {
     return false;
   }
 
@@ -75,6 +81,8 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
     return false;
   }
 
+  @Override
+  @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
   }
@@ -84,15 +92,18 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
     return true;
   }
 
+  @NotNull
   @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return new Expirable() {
+      @Override
       public boolean isExpired() {
         return false;
       }
     };
   }
 
+  @NotNull
   @Override
   public FocusRequestor getFurtherRequestor() {
     return this;
@@ -112,7 +123,7 @@ public class IdeFocusManagerHeadless extends IdeFocusManager {
   }
 
   @Override
-  public void runOnOwnContext(DataContext context, Runnable runnable) {
+  public void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable) {
     runnable.run();
   }
 

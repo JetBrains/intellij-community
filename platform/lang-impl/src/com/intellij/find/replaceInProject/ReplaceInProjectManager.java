@@ -1,27 +1,31 @@
 /*
-* Copyright 2000-2009 JetBrains s.r.o.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
+import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -38,13 +42,16 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.ui.content.Content;
+import com.intellij.usageView.*;
 import com.intellij.usages.*;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
@@ -52,13 +59,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ReplaceInProjectManager {
-  static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("FindInPath", ToolWindowId.FIND, false);
+  static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
   private boolean myIsFindInProgress = false;
@@ -110,13 +114,13 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void replaceInProject(DataContext dataContext) {
+  public void replaceInProject(@NotNull DataContext dataContext) {
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel = (FindModel)findManager.getFindInProjectModel().clone();
     findModel.setReplaceState(true);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     FindUtil.initStringToFindWithSelection(findModel, editor);
 
     findManager.showFindDialog(findModel, new Runnable() {
@@ -136,30 +140,60 @@ public class ReplaceInProjectManager {
         findManager.getFindInProjectModel().copyFrom(findModel);
         final FindModel findModelCopy = (FindModel)findModel.clone();
 
-        searchAndShowUsages(manager, new UsageSearcherFactory(findModelCopy, psiDirectory), findModelCopy, findManager);
+        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
+        final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+
+        UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, psiDirectory, processPresentation);
+        searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation, findManager);
       }
     });
   }
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
-                                  final Factory<UsageSearcher> usageSearcherFactory,
-                                  final FindModel findModelCopy,
-                                  final FindManager findManager) {
+                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull FindModel findModelCopy,
+                                  @NotNull FindManager findManager) {
     final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
 
     searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation, findManager);
   }
 
-  public void searchAndShowUsages(UsageViewManager manager,
-                                  final Factory<UsageSearcher> usageSearcherFactory,
-                                  final FindModel findModelCopy,
-                                  UsageViewPresentation presentation,
-                                  FindUsagesProcessPresentation processPresentation,
+  private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
+    public ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
+      super(project, findModel);
+    }
+
+    @NotNull
+    @Override
+    public String getLongDescriptiveName() {
+      UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
+      return "Replace "+presentation.getToolwindowTitle()+" with '"+ myFindModel.getStringToReplace()+"'";
+    }
+
+    @Override
+    public KeyboardShortcut getShortcut() {
+      return ActionManager.getInstance().getKeyboardShortcut("ReplaceInPath");
+    }
+
+    @Override
+    public void showSettings() {
+      Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      JComponent component = selectedContent == null ? null : selectedContent.getComponent();
+      ReplaceInProjectManager findInProjectManager = getInstance(myProject);
+      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component));
+    }
+  }
+
+  public void searchAndShowUsages(@NotNull UsageViewManager manager,
+                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull final FindModel findModelCopy,
+                                  @NotNull UsageViewPresentation presentation,
+                                  @NotNull FindUsagesProcessPresentation processPresentation,
                                   final FindManager findManager) {
-    final ReplaceContext[] context = new ReplaceContext[1];
     presentation.setMergeDupLinesAvailable(false);
-    manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind())},
+    final ReplaceContext[] context = new ReplaceContext[1];
+    manager.searchAndShowUsages(new UsageTarget[]{new ReplaceInProjectTarget(myProject, findModelCopy)},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
@@ -337,16 +371,15 @@ public class ReplaceInProjectManager {
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
   }
 
-  private boolean replaceUsages(final ReplaceContext replaceContext, Collection<Usage> usages) {
-    boolean success = true;
-    int replacedCount = 0;
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
+    int replacedCount = 0;
+    boolean success = true;
     for (final Usage usage : usages) {
       try {
         if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
-          replaceContext.getUsageView().removeUsage(usage);
           replacedCount++;
         }
       }
@@ -355,6 +388,7 @@ public class ReplaceInProjectManager {
         success = false;
       }
     }
+    replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount);
     return success;
   }
@@ -388,7 +422,7 @@ public class ReplaceInProjectManager {
         final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
         if (!document.isWritable()) return false;
 
-        return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
+        boolean result = ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
           @Override
           public boolean process(Segment segment) {
             final int textOffset = segment.getStartOffset();
@@ -407,6 +441,7 @@ public class ReplaceInProjectManager {
             return true;
           }
         });
+        return result;
       }
     });
 
@@ -429,7 +464,8 @@ public class ReplaceInProjectManager {
     }
     FindManager findManager = FindManager.getInstance(myProject);
     final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel);
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
     if (!findResult.isStringFound()) {
       return false;
     }
@@ -440,10 +476,13 @@ public class ReplaceInProjectManager {
     return true;
   }
 
-  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @Nullable final Set<Usage> usages) {
-    if (usages == null) {
+  private void replaceUsagesUnderCommand(@NotNull final ReplaceContext replaceContext, @Nullable final Set<Usage> usagesSet) {
+    if (usagesSet == null) {
       return;
     }
+
+    final List<Usage> usages = new ArrayList<Usage>(usagesSet);
+    Collections.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
 
     if (!ensureUsagesWritable(replaceContext, usages)) return;
 
@@ -481,7 +520,7 @@ public class ReplaceInProjectManager {
                                                FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
                                                FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
                                                Messages.getWarningIcon());
-      if (result != 0) {
+      if (result != Messages.OK) {
         return false;
       }
     }
@@ -492,7 +531,8 @@ public class ReplaceInProjectManager {
     if (usageView.getUsages().isEmpty()) {
       usageView.close();
       return true;
-    } else if (!success) {
+    }
+    if (!success) {
       NOTIFICATION_GROUP.createNotification("One or more malformed replacement strings", MessageType.ERROR).notify(myProject);
     }
     return false;
@@ -509,10 +549,14 @@ public class ReplaceInProjectManager {
   private class UsageSearcherFactory implements Factory<UsageSearcher> {
     private final FindModel myFindModelCopy;
     private final PsiDirectory myPsiDirectory;
+    private final FindUsagesProcessPresentation myProcessPresentation;
 
-    public UsageSearcherFactory(FindModel findModelCopy, PsiDirectory psiDirectory) {
+    private UsageSearcherFactory(@NotNull FindModel findModelCopy,
+                                PsiDirectory psiDirectory,
+                                @NotNull FindUsagesProcessPresentation processPresentation) {
       myFindModelCopy = findModelCopy;
       myPsiDirectory = psiDirectory;
+      myProcessPresentation = processPresentation;
     }
 
     @Override
@@ -520,12 +564,13 @@ public class ReplaceInProjectManager {
       return new UsageSearcher() {
 
         @Override
-        public void generate(final Processor<Usage> processor) {
+        public void generate(@NotNull final Processor<Usage> processor) {
           try {
             myIsFindInProgress = true;
 
             FindInProjectUtil.findUsages(myFindModelCopy, myPsiDirectory, myProject,
-                                         true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
+                                         new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                         myProcessPresentation);
           }
           finally {
             myIsFindInProgress = false;

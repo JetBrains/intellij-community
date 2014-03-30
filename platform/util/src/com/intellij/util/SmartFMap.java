@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,7 +190,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   @Override
   @Deprecated
-  public void putAll(Map<? extends K, ? extends V> m) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> m) {
     throw new UnsupportedOperationException();
   }
 
@@ -200,8 +200,11 @@ public class SmartFMap<K,V> implements Map<K,V> {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public Set<K> keySet() {
+    if (isEmpty()) return Collections.emptySet();
+    
     LinkedHashSet<K> result = new LinkedHashSet<K>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getKey());
@@ -209,8 +212,11 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableSet(result);
   }
 
+  @NotNull
   @Override
   public Collection<V> values() {
+    if (isEmpty()) return Collections.emptyList();
+    
     ArrayList<V> result = new ArrayList<V>();
     for (Entry<K, V> entry : entrySet()) {
       result.add(entry.getValue());
@@ -237,8 +243,11 @@ public class SmartFMap<K,V> implements Map<K,V> {
     return size() == 0;
   }
 
+  @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
+    if (isEmpty()) return Collections.emptySet();
+    
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();
     if (myMap instanceof Map) {
       for (Entry<K, V> entry : ((Map<K, V>)myMap).entrySet()) {

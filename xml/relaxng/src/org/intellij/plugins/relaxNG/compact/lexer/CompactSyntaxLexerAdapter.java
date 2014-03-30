@@ -25,6 +25,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.parse.compact.*;
 
@@ -33,6 +34,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.LinkedList;
 
@@ -128,6 +131,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     return CharArrayUtil.fromSequence(myBuffer);
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
@@ -171,7 +175,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
 
     final Reader reader = new CharSequenceReader(buffer, startOffset, endOffset);
@@ -197,12 +201,26 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
       return new CompactSyntaxTokenManager(new SimpleCharStream(preprocessor, 1, 1), initialState);
     } catch (NoSuchMethodError e) {
       final Class<CompactSyntaxTokenManager> managerClass = CompactSyntaxTokenManager.class;
-      LOG.error("Unsupported version of RNGOM in classpath", e,
+      LOG.error("Unsupported version of RNGOM in classpath. Please check your IDEA and JDK installation.", e,
                 "Actual parameter types: " + Arrays.toString(managerClass.getConstructors()[0].getParameterTypes()),
-                "Location of " + managerClass.getName() + ": " + managerClass.getProtectionDomain().getCodeSource(),
-                "Location of " + CharStream.class.getName() + ": " + CharStream.class.getProtectionDomain().getCodeSource());
+                "Location of " + managerClass.getName() + ": " + getSourceLocation(managerClass),
+                "Location of " + CharStream.class.getName() + ": " + getSourceLocation(CharStream.class));
       throw e;
     }
+  }
+
+  private static String getSourceLocation(Class<?> clazz) {
+    final CodeSource source = clazz.getProtectionDomain().getCodeSource();
+    if (source != null) {
+      final URL location = source.getLocation();
+      if (location != null) {
+        return location.toExternalForm();
+      }
+    }
+    final String name = clazz.getName().replace('.', '/') + ".class";
+    final ClassLoader loader = clazz.getClassLoader();
+    final URL resource = loader != null ? loader.getResource(name) : ClassLoader.getSystemResource(name);
+    return resource != null ? resource.toExternalForm() : "<unknown>";
   }
 
   public static void main(String[] args) throws IOException {

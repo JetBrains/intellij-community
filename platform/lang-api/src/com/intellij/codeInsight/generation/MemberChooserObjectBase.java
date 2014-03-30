@@ -38,11 +38,13 @@ public class MemberChooserObjectBase implements MemberChooserObject {
     myIcon = icon;
   }
 
+  @Override
   public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
     SpeedSearchUtil.appendFragmentsForSpeedSearch(tree, getText(), getTextAttributes(tree), false, component);
     component.setIcon(myIcon);
   }
 
+  @Override
   public String getText() {
     return myText;
   }

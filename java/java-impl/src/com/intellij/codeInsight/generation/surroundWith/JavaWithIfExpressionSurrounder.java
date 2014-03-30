@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
+public class JavaWithIfExpressionSurrounder extends JavaBooleanExpressionSurrounder {
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    PsiType type = expr.getType();
-    if (PsiType.BOOLEAN != type) return false;
+    if (!super.isApplicable(expr)) return false;
     if (!expr.isPhysical()) return false;
     PsiElement parent = expr.getParent();
     if (!(parent instanceof PsiExpressionStatement)) return false;
     final PsiElement element = parent.getParent();
-    if (!(element instanceof PsiCodeBlock) && !(JspPsiUtil.isInJspFile(element)  && element instanceof PsiFile)) return false;
+    if (!(element instanceof PsiCodeBlock) && !(FileTypeUtils.isInServerPageFile(element)  && element instanceof PsiFile)) return false;
     return true;
   }
 
@@ -55,7 +55,7 @@ class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
     ifStatement = (PsiIfStatement)statement.replace(ifStatement);
 
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
-    block = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(block);
+    block = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(block);
     TextRange range = block.getStatements()[0].getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());

@@ -19,7 +19,7 @@
  * User: max
  * Date: Nov 23, 2001
  * Time: 10:31:03 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.ui;
@@ -48,6 +48,7 @@ import java.util.Comparator;
 public class InspectionResultsViewComparator implements Comparator {
   private static final Logger LOG = Logger.getInstance("#" + InspectionResultsViewComparator.class.getName());
 
+  @Override
   public int compare(Object o1, Object o2) {
     InspectionTreeNode node1 = (InspectionTreeNode)o1;
     InspectionTreeNode node2 = (InspectionTreeNode)o2;
@@ -55,7 +56,7 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
       final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
       final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
-      return -SeverityRegistrar.getInstance(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
+      return -SeverityRegistrar.getSeverityRegistrar(groupNode1.getProject()).compare(groupNode1.getSeverityLevel().getSeverity(), groupNode2.getSeverityLevel().getSeverity());
     }
     if (node1 instanceof InspectionSeverityGroupNode) return -1;
     if (node2 instanceof InspectionSeverityGroupNode) return 1;
@@ -71,7 +72,7 @@ public class InspectionResultsViewComparator implements Comparator {
         .compareToIgnoreCase(InspectionsConfigTreeComparator.getDisplayTextToSort(node2.toString()));
     if (node1 instanceof InspectionNode) return -1;
     if (node2 instanceof InspectionNode) return 1;
-    
+
     if (node1 instanceof InspectionModuleNode && node2 instanceof InspectionModuleNode) {
       return Comparing.compare(node1.toString(), node2.toString());
     }
@@ -159,7 +160,7 @@ public class InspectionResultsViewComparator implements Comparator {
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
       return PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
-    } 
+    }
     if (entity1 != null && entity2 != null) {
       return entity1.getName().compareToIgnoreCase(entity2.getName());
     }

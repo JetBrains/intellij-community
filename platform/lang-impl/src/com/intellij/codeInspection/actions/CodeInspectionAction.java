@@ -53,15 +53,15 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
 
-  protected void analyze(@NotNull Project project, AnalysisScope scope) {
+  @Override
+  protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     try {
       scope.setSearchInLibraries(false);
       FileDocumentManager.getInstance().saveAllDocuments();
-      final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
       inspectionContext.setExternalProfile(myExternalProfile);
       inspectionContext.setCurrentScope(scope);
-      inspectionContext.doInspections(scope, inspectionManagerEx);
+      inspectionContext.doInspections(scope);
     }
     finally {
       myGlobalInspectionContext = null;
@@ -72,22 +72,25 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   private GlobalInspectionContextImpl getGlobalInspectionContext(Project project) {
     if (myGlobalInspectionContext == null) {
-      myGlobalInspectionContext = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).createNewGlobalContext(false);
+      myGlobalInspectionContext = ((InspectionManagerEx)InspectionManager.getInstance(project)).createNewGlobalContext(false);
     }
     return myGlobalInspectionContext;
   }
 
+  @Override
   @NonNls
   protected String getHelpTopic() {
     return "reference.dialogs.inspection.scope";
   }
 
+  @Override
   protected void canceled() {
     super.canceled();
     myGlobalInspectionContext = null;
   }
 
-  protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
+  @Override
+  protected JComponent getAdditionalActionSettings(@NotNull final Project project, final BaseAnalysisActionDialog dialog) {
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final JComboBox profiles = panel.myBrowseProfilesCombo.getComboBox();
@@ -105,6 +108,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
@@ -116,15 +120,16 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         else {
           //if profile was disabled and cancel after apply was pressed
           final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-          final boolean canExecute = profile != null && profile.isExecutable();
+          final boolean canExecute = profile != null && profile.isExecutable(project);
           dialog.setOKActionEnabled(canExecute);
         }
       }
     });
     profiles.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myExternalProfile = (InspectionProfile)profiles.getSelectedItem();
-        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable();
+        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
         dialog.setOKActionEnabled(canExecute);
         if (canExecute) {
           manager.setProfile(myExternalProfile.getName());
@@ -132,7 +137,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       }
     });
     final InspectionProfile profile = (InspectionProfile)profiles.getSelectedItem();
-    dialog.setOKActionEnabled(profile != null && profile.isExecutable());
+    dialog.setOKActionEnabled(profile != null && profile.isExecutable(project));
     return panel.myAdditionalPanel;
   }
 
@@ -170,6 +175,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
 
 
+    @Override
     protected void doOKAction() {
       final Object o = ((ErrorsConfigurable)getConfigurable()).getSelectedObject();
       if (o instanceof Profile) {

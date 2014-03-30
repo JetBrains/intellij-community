@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class OverrideMethodsHandler implements CodeInsightActionHandler{
@@ -36,7 +36,7 @@ public class OverrideMethodsHandler implements CodeInsightActionHandler{
       return;
     }
 
-    Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
     if (codeInsightActionHandler != null) {
       codeInsightActionHandler.invoke(project, editor, file);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -25,31 +26,30 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Manages {@link RunConfiguration}s.
- *
- * @see RunnerRegistry
- * @see ExecutionManager
- */
 public abstract class RunManagerEx extends RunManager {
   public static RunManagerEx getInstanceEx(final Project project) {
     return (RunManagerEx)project.getComponent(RunManager.class);
   }
 
-  public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
+  //public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
 
   @Deprecated // use setSelectedConfiguration instead
   public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
 
-  public abstract void setSelectedConfiguration(@Nullable RunnerAndConfigurationSettings configuration);
-
   public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
 
   public abstract RunManagerConfig getConfig();
 
+  /**
+   * @deprecated use {@link RunManager#createRunConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)} instead
+   * @param name
+   * @param type
+   * @return
+   */
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
@@ -57,8 +57,6 @@ public abstract class RunManagerEx extends RunManager {
                                         boolean isShared,
                                         List<BeforeRunTask> tasks,
                                         boolean addTemplateTasksIfAbsent);
-
-  public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 
@@ -76,7 +74,6 @@ public abstract class RunManagerEx extends RunManager {
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
-  public abstract void invalidateConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
@@ -85,6 +82,9 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract void addRunManagerListener(RunManagerListener listener);
   public abstract void removeRunManagerListener(RunManagerListener listener);
+
+  @NotNull
+  public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);
 
   public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask>... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {

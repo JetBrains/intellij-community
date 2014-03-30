@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -37,7 +37,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,11 +49,11 @@ public class RenameWrongRefFix implements IntentionAction {
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
   private final boolean myUnresolvedOnly;
 
-  public RenameWrongRefFix(PsiReferenceExpression refExpr) {
+  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr) {
     this(refExpr, false);
   }
 
-  public RenameWrongRefFix(PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
+  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
     myRefExpr = refExpr;
     myUnresolvedOnly = unresolvedOnly;
   }
@@ -161,7 +160,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
 
         @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
               && myFilterMethods == element instanceof PsiMethod) {
@@ -191,7 +190,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
     LookupElement[] items = collectItems();

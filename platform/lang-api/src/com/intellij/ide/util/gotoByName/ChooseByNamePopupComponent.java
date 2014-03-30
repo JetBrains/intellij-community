@@ -39,6 +39,7 @@ public interface ChooseByNamePopupComponent {
    * @author Konstantin Bulenkov
    */
   abstract class MultiElementsCallback extends Callback {
+    @Override
     public final void elementChosen(Object element){}
     public abstract void elementsChosen(List<Object> elements);
   }

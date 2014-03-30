@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Comparing;
@@ -28,10 +28,11 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
+import com.intellij.psi.impl.search.MethodDeepestSuperSearcher;
 import com.intellij.psi.scope.ElementClassFilter;
-import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ class RecursionWeigher extends LookupElementWeigher {
     if (myCallQualifier != null &&
         myPositionQualifier != null &&
         myCallQualifier != myPositionQualifier &&
-        CodeInsightUtil.areExpressionsEquivalent(myCallQualifier, myPositionQualifier)) {
+        JavaPsiEquivalenceUtil.areExpressionsEquivalent(myCallQualifier, myPositionQualifier)) {
       return false;
     }
 
@@ -130,16 +131,21 @@ class RecursionWeigher extends LookupElementWeigher {
 
     if (myExpectedInfos != null) {
       final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
-      for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
-        PsiMethod calledMethod = expectedInfo.getCalledMethod();
-        if (itemType != null &&
-            calledMethod != null &&
-            calledMethod.equals(myPositionMethod) &&
-            expectedInfo.getType().isAssignableFrom(itemType)) {
-          return myDelegate ? Result.delegation : Result.recursive;
+      if (itemType != null) {
+        boolean hasRecursiveInvocations = false;
+        boolean hasOtherInvocations = false;
+
+        for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+          PsiMethod calledMethod = expectedInfo.getCalledMethod();
+          if (!expectedInfo.getType().isAssignableFrom(itemType)) continue;
+
+          if (calledMethod != null && calledMethod.equals(myPositionMethod) || isGetterSetterAssignment(object, calledMethod)) {
+            hasRecursiveInvocations = true;
+          } else if (calledMethod != null) {
+            hasOtherInvocations = true;
+          }
         }
-        String propertyName = getSetterPropertyName(calledMethod);
-        if (propertyName != null && isGetterSetterAssignment(object, propertyName)) {
+        if (hasRecursiveInvocations && !hasOtherInvocations) {
           return myDelegate ? Result.delegation : Result.recursive;
         }
       }
@@ -162,7 +168,7 @@ class RecursionWeigher extends LookupElementWeigher {
     return Result.normal;
   }
 
-  @Nullable 
+  @Nullable
   private String getSetterPropertyName(@Nullable PsiMethod calledMethod) {
     if (PropertyUtil.isSimplePropertySetter(calledMethod)) {
       assert calledMethod != null;
@@ -178,7 +184,10 @@ class RecursionWeigher extends LookupElementWeigher {
     return null;
   }
 
-  private static boolean isGetterSetterAssignment(Object lookupObject, String prop) {
+  private boolean isGetterSetterAssignment(Object lookupObject, @Nullable PsiMethod calledMethod) {
+    String prop = getSetterPropertyName(calledMethod);
+    if (prop == null) return false;
+
     if (lookupObject instanceof PsiField &&
         prop.equals(PropertyUtil.suggestPropertyName((PsiField)lookupObject))) {
       return true;
@@ -201,7 +210,9 @@ class RecursionWeigher extends LookupElementWeigher {
 
   @NotNull
   public static PsiMethod findDeepestSuper(@NotNull final PsiMethod method) {
-    final PsiMethod first = DeepestSuperMethodsSearch.search(method).findFirst();
+    CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<PsiMethod>();
+    MethodDeepestSuperSearcher.processDeepestSuperMethods(method, processor);
+    final PsiMethod first = processor.getFoundValue();
     return first == null ? method : first;
   }
 }

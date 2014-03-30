@@ -3,11 +3,11 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import org.jetbrains.idea.svn.history.*;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -48,7 +48,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
     @Override
     public List<CommittedChangeList> loadInterval(final SVNRevision fromIncluding, final SVNRevision toIncluding, final int maxCount,
-                                                  final boolean includingYoungest, final boolean includeOldest) throws SVNException {
+                                                  final boolean includingYoungest, final boolean includeOldest)
+      throws VcsException {
       long young = fromIncluding.getNumber();
       young = (young == -1) ? myRevisions.get(myRevisions.size() - 1) : young;
       final long old = toIncluding.getNumber();

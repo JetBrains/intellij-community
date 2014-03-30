@@ -1,0 +1,16 @@
+<component name="ArtifactManager">
+  <artifact name="launcher-generator:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/launcher_generator_jar</output-path>
+    <root id="root">
+      <element id="archive" name="launcher-generator.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="launcher-generator" />
+      </element>
+      <element id="library" level="project" name="sanselan-0.98-snapshot" />
+      <element id="library" level="project" name="guava" />
+      <element id="library" level="project" name="jdom" />
+    </root>
+  </artifact>
+</component>

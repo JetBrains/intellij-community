@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -31,7 +32,9 @@ import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -129,12 +132,18 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @Override
   @NotNull
   public PsiClass[] getSupers() {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(getQualifiedName())) {
+      return PsiClass.EMPTY_ARRAY;
+    }
     return PsiClassImplUtil.getSupers(this);
   }
 
   @Override
   @NotNull
   public PsiClassType[] getSuperTypes() {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(getQualifiedName())) {
+      return PsiClassType.EMPTY_ARRAY;
+    }
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
@@ -327,7 +336,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     List<PsiMethod> methods = getOwnMethods();
     List<PsiClass> classes = getOwnInnerClasses();
 
-    if (fields.size() > 0) {
+    if (!fields.isEmpty()) {
       goNextLine(newIndentLevel, buffer);
 
       for (int i = 0; i < fields.size(); i++) {
@@ -356,8 +365,8 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       buffer.append(";");
     }
 
-    if (methods.size() > 0) {
-      if (isEnum() || fields.size() > 0) {
+    if (!methods.isEmpty()) {
+      if (isEnum() || !fields.isEmpty()) {
         buffer.append('\n');
       }
       goNextLine(newIndentLevel, buffer);
@@ -372,7 +381,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       }
     }
 
-    if (classes.size() > 0) {
+    if (!classes.isEmpty()) {
       if (fields.size() + methods.size() > 0) {
         buffer.append('\n');
       }
@@ -406,9 +415,17 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     setMirror(getExtendsList(), mirror.getExtendsList());
     setMirror(getImplementsList(), mirror.getImplementsList());
 
-    setMirrors(getOwnFields(), mirror.getFields());
-    setMirrors(getOwnMethods(), mirror.getMethods());
-    setMirrors(getOwnInnerClasses(), mirror.getInnerClasses());
+    if (mirror instanceof PsiExtensibleClass) {
+      PsiExtensibleClass extMirror = (PsiExtensibleClass)mirror;
+      setMirrors(getOwnFields(), extMirror.getOwnFields());
+      setMirrors(getOwnMethods(), extMirror.getOwnMethods());
+      setMirrors(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
+    }
+    else {
+      setMirrors(getOwnFields(), mirror.getFields());
+      setMirrors(getOwnMethods(), mirror.getMethods());
+      setMirrors(getOwnInnerClasses(), mirror.getInnerClasses());
+    }
   }
 
   @Override
@@ -431,7 +448,8 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
+    LanguageLevel languageLevel = processor instanceof MethodsProcessor ? ((MethodsProcessor)processor).getLanguageLevel() : PsiUtil.getLanguageLevel(place);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, languageLevel, false);
   }
 
   @Override

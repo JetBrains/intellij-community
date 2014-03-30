@@ -45,4 +45,17 @@ public class AutoBoxing {
         Byte s = 8;
         Short j = (byte)7;
     }
+
+    void polyadic() {
+        Integer i = 1 + 2 + 3;
+    }
+
+    void doInstanceof(Object o) {
+        Boolean b = o instanceof String;
+    }
+
+    void m(boolean b) {
+      System.out.println((Boolean)b);
+      final Object o1 = (Object) b;
+    }
 }

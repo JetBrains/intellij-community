@@ -118,6 +118,9 @@ public class ClockPanel extends JComponent {
       g.setColor(UIManager.getColor("Label.foreground"));
       myCalendar.setTimeInMillis(System.currentTimeMillis());
       int hours = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR);
+      if (hours == 0 && !is24Hours) {
+        hours = 12;
+      }
       int minutes = myCalendar.get(MINUTE);
       int x = 0;
       int y = (getHeight() - h) / 2;

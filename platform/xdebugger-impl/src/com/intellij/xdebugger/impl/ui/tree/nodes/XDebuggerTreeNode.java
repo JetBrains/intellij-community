@@ -15,8 +15,10 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -31,7 +33,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public abstract class XDebuggerTreeNode implements TreeNode {
+public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.PathAwareTreeNode {
   protected final XDebuggerTree myTree;
   private final XDebuggerTreeNode myParent;
   private boolean myLeaf;
@@ -45,32 +47,39 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     myTree = tree;
   }
 
+  @Override
   public TreeNode getChildAt(final int childIndex) {
     if (isLeaf()) return null;
     return getChildren().get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return isLeaf() ? 0 : getChildren().size();
   }
 
+  @Override
   public TreeNode getParent() {
     return myParent;
   }
 
+  @Override
   public int getIndex(final TreeNode node) {
     if (isLeaf()) return -1;
     return getChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     return true;
   }
 
+  @Override
   public boolean isLeaf() {
     return myLeaf;
   }
 
+  @Override
   public Enumeration children() {
     if (isLeaf()) {
       return EmptyEnumeration.INSTANCE;
@@ -78,7 +87,8 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return Collections.enumeration(getChildren());
   }
 
-  protected abstract List<? extends TreeNode> getChildren();
+  @NotNull
+  public abstract List<? extends TreeNode> getChildren();
 
   protected void setIcon(final Icon icon) {
     myIcon = icon;
@@ -128,7 +138,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   protected int[] getNodesIndices(@Nullable Collection<? extends TreeNode> children) {
-    if (children == null) return new int[0];
+    if (children == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
     final int[] ints = new int[children.size()];
     int i = 0;
@@ -151,6 +161,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     return myTree;
   }
 
+  @Override
   public TreePath getPath() {
     if (myPath == null) {
       TreePath path;
@@ -170,7 +181,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
 
   public abstract void clearChildren();
 
-  public void appendToComponent(SimpleColoredComponent component) {
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
     getText().appendToComponent(component);
 
     XDebuggerTreeNodeHyperlink link = getLink();

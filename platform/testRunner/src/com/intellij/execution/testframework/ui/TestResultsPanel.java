@@ -15,8 +15,7 @@
  */
 package com.intellij.execution.testframework.ui;
 
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
 import com.intellij.execution.testframework.ToolbarPanel;
@@ -45,27 +44,25 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
   private Splitter myStatisticsSplitter;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
+  protected final ExecutionEnvironment myEnvironment;
   private final String mySplitterProportionProperty;
   private final String myStatisticsSplitterProportionProperty;
   private final float mySplitterDefaultProportion;
-  protected final RunnerSettings myRunnerSettings;
-  protected final ConfigurationPerRunnerSettings myConfigurationSettings;
   protected final AnAction[] myConsoleActions;
   protected final TestConsoleProperties myProperties;
   protected TestStatusLine myStatusLine;
 
   protected TestResultsPanel(@NotNull JComponent console, AnAction[] consoleActions, TestConsoleProperties properties,
-                             RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings,
+                             ExecutionEnvironment environment,
                              String splitterProportionProperty, float splitterDefaultProportion) {
     super(new BorderLayout(0,1));
     myConsole = console;
     myConsoleActions = consoleActions;
     myProperties = properties;
+    myEnvironment = environment;
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
     myStatisticsSplitterProportionProperty = mySplitterProportionProperty + "_Statistics";
-    myRunnerSettings = runnerSettings;
-    myConfigurationSettings = configurationSettings;
   }
 
   public void initUI() {
@@ -118,6 +115,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     });
     rightPanel.add(myStatisticsSplitter, BorderLayout.CENTER);
     splitter.setSecondComponent(rightPanel);
+    testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
   }
 
@@ -128,7 +126,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
   protected abstract JComponent createStatisticsPanel();
 
   protected ToolbarPanel createToolbarPanel() {
-    return new ToolbarPanel(myProperties, myRunnerSettings, myConfigurationSettings, this);
+    return new ToolbarPanel(myProperties, myEnvironment, this);
   }
 
   protected TestStatusLine createStatusLine() {
@@ -139,6 +137,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
 
   private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
     JPanel outputTab = new JPanel(new BorderLayout());
+    console.setFocusable(true);
     outputTab.add(console, BorderLayout.CENTER);
     final DefaultActionGroup actionGroup = new DefaultActionGroup(consoleActions);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);

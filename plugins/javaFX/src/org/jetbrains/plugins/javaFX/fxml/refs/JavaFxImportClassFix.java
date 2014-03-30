@@ -29,7 +29,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 */
 abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTagNameReference> {
 
-  public JavaFxImportClassFix(JavaFxTagNameReference ref, XmlTag element) {
+  public JavaFxImportClassFix(@NotNull JavaFxTagNameReference ref, @NotNull XmlTag element) {
     super(element, ref);
   }
 

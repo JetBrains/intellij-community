@@ -31,13 +31,13 @@ import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -46,13 +46,11 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.EditorTextFieldWithBrowseButton;
-import com.intellij.ui.InsertPathAction;
-import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -217,7 +215,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       }
     });
 
-    myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
+    UIUtil.setEnabled(myCommonJavaParameters.getProgramParametersComponent(), false, true);
 
     setAnchor(mySearchForTestsLabel);
     myModule.setAnchor(myAlternativeJREPanel.getCbEnabled());
@@ -382,7 +380,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }));
 
     myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
-    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true);
+    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true, 
+                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+                                                                                                          PlainTextLanguage.INSTANCE.getAssociatedFileType());
     new TextFieldCompletionProvider() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
@@ -486,7 +486,11 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   }
 
   private void onScopeChanged() {
-    myModule.setEnabled(((Integer)myTypeChooser.getSelectedItem()) != JUnitConfigurationModel.ALL_IN_PACKAGE || !myWholeProjectScope.isSelected());
+    final boolean allInPackageAllInProject = ((Integer)myTypeChooser.getSelectedItem()) == JUnitConfigurationModel.ALL_IN_PACKAGE && myWholeProjectScope.isSelected();
+    myModule.setEnabled(!allInPackageAllInProject);
+    if (allInPackageAllInProject) {
+      myModule.getComponent().setSelectedItem(null);
+    }
   }
 
   private class TestClassBrowser extends ClassBrowser {
@@ -568,9 +572,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   @NotNull
   public JComponent createEditor() {
     return myWholePanel;
-  }
-
-  public void disposeEditor() {
   }
 
   private void applyHelpersTo(final JUnitConfiguration currentState) {

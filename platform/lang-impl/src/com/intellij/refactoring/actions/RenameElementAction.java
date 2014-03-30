@@ -33,10 +33,12 @@ public class RenameElementAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length != 1) return false;
 
@@ -44,6 +46,7 @@ public class RenameElementAction extends BaseRefactoringAction {
     return element instanceof PsiNamedElement && !(element instanceof SyntheticElement);
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
   }
@@ -53,10 +56,12 @@ public class RenameElementAction extends BaseRefactoringAction {
     return isEnabledOnDataContext(dataContext);
   }
 
+  @Override
   protected boolean isEnabledOnDataContext(DataContext dataContext) {
     return RenameHandlerRegistry.getInstance().hasAvailableHandler(dataContext);
   }
 
+  @Override
   protected boolean isAvailableForLanguage(Language language) {
     return true;
   }

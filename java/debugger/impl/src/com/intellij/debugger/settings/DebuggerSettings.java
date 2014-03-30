@@ -64,7 +64,7 @@ public class DebuggerSettings implements JDOMExternalizable, NamedComponent, Clo
   public String EVALUATION_DIALOG_TYPE;
   public String RUN_HOTSWAP_AFTER_COMPILE;
   public boolean COMPILE_BEFORE_HOTSWAP;
-  public boolean HOTSWAP_HANG_WARNING_ENABLED = true;
+  public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;

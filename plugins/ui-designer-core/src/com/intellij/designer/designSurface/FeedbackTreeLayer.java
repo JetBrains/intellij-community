@@ -27,6 +27,8 @@ public interface FeedbackTreeLayer {
 
   void mark(RadComponent component, int feedback);
 
+  void unmark();
+
   boolean isBeforeLocation(RadComponent component, int x, int y);
 
   boolean isAfterLocation(RadComponent component, int x, int y);

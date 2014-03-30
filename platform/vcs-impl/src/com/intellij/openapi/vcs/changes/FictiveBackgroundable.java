@@ -44,6 +44,11 @@ class FictiveBackgroundable extends Task.Backgroundable {
       }, myState == null ? ModalityState.NON_MODAL : myState, myProject);
   }
 
+  @Override
+  public boolean isHeadless() {
+    return false;
+  }
+
   public void done() {
     myWaiter.done();
   }

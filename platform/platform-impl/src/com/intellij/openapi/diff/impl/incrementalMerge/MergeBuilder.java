@@ -18,203 +18,144 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
 import com.intellij.openapi.util.TextRange;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class MergeBuilder {
-  private final ContextLogger LOG;
-  private final int[] myProcessed = new int[]{0, 0, 0};
-  private final ArrayList<MergeFragment> myResult = new ArrayList<MergeFragment>();
-  private final EqualPair[] myPairs = new EqualPair[2];
+  @NotNull private final ContextLogger LOG;
 
-  public MergeBuilder(ContextLogger log) {
+  @NotNull private final ArrayList<MergeFragment> myResult = new ArrayList<MergeFragment>();
+
+  @NotNull private final int[] myProcessed = new int[]{0, 0, 0}; // LEFT aka SIDE1, RIGHT aka SIDE2, BASE
+  @NotNull private final EqualPair[] myPairs = new EqualPair[2]; // LEFT, RIGHT
+
+  public MergeBuilder(@NotNull ContextLogger log) {
     LOG = log;
   }
 
-  public void add(TextRange base, TextRange version, FragmentSide side) {
-    LOG.assertTrue(base.getLength() == version.getLength());
-    myPairs[side.getIndex()] = new EqualPair(base.getStartOffset(),
-                                             version.getStartOffset(), base.getLength(), side, LOG);
-    if (myPairs[side.otherSide().getIndex()] == null) return;
-    if (myPairs[0].baseStartFrom(myProcessed) && myPairs[1].baseStartFrom(myProcessed)) {
-      processInsertOrConflict();
-      return;
-    }
-    if (processNoIntersection()) return;
-    for (int i = 0; i < myPairs.length; i++) {
-      EqualPair pair = myPairs[i];
-      if (pair.startsFrom(myProcessed)) {
-        processDeleteOrChange(FragmentSide.fromIndex(i).otherSide());
-        return;
-      }
-    }
-    if (!removeSingleSideBase()) return;
-    LOG.assertTrue(myPairs[0].getBase() == myPairs[1].getBase());
-    LOG.assertTrue(myPairs[0].getBase() > myProcessed[1]);
-    addMergeFragment(myPairs[0].processVersion(myProcessed),
-                     processBaseChange(myPairs[0]),
-                     myPairs[1].processVersion(myProcessed));
-    skipProcessed();
+  /*
+   * ASSERT: all unchanged blocks should be squashed
+   *   add(B1, V1 ...); | -> B2.getStartOffset() > B1.getEndOffset() || V2.getStartOffset() > V1.getEndOffset()
+   *   add(B2, V2 ...); |
+   */
+  public void add(@NotNull TextRange base, @NotNull TextRange version, @NotNull FragmentSide side) {
+    int index = side.getIndex();
+    int otherIndex = side.otherSide().getIndex();
+    EqualPair pair = new EqualPair(base, version, side);
+
+    LOG.assertTrue(myPairs[index] == null || pair.getBaseStart() - myPairs[index].getBaseEnd() >= 0); // '==' can be in case of insertion
+    LOG.assertTrue(myPairs[otherIndex] == null || pair.getBaseStart() >= myPairs[otherIndex].getBaseStart());
+
+    myPairs[index] = pair;
+    if (myPairs[otherIndex] != null && myPairs[index].getBaseStart() >= myPairs[otherIndex].getBaseEnd()) myPairs[otherIndex] = null;
+
+    process();
   }
 
-  private boolean processNoIntersection() {
-    FragmentSide firstSide = getFirstSide();
-    int firstIndex = firstSide.getIndex();
-    if (myPairs[firstIndex].getBaseEnd() <= myPairs[firstSide.otherSide().getIndex()].getBase()) {
-      myPairs[firstIndex] = null;
-      return true;
-    }
-    return false;
-  }
-
-  private boolean removeSingleSideBase() {
-    FragmentSide firstSide = getFirstSide();
-    int firstIndex = firstSide.getIndex();
-    int singleSideDelta = myPairs[firstSide.otherSide().getIndex()].getBase() - myPairs[firstIndex].getBase();
-    if (singleSideDelta >= myPairs[firstIndex].getLength()) {
-      LOG.notTested();
-      myPairs[firstIndex] = null;
-      return false;
-    }
-    if (!myPairs[firstIndex].cutHead(singleSideDelta)) {
-      LOG.notTested();
-      myPairs[firstIndex] = null;
-      return false;
-    }
-    return true;
-  }
-
-  private FragmentSide getFirstSide() {
-    return myPairs[0].getBase() < myPairs[1].getBase() ? FragmentSide.SIDE1 : FragmentSide.SIDE2;
-  }
-
-  private void processDeleteOrChange(FragmentSide side) {
-    EqualPair workingPair = myPairs[side.getIndex()];
-    EqualPair otherPair = myPairs[side.otherSide().getIndex()];
-    LOG.assertTrue(!workingPair.baseStartFrom(myProcessed) &&
-                   otherPair.baseStartFrom(myProcessed));
-    TextRange versionChange = workingPair.processVersion(myProcessed);
-    TextRange baseChange = new TextRange(myProcessed[1], workingPair.getBase());
-    int changeLength = workingPair.getBase() - myProcessed[1];
-    myProcessed[1] += changeLength;
-    myProcessed[otherPair.getSide().getMergeIndex()] += changeLength;
-    myProcessed[side.getMergeIndex()] = workingPair.getVersion();
-    boolean stillValid = otherPair.cutHead(changeLength);
-    LOG.assertTrue(stillValid);
-    myResult.add(MergeFragment.notConflict(baseChange, versionChange, side));
-    skipProcessed();
-  }
-
-  private TextRange processBaseChange(EqualPair workingPair) {
-    int base = workingPair.getBase();
-    TextRange change = new TextRange(myProcessed[1], base);
-    int otherBase = myPairs[workingPair.getSide().otherSide().getIndex()].getBase();
-    LOG.assertTrue(otherBase >= base);
-    myProcessed[1] = base;
-    return change;
-  }
-
-  private void processInsertOrConflict() {
-    boolean leftVersionProcessed = myPairs[0].versionStartsFrom(myProcessed);
-    boolean rightVersionProcessed = myPairs[1].versionStartsFrom(myProcessed);
-    TextRange emptyBase = new TextRange(myProcessed[1], myProcessed[1]);
-    if (!leftVersionProcessed && rightVersionProcessed) {
-      addMergeFragment(myPairs[0].processVersion(myProcessed), emptyBase, null);
-    } else if (!rightVersionProcessed && leftVersionProcessed) {
-      addMergeFragment(null, emptyBase, myPairs[1].processVersion(myProcessed));
-    } else  if (!leftVersionProcessed && !rightVersionProcessed) {
-      addMergeFragment(myPairs[0].processVersion(myProcessed), emptyBase, myPairs[1].processVersion(myProcessed));
-    }
-    skipProcessed();
-  }
-
-  private void addMergeFragment(@Nullable TextRange left, TextRange base, @Nullable TextRange right) {
-    myResult.add(new MergeFragment(left, base, right));
-  }
-
-  private void skipProcessed() {
-    LOG.assertTrue(myProcessed[0] == myPairs[0].getVersion());
-    LOG.assertTrue(myProcessed[2] == myPairs[1].getVersion());
-    LOG.assertTrue(myPairs[0].getBase() == myPairs[1].getBase());
-    LOG.assertTrue(myPairs[0].getBase() == myProcessed[1]);
-    int processedDelta = Math.min(myPairs[0].getBaseEnd(), myPairs[1].getBaseEnd()) - myProcessed[1];
-    LOG.assertTrue(processedDelta > 0);
-    for (int i = 0; i < myProcessed.length; i++) myProcessed[i] += processedDelta;
-    for (int i = 0; i < myPairs.length; i++)
-      if (!myPairs[i].cutHead(processedDelta)) myPairs[i] = null;
-    LOG.assertTrue(myPairs[0] == null || myPairs[1] == null);
-  }
-
+  @NotNull
   public List<MergeFragment> finish(int leftLength, int baseLength, int rightLength) {
-    int[] lengths = new int[]{ leftLength, baseLength, rightLength };
-    if (isProcessedUpto(lengths)) {
-      return myResult;
+    if (!compare(new int[]{leftLength, rightLength, baseLength}, myProcessed)) {
+      processConflict(leftLength, baseLength, rightLength);
     }
-    int[] afterEnds = new int[3];
-    for (int i = 0; i < lengths.length; i++) {
-      afterEnds[i] = lengths[i] + 1;
-    }
-    FragmentSide notProcessedSide = getNotProcessedSide();
-    if (notProcessedSide == null) {
-      addTailChange(lengths);
-      return myResult;
-    }
-    myPairs[notProcessedSide.getIndex()].grow(1);
-    FragmentSide processedSide = notProcessedSide.otherSide();
-    add(createRange(lengths, afterEnds, 1), createRange(lengths, afterEnds, processedSide.getMergeIndex()), processedSide);
-    if (!isProcessedUpto(afterEnds)) {
-      add(createRange(lengths, afterEnds, 1), createRange(lengths, afterEnds, notProcessedSide.getMergeIndex()), notProcessedSide);
-    }
-    LOG.assertTrue(isProcessedUpto(afterEnds));
     return myResult;
   }
 
-  private static TextRange createRange(int[] starts, int[] ends, int column) {
-    return new TextRange(starts[column], ends[column]);
-  }
+  // see "A Formal Investigation of Diff3"
+  private void process() {
+    while (myPairs[0] != null && myPairs[1] != null) {
+      if (myPairs[0].startsFrom(myProcessed) && myPairs[1].startsFrom(myProcessed)) {
+        // process stable
+        int len = Math.min(myPairs[0].getLength(), myPairs[1].getLength());
+        if (!myPairs[0].cutHead(len)) {
+          myPairs[0] = null;
+        }
+        if (!myPairs[1].cutHead(len)) {
+          myPairs[1] = null;
+        }
+        myProcessed[0] += len;
+        myProcessed[1] += len;
+        myProcessed[2] += len;
+      }
+      else {
+        // process unstable
+        int nextBase = Math.max(myPairs[0].getBaseStart(), myPairs[1].getBaseStart());
+        int[] nextVersion = new int[2];
+        nextVersion[0] = nextBase - myPairs[0].getBaseStart() + myPairs[0].getVersionStart();
+        nextVersion[1] = nextBase - myPairs[1].getBaseStart() + myPairs[1].getVersionStart();
 
-  private void addTailChange(int[] lengths) {
-    TextRange[] tailChange = new TextRange[3];
-    for (int i = 0; i < tailChange.length; i++) {
-      if (i != 1 && myProcessed[i] == lengths[i]) tailChange[i] = null;
-      else tailChange[i] = new TextRange(myProcessed[i], lengths[i]);
+        processConflict(nextVersion[0], nextBase, nextVersion[1]);
+
+        if (!myPairs[0].cutHead(nextBase - myPairs[0].getBaseStart())) {
+          myPairs[0] = null;
+        }
+        if (!myPairs[1].cutHead(nextBase - myPairs[1].getBaseStart())) {
+          myPairs[1] = null;
+        }
+      }
     }
-    myResult.add(new MergeFragment(tailChange[0], tailChange[1], tailChange[2]));
   }
 
-  @Nullable
-  private FragmentSide getNotProcessedSide() {
-    EqualPair left = myPairs[0];
-    EqualPair right = myPairs[1];
-    LOG.assertTrue(left == null || right == null);
-    if (left != null) return FragmentSide.SIDE1;
-    if (right != null) return FragmentSide.SIDE2;
-    return null;
+  private void processConflict(int nextLeft, int nextBase, int nextRight) {
+      addConflict(new TextRange(myProcessed[0], nextLeft),
+                  new TextRange(myProcessed[2], nextBase),
+                  new TextRange(myProcessed[1], nextRight));
+
+    myProcessed[0] = nextLeft;
+    myProcessed[1] = nextRight;
+    myProcessed[2] = nextBase;
   }
 
-  private boolean isProcessedUpto(int[] lengths) {
+  private void addConflict(@NotNull TextRange left, @NotNull TextRange base, @NotNull TextRange right) {
+    myResult.add(new MergeFragment(left, base, right));
+  }
+
+  private static boolean compare(@NotNull int[] lengths, @NotNull int[] processed) {
     for (int i = 0; i < lengths.length; i++) {
-      int length = lengths[i];
-      if (length != myProcessed[i]) return false;
+      if (lengths[i] != processed[i]) return false;
     }
     return true;
   }
 
-  private static class EqualPair {
-    private final ContextLogger LOG;
-    private int myVersionStart;
+  private class EqualPair {
     private int myBaseStart;
+    private int myVersionStart;
     private int myLength;
     private final FragmentSide mySide;
 
-    public EqualPair(int baseStart, int versionStart, int length, FragmentSide side, ContextLogger log) {
-      LOG = log;
-      myBaseStart = baseStart;
-      myVersionStart = versionStart;
-      myLength = length;
+    public EqualPair(@NotNull TextRange base, @NotNull TextRange version, @NotNull FragmentSide side) {
+      LOG.assertTrue(base.getLength() == version.getLength());
+      LOG.assertTrue(base.getLength() > 0);
+      myBaseStart = base.getStartOffset();
+      myVersionStart = version.getStartOffset();
+      myLength = base.getLength();
       mySide = side;
+    }
+
+    public int getBaseStart() {
+      return myBaseStart;
+    }
+
+    public int getVersionStart() {
+      return myVersionStart;
+    }
+
+    public int getLength() {
+      return myLength;
+    }
+
+    public int getBaseEnd() {
+      return myBaseStart + myLength;
+    }
+
+    @NotNull
+    public FragmentSide getSide() {
+      return mySide;
+    }
+
+    public int getIndex() {
+      return mySide.getIndex();
     }
 
     public boolean startsFrom(int[] bound) {
@@ -222,49 +163,20 @@ class MergeBuilder {
     }
 
     public boolean versionStartsFrom(int[] bound) {
-      return myVersionStart == bound[mySide.getMergeIndex()];
+      return myVersionStart == bound[mySide.getIndex()];
     }
 
     public boolean baseStartFrom(int[] bound) {
-      return myBaseStart == bound[1];
+      return myBaseStart == bound[2];
     }
 
-    public int getBaseEnd() {
-      return myBaseStart + myLength;
-    }
-
-    public int getVersion() {
-      return myVersionStart;
-    }
-
-    public TextRange processVersion(int[] processed) {
-      TextRange change = new TextRange(processed[mySide.getMergeIndex()], getVersion());
-      processed[mySide.getMergeIndex()] = getVersion();
-      return change;
-    }
-
-    public boolean cutHead(int processedDelta) {
-      LOG.assertTrue(myLength >= processedDelta);
-      myBaseStart += processedDelta;
-      myVersionStart += processedDelta;
-      myLength -= processedDelta;
+    public boolean cutHead(int delta) {
+      LOG.assertTrue(myLength >= delta);
+      LOG.assertTrue(delta >= 0);
+      myBaseStart += delta;
+      myVersionStart += delta;
+      myLength -= delta;
       return myLength > 0;
-    }
-
-    public int getBase() {
-      return myBaseStart;
-    }
-
-    public int getLength() {
-      return myLength;
-    }
-
-    public FragmentSide getSide() {
-      return mySide;
-    }
-
-    public void grow(int delta) {
-      myLength += delta;
     }
   }
 }

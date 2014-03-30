@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,7 +30,7 @@ class MoveLineHandler extends BaseMoveHandler {
 
   @Override
   @Nullable
-  protected MoverWrapper getSuitableMover(final Editor editor, final PsiFile file) {
+  protected MoverWrapper getSuitableMover(@NotNull final Editor editor, @NotNull final PsiFile file) {
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
     info.indentTarget = false;
     final StatementUpDownMover mover = new LineMover();

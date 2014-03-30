@@ -18,11 +18,13 @@ public class TemplateDataHighlighterWrapper implements SyntaxHighlighter {
     myHighlighter = highlighter;
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return myHighlighter.getHighlightingLexer();
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(final IElementType tokenType) {
     if (tokenType == BAD_CHARACTER) {

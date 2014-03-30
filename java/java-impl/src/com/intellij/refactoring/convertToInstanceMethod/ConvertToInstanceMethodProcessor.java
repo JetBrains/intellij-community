@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodViewDescriptor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -132,6 +133,28 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.makeInstance";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(new PsiElement[]{myMethod, myTargetClass});
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myTargetClass);
+    return data;
+  }
+
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
@@ -187,7 +210,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     myTypeParameterReplacements = buildTypeParameterReplacements();
     List<PsiClass> inheritors = new ArrayList<PsiClass>();
 
-    RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
+    CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
     // Process usages
     for (final UsageInfo usage : usages) {

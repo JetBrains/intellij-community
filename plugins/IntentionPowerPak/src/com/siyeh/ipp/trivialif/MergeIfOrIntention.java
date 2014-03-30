@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MergeIfOrIntention extends Intention {
 
@@ -95,7 +96,7 @@ public class MergeIfOrIntention extends Intention {
       statement.append(childElseBranchText);
     }
     final String newStatement = statement.toString();
-    replaceStatement(newStatement, parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, newStatement);
   }
 
   private static void replaceMergeableImplicitIf(PsiJavaToken token)
@@ -147,7 +148,7 @@ public class MergeIfOrIntention extends Intention {
       newStatement.append("else ");
       newStatement.append(childElseBranch.getText());
     }
-    replaceStatement(newStatement.toString(), parentStatement);
+    PsiReplacementUtil.replaceStatement(parentStatement, newStatement.toString());
     childStatement.delete();
   }
 }

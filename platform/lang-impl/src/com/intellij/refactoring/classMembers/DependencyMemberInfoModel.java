@@ -43,18 +43,22 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     myTooltipManager = new MemberInfoTooltipManager<T, M>(tooltipProvider);
   }
 
+  @Override
   public boolean isAbstractEnabled(M member) {
     return true;
   }
 
+  @Override
   public boolean isAbstractWhenDisabled(M member) {
     return false;
   }
 
+  @Override
   public boolean isMemberEnabled(M member) {
     return true;
   }
 
+  @Override
   public int checkForProblems(@NotNull M memberInfo) {
     if (memberInfo.isChecked()) return OK;
     final T member = memberInfo.getMember();
@@ -69,6 +73,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     myMemberDependencyGraph = memberDependencyGraph;
   }
 
+  @Override
   public void memberInfoChanged(MemberInfoChange<T, M> event) {
     memberInfoChanged(event.getChangedMembers());
   }
@@ -80,6 +85,7 @@ public abstract class DependencyMemberInfoModel<T extends PsiElement, M extends 
     }
   }
 
+  @Override
   public String getTooltipText(M member) {
     if (myTooltipManager != null) {
       return myTooltipManager.getTooltip(member);

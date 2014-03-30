@@ -18,6 +18,7 @@ package git4idea.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +27,8 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.history.browser.GitCommit;
+import git4idea.GitCommit;
+import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +36,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * A table with the list of commits.
@@ -51,7 +55,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
 
     myTable = new TableView<GitCommit>();
     updateModel();
-    myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.setStriped(true);
     if (emptyText != null) {
       myTable.getEmptyText().setText(emptyText);
@@ -69,9 +73,27 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
       public void valueChanged(final ListSelectionEvent e) {
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
         int i = lsm.getMaxSelectionIndex();
-        if (i >= 0) {
+        int j = lsm.getMinSelectionIndex();
+        if (i >= 0 && i == j) {
           listener.consume(myCommits.get(i));
         }
+      }
+    });
+  }
+
+  public void addListMultipleSelectionListener(final @NotNull Consumer<List<Change>> listener) {
+    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(final ListSelectionEvent e) {
+        List<GitCommit> commits = myTable.getSelectedObjects();
+
+        final List<Change> changes = new ArrayList<Change>();
+        // We need changes in asc order for zipChanges, and they are in desc order in Table
+        ListIterator<GitCommit> iterator = commits.listIterator(commits.size());
+        while (iterator.hasPrevious()) {
+          changes.addAll(iterator.previous().getChanges());
+        }
+
+        listener.consume(CommittedChangesTreeBrowser.zipChanges(changes));
       }
     });
   }
@@ -176,15 +198,15 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getHash(GitCommit commit) {
-    return commit.getShortHash().toString();
+    return GitUtil.getShortHash(commit.getHash().toString());
   }
 
   private static String getAuthor(GitCommit commit) {
-    return commit.getAuthor();
+    return commit.getAuthor().getName();
   }
 
   private static String getTime(GitCommit commit) {
-    return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
+    return DateFormatUtil.formatPrettyDateTime(commit.getTime());
   }
 
   private abstract static class GitCommitColumnInfo extends ColumnInfo<GitCommit, String> {

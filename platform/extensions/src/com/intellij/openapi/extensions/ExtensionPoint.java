@@ -52,6 +52,7 @@ public interface ExtensionPoint<T> {
 
   void reset();
 
+  @NotNull
   Class<T> getExtensionClass();
 
   @NotNull

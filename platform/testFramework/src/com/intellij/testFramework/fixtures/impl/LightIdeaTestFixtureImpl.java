@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -28,17 +29,17 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.TestDataProvider;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import gnu.trove.THashMap;
 
 /**
  * @author mike
  */
+@SuppressWarnings("TestOnlyProblems")
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
+  private CodeStyleSettings myOldCodeStyleSettings;
 
   public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -49,9 +50,12 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionTool>());
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionToolWrapper>());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    storeSettings();
+
+    myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
+    myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+
     application.setDataProvider(new TestDataProvider(getProject()));
   }
 
@@ -59,22 +63,24 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
   public void tearDown() throws Exception {
     Project project = getProject();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    checkForSettingsDamage();
+    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
+    myOldCodeStyleSettings = null;
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    CompositeException damage = UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
 
     LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true);
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
     PersistentFS.getInstance().clearIdCache();
-      ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
+    ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
+    damage.throwIfNotEmpty();
   }
-
 
   @Override
   public Project getProject() {
     return LightPlatformTestCase.getProject();
   }
 
-  @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getSettings(getProject());

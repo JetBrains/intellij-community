@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author ilyas
@@ -35,24 +29,8 @@ public class GrAdditiveExpressionImpl extends GrBinaryExpressionImpl {
     super(node);
   }
 
-  private static boolean isStringType(@Nullable PsiType type) {
-    return type != null && (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) || type.equalsToText(GroovyCommonClassNames.GROOVY_LANG_GSTRING));
-  }
-
   public String toString() {
     return "Additive expression";
   }
 
-  protected PsiType calcType() {
-    final PsiType numeric = TypesUtil.getNumericResultType(this);
-    if (numeric != null) return numeric;
-
-    if (getOperationTokenType() == GroovyTokenTypes.mPLUS) {
-      if (isStringType(getLeftOperandType()) || isStringType(getRightOperandType())) {
-        return getTypeByFQName(CommonClassNames.JAVA_LANG_STRING);
-      }
-    }
-
-    return super.calcType();
-  }
 }

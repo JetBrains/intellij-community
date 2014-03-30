@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.file;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -26,7 +27,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class JavaUpdateAddedFileProcessor extends UpdateAddedFileProcessor {
   @Override
-  public boolean canProcessElement(final PsiFile file) {
+  public boolean canProcessElement(@NotNull final PsiFile file) {
     return file instanceof PsiClassOwner;
   }
 

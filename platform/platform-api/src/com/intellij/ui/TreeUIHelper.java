@@ -16,8 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 
 /**
  * @author yole
@@ -44,6 +46,8 @@ public abstract class TreeUIHelper {
 
   public abstract void installTreeSpeedSearch(JTree tree);
   public abstract void installListSpeedSearch(JList list);
+  public abstract void installTreeSpeedSearch(JTree tree, Convertor<TreePath, String> convertor, boolean canExpand);
+  public abstract void installListSpeedSearch(JList list, Convertor<Object, String> convertor);
 
   public abstract void installEditSourceOnEnterKeyHandler(JTree tree);
 

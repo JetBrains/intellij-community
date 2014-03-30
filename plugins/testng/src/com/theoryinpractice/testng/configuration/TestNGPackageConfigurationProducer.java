@@ -19,8 +19,10 @@ import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.theoryinpractice.testng.model.TestData;
@@ -28,30 +30,23 @@ import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
 public class TestNGPackageConfigurationProducer extends TestNGConfigurationProducer {
-  private PsiPackage myPackage = null;
 
-  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    final Project project = location.getProject();
-    final PsiElement element = location.getPsiElement();
-    myPackage = checkPackage(element);
-    if (myPackage == null) return null;
-    if (!LocationUtil.isJarAttached(location, myPackage, TestNGUtil.TEST_ANNOTATION_FQN)) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
+  @Override
+  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    final PsiElement element = context.getPsiLocation();
+    PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
+    if (aPackage == null) return false;
+    final Location location = context.getLocation();
+    if (!LocationUtil.isJarAttached(location, aPackage, TestNGUtil.TEST_ANNOTATION_FQN)) return false;
     final TestData data = configuration.data;
-    data.PACKAGE_NAME = myPackage.getQualifiedName();
+    data.PACKAGE_NAME = aPackage.getQualifiedName();
     data.TEST_OBJECT = TestType.PACKAGE.getType();
-    data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
+    data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
+    sourceElement.set(aPackage);
+    return true;
   }
 
-  public PsiElement getSourceElement() {
-    return myPackage;
-  }
-
-  public int compareTo(final Object o) {
-    return PREFERED;
-  }
 }

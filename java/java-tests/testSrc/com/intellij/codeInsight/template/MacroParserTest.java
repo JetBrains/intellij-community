@@ -10,13 +10,13 @@ import com.intellij.testFramework.LightIdeaTestCase;
 public class MacroParserTest extends LightIdeaTestCase {
 
   public void testEmpty() {
-    Expression e = TemplateImplUtil.parseTemplate("");
+    Expression e = MacroParser.parse("");
     assertTrue(e instanceof ConstantNode);
     assertEquals("", e.calculateResult(null).toString());
   }
 
   public void testFunction() {
-    Expression e = TemplateImplUtil.parseTemplate("  variableOfType(  \"java.util.Collection\"  )   ");
+    Expression e = MacroParser.parse("  variableOfType(  \"java.util.Collection\"  )   ");
     assertTrue(e instanceof MacroCallNode);
     MacroCallNode n = (MacroCallNode) e;
     assertTrue(n.getMacro() instanceof VariableOfTypeMacro);
@@ -28,7 +28,7 @@ public class MacroParserTest extends LightIdeaTestCase {
   }
 
   public void testVariable() {
-    Expression e = TemplateImplUtil.parseTemplate("variableOfType(E=\"t\")");
+    Expression e = MacroParser.parse("variableOfType(E=\"t\")");
     Expression[] parameters = ((MacroCallNode) e).getParameters();
     assertEquals(1, parameters.length);
     assertTrue(parameters [0] instanceof VariableNode);
@@ -38,12 +38,12 @@ public class MacroParserTest extends LightIdeaTestCase {
   }
 
   public void testEnd() {
-    Expression e = TemplateImplUtil.parseTemplate("END");
+    Expression e = MacroParser.parse("END");
     assertTrue(e instanceof EmptyNode);
   }
 
   public void testMultipleParams() {
-    Expression e = TemplateImplUtil.parseTemplate("variableOfType(\"A\", \"B\")");
+    Expression e = MacroParser.parse("variableOfType(\"A\", \"B\")");
     assertTrue(e instanceof MacroCallNode);
     MacroCallNode n = (MacroCallNode) e;
     assertTrue(n.getMacro() instanceof VariableOfTypeMacro);

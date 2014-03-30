@@ -32,6 +32,7 @@ import javax.swing.*;
  */
 public abstract class FacetEditorTab implements Configurable {
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

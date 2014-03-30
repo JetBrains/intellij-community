@@ -53,33 +53,46 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return StringUtil.trimEnd(moduleFile.getName(), ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @Override
   @NotNull
   public String getModuleName() {
     return myModuleName;
   }
 
+  @Override
   @Nullable
   public String getModuleType() {
     return getRootElement().getAttributeValue(ModuleImpl.ELEMENT_TYPE);
   }
 
+  @Override
   @NotNull
   public File getModuleFile() {
     return mySettingsFile.getFile();
   }
 
+  @Override
   @NotNull
   public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
     final Element facetManager = getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     final ArrayList<Element> elements = new ArrayList<Element>();
-    for (Element child : JDOMUtil.getChildren(facetManager, JpsFacetSerializer.FACET_TAG)) {
-      if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
-        elements.add(child);
-      }
-    }
+
+    addFacetTypes(facetTypeId, facetManager, elements);
+
     return elements;
   }
 
+  private static void addFacetTypes(@NotNull String facetTypeId, @Nullable Element parent, @NotNull ArrayList<Element> elements) {
+    for (Element child : JDOMUtil.getChildren(parent, JpsFacetSerializer.FACET_TAG)) {
+      if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
+        elements.add(child);
+      } else {
+        addFacetTypes(facetTypeId, child, elements);
+      }
+    }
+  }
+
+  @Override
   public Element getFacetElement(@NotNull String facetTypeId) {
     return ContainerUtil.getFirstItem(getFacetElements(facetTypeId), null);
   }
@@ -95,10 +108,12 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     componentElement.addContent(facetElement);
   }
 
+  @Override
   public void setModuleType(@NotNull String moduleType) {
     getRootElement().setAttribute(ModuleImpl.ELEMENT_TYPE, moduleType);
   }
 
+  @Override
   @NotNull
   public String expandPath(@NotNull String path) {
     return myContext.expandPath(path, this);
@@ -107,9 +122,10 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @NotNull
   @Override
   public String collapsePath(@NotNull String path) {
-    return myContext.collapsePath(path, this);
+    return ConversionContextImpl.collapsePath(path, this);
   }
 
+  @Override
   @NotNull
   public Collection<File> getSourceRoots(boolean includeTests) {
     final List<File> result = new ArrayList<File>();
@@ -128,6 +144,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return JDOMUtil.getChildren(getComponentElement(MODULE_ROOT_MANAGER_COMPONENT), ContentEntryImpl.ELEMENT_NAME);
   }
 
+  @Override
   @NotNull
   public Collection<File> getContentRoots() {
     final List<File> result = new ArrayList<File>();
@@ -138,6 +155,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return result;
   }
 
+  @Override
   @Nullable
   public String getProjectOutputUrl() {
     final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
@@ -146,6 +164,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return outputElement == null ? null : outputElement.getAttributeValue("url");
   }
 
+  @Override
   public void addExcludedFolder(@NotNull File directory) {
     final ComponentManagerSettings rootManagerSettings = myContext.getProjectRootManagerSettings();
     if (rootManagerSettings != null) {
@@ -171,12 +190,14 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     }
   }
 
+  @Override
   @NotNull
   public List<File> getModuleLibraryRoots(String libraryName) {
     final Element library = findModuleLibraryElement(libraryName);
     return library != null ? myContext.getClassRoots(library, this) : Collections.<File>emptyList();
   }
 
+  @Override
   public boolean hasModuleLibrary(String libraryName) {
     return findModuleLibraryElement(libraryName) != null;
   }
@@ -200,6 +221,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
     return JDOMUtil.getChildren(component, OrderEntryFactory.ORDER_ENTRY_ELEMENT_NAME);
   }
 
+  @Override
   @NotNull
   public Collection<ModuleSettings> getAllModuleDependencies() {
     Set<ModuleSettings> dependencies = new HashSet<ModuleSettings>();
@@ -232,7 +254,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
         return;
       }
     }
-    String path = myContext.collapsePath(FileUtil.toSystemIndependentName(directory.getAbsolutePath()), this);
+    String path = ConversionContextImpl.collapsePath(FileUtil.toSystemIndependentName(directory.getAbsolutePath()), this);
     contentRoot.addContent(new Element(ExcludeFolderImpl.ELEMENT_NAME).setAttribute(ExcludeFolderImpl.URL_ATTRIBUTE, VfsUtil.pathToUrl(path)));
   }
 

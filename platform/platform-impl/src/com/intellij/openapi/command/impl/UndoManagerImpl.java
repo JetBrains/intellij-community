@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -258,12 +259,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         Editor editor = null;
         final Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-          editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+          editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
         }
         else {
           Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
           if (component != null) {
-            editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+            editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
           }
         }
 

@@ -16,16 +16,21 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Kirill Likhodedov
@@ -42,38 +47,50 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
 
   @Override
   public void update(AnActionEvent e) {
-    EventData eventData = calcData(e);
-    final boolean enabled = myLineNumber != -1 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
-    e.getPresentation().setEnabled(eventData != null && enabled);
-    e.getPresentation().setVisible(eventData != null && GithubUtil.isRepositoryOnGitHub(eventData.getRepository()));
+    EventData eventData = calcData(e, myLineNumber);
+    if (eventData == null) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setVisible(false);
+      return;
+    }
+    int corrected = eventData.getCorrectedLineNumber();
+    e.getPresentation().setEnabled(corrected >= 0 && myAnnotation.getLineRevisionNumber(corrected) != null);
+    e.getPresentation().setVisible(GithubUtil.isRepositoryOnGitHub(eventData.getRepository()));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    EventData eventData = calcData(e);
+    EventData eventData = calcData(e, myLineNumber);
     if (eventData == null) {
       return;
     }
 
-    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(eventData.getCorrectedLineNumber());
     if (revisionNumber != null) {
       openInBrowser(eventData.getProject(), eventData.getRepository(), revisionNumber.asString());
     }
   }
 
   @Nullable
-  private static EventData calcData(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+  private static EventData calcData(AnActionEvent e, int lineNumber) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || virtualFile == null) {
       return null;
     }
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      return null;
+    }
+    final UpToDateLineNumberProvider myGetUpToDateLineNumber = new UpToDateLineNumberProviderImpl(document, project);
+    int corrected = myGetUpToDateLineNumber.getLineNumber(lineNumber);
+
     GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile);
     if (repository == null) {
       return null;
     }
 
-    return new EventData(project, repository);
+    return new EventData(project, repository, corrected);
   }
 
   @Override
@@ -84,10 +101,12 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
   private static class EventData {
     @NotNull private final Project myProject;
     @NotNull private final GitRepository myRepository;
+    private final int myCorrectedLineNumber;
 
-    private EventData(@NotNull Project project, @NotNull GitRepository repository) {
+    private EventData(@NotNull Project project, @NotNull GitRepository repository, int correctedLineNumber) {
       myProject = project;
       myRepository = repository;
+      myCorrectedLineNumber = correctedLineNumber;
     }
 
     @NotNull
@@ -100,6 +119,9 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
       return myRepository;
     }
 
+    private int getCorrectedLineNumber() {
+      return myCorrectedLineNumber;
+    }
   }
 
 }

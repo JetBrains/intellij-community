@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteralContainer;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
@@ -53,7 +54,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
 
   public PsiType getType() {
     IElementType elemType = getLiteralType(this);
-    return elemType == kNULL ? PsiType.NULL : TypesUtil.getPsiType(this, elemType);
+    return TypesUtil.getPsiType(this, elemType);
   }
 
   public void accept(GroovyElementVisitor visitor) {
@@ -185,7 +186,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   @NotNull
-  public LiteralTextEscaper<GrLiteralImpl> createLiteralTextEscaper() {
+  public LiteralTextEscaper<GrLiteralContainer> createLiteralTextEscaper() {
     return new GrLiteralEscaper(this);
   }
 }

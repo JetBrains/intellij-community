@@ -26,6 +26,7 @@
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction"
@@ -150,8 +151,7 @@
 
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
               text="Test Rebuild Performance"/>
-      <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
-              text="Generate Dom Model"/>
+
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
@@ -188,6 +188,7 @@
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
+    <action id="OpenModuleSettings" class="com.intellij.ide.actions.OpenModuleSettingsAction" use-shortcut-of="EditSource"/>
     <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <reference ref="AnalyzeMenu">
@@ -221,8 +222,11 @@
     </action>
 
 
-    <reference ref="MoveModuleToGroup">
+    <reference ref="OpenModuleSettings">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
+    </reference>
+    <reference ref="MoveModuleToGroup">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="after" relative-to-action="OpenModuleSettings"/>
     </reference>
 
     <group id="StructureViewCompileGroup">
@@ -244,7 +248,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -270,7 +273,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -293,7 +295,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunAPT"/>
@@ -329,7 +330,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -363,7 +363,6 @@
     <!--<action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>-->
     <!--<separator/>-->
     <!--<reference ref="AddToFavorites"/>-->
-    <!--<reference ref="MoveToChangeList"/>-->
     <!--<reference ref="FindUsages"/>-->
     <!--<action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>-->
     <!--<separator/>-->
@@ -409,8 +408,7 @@
     </group>
 
     <group>
-      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction" icon="AllIcons.Modules.SourceRoot"/>
-      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction" icon="AllIcons.Modules.TestRoot"/>
+      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot"/>
       <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>

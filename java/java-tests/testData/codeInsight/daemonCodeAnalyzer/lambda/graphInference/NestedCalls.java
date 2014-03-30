@@ -1,5 +1,5 @@
 import java.util.*;
-public class Main {
+class Main {
     public static <T> T foo() {return null;}
     
     public static <B> List<B> bar(B b) {return null;}

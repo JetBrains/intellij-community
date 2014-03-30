@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.ide.actions.ImportModuleAction;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.projectWizard.NewProjectWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.Disposable;
@@ -430,14 +431,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @Nullable
   ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport) {
-    AddModuleWizard wizard;
+    AbstractProjectWizard wizard;
     if (anImport) {
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
       if (wizard == null) return null;
       if (wizard.getStepCount() == 0) return wizard.getProjectBuilder();
     }
     else {
-      wizard = new AddModuleWizard(dialogParent, myProject, this);
+      wizard = new NewProjectWizard(myProject, dialogParent, this);
     }
     wizard.show();
     if (wizard.isOK()) {
@@ -472,7 +473,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
     int result =
       Messages.showYesNoDialog(myProject, question, ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
-    if (result != 0) {
+    if (result != Messages.YES) {
       return false;
     }
     // do remove

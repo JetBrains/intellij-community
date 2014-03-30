@@ -101,6 +101,17 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return SystemInfo.isWindows && version.isOlderOrEqual(new GitVersion(1, 7, 0, 2));
     }
+  },
+
+  /**
+   * {@code --no-walk=unsorted} <br/>
+   * Before this version {@code --no-walk} didn't take any parameters.
+   */
+  NO_WALK_UNSORTED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 12, 1));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

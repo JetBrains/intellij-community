@@ -17,6 +17,7 @@
 package com.intellij.history.integration.ui.actions;
 
 import com.intellij.history.LocalHistory;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -33,5 +34,10 @@ public class PutLabelAction extends LocalHistoryActionWithDialog {
                                                 "", new NonEmptyInputValidator());
     if (labelName == null) return;
     LocalHistory.getInstance().putUserLabel(p, labelName);
+  }
+
+  @Override
+  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+    return f != null && gw.isVersioned(f);
   }
 }

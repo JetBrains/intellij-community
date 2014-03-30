@@ -16,7 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.fileChooser.FileTextField;
-import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.ComboBox;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -25,7 +25,7 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TextFieldWithHistory extends ComboBoxWithWidePopup {
+public class TextFieldWithHistory extends ComboBox {
   private int myHistorySize = 5;
   private final MyModel myModel;
 

@@ -32,8 +32,6 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   @Nullable
   GrExpression getQualifierExpression();
 
-  boolean isQualified();
-
   @Nullable
   IElementType getDotTokenType();
 

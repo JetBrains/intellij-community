@@ -32,6 +32,8 @@ public interface Lookup {
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
   char AUTO_INSERT_SELECT_CHAR = (char) 0;
 
+  int getLookupStart();
+
   @Nullable
   LookupElement getCurrentItem();
 

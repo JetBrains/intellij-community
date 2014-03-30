@@ -69,6 +69,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
 
   static {
     SYSTEM_MACROS.add(APPLICATION_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
     SYSTEM_MACROS.add(PROJECT_DIR_MACRO_NAME);
     SYSTEM_MACROS.add(MODULE_DIR_MACRO_NAME);
     SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
@@ -94,6 +95,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     "FileNameWithoutAllExtensions",
     "FilePackage",
     "FilePath",
+    "UnixSeparators",
     "FilePathRelativeToProjectRoot",
     "/FilePathRelativeToProjectRoot",
     "FilePathRelativeToSourcepath",
@@ -122,11 +124,13 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     "SourcepathEntry",
     "Sourcepath",
     "SHOW_CHANGES",
+    "ClipboardContent",
     "SelectedText",
     "SelectionStartLine",
     "SelectionEndLine",
     "SelectionStartColumn",
-    "SelectionEndColumn"
+    "SelectionEndColumn",
+    "PyInterpreterDirectory"
   );
 
   public PathMacrosImpl() {

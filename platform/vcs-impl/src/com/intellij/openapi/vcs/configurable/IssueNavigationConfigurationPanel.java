@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ import java.util.List;
  * @author yole
  */
 public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBTable myLinkTable;
+  private final JBTable myLinkTable;
   private final Project myProject;
   private List<IssueNavigationLink> myLinks;
   private ListTableModel<IssueNavigationLink> myModel;
@@ -65,8 +66,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable = new JBTable();
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
-    add(new JLabel("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                   "checkin comments and link them to issues in your issue tracker:</html>"), BorderLayout.NORTH);
+    add(new JLabel(
+      XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                               "checkin comments and link them to issues in your issue tracker:")), BorderLayout.NORTH);
     add(
       ToolbarDecorator.createDecorator(myLinkTable)
         .setAddAction(new AnActionButtonRunnable() {
@@ -84,7 +86,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
         @Override
         public void run(AnActionButton button) {
           if (Messages.showOkCancelDialog(myProject, VcsBundle.message("issue.link.delete.prompt"),
-                                          VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == 0) {
+                                          VcsBundle.message("issue.link.delete.title"), Messages.getQuestionIcon()) == Messages.OK) {
             int selRow = myLinkTable.getSelectedRow();
             myLinks.remove(selRow);
             myModel.fireTableDataChanged();
@@ -99,7 +101,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          IssueNavigationLink link = (IssueNavigationLink) myModel.getItem(myLinkTable.getSelectedRow());
+          IssueNavigationLink link = myModel.getItem(myLinkTable.getSelectedRow());
           IssueLinkConfigurationDialog dlg = new IssueLinkConfigurationDialog(myProject);
           dlg.setTitle(VcsBundle.message("issue.link.edit.title"));
           dlg.setLink(link);

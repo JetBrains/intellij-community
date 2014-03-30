@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import java.awt.*;
  * @author yole
  */
 public class PlatformModuleRendererFactory extends ModuleRendererFactory {
+  @Override
   public DefaultListCellRenderer getModuleRenderer() {
     return new PlatformModuleRenderer();
   }
@@ -37,6 +39,7 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
   }
 
   public static class PlatformModuleRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value,
                                                   final int index,
@@ -49,7 +52,7 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
         final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
         if (presentation != null) {
           String containerText = presentation.getLocationString();
-          if (containerText != null && containerText.length() > 0) {
+          if (!StringUtil.isEmpty(containerText)) {
             text = " " + containerText;
           }
         }

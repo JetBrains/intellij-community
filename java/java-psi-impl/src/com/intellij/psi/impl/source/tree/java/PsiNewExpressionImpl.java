@@ -30,6 +30,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,19 +73,20 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        type = factory.createPrimitiveType(child.getText(), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        type = factory.createPrimitiveType(child.getText(), ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
-        type = type.createArrayType(annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        type = type.createArrayType(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
-        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass),
+                                  ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
     }

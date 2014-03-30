@@ -1,4 +1,4 @@
-// "Change 'var' type to 'Foo" "false"
+// "Change variable 'var' type to 'Foo" "false"
 public class Test {
   void foo()  {
     final Foo var = new Foo();

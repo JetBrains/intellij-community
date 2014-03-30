@@ -16,56 +16,23 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ChainedMethodCallInspection extends BaseInspection {
-
-  @SuppressWarnings("PublicField")
-  public boolean m_ignoreFieldInitializations = true;
-
-  @SuppressWarnings("PublicField")
-  public boolean m_ignoreThisSuperCalls = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("chained.method.call.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("chained.method.call.problem.descriptor");
-  }
-
+public class ChainedMethodCallInspection extends ChainedMethodCallInspectionBase {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.option"), "m_ignoreFieldInitializations");
     panel.addCheckbox(InspectionGadgetsBundle.message("chained.method.call.ignore.this.super.option"), "m_ignoreThisSuperCalls");
     return panel;
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ChainedMethodCallVisitor();
   }
 
   @Override
@@ -82,42 +49,5 @@ public class ChainedMethodCallInspection extends BaseInspection {
         return methodExpression.getQualifierExpression();
       }
     };
-  }
-
-  private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression reference = expression.getMethodExpression();
-      final PsiExpression qualifier = reference.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      if (!isCallExpression(qualifier)) {
-        return;
-      }
-      if (m_ignoreFieldInitializations) {
-        final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-        if (field != null) {
-          return;
-        }
-      }
-      if (m_ignoreThisSuperCalls) {
-        final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
-        if (expressionList != null) {
-          final PsiElement parent = expressionList.getParent();
-          if (ExpressionUtils.isConstructorInvocation(parent)) {
-            return;
-          }
-        }
-      }
-      registerMethodCallError(expression);
-    }
-
-    private boolean isCallExpression(PsiExpression expression) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      return expression instanceof PsiMethodCallExpression || expression instanceof PsiNewExpression;
-    }
   }
 }

@@ -1,0 +1,2 @@
+from re import *
+compile

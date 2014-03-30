@@ -445,7 +445,6 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Task task = new Task.Modal(project, GroovyIntentionsBundle
       .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
         final Collection<PsiReference> references = Collections.synchronizedSet(new HashSet<PsiReference>());
         final Processor<PsiReference> consumer = new Processor<PsiReference>() {
           @Override
@@ -454,7 +453,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             return true;
           }
         };
-        ReferencesSearch.search(namedElem, projectScope).forEach(consumer);
+        ReferencesSearch.search(namedElem).forEach(consumer);
         if (namedElem instanceof GrField && ((GrField)namedElem).isProperty()) {
           final GrAccessorMethod[] getters = ((GrField)namedElem).getGetters();
           for (GrAccessorMethod getter : getters) {

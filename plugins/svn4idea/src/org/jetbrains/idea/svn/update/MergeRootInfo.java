@@ -18,8 +18,8 @@ package org.jetbrains.idea.svn.update;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 
@@ -33,17 +33,9 @@ public class MergeRootInfo {
     myRevision1 = SVNRevision.HEAD;
     myRevision2 = SVNRevision.HEAD;
 
-    try {
-      SVNWCClient wcClient = vcs.createWCClient();
-      final SVNURL url = wcClient.doInfo(file, SVNRevision.UNDEFINED).getURL();
-      myUrl1 = url.toString();
-      myUrl2 = url.toString();
-    }
-    catch (SVNException e) {
-      myUrl1 = "";
-      myUrl2 = "";
-    }
-
+    SVNInfo info = vcs.getInfo(file);
+    myUrl1 = info != null && info.getURL() != null ? info.getURL().toString() : "";
+    myUrl2 = myUrl1;
   }
 
   public SVNURL getUrl1() {

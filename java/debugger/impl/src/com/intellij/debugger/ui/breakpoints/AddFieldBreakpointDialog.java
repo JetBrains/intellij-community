@@ -41,7 +41,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-abstract class AddFieldBreakpointDialog extends DialogWrapper {
+public abstract class AddFieldBreakpointDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myFieldChooser;

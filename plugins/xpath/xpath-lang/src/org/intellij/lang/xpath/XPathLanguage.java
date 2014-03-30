@@ -53,6 +53,7 @@ public final class XPathLanguage extends Language {
   public static class XPathPairedBraceMatcher implements PairedBraceMatcher {
         private BracePair[] myBracePairs;
 
+        @Override
         public BracePair[] getPairs() {
             if (myBracePairs == null) {
                 myBracePairs = new BracePair[]{
@@ -63,30 +64,36 @@ public final class XPathLanguage extends Language {
             return myBracePairs;
         }
 
+        @Override
         public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
             return openingBraceOffset;
         }
 
+        @Override
         public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
             return true;
         }
     }
 
     public static class XPathFindUsagesProvider implements FindUsagesProvider {
+        @Override
         @Nullable
         public WordsScanner getWordsScanner() {
             return new SimpleWordsScanner();
         }
 
+        @Override
         public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
             return psiElement instanceof XPathFunction || psiElement instanceof XPathVariable;
         }
 
+        @Override
         @Nullable
         public String getHelpId(@NotNull PsiElement psiElement) {
             return null;
         }
 
+        @Override
         @NotNull
         public String getType(@NotNull PsiElement element) {
           if (element instanceof XPathFunction) {
@@ -98,6 +105,7 @@ public final class XPathLanguage extends Language {
           }
         }
 
+        @Override
         @NotNull
         public String getDescriptiveName(@NotNull PsiElement element) {
             if (element instanceof PsiNamedElement) {
@@ -107,6 +115,7 @@ public final class XPathLanguage extends Language {
             return element.toString();
         }
 
+        @Override
         @NotNull
         public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
             if (useFullName) {
@@ -136,7 +145,8 @@ public final class XPathLanguage extends Language {
     public static class XPathNamesValidator implements NamesValidator {
         private final Lexer xPathLexer = XPathLexer.create(false);
 
-        public synchronized boolean isIdentifier(String text, Project project) {
+        @Override
+        public synchronized boolean isIdentifier(@NotNull String text, Project project) {
             xPathLexer.start(text);
             assert xPathLexer.getState() == 0;
 
@@ -155,12 +165,14 @@ public final class XPathLanguage extends Language {
             return false;
         }
 
-        public boolean isKeyword(String text, Project project) {
+        @Override
+        public boolean isKeyword(@NotNull String text, Project project) {
             return CompletionLists.AXIS_NAMES.contains(text) || CompletionLists.NODE_TYPE_FUNCS.contains(text) || CompletionLists.OPERATORS.contains(text);
         }
     }
 
     public static class XPathSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
+        @Override
         @NotNull
         protected SyntaxHighlighter createHighlighter() {
             return new XPathHighlighter(false);

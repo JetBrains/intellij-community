@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class AbstractToStringInspection extends LocalInspectionTool {
     protected static final Logger log = Logger.getInstance("#org.jetbrains.generate.tostring.inspection.AbstractToStringInspection");
 
+    @Override
     @NotNull
     public String getGroupDisplayName() {
         return "toString() issues";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GotoDeclarationHandlerBase implements GotoDeclarationHandler {
   @Nullable
   @Override
-  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor) {
+  public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
     final PsiElement target = getGotoDeclarationTarget(sourceElement, editor);
-    return target != null ? new PsiElement[] {target} : null;
+    return target != null ? new PsiElement[]{target} : null;
   }
 
   @Nullable
-  public abstract PsiElement getGotoDeclarationTarget(PsiElement sourceElement, Editor editor);
+  public abstract PsiElement getGotoDeclarationTarget(@Nullable PsiElement sourceElement, Editor editor);
 
   @Override
   public String getActionText(DataContext context) {

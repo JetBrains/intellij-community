@@ -11,7 +11,8 @@ Groovy script
     Command arguments
       Compound Gstring
         PsiElement(Gstring begin)('"""')
-        PsiElement(Gstring content)('Pre')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('Pre')
         GString injection
           PsiElement($)('$')
           Closable block
@@ -55,5 +56,6 @@ Groovy script
             Literal
               PsiElement(string)(''ved'')
             PsiElement(})('}')
-        PsiElement(Gstring content)('!')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('!')
         PsiElement(Gstring end)('"""')

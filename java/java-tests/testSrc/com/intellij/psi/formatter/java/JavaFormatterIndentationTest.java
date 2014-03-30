@@ -40,7 +40,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
     // Checking that closing curly brace of initialization block that is not the first block on a line is correctly indented.
     doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
-               "class Class {\n" + "    private Type field; {\n" + "    }\n" + "}");
+               "class Class {\n" + "    private Type field;\n\n    {\n" + "    }\n" + "}");
     doTextTest(
       "class T {\n" +
       "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
@@ -49,7 +49,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}",
       "class T {\n" +
-      "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
+      "    private final DecimalFormat fmt = new DecimalFormat();\n\n    {\n" +
       "        fmt.setGroupingUsed(false);\n" +
       "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
       "    }\n" +
@@ -340,10 +340,11 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "});",
       "foo(1,\n" +
       "        2, new Runnable() {\n" +
-      "    @Override\n" +
-      "    public void run() {\n" +
-      "    }\n" +
-      "});"
+      "            @Override\n" +
+      "            public void run() {\n" +
+      "            }\n" +
+      "        }\n" +
+      ");"
     );
     
     doMethodTest(
@@ -446,16 +447,95 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "               }\n" +
       "              });",
       "foo(new Runnable() {\n" +
-      "        public void run() {\n" +
-      "        }\n" +
-      "    }, new Runnable() {\n" +
-      "        public void run() {\n" +
-      "        }\n" +
+      "    public void run() {\n" +
       "    }\n" +
-      ");"
+      "}, new Runnable() {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "});"
     );
   }
-  
+
+  public void testAlignMultipleAnonymousClasses_PassedAsMethodParameters() throws Exception {
+    String text = "test(new Runnable() {\n" +
+                  "    @Override\n" +
+                  "    public void run() {\n" +
+                  "        System.out.println(\"AAA!\");\n" +
+                  "    }\n" +
+                  "}, new Runnable() {\n" +
+                  "    @Override\n" +
+                  "    public void run() {\n" +
+                  "        System.out.println(\"BBB!\");\n" +
+                  "    }\n" +
+                  "});\n";
+    doMethodTest(text, text);
+  }
+
+  public void testAlignmentAdditionalParamsWithMultipleAnonymousClasses_PassedAsMethodParameters() throws Exception {
+    String text = "foo(1221, new Runnable() {\n" +
+                  "    @Override\n" +
+                  "    public void run() {\n" +
+                  "        System.out.println(\"A\");\n" +
+                  "    }\n" +
+                  "}, new Runnable() {\n" +
+                  "    @Override\n" +
+                  "    public void run() {\n" +
+                  "        System.out.println(\"BB\");\n" +
+                  "    }\n" +
+                  "});";
+    doMethodTest(text, text);
+  }
+
+  public void testAlignmentMultipleParamsWithAnonymousClass_PassedAsMethodParams() throws Exception {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    String text = "test(1000,\n" +
+                  "     new Runnable() {\n" +
+                  "         @Override\n" +
+                  "         public void run() {\n" +
+                  "             System.out.println(\"BBB\");\n" +
+                  "         }\n" +
+                  "     }\n" +
+                  ");";
+    doMethodTest(text, text);
+  }
+
+  public void testAlignmentMultipleAnonymousClassesOnNewLines() throws Exception {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    String text = "test(1000,\n" +
+                  "     new Runnable() {\n" +
+                  "         @Override\n" +
+                  "         public void run() {\n" +
+                  "             System.out.println(\"BBB\");\n" +
+                  "         }\n" +
+                  "     },\n" +
+                  "     new Runnable() {\n" +
+                  "         @Override\n" +
+                  "         public void run() {\n" +
+                  "             System.out.println(\"BBB\");\n" +
+                  "         }\n" +
+                  "     }\n" +
+                  ");";
+    doMethodTest(text, text);
+  }
+
+  public void testEnforceChildrenIndent_OfAnonymousClasses_IfAnyOfParamsIsLocatedOnNewLine() throws Exception {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    String text = "test(\"Suuuuuuuuuuuuuuuuuper loooooooooooong string\",\n" +
+                  "     \"Next loooooooooooooooooooooong striiiiiiiiiiing\", new Runnable() {\n" +
+                  "            @Override\n" +
+                  "            public void run() {\n" +
+                  "\n" +
+                  "            }\n" +
+                  "        }, new Runnable() {\n" +
+                  "            @Override\n" +
+                  "            public void run() {\n" +
+                  "\n" +
+                  "            }\n" +
+                  "        }\n" +
+                  ");\n";
+    doMethodTest(text, text);
+  }
+
   public void testPackagePrivateAnnotation() {
     // Inspired by IDEA-67294
     
@@ -480,13 +560,12 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "         }\n" +
       "     }, )",
       "test(new Runnable() {\n" +
-      "         public void run() {\n" +
-      "         }\n" +
-      "     }, new Runnable() {\n" +
-      "         public void run() {\n" +
-      "         }\n" +
-      "     },\n" +
-      ")"
+      "    public void run() {\n" +
+      "    }\n" +
+      "}, new Runnable() {\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "}, )"
     );
   }
 
@@ -536,4 +615,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getIndentOptions().USE_TAB_CHARACTER = true;
     doTextTest(initial, expected);
   }
+
+  public void testLambdaIndentation() throws Exception {
+    String before = "Runnable r = () ->\n" +
+                    "{\n" +
+                    "    System.out.println(\"olo\");\n" +
+                    "};";
+    doMethodTest(before, before);
+  }
+
 }

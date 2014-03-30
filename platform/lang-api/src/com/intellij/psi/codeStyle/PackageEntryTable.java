@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     return 0;
   }
 
+  @Override
   public Object clone() throws CloneNotSupportedException {
     PackageEntryTable clon = new PackageEntryTable();
     clon.copyFrom(this);
@@ -104,6 +105,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     return false;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myEntries.clear();
     List children = element.getChildren();
@@ -118,7 +120,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
           throw new InvalidDataException();
         }
         PackageEntry entry;
-        if (packageName.length() == 0) {
+        if (packageName.isEmpty()) {
           entry = isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
         }
         else {
@@ -134,6 +136,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     }
   }
 
+  @Override
   public void writeExternal(Element parentNode) throws WriteExternalException {
     for (PackageEntry entry : myEntries) {
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {

@@ -1,0 +1,15 @@
+0(1) element: null
+1(2) element: PyAssignmentStatement
+2(3) READ ACCESS: read
+3(4) WRITE ACCESS: a
+4(5) element: PyIfStatement
+5(6,10) READ ACCESS: a
+6(7) element: PyStatementList. Condition: a.startswith("Exit"):true
+7(8) element: PyExpressionStatement
+8(9) element: PySubscriptionExpression
+9(14) READ ACCESS: a
+10(11) element: PyElsePart. Condition: a.startswith("Exit"):false
+11(12) element: PyPrintStatement
+12(13) READ ACCESS: a
+13(14) element: PyExpressionStatement
+14() element: null

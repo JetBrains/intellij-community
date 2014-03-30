@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.containers.HashMap;
@@ -38,14 +39,14 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public abstract class AbstractNavBarUI implements NavBarUI {
-  
-  private Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<NavBarItem, Map<ImageType, BufferedImage>>();
-  
+
+  private final Map<NavBarItem, Map<ImageType, BufferedImage>> myCache = new THashMap<NavBarItem, Map<ImageType, BufferedImage>>();
+
   private enum ImageType {
     INACTIVE, NEXT_ACTIVE, ACTIVE, INACTIVE_FLOATING, NEXT_ACTIVE_FLOATING, ACTIVE_FLOATING,
     INACTIVE_NO_TOOLBAR, NEXT_ACTIVE_NO_TOOLBAR, ACTIVE_NO_TOOLBAR
   }
-  
+
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
     return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
@@ -58,7 +59,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    return navBarItem.getFont();
+    return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
   }
 
   @Override
@@ -114,8 +115,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       cached.put(type, image);
     }
 
-    g.drawImage(image, 0, 0, null);
-    
+    UIUtil.drawImage(g, image, 0, 0, null);
+
     Icon icon = item.getIcon();
     final int offset = item.isFirstElement() ? getFirstElementLeftOffset() : 0;
     final int iconOffset = getElementPadding().left + offset;
@@ -123,36 +124,40 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final int textOffset = icon.getIconWidth() + getElementPadding().width() + offset;
     item.doPaintText(g, textOffset);
   }
-  
+
   private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
     int w = item.getWidth();
     int h = item.getHeight();
+    int offset = (w - getDecorationOffset());
+    int h2 = h / 2;
 
     BufferedImage result = UIUtil.createImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
     Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : Color.WHITE;
-    final Paint bg = floating ? defaultBg : UIUtil.getGradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
+    final Paint bg = floating ? defaultBg : null;/*UIUtil.getGradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));*/
     final Color selection = UIUtil.getListSelectionBackground();
-    
+
     Graphics2D g2 = result.createGraphics();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+
     Path2D.Double shape = new Path2D.Double();
     shape.moveTo(0, 0);
-    shape.lineTo(w - getDecorationOffset(), 0);
-    shape.lineTo(w, h / 2);
-    shape.lineTo(w - getDecorationOffset(), h);
+
+    shape.lineTo(offset, 0);
+    shape.lineTo(w, h2);
+    shape.lineTo(offset, h);
     shape.lineTo(0, h);
     shape.closePath();
-    
+
     Path2D.Double endShape = new Path2D.Double();
-    endShape.moveTo(w - getDecorationOffset(), 0);
+    endShape.moveTo(offset, 0);
     endShape.lineTo(w, 0);
     endShape.lineTo(w, h);
-    endShape.lineTo(w - getDecorationOffset(), h);
-    endShape.lineTo(w, h / 2);
+    endShape.lineTo(offset, h);
+    endShape.lineTo(w, h2);
     endShape.closePath();
-    
+
     if (bg != null && toolbarVisible) {
       g2.setPaint(bg);
       g2.fill(shape);
@@ -164,16 +169,16 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (selected) {
       Path2D.Double focusShape = new Path2D.Double();
       if (toolbarVisible || floating) {
-        focusShape.moveTo(w-getDecorationOffset(), 0);
+        focusShape.moveTo(offset, 0);
       } else {
         focusShape.moveTo(0, 0);
-        focusShape.lineTo(w - getDecorationOffset(), 0);
+        focusShape.lineTo(offset, 0);
       }
-      focusShape.lineTo(w - 1, h / 2);
-      focusShape.lineTo(w - getDecorationOffset(), h - 1);
+      focusShape.lineTo(w - 1, h2);
+      focusShape.lineTo(offset, h - 1);
       if (!toolbarVisible && !floating) {
         focusShape.lineTo(0, h - 1);
-        
+
       }
 
       g2.setColor(selection);
@@ -181,7 +186,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
         g2.fillRect(0, 0, w, h);
       } else {
         g2.fill(shape);
-        
+
         g2.setColor(new Color(0, 0, 0, 70));
         g2.draw(focusShape);
       }
@@ -190,18 +195,18 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (item.isNextSelected() && navbar.hasFocus()) {
       g2.setColor(selection);
       g2.fill(endShape);
-      
+
       Path2D.Double endFocusShape = new Path2D.Double();
       if (toolbarVisible || floating) {
-        endFocusShape.moveTo(w - getDecorationOffset(), 0);
+        endFocusShape.moveTo(offset, 0);
       } else {
         endFocusShape.moveTo(w, 0);
-        endFocusShape.lineTo(w - getDecorationOffset(), 0);
+        endFocusShape.lineTo(offset, 0);
       }
-      
-      endFocusShape.lineTo(w - 1, h / 2);
-      endFocusShape.lineTo(w - getDecorationOffset(), h - 1);
-      
+
+      endFocusShape.lineTo(w - 1, h2);
+      endFocusShape.lineTo(offset, h - 1);
+
       if (!toolbarVisible && !floating) {
         endFocusShape.lineTo(w, h - 1);
       }
@@ -210,8 +215,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2.draw(endFocusShape);
     }
 
-    
-    g2.translate(w - getDecorationOffset(), 0);
+
+    g2.translate(offset, 0);
     int off = getDecorationOffset() - 1;
 
     if (!floating || !item.isLastElement()) {
@@ -227,14 +232,14 @@ public abstract class AbstractNavBarUI implements NavBarUI {
         }
       }
     }
-    
+
     g2.dispose();
     return result;
   }
-  
+
   private static void drawArrow(Graphics2D g2d, Color c, Color light, int decorationOffset, int h, boolean highlight, boolean gradient) {
     int off = decorationOffset - 1;
-    
+
     g2d.setColor(c);
     if (gradient) {
       g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(c, 10), 0, h / 2, c));
@@ -249,7 +254,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (highlight) {
       g2d.translate(-1, 0);
       g2d.setColor(light);
-      
+
       if (gradient) {
         g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(light, 10), 0, h / 2, light));
       }
@@ -285,15 +290,15 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   public Insets getWrapperPanelInsets(Insets insets) {
     return new Insets(insets.top + (shouldPaintWrapperPanel() ? 1 : 0), insets.left, insets.bottom, insets.right);
   }
-  
+
   private static boolean shouldPaintWrapperPanel() {
-    return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists(); 
+    return !UISettings.getInstance().SHOW_MAIN_TOOLBAR && NavBarRootPaneExtension.runToolbarExists();
   }
 
   protected Color getBackgroundColor() {
     return UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
   }
-  
+
   @Override
   public void doPaintNavBarPanel(Graphics2D g, Rectangle r, boolean mainToolbarVisible, boolean undocked) {
     g.setColor(getBackgroundColor());
@@ -309,6 +314,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public int getPopupOffset(@NotNull NavBarItem item) {
-    return item.isFirstElement() ? 0 : 5; 
+    return item.isFirstElement() ? 0 : 5;
   }
 }

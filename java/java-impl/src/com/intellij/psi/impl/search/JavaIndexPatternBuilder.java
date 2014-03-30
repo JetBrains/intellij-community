@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,21 +32,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
-  public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlElementType.XML_COMMENT_CHARACTERS);
+  public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS);
 
   @Override
   @Nullable
-  public Lexer getIndexingLexer(final PsiFile file) {
+  public Lexer getIndexingLexer(@NotNull final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
-      return new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
+      return JavaParserDefinition.createLexer(((PsiJavaFile)file).getLanguageLevel());
     }
     return null;
   }
 
   @Override
   @Nullable
-  public TokenSet getCommentTokenSet(final PsiFile file) {
-    if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
+  public TokenSet getCommentTokenSet(@NotNull final PsiFile file) {
+    if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
       return TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
     }
     return null;

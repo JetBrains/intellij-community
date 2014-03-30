@@ -33,7 +33,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.content.Content;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -53,14 +55,16 @@ public class EventLog {
   public static final String LOG_REQUESTOR = "Internal log requestor";
   public static final String LOG_TOOL_WINDOW_ID = "Event Log";
   public static final String HELP_ID = "reference.toolwindows.event.log";
-  private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
   private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
+  private static final String DEFAULT_CATEGORY = "";
+
+  private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
 
   public EventLog() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -70,16 +74,6 @@ public class EventLog {
         for (Project p : openProjects) {
           getProjectComponent(p).printNotification(notification);
         }
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName,
-                           @NotNull NotificationDisplayType defaultDisplayType,
-                           boolean shouldLog) {
       }
     });
   }
@@ -181,7 +175,7 @@ public class EventLog {
   }
 
   private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(logDoc.getText(),true);
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -315,19 +309,30 @@ public class EventLog {
     return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(LOG_TOOL_WINDOW_ID);
   }
 
-  public static void toggleLog(final Project project) {
+  public static void toggleLog(@Nullable final Project project, @Nullable final Notification notification) {
     final ToolWindow eventLog = getEventLog(project);
     if (eventLog != null) {
       if (!eventLog.isVisible()) {
-        eventLog.activate(null, true);
-      } else {
+        eventLog.activate(new Runnable() {
+          @Override
+          public void run() {
+            if (notification == null) return;
+            String contentName = getContentName(notification);
+            Content content = eventLog.getContentManager().findContent(contentName);
+            if (content != null) {
+              eventLog.getContentManager().setSelectedContent(content);
+            }
+          }
+        }, true);
+      }
+      else {
         eventLog.hide(null);
       }
     }
   }
 
   public static class ProjectTracker extends AbstractProjectComponent {
-    private volatile EventLogConsole myConsole;
+    private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
 
@@ -340,57 +345,49 @@ public class EventLog {
         printNotification(notification);
       }
 
-      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
+      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);
         }
-
-        @Override
-        public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-        }
-
-        @Override
-        public void register(@NotNull String groupDisplayName,
-                             @NotNull NotificationDisplayType defaultDisplayType,
-                             boolean shouldLog) {
-        }
       });
     }
 
-    EventLogConsole getConsole() {
-      return myConsole;
-    }
-
-    @Override
-    public void projectOpened() {
-      myConsole = new EventLogConsole(myProjectModel);
+    void initDefaultContent() {
+      createNewContent(DEFAULT_CATEGORY);
 
       for (Notification notification : myInitial) {
-        printNotification(notification);
+        doPrintNotification(notification, ObjectUtils.assertNotNull(getConsole(notification)));
       }
       myInitial.clear();
     }
 
     @Override
-    public void projectClosed() {
-      getApplicationComponent().myModel.setStatusMessage(null, 0);
-      StatusBar.Info.set("", null, EventLog.LOG_REQUESTOR);
+    public void projectOpened() {
     }
 
-    private void printNotification(final Notification notification) {
-      final EventLogConsole console = myConsole;
-      if (console == null) {
-        myInitial.add(notification);
-        return;
-      }
+    @Override
+    public void projectClosed() {
+      getApplicationComponent().myModel.setStatusMessage(null, 0);
+      StatusBar.Info.set("", null, LOG_REQUESTOR);
+    }
 
+    private void printNotification(Notification notification) {
       if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         return;
       }
-
       myProjectModel.addNotification(notification);
 
+      EventLogConsole console = getConsole(notification);
+      if (console == null) {
+        myInitial.add(notification);
+      }
+      else {
+        doPrintNotification(notification, console);
+      }
+    }
+
+    private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
@@ -404,6 +401,36 @@ public class EventLog {
         }
       });
     }
+
+    @Nullable
+    private EventLogConsole getConsole(Notification notification) {
+      if (myCategoryMap.get(DEFAULT_CATEGORY) == null) return null; // still not initialized
+
+      String name = getContentName(notification);
+      EventLogConsole console = myCategoryMap.get(name);
+      return console != null ? console : createNewContent(name);
+    }
+
+    @NotNull
+    private EventLogConsole createNewContent(String name) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      EventLogConsole newConsole = new EventLogConsole(myProjectModel);
+      EventLogToolWindowFactory.createContent(myProject, getEventLog(myProject), newConsole, name);
+      myCategoryMap.put(name, newConsole);
+
+      return newConsole;
+    }
+
+  }
+
+  @NotNull
+  private static String getContentName(Notification notification) {
+    for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensions()) {
+      if (category.acceptsNotification(notification.getGroupId())) {
+        return category.getDisplayName();
+      }
+    }
+    return DEFAULT_CATEGORY;
   }
 
   static ProjectTracker getProjectComponent(Project project) {
@@ -423,7 +450,8 @@ public class EventLog {
     public void navigate(Project project) {
       NotificationListener listener = myNotification.getListener();
       if (listener != null) {
-        JComponent component = getProjectComponent(project).myConsole.getConsoleEditor().getContentComponent();
+        EventLogConsole console = ObjectUtils.assertNotNull(getProjectComponent(project).getConsole(myNotification));
+        JComponent component = console.getConsoleEditor().getContentComponent();
         listener.hyperlinkUpdate(myNotification, IJSwingUtilities.createHyperlinkEvent(myHref, component));
       }
     }
@@ -444,7 +472,8 @@ public class EventLog {
         hideBalloon(notification);
       }
 
-      RelativePoint target = EventLog.getProjectComponent(project).myConsole.getHyperlinkLocation(this);
+      EventLogConsole console = ObjectUtils.assertNotNull(getProjectComponent(project).getConsole(myNotification));
+      RelativePoint target = console.getHyperlinkLocation(this);
       if (target != null) {
         IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
         assert frame != null;
@@ -457,7 +486,7 @@ public class EventLog {
     private static void hideBalloon(Notification notification1) {
       Balloon balloon = notification1.getBalloon();
       if (balloon != null) {
-        balloon.hide();
+        balloon.hide(true);
       }
     }
   }

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
-    <p1.newPackage.MyWidget xmlns:android="http://schemas.android.com/apk/res/android">
-      <ListView/>
-    </p1.newPackage.MyWidget>
-    <view class="p1.newPackage.MyWidget"/>
-</LinearLayout>

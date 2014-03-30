@@ -17,6 +17,7 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.formatting.FormattingDocumentModel;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -38,13 +39,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
   //private final CharBuffer myBuffer = CharBuffer.allocate(1);
-  private final Document myDocument;
+  @NotNull private final Document myDocument;
   private final PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
-  private CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
 
-  public FormattingDocumentModelImpl(final Document document, PsiFile file) {
+  public FormattingDocumentModelImpl(@NotNull final Document document, PsiFile file) {
     myDocument = document;
     myFile = file;
     if (file != null) {
@@ -63,7 +64,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(document)) {
         LOG.error("Document is uncommitted");
       }
-      if (!document.getText().equals(file.getText())) {
+      if (!file.textMatches(document.getImmutableCharSequence())) {
         LOG.error("Document and psi file texts should be equal: file " + file);
       }
       return new FormattingDocumentModelImpl(document, file);
@@ -117,6 +118,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     return myDocument.getTextLength();
   }
 
+  @NotNull
   @Override
   public Document getDocument() {
     return myDocument;
@@ -148,13 +150,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   @NotNull
   @Override
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
-                                                  boolean changedViaPsi)
+                                                  ASTNode nodeAfter, boolean changedViaPsi)
   {
     if (!changedViaPsi) {
       return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset,
-                                                              mySettings);
+                                                              mySettings, nodeAfter);
     }
-    
+
     final PsiElement element = myFile.findElementAt(startOffset);
     if (element == null) {
       return whiteSpaceText;

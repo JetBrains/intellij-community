@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -23,13 +26,58 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  public static final Color GLOW_COLOR = new Color(96, 175, 255);
+  public static final Color GLOW_COLOR = new JBColor(new Color(96, 132, 212), new Color(96, 175, 255));
 
   public static void paintFocusRing(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height));
+    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height));
   }
 
   public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
+    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height), true);
   }
+
+  private static Color getGlow() {
+    return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
+  }
+
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
+    int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
+    final Color[] colors = new Color[]{
+      ColorUtil.toAlpha(getGlow(), 180 - correction),
+      ColorUtil.toAlpha(getGlow(), 120 - correction),
+      ColorUtil.toAlpha(getGlow(), 70  - correction),
+      ColorUtil.toAlpha(getGlow(), 100 - correction),
+      ColorUtil.toAlpha(getGlow(), 50  - correction)
+    };
+
+    final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+    final Object oldStrokeControlValue = g.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
+
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+
+    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
+
+    g.setColor(colors[0]);
+    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, r.height - 5, r.height - 5);
+
+    g.setColor(colors[1]);
+    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, r.height - 3, r.height - 3);
+
+    g.setColor(colors[2]);
+    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, r.height - 1, r.height - 1);
+
+
+    g.setColor(colors[3]);
+    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, r.height - 7, r.height - 7);
+
+    g.setColor(colors[4]);
+    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, r.height - 9, r.height - 9);
+
+    // restore rendering hints
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
+  }
+
 }

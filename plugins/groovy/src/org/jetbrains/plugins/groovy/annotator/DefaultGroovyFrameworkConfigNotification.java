@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.ide.util.frameworkSupport.AddFrameworkSupportDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 
 /**
 * @author sergey.evdokimov
@@ -46,10 +47,7 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
     panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), new Runnable() {
       @Override
       public void run() {
-        AddFrameworkSupportDialog dialog = AddFrameworkSupportDialog.createDialog(module);
-        if (dialog != null) {
-          dialog.show();
-        }
+        AddCustomLibraryDialog.createDialog(new GroovyLibraryDescription(), module, null).show();
       }
     });
     return panel;

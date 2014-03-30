@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInsight.navigation;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,11 +109,11 @@ public class DocPreviewUtil {
     }
 
     // Build links info.
-    Map<String/*qName*/, String/*address*/> links = new HashMap<String, String>();
+    Map<String/*qName*/, String/*address*/> links = ContainerUtilRt.newHashMap();
     process(fullText, new LinksCollector(links));
     
     // Add derived names.
-    Map<String, String> toAdd = new HashMap<String, String>();
+    Map<String, String> toAdd = ContainerUtilRt.newHashMap();
     for (Map.Entry<String, String> entry : links.entrySet()) {
       String shortName = parseShortName(entry.getKey());
       if (shortName != null) {
@@ -122,12 +126,12 @@ public class DocPreviewUtil {
     }
     links.putAll(toAdd);
     if (qName != null) {
-      links.put(qName, DocumentationManager.PSI_ELEMENT_PROTOCOL + qName);
+      links.put(qName, DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + qName);
     }
     
     // Apply links info to the header template.
-    List<TextRange> modifiedRanges = new ArrayList<TextRange>();
-    List<String> sortedReplacements = new ArrayList<String>(links.keySet());
+    List<TextRange> modifiedRanges = ContainerUtilRt.newArrayList();
+    List<String> sortedReplacements = ContainerUtilRt.newArrayList(links.keySet());
     Collections.sort(sortedReplacements, REPLACEMENTS_COMPARATOR);
     StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
@@ -186,14 +190,16 @@ public class DocPreviewUtil {
       if (intersects(readOnlyChanges, i, end)) {
         continue;
       }
-      if (end - i > 1 && end < text.length() && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(end))) {
-        // Consider a situation when we have, say, replacement from text 'PsiType' and encounter a 'PsiTypeParameter' in the text.
-        // We don't want to perform the replacement then.
-        continue;
-      }
-      if (end - i > 1 && i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
-        // Similar situation but targets head match: from = 'TextRange', text = 'getTextRange()'. 
-        continue;
+      if (!"\n".equals(replaceFrom)) {
+        if (end < text.length() && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(end))) {
+          // Consider a situation when we have, say, replacement from text 'PsiType' and encounter a 'PsiTypeParameter' in the text.
+          // We don't want to perform the replacement then.
+          continue;
+        }
+        if (i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
+          // Similar situation but targets head match: from = 'TextRange', text = 'getTextRange()'. 
+          continue;
+        }
       }
       text.replace(i, end, replaceTo);
       int diff = replaceTo.length() - replaceFrom.length();

@@ -1,0 +1,2 @@
+<spot>from sys import argv</spot>
+name = argv[0]

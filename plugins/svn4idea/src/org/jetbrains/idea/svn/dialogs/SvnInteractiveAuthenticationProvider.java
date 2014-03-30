@@ -20,11 +20,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.WaitForProgressToShow;
+import com.jcraft.jsch.agentproxy.AgentProxyException;
+import com.jcraft.jsch.agentproxy.Connector;
+import com.jcraft.jsch.agentproxy.ConnectorFactory;
+import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -81,18 +87,13 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final boolean authCredsOn = authMayBeStored && myManager.getHostOptionsProvider().getHostOptions(url).isAuthStorageEnabled();
 
     final String userName =
-      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : SystemProperties.getUserName();
+      previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : myManager.getDefaultUsername(kind, url);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
       command = new Runnable() {
         public void run() {
           SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
@@ -108,12 +109,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
         public void run() {
           UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
           dialog.setup(realm, userName, authCredsOn);
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
@@ -122,26 +118,32 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       };
     }
     else if (ISVNAuthenticationManager.SSH.equals(kind)) {
+      // In current implementation, pageant connector available = operating system is Windows.
+      // So "ssh agent" option will be always available on Windows, even if pageant is not running.
+      final Connector agentConnector = createSshAgentConnector();
+      final boolean isAgentAvailable = agentConnector != null && agentConnector.isAvailable();
+
       command = new Runnable() {
         public void run() {
-          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort());
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort(), isAgentAvailable);
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             int port = dialog.getPortNumber();
-            if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
+            if (dialog.isSshAgentSelected()) {
+              if (agentConnector != null) {
+                result[0] =
+                  new SVNSSHAuthentication(dialog.getUserName(), new TrileadAgentProxy(agentConnector), port, url, false);
+              }
+            }
+            else if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
               String passphrase = dialog.getPassphrase();
               if (passphrase != null && passphrase.length() == 0) {
                 passphrase = null;
               }
               result[0] =
-                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(),
-                                         url, false);
+                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(), url,
+                                         false);
             }
             else {
               result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
@@ -158,12 +160,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
           if (!StringUtil.isEmptyOrSpaces(file)) {
             dialog.setFile(file);
           }
-          if (errorMessage == null) {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-          }
-          else {
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required.was.failed"));
-          }
+          setTitle(dialog, errorMessage);
           dialog.show();
           if (dialog.isOK()) {
             result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
@@ -182,6 +179,26 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     callState.setWasCancelled(wasCanceled);
     myManager.requested(ProviderType.interactive, url, realm, kind, wasCanceled);
     return result[0];
+  }
+
+  @Nullable
+  private static Connector createSshAgentConnector() {
+    Connector result = null;
+
+    try {
+      result = ConnectorFactory.getDefault().createConnector();
+    }
+    catch (AgentProxyException e) {
+      LOG.info("Could not create ssh agent connector", e);
+    }
+
+    return result;
+  }
+
+  private static void setTitle(@NotNull DialogWrapper dialog, @Nullable SVNErrorMessage errorMessage) {
+    dialog.setTitle(errorMessage == null
+                    ? SvnBundle.message("dialog.title.authentication.required")
+                    : SvnBundle.message("dialog.title.authentication.required.was.failed"));
   }
 
   public int acceptServerAuthentication(final SVNURL url, String realm, final Object certificate, final boolean resultMayBeStored) {

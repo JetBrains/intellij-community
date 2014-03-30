@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package com.siyeh.ipp.commutative;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import com.siyeh.IntentionPowerPackBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
 
@@ -81,6 +82,6 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention {
       callString = strippedArg.getText() + '.' + methodName + '(' +
                    strippedTarget.getText() + ')';
     }
-    replaceExpression(callString, call);
+    PsiReplacementUtil.replaceExpression(call, callString);
   }
 }

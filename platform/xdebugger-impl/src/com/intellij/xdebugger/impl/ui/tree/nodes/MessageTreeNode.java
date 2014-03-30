@@ -16,7 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.SmartList;
@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class MessageTreeNode extends XDebuggerTreeNode {
-  private boolean myEllipsis;
+  private final boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
   private MessageTreeNode(XDebuggerTree tree, @Nullable final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
@@ -68,7 +68,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myEllipsis = false;
   }
 
-  protected List<? extends TreeNode> getChildren() {
+  @NotNull
+  @Override
+  public List<? extends TreeNode> getChildren() {
     return Collections.emptyList();
   }
 
@@ -82,6 +84,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return myLink;
   }
 
+  @Override
   public List<? extends XDebuggerTreeNode> getLoadedChildren() {
     return null;
   }
@@ -105,7 +108,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
                                XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES, null);
   }
 
-  public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, final XDebuggerTreeNode parent) {
+  public static MessageTreeNode createEvaluatingMessage(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent) {
     return new MessageTreeNode(tree, parent, XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE,
                                XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES, null);
   }
@@ -144,7 +147,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     }
     while (matcher.find());
 
-    if (prev < (message.length() - 1)) {
+    if (prev < message.length()) {
       objects.add(message.substring(prev));
     }
     return new MessageTreeNodeWithLinks(tree, objects);
@@ -161,10 +164,10 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     }
 
     @Override
-    public void appendToComponent(SimpleColoredComponent component) {
+    public void appendToComponent(@NotNull ColoredTextContainer component) {
       for (Object object : objects) {
         if (object instanceof String) {
-          component.append((String)object);
+          component.append((String)object, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
         else {
           XDebuggerTreeNodeHyperlink hyperlink = (XDebuggerTreeNodeHyperlink)object;

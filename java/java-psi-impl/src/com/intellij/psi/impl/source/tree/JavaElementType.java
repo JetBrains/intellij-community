@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.*;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.ReferenceParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,12 +35,13 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public interface JavaElementType {
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
-    private final Constructor<? extends ASTNode> myConstructor;
+    private final ConstructorAccessor myConstructor;
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
       this(debugName, nodeClass, false);
@@ -46,13 +49,14 @@ public interface JavaElementType {
 
     private JavaCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass, final boolean leftBound) {
       super(debugName, leftBound);
-      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      Constructor<? extends ASTNode> constructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      myConstructor = ReflectionUtil.getConstructorAccessor(constructor);
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstance(myConstructor);
+      return ReflectionUtil.createInstanceViaConstructorAccessor(myConstructor);
     }
   }
 
@@ -167,7 +171,7 @@ public interface JavaElementType {
 
     @Override
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
-      final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
 
       lexer.start(seq);
       if (lexer.getTokenType() != JavaTokenType.LBRACE) return IErrorCounterReparseableElementType.FATAL_ERROR;

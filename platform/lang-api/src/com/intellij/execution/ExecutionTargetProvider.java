@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Provides {@link com.intellij.execution.ExecutionTarget ExecutionTargets} for run configurations.
+ */
 public abstract class ExecutionTargetProvider {
   public static final ExtensionPointName<ExecutionTargetProvider> EXTENSION_NAME =
     ExtensionPointName.create("com.intellij.executionTargetProvider");

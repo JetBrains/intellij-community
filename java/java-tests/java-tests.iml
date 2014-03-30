@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
-    <orderEntry type="module" module-name="execution-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="java-i18n" />
@@ -27,9 +27,11 @@
     <orderEntry type="module" module-name="eclipse" scope="TEST" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="platform-tests" scope="TEST" />
-    <orderEntry type="module" module-name="IntentionPowerPackPlugin" scope="TEST" />
-    <orderEntry type="module" module-name="InspectionGadgetsPlugin" scope="TEST" />
     <orderEntry type="module" module-name="java-indexing-api" scope="TEST" />
+    <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="junit_rt" scope="TEST" />
+    <orderEntry type="module" module-name="xml-psi-impl" scope="TEST" />
+    <orderEntry type="module" module-name="properties-psi-api" scope="TEST" />
   </component>
 </module>
 

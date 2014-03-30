@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
   public boolean isReadWriteAccessible(final PsiElement element) {
-    return element instanceof PsiVariable && !(element instanceof ImplicitVariable);
+    return element instanceof PsiVariable && !(element instanceof ImplicitVariable) || element instanceof PsiClass;
   }
 
   @Override

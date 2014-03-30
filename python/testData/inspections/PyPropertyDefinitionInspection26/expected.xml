@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>prop_test.py</file>
+    <line>21</line>
+    <description>Names of function and decorator don't match; property accessor is not created</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>25</line>
+    <description>Names of function and decorator don't match; property accessor is not created</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>30</line>
+    <description>Getter should return something</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>34</line>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>38</line>
+    <description>Deleter should not return a value</description>
+  </problem>
+</problems>
+

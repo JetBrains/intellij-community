@@ -28,12 +28,14 @@ import java.util.List;
 
 public interface IdeaTestRunner {
 
-  int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree);
+  int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree);
   void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx);
 
-  Object getTestToStart(String[] args);
+  Object getTestToStart(String[] args, String name);
   List getChildTests(Object description);
   String getStartDescription(Object child);
 
   OutputObjectRegistry getRegistry();
+
+  String getTestClassName(Object child);
 }

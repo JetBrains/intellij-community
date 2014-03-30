@@ -158,7 +158,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
   }
 
   @Nullable
-  private String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest) {
+  private static String getRelativeAnnotationProcessorDirectory(MavenProject mavenProject, boolean isTest) {
     String annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(isTest);
     File annotationProcessorDirectoryFile = new File(annotationProcessorDirectory);
     if (!annotationProcessorDirectoryFile.isAbsolute()) {

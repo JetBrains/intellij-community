@@ -177,9 +177,6 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   @SuppressWarnings("unchecked")
   public String setLastSuccessful(int handlerNo, String userName, String method, String error) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 
@@ -38,4 +37,8 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
   GrExpression[] getInitializers();
 
   boolean isMap();
+
+  PsiElement getLBrack();
+
+  PsiElement getRBrack();
 }

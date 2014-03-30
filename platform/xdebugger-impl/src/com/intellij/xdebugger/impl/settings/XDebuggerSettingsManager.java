@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -77,17 +76,10 @@ public class XDebuggerSettingsManager implements PersistentStateComponent<XDebug
     for (SpecificSettingsState settingsState : state.getSpecificStates()) {
       XDebuggerSettings<?> settings = findSettings(settingsState.getId());
       if (settings != null) {
-        loadState(settings, settingsState.getSettingsElement());
+        ComponentSerializationUtil.loadComponentState(settings, settingsState.getSettingsElement());
       }
     }
   }
-
-  private static <T> void loadState(final XDebuggerSettings<T> settings, final Element settingsElement) {
-    Class stateClass = XDebuggerUtilImpl.getStateClass(settings.getClass());
-    //noinspection unchecked
-    settings.loadState((T)XmlSerializer.deserialize(settingsElement, stateClass));
-  }
-
 
   private XDebuggerSettings findSettings(String id) {
     initSettings();

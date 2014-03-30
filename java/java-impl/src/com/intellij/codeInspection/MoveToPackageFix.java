@@ -16,7 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,11 +39,13 @@ public class MoveToPackageFix implements LocalQuickFix {
     myTargetPackage = targetPackage;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return QuickFixBundle.message("move.class.to.package.text", myTargetPackage);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.to.package.family");
@@ -58,14 +60,16 @@ public class MoveToPackageFix implements LocalQuickFix {
         && myTargetPackage != null;
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     final PsiFile myFile = element.getContainingFile();
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         chooseDirectoryAndMove(project, myFile);
       }
@@ -95,10 +99,4 @@ public class MoveToPackageFix implements LocalQuickFix {
       LOG.error(e);
     }
   }
-
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-
 }

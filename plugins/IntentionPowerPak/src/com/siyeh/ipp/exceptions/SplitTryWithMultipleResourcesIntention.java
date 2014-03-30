@@ -17,6 +17,7 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -65,6 +66,6 @@ public class SplitTryWithMultipleResourcesIntention extends Intention {
     for (PsiCatchSection catchSection : catchSections) {
       newTryStatementText.append(catchSection.getText());
     }
-    replaceStatement(newTryStatementText.toString(), tryStatement);
+    PsiReplacementUtil.replaceStatement(tryStatement, newTryStatementText.toString());
   }
 }

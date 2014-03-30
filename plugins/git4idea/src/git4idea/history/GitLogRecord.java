@@ -17,21 +17,14 @@ package git4idea.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitContentRevision;
-import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
-import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -86,7 +79,6 @@ class GitLogRecord {
 
   // trivial access methods
   String getHash() { return lookup(HASH); }
-  String getShortHash() { return lookup(SHORT_HASH); }
   String getAuthorName() { return lookup(AUTHOR_NAME); }
   String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
   String getCommitterName() { return lookup(COMMITTER_NAME); }
@@ -102,12 +94,12 @@ class GitLogRecord {
     return GitUtil.parseTimestampWithNFEReport(myOptions.get(COMMIT_TIME), myHandler, myOptions.toString());
   }
 
-  long getLongTimeStamp() {
-    return Long.parseLong(myOptions.get(COMMIT_TIME).trim());
+  long getCommitTime() {
+    return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
   }
 
   long getAuthorTimeStamp() {
-    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim());
+    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
   }
 
   String getAuthorAndCommitter() {
@@ -118,12 +110,6 @@ class GitLogRecord {
 
   String getFullMessage() {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
-  }
-
-  String[] getParentsShortHashes() {
-    final String parents = lookup(SHORT_PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return parents.split(" ");
   }
 
   String[] getParentsHashes() {
@@ -180,80 +166,7 @@ class GitLogRecord {
   }
 
   public List<Change> parseChanges(Project project, VirtualFile vcsRoot) throws VcsException {
-    GitRevisionNumber thisRevision = new GitRevisionNumber(getHash(), getDate());
-    List<GitRevisionNumber> parentRevisions = prepareParentRevisions();
-
-    List<Change> result = new ArrayList<Change>();
-    for (GitLogStatusInfo statusInfo: myStatusInfo) {
-      result.add(parseChange(project, vcsRoot, parentRevisions, statusInfo, thisRevision));
-    }
-    return result;
-  }
-
-  private List<GitRevisionNumber> prepareParentRevisions() {
-    final String[] parentsShortHashes = getParentsShortHashes();
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsShortHashes.length);
-    for (String parentsShortHash : parentsShortHashes) {
-      parents.add(AbstractHash.create(parentsShortHash));
-    }
-
-    final List<GitRevisionNumber> parentRevisions = new ArrayList<GitRevisionNumber>(parents.size());
-    for (AbstractHash parent : parents) {
-      parentRevisions.add(new GitRevisionNumber(parent.getString()));
-    }
-    return parentRevisions;
-  }
-
-  private static Change parseChange(final Project project, final VirtualFile vcsRoot, final List<GitRevisionNumber> parentRevisions,
-                                    final GitLogStatusInfo statusInfo, final VcsRevisionNumber thisRevision) throws VcsException {
-    final ContentRevision before;
-    final ContentRevision after;
-    FileStatus status = null;
-    final String path = statusInfo.getFirstPath();
-    @Nullable GitRevisionNumber firstParent = parentRevisions.isEmpty() ? null : parentRevisions.get(0);
-
-    switch (statusInfo.getType()) {
-      case ADDED:
-        before = null;
-        status = FileStatus.ADDED;
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
-        break;
-      case UNRESOLVED:
-        status = FileStatus.MERGED_WITH_CONFLICTS;
-      case MODIFIED:
-        if (status == null) {
-          status = FileStatus.MODIFIED;
-        }
-        final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath, (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      case DELETED:
-        status = FileStatus.DELETED;
-        final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true, true);
-        before = GitContentRevision.createRevision(filePathDeleted, firstParent, project, null);
-        after = null;
-        break;
-      case COPIED:
-      case RENAMED:
-        status = FileStatus.MODIFIED;
-        String secondPath = statusInfo.getSecondPath();
-        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
-                                                                           false, false, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, true, true, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename,
-                                                                 (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      case TYPE_CHANGED:
-        status = FileStatus.MODIFIED;
-        final FilePath filePath2 = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
-        after = GitContentRevision.createMultipleParentsRevision(project, filePath2, (GitRevisionNumber)thisRevision, parentRevisions);
-        break;
-      default:
-        throw new AssertionError("Unknown file status: " + statusInfo);
-    }
-    return new Change(before, after, status);
+    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), Arrays.asList(getParentsHashes()));
   }
 
   /**

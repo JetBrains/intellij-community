@@ -1,12 +1,24 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentSoftArrayHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -27,12 +39,6 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  // [greg] the key should actually be the MergingStrategy class, but this will break the API
-  private final ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>> myMergedMap = new ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>>() {
-    protected ConcurrentSoftArrayHashMap<Object, Object> create(final Class key) {
-      return new ConcurrentSoftArrayHashMap<Object, Object>(ContainerUtil.identityStrategy());
-    }
-  };
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
@@ -195,10 +201,6 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
-    /*final Object o = myMergedMap.get(aClass).get(implementations);
-    if (o != null) {
-      return (T)o;
-    }*/
     if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(aClass, Arrays.asList(implementations));
     return _mergeModels(aClass, handler, implementations);
@@ -214,7 +216,6 @@ public class ModelMergerImpl implements ModelMerger {
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
-    //myMergedMap.get(aClass).put(implementations, t);
     return t;
   }
 
@@ -271,10 +272,10 @@ public class ModelMergerImpl implements ModelMerger {
     }
 
     private JavaMethod getJavaMethod(final Method method) {
-      if (ReflectionCache.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
+      if (ReflectionUtil.isAssignable(MERGED_OBJECT_CLASS, method.getDeclaringClass())) {
         return JavaMethod.getMethod(MERGED_OBJECT_CLASS, method);
       }
-      if (ReflectionCache.isAssignable(method.getDeclaringClass(), myClass)) {
+      if (ReflectionUtil.isAssignable(method.getDeclaringClass(), myClass)) {
         return JavaMethod.getMethod(myClass, method);
       }
       return JavaMethod.getMethod(method.getDeclaringClass(), method);
@@ -286,7 +287,7 @@ public class ModelMergerImpl implements ModelMerger {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method != null) {
       final Object o = DomReflectionUtil.invokeMethod(method, implementation);
-      return ReflectionCache.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
     }
     else {
       if (implementation instanceof GenericValue) {
@@ -304,7 +305,7 @@ public class ModelMergerImpl implements ModelMerger {
     if (method == null) {
       if (ourPrimaryKeyMethods.containsKey(aClass)) return null;
 
-      for (final Method method1 : aClass.getMethods()) {
+      for (final Method method1 : ReflectionUtil.getClassPublicMethods(aClass)) {
         if ((method = findPrimaryKeyAnnotatedMethod(method1, aClass)) != null) {
           break;
         }
@@ -328,7 +329,7 @@ public class ModelMergerImpl implements ModelMerger {
 
     final List<Object> results = new ArrayList<Object>();
 
-    if (ReflectionCache.isInterface(returnType)) {
+    if (returnType.isInterface()) {
       final List<Object> orderedPrimaryKeys = new SmartList<Object>();
       final FactoryMap<Object, List<Set<Object>>> map = new FactoryMap<Object, List<Set<Object>>>() {
         @NotNull
@@ -382,7 +383,7 @@ public class ModelMergerImpl implements ModelMerger {
 
   protected final Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
-      if (ReflectionCache.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
+      if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);
         if (o != null) {
           return o;

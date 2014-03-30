@@ -99,3 +99,25 @@ public class WhileCanBeForeachInspection {
     }
   }
 }
+class Base implements Iterable<String> {
+  @Override
+  public Iterator<String> iterator() {
+    return null;
+  }
+}
+
+class Sub extends Base {
+  @Override
+  public Iterator<String> iterator() {
+    ArrayList<String> strings = new ArrayList<String>();
+    Iterator<String> superIterator = super.iterator();
+
+    while (superIterator.hasNext()) {
+      String str = superIterator.next();
+
+      strings.add(str + str);
+    }
+
+    return strings.iterator();
+  }
+}

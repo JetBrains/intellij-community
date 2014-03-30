@@ -158,4 +158,24 @@ public class IOResourceInspection {
       writer.close();
     }
   }
+
+  void escaper(InputStream in) {}
+
+  void escaped3() throws FileNotFoundException {
+    escaper(new FileInputStream(""));
+  }
+
+  void escaped4() throws FileNotFoundException {
+    class X {
+      X(InputStream s) {}
+    }
+    new X(new FileInputStream("")) {};
+    InputStream s = new FileInputStream("");
+    new X(s) {};
+  }
+
+  void escaped5() throws FileNotFoundException {
+    InputStream in = new FileInputStream("");
+    escaper(in);
+  }
 }

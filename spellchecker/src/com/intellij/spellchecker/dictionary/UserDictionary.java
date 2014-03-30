@@ -17,6 +17,7 @@ package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,46 +25,52 @@ import java.util.Collection;
 import java.util.Set;
 
 public class UserDictionary implements EditableDictionary {
-
   private final String name;
 
   @NotNull
-  private final THashSet<String> words = new THashSet<String>();
+  private final Set<String> words = new THashSet<String>();
 
-  public UserDictionary(String name) {
+  public UserDictionary(@NotNull String name) {
     this.name = name;
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   @Nullable
-  public Boolean contains(String word) {
+  public Boolean contains(@NotNull String word) {
     boolean contains = words.contains(word);
     if(contains) return true;
     return null;
   }
 
+  @Override
   public int size() {
     return words.size();
   }
 
-  @Nullable
+  @NotNull
+  @Override
   public Set<String> getWords() {
     return words;
   }
 
+  @Override
   @Nullable
   public Set<String> getEditableWords() {
     return words;
   }
 
+  @Override
   public void clear() {
     words.clear();
   }
 
-
+  @Override
   public void addToDictionary(String word) {
     if (word == null) {
       return;
@@ -71,6 +78,7 @@ public class UserDictionary implements EditableDictionary {
     words.add(word);
   }
 
+  @Override
   public void removeFromDictionary(String word) {
     if (word == null) {
       return;
@@ -78,11 +86,13 @@ public class UserDictionary implements EditableDictionary {
     words.remove(word);
   }
 
+  @Override
   public void replaceAll(@Nullable Collection<String> words) {
     clear();
     addToDictionary(words);
   }
 
+  @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     if (words == null || words.isEmpty()) {
       return;
@@ -92,8 +102,9 @@ public class UserDictionary implements EditableDictionary {
     }
   }
 
+  @Override
   public boolean isEmpty() {
-    return words.size() == 0;
+    return words.isEmpty();
   }
 
   @Override
@@ -103,11 +114,12 @@ public class UserDictionary implements EditableDictionary {
 
     UserDictionary that = (UserDictionary)o;
 
-    return !(name != null ? !name.equals(that.name) : that.name != null);
+    return name.equals(that.name);
 
   }
 
-  public void traverse(final Consumer<String> consumer) {
+  @Override
+  public void traverse(@NotNull final Consumer<String> consumer) {
     for (String word : words) {
       consumer.consume(word);
     }
@@ -115,9 +127,10 @@ public class UserDictionary implements EditableDictionary {
 
   @Override
   public int hashCode() {
-    return name != null ? name.hashCode() : 0;
+    return name.hashCode();
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';

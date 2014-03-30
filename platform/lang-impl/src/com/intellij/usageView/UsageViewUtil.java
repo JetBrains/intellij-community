@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package com.intellij.usageView;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -47,18 +48,13 @@ public class UsageViewUtil {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
-  public static String getMetaDataName(final PsiMetaData metaData) {
-    final String name = metaData.getName();
-    return StringUtil.isEmpty(name) ? "''" : name;
-  }
-
   public static String getShortName(final PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
+    LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
   public static String getLongName(final PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
+    LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
@@ -66,25 +62,26 @@ public class UsageViewUtil {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
-  public static String getDescriptiveName(@NotNull PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
-
-    if (psiElement instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
-      final PsiMetaData metaData = psiMetaOwner.getMetaData();
-      if (metaData != null) return getMetaDataName(metaData);
-    }
-
-    final Language lang = psiElement.getLanguage();
-    final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-    assert provider != null : lang;
-    return provider.getDescriptiveName(psiElement);
-  }
-
   public static boolean hasNonCodeUsages(UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) return true;
     }
+    return false;
+  }
+
+  public static boolean hasUsagesInGeneratedCode(UsageInfo[] usages, Project project) {
+    GeneratedSourcesFilter[] filters = GeneratedSourcesFilter.EP_NAME.getExtensions();
+    for (UsageInfo usage : usages) {
+      VirtualFile file = usage.getVirtualFile();
+      if (file != null) {
+        for (GeneratedSourcesFilter filter : filters) {
+          if (filter.isGeneratedSource(file, project)) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 
@@ -97,31 +94,31 @@ public class UsageViewUtil {
 
   public static UsageInfo[] removeDuplicatedUsages(@NotNull UsageInfo[] usages) {
     Set<UsageInfo> set = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
-    
+
     // Replace duplicates of move rename usage infos in injections from non code usages of master files
     String newTextInNonCodeUsage = null;
-    
+
     for(UsageInfo usage:usages) {
       if (!(usage instanceof NonCodeUsageInfo)) continue;
       newTextInNonCodeUsage = ((NonCodeUsageInfo)usage).newText;
       break;
     }
-    
+
     if (newTextInNonCodeUsage != null) {
       for(UsageInfo usage:usages) {
         if (!(usage instanceof MoveRenameUsageInfo)) continue;
         PsiFile file = usage.getFile();
-        
+
         if (file != null) {
           PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
           if (context != null) {
-  
+
             PsiElement usageElement = usage.getElement();
             if (usageElement == null) continue;
-  
+
             PsiReference psiReference = usage.getReference();
             if (psiReference == null) continue;
-            
+
             int injectionOffsetInMasterFile = InjectedLanguageManager.getInstance(usageElement.getProject()).injectedToHost(usageElement, usageElement.getTextOffset());
             TextRange rangeInElement = usage.getRangeInElement();
             assert rangeInElement != null : usage;
@@ -133,7 +130,7 @@ public class UsageViewUtil {
                 containingFile,
                 range.getStartOffset(),
                 range.getEndOffset(),
-                ((MoveRenameUsageInfo)usage).getReferencedElement(), 
+                ((MoveRenameUsageInfo)usage).getReferencedElement(),
                 newTextInNonCodeUsage
               )
             );
@@ -148,5 +145,22 @@ public class UsageViewUtil {
   public static UsageInfo[] toUsageInfoArray(@NotNull final Collection<? extends UsageInfo> collection) {
     final int size = collection.size();
     return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
+  }
+
+  @NotNull
+  public static PsiElement[] toElements(@NotNull UsageInfo[] usageInfos) {
+    return ContainerUtil.map2Array(usageInfos, PsiElement.class, new Function<UsageInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(UsageInfo info) {
+        return info.getElement();
+      }
+    });
+  }
+
+  public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {
+    int offset = info.getNavigationOffset();
+    VirtualFile file = info.getVirtualFile();
+    Project project = info.getProject();
+    FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
   }
 }

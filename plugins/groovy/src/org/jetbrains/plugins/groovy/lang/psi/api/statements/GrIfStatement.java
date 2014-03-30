@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -36,9 +37,11 @@ public interface GrIfStatement extends GrStatement, GrControlStatement {
     @Nullable
     GrStatement getElseBranch();
 
-    <T extends GrStatement> T replaceThenBranch(T newBranch) throws IncorrectOperationException;
+    @NotNull
+    <T extends GrStatement> T replaceThenBranch(@NotNull T newBranch) throws IncorrectOperationException;
 
-    <T extends GrStatement> T replaceElseBranch(T newBranch) throws IncorrectOperationException;
+    @NotNull
+    <T extends GrStatement> T replaceElseBranch(@NotNull T newBranch) throws IncorrectOperationException;
 
     @Nullable
     PsiElement getElseKeyword();

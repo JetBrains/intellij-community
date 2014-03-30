@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
   @NonNls public static final String URL_ATTR = "url";
   private boolean myDisposed;
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
-
   public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                          @NotNull Disposable parentDisposable,
                                          @Nullable VirtualFilePointerListener listener) {
@@ -162,6 +161,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
 
   private void dropCaches() {
     myTimeStampOfCachedThings = -1; // make it never equal to myVirtualFilePointerManager.getModificationCount()
+    myCachedThings = EMPTY;
   }
 
   @Override

@@ -116,7 +116,7 @@ public abstract class AbstractQuickFixManager {
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(e.getData(PlatformDataKeys.EDITOR) == null);
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
     };
     showHintAction.registerCustomShortcutSet(
@@ -377,7 +377,7 @@ public abstract class AbstractQuickFixManager {
 
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent event, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent event, int clickCount) {
           showPopup();
           return true;
         }

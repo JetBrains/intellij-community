@@ -19,17 +19,18 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.*;
 
 public class ExecUtil {
   private static final NotNullLazyValue<Boolean> hasGkSudo = new NotNullLazyValue<Boolean>() {
@@ -45,6 +46,14 @@ public class ExecUtil {
     @Override
     protected Boolean compute() {
       return new File("/usr/bin/kdesudo").canExecute();
+    }
+  };
+
+  private static final NotNullLazyValue<Boolean> hasPkExec = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/pkexec").canExecute();
     }
   };
 
@@ -115,7 +124,8 @@ public class ExecUtil {
   public static File createTempExecutableScript(@NotNull final String prefix,
                                                 @NotNull final String suffix,
                                                 @NotNull final String source) throws IOException, ExecutionException {
-    final File tempFile = FileUtil.createTempFile(prefix, suffix);
+    File tempDir = new File(PathManager.getTempPath());
+    File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
     FileUtil.writeToFile(tempFile, source);
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);
@@ -151,9 +161,24 @@ public class ExecUtil {
 
   @Nullable
   public static String execAndReadLine(final String... command) {
+    return execAndReadLine(null, command);
+  }
+
+  @Nullable
+  public static String execAndReadLine(@Nullable Charset charset, final String... command) {
     try {
-      final Process process = new GeneralCommandLine(command).createProcess();
-      final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      return readFirstLine(new GeneralCommandLine(command).createProcess().getInputStream(), charset);
+    }
+    catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static String readFirstLine(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    BufferedReader reader = new BufferedReader(charset == null ? new InputStreamReader(inputStream) : new InputStreamReader(inputStream, charset));
+    try {
       try {
         return reader.readLine();
       }
@@ -161,22 +186,99 @@ public class ExecUtil {
         reader.close();
       }
     }
-    catch (Exception ignored) { }
-    return null;
-  }
-
-  @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt) throws IOException, ExecutionException {
-    return sudoAndGetOutput(scriptPath, prompt, null);
+    catch (IOException ignored) {
+      return null;
+    }
   }
 
   /**
-   * @param scriptPath is already escaped file path
+   * Run the command with superuser privileges using safe escaping and quoting.
+   *
+   * No shell substitutions, input/output redirects, etc. in the command are applied.
+   *
+   * @param command the command and its arguments, can contain any characters
+   * @param prompt the prompt string for the users
+   * @param workDir working directory
+   * @return the results of running the process
    */
   @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt,
+  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command,
+                                               @NotNull String prompt,
+                                               @Nullable String workDir) throws IOException, ExecutionException {
+    if (SystemInfo.isMac) {
+      final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return escapeAppleScriptArgument(s);
+        }
+      }, " & \" \" & ");
+      final String escapedScript = "do shell script " + escapedCommandLine + " with administrator privileges";
+      return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir);
+    }
+    else if ("root".equals(System.getenv("USER"))) {
+      return execAndGetOutput(command, workDir);
+    }
+    else if (hasGkSudo.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"));
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (hasKdeSudo.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"));
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (hasPkExec.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.add("pkexec");
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (SystemInfo.isUnix && hasTerminalApp()) {
+      final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return escapeUnixShellArgument(s);
+        }
+      }, " ");
+      final File script = createTempExecutableScript(
+        "sudo", ".sh",
+        "#!/bin/sh\n" +
+        "echo " + escapeUnixShellArgument(prompt) + "\n" +
+        "echo\n" +
+        "sudo -- " + escapedCommandLine + "\n" +
+        "STATUS=$?\n" +
+        "echo\n" +
+        "read -p \"Press Enter to close this window...\" TEMP\n" +
+        "exit $STATUS\n");
+      return execAndGetOutput(getTerminalCommand("Install", script.getAbsolutePath()), workDir);
+    }
+
+    throw new UnsupportedSystemException();
+  }
+
+  @NotNull
+  private static String escapeAppleScriptArgument(@NotNull String arg) {
+    return "quoted form of \"" + arg.replace("\"", "\\\"") + "\"";
+  }
+
+  @NotNull
+  private static String escapeUnixShellArgument(@NotNull String arg) {
+    return "'" + arg.replace("'", "'\"'\"'") + "'";
+  }
+
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static ProcessOutput sudoAndGetOutput(@NotNull String scriptPath, @NotNull String prompt) throws IOException, ExecutionException {
+    return sudoAndGetOutput(scriptPath, prompt, null);
+  }
+
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
+  @NotNull
+  public static ProcessOutput sudoAndGetOutput(@NotNull String scriptPath,
+                                               @NotNull String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
@@ -190,6 +292,9 @@ public class ExecUtil {
     }
     else if (hasGkSudo.getValue()) {
       return execAndGetOutput(Arrays.asList("gksudo", "--message", prompt, scriptPath), workDir);
+    }
+    else if (hasPkExec.getValue()) {
+      return execAndGetOutput(Arrays.asList("pkexec", scriptPath), workDir);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
@@ -207,9 +312,10 @@ public class ExecUtil {
     throw new UnsupportedSystemException();
   }
 
-  public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ExecutionException {
-    return sudoAndGetOutput(scriptPath, prompt).getExitCode();
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static int sudoAndGetResult(@NotNull String scriptPath, @NotNull String prompt) throws IOException, ExecutionException {
+    return sudoAndGetOutput(scriptPath, prompt, null).getExitCode();
   }
 
   public static boolean hasTerminalApp() {
@@ -220,29 +326,21 @@ public class ExecUtil {
   public static List<String> getTerminalCommand(@Nullable String title, @NotNull String command) {
     if (SystemInfo.isWindows) {
       title = title != null ? title.replace("\"", "'") : "";
-      return Arrays.asList("cmd.exe", "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
+      return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
-      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command); // todo: title?
+      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);  // todo[r.sh] title?
     }
     else if (hasKdeTerminal.getValue()) {
-      return Arrays.asList("/usr/bin/konsole", "-e", command); // todo: title?
+      return Arrays.asList("/usr/bin/konsole", "-e", command);  // todo[r.sh] title?
     }
     else if (hasGnomeTerminal.getValue()) {
-      if (title != null) {
-        return Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command);
-      }
-      else {
-        return Arrays.asList("/usr/bin/gnome-terminal", "-x", command);
-      }
+      return title != null ? Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command)
+                           : Arrays.asList("/usr/bin/gnome-terminal", "-x", command);
     }
     else if (hasXTerm.getValue()) {
-      if (title != null) {
-        return Arrays.asList("/usr/bin/xterm", "-T", title, "-e", command);
-      }
-      else {
-        return Arrays.asList("/usr/bin/xterm", "-e", command);
-      }
+      return title != null ? Arrays.asList("/usr/bin/xterm", "-T", title, "-e", command)
+                           : Arrays.asList("/usr/bin/xterm", "-e", command);
     }
 
     throw new UnsupportedSystemException();

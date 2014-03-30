@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * A type which represents a function denoted by a method reference.
  */
 public class PsiMethodReferenceType extends PsiType {
+  @NotNull
   private final PsiMethodReferenceExpression myReference;
 
   public PsiMethodReferenceType(@NotNull final PsiMethodReferenceExpression reference) {
@@ -30,16 +31,19 @@ public class PsiMethodReferenceType extends PsiType {
     myReference = reference;
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return "<method reference>";
   }
 
+  @NotNull
   @Override
   public String getCanonicalText() {
     return getPresentableText();
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return getPresentableText();
@@ -51,7 +55,7 @@ public class PsiMethodReferenceType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls final String text) {
+  public boolean equalsToText(@NotNull @NonNls final String text) {
     return false;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
@@ -213,8 +213,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     int offset = myDocument.getLineStartOffset(myStartLine);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
 
-    final Language languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
-      myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n"), myFile);
+    int endOffset = CharArrayUtil.shiftBackward(myDocument.getCharsSequence(), myDocument.getLineEndOffset(myEndLine), " \t\n");
+    final Language languageSuitableForCompleteFragment;
+    if (offset >= endOffset) {  // we are on empty line
+      PsiElement element = myFile.findElementAt(offset);
+      if (element != null) languageSuitableForCompleteFragment = element.getParent().getLanguage();
+      else languageSuitableForCompleteFragment = null;
+    } else {
+      languageSuitableForCompleteFragment = PsiUtilBase.reallyEvaluateLanguageInRange(offset, endOffset, myFile);
+    }
 
     Commenter blockSuitableCommenter =
       languageSuitableForCompleteFragment == null ? LanguageCommenters.INSTANCE.forLanguage(myFile.getLanguage()) : null;
@@ -253,7 +260,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
 
     boolean allLineCommented = true;
-    boolean commentWithIndent = !CodeStyleSettingsManager.getSettings(myProject).LINE_COMMENT_AT_FIRST_COLUMN;
+    boolean commentWithIndent =
+      !CodeStyleSettingsManager.getSettings(myProject).getCommonSettings(myFile.getLanguage()).LINE_COMMENT_AT_FIRST_COLUMN;
 
     for (int line = myStartLine; line <= myEndLine; line++) {
       Commenter commenter = blockSuitableCommenter != null ? blockSuitableCommenter : findCommenter(line);
@@ -386,8 +394,8 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     final CharSequence charSequence = myDocument.getCharsSequence();
     lineStartOffset = CharArrayUtil.shiftForward(charSequence, lineStartOffset, " \t");
     lineEndOffset = CharArrayUtil.shiftBackward(charSequence, lineEndOffset < 0 ? 0 : lineEndOffset, " \t");
-    final Language lineStartLanguage = PsiUtilBase.getLanguageAtOffset(myFile, lineStartOffset);
-    final Language lineEndLanguage = PsiUtilBase.getLanguageAtOffset(myFile, lineEndOffset);
+    final Language lineStartLanguage = PsiUtilCore.getLanguageAtOffset(myFile, lineStartOffset);
+    final Language lineEndLanguage = PsiUtilCore.getLanguageAtOffset(myFile, lineEndOffset);
     return CommentByBlockCommentHandler.getCommenter(myFile, myEditor, lineStartLanguage, lineEndLanguage);
   }
 
@@ -445,25 +453,20 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         for (int line = myEndLine; line >= myStartLine; line--) {
           int lineStart = myDocument.getLineStartOffset(line);
           int offset = lineStart;
-          final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-          try {
-            while (true) {
-              String space = buffer.toString();
-              Indent indent = myCodeStyleManager.getIndent(space, fileType);
-              if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
-              char c = chars.charAt(offset);
-              if (c != ' ' && c != '\t') {
-                String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
-                myDocument.replaceString(lineStart, offset, newSpace);
-                offset = lineStart + newSpace.length();
-                break;
-              }
-              buffer.append(c);
-              offset++;
+          final StringBuilder buffer = new StringBuilder();
+          while (true) {
+            String space = buffer.toString();
+            Indent indent = myCodeStyleManager.getIndent(space, fileType);
+            if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
+            char c = chars.charAt(offset);
+            if (c != ' ' && c != '\t') {
+              String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
+              myDocument.replaceString(lineStart, offset, newSpace);
+              offset = lineStart + newSpace.length();
+              break;
             }
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(buffer);
+            buffer.append(c);
+            offset++;
           }
           commentLine(line, offset, commenter);
         }
@@ -481,6 +484,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     }
     if (endOffset >= suffix.length() && CharArrayUtil.regionMatches(myDocument.getCharsSequence(), endOffset - suffix.length(), suffix)) {
       myDocument.deleteString(endOffset - suffix.length(), endOffset);
+      endOffset = myDocument.getTextLength();
     }
     if (commentedPrefix != null && commentedSuffix != null) {
       CommentByBlockCommentHandler.commentNestedComments(myDocument, new TextRange(startOffset, endOffset), commenter);

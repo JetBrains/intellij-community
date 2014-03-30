@@ -35,7 +35,10 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
@@ -125,6 +128,35 @@ public class CompilerUtil {
     }
     if (!filesToRefresh.isEmpty()) {
       RefreshQueue.getInstance().refresh(false, true, null, filesToRefresh);
+    }
+  }
+
+  public static void refreshOutputDirectories(Set<File> outputs, boolean async) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    List<VirtualFile> toRefresh = new ArrayList<VirtualFile>();
+
+    int newDirectories = 0;
+    for (File ioOutput : outputs) {
+      VirtualFile output = fileSystem.findFileByIoFile(ioOutput);
+      if (output != null) {
+        toRefresh.add(output);
+      }
+      else if (ioOutput.exists()) {
+        VirtualFile parent = fileSystem.refreshAndFindFileByIoFile(ioOutput.getParentFile());
+        if (parent != null) {
+          parent.getChildren();
+          toRefresh.add(parent);
+          newDirectories++;
+        }
+      }
+    }
+    if (newDirectories > 10) {
+      LOG.info(newDirectories + " new output directories were created, refreshing their parents together to avoid too many rootsChange events");
+      RefreshQueue.getInstance().refresh(async, false, null, toRefresh);
+    }
+    else {
+      LOG.debug("Refreshing " + outputs.size() + " outputs");
+      fileSystem.refreshIoFiles(outputs, async, false, null);
     }
   }
 
@@ -234,7 +266,7 @@ public class CompilerUtil {
     final boolean is3OrNewer = is4OrNewer || isOfVersion(versionString, "1.3");
     final boolean is2OrNewer = is3OrNewer || isOfVersion(versionString, "1.2");
     final boolean is1OrNewer = is2OrNewer || isOfVersion(versionString, "1.0") || isOfVersion(versionString, "1.1");
-    
+
     if (!is1OrNewer) {
       // unknown jdk version, cannot say anything about the corresponding language level, so leave it unchanged
       return languageLevel;

@@ -16,6 +16,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,11 +47,12 @@ public class RunBackgroundable {
     }
 
     final boolean finalCanceled = canceled;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         if (finalCanceled) {
           task.onCancel();
-        } else {
+        }
+        else {
           task.onSuccess();
         }
       }

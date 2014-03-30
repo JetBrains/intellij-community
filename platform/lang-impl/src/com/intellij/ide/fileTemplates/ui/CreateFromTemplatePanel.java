@@ -22,6 +22,7 @@ import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,7 @@ public class CreateFromTemplatePanel{
   public JComponent getComponent() {
     if (myMainPanel == null){
       myMainPanel = new JPanel(new GridBagLayout()){
+        @Override
         public Dimension getPreferredSize(){
           return getMainPanelPreferredSize(super.getPreferredSize());
         }
@@ -98,7 +100,7 @@ public class CreateFromTemplatePanel{
 
   private Dimension getMainPanelPreferredSize(Dimension superPreferredSize){
     if((myHorizontalMargin > 0) && (myVerticalMargin > 0)){
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      Dimension screenSize = ScreenUtil.getMainScreenBounds().getSize();
       Dimension preferredSize = superPreferredSize;
       Dimension maxSize = new Dimension(screenSize.width - myHorizontalMargin, screenSize.height - myVerticalMargin);
       int width = Math.min(preferredSize.width, maxSize.width);

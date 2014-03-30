@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -34,7 +35,7 @@ import java.util.List;
  * @author peter
  */
 public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement, GrReferenceElement> {
-  public GroovyAddImportAction(GrReferenceElement ref) {
+  public GroovyAddImportAction(@NotNull GrReferenceElement ref) {
     super(ref, ref);
   }
 
@@ -79,8 +80,9 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     return false;
   }
 
+  @NotNull
   @Override
-  protected List<PsiClass> filterByContext(List<PsiClass> candidates, GrReferenceElement ref) {
+  protected List<PsiClass> filterByContext(@NotNull List<PsiClass> candidates, @NotNull GrReferenceElement ref) {
     PsiElement typeElement = ref.getParent();
     if (typeElement instanceof GrTypeElement) {
       PsiElement decl = typeElement.getParent();
@@ -92,6 +94,9 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
             return filterAssignableFrom(initializer.getType(), candidates);
           }
         }
+      }
+      if (decl instanceof GrParameter) {
+        return filterBySuperMethods((PsiParameter)decl, candidates);
       }
     }
 

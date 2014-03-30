@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -80,12 +80,12 @@ public abstract class BaseSMTRunnerTestCase extends LightPlatformTestCase {
     return createSuiteProxy("suite", parentSuite);
   }
 
-  protected RuntimeConfiguration createRunConfiguration() {
+  protected ModuleRunConfiguration createRunConfiguration() {
     return new MockRuntimeConfiguration(getProject());
   }
 
   protected TestConsoleProperties createConsoleProperties() {
-    final RuntimeConfiguration runConfiguration = createRunConfiguration();
+    final ModuleRunConfiguration runConfiguration = createRunConfiguration();
 
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(runConfiguration, "SMRunnerTests", DefaultDebugExecutor.getDebugExecutorInstance());
     TestConsoleProperties.HIDE_PASSED_TESTS.set(consoleProperties, false);

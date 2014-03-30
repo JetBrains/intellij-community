@@ -73,14 +73,17 @@ public final class TextWithImportsImpl implements TextWithImports{
     return Trinity.create(split[0], split.length > 1 ? split[1] : "", split.length > 2 ? FileTypeManager.getInstance().getStdFileType(split[2]) : null);
   }
 
+  @Override
   public CodeFragmentKind getKind() {
     return myKind;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public @NotNull String getImports() {
     return myImports;
   }
@@ -97,6 +100,7 @@ public final class TextWithImportsImpl implements TextWithImports{
     return getText();
   }
 
+  @Override
   public String toExternalForm() {
     String result = myText;
     if (StringUtil.isNotEmpty(myImports) || myFileType != null) {
@@ -112,15 +116,17 @@ public final class TextWithImportsImpl implements TextWithImports{
     return myText.hashCode();
   }
 
+  @Override
   public boolean isEmpty() {
-    final String text = getText();
-    return text == null || "".equals(text.trim());
+    return StringUtil.isEmptyOrSpaces(getText());
   }
 
+  @Override
   public void setText(String newText) {
     myText = newText;
   }
 
+  @Override
   public FileType getFileType() {
     return myFileType;
   }

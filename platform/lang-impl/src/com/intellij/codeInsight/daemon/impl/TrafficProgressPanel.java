@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -33,6 +34,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.AwtVisitor;
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +87,10 @@ public class TrafficProgressPanel extends JPanel {
     fakeStatusLargeEnough.passStati = new ArrayList<ProgressableTextEditorHighlightingPass>();
     for (int i = 0; i < 3; i++) {
       fakeStatusLargeEnough.passStati
-        .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
+        .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, editor, TextRange.EMPTY_RANGE, false,
+                                                        HighlightInfoProcessor.getEmpty()) {
           @Override
-          protected void collectInformationWithProgress(ProgressIndicator progress) {
+          protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
           }
 
           @Override
@@ -221,12 +224,12 @@ public class TrafficProgressPanel extends JPanel {
 
       int currentSeverityErrors = 0;
       @Language("HTML")
-      String text = "<html><body>";
+      String text = "";
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] > 0) {
-          final HighlightSeverity severity = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
+          final HighlightSeverity severity = SeverityRegistrar.getSeverityRegistrar(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
           String name =
-            status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+            status.errorCount[i] > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
           text += status.errorAnalyzingFinished
                   ? DaemonBundle.message("errors.found", status.errorCount[i], name)
                   : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
@@ -239,7 +242,7 @@ public class TrafficProgressPanel extends JPanel {
                 ? DaemonBundle.message("no.errors.or.warnings.found")
                 : DaemonBundle.message("no.errors.or.warnings.found.so.far") + "<br>";
       }
-      statistics.setText(text);
+      statistics.setText(XmlStringUtil.wrapInHtml(text));
     }
     finally {
       if (isFake) {

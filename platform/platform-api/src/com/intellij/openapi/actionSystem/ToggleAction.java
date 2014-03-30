@@ -36,6 +36,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, description, icon);
   }
 
+  @Override
   public final void actionPerformed(final AnActionEvent e){
     final boolean state = !isSelected(e);
     setSelected(e, state);
@@ -58,6 +59,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
    */
   public abstract void setSelected(AnActionEvent e, boolean state);
 
+  @Override
   public void update(final AnActionEvent e){
     final Boolean selected = isSelected(e) ? Boolean.TRUE : Boolean.FALSE;
     final Presentation presentation = e.getPresentation();

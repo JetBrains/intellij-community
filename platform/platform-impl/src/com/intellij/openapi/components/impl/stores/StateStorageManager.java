@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,19 @@ public interface StateStorageManager {
   StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
-  StateStorage getFileStateStorage(String fileName);
+  StateStorage getFileStateStorage(@NotNull String fileSpec);
 
   Collection<String> getStorageFileNames();
 
   void clearStateStorage(@NotNull String file);
 
+  @NotNull
   ExternalizationSession startExternalization();
-  SaveSession startSave(ExternalizationSession externalizationSession) ;
-  void finishSave(SaveSession saveSession);
+
+  @NotNull
+  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+
+  void finishSave(@NotNull SaveSession saveSession);
 
   @Nullable
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
@@ -56,27 +60,32 @@ public interface StateStorageManager {
   @Nullable
   String expandMacros(String file);
 
-  void registerStreamProvider(StreamProvider streamProvider, final RoamingType type);
+  @Deprecated
+  void registerStreamProvider(@SuppressWarnings("deprecation") StreamProvider streamProvider, final RoamingType type);
 
-  void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType);
+  void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
 
-  StreamProvider[] getStreamProviders(final RoamingType roamingType);
+  @Nullable
+  com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider();
 
   void reset();
 
-
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, Object component, String componentName, Object state) throws StateStorageException;
-    void setStateInOldStorage(Object component, String componentName, Object state) throws StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state) throws StateStorageException;
+    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException;
   }
 
   interface SaveSession {
     //returns set of component which were changed, null if changes are much more than just component state.
     @Nullable
-    Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
+    @NotNull
     List<IFile> getAllStorageFilesToSave() throws StateStorageException;
+
+    @NotNull
     List<IFile> getAllStorageFiles();
+
     void save() throws StateStorageException;
   }
 }

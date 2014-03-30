@@ -50,8 +50,8 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
     }
   }
 
-  private void addProblems(DomElement element, MavenDomProjectModel model, DomElementAnnotationHolder holder,
-                           MavenProjectProblem.ProblemType... types) {
+  private static void addProblems(DomElement element, MavenDomProjectModel model, DomElementAnnotationHolder holder,
+                                  MavenProjectProblem.ProblemType... types) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       for (MavenProjectProblem each : mavenProject.getProblems()) {

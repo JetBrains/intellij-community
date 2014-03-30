@@ -34,9 +34,12 @@ import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.xdebugger.ui.DebuggerColors;
 
 import javax.swing.*;
+import java.awt.*;
 
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
+
+  public abstract void saveState();
 
   public abstract Object getBreakpoint();
 
@@ -59,7 +62,10 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
     panel.navigateInPreviewEditor(state);
 
     TextAttributes softerAttributes = attributes.clone();
-    softerAttributes.setBackgroundColor(ColorUtil.softer(softerAttributes.getBackgroundColor()));
+    Color backgroundColor = softerAttributes.getBackgroundColor();
+    if (backgroundColor != null) {
+      softerAttributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
+    }
 
     final Editor editor = panel.getEditor();
     final MarkupModel editorModel = editor.getMarkupModel();
@@ -101,6 +107,7 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
 
   public abstract String getDisplayText();
 
+  protected void dispose() {}
 
   @Override
   public boolean equals(Object o) {

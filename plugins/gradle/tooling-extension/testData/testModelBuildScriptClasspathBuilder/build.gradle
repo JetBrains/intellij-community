@@ -1,0 +1,17 @@
+//noinspection GrPackage
+
+project("moduleWithAdditionalClasspath") {
+  buildscript {
+    dependencies {
+      classpath files("lib/someDep.jar")
+    }
+  }
+}
+
+project("baseModule") {
+  buildscript {
+    dependencies {
+      classpath files("lib/inheritedDep.jar")
+    }
+  }
+}

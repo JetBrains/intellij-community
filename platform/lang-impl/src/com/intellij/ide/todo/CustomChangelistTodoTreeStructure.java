@@ -34,19 +34,23 @@ public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
     mySearchHelper = searchHelper;
   }
 
+  @Override
   public boolean accept(final PsiFile psiFile) {
     if (! psiFile.isValid()) return false;
     return mySearchHelper.getTodoItemsCount(psiFile) > 0;
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }

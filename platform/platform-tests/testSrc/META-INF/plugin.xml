@@ -1,0 +1,8 @@
+<idea-plugin>
+  <name>Platform Tests</name>
+  <id>org.jetbrains.platform.tests</id>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <binaryRequestHandler implementation="com.intellij.ide.BinaryRequestHandlerTest$MyBinaryRequestHandler"/>
+  </extensions>
+</idea-plugin>

@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
@@ -45,7 +44,7 @@ public class GitRemoteSteps {
 
     myHttpAuthService.register(myAuthenticator);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         String projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "");
@@ -97,17 +96,17 @@ public class GitRemoteSteps {
     private final CountDownLatch myPasswordSuppliedWaiter = new CountDownLatch(1);
     private final CountDownLatch myUsernameSuppliedWaiter = new CountDownLatch(1);
 
-    private boolean myPasswordAsked;
-    private boolean myUsernameAsked;
+    private volatile boolean myPasswordAsked;
+    private volatile boolean myUsernameAsked;
 
-    private String myPassword;
-    private String myUsername;
+    private volatile String myPassword;
+    private volatile String myUsername;
 
     @NotNull
     @Override
     public String askPassword(@NotNull String url) {
-      myPasswordAskedWaiter.countDown();
       myPasswordAsked  = true;
+      myPasswordAskedWaiter.countDown();
       try {
         assertTrue("Password was not supplied during the reasonable period of time",
                    myPasswordSuppliedWaiter.await(TIMEOUT, TimeUnit.SECONDS));
@@ -121,8 +120,8 @@ public class GitRemoteSteps {
     @NotNull
     @Override
     public String askUsername(@NotNull String url) {
-      myUsernameAskedWaiter.countDown();
       myUsernameAsked  = true;
+      myUsernameAskedWaiter.countDown();
       try {
         assertTrue("Password was not supplied during the reasonable period of time",
                    myUsernameSuppliedWaiter.await(TIMEOUT, TimeUnit.SECONDS));
@@ -135,13 +134,13 @@ public class GitRemoteSteps {
 
 
     void supplyPassword(@NotNull String password) {
-      myPasswordSuppliedWaiter.countDown();
       myPassword = password;
+      myPasswordSuppliedWaiter.countDown();
     }
 
     void supplyUsername(@NotNull String username) {
-      myUsernameSuppliedWaiter.countDown();
       myUsername = username;
+      myUsernameSuppliedWaiter.countDown();
     }
 
     void waitUntilPasswordIsAsked() throws InterruptedException {

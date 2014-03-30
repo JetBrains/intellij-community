@@ -22,8 +22,9 @@ package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +42,6 @@ import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
@@ -69,7 +69,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_SUPERCLASS);
         return;
       }
-      if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass)) {
+      if (element instanceof PsiClass) {
         invoke(project, new PsiElement[]{element}, dataContext);
         return;
       }
@@ -85,7 +85,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, mySubclass)) return;
 
-    Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
+    Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (mySubclass.isInterface()) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("superclass.cannot.be.extracted.from.an.interface"));
@@ -107,7 +107,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     }, false);
 
     final ExtractSuperclassDialog dialog =
-      new ExtractSuperclassDialog(project, mySubclass, memberInfos, ExtractSuperclassHandler.this);
+      new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);
     dialog.show();
     if (!dialog.isOK() || !dialog.isExtractSuperclass()) return;
 
@@ -137,7 +137,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 ? mySubclass.getSuperClass() : null;
+        final PsiClass superClass = mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
         conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
@@ -182,7 +182,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   }
 
   private String getCommandName(final PsiClass subclass, String newName) {
-    return RefactoringBundle.message("extract.superclass.command.name", newName, UsageViewUtil.getDescriptiveName(subclass));
+    return RefactoringBundle.message("extract.superclass.command.name", newName, DescriptiveNameUtil.getDescriptiveName(subclass));
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {

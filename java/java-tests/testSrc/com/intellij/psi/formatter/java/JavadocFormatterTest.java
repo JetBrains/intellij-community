@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.psi.formatter.java;
 
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
@@ -39,6 +41,46 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "class Foo {\n" +
       "}");
 
+  }
+
+  public void testEA49739() throws Exception {
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    doTextTest("class A {\n" +
+               "    /**\n" +
+               "     * @return a is one line javadoc\n" +
+               "     */\n" +
+               "    public int get(int a) {\n" +
+               "        return 1;\n" +
+               "    }\n" +
+               "  }",
+               "class A {\n" +
+               "    /**\n" +
+               "     * @return a is one line \n" +
+               "     * javadoc\n" +
+               "     */\n" +
+               "    public int get(int a) {\n" +
+               "        return 1;\n" +
+               "    }\n" +
+               "}");
+  }
+
+  public void testOneLineCommentWrappedByRightMarginIntoMultiLine() throws Exception {
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 35;
+    doTextTest(
+      "/** Here is one-line java-doc comment */" +
+      "class Foo {\n" +
+      "}",
+      "/**\n" +
+      " * Here is one-line java-doc\n" +
+      " * comment\n" +
+      " */\n" +
+      "class Foo {\n" +
+      "}");
   }
 
   public void testLineFeedsArePreservedDuringWrap() {
@@ -78,6 +120,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
     getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
 
     doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
                "/**\n" +
@@ -90,11 +133,31 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                "class A {\n" +
                "}");
   }
-  
+
+  public void testSCR2632_JDK8_LanguageLevel() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 20;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+
+    doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
+               "/**\n" +
+               " * <p>\n" +
+               " * Another paragraph\n" +
+               " * of the description\n" +
+               " * placed after\n" +
+               " * blank line.\n" +
+               " */\n" +
+               "class A {\n" +
+               "}");
+  }
+
+
   public void testParagraphTagGeneration() {
     // Inspired by IDEA-61811
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
     getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doTextTest(
       "/**\n" +
       " * line 1\n" +
@@ -122,7 +185,31 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
-  
+
+  public void testParameterDescriptionNotOnNewLine() throws Exception {
+    // IDEA-107383
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_ALIGN_PARAM_COMMENTS = true;
+
+    doClassTest(
+      "/**\n" +
+      " @param protocolId protocol id\n" +
+      " @param connectedUserIdHandlerFromServer user id\n" +
+      " @return\n" +
+      
+      " */\n" +
+      "public void register(int protocolId, int connectedUserIdHandlerFromServer) {\n" +
+      "}",
+
+      "/**\n" +
+      " * @param protocolId                       protocol id\n" +
+      " * @param connectedUserIdHandlerFromServer user id\n" +
+      " * @return\n" +
+      " */\n" +
+      "public void register(int protocolId, int connectedUserIdHandlerFromServer) {\n" +
+      "}");
+  }
+
   public void testWrappedParameterDescription() throws Exception {
     // Inspired by IDEA-13072
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
@@ -155,4 +242,469 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testExceptionAlignmentCorrect() {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_ALIGN_EXCEPTION_COMMENTS = true;
+
+    String before =
+      "public class Controller {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * @throws NoSearchServersConfiguredException If no search engine servers are configured.\n" +
+      "     * @throws SearchServerUnavailableException If the search engine server is not accessible.\n" +
+      "     * @throws InvalidSearchServerResponseException If the search engine server response was invalid.\n" +
+      "     * @throws NotificationEncodingException If the request could not be encoded to UTF-8.\n" +
+      "     * @throws NotificationUnavailableException If the notification server is not available or sent back an invalid response code.\n" +
+      "     */\n" +
+      "    public int superDangerousMethod() {\n" +
+      "        return 68;\n" +
+      "    }\n" +
+      "}";
+
+    String after =
+      "public class Controller {\n" +
+      "\n" +
+      "    /**\n" +
+      "     * @throws NoSearchServersConfiguredException   If no search engine servers are configured.\n" +
+      "     * @throws SearchServerUnavailableException     If the search engine server is not accessible.\n" +
+      "     * @throws InvalidSearchServerResponseException If the search engine server response was invalid.\n" +
+      "     * @throws NotificationEncodingException        If the request could not be encoded to UTF-8.\n" +
+      "     * @throws NotificationUnavailableException     If the notification server is not available or sent back an invalid response code.\n" +
+      "     */\n" +
+      "    public int superDangerousMethod() {\n" +
+      "        return 68;\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(before, after);
+  }
+
+  public void testDoNotWrapMultiLineCommentIntoOneLine() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/**\n" +
+                  " * foo\n" +
+                  " */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    doClassTest(test, test);
+  }
+
+  public void testLeaveOneLineComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/** foo */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    doClassTest(test, test);
+  }
+
+  public void testWrapOneLineComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+    String test = "/** foo */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+  public void testWrapStrangeComment() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+    String test = "/** foo" +
+                  " */\n" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+  public void testWrapStrangeCommentIfNotWrapOneLines() throws Exception {
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    String test = "/** foo\n" +
+                  " */" +
+                  "public Object next() {\n" +
+                  "    return new Object();\n" +
+                  "}";
+    String after = "/**\n" +
+                   " * foo\n" +
+                   " */\n" +
+                   "public Object next() {\n" +
+                   "    return new Object();\n" +
+                   "}";
+    doClassTest(test, after);
+  }
+
+
+  public void testReturnTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @return this is a return value documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters, which should be greater than any sane right margin.\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }\n";
+
+    String after = "/**\n" +
+                   " * @return this is a return value documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters, which\n" +
+                   " * should be greater than any sane right margin.\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}\n";
+
+    doClassTest(before, after);
+  }
+
+
+  public void testReturnTagAlignmentWithPreTagOnFirstLine() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @return <pre>this is a return value documentation with a very long description\n" +
+                    "     * that is longer than the right margin.</pre>\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @return <pre>this is a return value documentation with a very long\n" +
+                   " * description\n" +
+                   " * that is longer than the right margin.</pre>\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testSeeTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @see this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @see this is an additional documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters which\n" +
+                   " * should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testDummySinceTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @since this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @since this is an additional documentation with a very long description\n" +
+                   " * that is longer than the right margin. It is more than 200 characters\n" +
+                   " * long, not including the comment indent and the asterisk characters which\n" +
+                   " * should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testDummyDeprecatedTagAlignment() throws Exception {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 80;
+    getSettings().getRootSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    String before = "    /**\n" +
+                    "     * @deprecated this is an additional documentation with a very long description that is longer than the right margin. It is more than 200 characters long, not including the comment indent and the asterisk characters which should be greater than any sane right margin\n" +
+                    "     */\n" +
+                    "    public int method(int parameter) {\n" +
+                    "        return 0;\n" +
+                    "    }";
+
+    String after = "/**\n" +
+                   " * @deprecated this is an additional documentation with a very long\n" +
+                   " * description that is longer than the right margin. It is more than 200\n" +
+                   " * characters long, not including the comment indent and the asterisk\n" +
+                   " * characters which should be greater than any sane right margin\n" +
+                   " */\n" +
+                   "public int method(int parameter) {\n" +
+                   "    return 0;\n" +
+                   "}";
+
+    doClassTest(before, after);
+  }
+
+  public void testJavadocFormattingIndependentOfMethodIndentation() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 50;
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getCurrentCodeStyleSettings().JD_P_AT_EMPTY_LINES = false;
+    getCurrentCodeStyleSettings().JD_KEEP_EMPTY_LINES = false;
+    getCurrentCodeStyleSettings().JD_ADD_BLANK_AFTER_DESCRIPTION = false;
+    String before1 = "class A {\n" +
+                     "    /**\n" +
+                     "     * Some really great independent test approach purpose live fish\n" +
+                     "     * banana split string be accurate when writing tests and code\n" +
+                     "     * read write buffer.\n" +
+                     "     *\n" +
+                     "     * Some text after empty line\n" +
+                     "     *\n" +
+                     "     */\n" +
+                     "void foo() {\n" +
+                     "\n" +
+                     "}\n" +
+                     "}";
+
+    String before2 = "class A {\n" +
+                     "    /**\n" +
+                     "     * Some really great independent test approach purpose live fish\n" +
+                     "     * banana split string be accurate when writing tests and code\n" +
+                     "     * read write buffer.\n" +
+                     "     *\n" +
+                     "     * Some text after empty line\n" +
+                     "     *\n" +
+                     "     */\n" +
+                     "    void foo() {\n" +
+                     "\n" +
+                     "    }\n" +
+                     "}";
+
+    formatEveryoneAndCheckIfResultEqual(before1, before2);
+  }
+
+  public void testJavadocAlignmentForInnerClasses() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 40;
+    getCurrentCodeStyleSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+
+    String code = "public class Outer {\n" +
+                  "    class Inner {\n" +
+                  "        /**\n" +
+                  "         * Password from wild forest big house\n" +
+                  "         */\n" +
+                  "        public int getMagic() {\n" +
+                  "            return 312;\n" +
+                  "        }\n" +
+                  "\n" +
+                  "class InnerInner {\n" +
+                  "/**\n" +
+                  " * Special magic needs special rules\n" +
+                  " */\n" +
+                  "public int innerMagic() {\n" +
+                  "    return 1;\n" +
+                  "}\n" +
+                  "}\n" +
+                  "    }\n" +
+                  "}";
+
+    String result = "public class Outer {\n" +
+                    "    class Inner {\n" +
+                    "        /**\n" +
+                    "         * Password from wild forest big\n" +
+                    "         * house\n" +
+                    "         */\n" +
+                    "        public int getMagic() {\n" +
+                    "            return 312;\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        class InnerInner {\n" +
+                    "            /**\n" +
+                    "             * Special magic needs\n" +
+                    "             * special rules\n" +
+                    "             */\n" +
+                    "            public int innerMagic() {\n" +
+                    "                return 1;\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}";
+    doTextTest(code, result);
+  }
+
+  public void testAlignmentWithNoTopClassMembersIndentation() {
+    getCurrentCodeStyleSettings().RIGHT_MARGIN = 40;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+    getCurrentCodeStyleSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+    getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = true;
+
+    String before = "public class Outer {\n" +
+                    "class Inner {\n" +
+                    "/**\n" +
+                    " * Password from wild forest big\n" +
+                    " * house\n" +
+                    " */\n" +
+                    "public int getMagic() {\n" +
+                    "    return 312;\n" +
+                    "}\n" +
+                    "\n" +
+                    "class InnerInner {\n" +
+                    "/**\n" +
+                    " * Special magic needs special rules\n" +
+                    " */\n" +
+                    "public int innerMagic() {\n" +
+                    "    return 1;\n" +
+                    "}\n" +
+                    "\n" +
+                    "class InnerInnerInner {\n" +
+                    "int iii;\n" +
+                    "class TripleInner {\n" +
+                    "int ti;\n" +
+                    "}\n" +
+                    "}\n" +
+                    "}\n" +
+                    "}\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "        System.out.println(\"AAA!\");\n" +
+                    "    }\n" +
+                    "}";
+
+   String after = "public class Outer {\n" +
+                  "class Inner {\n" +
+                  "    /**\n" +
+                  "     * Password from wild forest big\n" +
+                  "     * house\n" +
+                  "     */\n" +
+                  "    public int getMagic() {\n" +
+                  "        return 312;\n" +
+                  "    }\n" +
+                  "\n" +
+                  "    class InnerInner {\n" +
+                  "        /**\n" +
+                  "         * Special magic needs special\n" +
+                  "         * rules\n" +
+                  "         */\n" +
+                  "        public int innerMagic() {\n" +
+                  "            return 1;\n" +
+                  "        }\n" +
+                  "\n" +
+                  "        class InnerInnerInner {\n" +
+                  "            int iii;\n" +
+                  "\n" +
+                  "            class TripleInner {\n" +
+                  "                int ti;\n" +
+                  "            }\n" +
+                  "        }\n" +
+                  "    }\n" +
+                  "}\n" +
+                  "\n" +
+                  "public static void main(String[] args) {\n" +
+                  "    System.out.println(\"AAA!\");\n" +
+                  "}\n" +
+                  "}";
+
+    doTextTest(before, after);
+  }
+
+  public void testDoNotWrapLongLineCommentWithSpaceInStart() throws Exception {
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = true;
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 200;
+    String before = "public class JiraIssue {\n" +
+                    "\n" +
+                    "    public static void main(String[] args) {\n" +
+                    "// AAAMIIGgIBADANBgkqhkiG9w0BAQEFAASCBugwgsdfssdflkldkflskdfsdkfjskdlfjdskjfksdjfksdjfkjsdkfjsdkfjgbkAgEAAoIBgQCZfKds4XjFWIU8D4OqCYJ0TkAkKPVV96v2l6PuMBNbON3ndHCVvwoJOJnopfbtFro9eCTCUC9MlAUZBAVdCbPVi3ioqaEN\n" +
+                    "    }\n" +
+                    "}";
+    doTextTest(before, before);
+  }
+
+
+  public void testNotGenerateSelfClosingPTagIfLanguageLevelJava8() throws Exception {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    String before = "/**\n" +
+                    " * Super method\n" +
+                    " *\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    String after = "/**\n" +
+                    " * Super method\n" +
+                    " * <p>\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    doClassTest(before, after);
+  }
+
+  public void testGenerateSelfClosingPTagIfLanguageLevelNotJava8() throws Exception {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    String before = "/**\n" +
+                    " * Super method\n" +
+                    " *\n" +
+                    " * Super multiple times\n" +
+                    " */\n" +
+                    "public void voo() {\n" +
+                    "}\n";
+    String after = "/**\n" +
+                   " * Super method\n" +
+                   " * <p/>\n" +
+                   " * Super multiple times\n" +
+                   " */\n" +
+                   "public void voo() {\n" +
+                   "}\n";
+    doClassTest(before, after);
+  }
+
 }

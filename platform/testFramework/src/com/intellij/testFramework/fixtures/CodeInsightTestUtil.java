@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
+import java.io.File;
 import java.util.List;
+
+import static junit.framework.Assert.assertTrue;
 
 /**
  * @author Dmitry Avdeev
@@ -68,27 +73,32 @@ public class CodeInsightTestUtil {
     return null;
   }
 
-  public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) throws Throwable {
+  @TestOnly
+  public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) {
     doIntentionTest(fixture, actionText, file + ".xml", file + "_after.xml");
   }
 
+  @TestOnly
   public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
                                      @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
-    Assert.assertTrue("Action not found: " + action + " among " + availableIntentions, intentionAction != null);
+    if (intentionAction == null) {
+      Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
+    }
     new WriteCommandAction(fixture.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
         fixture.launchAction(intentionAction);
       }
     }.execute();
+    UIUtil.dispatchAllInvocationEvents();
     fixture.checkResultByFile(after, false);
   }
 
   public static void doWordSelectionTest(@NotNull final CodeInsightTestFixture fixture,
-                                         @NotNull final String before, final String... after) {
+                                         @TestDataFile @NotNull final String before, @TestDataFile final String... after) {
     assert after != null && after.length > 0;
     fixture.configureByFile(before);
 
@@ -98,6 +108,27 @@ public class CodeInsightTestUtil {
       action.execute(fixture.getEditor(), dataContext);
       fixture.checkResultByFile(file, false);
     }
+  }
+  
+  public static void doWordSelectionTestOnDirectory(@NotNull final CodeInsightTestFixture fixture,
+                                                    @TestDataFile @NotNull final String directoryName,
+                                                    @NotNull final String filesExtension) {
+    final SelectWordHandler action = new SelectWordHandler(null);
+    fixture.copyDirectoryToProject(directoryName, directoryName);
+    fixture.configureByFile(directoryName + "/before." + filesExtension);
+    int i = 1;
+    while (true) {
+      final String fileName = directoryName + "/after" + i + "." + filesExtension;
+      if (new File(fixture.getTestDataPath() + "/" + fileName).exists()) {
+        action.execute(fixture.getEditor(), DataManager.getInstance().getDataContext(fixture.getEditor().getComponent()));
+        fixture.checkResultByFile(fileName);
+        i++;
+      }
+      else {
+        break;
+      }
+    }
+    assertTrue("At least one 'after'-file required", i > 1);
   }
 
   public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,

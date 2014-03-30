@@ -44,6 +44,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     final String description = getDescription();
     if (description != null) {
       JPanel descPanel = new JPanel();
-      descPanel.add(new JLabel("<html>" + description + "</html>"));
+      descPanel.add(new JLabel(XmlStringUtil.wrapInHtml(description)));
       descPanel.setBorder(BorderFactory.createEtchedBorder());
       mainPanel.add(descPanel, BorderLayout.NORTH);
     }

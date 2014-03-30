@@ -34,6 +34,7 @@ public class SafeDeleteReferenceSimpleDeleteUsageInfo extends SafeDeleteReferenc
     super(element, referencedElement, startOffset, endOffset, isNonCodeUsage, isSafeDelete);
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     if(isSafeDelete()) {
       PsiElement element = getElement();

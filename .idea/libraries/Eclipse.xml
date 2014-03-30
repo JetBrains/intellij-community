@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="Eclipse">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/ecj-4.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ecj-4.3.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/ecjsrc-4.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/ecjsrc-4.3.2.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,48 +35,23 @@ public class CheckboxTreeBase extends Tree {
   private final CheckPolicy myCheckPolicy;
   private static final CheckPolicy DEFAULT_POLICY = new CheckPolicy(true, true, false, true);
 
+  public CheckboxTreeBase() {
+    this(new CheckboxTreeCellRendererBase(), null);
+  }
+
   public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root) {
     this(cellRenderer, root, DEFAULT_POLICY);
   }
 
-  public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root, CheckPolicy checkPolicy) {
+  public CheckboxTreeBase(CheckboxTreeCellRendererBase cellRenderer, @Nullable CheckedTreeNode root, CheckPolicy checkPolicy) {
     myCheckPolicy = checkPolicy;
 
-    setCellRenderer(cellRenderer);
     setRootVisible(false);
     setShowsRootHandles(true);
     setLineStyleAngled();
     TreeUtil.installActions(this);
 
-    new ClickListener() {
-      @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
-        int row = getRowForLocation(e.getX(), e.getY());
-        if (row < 0) return false;
-        final Object o = getPathForRow(row).getLastPathComponent();
-        if (!(o instanceof CheckedTreeNode)) return false;
-        Rectangle rowBounds = getRowBounds(row);
-        cellRenderer.setBounds(rowBounds);
-        Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
-        checkBounds.setLocation(rowBounds.getLocation());
-
-        if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
-
-        final CheckedTreeNode node = (CheckedTreeNode)o;
-        if (checkBounds.contains(e.getPoint())) {
-          if (node.isEnabled()) {
-            toggleNode(node);
-            setSelectionRow(row);
-            return true;
-          }
-        }
-        else if (clickCount > 1) {
-          onDoubleClick(node);
-          return true;
-        }
-        return false;
-      }
-    }.installOn(this);
+    installRenderer(cellRenderer);
 
     addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
@@ -103,7 +79,42 @@ public class CheckboxTreeBase extends Tree {
     });
 
     setSelectionRow(0);
-    setModel(new DefaultTreeModel(root));
+    if (root != null) {
+      setModel(new DefaultTreeModel(root));
+    }
+  }
+
+  public void installRenderer(final CheckboxTreeCellRendererBase cellRenderer) {
+    setCellRenderer(cellRenderer);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        int row = getRowForLocation(e.getX(), e.getY());
+        if (row < 0) return false;
+        final Object o = getPathForRow(row).getLastPathComponent();
+        if (!(o instanceof CheckedTreeNode)) return false;
+        Rectangle rowBounds = getRowBounds(row);
+        cellRenderer.setBounds(rowBounds);
+        Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
+        checkBounds.setLocation(rowBounds.getLocation());
+
+        if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
+
+        final CheckedTreeNode node = (CheckedTreeNode)o;
+        if (checkBounds.contains(e.getPoint())) {
+          if (node.isEnabled()) {
+            toggleNode(node);
+            setSelectionRow(row);
+            return true;
+          }
+        }
+        else if (clickCount > 1) {
+          onDoubleClick(node);
+          return true;
+        }
+        return false;
+      }
+    }.installOn(this);
   }
 
   protected void onDoubleClick(final CheckedTreeNode node) {
@@ -182,6 +193,10 @@ public class CheckboxTreeBase extends Tree {
 
   }
 
+  protected void nodeStateWillChange(CheckedTreeNode node) {
+
+  }
+
   protected void adjustParentsAndChildren(final CheckedTreeNode node, final boolean checked) {
     changeNodeState(node, checked);
     if (!checked) {
@@ -220,6 +235,7 @@ public class CheckboxTreeBase extends Tree {
 
   private void changeNodeState(final CheckedTreeNode node, final boolean checked) {
     if (node.isChecked() != checked) {
+      nodeStateWillChange(node);
       node.setChecked(checked);
       onNodeStateChanged(node);
     }
@@ -282,7 +298,7 @@ public class CheckboxTreeBase extends Tree {
     return true;
   }
 
-  public static abstract class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
+  public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
     public final JCheckBox myCheckbox;
     private final boolean myUsePartialStatusForParentNodes;
@@ -402,7 +418,7 @@ public class CheckboxTreeBase extends Tree {
   }
 
 
-  public static enum NodeState {
+  public enum NodeState {
     FULL, CLEAR, PARTIAL
   }
 

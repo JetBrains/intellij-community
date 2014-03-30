@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.overrideImplement;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -27,19 +28,19 @@ import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator;
+import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -48,17 +49,6 @@ import java.util.Properties;
  */
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
-  private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
-
-  private static final String[] GROOVY_MODIFIERS = new String[]{
-    //PsiModifier.PUBLIC,
-    PsiModifier.PROTECTED,
-    PsiModifier.PRIVATE,
-    PsiModifier.STATIC,
-    //PsiModifier.ABSTRACT,
-    PsiModifier.FINAL,
-    PsiModifier.SYNCHRONIZED,
-  };
 
   private GroovyOverrideImplementUtil() {
   }
@@ -71,110 +61,67 @@ public class GroovyOverrideImplementUtil {
 
     String templName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
-    final GrMethod result = createOverrideImplementMethodSignature(project, method, substitutor, aClass);
-    PsiModifierList modifierList = result.getModifierList();
-    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-    modifierList.setModifierProperty(PsiModifier.NATIVE, false);
+    final GrMethod result = (GrMethod)GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
+    setupModifierList(result);
     setupOverridingMethodBody(project, method, result, template, substitutor);
-    if (OverrideImplementUtil.isInsertOverride(method, aClass)) {
-      result.getModifierList().addAnnotation(JAVA_LANG_OVERRIDE);
-    }
+    setupReturnType(result, method);
 
-    GrReferenceAdjuster.shortenReferences(result);
+    setupAnnotations(aClass, method, result);
+
+    GroovyChangeContextUtil.encodeContextInfo(result);
     return result;
   }
 
-
-  private static GrMethod createOverrideImplementMethodSignature(Project project, PsiMethod superMethod, PsiSubstitutor substitutor, PsiClass aClass) {
-    StringBuilder buffer = new StringBuilder();
-    final boolean hasModifiers = ModifierListGenerator.writeModifiers(buffer, superMethod.getModifierList(), GROOVY_MODIFIERS, false);
-
-    final PsiTypeParameter[] superTypeParameters = superMethod.getTypeParameters();
-    final List<PsiTypeParameter> typeParameters = new ArrayList<PsiTypeParameter>();
-    final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-    for (PsiTypeParameter parameter : superTypeParameters) {
-      if (!map.containsKey(parameter)) {
-        typeParameters.add(parameter);
+  private static void setupReturnType(GrMethod result, PsiMethod method) {
+    if (method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) {
+      result.setReturnType(null);
+      GrModifierList modifierList = result.getModifierList();
+      if (!modifierList.hasExplicitVisibilityModifiers()) {
+        modifierList.setModifierProperty(GrModifier.DEF, true);
       }
-    }
-
-    final PsiType returnType = substitutor.substitute(getSuperReturnType(superMethod));
-
-    boolean isConstructor = superMethod.isConstructor();
-    if (!isConstructor && (!hasModifiers && returnType == null || typeParameters.size() > 0)) {
-      buffer.append("def ");
-    }
-
-    if (typeParameters.size() > 0) {
-      LOG.assertTrue(!isConstructor);
-      buffer.append('<');
-      for (PsiTypeParameter parameter : typeParameters) {
-        buffer.append(parameter.getText());
-        buffer.append(", ");
-      }
-      buffer.replace(buffer.length() - 2, buffer.length(), ">");
-    }
-
-    final String name;
-    if (isConstructor) {
-      name = aClass.getName();
-    }
-    else {
-      if (returnType != null) {
-        buffer.append(returnType.getCanonicalText()).append(" ");
-      }
-
-      name = superMethod.getName();
-    }
-    buffer.append(name);
-
-    buffer.append("(");
-    final PsiParameter[] parameters = superMethod.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      if (i > 0) buffer.append(", ");
-      PsiParameter parameter = parameters[i];
-      if (!(parameter instanceof GrParameter && ((GrParameter)parameter).getTypeElementGroovy() == null)) {
-        final PsiType parameterType = substitutor.substitute(parameter.getType());
-        buffer.append(parameterType.getCanonicalText());
-        buffer.append(" ");
-      }
-      final String paramName = parameter.getName();
-      if (paramName != null) {
-        buffer.append(paramName);
-      }
-      else if (parameter instanceof PsiCompiledElement) {
-        buffer.append(((PsiParameter)((PsiCompiledElement)parameter).getMirror()).getName());
-      }
-    }
-
-    buffer.append(") ");
-    final PsiReferenceList list = superMethod.getThrowsList();
-    if (list != null) {
-      final PsiClassType[] types = list.getReferencedTypes();
-      if (types.length > 0) {
-        buffer.append("throws ");
-        for (PsiClassType type : types) {
-          buffer.append(type.getCanonicalText());
-          buffer.append(" ,");
-        }
-
-        buffer.delete(buffer.length() - 2, buffer.length());
-      }
-    }
-    buffer.append("{}");
-
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
-    if (isConstructor) {
-      return factory.createConstructorFromText(name, buffer.toString(), aClass);
-    }
-    else {
-      return factory.createMethodFromText(buffer.toString(), aClass);
     }
   }
 
+  private static void setupAnnotations(@NotNull GrTypeDefinition aClass, @NotNull PsiMethod method, @NotNull GrMethod result) {
+    if (OverrideImplementUtil.isInsertOverride(method, aClass)) {
+      result.getModifierList().addAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+    }
+
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
+
+    final PsiParameter[] originalParams = method.getParameterList().getParameters();
+
+    GrParameter[] parameters = result.getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      GrParameter parameter = parameters[i];
+      PsiParameter original = originalParams[i];
+
+      for (PsiAnnotation annotation : original.getModifierList().getAnnotations()) {
+        final GrModifierList modifierList = parameter.getModifierList();
+
+        String qname = annotation.getQualifiedName();
+        if (qname != null && modifierList.findAnnotation(qname) == null) {
+          if (annotation instanceof GrAnnotation) {
+            modifierList.add(annotation);
+          }
+          else {
+            modifierList.add(factory.createAnnotationFromText(annotation.getText()));
+          }
+        }
+      }
+    }
+  }
+
+  private static void setupModifierList(GrMethod result) {
+    PsiModifierList modifierList = result.getModifierList();
+    modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
+    modifierList.setModifierProperty(PsiModifier.NATIVE, false);
+  }
+
+
   @Nullable
-  private static PsiType getSuperReturnType(PsiMethod superMethod) {
+  private static PsiType getSuperReturnType(@NotNull PsiMethod superMethod) {
     if (superMethod instanceof GrMethod) {
       final GrTypeElement element = ((GrMethod)superMethod).getReturnTypeElementGroovy();
       return element != null ? element.getType() : null;
@@ -203,9 +150,10 @@ public class GroovyOverrideImplementUtil {
 
     try {
       String bodyText = StringUtil.replace(template.getText(properties), ";", "");
-      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n " + bodyText + "\n");
+      GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile("\n " + bodyText + "\n", false, null);
 
-      resultMethod.setBlock(newBody);
+      GrOpenBlock block = resultMethod.getBlock();
+      block.getNode().addChildren(file.getFirstChild().getNode(), null, block.getRBrace().getNode());
     }
     catch (IOException e) {
       LOG.error(e);

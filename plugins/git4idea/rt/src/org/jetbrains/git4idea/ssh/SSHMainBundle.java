@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.git4idea.ssh;
 
 import com.intellij.BundleBase;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -27,20 +28,20 @@ import java.util.ResourceBundle;
  * The bundle for SSH messages
  */
 public class SSHMainBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls
-  private static final String BUNDLE = "org.jetbrains.git4idea.ssh.SSHMainBundle";
-
-  private SSHMainBundle() { }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return BundleBase.message(getBundle(), key, params);
   }
 
+  private static Reference<ResourceBundle> ourBundle;
+  @NonNls
+  private static final String BUNDLE = "org.jetbrains.git4idea.ssh.SSHMainBundle";
+
+  private SSHMainBundle() {
+  }
+
   private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);

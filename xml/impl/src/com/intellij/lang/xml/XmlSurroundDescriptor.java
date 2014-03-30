@@ -24,7 +24,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -57,7 +57,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
       first = first.getNextSibling();
     }
 
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @NotNull public Surrounder[] getSurrounders() {

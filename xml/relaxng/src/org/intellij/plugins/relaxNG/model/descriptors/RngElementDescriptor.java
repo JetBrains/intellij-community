@@ -16,12 +16,14 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -31,6 +33,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.validation.RngSchemaValidator;
 import org.jetbrains.annotations.NonNls;
@@ -215,8 +218,9 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   public PsiElement getDeclaration() {
-    if (myDeclaration != null) {
-      final PsiElement element = myDeclaration.getElement();
+    final SmartPsiElementPointer<? extends PsiElement> declaration = myDeclaration;
+    if (declaration != null) {
+      final PsiElement element = declaration.getElement();
       if (element != null && element.isValid()) {
         return element;
       }
@@ -225,7 +229,6 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final PsiElement decl = myNsDescriptor.getDeclaration();
     if (decl == null/* || !decl.isValid()*/) {
       myDeclaration = null;
-      System.out.println("decl is null");
       return null;
     }
 
@@ -244,7 +247,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return getDeclarationImpl(element, location);
   }
 
-  private PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
+  private static PsiElement getDeclarationImpl(PsiElement decl, Locator location) {
     final VirtualFile virtualFile = RngSchemaValidator.findVirtualFile(location.getSystemId());
     if (virtualFile == null) {
       return decl;
@@ -262,16 +265,23 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     assert document != null;
 
+    if (line <= 0 || document.getLineCount() < line - 1) {
+      return decl;
+    }
     final int startOffset = document.getLineStartOffset(line - 1);
 
     final PsiElement at;
     if (column > 0) {
       if (decl.getContainingFile().getFileType() == RncFileType.getInstance()) {
-        return file.findElementAt(startOffset + column);
+        final PsiElement rncElement = file.findElementAt(startOffset + column);
+        final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
+        final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
+        return nameClass != null ? nameClass.getPsi() : rncElement;
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {
-      at = PsiTreeUtil.nextLeaf(file.findElementAt(startOffset));
+      PsiElement element = file.findElementAt(startOffset);
+      at = element != null ? PsiTreeUtil.nextLeaf(element) : null;
     }
 
     return PsiTreeUtil.getParentOfType(at, XmlTag.class);

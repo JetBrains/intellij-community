@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -148,12 +147,10 @@ class JarLoader extends Loader {
   @Nullable
   Resource getResource(String name, boolean flag) {
     final long started = myDebugTime ? System.nanoTime():0;
-    if (myMemoryLoader != null) {
-      JarMemoryLoader loader = myMemoryLoader.get();
-      if (loader != null) {
-        Resource resource = loader.getResource(name);
-        if (resource != null) return resource;
-      }
+    JarMemoryLoader loader = com.intellij.reference.SoftReference.dereference(myMemoryLoader);
+    if (loader != null) {
+      Resource resource = loader.getResource(name);
+      if (resource != null) return resource;
     }
     ZipFile file = null;
     try {
@@ -162,14 +159,14 @@ class JarLoader extends Loader {
       ZipEntry entry = file.getEntry(name);
       if (entry != null) {
         ++hits;
-        if (hits % 1000 == 0 && UrlClassLoader.doDebug) {
-          UrlClassLoader.debug("Exists jar loader: misses:" + misses + ", hits:" + hits);
+        if (hits % 1000 == 0 && ClasspathCache.doDebug) {
+          ClasspathCache.LOG.debug("Exists jar loader: misses:" + misses + ", hits:" + hits);
         }
         return new MyResource(entry, new URL(getBaseURL(), name));
       }
 
-      if (misses % 1000 == 0 && UrlClassLoader.doDebug) {
-        UrlClassLoader.debug("Missed " + name + " from jar:" + myURL);
+      if (misses % 1000 == 0 && ClasspathCache.doDebug) {
+        ClasspathCache.LOG.debug("Missed " + name + " from jar:" + myURL);
       }
       ++misses;
     }
@@ -184,7 +181,7 @@ class JarLoader extends Loader {
       }
       final long doneFor = myDebugTime ? System.nanoTime() - started :0;
       if (doneFor > NS_THRESHOLD) {
-        System.out.println(doneFor/1000000 + " ms for jar loader get resource:"+name);
+        ClasspathCache.LOG.debug(doneFor/1000000 + " ms for jar loader get resource:"+name);
       }
     }
 

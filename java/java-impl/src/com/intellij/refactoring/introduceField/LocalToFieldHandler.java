@@ -38,6 +38,7 @@ import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,7 @@ public abstract class LocalToFieldHandler {
       if (parent instanceof PsiClass && !(myIsConstant && parent instanceof PsiAnonymousClass)) {
         classes.add((PsiClass)parent);
       }
-      if (parent instanceof PsiFile && JspPsiUtil.isInJspFile(parent)) {
+      if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
         String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
         CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.LOCAL_TO_FIELD);
         return false;

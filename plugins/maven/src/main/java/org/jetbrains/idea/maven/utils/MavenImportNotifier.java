@@ -93,11 +93,9 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent {
                                         ProjectBundle.message("maven.project.changed"),
                                         "<a href='reimport'>" + ProjectBundle.message("maven.project.importChanged") + "</a> " +
                                         "<a href='autoImport'>" + ProjectBundle.message("maven.project.enableAutoImport") + "</a>",
-                                        NotificationType.INFORMATION, new NotificationListener() {
+                                        NotificationType.INFORMATION, new NotificationListener.Adapter() {
         @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
-
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
           if (event.getDescription().equals("reimport")) {
             myMavenProjectsManager.scheduleImportAndResolve();
           }

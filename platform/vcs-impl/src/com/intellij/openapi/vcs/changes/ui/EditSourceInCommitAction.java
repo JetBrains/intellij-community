@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.pom.Navigatable;
@@ -37,7 +38,7 @@ public class EditSourceInCommitAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
+    final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (navigatableArray != null && navigatableArray.length > 0) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

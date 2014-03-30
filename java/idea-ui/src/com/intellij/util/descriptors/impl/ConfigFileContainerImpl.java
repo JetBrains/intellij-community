@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.descriptors.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -49,11 +50,11 @@ public class ConfigFileContainerImpl implements ConfigFileContainer {
     myMetaDataProvider = descriptorMetaDataProvider;
     myProject = project;
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      public void propertyChanged(final VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
         fileChanged(event.getFile());
       }
 
-      public void fileMoved(final VirtualFileMoveEvent event) {
+      public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
         fileChanged(event.getFile());
       }
     }, this);

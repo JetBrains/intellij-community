@@ -23,15 +23,14 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
@@ -63,6 +62,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
   @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
   @Nullable private final Document                      myDocument;
+
+  @Nullable private Set<PsiField> classFields;
 
   public JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                                 @Nullable Document document,
@@ -153,7 +154,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
           if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
               || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
           {
-            range = TextRange.create(range.getStartOffset(), c.getTextRange().getEndOffset());
+            range = TextRange.create(range.getStartOffset(), expandToCommentIfPossible(c));
           }
           else {
             continue;
@@ -162,9 +163,48 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         break;
       }
     }
+
     JavaElementArrangementEntry entry = createNewEntry(field, range, FIELD, field.getName(), true);
+    if (entry == null)
+      return;
+
     processEntry(entry, field, field.getInitializer());
+    myInfo.onFieldEntryCreated(field, entry);
+
+    List<PsiField> referencedFields = getReferencedFields(field);
+    for (PsiField referencedField : referencedFields) {
+      myInfo.registerFieldInitializationDependency(field, referencedField);
+    }
   }
+
+  @NotNull
+  private List<PsiField> getReferencedFields(@NotNull PsiField field) {
+    final List<PsiField> referencedElements = new ArrayList<PsiField>();
+
+    PsiExpression fieldInitializer = field.getInitializer();
+    PsiClass containingClass = field.getContainingClass();
+
+    if (fieldInitializer == null || containingClass == null) {
+      return referencedElements;
+    }
+
+    if (classFields == null) {
+      classFields = ContainerUtil.map2Set(containingClass.getFields(), new Function.Self<PsiField, PsiField>());
+    }
+
+    fieldInitializer.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        PsiElement ref = expression.resolve();
+        if (ref instanceof PsiField && classFields.contains(ref)) {
+          referencedElements.add((PsiField)ref);
+        }
+      }
+    });
+
+    return referencedElements;
+  }
+
 
   @Nullable
   private static PsiElement getPreviousNonWsComment(@Nullable PsiElement element, int minOffset) {
@@ -178,6 +218,39 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       return e;
     }
     return null;
+  }
+
+  private int expandToCommentIfPossible(@NotNull PsiElement element) {
+    if (myDocument == null) {
+      return element.getTextRange().getEndOffset();
+    }
+
+    CharSequence text = myDocument.getCharsSequence();
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (e instanceof PsiWhiteSpace) {
+        if (hasLineBreak(text, e.getTextRange())) {
+          return element.getTextRange().getEndOffset();
+        }
+      }
+      else if (e instanceof PsiComment) {
+        if (!hasLineBreak(text, e.getTextRange())) {
+          return e.getTextRange().getEndOffset();
+        }
+      }
+      else {
+        return element.getTextRange().getEndOffset();
+      }
+    }
+    return element.getTextRange().getEndOffset();
+  }
+
+  private static boolean hasLineBreak(@NotNull CharSequence text, @NotNull TextRange range) {
+    for (int i = range.getStartOffset(), end = range.getEndOffset(); i < end; i++) {
+      if (text.charAt(i) == '\n') {
+        return true;
+      }
+    }
+    return false;
   }
   
   private static boolean isSemicolon(@Nullable PsiElement e) {
@@ -340,7 +413,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     DefaultArrangementEntry current = getCurrent();
     JavaElementArrangementEntry entry;
     if (canArrange) {
-      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument);
+      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLineIfPossible(range, myDocument);
       TextRange rangeToUse = expandedRange == null ? range : expandedRange;
       entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, true);
     }
@@ -409,7 +482,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         assert myBaseMethod != null;
         PsiMethod m = (PsiMethod)e;
         if (m.getContainingClass() == myBaseMethod.getContainingClass()) {
-          myInfo.registerDependency(myBaseMethod, m);
+          myInfo.registerMethodCallDependency(myBaseMethod, m);
         }
       }
       

@@ -15,11 +15,11 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -217,7 +217,7 @@ public class OldReferenceResolver {
     }
     PsiElement newExpr = expr;
 
-    PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(psiField);
+    PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(psiField);
 
     PsiMethod getter = psiField.getContainingClass().findMethodBySignature(getterPrototype, true);
 

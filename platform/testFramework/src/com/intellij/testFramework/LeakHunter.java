@@ -15,13 +15,15 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -47,6 +49,12 @@ import java.util.Set;
 public class LeakHunter {
   private static final Map<Class, Field[]> allFields = new THashMap<Class, Field[]>();
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
+  public static final Processor<Project> NOT_DEFAULT_PROJECT = new Processor<Project>() {
+    @Override
+    public boolean process(Project project) {
+      return !project.isDefault();
+    }
+  };
 
   private static Field[] getAllFields(@NotNull Class aClass) {
     Field[] cached = allFields.get(aClass);
@@ -72,6 +80,7 @@ public class LeakHunter {
   }
 
   private static final Set<Object> visited = ContainerUtil.<Object>newIdentityTroveSet();
+
   private static class BackLink {
     private final Class aClass;
     private final Object value;
@@ -108,9 +117,6 @@ public class LeakHunter {
           throw new RuntimeException(e);
         }
         if (value == null) continue;
-        if (value instanceof PsiElement || value instanceof TreeElement)  {
-          int i = 0;
-        }
         Class valueClass = value.getClass();
         if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(field, fieldName, value, valueClass)) {
           BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
@@ -169,15 +175,17 @@ public class LeakHunter {
 
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
-  public static void checkProjectLeak(@NotNull Object root) throws Exception {
-    checkLeak(root, ProjectImpl.class);
+  public static void checkProjectLeak() throws Exception {
+    checkLeak(ApplicationManager.getApplication(), ProjectImpl.class);
+    checkLeak(Extensions.getRootArea(), ProjectImpl.class, NOT_DEFAULT_PROJECT);
   }
+
   @TestOnly
   public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws AssertionError {
     checkLeak(root, suspectClass, null);
   }
   @TestOnly
-  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<T> isReallyLeak) throws AssertionError {
+  public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }

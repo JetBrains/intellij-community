@@ -16,14 +16,14 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.ui.JBColor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.Method;
 
@@ -38,6 +38,7 @@ class FramesListRenderer extends ColoredListCellRenderer {
     myColorScheme = EditorColorsManager.getInstance().getGlobalScheme();
   }
 
+  @Override
   protected void customizeCellRenderer(final JList list, final Object item, final int index, final boolean selected, final boolean hasFocus) {
     if (!(item instanceof StackFrameDescriptorImpl)) {
       append(item.toString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);

@@ -18,10 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,6 +109,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final FileDocumentManager fileManager = FileDocumentManager.getInstance();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
@@ -138,7 +136,11 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
               }
             }
           }
-        } catch (Exception e) {
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
           LOG.error(e);
           myException = e;
         }
@@ -153,6 +155,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     return result;
   }
 
+  @NotNull
   private List<CodeSmellInfo> findCodeSmells(@NotNull PsiFile psiFile, final ProgressIndicator progress, @NotNull Document document) {
     final List<CodeSmellInfo> result = new ArrayList<CodeSmellInfo>();
 
@@ -170,7 +173,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     if (highlights == null) return;
     for (HighlightInfo highlightInfo : highlights) {
       final HighlightSeverity severity = highlightInfo.getSeverity();
-      if (SeverityRegistrar.getInstance(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
+      if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
         result.add(new CodeSmellInfo(document, getDescription(highlightInfo),
                                      new TextRange(highlightInfo.startOffset, highlightInfo.endOffset), severity));
       }
@@ -178,14 +181,12 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   private static String getDescription(final HighlightInfo highlightInfo) {
-    final String description = highlightInfo.description;
+    final String description = highlightInfo.getDescription();
     final HighlightInfoType type = highlightInfo.type;
     if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
       final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
       final String id = severityKey.getID();
-      if (id != null) {
-        return "[" + id + "] " + description;
-      }
+      return "[" + id + "] " + description;
     }
     return description;
   }

@@ -68,7 +68,6 @@ class AssociationsEditor {
 
     myBuilder = new ProjectTreeBuilder(project, myTree, treeModel, new MyGroupByTypeComparator(), new MyProjectStructure(project));
 
-    myTree.expandRow(0);
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
     new TreeSpeedSearch(myTree);
 

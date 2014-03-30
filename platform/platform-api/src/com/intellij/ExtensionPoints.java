@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * Extension points provided by IDEA core are listed here.
  */
-public interface ExtensionPoints {
+public interface ExtensionPoints extends ToolExtensionPoints {
   /**
    * This extension point should be used instead of former application-components, project-components, module-components.
    * Extension declaration sample is as follows:
@@ -64,8 +64,7 @@ public interface ExtensionPoints {
    * </pre>
    * my.plugin.package.MyJUnitPatcher class must implement {@link com.intellij.execution.JUnitPatcher} abstract class.
    */
-
-  @NonNls String JUNIT_PATCHER = "com.intellij.junitPatcher";
+  @SuppressWarnings("JavadocReference") @NonNls String JUNIT_PATCHER = "com.intellij.junitPatcher";
 
   /**
    * This extensions allows to run custom [command-line] application based on IDEA platform
@@ -77,20 +76,6 @@ public interface ExtensionPoints {
    * my.plugin.package.MyApplicationStarter class must implement {@link com.intellij.openapi.application.ApplicationStarter} interface.
    */
   @NonNls String APPLICATION_STARTER = "com.intellij.appStarter";
-
-  @NonNls String INVALID_PROPERTY_KEY_INSPECTION_TOOL = "com.intellij.invalidPropertyKeyInspectionTool";
-  @NonNls String I18N_INSPECTION_TOOL = "com.intellij.i18nInspectionTool";
-  @NonNls String JAVA15_INSPECTION_TOOL = "com.intellij.java15InspectionTool";
-
-  @NonNls String INSPECTIONS_GRAPH_ANNOTATOR = "com.intellij.refGraphAnnotator";
-
-  @NonNls String DEAD_CODE_TOOL = "com.intellij.deadCode";
-
-  @NonNls String JAVADOC_LOCAL = "com.intellij.javaDocNotNecessary";
-
-  @NonNls String VISIBLITY_TOOL = "com.intellij.visibility";
-
-  @NonNls String EMPTY_METHOD_TOOL = "com.intellij.canBeEmpty";
 
   @NonNls String ANT_BUILD_GEN = "com.intellij.antBuildGen";
 

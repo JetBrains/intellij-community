@@ -32,6 +32,7 @@ public class ArrangementLabelUiComponent extends AbstractArrangementUiComponent 
   @NotNull private final JLabel                        myLabel;
 
   public ArrangementLabelUiComponent(@NotNull ArrangementSettingsToken token) {
+    super(token);
     myCondition = new ArrangementAtomMatchCondition(token);
     myLabel = new JLabel(token.getRepresentationValue());
   }

@@ -55,18 +55,42 @@ public class GroovyMethodDescriptor {
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
   //public Arguments[] arguments;
-  public NamedArguments[] myArguments;
+  public NamedArgument[] myArguments;
 
-  @Tag("namedArguments")
-  public static class NamedArguments {
+  @Tag("namedArgument")
+  public static class NamedArgument {
     @Attribute("type")
     public String type;
 
     @Attribute("showFirst")
     public Boolean isFirst;
 
-    @Attribute("names")
-    public String names;
+    @Attribute("name")
+    public String name;
+
+    @Attribute("referenceProvider")
+    public String referenceProvider;
+
+    @Attribute("values")
+    public String values;
+
+    protected Iterable<String> getNames() {
+      assert !StringUtil.isEmptyOrSpaces(name);
+      return StringUtil.tokenize(name, ATTR_NAMES_DELIMITER);
+    }
+  }
+
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false)
+  public ClosureArgument[] myClosureArguments;
+
+  @Tag("closureArgument")
+  public static class ClosureArgument {
+    @Attribute("index")
+    public int index;
+
+    @Attribute("methodContributor")
+    public String methodContributor;
   }
 
   @Nullable
@@ -99,22 +123,14 @@ public class GroovyMethodDescriptor {
       return null;
     }
 
-    assert namedArgsProvider == null;
-
     Map<String, NamedArgumentDescriptor> res =
       new HashMap<String, NamedArgumentDescriptor>();
 
     if (myArguments != null) {
-      for (NamedArguments arguments : myArguments) {
+      for (NamedArgument arguments : myArguments) {
         NamedArgumentDescriptor descriptor = getDescriptor(isNamedArgsShowFirst, arguments.isFirst, arguments.type);
 
-        assert !StringUtil.isEmptyOrSpaces(arguments.names);
-
-        String names = arguments.names;
-
-        for (StringTokenizer st = new StringTokenizer(names, ATTR_NAMES_DELIMITER); st.hasMoreTokens(); ) {
-          String name = st.nextToken();
-
+        for (String name : arguments.getNames()) {
           Object oldValue = res.put(name, descriptor);
           assert oldValue == null;
         }

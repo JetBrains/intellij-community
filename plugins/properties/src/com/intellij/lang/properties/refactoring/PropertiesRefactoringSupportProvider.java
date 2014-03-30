@@ -21,9 +21,10 @@ package com.intellij.lang.properties.refactoring;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class PropertiesRefactoringSupportProvider extends RefactoringSupportProvider {
-  public boolean isSafeDeleteAvailable(PsiElement element) {
+  public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return true;
   }
 }

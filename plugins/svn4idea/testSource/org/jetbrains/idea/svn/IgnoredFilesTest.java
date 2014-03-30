@@ -54,6 +54,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
 
   @Before
   public void setUp() throws Exception {
+    super.setUp();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

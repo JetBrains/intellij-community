@@ -54,6 +54,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  * A handler for git commands
  */
 public abstract class GitHandler {
+
+  protected static final Logger LOG = Logger.getInstance(GitHandler.class);
+  protected static final Logger OUTPUT_LOG = Logger.getInstance("#output." + GitHandler.class.getName());
+
   protected final Project myProject;
   protected final GitCommand myCommand;
 
@@ -61,7 +65,6 @@ public abstract class GitHandler {
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
   private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
   private final int LAST_OUTPUT_SIZE = 5;
-  protected static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
   final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   Process myProcess;
@@ -100,7 +103,7 @@ public abstract class GitHandler {
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private ModalityState myState;
-  @Nullable private GitRemoteProtocol myRemoteProtocol;
+  @Nullable private String myUrl;
 
 
   /**
@@ -126,6 +129,7 @@ public abstract class GitHandler {
     if (command.name().length() > 0) {
       myCommandLine.addParameter(command.name());
     }
+    myStdoutSuppressed = true;
   }
 
   /**
@@ -220,12 +224,13 @@ public abstract class GitHandler {
     return file;
   }
 
-  public void setRemoteProtocol(@NotNull String url) {
-    myRemoteProtocol = GitRemoteProtocol.fromUrl(url);
+  @SuppressWarnings("NullableProblems")
+  public void setUrl(@NotNull String url) {
+    myUrl = url;
   }
 
   protected boolean isRemote() {
-    return myRemoteProtocol != null;
+    return myUrl != null;
   }
 
   /**
@@ -403,6 +408,7 @@ public abstract class GitHandler {
   /**
    * Start process
    */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public synchronized void start() {
     checkNotStarted();
 
@@ -419,8 +425,14 @@ public abstract class GitHandler {
         LOG.debug(printableCommandLine());
       }
 
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        System.out.println("cd " + myWorkingDirectory);
+        System.out.println(printableCommandLine());
+      }
+
       // setup environment
-      if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
+      GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
+      if (remoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
         GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
@@ -430,10 +442,11 @@ public abstract class GitHandler {
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
       }
-      else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+      else if (remoteProtocol == GitRemoteProtocol.HTTP) {
         GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myState, myCommand);
+        assert myUrl != null : "myUrl can't be null here";
+        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myState, myCommand, myUrl);
         myHandlerNo = service.registerHandler(httpAuthenticator);
         myEnvironmentCleanedUp = false;
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
@@ -442,12 +455,14 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
         addAuthListener(httpAuthenticator);
       }
-      myCommandLine.setEnvParams(myEnv);
+      myCommandLine.getEnvironment().clear();
+      myCommandLine.getEnvironment().putAll(myEnv);
       // start process
       myProcess = startProcess();
       startHandlingStreams();
     }
     catch (Throwable t) {
+      LOG.error(t);
       cleanupEnv();
       myListeners.getMulticaster().startFailed(t);
     }
@@ -531,12 +546,16 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   protected synchronized void cleanupEnv() {
-    if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
+    if (myEnvironmentCleanedUp) {
+      return;
+    }
+    GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
+    if (remoteProtocol == GitRemoteProtocol.SSH) {
       GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }
-    else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+    else if (remoteProtocol == GitRemoteProtocol.HTTP) {
       GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
       myEnvironmentCleanedUp = true;
       service.unregisterHandler(myHandlerNo);
@@ -575,8 +594,10 @@ public abstract class GitHandler {
   public void setSilent(final boolean silent) {
     checkNotStarted();
     mySilent = silent;
-    setStderrSuppressed(silent);
-    setStdoutSuppressed(silent);
+    if (silent) {
+      setStderrSuppressed(true);
+      setStdoutSuppressed(true);
+    }
   }
 
   /**

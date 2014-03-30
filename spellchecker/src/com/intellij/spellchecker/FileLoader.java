@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class FileLoader implements Loader {
 
@@ -61,6 +60,4 @@ public class FileLoader implements Loader {
       }
     }
   }
-
-
 }

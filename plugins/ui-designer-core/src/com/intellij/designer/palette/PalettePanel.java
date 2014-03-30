@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.PaletteToolWindowContent;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel implements DataProvider {
+public class PalettePanel extends JPanel implements DataProvider, PaletteToolWindowContent {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -95,6 +96,7 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
@@ -114,6 +116,7 @@ public class PalettePanel extends JPanel implements DataProvider {
     return null;
   }
 
+  @Override
   public void clearActiveItem() {
     if (getActiveItem() != null) {
       for (PaletteItemsComponent itemsComponent : myItemsComponents) {
@@ -123,10 +126,17 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
   }
 
+  @Override
+  public void refresh() {
+    repaint();
+  }
+
+  @Override
   public boolean isEmpty() {
     return myGroups.isEmpty();
   }
 
+  @Override
   public void loadPalette(@Nullable DesignerEditorPanel designer) {
     if (myDesigner == null && designer == null) {
       return;

@@ -1,0 +1,46 @@
+<project name="PyCharm Community Edition" default="all">
+  <property name="project.home" value="${basedir}/.."/>
+  <property name="python.home" value="${basedir}"/>
+  <property name="out.dir" value="${project.home}/out"/>
+  <property name="tmp.dir" value="${project.home}/out/tmp"/>
+
+  <target name="cleanup">
+    <delete dir="${out.dir}" failonerror="false"/>
+  </target>
+
+  <target name="init">
+    <mkdir dir="${out.dir}"/>
+    <mkdir dir="${tmp.dir}"/>
+  </target>
+
+  <macrodef name="call_gant">
+    <attribute name="script" />
+    <sequential>
+      <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
+        <jvmarg line="-Xmx612m -XX:MaxPermSize=152m -Didea.build.number=${idea.build.number} &quot;-DideaPath=${idea.path}&quot;"/>
+        <sysproperty key="java.awt.headless" value="true"/>
+        <arg line="&quot;-Dgant.script=@{script}&quot;"/>
+        <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
+        <arg line="&quot;-Didea.build.number=${idea.build.number}&quot;"/>
+        <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
+        <arg value="-f"/>
+        <arg value="${project.home}/build/gant.xml"/>
+      </java>
+    </sequential>
+  </macrodef>
+
+  <target name="build" depends="init">
+    <call_gant script="${python.home}/build/pycharm_community_build.gant"/>
+  </target>
+
+  <target name="plugin" depends="init">
+    <call_gant script="${python.home}/build/python_plugin_build.gant"/>
+  </target>
+  <!--
+  <target name="test" depends="init">
+    <call_gant script="${project.home}/build/scripts/tests.gant"/>
+  </target>
+  -->
+
+  <target name="all" depends="cleanup,build"/>
+</project>

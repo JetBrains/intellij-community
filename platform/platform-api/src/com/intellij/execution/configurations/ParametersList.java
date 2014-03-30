@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -107,9 +106,8 @@ public class ParametersList implements Cloneable {
   }
 
   public void prependAll(@NonNls final String... parameter) {
-    for (int i = parameter.length - 1; i >= 0; i--) {
-      addAt(0, parameter[i]);
-    }
+    addAll(parameter);
+    Collections.rotate(myParameters, parameter.length);
   }
 
   public void addParametersString(final String parameters) {
@@ -181,8 +179,11 @@ public class ParametersList implements Cloneable {
     addProperty(propertyName, propertyValue);
   }
 
-  public void addProperty(@NonNls final String propertyName, @NonNls final String propertyValue) {
-    //noinspection HardCodedStringLiteral
+  public void addProperty(@NonNls String propertyName) {
+    myParameters.add("-D" + propertyName);
+  }
+
+  public void addProperty(@NonNls String propertyName, @NonNls String propertyValue) {
     myParameters.add("-D" + propertyName + "=" + propertyValue);
   }
 
@@ -226,11 +227,14 @@ public class ParametersList implements Cloneable {
   }
 
   public void addAll(final String... parameters) {
-    ContainerUtil.addAll(myParameters, parameters);
+    addAll(Arrays.asList(parameters));
   }
 
   public void addAll(final List<String> parameters) {
-    myParameters.addAll(parameters);
+    // Don't use myParameters.addAll(parameters) , it does not call expandMacros(parameter)
+    for (String parameter : parameters) {
+      add(parameter);
+    }
   }
 
   @Override
@@ -293,13 +297,15 @@ public class ParametersList implements Cloneable {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         final PathMacros pathMacros = PathMacros.getInstance();
-        for (String name : pathMacros.getUserMacroNames()) {
-          final String value = pathMacros.getValue(name);
-          if (value != null) {
-            myMacroMap.put("${" + name + "}", value);
+        if (pathMacros != null) {
+          for (String name : pathMacros.getUserMacroNames()) {
+            final String value = pathMacros.getValue(name);
+            if (value != null) {
+              myMacroMap.put("${" + name + "}", value);
+            }
           }
         }
-        final Map<String, String> env = EnvironmentUtil.getEnvironmentProperties();
+        final Map<String, String> env = EnvironmentUtil.getEnvironmentMap();
         for (String name : env.keySet()) {
           final String key = "${" + name + "}";
           if (!myMacroMap.containsKey(key)) {

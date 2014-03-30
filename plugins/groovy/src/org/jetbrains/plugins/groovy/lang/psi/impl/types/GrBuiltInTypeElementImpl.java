@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -45,10 +44,5 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
   @NotNull
   public PsiType getType() {
     return TypesUtil.getPrimitiveTypeByText(getText());
-  }
-
-  @Override
-  public PsiType getTypeNoResolve(PsiElement context) {
-    return GrTypeElementImplUtil.getTypeNoResolve(this, context);
   }
 }

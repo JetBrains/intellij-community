@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -33,6 +34,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     super(node);
   }
 
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTypeArgumentList(this);
   }
@@ -41,6 +43,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     return "Type arguments";
   }
 
+  @Override
   public GrTypeElement[] getTypeArgumentElements() {
     return findChildrenByClass(GrTypeElement.class);
   }
@@ -50,14 +53,39 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     final GrTypeElement[] elements = getTypeArgumentElements();
     if (elements.length == 0) return PsiType.EMPTY_ARRAY;
 
-    PsiType[] result = new PsiType[elements.length];
+    PsiType[] result = PsiType.createArray(elements.length);
     for (int i = 0; i < elements.length; i++) {
       result[i] = elements[i].getType();
     }
     return result;
   }
 
+  @Override
   public boolean isDiamond() {
     return getTypeArgumentElements().length == 0;
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (first == last && first.getPsi() instanceof GrTypeElement) {
+      if (anchor == null) {
+        anchor = getLastChild().getNode();
+        before = true;
+      }
+      if (getTypeArgumentElements().length > 0) {
+        if (before == null || before.booleanValue()) {
+          getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
+        }
+        else {
+          getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor.getTreeNext());
+        }
+      }
+
+      return super.addInternal(first, last, anchor, before);
+    }
+
+    else {
+      return super.addInternal(first, last, anchor, before);
+    }
   }
 }

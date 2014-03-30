@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
   public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
     if (!(element instanceof PsiJavaFile) || quick || !isFoldingsOn()) {
@@ -82,7 +84,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (isI18nProperty(project, expression)) {
       final IProperty property = getI18nProperty(project, expression);
       final HashSet<Object> set = new HashSet<Object>();
-      set.add(property);
+      set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       final String msg = formatI18nProperty(expression, property);
 
       final PsiElement parent = expression.getParent();
@@ -115,6 +117,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof PsiLiteralExpression) {
@@ -197,7 +200,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   private static boolean isValid(Property property, PsiLiteralExpression literal) {
     if (literal == null || property == null || !property.isValid()) return false;
-    return StringUtil.unquoteString(literal.getText()).equals(property.getKey());    
+    return StringUtil.unquoteString(literal.getText()).equals(property.getKey());
   }
 
   private static String formatI18nProperty(PsiLiteralExpression literal, IProperty property) {
@@ -205,6 +208,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
            literal.getText() : "\"" + property.getValue() + "\"";
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return isFoldingsOn();
   }

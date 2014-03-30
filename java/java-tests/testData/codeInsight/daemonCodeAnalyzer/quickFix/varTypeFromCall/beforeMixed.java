@@ -1,4 +1,4 @@
-// "Change 'list' type to 'Lost<java.lang.Integer>'" "true"
+// "Change variable 'list' type to 'Lost<java.lang.Integer>'" "true"
 public class Test {
   void foo()  {
     Lost<String> list = new Lost<String>();

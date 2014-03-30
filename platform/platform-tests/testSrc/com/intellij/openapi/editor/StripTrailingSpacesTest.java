@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,7 +61,7 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   }
 
   private static void stripTrailingSpaces() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
       @Override
       public void run() {
         TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
@@ -60,6 +76,11 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
   public void testDoStripModifiedOnCurrentLineIfCaretWouldNotJump() throws IOException {
     doTest("xxx\n   222<caret>    \nyyy",
            "xxx\n   222<caret>\nyyy");
+  }
+
+  public void testStrippingWithMultipleCarets() throws Exception {
+    doTest("xxx\n   <caret>\nyyy<caret>  ",
+           "xxx\n   <caret>\nyyy<caret>");
   }
 
   public void testModifyAndAltTabAway() throws IOException {
@@ -154,5 +175,26 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
 
     FileDocumentManager.getInstance().saveAllDocuments();
     checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
+  }
+
+  public void testOverrideStripTrailingSpaces() throws IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    configureFromFileText("x.txt", "xxx<caret>\n   222    \nyyy");
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
+                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("xxx <caret>\n   222\nyyy");
+  }
+
+  public void testOverrideEnsureNewline() throws  IOException {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setEnsureNewLineAtEOF(false);
+    configureFromFileText("x.txt", "XXX<caret>\nYYY");
+    myVFile.putUserData(TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY, Boolean.TRUE);
+    type(' ');
+    FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByText("XXX <caret>\nYYY\n");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * Project interface class.
  */
 public interface Project extends ComponentManager, AreaInstance {
-  @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
+  @NonNls String DIRECTORY_STORE_FOLDER = ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR;
 
   /**
    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
@@ -106,11 +106,6 @@ public interface Project extends ComponentManager, AreaInstance {
   @NotNull
   @NonNls
   String getLocationHash();
-
-  /** @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getBasePath()} (to remove in IDEA 13) */
-  @Nullable
-  @NonNls
-  String getLocation();
 
   /**
    * Should be invoked under WriteAction.

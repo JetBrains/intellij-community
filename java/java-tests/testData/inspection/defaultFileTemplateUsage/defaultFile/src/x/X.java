@@ -2,11 +2,7 @@ package x;
 import java.io.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Alexey
- * Date: 02.12.2005
- * Time: 0:24:14
- * To change this template use File | Settings | File Templates.
+ * Created by Alexey on 02.12.2005.
  */
 public class X implements Runnable{
     File f; //kkj lkkl jjkuufdffffjkkjjh kjh kjhj kkjh kjh  i k kj kj klj lkj lkj lkjl kj klkl kl
@@ -14,29 +10,29 @@ public class X implements Runnable{
         try {
             f=null;
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
         try {
             g();
         } catch (Exception ex) {
-            ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            ex.printStackTrace();
         }
     }
 
     private void g() throws EOFException, FileNotFoundException {
-        //To change body of created methods use File | Settings | File Templates.
+        
     }
 
     public int hashCode() {
-        return super.hashCode();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.hashCode();
     }
         
     public String toString() {
-     return super.toString();            //To change body of overridden methods use File | Settings | File Templates.
+     return super.toString();
     }
 
     public void run() {
-        //To change body of implemented methods use File | Settings | File Templates.
+      
     }
 
     private void method() {
@@ -60,7 +56,7 @@ public class X implements Runnable{
         try {
             g();
         } catch (EOFException | FileNotFoundException ex) {
-            ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            ex.printStackTrace();
         }
     }
 }

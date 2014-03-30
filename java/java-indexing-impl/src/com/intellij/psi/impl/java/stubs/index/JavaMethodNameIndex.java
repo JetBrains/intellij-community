@@ -24,6 +24,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,6 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
 
   @Override
   public Collection<PsiMethod> get(final String s, final Project project, @NotNull final GlobalSearchScope scope) {
-    return super.get(s, project, new JavaSourceFilterScope(scope));
+    return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiMethod.class);
   }
 }

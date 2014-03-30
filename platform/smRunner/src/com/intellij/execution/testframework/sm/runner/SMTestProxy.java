@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,8 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
   private boolean myHasErrorsCached = false;
+  private boolean myHasPassedTests = false;
+  private boolean myHasPassedTestsCached = false;
 
   @Nullable private String myStacktrace;
 
@@ -140,6 +143,13 @@ public class SMTestProxy extends AbstractTestProxy {
     return false;
   }
 
+  /**
+   * @return true if the state is final (PASSED, FAILED, IGNORED, TERMINATED)
+   */
+  public boolean isFinal() {
+    return myState.isFinal();
+  }
+
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {
     if (myStacktrace == null) myStacktrace = stacktrace;
   }
@@ -153,9 +163,37 @@ public class SMTestProxy extends AbstractTestProxy {
     return myState.wasTerminated();
   }
 
-  @Override
+  boolean hasPassedTests() {
+    if (myHasPassedTestsCached) {
+      return myHasPassedTests;
+    }
+    boolean hasPassedTests = calcPassedTests();
+    boolean canCache = !myState.isInProgress();
+    if (canCache) {
+      myHasPassedTests = hasPassedTests;
+      myHasPassedTestsCached = true;
+    }
+    return hasPassedTests;
+  }
+
+  private boolean calcPassedTests() {
+    if (isPassed()) {
+      return true;
+    }
+    for (SMTestProxy child : getChildren()) {
+      if (child.hasPassedTests()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+    @Override
   public boolean isIgnored() {
-    return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX;
+    if (hasPassedTests()) {
+      return false;
+    }
+    return myState.getMagnitude() == TestStateInfo.Magnitude.IGNORED_INDEX;
   }
 
   public boolean isPassed() {
@@ -207,7 +245,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Location getLocation(final Project project) {
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
     //determines location of test proxy
 
     //TODO multiresolve support
@@ -366,8 +404,7 @@ public class SMTestProxy extends AbstractTestProxy {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestIgnored(@NotNull final String ignoreComment,
-                             @Nullable final String stackTrace) {
+  public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
     setStacktraceIfNotSet(stackTrace);
     myState = new TestIgnoredState(ignoreComment, stackTrace);
     fireOnNewPrintable(myState);

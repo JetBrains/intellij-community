@@ -32,7 +32,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   CompileScope getScope();
 
   /**
-   * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderUtil#isForcedRecompilationJava(CompileContext)} for java-related usages
+   * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderUtil#isCompileJavaIncrementally(CompileContext)} for java-related usages
    */
   boolean isMake();
 

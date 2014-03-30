@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 
 /**
@@ -47,7 +48,7 @@ public class FileUrlLocationTest extends SMLightFixtureTestCase {
         new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
     testProxy.setLocator(new CompositeTestLocationProvider(null));
 
-    final Location location = testProxy.getLocation(getProject());
+    final Location location = testProxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
     assertNotNull(location);
     assertNotNull(location.getPsiElement());
 

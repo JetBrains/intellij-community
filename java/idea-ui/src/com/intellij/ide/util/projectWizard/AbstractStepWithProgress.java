@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.SwingWorker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,6 +96,14 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     });
     progressPanel.add(stopButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 2, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(10, 0, 0, 10), 0, 0));
     return progressPanel;
+  }
+
+  @TestOnly
+  public void performStep() {
+    Result result = calculate();
+    createResultsPanel();
+    onFinished(result, false);
+    updateDataModel();
   }
 
   private void cancelSearch() {
@@ -178,7 +187,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
                                              IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());
-      if (answer == 1) { // terminate
+      if (answer != Messages.OK) { // terminate
         cancelSearch();
       }
       return false;

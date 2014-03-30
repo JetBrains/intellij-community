@@ -78,9 +78,7 @@ public class WcInfoLoader {
     if (rootInfo == null) {
       return null;
     }
-    final WCInfo wcInfo = new WCInfo(rootInfo.getIoFile().getAbsolutePath(), rootInfo.getAbsoluteUrlAsUrl(),
-                             SvnFormatSelector.getWorkingCopyFormat(file), rootInfo.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file),
-                             rootInfo.getType(), SvnUtil.getDepth(vcs, file));
+    final WCInfo wcInfo = new WCInfo(rootInfo, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(vcs, file));
     return createInfo(wcInfo, vcs, urlMapping);
   }
 
@@ -123,9 +121,8 @@ public class WcInfoLoader {
 
     final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
     final String branchRoot = createBranchesList(url, configuration, items);
-    return new WCInfoWithBranches(info.getPath(), info.getUrl(), info.getFormat(),
-                                                                         info.getRepositoryRoot(), info.isIsWcRoot(), items, root,
-                                                                         branchRoot, info.getType(), info.getStickyDepth());
+
+    return new WCInfoWithBranches(info, items, root, branchRoot);
   }
 
   private static String createBranchesList(final String url, final SvnBranchConfigurationNew configuration,

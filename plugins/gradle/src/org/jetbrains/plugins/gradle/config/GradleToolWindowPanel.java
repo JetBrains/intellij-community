@@ -3,18 +3,16 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -59,17 +57,17 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setContent(myContent);
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifierAdapter() {
-      
-      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        if (StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, NON_LINKED_CARD_NAME);
-          return;
-        }
-        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, CONTENT_CARD_NAME);
-        }
-      }
+    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListenerAdapter() {
+      // TODO den implement
+//      @Override public void onLinkedProjectConfigChange(@Nullable String oldPath, @Nullable String newPath) {
+//        if (StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, NON_LINKED_CARD_NAME);
+//          return;
+//        }
+//        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, CONTENT_CARD_NAME);
+//        }
+//      }
     });
   }
 
@@ -118,17 +116,13 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
    */
   public void update() {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
-    String cardToShow = StringUtil.isEmpty(settings.getLinkedProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
+    // TODO den implement
+    String cardToShow = "sf";
+//    String cardToShow = StringUtil.isEmpty(settings.getLinkedExternalProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
     boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
     for (JComponent component : getToolbarControls()) {
       component.setVisible(showToolbar);
-    }
-
-    if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
-      updateContent();
-      // Ensure that changes detector service is loaded.
-      ServiceManager.getService(myProject, GradleProjectStructureChangesDetector.class);
     }
   }
 

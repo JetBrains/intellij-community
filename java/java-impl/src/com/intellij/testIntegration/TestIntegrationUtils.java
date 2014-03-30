@@ -41,10 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public class TestIntegrationUtils {
   private static final Logger LOG = Logger.getInstance("#" + TestIntegrationUtils.class.getName());
@@ -139,8 +136,8 @@ public class TestIntegrationUtils {
                                            final PsiClass targetClass,
                                            final PsiMethod method,
                                            @Nullable String name,
-                                           boolean automatic) {
-    Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic);
+                                           boolean automatic, Set<String> existingNames) {
+    Template template = createTestMethodTemplate(methodKind, framework, targetClass, name, automatic, existingNames);
 
     final TextRange range = method.getTextRange();
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
@@ -182,7 +179,8 @@ public class TestIntegrationUtils {
                                                    TestFramework descriptor,
                                                    PsiClass targetClass,
                                                    @Nullable String name,
-                                                   boolean automatic) {
+                                                   boolean automatic, 
+                                                   Set<String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
     FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
@@ -198,6 +196,17 @@ public class TestIntegrationUtils {
     }
 
     if (name == null) name = methodKind.getDefaultName();
+
+    if (existingNames != null && !existingNames.add(name)) {
+      int idx = 1;
+      while (existingNames.contains(name)) {
+        final String newName = name + (idx++);
+        if (existingNames.add(newName)) {
+          name = newName;
+          break;
+        }
+      }
+    }
 
     templateText = StringUtil.replace(templateText, "${BODY}", "");
 

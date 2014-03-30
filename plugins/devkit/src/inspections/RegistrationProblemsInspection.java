@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (CHECK_PLUGIN_XML && isPluginXml(file)) {
+    if (CHECK_PLUGIN_XML && DescriptorUtil.isPluginXml(file)) {
       return checkPluginXml((XmlFile)file, manager, isOnTheFly);
     }
     return null;

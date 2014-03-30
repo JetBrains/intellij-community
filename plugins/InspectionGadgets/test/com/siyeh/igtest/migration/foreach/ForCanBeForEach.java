@@ -267,4 +267,12 @@ public class ForCanBeForEach {
       System.out.println(j);
     }
   }
+
+  class X<T> {
+    void m(T ts) {
+      for (int i = 0; i < ts.length; i++) {
+        System.out.println();
+      }
+    }
+  }
 }

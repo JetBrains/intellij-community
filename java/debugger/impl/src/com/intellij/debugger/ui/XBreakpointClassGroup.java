@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;

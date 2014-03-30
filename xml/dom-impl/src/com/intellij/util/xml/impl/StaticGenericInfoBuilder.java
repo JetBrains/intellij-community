@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
@@ -40,6 +40,7 @@ import java.util.*;
  */
 public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
+  private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
   final MultiValuesMap<XmlName, JavaMethod> collectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
@@ -64,9 +65,9 @@ public class StaticGenericInfoBuilder {
   public StaticGenericInfoBuilder(final Class aClass) {
     myClass = aClass;
 
-    final Set<JavaMethod> methods = new THashSet<JavaMethod>();
+    final Set<JavaMethod> methods = new LinkedHashSet<JavaMethod>();
     InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
-    for (final Method method : ReflectionCache.getMethods(myClass)) {
+    for (final Method method : ReflectionUtil.getClassPublicMethods(myClass)) {
       methods.add(invocationCache.getInternedMethod(method));
     }
     for (final JavaMethod method : methods) {
@@ -79,7 +80,7 @@ public class StaticGenericInfoBuilder {
     {
       final Class implClass = DomApplicationComponent.getInstance().getImplementation(myClass);
       if (implClass != null) {
-        for (Method method : ReflectionCache.getMethods(implClass)) {
+        for (Method method : ReflectionUtil.getClassPublicMethods(implClass)) {
           final int modifiers = method.getModifiers();
           if (!Modifier.isAbstract(modifiers) &&
               !Modifier.isVolatile(modifiers) &&
@@ -223,7 +224,10 @@ public class StaticGenericInfoBuilder {
       final String qname = getSubTagName(method);
       if (qname != null) {
         final XmlName xmlName = DomImplUtil.createXmlName(qname, method);
-        assert !myCollectionChildrenTypes.containsKey(xmlName) : "Collection and fixed children cannot intersect: " + qname;
+        Type collectionType = myCollectionChildrenTypes.get(xmlName);
+        if (collectionType != null) {
+          LOG.error("Collection (" + collectionType + ") and fixed children cannot intersect: " + qname + " for " + myClass);
+        }
         int index = 0;
         final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {

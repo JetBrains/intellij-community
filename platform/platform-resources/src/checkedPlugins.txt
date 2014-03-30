@@ -1,0 +1,16 @@
+org.intellij.scala
+org.jetbrains.kotlin
+org.jetbrains.plugins.ruby
+com.jetbrains.php
+org.intellij.clojure
+NodeJS
+com.jetbrains.lang.ejs
+com.jetbrains.twig
+Karma
+org.jetbrains.kannotator
+com.intellij.plugins.watcher
+SBT
+JSTestDriver Plugin
+com.jetbrains.chronon
+AngularJS
+org.jetbrains.plugins.vagrant

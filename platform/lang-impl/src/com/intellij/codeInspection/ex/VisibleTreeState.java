@@ -170,6 +170,7 @@ public class VisibleTreeState{
       return result;
     }
 
+    @Override
     public int compareTo(Object o) {
       if (!(o instanceof State)) return -1;
       final State other = (State)o;

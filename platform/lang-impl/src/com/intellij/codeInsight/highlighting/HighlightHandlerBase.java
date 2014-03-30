@@ -39,7 +39,13 @@ public abstract class HighlightHandlerBase {
 
   public static String getLineTextErrorStripeTooltip(Document document, int offset, boolean escape) {
     final int lineNumber = document.getLineNumber(offset);
-    final String lineText = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
+    int lineStartOffset = document.getLineStartOffset(lineNumber);
+    int lineEndOffset = document.getLineEndOffset(lineNumber);
+    int lineFragmentEndOffset = Math.min(lineStartOffset + 140, lineEndOffset);
+    String lineText = document.getImmutableCharSequence().subSequence(lineStartOffset, lineFragmentEndOffset).toString();
+    if (lineFragmentEndOffset != lineEndOffset) {
+      lineText = lineText.trim() + "...";
+    }
     return "  " + (escape ? StringUtil.escapeXml(lineText.trim()) : lineText.trim()) + "  ";
   }
 }

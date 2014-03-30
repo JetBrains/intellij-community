@@ -21,4 +21,10 @@
     <description>&lt;code&gt;Entry&lt;/code&gt; is not qualified with outer class #loc</description>
   </problem>
 
+  <problem>
+    <file>Test.java</file>
+    <line>27</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unqualified inner class access</problem_class>
+    <description>&lt;code&gt;X&lt;/code&gt; is not qualified with outer class #loc</description>
+  </problem>
 </problems>

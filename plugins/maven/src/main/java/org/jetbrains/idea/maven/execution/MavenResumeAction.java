@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.ProcessAdapter;
@@ -25,6 +24,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -62,7 +62,6 @@ public class MavenResumeAction extends AnAction {
   public static final int STATE_WTF = -1;
 
   private final ProgramRunner myRunner;
-  private final Executor myExecutor;
   private final ExecutionEnvironment myEnvironment;
 
   private int myState = STATE_INITIAL;
@@ -77,11 +76,9 @@ public class MavenResumeAction extends AnAction {
 
   public MavenResumeAction(ProcessHandler processHandler,
                            ProgramRunner runner,
-                           Executor executor,
                            ExecutionEnvironment environment) {
     super("Resume build from specified module", null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
-    myExecutor = executor;
     myEnvironment = environment;
 
     final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
@@ -300,8 +297,9 @@ public class MavenResumeAction extends AnAction {
         goals.add(myResumeModuleId);
       }
 
-      myRunner.execute(myExecutor, new ExecutionEnvironment(runConfiguration, project, myEnvironment.getRunnerSettings(),
-                                                            myEnvironment.getConfigurationSettings(), null));
+      runConfiguration.getRunnerParameters().setGoals(goals);
+
+      myRunner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).setRunProfile(runConfiguration).build());
     }
     catch (RunCanceledByUserException ignore) {
     }

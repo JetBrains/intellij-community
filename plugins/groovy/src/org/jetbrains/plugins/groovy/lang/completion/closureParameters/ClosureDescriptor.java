@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,12 +87,12 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     }
     final boolean isConstructor = Boolean.TRUE.equals(myMethod.get("constructor"));
     final MethodSignature signature = MethodSignatureUtil
-      .createMethodSignature(name, types.toArray(new PsiType[types.size()]), method.getTypeParameters(), PsiSubstitutor.EMPTY, isConstructor);
+      .createMethodSignature(name, types.toArray(PsiType.createArray(types.size())), method.getTypeParameters(), PsiSubstitutor.EMPTY, isConstructor);
     final GrClosureSignature closureSignature = GrClosureSignatureUtil.createSignature(signature);
 
     if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final PsiType[] typeArray = new PsiType[parameters.length];
+    final PsiType[] typeArray = PsiType.createArray(parameters.length);
     ContainerUtil.map(parameters, new Function<PsiParameter, PsiType>() {
       @Override
       public PsiType fun(PsiParameter parameter) {

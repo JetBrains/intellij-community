@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
 
 public class AdjustArrayRangeAction extends DebuggerAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
     if(debuggerContext == null) {
@@ -73,6 +74,7 @@ public class AdjustArrayRangeAction extends DebuggerAction {
 
     if(editor.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+          @Override
           public void contextAction() throws Exception {
             final ValueDescriptorImpl nodeDescriptor = (ValueDescriptorImpl)selectedNode.getDescriptor();
             final Renderer lastRenderer = nodeDescriptor.getLastRenderer();
@@ -92,6 +94,7 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
     boolean enable = false;
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
@@ -139,10 +142,12 @@ public class AdjustArrayRangeAction extends DebuggerAction {
       myTitle = title;
     }
 
+    @Override
     public String getDisplayName() {
       return myTitle;
     }
 
+    @Override
     public String getHelpTopic() {
       return null;
     }

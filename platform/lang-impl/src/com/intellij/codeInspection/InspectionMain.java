@@ -31,10 +31,12 @@ import java.util.Arrays;
 public class InspectionMain implements ApplicationStarter {
   private InspectionApplication myApplication;
 
+  @Override
   public String getCommandName() {
     return "inspect";
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void premain(String[] args) {
     if (args.length < 4) {
@@ -105,6 +107,7 @@ public class InspectionMain implements ApplicationStarter {
     myApplication.myRunGlobalToolsOnly = System.getProperty("idea.no.local.inspections") != null;
   }
 
+  @Override
   public void main(String[] args) {
     myApplication.startup();
   }

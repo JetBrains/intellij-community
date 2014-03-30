@@ -19,6 +19,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -30,13 +32,13 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 public class CheckoutEventHandler implements ISVNEventHandler {
-  private final ProgressIndicator myIndicator;
+  @Nullable private final ProgressIndicator myIndicator;
   private int myExternalsCount;
-  private final SvnVcs myVCS;
+  @NotNull private final SvnVcs myVCS;
   private final boolean myIsExport;
   private int myCnt;
 
-  public CheckoutEventHandler(SvnVcs vcs, boolean isExport, ProgressIndicator indicator) {
+  public CheckoutEventHandler(@NotNull SvnVcs vcs, boolean isExport, @Nullable ProgressIndicator indicator) {
     myIndicator = indicator;
     myVCS = vcs;
     myExternalsCount = 1;
@@ -51,16 +53,17 @@ public class CheckoutEventHandler implements ISVNEventHandler {
     }
     if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
       myExternalsCount++;
-      ProgressManager.progress(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()), "");
+      progress(SvnBundle.message("progress.text2.fetching.external.location", event.getFile().getAbsolutePath()));
     }
     else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-      ProgressManager.progress2(SvnBundle.message(myIsExport ? "progress.text2.exported" : "progress.text2.checked.out", event.getFile().getName(), myCnt));
+      progress2(SvnBundle.message(myIsExport ? "progress.text2.exported" : "progress.text2.checked.out", event.getFile().getName(), myCnt));
       ++ myCnt;
     }
     else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
       myExternalsCount--;
-      ProgressManager.progress2((SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "progress.text2.checked.out.revision", event.getRevision())));
-      if (myExternalsCount == 0 && event.getRevision() >= 0 && myVCS != null) {
+      progress2(
+        (SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "progress.text2.checked.out.revision", event.getRevision())));
+      if (myExternalsCount == 0 && event.getRevision() >= 0) {
         myExternalsCount = 1;
         Project project = myVCS.getProject();
         if (project != null) {
@@ -68,15 +71,34 @@ public class CheckoutEventHandler implements ISVNEventHandler {
         }
       }
     } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {
-      ProgressManager.progress2((SvnBundle.message("progress.text2.adding", path)));
+      progress2((SvnBundle.message("progress.text2.adding", path)));
     } else if (event.getAction() == SVNEventAction.COMMIT_DELTA_SENT) {
-      ProgressManager.progress2((SvnBundle.message("progress.text2.transmitting.delta", path)));
+      progress2((SvnBundle.message("progress.text2.transmitting.delta", path)));
     }
   }
 
   public void checkCancelled() throws SVNCancelException {
     if (myIndicator != null && myIndicator.isCanceled()) {
       throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Operation cancelled"));
+    }
+  }
+
+  private void progress(@NotNull String text) {
+    if (myIndicator != null) {
+      myIndicator.checkCanceled();
+      myIndicator.setText(text);
+      myIndicator.setText2("");
+    } else {
+      ProgressManager.progress(text);
+    }
+  }
+
+  private void progress2(@NotNull String text) {
+    if (myIndicator != null) {
+      myIndicator.checkCanceled();
+      myIndicator.setText2(text);
+    } else {
+      ProgressManager.progress2(text);
     }
   }
 }

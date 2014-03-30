@@ -70,8 +70,8 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
-  private Tree myTree;
-  private ResourceModules myResourceModules = new ResourceModules();
+  private final Tree myTree;
+  private final ResourceModules myResourceModules = new ResourceModules();
 
 
   public ImageDuplicateResultsDialog(Project project, List<VirtualFile> images, Map<String, Set<VirtualFile>> duplicates) {
@@ -130,10 +130,10 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
           if (component instanceof MyDuplicatesNode) {
             file = ((MyDuplicatesNode)component).getUserObject().iterator().next();
           }
-          if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
             return file;
           }
-          if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
+          if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
             return new VirtualFile[]{file};
           }
         }

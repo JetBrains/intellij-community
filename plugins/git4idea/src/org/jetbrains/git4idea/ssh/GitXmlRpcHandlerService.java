@@ -22,12 +22,12 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Random;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -48,16 +48,33 @@ import java.util.Random;
  */
 public abstract class GitXmlRpcHandlerService<T> {
 
-  private static final Random RANDOM = new Random();
+  @NotNull private final String myScriptTempFilePrefix;
+  @NotNull private final String myHandlerName;
+  @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
   @Nullable private File myScriptPath;
+  @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
+
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
+  private int myNextHandlerKey;
+  @NotNull private final Object HANDLERS_LOCK = new Object();
+
+  /**
+   * @param handlerName Returns the name of the handler to be used by XML RPC client to call remote methods of a proper object.
+   * @param aClass      Main class of the external application invoked by Git,
+   *                    which is able to handle its requests and pass to the main IDEA instance.
+   */
+  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull String handlerName, @NotNull Class<? extends GitExternalApp> aClass) {
+    myScriptTempFilePrefix = prefix;
+    myHandlerName = handlerName;
+    myScriptMainClass = aClass;
+  }
 
   /**
    * @return the port number for XML RCP
    */
   public int getXmlRcpPort() {
-    return WebServerManager.getInstance().waitForStart().getPort();
+    return BuiltInServerManager.getInstance().waitForStart().getPort();
   }
 
   /**
@@ -67,21 +84,18 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public synchronized File getScriptPath() throws IOException {
-    if (myScriptPath == null || !myScriptPath.exists()) {
-      ScriptGenerator generator = new ScriptGenerator(getScriptTempFilePrefix(), getScriptMainClass(), getTempDir());
-      generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
-      customizeScriptGenerator(generator);
-      myScriptPath = generator.generate();
+  public File getScriptPath() throws IOException {
+    ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
+    generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
+    customizeScriptGenerator(generator);
+
+    synchronized (SCRIPT_FILE_LOCK) {
+      if (myScriptPath == null || !myScriptPath.exists()) {
+        myScriptPath = generator.generate();
+      }
+      return myScriptPath;
     }
-    return myScriptPath;
   }
-
-  @NotNull
-  protected abstract String getScriptTempFilePrefix();
-
-  @NotNull
-  protected abstract Class<?> getScriptMainClass();
 
   /**
    * Adds more classes or resources to the script if needed.
@@ -89,45 +103,24 @@ public abstract class GitXmlRpcHandlerService<T> {
   protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
 
   /**
-   * @return the temporary directory to use or null if the default directory might be used
-   */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  @Nullable
-  protected File getTempDir() {
-    return null;
-  }
-
-  /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
    *
    * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
-  public synchronized int registerHandler(@NotNull T handler) {
-    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-    if (!xmlRpcServer.hasHandler(getRpcHandlerName())) {
-      xmlRpcServer.addHandler(getRpcHandlerName(), createRpcRequestHandlerDelegate());
-    }
+  public int registerHandler(@NotNull T handler) {
+    synchronized (HANDLERS_LOCK) {
+      XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+      if (!xmlRpcServer.hasHandler(myHandlerName)) {
+        xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
+      }
 
-    while (true) {
-      int candidate = RANDOM.nextInt();
-      if (candidate == Integer.MIN_VALUE) {
-        continue;
-      }
-      candidate = Math.abs(candidate);
-      if (handlers.containsKey(candidate)) {
-        continue;
-      }
-      handlers.put(candidate, handler);
-      return candidate;
+      int key = myNextHandlerKey;
+      handlers.put(key, handler);
+      myNextHandlerKey++;
+      return key;
     }
   }
-
-  /**
-   * Returns the name of the handler to be used by XML RPC client to call remote methods of a proper object.
-   */
-  @NotNull
-  protected abstract String getRpcHandlerName();
 
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.
@@ -144,12 +137,14 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the registered handler
    */
   @NotNull
-  protected synchronized T getHandler(int key) {
-    T rc = handlers.get(key);
-    if (rc == null) {
-      throw new IllegalStateException("No handler for the key " + key);
+  protected T getHandler(int key) {
+    synchronized (HANDLERS_LOCK) {
+      T rc = handlers.get(key);
+      if (rc == null) {
+        throw new IllegalStateException("No handler for the key " + key);
+      }
+      return rc;
     }
-    return rc;
   }
 
   /**
@@ -157,9 +152,11 @@ public abstract class GitXmlRpcHandlerService<T> {
    *
    * @param key the key to unregister
    */
-  public synchronized void unregisterHandler(int key) {
-    if (handlers.remove(key) == null) {
-      throw new IllegalArgumentException("The handler " + key + " is not registered");
+  public void unregisterHandler(int key) {
+    synchronized (HANDLERS_LOCK) {
+      if (handlers.remove(key) == null) {
+        throw new IllegalArgumentException("The handler " + key + " is not registered");
+      }
     }
   }
 

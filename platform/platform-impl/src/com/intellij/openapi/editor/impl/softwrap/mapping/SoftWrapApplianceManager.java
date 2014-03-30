@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 5, 2010 10:01:27 AM
  */
-public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener, Dumpable {
+public class SoftWrapApplianceManager implements DocumentListener, Dumpable {
   
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
   
@@ -340,7 +341,8 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     
     notifyListenersOnVisualLineStart(myContext.lineStartPosition);
     
-    if (!myContext.exceedsVisualEdge(newX)) {
+    if (!myContext.exceedsVisualEdge(newX)
+        || (myContext.currentPosition.offset == myContext.lineStartPosition.offset) && !Registry.is("editor.wrap.collapsed.region.at.line.start")) {
       myContext.advance(foldRegion, placeholderWidthInPixels);
       return true;
     }
@@ -984,7 +986,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     }
   }
 
-  @Override
   public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
@@ -1000,7 +1001,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, recalculationStartOffset, recalculationEndOffset));
   }
 
-  @Override
   public void onFoldProcessingEnd() {
     //CachingSoftWrapDataMapper.log("xxxxxxxxxxx On fold region processing end");
     recalculateSoftWraps();

@@ -21,6 +21,8 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -31,14 +33,15 @@ import java.io.*;
 public class ID<K, V> {
   private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
+  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final String myName;
   private final short myUniqueId;
 
   static {
-    final File indicies = getEnumFile();
+    final File indices = getEnumFile();
     try {
-      final BufferedReader reader = new BufferedReader(new FileReader(indicies));
+      final BufferedReader reader = new BufferedReader(new FileReader(indices));
       try {
         int cnt = 0;
         do {
@@ -78,7 +81,7 @@ public class ID<K, V> {
     }
 
     int n = ourNameToIdRegistry.size() + 1;
-    assert n <= Short.MAX_VALUE : "Number of indices exceeded";
+    assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded";
 
     ourNameToIdRegistry.put(name, n);
 
@@ -117,12 +120,13 @@ public class ID<K, V> {
   }
 
   public static <K, V> ID<K, V> create(@NonNls String name) {
-    short id = stringToId(name);
+    final ID<K, V> found = findByName(name);
+    return found != null ? found : new ID<K, V>(name);
+  }
 
-    final ID<K, V> found = (ID<K, V>)findById(id);
-    if (found != null) return found;
-
-    return new ID<K, V>(name);
+  @Nullable
+  public static <K, V> ID<K, V> findByName(@NotNull String name) {
+    return (ID<K, V>)findById(stringToId(name));
   }
 
   public int hashCode() {

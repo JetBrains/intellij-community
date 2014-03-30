@@ -22,7 +22,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.actions.OpenTaskDialog;
+import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextFieldWithAutoCompletionContributor;
 import com.intellij.util.Consumer;
@@ -44,8 +44,8 @@ public class TaskChangelistSupport implements EditChangelistSupport {
 
   public void installSearch(EditorTextField name, final EditorTextField comment) {
     Document document = name.getDocument();
-    final OpenTaskDialog.MyTextFieldWithAutoCompletionListProvider completionProvider =
-      new OpenTaskDialog.MyTextFieldWithAutoCompletionListProvider(myProject);
+    final TaskAutoCompletionListProvider completionProvider =
+      new TaskAutoCompletionListProvider(myProject);
 
     TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
   }

@@ -36,7 +36,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   }
 
   @Override
-  protected void analyze(@NotNull Project project, AnalysisScope scope) {
+  protected void analyze(@NotNull Project project, @NotNull AnalysisScope scope) {
     myConfigurable.apply();
     JavadocGenerationManager.getInstance(project).generateJavadoc(scope);
     dispose();

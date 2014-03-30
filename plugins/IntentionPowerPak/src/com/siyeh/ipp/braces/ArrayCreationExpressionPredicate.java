@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.siyeh.ipp.braces;
 
-import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,9 +25,9 @@ class ArrayCreationExpressionPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiArrayInitializerExpression)) {
       return false;
     }
-    final PsiArrayInitializerExpression arrayInitializerExpression =
-      (PsiArrayInitializerExpression)element;
-    if (arrayInitializerExpression.getType() == null) {
+    final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
+    final PsiType type = arrayInitializerExpression.getType();
+    if (type == null || !(type instanceof PsiArrayType)) {
       return false;
     }
     final PsiElement parent = element.getParent();

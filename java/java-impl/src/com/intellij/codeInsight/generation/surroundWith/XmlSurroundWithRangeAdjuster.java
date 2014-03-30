@@ -18,9 +18,9 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.PsiElement;
 
 /**
  * @author yole
@@ -65,6 +65,8 @@ public class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
     lang2 = getLanguage(element2);
 
     if(lang1 != lang2) return null;
+
+    TextRange.assertProperRange(startOffset, endOffset, "Wrong offsets for " + selectedRange.substring(file.getText()));
     return new TextRange(startOffset, endOffset);
   }
 }

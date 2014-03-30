@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduceParameter.ExternalUsageInfo;
@@ -79,7 +78,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
       final List<UsageInfo> result = new ArrayList<UsageInfo>();
-      for (PsiReference ref : ReferencesSearch.search(var, GlobalSearchScope.allScope(myHelper.getProject()), true)) {
+      for (PsiReference ref : ReferencesSearch.search(var)) {
         final PsiElement element = ref.getElement();
         if (element.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
           result.add(new OtherLanguageUsageInfo(ref));

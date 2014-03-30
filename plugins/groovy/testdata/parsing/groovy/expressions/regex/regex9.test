@@ -10,7 +10,8 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound regular expression
       PsiElement(regex begin)('/')
-      PsiElement(regex content)('abc ')
+      GrStringContentImpl(GString content element)
+        PsiElement(regex content)('abc ')
       GString injection
         PsiElement($)('$')
         Closable block
@@ -24,7 +25,8 @@ Groovy script
             Command arguments
               Compound Gstring
                 PsiElement(Gstring begin)('"')
-                PsiElement(Gstring content)('def ')
+                GrStringContentImpl(GString content element)
+                  PsiElement(Gstring content)('def ')
                 GString injection
                   PsiElement($)('$')
                   Closable block
@@ -38,14 +40,19 @@ Groovy script
                       Reference expression
                         PsiElement(identifier)('b')
                     PsiElement(})('}')
+                GrStringContentImpl(GString content element)
+                  ASTWrapperPsiElement(Gstring content)
+                    <empty list>
                 PsiElement(Gstring end)('"')
           PsiElement(})('}')
-      PsiElement(regex content)(' fgh')
+      GrStringContentImpl(GString content element)
+        PsiElement(regex content)(' fgh')
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('st')
-      PsiElement(regex content)(' ')
+      GrStringContentImpl(GString content element)
+        PsiElement(regex content)(' ')
       GString injection
         PsiElement($)('$')
         Closable block
@@ -67,6 +74,7 @@ Groovy script
                 PsiElement(Integer)('5')
               PsiElement())(')')
           PsiElement(})('}')
-      PsiElement(regex content)('\ni = 5')
+      GrStringContentImpl(GString content element)
+        PsiElement(regex content)('\ni = 5')
       PsiErrorElement:Regex ending expected
         <empty list>

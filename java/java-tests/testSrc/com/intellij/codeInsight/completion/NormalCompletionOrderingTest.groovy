@@ -1,5 +1,17 @@
 /*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.intellij.codeInsight.completion;
@@ -34,6 +46,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDontPreferRecursiveMethod2() throws Throwable {
     checkPreferredItems(0, "return", "register");
+  }
+
+  public void testDelegatingConstructorCall() {
+    checkPreferredItems 0, 'element', 'equals'
   }
 
   public void testPreferAnnotationMethods() throws Throwable {
@@ -98,11 +114,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testDispreferDeclared() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
-  }
-
-  public void testDispreferDeclaredOfExpectedType() throws Throwable {
-    checkPreferredItems(0, "aabbb", "aaa", "Aaaaaaa");
+    checkPreferredItems(0, "aabbb", "aaa");
   }
 
   public void testDispreferImpls() throws Throwable {
@@ -257,7 +269,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferInterfacesInImplements() {
-    checkPreferredItems(0, "FooIntf", "FooClass");
+    checkPreferredItems(0, "XFooIntf", "XFoo", "XFooClass");
   }
 
   public void testPreferClassesInExtends() {
@@ -385,7 +397,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.LOCAL_VARIABLE})
 @interface TLocalAnno {}'''
-    checkPreferredItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+    checkPreferredItems 0, 'TMetaAnno', 'Target', 'TabLayoutPolicy', 'TabPlacement'
   }
 
   public void testPreferApplicableAnnotationsMethod() throws Throwable {
@@ -394,11 +406,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
-@interface TClassAnno {}
+@interface TxClassAnno {}
+
+interface TxANotAnno {}
 
 @Target({ElementType.METHOD})
-@interface TMethodAnno {}'''
-    checkPreferredItems 0, 'TMethodAnno', 'TClassAnno'
+@interface TxMethodAnno {}'''
+    checkPreferredItems 0, 'TxMethodAnno', 'TxClassAnno'
+    assert !('TxANotAnno' in myFixture.lookupElementStrings)
   }
 
   public void testJComponentAddNewWithStats() throws Throwable {
@@ -437,23 +452,24 @@ import java.lang.annotation.Target;
     myFixture.addClass('public class fooAClass {}')
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, 'fooy', 'fooAClass', 'fooBar', 'foox');
+    assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
   }
 
   public void testChangePreselectionOnSecondInvocation() {
-    myFixture.addClass('package foo; public class FooZoo { }')
-    myFixture.addClass('public class FooZooImpl { }')
-    myFixture.addClass('public class FooZooGoo {}')
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC);
-    assertPreferredItems(0, 'FooZooGoo', 'FooZooImpl');
+    assertPreferredItems(0, 'fooZooGoo', 'fooZooImpl');
     myFixture.complete(CompletionType.BASIC);
-    assertPreferredItems(0, 'FooZoo', 'FooZooGoo', 'FooZooImpl');
+    assertPreferredItems(0, 'fooZoo', 'fooZooGoo', 'fooZooImpl');
   }
 
   public void testUnderscoresDontMakeMatchMiddle() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    checkPreferredItems(0, '_fooBar', 'FooBar')
+    checkPreferredItems(0, 'fooBar', '_fooBar', 'FooBar')
+  }
+
+  public void testDispreferUnderscoredCaseMismatch() {
+    checkPreferredItems(0, 'fooBar', '__FOO_BAR')
   }
 
   public void testStatisticsMattersOnNextCompletion() {
@@ -596,12 +612,20 @@ import java.lang.annotation.Target;
     assertPreferredItems 0, 'setText', 'setOurText'
   }
 
-  public void testEnumConstantStartMatching() {
-    checkPreferredItems(0, 'rMethod', 'Zoo.RIGHT')
-    myFixture.type('i\n;\nreturn r')
-    myFixture.completeBasic()
-    assertPreferredItems 0, 'Zoo.RIGHT', 'rMethod'
+  public void testPreferString() {
+    checkPreferredItems 0, 'String', 'System', 'Set'
+  }
 
+  public void testAnnotationEnum() {
+    checkPreferredItems 0, 'MyEnum.BAR', 'MyEnum', 'MyEnum.FOO'
+  }
+
+  public void testGlobalStaticMemberStats() {
+    configureNoCompletion(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
+    assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
+    incUseCount lookup, 1
+    assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
 }

@@ -71,8 +71,7 @@ public class ClassGenerator {
     boolean isAnnotationType = typeDefinition.isAnnotationType();
     boolean isInterface = typeDefinition.isInterface();
 
-    ModifierListGenerator.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel,
-                                              classItemGenerator.generateAnnotations());
+    ModifierListGenerator.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), typeDefinition.isEnum(), toplevel, classItemGenerator.generateAnnotations());
 
     if (isAnnotationType) {
       text.append('@');

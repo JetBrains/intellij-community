@@ -21,22 +21,30 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
+
+  private static final Pattern CLASSNAME_PATTERN = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+");
+
   private final PsiJavaCodeReferenceElement myRef;
 
   public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {
@@ -54,7 +62,13 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return MavenDomUtil.findContainingProject(file) != null;
+    return myRef.isValid() && MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
+  }
+
+  private static boolean looksLikeClassName(@Nullable String text) {
+    if (text == null) return false;
+    //if (true) return true;
+    return CLASSNAME_PATTERN.matcher(text).matches();
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -72,14 +86,24 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     new WriteCommandAction(project, "Add Maven Dependency", DomUtil.getFile(model)) {
       @Override
       protected void run(Result result) throws Throwable {
+        boolean isTestSource = false;
+
+        VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
+        if (virtualFile != null) {
+          isTestSource = ProjectRootManager.getInstance(project).getFileIndex().isInTestSourceContent(virtualFile);
+        }
+
         for (MavenId each : ids) {
-          MavenDomUtil.createDomDependency(model, null, each);
+          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, each);
+          if (isTestSource) {
+            dependency.getScope().setStringValue("test");
+          }
         }
       }
     }.execute();
   }
 
-  private String getReferenceText() {
+  public String getReferenceText() {
     PsiJavaCodeReferenceElement result = myRef;
     while (true) {
       PsiElement parent = result.getParent();

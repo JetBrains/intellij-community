@@ -134,7 +134,10 @@ public class SurroundWithUtil {
     if (last instanceof PsiWhiteSpace) {
       last = last.getPrevSibling();
     }
-    return new TextRange(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+    final int startOffset = first.getTextRange().getStartOffset();
+    final int endOffset = last.getTextRange().getEndOffset();
+    return startOffset <= endOffset ? new TextRange(startOffset, endOffset) 
+                                    : new TextRange(startOffset, startOffset);
   }
 
   /**

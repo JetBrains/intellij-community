@@ -203,7 +203,7 @@ set CMD_LINE_ARGS=%$
 
 :execute
 @rem Setup the command line
-set STARTER_CLASSPATH=%GROOVY_HOME%\%JARSPATH%\groovy-all-2.0.6.jar;%STARTER_CLASSPATH%
+set STARTER_CLASSPATH=%GROOVY_HOME%\%JARSPATH%\groovy-all-2.2.1.jar;%STARTER_CLASSPATH%
 
 if exist "%USERPROFILE%/.groovy/init.bat" call "%USERPROFILE%/.groovy/init.bat"
 

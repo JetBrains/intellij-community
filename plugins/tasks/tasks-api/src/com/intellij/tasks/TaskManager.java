@@ -15,9 +15,9 @@
  */
 package com.intellij.tasks;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,12 @@ public abstract class TaskManager {
     return project.getComponent(TaskManager.class);
   }
 
+  public enum VcsOperation {
+    CREATE_BRANCH,
+    CREATE_CHANGELIST,
+    DO_NOTHING
+  }
+
   /**
    * Queries all configured task repositories.
    * Operation may be blocked for a while.
@@ -44,12 +50,23 @@ public abstract class TaskManager {
 
   public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
+  @Deprecated
   public abstract List<Task> getIssues(@Nullable String query,
                                        int max,
                                        long since,
                                        boolean forceRequest,
                                        final boolean withClosed,
                                        @NotNull final ProgressIndicator cancelled);
+
+  public List<Task> getIssues(@Nullable String query,
+                              int offset,
+                              int limit,
+                              boolean forceRequest,
+                              final boolean withClosed,
+                              @NotNull ProgressIndicator indicator) {
+    return getIssues(query, offset + limit, (long)0, forceRequest, withClosed, indicator);
+  }
+
   /**
    * Returns already cached issues.
    * @return cached issues.
@@ -69,7 +86,7 @@ public abstract class TaskManager {
 
   public abstract LocalTask createLocalTask(String summary);
 
-  public abstract void activateTask(@NotNull Task task, boolean clearContext, boolean createChangelist);
+  public abstract LocalTask activateTask(@NotNull Task task, boolean clearContext);
 
   @NotNull
   public abstract LocalTask getActiveTask();
@@ -84,6 +101,8 @@ public abstract class TaskManager {
   public abstract void updateIssues(@Nullable Runnable onComplete);
 
   public abstract boolean isVcsEnabled();
+
+  public abstract AbstractVcs getActiveVcs();
 
   public abstract boolean isLocallyClosed(LocalTask localTask);
 
@@ -105,5 +124,4 @@ public abstract class TaskManager {
 
   public abstract boolean testConnection(TaskRepository repository);
 
-  public final static TaskRepositoryType[] ourRepositoryTypes = Extensions.getExtensions(TaskRepositoryType.EP_NAME);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -22,10 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -47,11 +46,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myMajorVersion = null;
   private String myMinorVersion = null;
   private String myBuildNumber = null;
+  private String myApiVersion = null;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myProgressColor = null;
   private Color myAboutForeground = Color.black;
   private Color myAboutLinkColor = null;
+  private String myProgressTailIconName = null;
   private Icon myProgressTailIcon = null;
 
   private int myProgressY = 350;
@@ -90,9 +91,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myHelpRootName = "idea";
   @NonNls private String myWebHelpUrl = "http://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
-  private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
+  private String myStatisticsServiceKey;
   private String myThirdPartySoftwareUrl;
 
   private Rectangle myAboutLogoRect;
@@ -106,6 +107,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_BUILD = "build";
   @NonNls private static final String ELEMENT_COMPANY = "company";
   @NonNls private static final String ATTRIBUTE_NUMBER = "number";
+  @NonNls private static final String ATTRIBUTE_API_VERSION = "apiVersion";
   @NonNls private static final String ATTRIBUTE_DATE = "date";
   @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   @NonNls private static final String ELEMENT_LOGO = "logo";
@@ -156,11 +158,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_WINDOWS_URL = "win";
   @NonNls private static final String ATTRIBUTE_MAC_URL = "mac";
   @NonNls private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
-  @NonNls private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
   @NonNls private static final String ELEMENT_STATISTICS = "statistics";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
+  @NonNls private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
 
   @NonNls private static final String ELEMENT_THIRD_PARTY = "third-party";
 
@@ -179,14 +181,26 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Override
   public BuildNumber getBuild() {
+    return BuildNumber.fromString(myBuildNumber, getProductPrefix());
+  }
+
+  private static String getProductPrefix() {
     String prefix = null;
-    if (PlatformUtils.isCommunity()) {
+    if (PlatformUtils.isIdeaCommunity()) {
       prefix = "IC";
     }
-    else if (PlatformUtils.isIdea()) {
+    else if (PlatformUtils.isIdeaUltimate()) {
       prefix = "IU";
     }
-    return BuildNumber.fromString(myBuildNumber, prefix);
+    return prefix;
+  }
+
+  @Override
+  public String getApiVersion() {
+    if (myApiVersion != null) {
+      return BuildNumber.fromString(myApiVersion, getProductPrefix()).asString();
+    }
+    return getBuild().asString();
   }
 
   public String getMajorVersion() {
@@ -199,7 +213,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getVersionName() {
     final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP) {
+    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) {
       return fullName + " (" + myCodeName + ")";
     }
     return fullName;
@@ -247,6 +261,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Nullable
   public Icon getProgressTailIcon() {
+    if (myProgressTailIcon == null && myProgressTailIconName != null) {
+      myProgressTailIcon = IconLoader.getIcon(myProgressTailIconName);
+    }
     return myProgressTailIcon;
   }
 
@@ -396,6 +413,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myStatisticsServiceUrl;
   }
 
+  public String getStatisticsServiceKey() {
+    return myStatisticsServiceKey;
+  }
+
   @Override
   public String getThirdPartySoftwareURL() {
     return myThirdPartySoftwareUrl;
@@ -425,6 +446,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
         Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
         ourShadowInstance.readExternal(doc.getRootElement());
       }
+      catch (FileNotFoundException e) {
+        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -450,6 +474,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
+      myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
+      PluginManagerCore.BUILD_NUMBER = myApiVersion != null ? myApiVersion : myBuildNumber;
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
@@ -488,7 +514,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
       if (v != null) {
-        myProgressTailIcon = IconLoader.getIcon(v);
+        myProgressTailIconName = v;
       }
 
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
@@ -636,24 +662,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
     }
 
-    List<Element> essentialPluginsElements = JDOMUtil.getChildren(parentNode, ESSENTIAL_PLUGIN);
-    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
-      @Override
-      public String fun(Element element) {
-        String id = element.getTextTrim();
-        return StringUtil.isNotEmpty(id) ? id : null;
-      }
-    });
-    myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
-
     Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
+      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
+      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
     }
     else {
       myStatisticsSettingsUrl = "http://jetbrains.com/idea/statistics/stat-assistant.xml";
-      myStatisticsServiceUrl = "http://jetbrains.com/idea/statistics/index.jsp";
+      myStatisticsServiceUrl  = "http://jetbrains.com/idea/statistics/index.jsp";
+      myStatisticsServiceKey  = null;
     }
 
     Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
@@ -690,11 +708,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public List<PluginChooserPage> getPluginChooserPages() {
     return myPluginChooserPages;
-  }
-
-  @Override
-  public boolean isEssentialPlugin(@NotNull String pluginId) {
-    return ArrayUtil.contains(pluginId, myEssentialPluginsIds);
   }
 
   @NotNull

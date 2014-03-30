@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * JavaResolveResult holds additional information that is obtained
  * when Java references are being resolved.
@@ -28,6 +30,7 @@ public interface JavaResolveResult extends ResolveResult {
   /**
    * Substitutor providing values of type parameters occurring in {@link #getElement()}.
    */
+  @NotNull
   PsiSubstitutor getSubstitutor();
 
   boolean isPackagePrefixPackageReference();
@@ -47,6 +50,7 @@ public interface JavaResolveResult extends ResolveResult {
 
   JavaResolveResult EMPTY = new JavaResolveResult() {
     @Override public PsiElement getElement() { return null; }
+    @NotNull
     @Override public PsiSubstitutor getSubstitutor() { return PsiSubstitutor.EMPTY; }
     @Override public boolean isValidResult() { return false; }
     @Override public boolean isAccessible() { return false; }

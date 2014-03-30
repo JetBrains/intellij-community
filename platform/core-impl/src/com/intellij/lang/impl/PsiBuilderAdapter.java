@@ -86,6 +86,11 @@ public class PsiBuilderAdapter implements PsiBuilder {
     return myDelegate.rawTokenTypeStart(steps);
   }
 
+  @Override
+  public int rawTokenIndex() {
+    return myDelegate.rawTokenIndex();
+  }
+
   @Override @Nullable @NonNls
   public String getTokenText() {
     return myDelegate.getTokenText();

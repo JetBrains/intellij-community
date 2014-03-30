@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class CenteredIcon implements Icon {
     myCenteredInComponent = centeredInComponent;
   }
 
+  @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
     int offsetX;
     int offsetY;
@@ -59,10 +60,12 @@ public class CenteredIcon implements Icon {
     myIcon.paintIcon(c, g, x + offsetX, y + offsetY);
   }
 
+  @Override
   public int getIconWidth() {
     return myWidth;
   }
 
+  @Override
   public int getIconHeight() {
     return myHight;
   }

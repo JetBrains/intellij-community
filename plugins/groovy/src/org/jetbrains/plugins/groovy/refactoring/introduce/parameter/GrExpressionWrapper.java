@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
@@ -26,9 +31,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  */
 public class GrExpressionWrapper implements IntroduceParameterData.ExpressionWrapper {
   private final GrExpression myExpression;
+  private final RangeMarker myMarker;
+  private final PsiFile myFile;
 
-  public GrExpressionWrapper(GrExpression expression) {
+  public GrExpressionWrapper(@NotNull GrExpression expression) {
+    assert expression.isValid();
+
     myExpression = expression;
+    myFile = expression.getContainingFile();
+    if (myFile.isPhysical()) {
+      Document document = PsiDocumentManager.getInstance(expression.getProject()).getDocument(myFile);
+      assert document != null;
+      myMarker = document.createRangeMarker(myExpression.getTextRange());
+    }
+    else {
+      myMarker = null;
+    }
   }
 
   @NotNull
@@ -44,7 +62,17 @@ public class GrExpressionWrapper implements IntroduceParameterData.ExpressionWra
 
   @NotNull
   @Override
-  public PsiElement getExpression() {
-    return myExpression;
+  public GrExpression getExpression() {
+    if (myExpression.isValid()) {
+      return myExpression;
+    }
+    else if (myMarker != null && myMarker.isValid()) {
+      PsiElement at = myFile.findElementAt(myMarker.getStartOffset());
+      if (at != null) {
+        return GroovyPsiElementFactory.getInstance(myFile.getProject()).createExpressionFromText(myExpression.getText(), at);
+      }
+    }
+
+    return GroovyPsiElementFactory.getInstance(myFile.getProject()).createExpressionFromText(myExpression.getText(), null);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import org.jetbrains.plugins.groovy.annotator.intentions.GrModifierFix;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -57,14 +58,23 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     return optionsPanel;
   }
 
+  @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethod(GrMethod method) {
         if (checkMethod(method)) {
-          LocalQuickFix[] fixes = new LocalQuickFix[]{new GrModifierFix(method, method.getModifierList(), PsiModifier.STATIC, false, true)};
-          registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          final GrModifierFix modifierFix = new GrModifierFix(method, PsiModifier.STATIC, false, true, new Function<ProblemDescriptor, PsiModifierList>() {
+            @Override
+            public PsiModifierList fun(ProblemDescriptor descriptor) {
+              final PsiElement element = descriptor.getPsiElement();
+              final PsiElement parent = element.getParent();
+              assert parent instanceof GrMethod : "element: " + element + ", parent:" + parent;
+              return ((GrMethod)parent).getModifierList();
+            }
+          });
+          registerError(method.getNameIdentifierGroovy(), GroovyInspectionBundle.message("method.may.be.static"), new LocalQuickFix[]{modifierFix}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     };
@@ -93,9 +103,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       return false;
     }
 
-    final ExtensionsArea rootArea = Extensions.getRootArea();
-    final ExtensionPoint<Condition<PsiElement>> extensionPoint = rootArea.getExtensionPoint("com.intellij.cantBeStatic");
-    final Condition<PsiElement>[] addins = extensionPoint.getExtensions();
+    final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
     for (Condition<PsiElement> addin : addins) {
       if (addin.value(method)) {
         return false;
@@ -112,6 +120,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     final GrParameter[] parameters = method.getParameters();
     if (method.getName().equals("propertyMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
     if (method.getName().equals("methodMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
+    if (method.getContainingClass() instanceof PsiAnonymousClass) return true;
 
     for (GrMethodMayBeStaticInspectionFilter filter : GrMethodMayBeStaticInspectionFilter.EP_NAME.getExtensions()) {
       if (filter.isIgnored(method)) {

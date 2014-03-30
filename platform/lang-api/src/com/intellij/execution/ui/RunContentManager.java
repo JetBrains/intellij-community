@@ -47,11 +47,18 @@ public interface RunContentManager {
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse);
 
+  /**
+   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
+   */
+  @Deprecated
   @Nullable
   RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment);
 
+  @Nullable
+  RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment);
+
   /**
-   * @deprecated use {@link #getReuseContent(com.intellij.execution.Executor, ExecutionEnvironment)}
+   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
    */
   @Deprecated
   @Nullable

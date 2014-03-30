@@ -17,12 +17,14 @@ package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -35,6 +37,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -56,11 +59,12 @@ import java.util.*;
 import java.util.List;
 
 public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
+  private final Editor myEditor;
   private final int mySelectionStart;
   private final int mySelectionEnd;
 
   // todo equals???
-  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new com.intellij.util.containers.HashMap<VcsFileRevision, Block>();
+  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
@@ -115,7 +119,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   public VcsHistoryDialog(Project project,
                           final VirtualFile file,
-                          final VcsHistoryProvider vcsHistoryProvider,
+                          Editor editor, final VcsHistoryProvider vcsHistoryProvider,
                           VcsHistorySession session,
                           AbstractVcs vcs,
                           int selectionStart,
@@ -123,6 +127,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
                           final String title, final CachedRevisionsContents cachedContents){
     super(project, true);
     myProject = project;
+    myEditor = editor;
     mySelectionStart = selectionStart;
     mySelectionEnd = selectionEnd;
     myCachedContents = cachedContents;
@@ -436,7 +441,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     } else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       return myFile;
@@ -456,20 +461,23 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
 
   @Nullable
   private Block getBlock(VcsFileRevision revision) throws FilesTooBigForDiffException, VcsException {
-    if (myRevisionToContentMap.containsKey(revision))
+    if (myRevisionToContentMap.containsKey(revision)) {
       return myRevisionToContentMap.get(revision);
-
-    int index = myRevisions.indexOf(revision);
+    }
 
     final String revisionContent = getContentOf(revision);
     if (revisionContent == null) return null;
-    if (index == 0)
-      myRevisionToContentMap.put(revision, new Block(revisionContent,  mySelectionStart, mySelectionEnd));
-    else {
-      Block prevBlock = getBlock(myRevisions.get(index - 1));
-      if (prevBlock == null) return null;
-      myRevisionToContentMap.put(revision, new FindBlock(revisionContent, prevBlock).getBlockInThePrevVersion());
-    }
+
+    int index = myRevisions.indexOf(revision);
+    Block blockByIndex = getBlock(index);
+    if (blockByIndex == null) return null;
+
+    myRevisionToContentMap.put(revision, new FindBlock(revisionContent, blockByIndex).getBlockInThePrevVersion());
     return myRevisionToContentMap.get(revision);
   }
+
+  private Block getBlock(int index) throws FilesTooBigForDiffException, VcsException {
+    return index > 0 ? getBlock(myRevisions.get(index - 1)) : new Block(myEditor.getDocument().getText(), mySelectionStart, mySelectionEnd);
+  }
+
 }

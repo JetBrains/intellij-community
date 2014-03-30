@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,16 @@ import java.util.*;
 public class CollectionListModel<T> extends AbstractListModel implements EditableModel {
   private final List<T> myItems;
 
-  public CollectionListModel(@NotNull final List<? extends T> items) {
+  public CollectionListModel(@NotNull final Collection<? extends T> items) {
     myItems = new ArrayList<T>(items);
   }
 
+  public CollectionListModel(@NotNull final List<? extends T> items) {
+    this((Collection<? extends T>)items);
+  }
+
   public CollectionListModel(final T... items) {
-    myItems = new ArrayList<T>(Arrays.asList(items));
+    myItems = ContainerUtilRt.newArrayList(items);
   }
 
   @Override
@@ -50,6 +55,11 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   public void add(final T element) {
     int i = myItems.size();
     myItems.add(element);
+    fireIntervalAdded(this, i, i);
+  }
+
+  public void add(int i,final T element) {
+    myItems.add(i, element);
     fireIntervalAdded(this, i, i);
   }
 

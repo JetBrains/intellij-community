@@ -22,22 +22,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
+import com.intellij.util.xml.highlighting.DomElementsInspection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.*;
 
-public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
+public class MavenDuplicateDependenciesInspection extends DomElementsInspection<MavenDomProjectModel> {
   public MavenDuplicateDependenciesInspection() {
     super(MavenDomProjectModel.class);
   }
@@ -47,18 +49,19 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
                                DomElementAnnotationHolder holder) {
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
-    checkMavenProjectModel(projectModel, holder);
+    checkManagedDependencies(projectModel, holder);
+    checkDependencies(projectModel, holder);
   }
 
-  private static void checkMavenProjectModel(@NotNull MavenDomProjectModel projectModel,
-                                             @NotNull DomElementAnnotationHolder holder) {
-    final Map<String, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
+  private static void checkDependencies(@NotNull MavenDomProjectModel projectModel,
+                                        @NotNull DomElementAnnotationHolder holder) {
+    MultiMap<DependencyConflictId, MavenDomDependency> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
     for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
-      String id = createId(dependency);
+      DependencyConflictId id = DependencyConflictId.create(dependency);
       if (id != null) {
-        Set<MavenDomDependency> dependencies = allDuplicates.get(id);
-        if (dependencies != null && dependencies.size() > 1) {
+        Collection<MavenDomDependency> dependencies = allDuplicates.get(id);
+        if (dependencies.size() > 1) {
 
           List<MavenDomDependency> duplicatedDependencies = new ArrayList<MavenDomDependency>();
 
@@ -66,12 +69,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
             if (d == dependency) continue;
 
             if (d.getParent() == dependency.getParent()) {
-              duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:type:classifier
+              duplicatedDependencies.add(d); // Dependencies in the same file must be unique by groupId:artifactId:type:classifier
             }
             else {
               if (scope(d).equals(scope(dependency))
                   && Comparing.equal(d.getVersion().getStringValue(), dependency.getVersion().getStringValue())) {
-                duplicatedDependencies.add(d); // Dependencies in same file must be unique by groupId:artifactId:VERSION:type:classifier:SCOPE
+                duplicatedDependencies.add(d); // Dependencies in different files must not have same groupId:artifactId:VERSION:type:classifier:SCOPE
               }
             }
           }
@@ -111,22 +114,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
-    StringBuilder sb = new StringBuilder();
-
     XmlTag tag = dependency.getXmlTag();
     if (tag == null) return getProjectName(model);
     VirtualFile file = tag.getContainingFile().getVirtualFile();
     if (file == null) return getProjectName(model);
 
-    sb.append("<a href ='#navigation/");
-    sb.append(file.getPath());
-    sb.append(":");
-    sb.append(tag.getTextRange().getStartOffset());
-    sb.append("'>");
-    sb.append(getProjectName(model));
-    sb.append("</a>");
-
-    return sb.toString();
+    return "<a href ='#navigation/" + file.getPath() + ":" + tag.getTextRange().getStartOffset() + "'>" + getProjectName(model) + "</a>";
   }
 
   @NotNull
@@ -147,24 +140,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   @NotNull
-  private static Map<String, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final Map<String, Set<MavenDomDependency>> allDependencies = new HashMap<String, Set<MavenDomDependency>>();
+  private static MultiMap<DependencyConflictId, MavenDomDependency> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
+    final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = MultiMap.createSet();
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
-        for (MavenDomDependency dependency : model.getDependencies().getDependencies()) {
-          String mavenId = createId(dependency);
-          if (mavenId != null) {
-            if (allDependencies.containsKey(mavenId)) {
-              allDependencies.get(mavenId).add(dependency);
-            }
-            else {
-              Set<MavenDomDependency> dependencies = new HashSet<MavenDomDependency>();
-              dependencies.add(dependency);
-              allDependencies.put(mavenId, dependencies);
-            }
-          }
-        }
+        collect(allDependencies, model.getDependencies());
         return false;
       }
     };
@@ -175,17 +156,28 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     return allDependencies;
   }
 
-  @Nullable
-  private static String createId(MavenDomDependency coordinates) {
-    String groupId = coordinates.getGroupId().getStringValue();
-    String artifactId = coordinates.getArtifactId().getStringValue();
+  private static void collect(MultiMap<DependencyConflictId, MavenDomDependency> duplicates, @NotNull MavenDomDependencies dependencies) {
+    for (MavenDomDependency dependency : dependencies.getDependencies()) {
+      DependencyConflictId mavenId = DependencyConflictId.create(dependency);
+      if (mavenId == null) continue;
 
-    if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) return null;
+      duplicates.putValue(mavenId, dependency);
+    }
+  }
 
-    String type = coordinates.getType().getStringValue();
-    String classifier = coordinates.getClassifier().getStringValue();
+  private static void checkManagedDependencies(@NotNull MavenDomProjectModel projectModel,
+                                               @NotNull DomElementAnnotationHolder holder) {
+    MultiMap<DependencyConflictId, MavenDomDependency> duplicates = MultiMap.createSet();
+    collect(duplicates, projectModel.getDependencyManagement().getDependencies());
 
-    return groupId + ":" + artifactId + ":" + type + ":" + classifier;
+    for (Map.Entry<DependencyConflictId, Collection<MavenDomDependency>> entry : duplicates.entrySet()) {
+      Collection<MavenDomDependency> set = entry.getValue();
+      if (set.size() <= 1) continue;
+
+      for (MavenDomDependency dependency : set) {
+        holder.createProblem(dependency, HighlightSeverity.WARNING, "Duplicated dependency");
+      }
+    }
   }
 
   @NotNull

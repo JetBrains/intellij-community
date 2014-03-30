@@ -18,9 +18,12 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
@@ -38,16 +41,53 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     doTest("newFieldName");
   }
 
+  public void testControllerFieldWithRefs() throws Exception {
+    doTest("newFieldName");
+  }
+
+  public void testHandler() throws Exception {
+    doTest("newHandlerName");
+  }
+
   public void testCustomComponentTag() throws Exception {
-    doTest("Foo");
+    doTest("Foo", true);
+  }
+
+  public void testCustomComponentPropertyTag() throws Exception {
+    doTest("Foo", true);
+  }
+
+  public void testFromReference() throws Exception {
+    final String newName = "lbl1";
+    doTest(newName);
+    final PsiClass controllerClass = findClass(getTestName(false));
+    assertNotNull(controllerClass);
+    assertNotNull(controllerClass.findFieldByName(newName, false));
+  }
+
+  public void testIdWithRefs() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml");
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    new RenameProcessor(getProject(), element, "lb1", true, true).run();
+    checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
   private void doTest(final String newName) throws Exception {
+    doTest(newName, false);
+  }
+
+  private void doTest(final String newName, boolean inline) throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    new RenameProcessor(getProject(), element, newName, true, true).run();
+    if (inline) {
+      CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);
+    } else {
+      new RenameProcessor(getProject(), element, newName, true, true).run();
+    }
     checkResultByFile(getTestName(true) + "_after.fxml");
   }
 

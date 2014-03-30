@@ -37,6 +37,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   protected abstract boolean canSelect(PsiFileSystemItem file);
 
+  @Override
   public final boolean canSelect(SelectInContext context) {
     if (myProject.isDisposed()) return false;
 
@@ -60,6 +61,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     return psiFile != null && canSelect(psiFile) || canWorkWithCustomObjects();
   }
 
+  @Override
   public final void selectIn(SelectInContext context, final boolean requestFocus) {
     VirtualFile file = context.getVirtualFile();
     Object selector = context.getSelectorInFile();

@@ -17,13 +17,14 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +39,7 @@ import java.util.*;
  *
  * This class fires events to RTestUnitEventsListener in EventDispatch thread
  */
-public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProcessor {
+public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralToSMTRunnerEventsConvertor.class.getName());
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
@@ -67,7 +68,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onStartTesting() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         mySuitesStack.pushSuite(myTestsRootNode);
         myTestsRootNode.setStarted();
@@ -80,7 +81,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
   @Override
   public void onTestsReporterAttached() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         myTestsRootNode.setTestsReporterAttached();
       }
@@ -88,7 +89,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onFinishTesting() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         if (myIsTestingFinished) {
           // has been already invoked!
@@ -119,7 +120,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = testStartedEvent.getName();
         final String locationUrl = testStartedEvent.getLocationUrl();
@@ -155,7 +156,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onSuiteStarted(@NotNull final TestSuiteStartedEvent suiteStartedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String suiteName = suiteStartedEvent.getName();
         final String locationUrl = suiteStartedEvent.getLocationUrl();
@@ -179,7 +180,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = testFinishedEvent.getName();
         final long duration = testFinishedEvent.getDuration();
@@ -203,7 +204,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String suiteName = suiteFinishedEvent.getName();
         final SMTestProxy mySuite = mySuitesStack.popSuite(suiteName);
@@ -218,7 +219,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy currentProxy = findCurrentTestOrSuite();
 
@@ -236,7 +237,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy currentProxy = findCurrentTestOrSuite();
         currentProxy.addError(localizedMessage, stackTrace, isCritical);
@@ -246,7 +247,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
   public void onCustomProgressTestsCategory(@Nullable final String categoryName,
                                             final int testCount) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestsCategory(categoryName, testCount);
       }
@@ -254,7 +255,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onCustomProgressTestStarted() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestStarted();
       }
@@ -262,7 +263,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onCustomProgressTestFailed() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         fireOnCustomProgressTestFailed();
       }
@@ -270,7 +271,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = ObjectUtils.assertNotNull(testFailedEvent.getName());
         final String localizedMessage = testFailedEvent.getLocalizedFailureMessage();
@@ -336,10 +337,13 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+     addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
-        final String ignoreComment = testIgnoredEvent.getIgnoreComment();
+        String ignoreComment = testIgnoredEvent.getIgnoreComment();
+        if (StringUtil.isEmpty(ignoreComment)) {
+          ignoreComment = SMTestsRunnerBundle.message("sm.test.runner.states.test.is.ignored");
+        }
         final String stackTrace = testIgnoredEvent.getStacktrace();
         final String fullTestName = getFullTestName(testName);
         SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
@@ -373,7 +377,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+     addToInvokeLater(new Runnable() {
       public void run() {
         final String testName = testOutputEvent.getName();
         final String text = testOutputEvent.getText();
@@ -398,7 +402,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   }
 
   public void onTestsCountInSuite(final int count) {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+     addToInvokeLater(new Runnable() {
       public void run() {
         fireOnTestsCountInSuite(count);
       }
@@ -537,7 +541,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
    * Remove listeners,  etc
    */
   public void dispose() {
-    SMRunnerUtil.addToInvokeLater(new Runnable() {
+    super.dispose();
+     addToInvokeLater(new Runnable() {
       public void run() {
         myEventsListeners.clear();
 

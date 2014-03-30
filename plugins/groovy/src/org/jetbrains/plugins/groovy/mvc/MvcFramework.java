@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -54,7 +54,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,7 +105,7 @@ public abstract class MvcFramework {
   public List<Module> reorderModulesForMvcView(List<Module> modules) {
     return modules;
   }
-  
+
   public abstract String getApplicationDirectoryName();
 
   public void syncSdkAndLibrariesInPluginsModule(@NotNull Module module) {
@@ -132,7 +131,7 @@ public abstract class MvcFramework {
         if (Messages.showYesNoDialog(module.getProject(), "Cannot generate " + getDisplayName() + " project structure because JDK is not specified for module \"" +
                                                           module.getName() + "\".\n" +
                                                           getDisplayName() + " project will not be created if you don't specify JDK.\nDo you want to specify JDK?",
-                                     "Error", Messages.getErrorIcon()) == 1) {
+                                     "Error", Messages.getErrorIcon()) == Messages.NO) {
           return;
         }
         ProjectSettingsService.getInstance(module.getProject()).showModuleConfigurationDialog(module.getName(), ClasspathEditor.NAME);
@@ -226,6 +225,27 @@ public abstract class MvcFramework {
   public abstract VirtualFile getSdkRoot(@Nullable Module module);
 
   public abstract String getUserLibraryName();
+
+  protected abstract boolean isCoreJar(@NotNull VirtualFile localFile);
+
+  @Nullable
+  protected VirtualFile findCoreJar(@Nullable Module module) {
+    if (module == null) return null;
+
+    JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(module.getProject());
+
+    for (PsiClass aClass : javaFacade.findClasses(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module))) {
+      VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
+      if (virtualFile != null && virtualFile.getFileSystem() instanceof JarFileSystem) {
+        VirtualFile localFile = PathUtil.getLocalFile(virtualFile);
+        if (isCoreJar(localFile)) {
+          return localFile;
+        }
+      }
+    }
+
+    return null;
+  }
 
   protected List<File> getImplicitClasspathRoots(@NotNull Module module) {
     final List<File> toExclude = new ArrayList<File>();
@@ -325,7 +345,7 @@ public abstract class MvcFramework {
 
   protected static void ensureRunConfigurationExists(Module module, ConfigurationType configurationType, String name) {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
-    for (final RunConfiguration runConfiguration : runManager.getConfigurations(configurationType)) {
+    for (final RunConfiguration runConfiguration : runManager.getConfigurationsList(configurationType)) {
       if (runConfiguration instanceof MvcRunConfiguration && ((MvcRunConfiguration)runConfiguration).getModule() == module) {
         return;
       }
@@ -381,7 +401,7 @@ public abstract class MvcFramework {
   @NotNull
   public GeneralCommandLine createCommand(@NotNull Module module,
                                           @Nullable String jvmParams,
-                                          final boolean forCreation,
+                                          boolean forCreation,
                                           @NotNull MvcCommand command) throws ExecutionException {
     final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command);
     addJavaHome(params, module);
@@ -390,11 +410,11 @@ public abstract class MvcFramework {
 
     final VirtualFile griffonHome = getSdkRoot(module);
     if (griffonHome != null) {
-      commandLine.setEnvParams(Collections.singletonMap(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath())));
+      commandLine.getEnvironment().put(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath()));
     }
 
     final VirtualFile root = findAppRoot(module);
-    final File ioRoot = root != null ? VfsUtil.virtualToIoFile(root) : new File(module.getModuleFilePath()).getParentFile();
+    final File ioRoot = root != null ? VfsUtilCore.virtualToIoFile(root) : new File(module.getModuleFilePath()).getParentFile();
     commandLine.setWorkDirectory(forCreation ? ioRoot.getParentFile() : ioRoot);
 
     return commandLine;
@@ -420,8 +440,12 @@ public abstract class MvcFramework {
     return CommandLineBuilder.createFromJavaParameters(params);
   }
 
-  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {
+  private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, boolean refreshPluginRoot, Map<String, VirtualFile> res) {
     if (pluginRoot != null) {
+      if (refreshPluginRoot) {
+        pluginRoot.refresh(false, false);
+      }
+
       VirtualFile[] children = pluginRoot.getChildren();
       if (children != null) {
         for (VirtualFile child : children) {
@@ -451,9 +475,9 @@ public abstract class MvcFramework {
       VirtualFile root = findAppRoot(module);
       if (root == null) return;
 
-      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), result);
-      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), result);
-      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), result);
+      extractPlugins(module.getProject(), root.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY), refresh, result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getCommonPluginsDir(module), refresh), refresh, result);
+      extractPlugins(module.getProject(), MvcModuleStructureUtil.findFile(getGlobalPluginsDir(module), refresh), refresh, result);
     }
   }
 

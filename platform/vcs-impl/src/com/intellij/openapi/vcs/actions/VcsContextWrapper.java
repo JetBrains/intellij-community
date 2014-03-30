@@ -16,8 +16,8 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -26,13 +26,17 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 public class VcsContextWrapper implements VcsContext {
   protected final DataContext myContext;
@@ -65,23 +69,22 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(myContext);
+    return CommonDataKeys.PROJECT.getData(myContext);
   }
 
   public VirtualFile getSelectedFile() {
     VirtualFile[] files = getSelectedFiles();
-    if (files == null || files.length == 0) return null;
-    return files[0];
+    return files.length == 0 ? null : files[0];
   }
 
   @NotNull
   public VirtualFile[] getSelectedFiles() {
-    VirtualFile[] fileArray = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
+    VirtualFile[] fileArray = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(myContext);
     if (fileArray != null) {
       return filterLocalFiles(fileArray);
     }
 
-    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(myContext);
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(myContext);
     if (virtualFile != null && isLocal(virtualFile)) {
       return new VirtualFile[]{virtualFile};
     }
@@ -100,11 +103,11 @@ public class VcsContextWrapper implements VcsContext {
         result.add(virtualFile);
       }
     }
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   public Editor getEditor() {
-    return PlatformDataKeys.EDITOR.getData(myContext);
+    return CommonDataKeys.EDITOR.getData(myContext);
   }
 
   public Collection<VirtualFile> getSelectedFilesCollection() {
@@ -137,7 +140,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public FilePath[] getSelectedFilePaths() {
-    Set<FilePath> result = new HashSet<FilePath>();
+    Set<FilePath> result = new THashSet<FilePath>();
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
     if (path != null) {
       result.add(path);
@@ -153,11 +156,9 @@ public class VcsContextWrapper implements VcsContext {
     }
 
     VirtualFile[] selectedFiles = getSelectedFiles();
-    if (selectedFiles != null) {
-      for (VirtualFile selectedFile : selectedFiles) {
-        FilePathImpl filePath = new FilePathImpl(selectedFile);
-        result.add(filePath);
-      }
+    for (VirtualFile selectedFile : selectedFiles) {
+      FilePathImpl filePath = new FilePathImpl(selectedFile);
+      result.add(filePath);
     }
 
     File[] selectedIOFiles = getSelectedIOFiles();
@@ -172,7 +173,6 @@ public class VcsContextWrapper implements VcsContext {
     }
 
     return result.toArray(new FilePath[result.size()]);
-
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -347,7 +348,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
             MoveMembersImpl.REFACTORING_NAME,
             Messages.getQuestionIcon()
     );
-    if (answer != 0) return null;
+    if (answer != Messages.YES) return null;
     final Ref<IncorrectOperationException> eRef = new Ref<IncorrectOperationException>();
     final PsiClass newClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
           public PsiClass compute() {
@@ -395,23 +396,26 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
   }
 
-  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel {
+  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     PsiClass myTargetClass = null;
     public MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 
+    @Override
     @Nullable
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if(myTargetClass != null && myTargetClass.isInterface()) {
+      if(myTargetClass != null && myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
         return !(member.getMember() instanceof PsiMethod);
       }
       return super.isMemberEnabled(member);

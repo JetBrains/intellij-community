@@ -8,6 +8,8 @@
   <!--fake dependency for Web IDE-->
   <depends>com.intellij.modules.xml</depends>
   <depends optional="true" config-file="java-contexts.xml">com.intellij.modules.java</depends>
+  <!-- Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog -->
+  <depends optional="true">XPathView</depends>
 
   <project-components>
     <component>
@@ -19,14 +21,14 @@
   <actions>
 
     <group id="task.actions">
-      <!--<action id="tasks.activate" class="com.intellij.tasks.actions.OpenTaskAction" text="_Open Task...">-->
-        <!--<keyboard-shortcut keymap="$default" first-keystroke="alt shift G"/>-->
-      <!--</action>-->
       <action id="tasks.switch" class="com.intellij.tasks.actions.SwitchTaskAction" text="_Switch Task...">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <action id="tasks.goto" class="com.intellij.tasks.actions.GotoTaskAction">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift N"/>
+      </action>
+      <action id="tasks.close" class="com.intellij.tasks.actions.CloseTaskAction" text="_Close Active Task...">
+        <keyboard-shortcut keymap="$default" first-keystroke="alt shift W"/>
       </action>
       <separator/>
       <action id="tasks.create.changelist" class="com.intellij.tasks.actions.CreateChangelistAction" text="Create Change_list..."/>
@@ -52,10 +54,16 @@
       </action>
     </group>
 
+    <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
+      <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <add-to-group group-id="Internal"/>
+    </group>
+
     <group id="tasks.and.contexts" text="_Tasks &amp; Contexts" popup="true">
       <reference ref="task.actions"/>
       <separator/>
       <reference ref="working.context"/>
+      <!-- <reference ref="tasks.util"/> -->
     </group>
 
     <group id="tasks.group">
@@ -70,7 +78,7 @@
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
       </action>
       <add-to-group group-id="MainToolBar" anchor="last"/>
-      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
     </group>
 
     <!--
@@ -109,6 +117,7 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
 
     <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
@@ -119,9 +128,28 @@
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.generic.assembla.AssemblaRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
+    <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
+
+    <!-- JQL support -->
+    <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
+    <lang.parserDefinition language="JQL"
+                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
+    <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
+    <completion.contributor language="JQL"
+                            implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
+    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
+
+    <!-- YouTrack support -->
+    <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
+    <fileTypeFactory implementation="com.intellij.tasks.youtrack.lang.YouTrackFileTypeFactory"/>
+    <lang.parserDefinition language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackParserDefinition"/>
+    <completion.contributor language="YouTrack"
+                            implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>
+    <externalAnnotator language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>
   </extensions>
 
 </idea-plugin>

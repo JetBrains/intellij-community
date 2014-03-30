@@ -19,12 +19,10 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,29 +30,28 @@ import java.awt.*;
 /**
  * @author max
  */
-public class LayoutProjectCodeDialog extends DialogWrapper {
+public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
   private static @NonNls final String HELP_ID = "editing.codeReformatting";
 
   private final String  myText;
   private final boolean mySuggestOptimizeImports;
   private final Project myProject;
-  private final Module  myModule;
+
   
   private JCheckBox myCbOptimizeImports;
-  private JCheckBox myCbOnlyVcsChangedRegions;
+  private JCheckBox myCbRearrangeEntries;
 
   public LayoutProjectCodeDialog(@NotNull Project project,
-                                 @Nullable Module module,
                                  String title,
                                  String text,
-                                 boolean suggestOptimizeImports)
+                                 boolean suggestOptimizeImports,
+                                 boolean enableOnlyVCSChangedTextCb)
   {
     super(project, false);
     myText = text;
     mySuggestOptimizeImports = suggestOptimizeImports;
     myProject = project;
-    myModule = module;
-    
+
     setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
     setTitle(title);
     init();
@@ -62,20 +59,21 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    if (!mySuggestOptimizeImports) return new JLabel(myText);
-    JPanel panel = new JPanel(new GridLayout(3, 1));
-    panel.add(new JLabel(myText));
-    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
-    panel.add(myCbOptimizeImports);
-    myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
+    if (!mySuggestOptimizeImports) {
+      return new JLabel(myText);
+    }
 
-    myCbOnlyVcsChangedRegions = new JCheckBox(CodeInsightBundle.message("reformat.option.vcs.changed.region"));
-    panel.add(myCbOnlyVcsChangedRegions);
-    final boolean canTargetVcsRegions = canTargetVcsRegions();
-    myCbOnlyVcsChangedRegions.setEnabled(canTargetVcsRegions);
-    myCbOnlyVcsChangedRegions.setSelected(
-      canTargetVcsRegions && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
-    );
+    JPanel panel = new JPanel(new GridLayout(3, 1));
+    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
+    myCbRearrangeEntries = new JCheckBox(CodeInsightBundle.message("reformat.option.rearrange.entries"));
+
+    panel.add(new JLabel(myText));
+    panel.add(myCbOptimizeImports);
+    panel.add(myCbRearrangeEntries);
+
+    myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
+    myCbRearrangeEntries.setSelected(LayoutCodeSettingsStorage.getLastSavedRearrangeEntriesCbStateFor(myProject));
+
     return panel;
   }
   
@@ -83,6 +81,11 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
   @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
+  }
+
+  @Override
+  public boolean isRearrangeEntries() {
+    return myCbRearrangeEntries.isSelected();
   }
 
   @Override
@@ -95,6 +98,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
     super.doOKAction();
     if (mySuggestOptimizeImports) {
       PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
+      LayoutCodeSettingsStorage.saveRearrangeEntriesOptionFor(myProject, isRearrangeEntries());
     }
   }
 
@@ -103,14 +107,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper {
   }
 
   public boolean isProcessOnlyChangedText() {
-    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
+    return false;
   }
-  
-  private boolean canTargetVcsRegions() {
-    if (myModule != null) {
-      return FormatChangedTextUtil.hasChanges(myModule);
-    }
 
-    return FormatChangedTextUtil.hasChanges(myProject);
-  }
 }

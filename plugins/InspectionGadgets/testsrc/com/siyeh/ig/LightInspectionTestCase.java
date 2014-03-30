@@ -15,14 +15,12 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -39,11 +37,24 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.enableInspections(getInspection());
   }
 
-  protected abstract LocalInspectionTool getInspection();
+  protected abstract InspectionProfileEntry getInspection();
 
   @NonNls
+  @Language("JAVA")
   protected String[] getEnvironmentClasses() {
-    return new String[]{};
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  protected void addEnvironmentClass(@Language("JAVA") @NotNull @NonNls String classText) {
+    myFixture.addClass(classText);
+  }
+
+  protected final void doStatementTest(@Language(value="JAVA", prefix="class X { void m() {", suffix="}}") @NotNull @NonNls String statementText) {
+    doTest("class X { void m() {" + statementText + "}}");
+  }
+
+  protected final void doMemberTest(@Language(value="JAVA", prefix="class X {", suffix="}") @NotNull @NonNls String memberText) {
+    doTest("class X {" + memberText + "}");
   }
 
   protected final void doTest(@Language("JAVA") @NotNull @NonNls String classText) {
@@ -68,6 +79,48 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     }
     newText.append(classText, start, classText.length());
     myFixture.configureByText("X.java", newText.toString());
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  @Override
+  protected String getBasePath() {
+    final Class<? extends InspectionProfileEntry> inspectionClass = getInspection().getClass();
+    final String className = inspectionClass.getName();
+    final String[] words = className.split("\\.");
+    @NonNls final StringBuilder basePath = new StringBuilder("/plugins/InspectionGadgets/test/");
+    final int lastWordIndex = words.length - 1;
+    for (int i = 0; i < lastWordIndex; i++) {
+      final String word = words[i];
+      if (word.equals("ig")) {
+        basePath.append("igtest");
+      }
+      else {
+        basePath.append(word);
+      }
+      basePath.append('/');
+    }
+    String lastWord = words[lastWordIndex];
+    if (lastWord.endsWith("Inspection")) {
+      lastWord = lastWord.substring(0, lastWord.length() - 10);
+    }
+    final int length = lastWord.length();
+    for (int i = 0; i < length; i++) {
+      final char ch = lastWord.charAt(i);
+      if (Character.isUpperCase(ch)) {
+        if (i != 0) {
+          basePath.append('_');
+        }
+        basePath.append(Character.toLowerCase(ch));
+      }
+      else {
+        basePath.append(ch);
+      }
+    }
+    return basePath.toString();
+  }
+
+  protected final void doTest() {
+    myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.testHighlighting(true, false, false);
   }
 }

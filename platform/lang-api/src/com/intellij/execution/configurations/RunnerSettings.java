@@ -15,37 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
 
-public final class RunnerSettings<T extends JDOMExternalizable> implements JDOMExternalizable {
-  private final T myData;
-  private final RunProfile myConfig;
-
-  public RunnerSettings(T data, RunProfile config) {
-    myData = data;
-    myConfig = config;
-  }
-
-  public T getData() {
-    return myData;
-  }
-
-  public RunProfile getRunProfile() {
-    return myConfig;
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    if (myData != null) {
-      myData.readExternal(element);
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (myData != null) {
-      myData.writeExternal(element);
-    }
-  }
+public interface RunnerSettings extends JDOMExternalizable {
 }

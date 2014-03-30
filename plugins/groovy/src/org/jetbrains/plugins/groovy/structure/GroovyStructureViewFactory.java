@@ -27,20 +27,24 @@ import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.lang.PsiStructureViewFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 public class GroovyStructureViewFactory implements PsiStructureViewFactory {
+  @Override
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
     return new TreeBasedStructureViewBuilder() {
 
+      @Override
       @NotNull
-      public StructureViewModel createStructureViewModel() {
-        return new JavaFileTreeModel((GroovyFileBase)psiFile) {
+      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+        return new JavaFileTreeModel((GroovyFileBase)psiFile, editor) {
           @NotNull
           @Override
           public Collection<NodeProvider> getNodeProviders() {

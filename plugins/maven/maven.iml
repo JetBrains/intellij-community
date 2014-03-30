@@ -59,7 +59,10 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="maven-jps-plugin" />
     <orderEntry type="module" module-name="maven-artifact-resolver-m3" />
+    <orderEntry type="module" module-name="maven-artifact-resolver-m31" />
     <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="properties-psi-api" />
   </component>
   <component name="copyright">
     <Base>

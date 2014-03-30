@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ public final class ColorKey implements Comparable<ColorKey> {
   private Color myDefaultColor = NULL_COLOR;
   private static final Map<String, ColorKey> ourRegistry = new HashMap<String, ColorKey>();
 
-  private ColorKey(String externalName) {
+  private ColorKey(@NotNull String externalName) {
     myExternalName = externalName;
     if (ourRegistry.containsKey(myExternalName)) {
       LOG.error("Key " + myExternalName + " already registered.");
@@ -41,20 +42,23 @@ public final class ColorKey implements Comparable<ColorKey> {
     }
   }
 
-  public static ColorKey find(String externalName) {
+  @NotNull
+  public static ColorKey find(@NotNull String externalName) {
     ColorKey key = ourRegistry.get(externalName);
-    return key != null ? key : new ColorKey(externalName);
+    return key == null ? new ColorKey(externalName) : key;
   }
 
   public String toString() {
     return myExternalName;
   }
 
+  @NotNull
   public String getExternalName() {
     return myExternalName;
   }
 
-  public int compareTo(ColorKey key) {
+  @Override
+  public int compareTo(@NotNull ColorKey key) {
     return myExternalName.compareTo(key.myExternalName);
   }
 
@@ -72,15 +76,14 @@ public final class ColorKey implements Comparable<ColorKey> {
     return myDefaultColor;
   }
 
-  public static ColorKey createColorKey(@NonNls String externalName) {
+  @NotNull
+  public static ColorKey createColorKey(@NonNls @NotNull String externalName) {
     return find(externalName);
   }
 
-  public static ColorKey createColorKey(@NonNls String externalName, Color defaultColor) {
-    ColorKey key = ourRegistry.get(externalName);
-    if (key == null) {
-      key = find(externalName);
-    }
+  @NotNull
+  public static ColorKey createColorKey(@NonNls @NotNull String externalName, Color defaultColor) {
+    ColorKey key = createColorKey(externalName);
 
     if (key.getDefaultColor() == null) {
       key.myDefaultColor = defaultColor;

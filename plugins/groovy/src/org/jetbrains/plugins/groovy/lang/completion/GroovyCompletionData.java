@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,15 @@ public class GroovyCompletionData {
       return;
     }
 
+    final String[] extendsImplements = addExtendsImplements(position);
+    for (String keyword : extendsImplements) {
+      result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    if (extendsImplements.length > 0) {
+      return;
+    }
+
+
     if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
       addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL);
       return;
@@ -101,6 +110,11 @@ public class GroovyCompletionData {
     }
 
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
+      if (afterAbstractMethod(position, false, true)) {
+        result.addElement(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (afterAbstractMethod(position, false, false)) return;
+      }
+
       if (suggestPackage(position)) {
         result.addElement(keyword(PsiKeyword.PACKAGE, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
@@ -109,9 +123,6 @@ public class GroovyCompletionData {
       }
 
       addTypeDefinitionKeywords(result, position);
-      for (String keyword : addExtendsImplements(position)) {
-        result.addElement(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
-      }
 
       if (isAfterAnnotationMethodIdentifier(position)) {
         result.addElement(keyword(PsiKeyword.DEFAULT, TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -121,20 +132,16 @@ public class GroovyCompletionData {
 
       registerControlCompletion(position, result);
 
-      if (parent instanceof GrExpression) {
+      if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
         addKeywords(result, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
         result.addElement(keyword(PsiKeyword.NEW, TailType.HUMBLE_SPACE_BEFORE_WORD));
-        result.addElement(keyword("as", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
       if (isAfterForParameter(position)) {
         result.addElement(keyword("in", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
       if (isInfixOperatorPosition(position)) {
-        addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
-      }
-      if (afterAbstractMethod(position, false)) {
-        result.addElement(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        addKeywords(result, true, "as", "in", PsiKeyword.INSTANCEOF);
       }
       if (suggestPrimitiveTypes(position)) {
         final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) && !GroovySmartCompletionContributor.AFTER_NEW.accepts(position) && !isInExpression(position);
@@ -231,7 +238,12 @@ public class GroovyCompletionData {
       elem = PsiUtil.skipWhitespacesAndComments(context.getPrevSibling(), false);
     }
     else {
-      elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
+      if (elem instanceof GrReferenceExpression && PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false) instanceof GrTypeDefinition) {
+        elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
+      }
+      else if (elem.getParent() != null) {
+        elem = PsiUtil.skipWhitespacesAndComments(elem.getParent().getPrevSibling(), false);
+      }
     }
 
     ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
@@ -240,8 +252,8 @@ public class GroovyCompletionData {
 
     PsiElement[] children = elem.getChildren();
     for (PsiElement child : children) {
-      ext &= !(child instanceof GrExtendsClause);
-      if (child instanceof GrImplementsClause || child instanceof GrTypeDefinitionBody) {
+      ext &= !(child instanceof GrExtendsClause && ((GrExtendsClause)child).getKeyword() != null);
+      if (child instanceof GrImplementsClause && ((GrImplementsClause)child).getKeyword() != null || child instanceof GrTypeDefinitionBody) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
     }
@@ -381,7 +393,7 @@ public class GroovyCompletionData {
   public static boolean suggestClassInterfaceEnum(PsiElement context) {
     PsiElement nextNonSpace = PsiUtil.getNextNonSpace(context);
     if (nextNonSpace instanceof PsiErrorElement) nextNonSpace = PsiUtil.getNextNonSpace(nextNonSpace);
-    if (afterAbstractMethod(context, true) && nextNonSpace != null && nextNonSpace.getText().startsWith("{") || addExtendsImplements(context).length > 0) {
+    if (afterAbstractMethod(context, true, false) && nextNonSpace != null && nextNonSpace.getText().startsWith("{") || addExtendsImplements(context).length > 0) {
       return false;
     }
 
@@ -400,6 +412,21 @@ public class GroovyCompletionData {
         return true;
       }
     }
+
+    /*
+    @Anno
+    cl<caret>
+     */
+    if (parent instanceof GrVariable && context == ((GrVariable)parent).getNameIdentifierGroovy()) {
+      final PsiElement decl = parent.getParent();
+      if (decl instanceof GrVariableDeclaration &&
+          !((GrVariableDeclaration)decl).isTuple() &&
+          ((GrVariableDeclaration)decl).getTypeElementGroovy() == null &&
+          (decl.getParent() instanceof GrTypeDefinitionBody || decl.getParent() instanceof GroovyFile)) {
+        return true;
+      }
+    }
+
     final PsiElement leaf = getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement prev = leaf;
@@ -457,7 +484,8 @@ public class GroovyCompletionData {
 
         if (superParent instanceof GrStatementOwner ||
             superParent instanceof GrLabeledStatement ||
-            superParent instanceof GrControlStatement) {
+            superParent instanceof GrControlStatement ||
+            superParent instanceof GrMethodCall) {
           return true;
         }
       }
@@ -508,6 +536,18 @@ public class GroovyCompletionData {
         return true;
       }
     }
+
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression) &&
+        (context.getParent().getParent() instanceof GrMethodCall) &&
+        nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement) {
+      GrTryCatchStatement tryStatement = (GrTryCatchStatement) nearestLeftSibling(context.getParent().getParent());
+      if (tryStatement == null) return false;
+      if (tryStatement.getFinallyClause() == null) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -542,20 +582,20 @@ public class GroovyCompletionData {
     return false;
   }
 
-  private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods) {
-    PsiElement candidate = null;
+  private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods, boolean skipNLs) {
+    PsiElement candidate;
     if (isInTypeDefinitionBody(context)) {
       PsiElement run = context;
       while(!(run.getParent() instanceof GrTypeDefinitionBody)) {
         run = run.getParent();
         assert run != null;
       }
-      candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false);
-      if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
+      candidate = PsiUtil.skipWhitespacesAndComments(run.getPrevSibling(), false, skipNLs);
     }
-    else if (context.getParent() instanceof PsiErrorElement) {
-     candidate = context.getParent().getPrevSibling();
+    else {
+     candidate = PsiUtil.skipWhitespacesAndComments(PsiTreeUtil.prevLeaf(context), false);
     }
+    if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
 
     return candidate instanceof GrMethod &&
            ((GrMethod)candidate).getBlock() == null &&
@@ -589,7 +629,8 @@ public class GroovyCompletionData {
     }
     if (asSimpleVariable(context) ||
         asTypedMethod(context) ||
-        asVariableInBlock(context)) {
+        asVariableInBlock(context) ||
+        asVariableAfterModifiers(context)) {
       return true;
     }
     if ((parent instanceof GrParameter &&
@@ -615,6 +656,20 @@ public class GroovyCompletionData {
     return parent instanceof GrExpression &&
            parent.getParent() instanceof GroovyFile &&
            isNewStatement(context, false);
+  }
+
+  private static boolean asVariableAfterModifiers(PsiElement context) {
+    final PsiElement parent = context.getParent();
+    if (parent instanceof GrVariable && context == ((GrVariable)parent).getNameIdentifierGroovy()) {
+      final PsiElement decl = parent.getParent();
+      if (decl instanceof GrVariableDeclaration &&
+          !((GrVariableDeclaration)decl).isTuple() &&
+          ((GrVariableDeclaration)decl).getTypeElementGroovy() == null) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static boolean isInfixOperatorPosition(PsiElement context) {

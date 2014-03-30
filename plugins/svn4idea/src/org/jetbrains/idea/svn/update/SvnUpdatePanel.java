@@ -52,24 +52,24 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setLabelFor(myDepthCombo);
 
     final SvnConfiguration svnConfiguration = SvnConfiguration.getInstance(myVCS.getProject());
-    myLockOnDemand.setSelected(svnConfiguration.UPDATE_LOCK_ON_DEMAND);
+    myLockOnDemand.setSelected(svnConfiguration.isUpdateLockOnDemand());
     myLockOnDemand.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        svnConfiguration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
+        svnConfiguration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
       }
     });
-    myForceBox.setSelected(svnConfiguration.FORCE_UPDATE);
-    myIgnoreExternalsCheckBox.setSelected(svnConfiguration.IGNORE_EXTERNALS);
+    myForceBox.setSelected(svnConfiguration.isForceUpdate());
+    myIgnoreExternalsCheckBox.setSelected(svnConfiguration.isIgnoreExternals());
     myForceBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        svnConfiguration.FORCE_UPDATE = myForceBox.isSelected();
+        svnConfiguration.setForceUpdate(myForceBox.isSelected());
       }
     });
     myIgnoreExternalsCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        svnConfiguration.IGNORE_EXTERNALS = myIgnoreExternalsCheckBox.isSelected();
+        svnConfiguration.setIgnoreExternals(myIgnoreExternalsCheckBox.isSelected());
       }
     });
   }

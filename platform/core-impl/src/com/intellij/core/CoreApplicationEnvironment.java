@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.concurrency.*;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
+import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.mock.MockReferenceProvidersRegistry;
 import com.intellij.openapi.Disposable;
@@ -43,9 +44,13 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.psi.FileContextProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
+import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.meta.MetaDataContributor;
+import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
@@ -74,7 +79,7 @@ public class CoreApplicationEnvironment {
   protected final VirtualFileSystem myJarFileSystem;
   private final Disposable myParentDisposable;
 
-  public CoreApplicationEnvironment(Disposable parentDisposable) {
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
     Extensions.cleanRootArea(myParentDisposable);
 
@@ -103,33 +108,44 @@ public class CoreApplicationEnvironment {
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, new MessageBusImpl(myApplication, null));
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
-    myApplication.registerService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
+    registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     myApplication.registerService(ReferenceProvidersRegistry.class, new MockReferenceProvidersRegistry());
     myApplication.registerService(StubTreeLoader.class, new CoreStubTreeLoader());
     myApplication.registerService(PsiReferenceService.class, new PsiReferenceServiceImpl());
+    myApplication.registerService(MetaDataRegistrar.class, new MetaRegistry());
 
     registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
     registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
+    registerExtensionPoint(Extensions.getRootArea(), FileContextProvider.EP_NAME, FileContextProvider.class);
+
+    registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
 
     ProgressIndicatorProvider.ourInstance = createProgressIndicatorProvider();
 
     myApplication.registerService(JobLauncher.class, createJobLauncher());
   }
 
+  public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
+    myApplication.registerService(serviceInterface, serviceImplementation);
+  }
+
+  @NotNull
   protected VirtualFilePointerManager createVirtualFilePointerManager() {
     return new CoreVirtualFilePointerManager();
   }
 
-  protected MockApplication createApplication(Disposable parentDisposable) {
-    return new MockApplication(parentDisposable);
+  @NotNull
+  protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
+    return new MockApplicationEx(parentDisposable);
   }
 
+  @NotNull
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                          ProgressIndicator progress,
                                                          boolean failFastOnAcquireReadAction,
                                                          @NotNull Processor<T> thingProcessor) throws ProcessCanceledException {
@@ -141,7 +157,17 @@ public class CoreApplicationEnvironment {
       }
 
       @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
+                                                         ProgressIndicator progress,
+                                                         boolean runInReadAction,
+                                                         boolean failFastOnAcquireReadAction,
+                                                         @NotNull Processor<T> thingProcessor) {
+        return invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
+      }
+
+      @NotNull
+      @Override
+      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
                                                                            ProgressIndicator progress,
                                                                            boolean failFastOnAcquireReadAction,
                                                                            @NotNull Processor<T> thingProcessor) {
@@ -149,12 +175,14 @@ public class CoreApplicationEnvironment {
         try {
           final boolean result = invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
           asyncFutureResult.set(result);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           asyncFutureResult.setException(t);
         }
         return asyncFutureResult;
       }
 
+      @NotNull
       @Override
       public Job<Void> submitToJobThread(int priority, @NotNull Runnable action, Consumer<Future> onDoneCallback) {
         action.run();
@@ -181,15 +209,16 @@ public class CoreApplicationEnvironment {
             }
 
             @Override
-            public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            public Object get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
               return null;
             }
           });
-        return null;
+        return Job.NULL_JOB;
       }
     };
   }
 
+  @NotNull
   protected ProgressIndicatorProvider createProgressIndicatorProvider() {
     return new ProgressIndicatorProvider() {
       @Override
@@ -203,23 +232,22 @@ public class CoreApplicationEnvironment {
 
       @Override
       public NonCancelableSection startNonCancelableSection() {
-        return new NonCancelableSection() {
-          @Override
-          public void done() {
-          }
-        };
+        return NonCancelableSection.EMPTY;
       }
     };
   }
 
+  @NotNull
   protected VirtualFileSystem createJarFileSystem() {
     return new CoreJarFileSystem();
   }
 
+  @NotNull
   protected CoreLocalFileSystem createLocalFileSystem() {
     return new CoreLocalFileSystem();
   }
 
+  @NotNull
   public MockApplication getApplication() {
     return myApplication;
   }
@@ -255,7 +283,11 @@ public class CoreApplicationEnvironment {
     });
   }
 
-  public <T> void addExplicitExtension(final FileTypeExtension<T> instance, final FileType fileType, final T object) {
+  public void registerParserDefinition(Language language, ParserDefinition parserDefinition) {
+    addExplicitExtension(LanguageParserDefinitions.INSTANCE, language, parserDefinition);
+  }
+
+  public <T> void addExplicitExtension(@NotNull final FileTypeExtension<T> instance, @NotNull final FileType fileType, @NotNull final T object) {
     instance.addExplicitExtension(fileType, object);
     Disposer.register(myParentDisposable, new Disposable() {
       @Override

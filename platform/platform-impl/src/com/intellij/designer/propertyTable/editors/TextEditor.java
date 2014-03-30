@@ -40,7 +40,7 @@ public class TextEditor extends PropertyEditor {
     myTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        fireValueCommitted(true, false);
+        fireValueCommitted(true, true);
       }
     });
     myTextField.getDocument().addDocumentListener(

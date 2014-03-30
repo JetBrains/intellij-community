@@ -20,20 +20,45 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
-  public static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
-    return !(baseClass instanceof PsiAnonymousClass) && isInheritor(candidateClass, baseClass, checkDeep, null);
+  public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
+    if (baseClass instanceof PsiAnonymousClass) return false;
+    if (!checkDeep) return isInheritor(candidateClass, baseClass, false, null);
+
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(candidateClass.getQualifiedName())) return false;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName())) return true;
+    Map<PsiClass, Boolean> map = CachedValuesManager.
+      getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
+        @Nullable
+        @Override
+        public Result<Map<PsiClass, Boolean>> compute() {
+          final Map<PsiClass, Boolean> map = new ConcurrentHashMap<PsiClass, Boolean>();
+          return Result.create(map, candidateClass, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
+
+    Boolean computed = map.get(baseClass);
+    if (computed == null) {
+      computed = isInheritor(candidateClass, baseClass, true, null);
+      map.put(baseClass, computed);
+    }
+    return computed;
   }
 
   private static boolean isInheritor(@NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, boolean checkDeep, Set<PsiClass> checkedClasses) {

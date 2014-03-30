@@ -50,6 +50,7 @@ import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -84,6 +85,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private final List<? extends LogFilter> myFilters;
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
+    @Override
     public void filter() {
       final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
         @Override
@@ -118,6 +120,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myModel.addFilterListener(this);
   }
 
+  @Override
   public void setFilterModel(LogFilterModel model) {
     if (myModel != null) {
       myModel.removeFilterListener(this);
@@ -126,14 +129,17 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myModel.addFilterListener(this);
   }
 
+  @Override
   public LogFilterModel getFilterModel() {
     return myModel;
   }
 
+  @Override
   public LogContentPreprocessor getContentPreprocessor() {
     return myContentPreprocessor;
   }
 
+  @Override
   public void setContentPreprocessor(final LogContentPreprocessor contentPreprocessor) {
     myContentPreprocessor = contentPreprocessor;
   }
@@ -151,10 +157,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myFilter.setSelectedItem(customFilter != null ? customFilter : "");
     new AnAction() {
       {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK)),
+        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
                                   LogConsoleBase.this);
       }
 
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         myFilter.requestFocusInWindow();
       }
@@ -199,14 +206,17 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myActions;
   }
 
+  @Override
   public void onFilterStateChange(final LogFilter filter) {
     filterConsoleOutput();
   }
 
+  @Override
   public void onTextFilterChange() {
     filterConsoleOutput();
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     if (!myWasInitialized) {
@@ -239,10 +249,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     activate();
   }
 
+  @Override
   public String getTabTitle() {
     return myTitle;
   }
 
+  @Override
   public void dispose() {
     myModel.removeFilterListener(this);
     stopRunning(false);
@@ -325,6 +337,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public void attachStopLogConsoleTrackingListener(final ProcessHandler process) {
     if (process != null) {
       final ProcessAdapter stopListener = new ProcessAdapter() {
+        @Override
         public void processTerminated(final ProcessEvent event) {
           process.removeProcessListener(this);
           stopRunning(true);
@@ -354,7 +367,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   @Nullable
   private Editor getEditor() {
     final ConsoleView console = getConsole();
-    return console != null ? PlatformDataKeys.EDITOR.getData((DataProvider) console) : null;
+    return console != null ? CommonDataKeys.EDITOR.getData((DataProvider) console) : null;
   }
 
   private void filterConsoleOutput() {
@@ -485,20 +498,24 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return console;
   }
 
+  @Override
   public ActionGroup getToolbarActions() {
     return getOrCreateActions();
   }
 
+  @Override
   public String getToolbarPlace() {
     return ActionPlaces.UNKNOWN;
   }
 
+  @Override
   @Nullable
   public JComponent getToolbarContextComponent() {
     final ConsoleView console = getConsole();
     return console == null ? null : console.getComponent();
   }
 
+  @Override
   public JComponent getPreferredFocusableComponent() {
     return getConsoleNotNull().getPreferredFocusableComponent();
   }
@@ -512,10 +529,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myOriginalDocument = null;
   }
 
+  @Override
   public JComponent getSearchComponent() {
     myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[myFilters.size()])));
     resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
         final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
@@ -548,6 +567,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myFilter;
   }
 
+  @Override
   public boolean isContentBuiltIn() {
     return myBuildInActions;
   }
@@ -567,18 +587,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private static class LightProcessHandler extends ProcessHandler {
+    @Override
     protected void destroyProcessImpl() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     protected void detachProcessImpl() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean detachIsDefault() {
       return false;
     }
 
+    @Override
     @Nullable
     public OutputStream getProcessInput() {
       return null;
@@ -588,15 +612,17 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
-    private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);
 
     public ReaderThread(@Nullable Reader reader) {
       myReader = reader != null ? new BufferedReader(reader) : null;
     }
 
+    @Override
     public void run() {
       if (myReader == null) return;
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           if (myRunning) {
             try {

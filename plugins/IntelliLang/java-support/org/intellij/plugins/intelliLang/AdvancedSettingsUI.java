@@ -20,8 +20,8 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -31,6 +31,7 @@ import com.intellij.util.Function;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,7 @@ import java.util.Arrays;
 /**
  * @author Gregory.Shrago
  */
-public class AdvancedSettingsUI implements Configurable {
+public class AdvancedSettingsUI implements SearchableConfigurable {
   private final Configuration.AdvancedConfiguration myConfiguration;
 
   @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
@@ -212,6 +213,18 @@ public class AdvancedSettingsUI implements Configurable {
 
   public String getHelpTopic() {
     return "reference.settings.injection.advanced";
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "IntelliLang.Advanced";
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   private static class BrowseClassListener implements ActionListener {

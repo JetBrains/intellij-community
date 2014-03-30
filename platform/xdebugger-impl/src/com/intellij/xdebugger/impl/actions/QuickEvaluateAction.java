@@ -16,7 +16,7 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -40,6 +40,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     super(true);
   }
 
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return new QuickEvaluateHandlerWrapper(debuggerSupport.getQuickEvaluateHandler());
@@ -52,8 +53,9 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
       myHandler = handler;
     }
 
+    @Override
     public void perform(@NotNull final Project project, final AnActionEvent event) {
-      Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
         ValueLookupManager.getInstance(project).
@@ -61,11 +63,16 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
       }
     }
 
+    @Override
     public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-      if (!myHandler.isEnabled(project)) return false;
+      if (!myHandler.isEnabled(project)) {
+        return false;
+      }
 
-      Editor editor = event.getData(PlatformDataKeys.EDITOR);
-      if (editor == null) return false;
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      if (editor == null) {
+        return false;
+      }
 
       InputEvent inputEvent = event.getInputEvent();
       if (inputEvent instanceof MouseEvent && inputEvent.isAltDown()) {

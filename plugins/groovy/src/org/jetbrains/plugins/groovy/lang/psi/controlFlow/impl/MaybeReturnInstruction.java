@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
 * @author peter
@@ -35,7 +37,7 @@ public class MaybeReturnInstruction extends InstructionImpl {
     GrExpression expression = (GrExpression) getElement();
     assert expression != null;
     final PsiType type = expression.getType();
-    return type != PsiType.VOID;
+    return type != PsiType.VOID && !PsiUtil.isVoidMethodCall(expression);
   }
 
 }

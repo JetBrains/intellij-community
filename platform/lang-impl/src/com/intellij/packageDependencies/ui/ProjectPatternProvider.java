@@ -49,24 +49,29 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
 
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return FileTreeModelBuilder.createTreeModel(project, false, marker);
   }
 
+  @Override
   public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
                                    final DependenciesPanel.DependencyPanelSettings settings) {
     return FileTreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.project");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return FILE;
   }
 
+  @Override
   public AnAction[] createActions(Project project, final Runnable update) {
     if (ProjectViewDirectoryHelper.getInstance(project).supportsHideEmptyMiddlePackages()) {
       return new AnAction[]{new CompactEmptyMiddlePackagesAction(update)};
@@ -74,6 +79,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
@@ -114,6 +120,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return null;
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
@@ -127,15 +134,18 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       myUpdate = update;
     }
 
+    @Override
     public boolean isSelected(AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
       myUpdate.run();
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(DependencyUISettings.getInstance().SCOPE_TYPE == FILE);

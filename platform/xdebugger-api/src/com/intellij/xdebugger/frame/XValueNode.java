@@ -17,6 +17,7 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,17 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
-   * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but also allows to
-   * customize {@code separator} between name and value
+   * Setup presentation of the value. This method allows to change separator between name and value and customize the way value text is shown
+   * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
+   * @param presentation a new {@link XValuePresentation} instance which determines how the value is show
+   * @param hasChildren {@code false} if the node is a leaf
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren);
+
+  /**
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
+   */
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
@@ -58,16 +66,13 @@ public interface XValueNode extends Obsolescent {
    * are escaped in the value. {@code valuePresenter} function doesn't affect 'Copy Value' action. It can be used to escape additional
    * characters and/or surround value by quotes.
    *
-   * @see com.intellij.openapi.util.text.StringUtil#QUOTER
-   * @see com.intellij.openapi.util.text.StringUtil#escaper
-   * @see com.intellij.util.FunctionUtil#composition
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
   /**
-   * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to
-   * customize {@code separator} between name and value
+   * @deprecated use {@link #setPresentation(javax.swing.Icon, XValuePresentation, boolean)}
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
@@ -80,16 +85,4 @@ public interface XValueNode extends Obsolescent {
    * @see #MAX_VALUE_LENGTH
    */
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
-
-  /**
-   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
-   */
-  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
-
-  /**
-   * @deprecated use {@link #setPresentation(javax.swing.Icon, String, String, String, boolean)} instead. Names for values should be passed to
-   * {@link XCompositeNode#addChildren(com.intellij.xdebugger.frame.XValueChildrenList, boolean)}
-   */
-  void setPresentation(@NonNls String name, @Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 }

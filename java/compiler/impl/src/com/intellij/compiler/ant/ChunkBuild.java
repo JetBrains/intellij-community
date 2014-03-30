@@ -46,7 +46,13 @@ public class ChunkBuild extends CompositeGenerator{
       }
     }
 
-    add(new Property(BuildProperties.getModuleChunkCompilerArgsProperty(chunk.getName()), BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_ADDITIONAL_ARGS)), 1);
+    final StringBuilder compileArgs = new StringBuilder();
+    compileArgs.append(chunk.getChunkSpecificCompileOptions());
+    if (compileArgs.length() > 0) {
+      compileArgs.append(" ");
+    }
+    compileArgs.append(BuildProperties.propertyRef(BuildProperties.PROPERTY_COMPILER_ADDITIONAL_ARGS));
+    add(new Property(BuildProperties.getModuleChunkCompilerArgsProperty(chunk.getName()), compileArgs.toString()), 1);
 
     final String outputPathUrl = chunk.getOutputDirUrl();
     String location = outputPathUrl != null?

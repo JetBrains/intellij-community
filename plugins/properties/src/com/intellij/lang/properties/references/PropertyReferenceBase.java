@@ -59,7 +59,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       PropertiesFile propertiesFile = property.getPropertiesFile();
       ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
       String value = property.getValue();
-      boolean hasBundle = resourceBundle != ResourceBundleImpl.NULL;
+      boolean hasBundle = resourceBundle != EmptyResourceBundle.getInstance();
       if (hasBundle) {
         PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
         IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
@@ -203,7 +203,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     List<IProperty> properties;
     final List<PropertiesFile> propertiesFiles = getPropertiesFiles();
     if (propertiesFiles == null) {
-      properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), key);
+      properties = PropertiesImplUtil.findPropertiesByKey(getElement().getProject(), key);
     }
     else {
       properties = new ArrayList<IProperty>();

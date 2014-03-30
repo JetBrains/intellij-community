@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.FileContentUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +33,43 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   private final Object myOldValue;
   private final Object myNewValue;
 
-  public VFilePropertyChangeEvent(final Object requestor,
-                                  @NotNull final VirtualFile file,
-                                  @NotNull final String propertyName,
-                                  final Object oldValue,
-                                  final Object newValue,
-                                  final boolean isFromRefresh) {
+  public VFilePropertyChangeEvent(Object requestor,
+                                  @NotNull VirtualFile file,
+                                  @NotNull String propertyName,
+                                  @Nullable Object oldValue,
+                                  @Nullable Object newValue,
+                                  boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
     myPropertyName = propertyName;
     myOldValue = oldValue;
     myNewValue = newValue;
+    checkPropertyValuesCorrect(requestor, propertyName, oldValue, newValue);
+  }
+
+  public static void checkPropertyValuesCorrect(Object requestor, @NotNull String propertyName, Object oldValue, Object newValue) {
+    if (Comparing.equal(oldValue, newValue) && FileContentUtilCore.FORCE_RELOAD_REQUESTOR != requestor) {
+      throw new IllegalArgumentException("Values must be different, got the same: " + oldValue);
+    }
+    if (VirtualFile.PROP_NAME.equals(propertyName)) {
+      if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
+      if (newValue == null) throw new IllegalArgumentException("newName must not be null");
+    }
+    else if (VirtualFile.PROP_ENCODING.equals(propertyName)) {
+      if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
+    }
+    else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
+      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got "+oldValue);
+      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newWriteable must be boolean, got "+newValue);
+    }
+    else if (VirtualFile.PROP_HIDDEN.equals(propertyName)) {
+      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldHidden must be boolean, got "+oldValue);
+      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newHidden must be boolean, got "+newValue);
+    }
+    else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
+      if (oldValue != null && !(oldValue instanceof String)) throw new IllegalArgumentException("oldSymTarget must be String, got "+oldValue);
+      if (newValue != null && !(newValue instanceof String)) throw new IllegalArgumentException("newSymTarget must be String, got "+newValue);
+    }
   }
 
   @NotNull
@@ -63,12 +91,6 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myPropertyName;
   }
 
-  @NotNull
-  @NonNls
-  public String toString() {
-    return "VfsEvent[property( " + myPropertyName + ") changed for '" + myFile + "': oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
-  }
-
   @Override
   public String getPath() {
     return myFile.getPath();
@@ -85,26 +107,34 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myFile.isValid();
   }
 
-  public boolean equals(@Nullable final Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final VFilePropertyChangeEvent event = (VFilePropertyChangeEvent)o;
+    VFilePropertyChangeEvent event = (VFilePropertyChangeEvent)o;
 
     if (!myFile.equals(event.myFile)) return false;
-    if (!myNewValue.equals(event.myNewValue)) return false;
-    if (!myOldValue.equals(event.myOldValue)) return false;
+    if (myNewValue != null ? !myNewValue.equals(event.myNewValue) : event.myNewValue != null) return false;
+    if (myOldValue != null ? !myOldValue.equals(event.myOldValue) : event.myOldValue != null) return false;
     if (!myPropertyName.equals(event.myPropertyName)) return false;
 
     return true;
   }
 
+  @Override
   public int hashCode() {
-    int result;
-    result = myFile.hashCode();
+    int result = myFile.hashCode();
     result = 31 * result + myPropertyName.hashCode();
-    result = 31 * result + myOldValue.hashCode();
-    result = 31 * result + myNewValue.hashCode();
+    result = 31 * result + (myOldValue != null ? myOldValue.hashCode() : 0);
+    result = 31 * result + (myNewValue != null ? myNewValue.hashCode() : 0);
     return result;
+  }
+
+  @NotNull
+  @NonNls
+  public String toString() {
+    return "VfsEvent[property(" + myPropertyName + ") changed for '" + myFile + "':" +
+           " oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
   }
 }

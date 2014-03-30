@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,12 +56,12 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateSettings");
 
-  public  @NonNls static final String USER_GROUP_NAME = "user";
-  private @NonNls static final String TEMPLATE_SET = "templateSet";
-  private @NonNls static final String GROUP = "group";
-  private @NonNls static final String TEMPLATE = "template";
+  @NonNls public static final String USER_GROUP_NAME = "user";
+  @NonNls private static final String TEMPLATE_SET = "templateSet";
+  @NonNls private static final String GROUP = "group";
+  @NonNls private static final String TEMPLATE = "template";
 
-  private @NonNls static final String DELETED_TEMPLATES = "deleted_templates";
+  @NonNls private static final String DELETED_TEMPLATES = "deleted_templates";
   private final List<TemplateKey> myDeletedTemplates = new ArrayList<TemplateKey>();
 
   public static final char SPACE_CHAR = ' ';
@@ -69,40 +69,35 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
 
-  private static final @NonNls String SPACE = "SPACE";
-  private static final @NonNls String TAB = "TAB";
-  private static final @NonNls String ENTER = "ENTER";
+  @NonNls private static final String SPACE = "SPACE";
+  @NonNls private static final String TAB = "TAB";
+  @NonNls private static final String ENTER = "ENTER";
 
-  private static final @NonNls String NAME = "name";
-  private static final @NonNls String VALUE = "value";
-  private static final @NonNls String DESCRIPTION = "description";
-  private static final @NonNls String SHORTCUT = "shortcut";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String VALUE = "value";
+  @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String SHORTCUT = "shortcut";
 
-  private static final @NonNls String VARIABLE = "variable";
-  private static final @NonNls String EXPRESSION = "expression";
-  private static final @NonNls String DEFAULT_VALUE = "defaultValue";
-  private static final @NonNls String ALWAYS_STOP_AT = "alwaysStopAt";
+  @NonNls private static final String VARIABLE = "variable";
+  @NonNls private static final String EXPRESSION = "expression";
+  @NonNls private static final String DEFAULT_VALUE = "defaultValue";
+  @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  private static final @NonNls String CONTEXT = "context";
-  private static final @NonNls String TO_REFORMAT = "toReformat";
-  private static final @NonNls String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
-  private static final @NonNls String USE_STATIC_IMPORT = "useStaticImport";
+  @NonNls private static final String CONTEXT = "context";
+  @NonNls private static final String TO_REFORMAT = "toReformat";
+  @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
+  @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
 
-  private static final @NonNls String DEFAULT_SHORTCUT = "defaultShortcut";
-  private static final @NonNls String DEACTIVATED = "deactivated";
+  @NonNls private static final String DEFAULT_SHORTCUT = "defaultShortcut";
+  @NonNls private static final String DEACTIVATED = "deactivated";
 
   @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
 
-  private static final @NonNls String TEMPLATES_CONFIG_FOLDER = "templates";
+  @NonNls private static final String TEMPLATES_CONFIG_FOLDER = "templates";
 
-  private final MultiMap<String,TemplateImpl> myTemplates = new MultiMap<String,TemplateImpl>() {
-    @Override
-    protected Map<String, Collection<TemplateImpl>> createMap() {
-      return new LinkedHashMap<String, Collection<TemplateImpl>>();
-    }
-  };
+  private final MultiMap<String,TemplateImpl> myTemplates = MultiMap.createLinked();
     
   private final Map<String,Template> myTemplatesById = new LinkedHashMap<String,Template>();
   private final Map<TemplateKey,TemplateImpl> myDefaultTemplates = new LinkedHashMap<TemplateKey, TemplateImpl>();
@@ -172,7 +167,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     SchemeProcessor<TemplateGroup> processor = new BaseSchemeProcessor<TemplateGroup>() {
       @Override
       @Nullable
-      public TemplateGroup readScheme(final Document schemeContent)
+      public TemplateGroup readScheme(@NotNull final Document schemeContent)
         throws InvalidDataException, IOException, JDOMException {
         return readTemplateFile(schemeContent, schemeContent.getRootElement().getAttributeValue("group"), false, false,
                                 getClass().getClassLoader());
@@ -180,7 +175,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
 
 
       @Override
-      public boolean shouldBeSaved(final TemplateGroup template) {
+      public boolean shouldBeSaved(@NotNull final TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
             return true;
@@ -190,7 +185,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public Document writeScheme(final TemplateGroup template) throws WriteExternalException {
+      public Document writeScheme(@NotNull final TemplateGroup template) throws WriteExternalException {
         Element templateSetElement = new Element(TEMPLATE_SET);
         templateSetElement.setAttribute(GROUP, template.getName());
 
@@ -204,7 +199,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public void initScheme(final TemplateGroup scheme) {
+      public void initScheme(@NotNull final TemplateGroup scheme) {
         Collection<TemplateImpl> templates = scheme.getElements();
 
         for (TemplateImpl template : templates) {
@@ -213,14 +208,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
       }
 
       @Override
-      public void onSchemeAdded(final TemplateGroup scheme) {
+      public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
 
       @Override
-      public void onSchemeDeleted(final TemplateGroup scheme) {
+      public void onSchemeDeleted(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }
@@ -239,7 +234,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   @Nullable
-  private TemplateImpl getDefaultTemplate(TemplateImpl t) {
+  public TemplateImpl getDefaultTemplate(TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
@@ -276,7 +271,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
 
     ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
-    assert exportableSettings != null : "Can't find required ExportablTemplateSettings service.";
+    assert exportableSettings != null : "Can't find required ExportableTemplateSettings service.";
     exportableSettings.setParentSettings(this);
     if (exportableSettings.isLoaded()) {
       myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());
@@ -405,7 +400,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      myTemplates.removeValue(template.getKey(), existing);
+      myTemplates.remove(template.getKey(), existing);
     }
   }
 
@@ -430,7 +425,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void removeTemplate(Template template) {
-    myTemplates.removeValue(template.getKey(), (TemplateImpl )template);
+    myTemplates.remove(template.getKey(), (TemplateImpl)template);
 
     TemplateImpl templateImpl = (TemplateImpl)template;
     String groupName = templateImpl.getGroupName();
@@ -549,7 +544,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
 
     String groupName = root.getAttributeValue(GROUP);
-    if (groupName == null || groupName.length() == 0) groupName = defGroupName;
+    if (groupName == null || groupName.isEmpty()) groupName = defGroupName;
 
     TemplateGroup result = new TemplateGroup(groupName, root.getAttributeValue("REPLACE"));
 
@@ -724,7 +719,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return mySchemesManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, Character shortcutChar, boolean hasArgument) {
+  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {
@@ -732,9 +727,6 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
         continue;
       }
       if (shortcutChar != null && getShortcutChar(template) != shortcutChar) {
-        continue;
-      }
-      if (template.isSelectionTemplate()) {
         continue;
       }
       if (hasArgument && !template.hasArgument()) {

@@ -1,0 +1,2 @@
+.. footnone::
+  :<caret>

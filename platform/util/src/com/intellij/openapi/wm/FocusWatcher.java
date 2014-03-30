@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,10 +54,12 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     return myTopComponent;
   }
 
+  @Override
   public final void componentAdded(final ContainerEvent e){
     installImpl(e.getChild());
   }
 
+  @Override
   public final void componentRemoved(final ContainerEvent e){
     Component removedChild=e.getChild();
     if(getNearestFocusableComponent() !=null&&SwingUtilities.isDescendingFrom(getNearestFocusableComponent(),removedChild)){
@@ -87,6 +90,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     }
   }
 
+  @Override
   public final void focusGained(final FocusEvent e){
     final Component component = e.getComponent();
     if(e.isTemporary()||!component.isShowing()){
@@ -96,6 +100,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
     setNearestFocusableComponent(component.getParent());
   }
 
+  @Override
   public final void focusLost(final FocusEvent e){
     Component component = e.getOppositeComponent();
     if(component != null && !SwingUtilities.isDescendingFrom(component, myTopComponent)){
@@ -107,11 +112,11 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * @return last focused component or <code>null</code>.
    */
   public final Component getFocusedComponent(){
-    return myFocusedComponent != null ? myFocusedComponent.get() : null;
+    return SoftReference.dereference(myFocusedComponent);
   }
 
   public final Component getNearestFocusableComponent() {
-    return myNearestFocusableComponent != null ? myNearestFocusableComponent.get() : null;
+    return SoftReference.dereference(myNearestFocusableComponent);
   }
 
   public final void install(@NotNull Component component){

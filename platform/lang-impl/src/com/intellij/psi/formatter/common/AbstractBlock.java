@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public abstract class AbstractBlock implements ASTBlock {
       if (list.isEmpty()) {
         list = buildInjectedBlocks();
       }
-      mySubBlocks = list.size() > 0 ? list : EMPTY;
+      mySubBlocks = !list.isEmpty() ? list : EMPTY;
     }
     return mySubBlocks;
   }

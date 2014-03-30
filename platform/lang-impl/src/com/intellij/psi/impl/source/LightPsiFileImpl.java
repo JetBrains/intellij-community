@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.source;
 
-import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
@@ -258,7 +257,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return CharArrayUtil.fromSequenceStrict(getViewProvider().getContents());
+    return CharArrayUtil.fromSequence(getViewProvider().getContents());
   }
 
   @Override
@@ -268,11 +267,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @Override
   public void onContentReload() {
-  }
-
-  @Override
-  public PsiFile cacheCopy(final FileContent content) {
-    return this;
   }
 
   @Override

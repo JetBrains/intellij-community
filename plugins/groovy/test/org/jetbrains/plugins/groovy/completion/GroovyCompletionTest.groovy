@@ -15,6 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.completion
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
@@ -26,8 +27,8 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -119,6 +120,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   }
 
   public void testInstanceofHelpsDetermineTypeInBinaryAnd() { doBasicTest() }
+
   public void testInstanceofHelpsDetermineTypeInBinaryOr() { doBasicTest() }
 
   public void testNotInstanceofDoesntHelpDetermineType() {
@@ -209,6 +211,7 @@ class Foo<A, B> {
   public void testWhileInstanceof() { doBasicTest() }
 
   public void testCompletionInParameterListInClosableBlock() { doBasicTest(); }
+
   public void testCompletionInParameterListInClosableBlock3() { doBasicTest(); }
 
   public void testCompletionInParameterListInClosableBlock2() {
@@ -235,10 +238,6 @@ class Foo<A, B> {
     doBasicTest();
   }
 
-  public void testGStringConcatenationCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
-  }
-
   public void testPropertyWithSecondUpperLetter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
   }
@@ -260,8 +259,9 @@ class Foo<A, B> {
     assert presentation.typeText == 'Integer'
   }
 
-  public void testIntCompletionInPlusMethod() {doBasicTest();}
-  public void testIntCompletionInGenericParameter() {doBasicTest();}
+  public void testIntCompletionInPlusMethod() { doBasicTest(); }
+
+  public void testIntCompletionInGenericParameter() { doBasicTest(); }
 
   public void testWhenSiblingIsStaticallyImported_Method() {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
@@ -705,7 +705,7 @@ form<caret>"""
     myFixture.checkResult """import static java.lang.String.format
 format(<caret>)"""
   }
-  
+
   public void testImportAsterisk() {
     myFixture.configureByText "a.groovy", "import java.lang.<caret>"
     myFixture.completeBasic()
@@ -825,7 +825,6 @@ class A {
     print myVar<caret>
   }
 }"""
-
   }
 
   public void testParenthesesInMethodCompletion() {
@@ -966,12 +965,13 @@ class Fopppp {
     myFixture.configureByText "a.groovy", text
 
     final LookupElement[] completion = myFixture.completeBasic()
-    return completion.find {println it.lookupString;itemToCheck == it.lookupString}
+    return completion.find { println it.lookupString; itemToCheck == it.lookupString }
   }
 
   public void testWordCompletionInLiterals() {
     checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
   }
+
   public void testWordCompletionInLiterals2() {
     checkSingleItemCompletion('''
 println "abcd"
@@ -1027,7 +1027,6 @@ def conti = 4
 while(true) {
   if (tst) cont<caret>
 }""")
-
   }
 
   public void testPreferParametersToClasses() {
@@ -1078,7 +1077,7 @@ class X {
     assertFalse(myFixture.lookupElementStrings.contains('Foo'))
   }
 
-  public void testClassNameBeforeParentheses(){
+  public void testClassNameBeforeParentheses() {
     doBasicTest()
   }
 
@@ -1119,13 +1118,28 @@ class X {
 public class KeyVO {
   { this.fo<caret>x }
   static void foo() {}
+  static void foox() {}
 }
 """);
     myFixture.complete(CompletionType.BASIC, 1)
-    assert !myFixture.lookupElementStrings
-    myFixture.complete(CompletionType.BASIC, 2)
-    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
+    assertOrderedEquals(myFixture.lookupElementStrings, ['foo', 'foox'])
   }
+
+  public void testPreferInstanceMethodViaInstanceSecond() {
+    myFixture.configureByText("a.groovy", """
+public class KeyVO {
+  { this.fo<caret>x }
+  static void foo() {}
+  static void foox() {}
+
+  void fooy() {}
+  void fooz() {}
+}
+""");
+    myFixture.complete(CompletionType.BASIC, 1)
+    assertOrderedEquals(myFixture.lookupElementStrings, ['fooy', 'fooz'])
+  }
+
 
   public void testNoRepeatingModifiers() {
     myFixture.configureByText 'a.groovy', 'class A { public static <caret> }'
@@ -1135,9 +1149,11 @@ public class KeyVO {
     assert 'final' in myFixture.lookupElementStrings
   }
 
-  public void testSpaceTail() {
-    checkCompletion 'class A <caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
-    checkCompletion 'class A <caret> ArrayList {}', '\n', 'class A extends<caret> ArrayList {}'
+  public void testSpaceTail1() {
+    checkCompletion 'class A ex<caret> ArrayList {}', ' ', 'class A extends <caret> ArrayList {}'
+  }
+
+  public void testSpaceTail3() {
     checkSingleItemCompletion 'class Foo impl<caret> {}', 'class Foo implements <caret> {}'
   }
 
@@ -1146,7 +1162,7 @@ public class KeyVO {
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.groovy', 'Util.<caret>'
     myFixture.completeBasic()
-    assertOrderedEquals myFixture.lookupElementStrings[0..1] , ['Util.bar', 'Util.foo']
+    assertOrderedEquals myFixture.lookupElementStrings[0..1], ['Util.bar', 'Util.foo']
 
     def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assertEquals 'Util.bar', presentation.itemText
@@ -1421,7 +1437,7 @@ import java.lang.annotation.Target;
 
     configure('@T<caret> @interface Foo {}')
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+    myFixture.assertPreferredCompletionItems 0, 'TMetaAnno', 'Target', 'TabLayoutPolicy', 'TabPlacement'
   }
 
   void testDiamondCompletion1() {
@@ -1719,5 +1735,162 @@ class Baz {}''', '', CompletionType.BASIC, CompletionResult.contain, 'xxx', 'yyy
     myFixture.type('\n\nb.mes')
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, "message", "messages"
+  }
+
+  void testFieldCompletionFromJavaClass() {
+    myFixture.addClass("""\
+class Base {
+    static public Base foo;
+}
+
+class Inheritor extends Base {
+    static public Inheritor foo;
+}
+""")
+
+    doVariantableTest('Inheritor.fo<caret>', '', CompletionType.BASIC, CompletionResult.equal, 'foo', 'forName', 'forName')
+  }
+
+  void testBinding1() {
+    doCompletionTest('''\
+aaa = 5
+print aa<caret>
+''', '''\
+aaa = 5
+print aaa<caret>
+''', CompletionType.BASIC)
+  }
+
+  void testBinding2() {
+    doCompletionTest('''\
+def foo() {
+  aaa = 5
+}
+print aa<caret>
+''', '''\
+def foo() {
+  aaa = 5
+}
+print aaa<caret>
+''', CompletionType.BASIC)
+  }
+
+
+  void testBinding3() {
+    doVariantableTest('''\
+def x() {
+  aaa = 5
+}
+
+aaaa = 6
+print aa<caret>
+''', CompletionType.BASIC, 'aaa', 'aaaa')
+  }
+
+  void testCompleteRefInLValue() {
+    myFixture.addClass('''\
+public class Util {
+    public int CONST = 4;
+}
+''')
+    doVariantableTest('''\
+def foo(Util util) {
+  util.CONS<caret>T = 3
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 'CONST')
+  }
+
+  void testInnerClassOfAnonymous() {
+    doCompletionTest(
+      '''
+        def r = new Runnable() {
+          void run() {
+            Data data = new <caret>
+          }
+
+          private static class Data {}
+        }
+      ''',
+      '''
+        def r = new Runnable() {
+          void run() {
+            Data data = new Data()<caret>
+          }
+
+          private static class Data {}
+        }
+      ''', CompletionType.SMART)
+  }
+
+  void testDollarInGString() {
+    doCompletionTest('''\
+class Autocompletion {
+    def reportDir = '/'
+    def reportDirectory = '/'
+    def fileName = "$reportD<caret>${File.separator}"
+}
+''', '''\
+class Autocompletion {
+    def reportDir = '/'
+    def reportDirectory = '/'
+    def fileName = "$reportDir<caret>${File.separator}"
+}
+''', '\t', CompletionType.BASIC)
+  }
+
+  void testDollarInGString2() {
+    doCompletionTest('''\
+class Autocompletion {
+    def reportDir = '/'
+    def fileName = "$report<caret>D${File.separator}"
+}
+''', '''\
+class Autocompletion {
+    def reportDir = '/'
+    def fileName = "$reportDir<caret>${File.separator}"
+}
+''', '\t', CompletionType.BASIC)
+  }
+
+  void testSpaceBeforeMethodCallParentheses() {
+    def settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE)
+
+    boolean old = settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES
+    try {
+      settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+      doCompletionTest('''\
+def foooo() {}
+fooo<caret>
+''', '''\
+def foooo() {}
+foooo ()<caret>
+''', '', CompletionType.BASIC)
+    }
+    finally {
+      settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = old
+
+    }
+  }
+
+  void testNoClassNamesInComments() {
+    doVariantableTest("""\
+class drop{}
+class dropX{}
+
+class A {
+/*
+    print dr<caret>
+*/
+}
+""", "o", CompletionType.BASIC, CompletionResult.equal, 0)
+  }
+
+  void testIntellijIdeaRulezzzNotInCompletion() {
+    doVariantableTest('''\
+def foo() {
+  def var
+  va<caret>r = 'abc'
+}
+''', '', CompletionType.BASIC, CompletionResult.notContain, 1, 'vaIntellijIdeaRulezzzr')
   }
 }

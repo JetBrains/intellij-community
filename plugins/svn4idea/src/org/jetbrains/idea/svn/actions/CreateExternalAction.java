@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,13 +37,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -64,8 +69,8 @@ public class CreateExternalAction extends DumbAwareAction {
     if (! helper.isOk()) return;
 
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
 
     //1 select target
     final SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, vf);
@@ -94,7 +99,7 @@ public class CreateExternalAction extends DumbAwareAction {
       dirtyScopeManager.fileDirty(filePath);
       if (checkout) {
         // +-
-        final SVNUpdateClient client = vcs.createUpdateClient();
+        final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
         client.setEventHandler(new ISVNEventHandler() {
           @Override
           public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -118,12 +123,16 @@ public class CreateExternalAction extends DumbAwareAction {
     catch (SVNException e1) {
       AbstractVcsHelper.getInstance(project).showError(new VcsException(e1), "Create External");
     }
+    catch (VcsException e1) {
+      AbstractVcsHelper.getInstance(project).showError(e1, "Create External");
+    }
   }
 
-  public static boolean addToExternalProperty(SvnVcs vcs, File ioFile, String target, String url) throws SVNException {
-    final SVNWCClient wcClient = vcs.createWCClient();
-    final SVNPropertyData propertyData =
-      wcClient.doGetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+  public static boolean addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url)
+    throws SVNException, VcsException {
+    ClientFactory factory = vcs.getFactory(ioFile);
+    SVNPropertyData propertyData = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
+                                                                              false, SVNRevision.UNDEFINED);
     String newValue;
     if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
       final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
@@ -135,16 +144,17 @@ public class CreateExternalAction extends DumbAwareAction {
         }
       }
       final String string = createExternalDefinitionString(url, target);
-      newValue = propertyData.getValue().getString() + "\n" + string;
+      newValue = propertyData.getValue().getString().trim() + "\n" + string;
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
-    wcClient.doSetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), false, SVNDepth.EMPTY, null, null);
+    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), SVNDepth.EMPTY,
+                                               false);
     return false;
   }
 
   public static String createExternalDefinitionString(String url, String target) {
-    return url + " " + target;
+    return CommandUtil.escape(url) + " " + target;
   }
 
   @Override
@@ -156,15 +166,19 @@ public class CreateExternalAction extends DumbAwareAction {
 
   private void checkState(AnActionEvent e, final ActionStateConsumer sc) {
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
+    if (project == null) {
+      sc.hide();
+      return;
+    }
     final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    if (project == null || ! manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
+    if (!manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
       sc.hide();
       return;
     }
 
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
     if (vf == null || files == null || files.length != 1 || ! vf.isDirectory()) {
       sc.disable();
       return;

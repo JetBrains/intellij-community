@@ -71,4 +71,13 @@ public class BracePair {
   public boolean isStructural() {
     return myStructural;
   }
+
+  @Override
+  public String toString() {
+    return "BracePair{" +
+           "myLeftBrace=" + myLeftBrace +
+           ", myRightBrace=" + myRightBrace +
+           ", myStructural=" + myStructural +
+           '}';
+  }
 }

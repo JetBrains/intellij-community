@@ -484,7 +484,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.COMMANDER;
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {

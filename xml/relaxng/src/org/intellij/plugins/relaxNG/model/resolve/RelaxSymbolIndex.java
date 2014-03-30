@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.intellij.plugins.relaxNG.model.resolve;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -6,7 +21,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -72,7 +86,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         final HashMap<String, Void> map = new HashMap<String, Void>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();
-          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.EMPTY_MAP;
+          if (CharArrayUtil.indexOf(inputDataContentAsText, ApplicationLoader.RNG_NAMESPACE, 0) == -1) return Collections.emptyMap();
           NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
             NanoXmlUtil.IXMLBuilderAdapter attributeHandler;
             int depth;
@@ -130,21 +144,19 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     };
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML, RncFileType.getInstance()) {
       @Override
-      public boolean acceptInput(VirtualFile file) {
-        if (file.getFileSystem() instanceof JarFileSystem) {
-          return false; // there is lots and lots of custom XML inside zip files
-        }
-        final FileType fileType = file.getFileType();
-        return fileType == StdFileTypes.XML || fileType == RncFileType.getInstance();
+      public boolean acceptInput(@NotNull VirtualFile file) {
+        return !(file.getFileSystem() instanceof JarFileSystem);
       }
     };
   }
@@ -243,7 +255,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
 
     @Override
     public ItemPresentation getPresentation() {
-      return myPresentation != null ? this : null;
+      return this;
     }
 
     @Override

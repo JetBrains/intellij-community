@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a module in an IDEA project.
  *
  * @see ModuleManager#getModules()
- * @see ModuleComponent 
+ * @see ModuleComponent
  */
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
@@ -99,15 +99,18 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @param optionName the name of the custom option.
    * @return the value of the custom option, or null if no value has been set.
    */
-  @Nullable String getOptionValue(@NotNull String optionName);
+  @Nullable
+  String getOptionValue(@NotNull String optionName);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.
    *
    * @return scope including sources and tests, excluding libraries and dependencies.
    */
+  @NotNull
   GlobalSearchScope getModuleScope();
 
+  @NotNull
   GlobalSearchScope getModuleScope(boolean includeTests);
 
   /**
@@ -115,20 +118,28 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return scope including sources, tests, and libraries, excluding dependencies.
    */
+  @NotNull
   GlobalSearchScope getModuleWithLibrariesScope();
 
   /**
    * Returns module scope including sources, tests, and dependencies, excluding libraries.
-   * 
+   *
    * @return scope including sources, tests, and dependencies, excluding libraries.
    */
+  @NotNull
   GlobalSearchScope getModuleWithDependenciesScope();
 
+  @NotNull
   GlobalSearchScope getModuleContentScope();
+  @NotNull
   GlobalSearchScope getModuleContentWithDependenciesScope();
 
+  @NotNull
   GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests);
+  @NotNull
   GlobalSearchScope getModuleWithDependentsScope();
+  @NotNull
   GlobalSearchScope getModuleTestsWithDependentsScope();
+  @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 }

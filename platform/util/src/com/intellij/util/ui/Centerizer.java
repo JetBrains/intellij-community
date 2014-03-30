@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class Centerizer extends JPanel {
     return getComponent(0);
   }
 
+  @Override
   public void doLayout() {
     final Component c = getComponent();
     if (c == null) return;
@@ -61,16 +62,19 @@ public class Centerizer extends JPanel {
     }
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
   public Dimension getPreferredSize() {
     return getComponent() != null ? getComponent().getPreferredSize() : super.getPreferredSize();
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
   public Dimension getMinimumSize() {
     return getComponent() != null ? getComponent().getMinimumSize() : super.getPreferredSize();
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
   public Dimension getMaximumSize() {
     return getComponent() != null ? getComponent().getMaximumSize() : super.getPreferredSize();

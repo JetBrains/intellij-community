@@ -34,6 +34,7 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -83,14 +84,14 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
                                                                  MavenDomDependency.class);
     if (dependency == null || isManagedDependency(dependency)) return null;
 
-    Set<MavenDomProjectModel> parents = getParentProjects(file.getProject(), file);
+    Set<MavenDomProjectModel> parents = getParentProjects(file);
     if (parents.isEmpty()) return null;
 
     return Pair.create(dependency, parents);
   }
 
   @NotNull
-  private static Set<MavenDomProjectModel> getParentProjects(@NotNull Project project, @NotNull PsiFile file) {
+  private static Set<MavenDomProjectModel> getParentProjects(@NotNull PsiFile file) {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 
     if (model == null) return Collections.emptySet();
@@ -134,13 +135,11 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
           if (typeValue != null) {
             addedDependency.getType().setStringValue(typeValue);
-            dependency.getType().undefine();
           }
 
           String classifier = dependency.getClassifier().getStringValue();
           if (classifier != null) {
             addedDependency.getClassifier().setStringValue(classifier);
-            dependency.getClassifier().undefine();
           }
 
           String systemPath = dependency.getSystemPath().getStringValue();
@@ -219,10 +218,10 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
 
       return new Function<MavenDomProjectModel, Set<MavenDomDependency>>() {
         public Set<MavenDomDependency> fun(MavenDomProjectModel model) {
-          String groupId = dependency.getGroupId().getStringValue();
-          String artifactId = dependency.getArtifactId().getStringValue();
+          DependencyConflictId dependencyId = DependencyConflictId.create(dependency);
+          if (dependencyId == null) return Collections.emptySet();
 
-          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, groupId, artifactId, Collections.singleton(dependency));
+          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, dependencyId, Collections.singleton(dependency));
         }
       };
     }

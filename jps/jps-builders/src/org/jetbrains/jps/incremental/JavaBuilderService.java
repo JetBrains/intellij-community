@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
+import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFilesIndicesBuilder;
 import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -33,6 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class JavaBuilderService extends BuilderService {
+  @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
     final ArrayList<BuildTargetType<?>> types = new ArrayList<BuildTargetType<?>>();
@@ -44,7 +46,10 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Arrays.asList(new JavaBuilder(SharedThreadPool.getInstance()), new NotNullInstrumentingBuilder(), new RmiStubsGenerator());
+    return Arrays.asList(new JavaBuilder(SharedThreadPool.getInstance()),
+                         new NotNullInstrumentingBuilder(),
+                         new RmiStubsGenerator(),
+                         new ClassFilesIndicesBuilder());
   }
 
   @NotNull

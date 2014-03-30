@@ -2,8 +2,7 @@ package com.intellij.ide.passwordSafe.config;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.ChangeMasterKeyDialog;
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.ResetPasswordDialog;
+import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterPasswordDialog;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,11 +29,7 @@ public class PasswordSafeOptionsPanel {
   /**
    * The change password button
    */
-  private JButton myChangeMasterPasswordButton;
-  /**
-   * The reset password button
-   */
-  private JButton myResetMasterPasswordButton;
+  private JButton myManagePasswordButton;
   /**
    * The root panel
    */
@@ -50,27 +45,18 @@ public class PasswordSafeOptionsPanel {
     final ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         boolean isDisk = myRememberOnDiskProtectedRadioButton.isSelected();
-        myChangeMasterPasswordButton.setEnabled(isDisk && !isMasterKeyEmpty(ps));
-        myResetMasterPasswordButton.setEnabled(isDisk);
+        myManagePasswordButton.setEnabled(isDisk);
       }
     };
     myRememberOnDiskProtectedRadioButton.addChangeListener(listener);
     listener.stateChanged(null);
-    myChangeMasterPasswordButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (!isMasterKeyEmpty(ps)) {
-          ChangeMasterKeyDialog.changePassword(null, ps.getMasterKeyProvider());
-          listener.stateChanged(null);
-        }
-      }
-    });
-    myResetMasterPasswordButton.addActionListener(new ActionListener() {
+    myManagePasswordButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (isMasterKeyEmpty(ps)) {
-          ResetPasswordDialog.newPassword(null, ps.getMasterKeyProvider());
+          MasterPasswordDialog.resetMasterPasswordDialog(null, ps.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
         }
         else {
-          ResetPasswordDialog.resetPassword(null, ps.getMasterKeyProvider());
+          MasterPasswordDialog.changeMasterPasswordDialog(null, ps.getMasterKeyProvider(), PasswordSafeOptionsPanel.class).show();
         }
         listener.stateChanged(null);
       }

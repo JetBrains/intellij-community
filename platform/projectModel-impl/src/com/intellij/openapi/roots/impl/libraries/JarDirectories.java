@@ -65,8 +65,8 @@ public class JarDirectories implements JDOMExternalizable {
   }
 
   public void remove(OrderRootType rootType, String url) {
-    myDirectories.removeValue(rootType, url);
-    myRecursivelyIncluded.removeValue(rootType, url);
+    myDirectories.remove(rootType, url);
+    myRecursivelyIncluded.remove(rootType, url);
   }
 
   public void clear() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,12 @@ import junit.framework.TestSuite;
 import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
-
   /** Holds name of JVM property that is assumed to define target test group name. */
   private static final String TARGET_TEST_GROUP = "idea.test.group";
 
@@ -54,43 +54,43 @@ public class TestCaseLoader {
   private Class myFirstTestClass;
   private Class myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
-  private boolean myIsPerformanceTestsRun;
+  private final boolean myIsPerformanceTestsRun;
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
     myIsPerformanceTestsRun = isPerformanceTestsRun;
-    InputStream excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResourceAsStream(classFilterName);
-    String preConfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
-    String testGroupName;
-    if (preConfiguredGroup == null || preConfiguredGroup.trim().isEmpty()) {
-      testGroupName = "";
-    } else {
-      testGroupName = preConfiguredGroup.trim();
+
+    String patterns = System.getProperty(TARGET_TEST_PATTERNS);
+    if (patterns != null) {
+      myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+      System.out.println("Using patterns: [" + patterns +"]");
     }
-    if (excludedStream != null) {
-      try {
-        myTestClassesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(excludedStream), testGroupName);
-      }
-      finally {
+    else {
+      URL excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResource(classFilterName);
+      if (excludedStream != null) {
+        TestClassesFilter filter;
         try {
-          excludedStream.close();
+          String testGroupName = System.getProperty(TARGET_TEST_GROUP, "").trim();
+          InputStreamReader reader = new InputStreamReader(excludedStream.openStream());
+          try {
+            filter = GroupBasedTestClassFilter.createOn(reader, testGroupName);
+            System.out.println("Using test group: [" + testGroupName +"]");
+          }
+          finally {
+            reader.close();
+          }
         }
         catch (IOException e) {
           e.printStackTrace();
+          filter = TestClassesFilter.ALL_CLASSES;
+          System.out.println("Using all classes");
         }
-      }
-    }
-    else {
-      String patterns = System.getProperty(TARGET_TEST_PATTERNS);
-      if (patterns != null) {
-        myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+        myTestClassesFilter = filter;
       }
       else {
         myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
+        System.out.println("Using all classes");
       }
     }
-
-    System.out.println("Using test group: [" + testGroupName +"]");
   }
 
   /*
@@ -98,10 +98,10 @@ public class TestCaseLoader {
    * if the class is a test case we wish to load. Calls
    * <code>shouldLoadTestCase ()</code> to determine that.
    */
-  void addClassIfTestCase(final Class testCaseClass) {
-    if (shouldAddTestCase(testCaseClass, true) && testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass
-        && PlatformTestUtil.canRunTest(testCaseClass))
-    {
+  void addClassIfTestCase(Class testCaseClass) {
+    if (shouldAddTestCase(testCaseClass, true) &&
+        testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
+        PlatformTestUtil.canRunTest(testCaseClass)) {
       myClassList.add(testCaseClass);
     }
   }
@@ -148,7 +148,7 @@ public class TestCaseLoader {
   private boolean shouldExcludeTestClass(Class testCaseClass) {
     String className = testCaseClass.getName();
     if (className.toLowerCase().contains("performance") && !myIsPerformanceTestsRun) return true;
-    
+
     return !myTestClassesFilter.matches(className) || isBombed(testCaseClass);
   }
 

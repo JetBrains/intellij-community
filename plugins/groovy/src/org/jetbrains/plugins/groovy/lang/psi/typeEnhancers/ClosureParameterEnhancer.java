@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -32,9 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
@@ -49,10 +48,10 @@ import static com.intellij.psi.CommonClassNames.JAVA_IO_FILE;
  * @author peter
  */
 public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private final Map<String, String> simpleTypes = new HashMap<String, String>();
-  private final Set<String> iterations = new HashSet<String>();
+  private static final Map<String, String> simpleTypes = new HashMap<String, String>();
+  private static final Set<String> iterations = new HashSet<String>();
 
-  public ClosureParameterEnhancer() {
+  static {
     simpleTypes.put("times", "java.lang.Integer");
     simpleTypes.put("upto", "java.lang.Integer");
     simpleTypes.put("downto", "java.lang.Integer");
@@ -85,7 +84,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("replaceAll", "java.util.regex.Matcher");
     simpleTypes.put("replaceFirst", "java.util.regex.Matcher");
     simpleTypes.put("splitEachLine", "java.util.List<java.lang.String>");
-    simpleTypes.put("takeWhile", "java.lang.Character");
+    simpleTypes.put("withBatch", "groovy.sql.BatchingStatementWrapper");
 
     iterations.add("each");
     iterations.add("any");
@@ -105,32 +104,36 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("findIndexValues");
     iterations.add("findIndexOf");
     iterations.add("count");
+    iterations.add("takeWhile");
 
   }
 
   @Override
   @Nullable
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    final PsiMember containingMember = PsiTreeUtil.getParentOfType(closure, PsiMember.class);
-    if (containingMember != null && GroovyPsiManager.getInstance(closure.getProject()).isCompileStatic(containingMember)) {
+    if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic(closure)) {
       return null;
     }
 
+    return inferType(closure, index);
+  }
+
+  @Nullable
+  public static PsiType inferType(@NotNull GrClosableBlock closure, int index) {
     PsiElement parent = closure.getParent();
     if (parent instanceof GrStringInjection && index == 0) {
       return TypesUtil.createTypeByFQClassName("java.io.StringWriter", closure);
     }
-    
+
     if (parent instanceof GrArgumentList) parent = parent.getParent();
     if (!(parent instanceof GrMethodCall)) {
       return null;
     }
+
     String methodName = findMethodName((GrMethodCall)parent);
 
     GrExpression expression = ((GrMethodCall)parent).getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
-//    final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-//    if (!(resolved instanceof GrGdkMethod)) return null;
 
     GrExpression qualifier = ((GrReferenceExpression)expression).getQualifierExpression();
     if (qualifier == null) return null;
@@ -226,7 +229,10 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     else if (GdkMethodUtil.WITH_STREAM.equals(methodName)) {
       final PsiMethod method = ((GrMethodCall)parent).resolveMethod();
-      if (method != null) {
+      if (method instanceof GrGdkMethod) {
+        return qualifier.getType();
+      }
+      else if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameters.length > 0) {
           return parameters[0].getType();
@@ -247,7 +253,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     }
     return null;
   }
-
 
   @Nullable
   private static PsiType getEntryForMap(@Nullable PsiType map, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {

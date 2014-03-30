@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.lang.customFolding;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
@@ -36,7 +37,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (Boolean.TRUE.equals(e.getData(PlatformDataKeys.IS_MODAL_CONTEXT))) {
       return;
     }
@@ -49,6 +50,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
       processor.executeCommand(
         project,
         new Runnable() {
+          @Override
           public void run() {
             GotoCustomRegionDialog dialog = new GotoCustomRegionDialog(project, editor);
             dialog.show();
@@ -70,7 +72,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setText("Custom Region...");
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final Project project = e.getProject();
     boolean isAvailable = editor != null && project != null;
     presentation.setEnabled(isAvailable);
@@ -80,6 +82,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
   private static void navigateTo(Editor editor, PsiElement element) {
     int offset = element.getTextRange().getStartOffset();
     if (offset >= 0 && offset < editor.getDocument().getTextLength()) {
+      editor.getCaretModel().removeSecondaryCarets();
       editor.getCaretModel().moveToOffset(offset);
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       editor.getSelectionModel().removeSelection();

@@ -18,32 +18,26 @@
 package com.pme.exe.res.vi;
 
 import com.pme.exe.Bin;
-import com.pme.util.OffsetTrackingInputStream;
 
-import java.io.DataInput;
-import java.io.IOException;
-
-public class StringTable extends Bin.Structure {
+public class StringTable extends VersionInfoBin {
 
   public StringTable(String name) {
-    super(name);
-    addMember(new Word("wLength"));
-    addMember(new Word("wValueLength"));
-    addMember(new Word("wType"));
-    addMember(new WChar("szKey"));
-    addMember(new Padding(4));
+    super(name, null, new VersionInfoFactory() {
+      @Override
+      public VersionInfoBin createChild(int index) {
+        return new StringTableEntry();
+      }
+    });
   }
 
-  public void read(DataInput stream) throws IOException {
-    OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
-    long startOffset = inputStream.getOffset();
-    super.read(stream);
-    long length = getValue("wLength");
-    int i = 0;
-    while(inputStream.getOffset() < startOffset + length) {
-      StringTableEntry stringTableEntry = new StringTableEntry();
-      stringTableEntry.read(inputStream);
-      addMember(stringTableEntry);
+  public void setStringValue(String key, String value) {
+    for (Bin bin : getMembers()) {
+      if (bin.getName().equals(key)) {
+        StringTableEntry entry = (StringTableEntry) bin;
+        ((WChar) entry.getMember("Value")).setValue(value);
+        return;
+      }
     }
+    assert false: "Could not find string with key " + key;
   }
 }

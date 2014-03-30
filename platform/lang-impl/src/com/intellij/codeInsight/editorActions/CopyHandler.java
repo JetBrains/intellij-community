@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RawText;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -46,7 +45,7 @@ public class CopyHandler extends EditorActionHandler {
 
   @Override
   public void execute(final Editor editor, final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null){
       if (myOriginalAction != null){
         myOriginalAction.execute(editor, dataContext);
@@ -65,12 +64,23 @@ public class CopyHandler extends EditorActionHandler {
     }
 
     final SelectionModel selectionModel = editor.getSelectionModel();
-    if(!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      if (Registry.is(CopyAction.SKIP_COPY_FOR_EMPTY_SELECTION_KEY)) {
+    if(!selectionModel.hasSelection(true) && !selectionModel.hasBlockSelection()) {
+      if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
         return;
       }
-      selectionModel.selectLineAtCaret();
-      if (!selectionModel.hasSelection()) return;
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          selectionModel.selectLineAtCaret();
+        }
+      });
+      if (!selectionModel.hasSelection(true)) return;
+      editor.getCaretModel().runForEachCaret(new CaretAction() {
+        @Override
+        public void perform(Caret caret) {
+          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
+        }
+      });
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -86,7 +96,7 @@ public class CopyHandler extends EditorActionHandler {
       }
     }
 
-    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", transferableDatas);
+    String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(true), "\n", transferableDatas);
     String escapedText = null;
     for(CopyPastePreProcessor processor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
       escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);

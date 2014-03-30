@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,19 @@ import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -164,26 +163,17 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
           return initializer.getType();
         }
       });
-      if (initializerType != null) {
-        if (declaredType != null && initializerType instanceof PsiClassType) {
-          final PsiClass declaredClass = ((PsiClassType)declaredType).resolve();
-          if (declaredClass != null) {
-            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType)initializerType).resolveGenerics();
-            final PsiClass initializerClass = initializerResult.getElement();
-            if (initializerClass != null &&
-                !com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
-              if (declaredClass == initializerClass) return initializerType;
-              final PsiSubstitutor superSubstitutor =
-                TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, initializerResult.getSubstitutor());
-              if (superSubstitutor != null) {
-                return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(declaredClass, superSubstitutor);
-              }
-            }
-          }
+      if (declaredType == null) return initializerType;
+
+      if (initializerType instanceof PsiClassType && TypesUtil.isAssignable(declaredType, initializerType, this)) {
+        final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType)initializerType).resolveGenerics();
+        final PsiClass initializerClass = initializerResult.getElement();
+        if (initializerClass != null &&
+            !com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
+          return initializerType;
         }
       }
 
-      if (declaredType == null) declaredType = initializerType;
     }
 
 
@@ -221,7 +211,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
       newTypeElement = (GrTypeElement)typeElement.replace(newTypeElement);
     }
 
-    GrReferenceAdjuster.shortenReferences(newTypeElement);
+    JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(newTypeElement);
   }
 
   @NotNull
@@ -288,11 +278,6 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
   public Icon getIcon(int flags) {
     return JetgroovyIcons.Groovy.Variable;
   }
-
-  public PsiType getTypeNoResolve() {
-    return getType();
-  }
-
 
   @Nullable
   private GrVariableDeclaration getDeclaration() {

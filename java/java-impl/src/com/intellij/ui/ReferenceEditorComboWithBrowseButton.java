@@ -43,7 +43,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
                                               @NotNull final Project project,
                                               boolean toAcceptClasses,
                                               final JavaCodeFragment.VisibilityChecker visibilityChecker, final String recentsKey) {
-    super(new EditorComboBox(createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
+    super(new EditorComboBox(JavaReferenceEditorUtil.createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
           browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {
@@ -52,16 +52,6 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     if (text != null && text.length() > 0) {
       prependItem(text);
     }
-  }
-
-  private static Document createDocument(final String text,
-                                         Project project,
-                                         boolean isClassesAccepted, 
-                                         final JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-    final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
-    fragment.setVisibilityChecker(visibilityChecker);
-    return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
   public String getText(){

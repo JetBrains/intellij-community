@@ -9,7 +9,7 @@ class Outer {
 
     class CreateConstructorFromUsage {
         public CreateConstructorFromUsage(String parameter) {
-            <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+            <selection></selection>
         }
     }
 }

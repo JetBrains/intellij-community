@@ -87,11 +87,8 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
     dictionary.addToDictionary(words);
   }
 
-
   @Override
   public String toString() {
     return "DictionaryState{" + "dictionary=" + dictionary + '}';
   }
-
-
 }

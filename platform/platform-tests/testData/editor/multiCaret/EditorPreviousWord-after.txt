@@ -1,0 +1,3 @@
+some <caret>tExt
+other <caret>line<caret>
+yet <caret>another line

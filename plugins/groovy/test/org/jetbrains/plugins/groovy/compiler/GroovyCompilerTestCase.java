@@ -15,14 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.process.*;
@@ -30,32 +27,24 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.TempDirTestFixture;
-import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -63,10 +52,8 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -75,32 +62,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author peter
  */
 public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase {
-  private TempDirTestFixture myMainOutput;
+  @SuppressWarnings("AbstractMethodCallInConstructor") private CompilerTester myCompilerTester;
 
   protected abstract boolean useJps();
 
   @Override
   protected void setUp() throws Exception {
-    myMainOutput = new TempDirTestFixtureImpl();
-    myMainOutput.setUp();
     super.setUp();
     getProject().getComponent(GroovyCompilerLoader.class).projectOpened();
-    CompilerManagerImpl.testSetup();
-
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        //noinspection ConstantConditions
-        CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-        if (useJps()) {
-          CompilerTestUtil.enableExternalCompiler(getProject());
-          ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
-        }
-        else {
-          CompilerTestUtil.disableExternalCompiler(getProject());
-        }
-      }
-    }.execute();
+    myCompilerTester = new CompilerTester(useJps(), myModule);
   }
 
   @Override
@@ -121,12 +91,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       @Override
       public void run() {
         try {
-          if (useJps()) {
-            CompilerTestUtil.disableExternalCompiler(getProject());
-          }
-
-          myMainOutput.tearDown();
-          myMainOutput = null;
+          myCompilerTester.tearDown();
           GroovyCompilerTestCase.super.tearDown();
         }
         catch (Exception e) {
@@ -182,20 +147,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   protected void deleteClassFile(final String className) throws IOException {
-    AccessToken token = WriteAction.start();
-    try {
-      if (useJps()) {
-        //noinspection ConstantConditions
-        touch(myFixture.getJavaFacade().findClass(className).getContainingFile().getVirtualFile());
-      }
-      else {
-        //noinspection ConstantConditions
-        findClassFile(className).delete(this);
-      }
-    }
-    finally {
-      token.finish();
-    }
+    myCompilerTester.deleteClassFile(className);
   }
 
   @Nullable
@@ -205,115 +157,35 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   @Nullable
   protected VirtualFile findClassFile(String className, Module module) {
-    //noinspection ConstantConditions
-    VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    path.getChildren();
-    assert path != null;
-    path.refresh(false, true);
-    return path.findChild(className + ".class");
+    return myCompilerTester.findClassFile(className, module);
   }
 
-  protected static void touch(VirtualFile file) throws IOException {
-    file.setBinaryContent(file.contentsToByteArray(), file.getModificationStamp() + 1, file.getTimeStamp() + 1);
-    File ioFile = VfsUtil.virtualToIoFile(file);
-    assert ioFile.setLastModified(ioFile.lastModified() - 100000);
-    file.refresh(false, false);
+  protected void touch(VirtualFile file) throws IOException {
+    myCompilerTester.touch(file);
   }
 
-  protected static void setFileText(final PsiFile file, final String barText) throws IOException {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), barText);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-    touch(file.getVirtualFile());
+  protected void setFileText(final PsiFile file, final String barText) throws IOException {
+    myCompilerTester.setFileText(file, barText);
   }
 
   protected void setFileName(final PsiFile bar, final String name) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        bar.setName(name);
-      }
-    }.execute();
+    myCompilerTester.setFileName(bar, name);
   }
 
   protected List<CompilerMessage> make() {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).make(callback);
-      }
-    });
+    return myCompilerTester.make();
   }
 
   protected List<CompilerMessage> rebuild() {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).rebuild(callback);
-      }
-    });
+    return myCompilerTester.rebuild();
   }
 
   protected List<CompilerMessage> compileModule(final Module module) {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).compile(module, callback);
-      }
-    });
+    return myCompilerTester.compileModule(module);
   }
 
   protected List<CompilerMessage> compileFiles(final VirtualFile... files) {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).compile(files, callback);
-      }
-    });
-  }
-
-  private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    final ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (useJps()) {
-            getProject().save();
-            CompilerTestUtil.saveApplicationSettings();
-            File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
-            if (!ioFile.exists()) {
-              getProject().save();
-              assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
-            }
-          }
-          runnable.consume(callback);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-
-    //tests run in awt
-    while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }
-    callback.throwException();
-    return callback.getMessages();
+    return myCompilerTester.compileFiles(files);
   }
 
   protected void assertOutput(String className, String output) throws ExecutionException {
@@ -347,13 +219,12 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                           ProgramRunner runner,
                                           RunProfile configuration) throws ExecutionException {
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
-    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
-                                                                      new RunnerSettings<JDOMExternalizable>(null, null), null, null);
+    final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, executor, getProject(), null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
     final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
-    runner.execute(executor, environment, new ProgramRunner.Callback() {
+    runner.execute(environment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
         disposeOnTearDown(new Disposable() {
@@ -369,7 +240,9 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         semaphore.up();
       }
     });
-    semaphore.waitFor();
+    if (!semaphore.waitFor(20000)) {
+      fail("Process took too long");
+    }
     return processHandler.get();
   }
 
@@ -389,45 +262,4 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     return configuration;
   }
 
-  private static class ErrorReportingCallback implements CompileStatusNotification {
-    private final Semaphore mySemaphore;
-    private Throwable myError;
-    private final List<CompilerMessage> myMessages = new ArrayList<CompilerMessage>();
-
-    public ErrorReportingCallback(Semaphore semaphore) {
-      mySemaphore = semaphore;
-    }
-
-    @Override
-    public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-      try {
-        for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
-          CompilerMessage[] messages = compileContext.getMessages(category);
-          for (CompilerMessage message : messages) {
-            final String text = message.getMessage();
-            if (category != CompilerMessageCategory.INFORMATION || !(text.startsWith("Compilation completed successfully") || text.startsWith("Using javac"))) {
-              myMessages.add(message);
-            }
-          }
-        }
-        assertFalse("Code did not compile!", aborted);
-      }
-      catch (Throwable t) {
-        myError = t;
-      }
-      finally {
-        mySemaphore.up();
-      }
-    }
-
-    void throwException() {
-      if (myError != null) {
-        throw new RuntimeException(myError);
-      }
-    }
-
-    public List<CompilerMessage> getMessages() {
-      return myMessages;
-    }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,31 +55,38 @@ public class OpenFileDescriptor implements Navigatable {
   private boolean myUseCurrentWindow = false;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, -1, -1, offset, false);
+    this(project, file, -1, -1, offset, null, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, logicalLine, logicalColumn, -1, false);
+    this(project, file, logicalLine, logicalColumn, -1, null, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
                             int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, logicalLine, logicalColumn, -1, persistent);
+    this(project, file, logicalLine, logicalColumn, -1, null, persistent);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1, false);
+    this(project, file, -1, -1, -1, null, false);
+  }
+
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull RangeMarker rangeMarker) {
+    this(project, file, -1, -1, -1, rangeMarker, false);
   }
 
   private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
-                             int logicalLine, int logicalColumn, int offset, boolean persistent) {
+                             int logicalLine, int logicalColumn, int offset, @Nullable RangeMarker rangeMarker, boolean persistent) {
     myProject = project;
 
     myFile = file;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
     myOffset = offset;
-    if (offset >= 0) {
+    if (rangeMarker != null) {
+      myRangeMarker = rangeMarker;
+    }
+    else if (offset >= 0) {
       myRangeMarker = LazyRangeMarkerFactory.getInstance(project).createRangeMarker(file, offset);
     }
     else if (logicalLine >= 0 ){
@@ -118,12 +125,12 @@ public class OpenFileDescriptor implements Navigatable {
       throw new IllegalStateException("Navigation is not possible with null project");
     }
 
-    if (!myFile.isDirectory() && navigateInEditor(myProject, requestFocus)) return;
+    if (!myFile.isDirectory() && navigateInEditorOrNativeApp(myProject, requestFocus)) return;
 
     navigateInProjectView(requestFocus);
   }
 
-  private boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
+  private boolean navigateInEditorOrNativeApp(@NotNull Project project, boolean requestFocus) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile,project);
     if (type == null || !myFile.isValid()) return false;
 
@@ -131,6 +138,10 @@ public class OpenFileDescriptor implements Navigatable {
       return ((INativeFileType) type).openFileInAssociatedApplication(project, myFile);
     }
 
+    return navigateInEditor(project, requestFocus);
+  }
+
+  public boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
     return navigateInRequestedEditor() || navigateInAnyFileEditor(project, requestFocus);
   }
 
@@ -200,11 +211,13 @@ public class OpenFileDescriptor implements Navigatable {
     if (myLogicalLine >= 0) {
       LogicalPosition pos = new LogicalPosition(myLogicalLine, Math.max(myLogicalColumn, 0));
       if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
+        caretModel.removeSecondaryCarets();
         caretModel.moveToLogicalPosition(pos);
         caretMoved = true;
       }
     }
     if (!caretMoved && offset >= 0) {
+      caretModel.removeSecondaryCarets();
       caretModel.moveToOffset(Math.min(offset, e.getDocument().getTextLength()));
       caretMoved = true;
     }

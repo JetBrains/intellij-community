@@ -58,7 +58,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
       value = dh.getUserData(key);
       if (value instanceof CachedValueBase && !((CachedValueBase)value).isFromMyProject(myProject)) {
         value = null;
-        dataHolder.putUserData(key, null);
+        dh.putUserData(key, null);
       }
       if (value == null) {
         value = createCachedValue(provider, trackValue);

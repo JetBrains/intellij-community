@@ -95,6 +95,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   void setPinned(boolean locked);
   boolean isPinnable();
+  void setPinnable(boolean pinnable);
 
   boolean isCloseable();
   void setCloseable(boolean closeable);

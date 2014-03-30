@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import java.awt.*;
@@ -25,24 +26,26 @@ public interface PopupBorder extends Border {
   void setActive(boolean active);
 
   class Factory {
+    private Factory() { }
 
-    private Factory() {
+    @NotNull
+    public static PopupBorder createEmpty() {
+      return new BaseBorder();
     }
 
+    @NotNull
     public static PopupBorder create(boolean active, boolean windowWithShadow) {
-      final BaseBorder border =
-        SystemInfo.isMac && windowWithShadow ? new BaseBorder() : new BaseBorder(true, CaptionPanel.getBorderColor(true), CaptionPanel.getBorderColor(false));
+      PopupBorder border = SystemInfo.isMac && windowWithShadow ?
+                           createEmpty() : new BaseBorder(true, CaptionPanel.getBorderColor(true), CaptionPanel.getBorderColor(false));
       border.setActive(active);
       return border;
     }
   }
 
   class BaseBorder implements PopupBorder {
-
-    private boolean myVisible;
-    private Color myActiveColor;
-    private Color myPassiveColor;
-
+    private final boolean myVisible;
+    private final Color myActiveColor;
+    private final Color myPassiveColor;
     private boolean myActive;
 
     protected BaseBorder() {
@@ -55,10 +58,12 @@ public interface PopupBorder extends Border {
       myPassiveColor = passiveColor;
     }
 
+    @Override
     public void setActive(final boolean active) {
       myActive = active;
     }
 
+    @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
       if (!myVisible) return;
 
@@ -67,14 +72,14 @@ public interface PopupBorder extends Border {
       g.drawRect(x, y, width - 1, height - 1);
     }
 
+    @Override
     public Insets getBorderInsets(final Component c) {
       return myVisible ? new Insets(1, 1, 1, 1) : new Insets(0, 0, 0, 0);
     }
 
+    @Override
     public boolean isBorderOpaque() {
       return true;
     }
   }
-
-
 }

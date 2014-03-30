@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,33 +64,36 @@ class TableToolbarDecorator extends ToolbarDecorator {
   protected void updateButtons() {
     final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
+      boolean someElementSelected;
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();
         final int size = myTable.getModel().getRowCount();
-        if (0 <= index && index < size) {
+        someElementSelected = 0 <= index && index < size;
+        if (someElementSelected) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
           final boolean editEnabled = myTable.getSelectedRowCount() == 1;
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
         }
         else {
           p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-          p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
           p.setEnabled(CommonActionsPanel.Buttons.UP, false);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
         }
         p.setEnabled(CommonActionsPanel.Buttons.ADD, myProducer == null || myProducer.canCreateElement());
       }
       else {
+        someElementSelected = false;
         p.setEnabled(CommonActionsPanel.Buttons.ADD, false);
         p.setEnabled(CommonActionsPanel.Buttons.EDIT, false);
-        p.setEnabled(CommonActionsPanel.Buttons.REMOVE, false);
         p.setEnabled(CommonActionsPanel.Buttons.UP, false);
         p.setEnabled(CommonActionsPanel.Buttons.DOWN, false);
       }
+
+      p.setEnabled(CommonActionsPanel.Buttons.REMOVE, someElementSelected);
+      updateExtraElementActions(someElementSelected);
     }
   }
 
@@ -111,39 +114,38 @@ class TableToolbarDecorator extends ToolbarDecorator {
         }
         if (rowCount == table.getRowCount()) return;
         final int index = table.getModel().getRowCount() - 1;
-        table.editCellAt(index, 0);
+
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
-        table.getParent().repaint();
-        final Component editorComponent = table.getEditorComponent();
-        if (editorComponent != null) {
-          final Rectangle bounds = editorComponent.getBounds();
-          table.scrollRectToVisible(bounds);
-          editorComponent.requestFocus();
-        }
+        table.editCellAt(index, 0);
+
+        boolean temporaryHideVerticalScrollBar = table.getCellEditor() instanceof Animated;
+        TableUtil.updateScroller(table, temporaryHideVerticalScrollBar);
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            final Component editorComponent = table.getEditorComponent();
+            if (editorComponent != null) {
+              final Rectangle bounds = editorComponent.getBounds();
+              table.scrollRectToVisible(bounds);
+              editorComponent.requestFocus();
+            }
+          }
+        });
+
+
       }
     };
 
     myRemoveAction = new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        TableUtil.stopEditing(table);
-        int index = table.getSelectedRow();
-        if (0 <= index && index < table.getModel().getRowCount()) {
-          tableModel.removeRow(index);
-          if (index < table.getModel().getRowCount()) {
-            table.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              table.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
+        if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
+          table.requestFocus();
+          TableUtil.updateScroller(table, false);
         }
-
-        table.getParent().repaint();
-        table.requestFocus();
       }
     };
 

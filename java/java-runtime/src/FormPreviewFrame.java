@@ -53,8 +53,10 @@ public class FormPreviewFrame {
     }
 
     frame.pack();
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    frame.setLocation((screenSize.width - frame.getWidth())/2, (screenSize.height - frame.getHeight())/2);
+    Rectangle screenBounds =
+      GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+    frame.setLocation(screenBounds.x + (screenBounds.width - frame.getWidth()) / 2,
+                      screenBounds.y + (screenBounds.height - frame.getHeight()) / 2);
     frame.setVisible(true);
   }
 

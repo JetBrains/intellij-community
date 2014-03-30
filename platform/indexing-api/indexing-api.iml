@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>
 

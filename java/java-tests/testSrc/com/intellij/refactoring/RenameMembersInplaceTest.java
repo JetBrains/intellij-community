@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,14 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -38,6 +42,10 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
 
   public void testInnerClass() throws Exception {
     doTestInplaceRename("NEW_NAME");
+  }
+  
+  public void testIncomplete() throws Exception {
+    doTestInplaceRename("Klazz");
   }
   
   public void testConstructor() throws Exception {
@@ -72,12 +80,26 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     doTestInplaceRename("bar");
   }
 
+  public void testNameSuggestion() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted());
+    assertNotNull(element);
+
+    final Set<String> result = new LinkedHashSet<String>();
+    new JavaNameSuggestionProvider().getSuggestedNames(element, getFile(), result);
+
+    CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), result.iterator().next(), getEditor(), element);
+
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testConflictingMethodName() throws Exception {
     try {
       doTestInplaceRename("bar");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>.", e.getMessage());
+      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>", e.getMessage());
       checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
       return;
     }

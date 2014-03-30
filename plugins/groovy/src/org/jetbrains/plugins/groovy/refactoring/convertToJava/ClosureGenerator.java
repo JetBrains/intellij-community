@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeType;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.TypeWriter.writeTypeForNew;
@@ -85,15 +86,15 @@ public class ClosureGenerator {
 
   private void generateClosureMainMethod(@NotNull GrClosableBlock block) {
     builder.append("public ");
-    final PsiType returnType = block.getReturnType();
+    final PsiType returnType = context.typeProvider.getReturnType(block);
     writeType(builder, returnType, block);
     builder.append(" doCall");
     final GrParameter[] parameters = block.getAllParameters();
     GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
 
-    Collection<GrStatement> myExitPoints = ControlFlowUtils.collectReturns(block);
-    boolean shouldInsertReturnNull =
-      !(returnType instanceof PsiPrimitiveType) && MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
+    Collection<GrStatement> myExitPoints = returnType != PsiType.VOID ? ControlFlowUtils.collectReturns(block) : Collections.<GrStatement>emptySet();
+    boolean shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
+                                     MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
 
     new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(block, shouldInsertReturnNull);
     builder.append('\n');
@@ -104,7 +105,7 @@ public class ClosureGenerator {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrMethod method = factory.createMethodFromText("def doCall(){}", block);
 
-    method.setReturnType(block.getReturnType());
+    method.setReturnType(context.typeProvider.getReturnType(block));
     if (block.hasParametersSection()) {
       method.getParameterList().replace(block.getParameterList());
     }

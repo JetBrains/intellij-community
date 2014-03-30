@@ -15,10 +15,10 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -30,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -43,30 +42,29 @@ import java.util.zip.ZipInputStream;
  */
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
-  static final String DESCRIPTION_PATH = ".idea/description.html";
-  static final String IDEA_INPUT_FIELDS_XML = ".idea/project-template.xml";
+  public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
+  static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
-  private List<WizardInputField> myInputFields = Collections.emptyList();
   private Icon myIcon;
 
-  public LocalArchivedTemplate(String displayName,
-                               URL archivePath, ClassLoader classLoader) {
-    super(displayName);
+  public LocalArchivedTemplate(@NotNull URL archivePath,
+                               @NotNull ClassLoader classLoader) {
+    super(getTemplateName(archivePath), null);
 
     myArchivePath = archivePath;
     myModuleType = computeModuleType(this);
     String s = readEntry(new Condition<ZipEntry>() {
       @Override
       public boolean value(ZipEntry entry) {
-        return entry.getName().endsWith(IDEA_INPUT_FIELDS_XML);
+        return entry.getName().endsWith(TEMPLATE_DESCRIPTOR);
       }
     });
     if (s != null) {
       try {
         Element templateElement = JDOMUtil.loadDocument(s).getRootElement();
-        myInputFields = RemoteTemplatesFactory.getFields(templateElement, Namespace.NO_NAMESPACE);
+        populateFromElement(templateElement, Namespace.NO_NAMESPACE);
         String iconPath = templateElement.getChildText("icon-path");
         if (iconPath != null) {
           myIcon = IconLoader.findIcon(iconPath, classLoader);
@@ -76,6 +74,11 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  private static String getTemplateName(URL url) {
+    String fileName = new File(url.getPath()).getName();
+    return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
 
   @Override
@@ -136,11 +139,6 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   @Override
   protected ModuleType getModuleType() {
     return myModuleType;
-  }
-
-  @Override
-  public List<WizardInputField> getInputFields() {
-    return myInputFields;
   }
 
   @Override

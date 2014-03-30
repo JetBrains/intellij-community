@@ -33,10 +33,12 @@ public class IntroduceFieldAction extends BasePlatformRefactoringAction {
     return provider.getIntroduceFieldHandler();
   }
 
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }

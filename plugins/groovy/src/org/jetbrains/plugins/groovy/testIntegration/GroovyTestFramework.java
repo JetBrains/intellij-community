@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -31,8 +30,10 @@ import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
@@ -50,12 +51,14 @@ public class GroovyTestFramework extends JavaTestFramework {
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     return clazz.getLanguage() == GroovyFileType.GROOVY_LANGUAGE &&
-           JUnitUtil.isTestClass(clazz) &&
+           //JUnitUtil.isTestClass(clazz) &&
            InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
   }
 
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    if (!isTestClass(clazz, false)) return null;
+
     for (PsiMethod method : clazz.getMethods()) {
       if (method.getName().equals("setUp")) return method;
     }
@@ -64,6 +67,8 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    if (!isTestClass(clazz, false)) return null;
+
     for (PsiMethod method : clazz.getMethods()) {
       if (method.getName().equals("tearDown")) return method;
     }
@@ -100,6 +105,11 @@ public class GroovyTestFramework extends JavaTestFramework {
     return inClass;
   }
 
+  @Override
+  public char getMnemonic() {
+    return 'G';
+  }
+
   @NotNull
   @Override
   public String getName() {
@@ -112,10 +122,9 @@ public class GroovyTestFramework extends JavaTestFramework {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
-  @NotNull
   @Override
   public String getLibraryPath() {
-    return JavaSdkUtil.getJunit3JarPath();
+    return GroovyUtils.getBundledGroovyJar().getAbsolutePath();
   }
 
   @Override
@@ -125,15 +134,15 @@ public class GroovyTestFramework extends JavaTestFramework {
 
   @Override
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("Groovy JUnit SetUp Method.groovy");
+    return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_SET_UP_METHOD_GROOVY);
   }
 
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("Groovy JUnit TearDown Method.groovy");
+    return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY);
   }
 
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
-    return new FileTemplateDescriptor("Groovy JUnit Test Method.groovy");
+    return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_METHOD_GROOVY);
   }
 
   @Override

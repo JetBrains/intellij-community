@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
-import com.intellij.codeInsight.CodeInsightSettings
+
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.EmptyNode
+import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -32,13 +35,11 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     if (state != null) {
       state.gotoEnd();
     }
@@ -54,5 +55,31 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     manager.startTemplate(myFixture.getEditor(), template);
     myFixture.checkResult '<tag><selection><</selection><caret></tag>'
   }
-  
+
+  public void "test insert CDATA by CD and tab"() {
+    myFixture.configureByText 'a.xml', '<tag><caret></tag>'
+    myFixture.type('CD\t')
+    myFixture.checkResult '''<tag><![CDATA[
+
+]]></tag>'''
+  }
+
+  public void testAvailabilityCDATA() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("CD", "html/xml");
+    assertTrue(isApplicable("<foo><caret> </foo>", template));
+    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));
+  }
+
+  public void testAvailabilityT() {
+    final TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "html/xml");
+    assertTrue(isApplicable("<foo><caret> </foo>", template));
+    assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template));
+  }
+
+  private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
+    myFixture.configureByText(XmlFileType.INSTANCE, text);
+    return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), inst);
+  }
+
+
 }

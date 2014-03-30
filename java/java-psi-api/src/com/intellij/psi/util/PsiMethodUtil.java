@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Condition;
@@ -26,20 +25,18 @@ import org.jetbrains.annotations.Nullable;
  * @author mike
  */
 public class PsiMethodUtil {
-
   private static final JavaMainMethodProvider[] myProviders = Extensions.getExtensions(JavaMainMethodProvider.EP_NAME);
 
   public static final Condition<PsiClass> MAIN_CLASS = new Condition<PsiClass>() {
     @Override
     public boolean value(final PsiClass psiClass) {
       if (psiClass instanceof PsiAnonymousClass) return false;
-      if (psiClass.isInterface()) return false;
+      if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
       return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
     }
   };
 
-  private PsiMethodUtil() {
-  }
+  private PsiMethodUtil() { }
 
   @Nullable
   public static PsiMethod findMainMethod(final PsiClass aClass) {
@@ -70,7 +67,7 @@ public class PsiMethodUtil {
     final PsiType type = parameters[0].getType();
     if (!(type instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText("java.lang.String");
+    return componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 
   public static boolean hasMainMethod(final PsiClass psiClass) {

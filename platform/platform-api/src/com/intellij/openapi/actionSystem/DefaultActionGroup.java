@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,6 +35,13 @@ import java.util.List;
  * to implement your own <code>ActionGroup</code>.
  *
  * @see Constraints
+ *
+ * @see com.intellij.openapi.actionSystem.ComputableActionGroup
+ *
+ * @see com.intellij.ide.actions.NonEmptyActionGroup
+ * @see com.intellij.ide.actions.NonTrivialActionGroup
+ * @see com.intellij.ide.actions.SmartPopupActionGroup
+ *
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
@@ -57,6 +65,16 @@ public class DefaultActionGroup extends ActionGroup {
    * @since 9.0
    */
   public DefaultActionGroup(@NotNull AnAction... actions) {
+    this(Arrays.asList(actions));
+  }
+
+  /**
+   * Creates an action group containing the specified actions.
+   *
+   * @param actions the actions to add to the group
+   * @since 13.0
+   */
+  public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
     this(null, false);
     for (AnAction action : actions) {
       add(action);
@@ -74,15 +92,15 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actionManager ActionManager instance
    */
   public final void add(@NotNull AnAction action, @NotNull ActionManager actionManager) {
-    add(action, new Constraints(Anchor.LAST, null), actionManager);
+    add(action, Constraints.LAST, actionManager);
   }
 
   public final void add(@NotNull AnAction action) {
-    addAction(action, new Constraints(Anchor.LAST, null));
+    addAction(action, Constraints.LAST);
   }
 
   public final ActionInGroup addAction(@NotNull AnAction action) {
-    return addAction(action, new Constraints(Anchor.LAST, null));
+    return addAction(action, Constraints.LAST);
   }
 
   /**
@@ -225,12 +243,50 @@ public class DefaultActionGroup extends ActionGroup {
     myPairs.clear();
   }
 
+
+  /**
+   * Replaces specified action with the a one.
+   */
+  public boolean replaceAction(@NotNull AnAction oldAction, @NotNull AnAction newAction) {
+    int index = mySortedChildren.indexOf(oldAction);
+    if (index >= 0) {
+      mySortedChildren.set(index, newAction);
+      return true;
+    }
+    else {
+      for (int i = 0; i < myPairs.size(); i++) {
+        Pair<AnAction, Constraints> pair = myPairs.get(i);
+        if (pair.first.equals(newAction)) {
+          myPairs.set(i, Pair.create(newAction, pair.second));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Copies content from <code>group</code>.
+   * @param other group to copy from
+   */
+  public void copyFromGroup(@NotNull DefaultActionGroup other) {
+    copyFrom(other);
+    setPopup(other.isPopup());
+
+    mySortedChildren.clear();
+    mySortedChildren.addAll(other.mySortedChildren);
+
+    myPairs.clear();
+    myPairs.addAll(other.myPairs);
+  }
+
   /**
    * Returns group's children in the order determined by constraints.
    *
    * @param e not used
    * @return An array of children actions
    */
+  @Override
   @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;
@@ -244,8 +300,13 @@ public class DefaultActionGroup extends ActionGroup {
         LOG.error("Empty sorted child: " + this + ", " + getClass() + "; index=" + i);
       }
       if (action instanceof ActionStub) {
-        action = unstub(e, (ActionStub)action);
-        mySortedChildren.set(i, action);
+        action = unStub(e, (ActionStub)action);
+        if (action == null) {
+          LOG.error("Can't unstub " + mySortedChildren.get(i));
+        }
+        else {
+          mySortedChildren.set(i, action);
+        }
       }
 
       hasNulls |= action == null;
@@ -257,9 +318,14 @@ public class DefaultActionGroup extends ActionGroup {
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + i);
       }
-      if (action instanceof ActionStub) {
-        action = unstub(e, (ActionStub)action);
-        myPairs.set(i, Pair.create(action, pair.second));
+      else if (action instanceof ActionStub) {
+        action = unStub(e, (ActionStub)action);
+        if (action == null) {
+          LOG.error("Can't unstub " + pair);
+        }
+        else {
+          myPairs.set(i, Pair.create(action, pair.second));
+        }
       }
 
       hasNulls |= action == null;
@@ -273,7 +339,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   @Nullable
-  private AnAction unstub(@Nullable AnActionEvent e, final ActionStub stub) {
+  private AnAction unStub(@Nullable AnActionEvent e, final ActionStub stub) {
     ActionManager actionManager = e != null ? e.getActionManager() : ActionManager.getInstance();
     try {
       AnAction action = actionManager.getAction(stub.getId());

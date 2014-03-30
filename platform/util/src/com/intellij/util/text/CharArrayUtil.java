@@ -67,9 +67,14 @@ public class CharArrayUtil {
    * @param len         number of source data symbols to copy to the given buffer
    */
   public static void getChars(@NotNull CharSequence src, @NotNull char[] dst, int srcOffset, int dstOffset, int len) {
+    if (src instanceof CharArrayExternalizable) {
+      ((CharArrayExternalizable)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
+      return;
+    }
+    
     if (len >= GET_CHARS_THRESHOLD) {
       if (src instanceof String) {
-        ((String)src).getChars(srcOffset, len, dst, dstOffset);
+        ((String)src).getChars(srcOffset, srcOffset + len, dst, dstOffset);
         return;
       }
       else if (src instanceof CharBuffer) {
@@ -81,7 +86,7 @@ public class CharArrayUtil {
         return;
       }
       else if (src instanceof CharSequenceBackedByArray) {
-        ((CharSequenceBackedByArray)src.subSequence(srcOffset, len)).getChars(dst, dstOffset);
+        ((CharSequenceBackedByArray)src.subSequence(srcOffset, srcOffset + len)).getChars(dst, dstOffset);
         return;
       }
       else if (src instanceof StringBuffer) {
@@ -99,13 +104,12 @@ public class CharArrayUtil {
     }
   }
 
+  /**
+   * @deprecated use {@link #fromSequence(CharSequence)}
+   */
   @NotNull
   public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    char[] chars = fromSequence(seq);
-    if (seq.length() == chars.length) return chars;
-    char[] strictChars = new char[seq.length()];
-    System.arraycopy(chars, 0, strictChars, 0, seq.length());
-    return strictChars;
+    return fromSequence(seq);
   }
 
   @Nullable
@@ -126,71 +130,21 @@ public class CharArrayUtil {
 
   /**
    * @return the underlying char[] array if any, or the new chara array if not
-   * NOTE RETURNED ARRAY LENGTH MAY HAVE BE DIFFERENT FROM THE seq.length()
    */
   @NotNull
   public static char[] fromSequence(@NotNull CharSequence seq) {
-    if (seq instanceof CharSequenceBackedByArray) {
-      return ((CharSequenceBackedByArray)seq).getChars();
-    }
-
-    if (seq instanceof CharBuffer) {
-      final CharBuffer buffer = (CharBuffer)seq;
-      if (buffer.hasArray() && !buffer.isReadOnly() && buffer.arrayOffset() == 0) {
-        return buffer.array();
-        // final char[] bufArray = buffer.array();
-        // return larger array. Clients may use seq.length() to calculate correct processing range.
-        // if (bufArray.length == seq.length())
-        // return bufArray;
-      }
-
-      char[] chars = new char[seq.length()];
-      buffer.position(0);
-      buffer.get(chars);
-      buffer.position(0);
-      return chars;
-    }
-
-    if (seq instanceof StringBuffer) {
-      char[] chars = new char[seq.length()];
-      ((StringBuffer)seq).getChars(0, seq.length(), chars, 0);
-      return chars;
-    }
-
-    if (seq instanceof String) {
-      char[] chars = new char[seq.length()];
-      ((String)seq).getChars(0, seq.length(), chars, 0);
-      return chars;
-    }
-
-    return seq.toString().toCharArray();
+    char[] underlying = fromSequenceWithoutCopying(seq);
+    return underlying != null ? Arrays.copyOf(underlying, underlying.length) : fromSequence(seq, 0, seq.length());
   }
 
+  /**
+   * @return a new char array containing the sub-sequence's chars 
+   */
   @NotNull
   public static char[] fromSequence(@NotNull CharSequence seq, int start, int end) {
-    if (seq instanceof CharSequenceBackedByArray) {
-      return Arrays.copyOfRange(((CharSequenceBackedByArray)seq).getChars(), start, end);
-    }
-
-    if (seq instanceof CharBuffer) {
-      CharBuffer buffer = (CharBuffer)seq;
-      char[] chars = new char[end-start];
-      buffer.position(start);
-      buffer.get(chars, 0, end-start);
-      buffer.position(0);
-      return chars;
-    }
-
-    if (seq instanceof StringBuffer) {
-      char[] chars = new char[end-start];
-      ((StringBuffer)seq).getChars(start, end, chars, 0);
-      return chars;
-    }
-
-    String s = seq.toString();
-    char[] chars = new char[end-start];
-    s.getChars(start, end, chars, 0);
-    return chars;
+    char[] result = new char[end - start];
+    getChars(seq, result, start, 0, end - start);
+    return result;
   }
 
   public static int shiftForward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
@@ -250,10 +204,15 @@ public class CharArrayUtil {
   }
 
   public static int shiftBackward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    if (offset >= buffer.length()) return offset;
-
+    return shiftBackward(buffer, 0, offset, chars);
+  }
+  
+  public static int shiftBackward(@NotNull CharSequence buffer, int minOffset, int maxOffset, @NotNull String chars) {
+    if (maxOffset >= buffer.length()) return maxOffset;
+    
+    int offset = maxOffset;
     while (true) {
-      if (offset < 0) break;
+      if (offset < minOffset) break;
       char c = buffer.charAt(offset);
       int i;
       for (i = 0; i < chars.length(); i++) {

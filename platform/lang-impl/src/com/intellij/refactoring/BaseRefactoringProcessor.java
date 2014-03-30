@@ -21,10 +21,13 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -43,6 +46,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -60,13 +65,14 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-public abstract class BaseRefactoringProcessor {
+public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
 
   protected final Project myProject;
@@ -233,7 +239,7 @@ public abstract class BaseRefactoringProcessor {
       public UsageSearcher create() {
         return new UsageSearcher() {
           @Override
-          public void generate(final Processor<Usage> processor) {
+          public void generate(@NotNull final Processor<Usage> processor) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
@@ -269,6 +275,7 @@ public abstract class BaseRefactoringProcessor {
 
             for (final Usage usage : usages) {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   processor.process(usage);
                 }
@@ -285,9 +292,9 @@ public abstract class BaseRefactoringProcessor {
   protected boolean skipNonCodeUsages() {
     return false;
   }
-  
+
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = new THashSet<PsiElement>();
+    Set<PsiElement> elements = new THashSet<PsiElement>(TObjectHashingStrategy.IDENTITY); // protect against poorly implemented equality
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
       if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
@@ -315,7 +322,7 @@ public abstract class BaseRefactoringProcessor {
   }
 
   protected boolean isGlobalUndoAction() {
-    return PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
+    return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
@@ -364,9 +371,21 @@ public abstract class BaseRefactoringProcessor {
     nonCodeFiles.remove(null);
     dynamicUsagesCodeFiles.remove(null);
 
-    presentation.setCodeUsagesString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
-    presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
+    String codeReferencesText = descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size());
+    presentation.setCodeUsagesString(codeReferencesText);
+    final String commentReferencesText = descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size());
+    if (commentReferencesText != null) {
+      presentation.setNonCodeUsagesString(commentReferencesText);
+    }
     presentation.setDynamicUsagesString("Dynamic " + StringUtil.decapitalize(descriptor.getCodeReferencesText(dynamicUsagesCount, dynamicUsagesCodeFiles.size())));
+    String generatedCodeString;
+    if (codeReferencesText.contains("in code")) {
+      generatedCodeString = StringUtil.replace(codeReferencesText, "in code", "in generated code");
+    }
+    else {
+      generatedCodeString = codeReferencesText + " in generated code";
+    }
+    presentation.setUsagesInGeneratedCodeString(generatedCodeString);
     return presentation;
   }
 
@@ -380,6 +399,7 @@ public abstract class BaseRefactoringProcessor {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
           }
@@ -429,7 +449,7 @@ public abstract class BaseRefactoringProcessor {
     return usageInfos;
   }
 
-  private void doRefactoring(@NotNull Collection<UsageInfo> usageInfoSet) {
+  private void doRefactoring(@NotNull final Collection<UsageInfo> usageInfoSet) {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
       final PsiElement element = usageInfo.getElement();
@@ -445,7 +465,7 @@ public abstract class BaseRefactoringProcessor {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      final Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+      final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<RefactoringHelper, Object>();
       final Runnable prepareHelpersRunnable = new Runnable() {
         @Override
         public void run() {
@@ -460,7 +480,38 @@ public abstract class BaseRefactoringProcessor {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          performRefactoring(writableUsageInfos);
+          final String refactoringId = getRefactoringId();
+          if (refactoringId != null) {
+            RefactoringEventData data = getBeforeData();
+            if (data != null) {
+              data.addUsages(usageInfoSet);
+            }
+            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+          }
+
+          try {
+            if (refactoringId != null) {
+              UndoableAction action = new BasicUndoableAction() {
+                @Override
+                public void undo() {
+                  myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).undoRefactoring(refactoringId);
+                }
+  
+                @Override
+                public void redo() {
+                }
+              };
+              UndoManager.getInstance(myProject).undoableActionPerformed(action);
+            }
+
+            performRefactoring(writableUsageInfos);
+          }
+          finally {
+            if (refactoringId != null) {
+              myProject.getMessageBus()
+                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
+            }
+          }
         }
       });
 
@@ -519,6 +570,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
+  @Override
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
@@ -582,6 +634,12 @@ public abstract class BaseRefactoringProcessor {
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
+      final String refactoringId = getRefactoringId();
+      if (refactoringId != null) {
+        RefactoringEventData conflictUsages = new RefactoringEventData();
+        conflictUsages.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
+        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected(refactoringId, conflictUsages);
+      }
       final ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, usages);
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
@@ -594,15 +652,36 @@ public abstract class BaseRefactoringProcessor {
     return true;
   }
 
+  @NotNull
   protected ConflictsDialog prepareConflictsDialog(MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
-    final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
-      @Override
-      public void run() {
-        execute(usages);
-      }
-    }, false);
+    final ConflictsDialog conflictsDialog = createConflictsDialog(conflicts, usages);
     conflictsDialog.setCommandName(getCommandName());
     return conflictsDialog;
+  }
+
+  @Nullable
+  protected RefactoringEventData getBeforeData() {
+    return null;
+  }
+
+  @Nullable
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    return null;
+  }
+
+  @Nullable
+  protected String getRefactoringId() {
+    return null;
+  }
+  
+  @NotNull
+  protected ConflictsDialog createConflictsDialog(MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
+    return new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
+        @Override
+        public void run() {
+          execute(usages);
+        }
+      }, false, true);
   }
 
   @NotNull

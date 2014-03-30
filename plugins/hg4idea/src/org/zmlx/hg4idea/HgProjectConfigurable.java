@@ -28,7 +28,7 @@ public class HgProjectConfigurable implements SearchableConfigurable {
 
   public HgProjectConfigurable(@NotNull Project project, HgProjectSettings projectSettings) {
     myProject = project;
-    myPanel = new HgConfigurationProjectPanel(projectSettings);
+    myPanel = new HgConfigurationProjectPanel(projectSettings, myProject);
   }
 
   @Nls

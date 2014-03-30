@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,38 +40,51 @@ import java.util.zip.ZipFile;
  */
 public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
+  private final Condition<String> myPathInJarFilter;
 
   public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
                                         @NotNull String pathInJar,
                                         @NotNull SourceFileFilter filter,
                                         int index,
-                                        ArtifactBuildTarget target, DestinationInfo destinationInfo) {
+                                        @NotNull ArtifactBuildTarget target,
+                                        @NotNull DestinationInfo destinationInfo,
+                                        @NotNull Condition<String> pathInJarFilter) {
     super(jarFile, filter, index, target, destinationInfo);
     myPathInJar = pathInJar;
+    myPathInJarFilter = pathInJarFilter;
   }
 
   public void processEntries(EntryProcessor processor) throws IOException {
+    if (!myRoot.isFile()) return;
+
     String prefix = StringUtil.trimStart(myPathInJar, "/");
     if (!StringUtil.endsWithChar(prefix, '/')) prefix += "/";
     if (prefix.equals("/")) {
       prefix = "";
     }
 
-    ZipFile zipFile = new ZipFile(myRoot);
     try {
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      ZipFile zipFile = new ZipFile(myRoot);
+      try {
+        final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        final String name = entry.getName();
-        if (name.startsWith(prefix)) {
-          String relativePath = name.substring(prefix.length());
-          processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          final String name = entry.getName();
+          if (name.startsWith(prefix)) {
+            String relativePath = name.substring(prefix.length());
+            if (myPathInJarFilter.value(relativePath)) {
+              processor.process(entry.isDirectory() ? null : zipFile.getInputStream(entry), relativePath, entry);
+            }
+          }
         }
       }
+      finally {
+        zipFile.close();
+      }
     }
-    finally {
-      zipFile.close();
+    catch (IOException e) {
+      throw new IOException("Error occurred during processing zip file " + myRoot + ": " + e.getMessage(), e);
     }
   }
 

@@ -16,19 +16,21 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.*;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
+import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
 /**
@@ -40,7 +42,8 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().with(inFxmlCondition());
+    final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().inVirtualFile(
+      virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER))
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
@@ -51,7 +54,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlTag().with(inFxmlCondition()),
+    registrar.registerReferenceProvider(XmlPatterns.xmlTag().inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
                                         new MyJavaClassReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
@@ -72,7 +75,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ELEMENT_SOURCE)
                                                                                      .withParent(XmlPatterns.xmlTag()
-                                                                                                   .withName(FxmlConstants.FX_REFERENCE)))
+                                                                                                   .withName(string().oneOf(FxmlConstants.FX_REFERENCE, FxmlConstants.FX_COPY))))
                                           .and(attributeValueInFxml),
                                         new JavaFxComponentIdReferenceProvider());
 
@@ -91,14 +94,12 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxComponentIdReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName("url")).and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider());
+                                        new JavaFxLocationReferenceProvider(false, "png"));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)).and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider(true));
+                                        new JavaFxLocationReferenceProvider(true, "css"));
 
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inFile(inFxmlElementPattern()), new ImportReferenceProvider());
-
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
-                                        new EnumeratedAttributeReferenceProvider()); 
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
+                                        new ImportReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
                                         new JavaFxColorReferenceProvider()); 
@@ -107,25 +108,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)
                                                         .withParent(XmlPatterns.xmlTag().withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
                                           .and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider(true));
-  }
-
-  public static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {
-    return new PsiFilePattern.Capture<PsiFile>(new InitialPatternCondition<PsiFile>(PsiFile.class) {
-      @Override
-      public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        return o instanceof PsiFile && JavaFxFileTypeFactory.isFxml((PsiFile)o);
-      }
-    });
-  }
-
-  public static <T extends XmlElement> PatternCondition<T> inFxmlCondition() {
-    return new PatternCondition<T>("inFxmlFile") {
-      @Override
-      public boolean accepts(@NotNull T value, ProcessingContext context) {
-        return JavaFxFileTypeFactory.isFxml(value.getContainingFile());
-      }
-    };
+                                        new JavaFxLocationReferenceProvider(true, "css"));
   }
 
   private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {
@@ -171,7 +154,28 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       @Nullable
       @Override
       public PsiElement resolve() {
-        return myReference.resolve();
+        final PsiElement resolve = myReference.resolve();
+        if (resolve != null) {
+          return resolve;
+        }
+        return getReferencedClass();
+      }
+
+      private PsiElement getReferencedClass() {
+        if (myPosition instanceof XmlTag) {
+          final XmlElementDescriptor descriptor = ((XmlTag)myPosition).getDescriptor();
+          if (descriptor != null) {
+            final PsiElement declaration = descriptor.getDeclaration();
+            if (declaration instanceof PsiMethod &&
+                ((PsiMethod)declaration).hasModifierProperty(PsiModifier.STATIC)) {
+              final PsiClass containingClass = ((PsiMethod)declaration).getContainingClass();
+              if (containingClass != null && myReference.getCanonicalText().equals(containingClass.getName())) {
+                return containingClass;
+              }
+            }
+          }
+        }
+        return null;
       }
 
       @NotNull
@@ -191,13 +195,13 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         throws IncorrectOperationException {
         String oldText = ((XmlTag)myPosition).getName();
         final TextRange range = getRangeInElement();
-        final String newText = ((PsiPackage)element).getQualifiedName() +
+        final String newText = (element instanceof PsiPackage ? ((PsiPackage)element).getQualifiedName() : ((PsiClass)element).getName()) +
                                oldText.substring(range.getEndOffset() - 1);
         return ((XmlTag)myPosition).setName(newText);
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        return myReference.isReferenceTo(element);
+        return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 
       @NotNull

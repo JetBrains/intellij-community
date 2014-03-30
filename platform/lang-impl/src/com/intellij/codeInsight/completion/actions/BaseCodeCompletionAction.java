@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -42,8 +42,8 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
   }
 
   protected static void invokeCompletion(AnActionEvent e, CompletionType type, int time) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert project != null;
     assert editor != null;
     InputEvent inputEvent = e.getInputEvent();
@@ -54,10 +54,10 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     e.getPresentation().setEnabled(false);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);

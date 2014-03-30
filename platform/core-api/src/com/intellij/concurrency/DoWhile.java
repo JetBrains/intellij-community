@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,22 @@
  */
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Author: dmitrylomov
  */
-public abstract class DoWhile  {
-  private AsyncFutureResult<Boolean> myResult;
-  private SameThreadExecutorWithTrampoline myExecutor;
+public abstract class DoWhile {
+  private final AsyncFutureResult<Boolean> myResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+  private final SameThreadExecutorWithTrampoline myExecutor = new SameThreadExecutorWithTrampoline();
 
-  public DoWhile() {
-  }
-
+  @NotNull
   public AsyncFutureResult<Boolean> getResult() {
-    if (myResult == null) {
-      myExecutor = new SameThreadExecutorWithTrampoline();
-      myResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
-      body().addConsumer(myExecutor, new MyConsumer());
-    }
+    body().addConsumer(myExecutor, new MyConsumer());
     return myResult;
   }
 
+  @NotNull
   protected abstract AsyncFuture<Boolean> body();
   protected abstract boolean condition();
 

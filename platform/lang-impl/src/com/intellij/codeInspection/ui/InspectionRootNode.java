@@ -44,6 +44,7 @@ public class InspectionRootNode extends InspectionTreeNode {
     return getChildCount() == 0;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return APP_ICON;
   }

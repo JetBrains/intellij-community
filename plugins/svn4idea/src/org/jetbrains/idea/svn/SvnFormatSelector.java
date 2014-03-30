@@ -16,12 +16,9 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.WaitForProgressToShow;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -37,6 +34,9 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
+
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFormatSelector");
+
   public Collection getEnabledFactories(File path, Collection factories, boolean writeAccess) throws SVNException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return factories;
@@ -132,20 +132,22 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return result;
   }
 
-  public static String showUpgradeDialog(final File path, final Project project, final boolean display13format, final String mode,
-                                         @NotNull final Ref<Boolean> wasOk) {
-    assert ! ApplicationManager.getApplication().isUnitTestMode();
-    final String[] newMode = new String[] {mode};
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-      public void run() {
-        wasOk.set(displayUpgradeDialog(project, path, display13format, newMode));
-      }
-    });
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-    return newMode[0];
+  @NotNull
+  public static WorkingCopyFormat findRootAndGetFormat(final File path) {
+    File root = SvnUtil.getWorkingCopyRootNew(path);
+
+    return root != null ? getWorkingCopyFormat(root) : WorkingCopyFormat.UNKNOWN;
   }
 
+  @NotNull
   public static WorkingCopyFormat getWorkingCopyFormat(final File path) {
+    WorkingCopyFormat format = SvnUtil.getFormat(path);
+
+    return WorkingCopyFormat.UNKNOWN.equals(format) ? detectWithSvnKit(path) : format;
+  }
+
+  @NotNull
+  private static WorkingCopyFormat detectWithSvnKit(File path) {
     try {
       final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(path, true);
       if (SvnWcGeneration.V17.equals(svnWcGeneration)) return WorkingCopyFormat.ONE_DOT_SEVEN;
@@ -169,15 +171,5 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     }
 
     return WorkingCopyFormat.getInstance(format);
-  }
-
-  private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, String[] newMode) {
-    UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
-    dialog.setData(newMode[0]);
-    dialog.show();
-    if (dialog.isOK()) {
-      newMode[0] = dialog.getUpgradeMode();
-    }
-    return dialog.isOK();
   }
 }

@@ -42,7 +42,11 @@ public class SideBorder extends LineBorder {
   }
 
   public SideBorder(Color color, @SideMask int mask, boolean dotted) {
-    super(color, 1);
+    this(color, mask, dotted, 1);
+  }
+
+  public SideBorder(Color color, @SideMask int mask, boolean dotted, int thickness) {
+    super(color, thickness);
     mySideMask = mask;
     myDotted = dotted;
   }
@@ -73,16 +77,16 @@ public class SideBorder extends LineBorder {
     g.setColor(getLineColor());
     for(int i = 0; i < getThickness(); i++){
       if ((mySideMask & LEFT) != 0){
-        drawLine(g, x + i, y + i, x + i, y + height - i - i - 1);
+        drawLine(g, x + i, y, x + i, y + height - 1);
       }
       if ((mySideMask & TOP) != 0){
-        drawLine(g, x + i, y + i, x + width - i - i - 1, y + i);
+        drawLine(g, x, y + i, x + width - 1, y + i);
       }
       if ((mySideMask & RIGHT) != 0){
-        drawLine(g, x + width - i - i - 1, y + i, x + width - i - i - 1, y + height - i - i - 1);
+        drawLine(g, x + width - 1 - i, y, x + width - 1 - i, y + height - 1);
       }
       if ((mySideMask & BOTTOM) != 0){
-        drawLine(g, x + i, y + height - i - i - 1, x + width - i - i - 1, y + height - i - i - 1);
+        drawLine(g, x, y + height - 1 - i, x + width - 1, y + height - 1 - i);
       }
     }
     g.setColor(oldColor);

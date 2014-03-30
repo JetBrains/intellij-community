@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 public class WeighingNewActionGroup extends WeighingActionGroup {
   private ActionGroup myDelegate;
 
+  @Override
   protected ActionGroup getDelegate() {
     if (myDelegate == null) {
       myDelegate = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);

@@ -49,7 +49,7 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   public void writeExternal(Element element) {
     element.setAttribute("enabled", String.valueOf(myIsEnabled));
   }
-  
+
   public void readExternal(Element element) {
     String attribValue = element.getAttributeValue("enabled");
     if (attribValue == null) {
@@ -65,6 +65,7 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     return 1;
   }
 
+  @Override
   public BeforeRunTask clone() {
     try {
       return (BeforeRunTask)super.clone();

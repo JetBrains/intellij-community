@@ -32,6 +32,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     myProject = project;
   }
 
+  @Override
   protected StorageData createStorageData(String storageSpec) {
     if (storageSpec.equals(StoragePathMacros.PROJECT_FILE)) return createIprStorageData();
     if (storageSpec.equals(StoragePathMacros.WORKSPACE_FILE)) return createWsStorageData();
@@ -46,6 +47,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     return new ProjectStoreImpl.IprStorageData(ROOT_TAG_NAME, myProject);
   }
 
+  @Override
   protected String getOldStorageSpec(Object component, final String componentName, final StateStorageOperation operation) throws
                                                                                                                           StateStorageException {
     final ComponentConfig config = myProject.getConfig(component.getClass());
@@ -65,6 +67,7 @@ class ProjectStateStorageManager extends StateStorageManagerImpl {
     return name;
   }
 
+  @Override
   protected String getVersionsFilePath() {
     return PathManager.getConfigPath() + "/componentVersions/" + "project" + myProject.getLocationHash() + ".xml";
   }

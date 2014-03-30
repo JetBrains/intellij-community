@@ -7,5 +7,12 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'final' method in 'final' class</problem_class>
     <description>Method declared &lt;code&gt;final&lt;/code&gt; in 'final' class #loc</description>
   </problem>
+
+  <problem>
+    <file>FinalMethodInFinalClass.java</file>
+    <line>33</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'final' method in 'final' class</problem_class>
+    <description>Method declared &lt;code&gt;final&lt;/code&gt; in 'final' class #loc</description>
+  </problem>
   
 </problems>

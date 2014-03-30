@@ -25,11 +25,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 
 public final class LanguageUtil {
   private LanguageUtil() {
   }
+
+  public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
+    @Override
+    public int compare(Language o1, Language o2) {
+      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+    }
+  };
 
   public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer) {
     String textStr = left.getText() + right.getText();
@@ -62,5 +70,24 @@ public final class LanguageUtil {
 
     final Language language = psiFile.getViewProvider().getBaseLanguage();
     return language instanceof TemplateLanguage;
+  }
+
+  public static boolean isInjectableLanguage(Language language) {
+    if (language == Language.ANY) {
+      return false;
+    }
+    if (language.getID().startsWith("$")) {
+      return false;
+    }
+    if (language instanceof InjectableLanguage) {
+      return true;
+    }
+    if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
+      return false;
+    }
+    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
+      return false;
+    }
+    return true;
   }
 }

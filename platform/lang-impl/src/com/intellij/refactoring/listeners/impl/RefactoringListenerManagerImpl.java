@@ -38,10 +38,12 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
     myProject = project;
   }
 
+  @Override
   public void addListenerProvider(RefactoringElementListenerProvider provider) {
     myListenerProviders.add(provider);
   }
 
+  @Override
   public void removeListenerProvider(RefactoringElementListenerProvider provider) {
     myListenerProviders.remove(provider);
   }

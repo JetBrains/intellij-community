@@ -23,12 +23,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AppendTokenParser extends TokenParser {
   public static final AppendTokenParser JUST_APPEND = new AppendTokenParser() {
+    @Override
     @Nullable
     protected IElementType parseAppend(final PrattBuilder builder) {
       return null;
     }
   };
 
+  @Override
   public boolean parseToken(final PrattBuilder builder) {
     final MutableMarker marker = builder.mark();
     builder.advance();
@@ -37,5 +39,5 @@ public abstract class AppendTokenParser extends TokenParser {
   }
 
   @Nullable protected abstract IElementType parseAppend(PrattBuilder builder);
-  
+
 }

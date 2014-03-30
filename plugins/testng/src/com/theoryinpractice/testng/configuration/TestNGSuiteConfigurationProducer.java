@@ -26,6 +26,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,25 +35,19 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProducer{
-  private PsiElement myPsiElement = null;
 
 
-  public PsiElement getSourceElement() {
-    return myPsiElement;
-  }
-
-  @Nullable
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    final PsiElement element = location.getPsiElement();
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return null;
+  @Override
+  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    final PsiElement element = context.getPsiLocation();
+    final PsiFile containingFile = element != null ? element.getContainingFile() : null;
+    if (containingFile == null) return false;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) return null;
-    if (!TestNGUtil.isTestngXML(virtualFile)) return null;
-    myPsiElement = containingFile;
-    final Project project = location.getProject();
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
+    if (virtualFile == null || !virtualFile.isValid()) return false;
+    if (!TestNGUtil.isTestngXML(virtualFile)) return false;
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.getPersistantData().SUITE_NAME = virtualFile.getPath();
@@ -60,11 +55,7 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
     configuration.restoreOriginalModule(originalModule);
     configuration.setGeneratedName();
     settings.setName(configuration.getName());
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
-  }
-
-  public int compareTo(Object o) {
-    return PREFERED;
+    sourceElement.set(containingFile);
+    return true;
   }
 }

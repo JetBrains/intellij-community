@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -134,7 +135,7 @@ public class CreateFromUsageUtils {
 
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
-    LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
+    LOG.assertTrue(!aClass.isInterface() || method.hasModifierProperty(PsiModifier.DEFAULT), "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
     Properties properties = new Properties();
@@ -255,9 +256,9 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || 
-          argType instanceof PsiLambdaExpressionType || 
-          argType instanceof PsiLambdaParameterType || 
+      if (argType == null || PsiType.NULL.equals(argType) ||
+          argType instanceof PsiLambdaExpressionType ||
+          argType instanceof PsiLambdaParameterType ||
           argType instanceof PsiMethodReferenceType) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       } else if (argType instanceof PsiDisjunctionType) {
@@ -365,7 +366,7 @@ public class CreateFromUsageUtils {
                                                 String name,
                                                 PsiJavaCodeReferenceElement referenceElement) {
     try {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(psiClass)) return null;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiClass)) return null;
 
       PsiManager manager = psiClass.getManager();
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -447,7 +448,7 @@ public class CreateFromUsageUtils {
               targetClass = (PsiClass) sourceFile.add(aClass);
             }
 
-            if (superClassName != null) {
+            if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
               final PsiClass superClass =
                 facade.findClass(superClassName, targetClass.getResolveScope());
               final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
@@ -522,7 +523,7 @@ public class CreateFromUsageUtils {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
       @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if(!(element instanceof PsiField) ||
            JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiField)element, expression, null)) {
           return super.execute(element, state);
@@ -569,7 +570,7 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiVariable[result.size()]);
   }
 
-  private static void getExpectedInformation(PsiExpression expression,
+  private static void getExpectedInformation(final PsiExpression expression,
                                              List<ExpectedTypeInfo[]> types,
                                              List<String> expectedMethodNames,
                                              List<String> expectedFieldNames) {
@@ -577,8 +578,14 @@ public class CreateFromUsageUtils {
       PsiElement parent = expr.getParent();
 
       if (!(parent instanceof PsiReferenceExpression)) {
-        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
+        ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiExpressionList);
         if (someExpectedTypes.length > 0) {
+          Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
+            @Override
+            public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
+              return compareExpectedTypes(o1, o2, expression);
+            }
+          });
           types.add(someExpectedTypes);
         }
         continue;
@@ -595,6 +602,12 @@ public class CreateFromUsageUtils {
         if (refName.equals("equals")) {
           ExpectedTypeInfo[] someExpectedTypes = equalsExpectedTypes((PsiMethodCallExpression)pparent);
           if (someExpectedTypes.length > 0) {
+            Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
+              @Override
+              public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
+                return compareExpectedTypes(o1, o2, expression);
+              }
+            });
             types.add(someExpectedTypes);
           }
         }
@@ -607,6 +620,14 @@ public class CreateFromUsageUtils {
         expectedFieldNames.add(refName);
       }
     }
+  }
+
+  private static int compareExpectedTypes(ExpectedTypeInfo o1, ExpectedTypeInfo o2, PsiExpression expression) {
+    PsiClass c1 = PsiUtil.resolveClassInType(o1.getDefaultType());
+    PsiClass c2 = PsiUtil.resolveClassInType(o2.getDefaultType());
+    if (c1 == null && c2 == null) return 0;
+    if (c1 == null || c2 == null) return c1 == null ? -1 : 1;
+    return compareMembers(c1, c2, expression);
   }
 
   private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
@@ -781,22 +802,7 @@ public class CreateFromUsageUtils {
     Arrays.sort(members, new Comparator<PsiMember>() {
       @Override
       public int compare(final PsiMember m1, final PsiMember m2) {
-        ProgressManager.checkCanceled();
-        int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
-        if (result != 0) return result;
-        final PsiClass aClass = m1.getContainingClass();
-        final PsiClass bClass = m2.getContainingClass();
-        if (aClass == null || bClass == null) return 0;
-        result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
-        if (result != 0) return result;
-
-        WeighingComparable<PsiElement,ProximityLocation> proximity1 = PsiProximityComparator.getProximity(m1, expression);
-        WeighingComparable<PsiElement,ProximityLocation> proximity2 = PsiProximityComparator.getProximity(m2, expression);
-        if (proximity1 != null && proximity2 != null) {
-          return proximity2.compareTo(proximity1);
-        }
-
-        return 0;
+        return compareMembers(m1, m2, expression);
       }
     });
 
@@ -831,6 +837,29 @@ public class CreateFromUsageUtils {
     if (!l.isEmpty()) {
       types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
     }
+  }
+
+  private static int compareMembers(PsiMember m1, PsiMember m2, PsiExpression context) {
+    ProgressManager.checkCanceled();
+    int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
+    if (result != 0) return result;
+    final PsiClass aClass = m1.getContainingClass();
+    final PsiClass bClass = m2.getContainingClass();
+    if (aClass != null && bClass != null) {
+      result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+      if (result != 0) return result;
+    }
+
+    WeighingComparable<PsiElement,ProximityLocation> proximity1 = PsiProximityComparator.getProximity(m1, context);
+    WeighingComparable<PsiElement,ProximityLocation> proximity2 = PsiProximityComparator.getProximity(m2, context);
+    if (proximity1 != null && proximity2 != null) {
+      result = proximity2.compareTo(proximity1);
+      if (result != 0) return result;
+    }
+
+    String name1 = PsiUtil.getMemberQualifiedName(m1);
+    String name2 = PsiUtil.getMemberQualifiedName(m2);
+    return Comparing.compare(name1, name2);
   }
 
   public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {

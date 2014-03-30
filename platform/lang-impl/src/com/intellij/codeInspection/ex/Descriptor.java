@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
@@ -36,7 +37,7 @@ public class Descriptor {
   private final HighlightDisplayKey myKey;
 
   private Element myConfig;
-  private final InspectionProfileEntry myTool;
+  private final InspectionToolWrapper myToolWrapper;
   private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
   private final NamedScope myScope;
@@ -44,18 +45,18 @@ public class Descriptor {
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
 
-  public Descriptor(ScopeToolState pair, InspectionProfileImpl inspectionProfile) {
-    myState = pair;
+  public Descriptor(@NotNull ScopeToolState state, @NotNull InspectionProfileImpl inspectionProfile, @NotNull Project project) {
+    myState = state;
     myInspectionProfile = inspectionProfile;
-    final InspectionProfileEntry tool = pair.getTool();
+    InspectionToolWrapper tool = state.getTool();
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
     myKey = HighlightDisplayKey.find(tool.getShortName());
-    myLevel = inspectionProfile.getErrorLevel(myKey, pair.getScope());
-    myEnabled = inspectionProfile.isToolEnabled(myKey, pair.getScope());
-    myTool = tool;
-    myScope = pair.getScope();
+    myScope = state.getScope(project);
+    myLevel = inspectionProfile.getErrorLevel(myKey, myScope, project);
+    myEnabled = inspectionProfile.isToolEnabled(myKey, myScope, project);
+    myToolWrapper = tool;
   }
 
   public boolean equals(Object obj) {
@@ -98,28 +99,29 @@ public class Descriptor {
     return myConfig;
   }
 
-  public InspectionProfileEntry getTool() {
-    return myTool;
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return myToolWrapper;
   }
 
   @Nullable
   public String loadDescription() {
     if (myConfig == null) {
-      myConfig = createConfigElement(getTool());
+      InspectionToolWrapper toolWrapper = getToolWrapper();
+      myConfig = createConfigElement(toolWrapper);
     }
 
-    if (!(myTool instanceof InspectionTool)) return null;
-    return myTool.loadDescription();
+    return myToolWrapper.loadDescription();
   }
 
   public InspectionProfileImpl getInspectionProfile() {
     return myInspectionProfile;
   }
 
-  public static Element createConfigElement(InspectionProfileEntry tool) {
+  public static Element createConfigElement(InspectionToolWrapper toolWrapper) {
     Element element = new Element("options");
     try {
-      tool.writeSettings(element);
+      toolWrapper.getTool().writeSettings(element);
     }
     catch (WriteExternalException e) {
       LOG.error(e);

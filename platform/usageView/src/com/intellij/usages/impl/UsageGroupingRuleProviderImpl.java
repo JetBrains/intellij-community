@@ -42,7 +42,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   @NotNull
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
-    rules.add(new NonCodeUsageGroupingRule());
+    rules.add(new NonCodeUsageGroupingRule(project));
     if (UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
       rules.add(new UsageScopeGroupingRule());
     }
@@ -164,7 +164,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByPackageAction extends RuleAction {
     private GroupByPackageAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.package"), AllIcons.Actions.GroupByPackage);
+      super(view, DirectoryGroupingRule.getInstance(view.getProject()).getActionTitle(), AllIcons.Actions.GroupByPackage);
     }
     @Override
     protected boolean getOptionValue() {

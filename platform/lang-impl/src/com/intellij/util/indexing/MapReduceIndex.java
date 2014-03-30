@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.CommonProcessors;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
@@ -30,8 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -47,9 +53,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   @Nullable private PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-  
-  private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
+  private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, @NotNull IndexStorage<Key, Value> storage) {
     myIndexId = indexId;
@@ -74,6 +79,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         }
         catch (IOException ignored) {
         }
+
         FileUtil.delete(baseFile);
         myInputsIndex = createInputsIndex();
       }
@@ -143,30 +149,24 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  @NotNull
   @Override
   public final Lock getReadLock() {
     return myLock.readLock();
   }
 
+  @NotNull
   @Override
   public final Lock getWriteLock() {
     return myLock.writeLock();
   }
 
-  @NotNull
   @Override
-  public Collection<Key> getAllKeys() throws StorageException {
-    Set<Key> allKeys = new HashSet<Key>();
-    processAllKeys(new CommonProcessors.CollectProcessor<Key>(allKeys));
-    return allKeys;
-  }
-
-  @Override
-  public boolean processAllKeys(Processor<Key> processor) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
-      return myStorage.processKeys(processor);
+      return myStorage.processKeys(processor, scope, idFilter);
     }
     finally {
       lock.unlock();
@@ -175,7 +175,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   @Override
   @NotNull
-  public ValueContainer<Value> getData(final Key key) throws StorageException {
+  public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
     final Lock lock = getReadLock();
     try {
       lock.lock();
@@ -208,26 +208,63 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return null;
   }
 
+  @NotNull
   @Override
-  public final void update(final int inputId, @Nullable Input content) throws StorageException {
-    assert myInputsIndex != null;
+  public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
 
     final Map<Key, Value> data = content != null ? myIndexer.map(content) : Collections.<Key, Value>emptyMap();
 
-    updateWithMap(inputId, data, new Callable<Collection<Key>>() {
+    ProgressManager.checkCanceled();
+
+    // do not depend on content!
+    return new Computable<Boolean>() {
       @Override
-      public Collection<Key> call() throws Exception {
-        final Collection<Key> oldKeys = myInputsIndex.get(inputId);
-        return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+      public Boolean compute() {
+        final Ref<StorageException> exRef = new Ref<StorageException>(null);
+        ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              updateWithMap(inputId, data, new NotNullComputable<Collection<Key>>() {
+                @NotNull
+                @Override
+                public Collection<Key> compute() {
+                  if (myInputsIndex == null) {
+                    return new SmartList<Key>((Key)(Integer)inputId);
+                  }
+                  try {
+                    Collection<Key> oldKeys = myInputsIndex.get(inputId);
+                    return oldKeys == null? Collections.<Key>emptyList() : oldKeys;
+                  }
+                  catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                }
+              });
+            }
+            catch (StorageException ex) {
+              exRef.set(ex);
+            }
+          }
+        });
+
+        if (exRef.get() != null) {
+          LOG.info(exRef.get());
+          FileBasedIndex.getInstance().requestRebuild(myIndexId);
+          return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
       }
-    });
+    };
   }
 
-  protected void updateWithMap(final int inputId, @NotNull Map<Key, Value> newData, @NotNull Callable<Collection<Key>> oldKeysGetter) throws StorageException {
+  protected void updateWithMap(final int inputId,
+                               @NotNull Map<Key, Value> newData,
+                               @NotNull NotNullComputable<Collection<Key>> oldKeysGetter) throws StorageException {
     getWriteLock().lock();
     try {
       try {
-        for (Key key : oldKeysGetter.call()) {
+        for (Key key : oldKeysGetter.compute()) {
           myStorage.removeAllValues(key, inputId);
         }
       }
@@ -252,7 +289,8 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           }
         });
         if (!b) throw exceptionRef.get();
-      } else {
+      }
+      else {
         for (Map.Entry<Key, Value> entry : newData.entrySet()) {
           myStorage.addValue(entry.getKey(), inputId, entry.getValue());
         }
@@ -276,5 +314,4 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       getWriteLock().unlock();
     }
   }
-
 }

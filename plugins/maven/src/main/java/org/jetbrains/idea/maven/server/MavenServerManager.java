@@ -25,18 +25,18 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.search.Query;
@@ -44,6 +44,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -54,7 +55,6 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -80,8 +80,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  private boolean useMaven2 = true;
+  private boolean useMaven2 = false;
   private String mavenEmbedderVMOptions = DEFAULT_VM_OPTIONS;
+  private String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -164,12 +165,34 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     myShutdownAlarm.cancelAllRequests();
   }
 
+  @NotNull
+  private Sdk getJdk() {
+    if (embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
+      final String javaHome = System.getenv("JAVA_HOME");
+      if (!StringUtil.isEmptyOrSpaces(javaHome)) {
+        Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
+        if (jdk != null) {
+          return jdk;
+        }
+      }
+    }
+
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectJdk.getName().equals(embedderJdk)) {
+        return projectJdk;
+      }
+    }
+
+    // By default use internal jdk
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
   private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
         final SimpleJavaParameters params = new SimpleJavaParameters();
 
-        params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
+        params.setJdk(getJdk());
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final List<String> classPath = new ArrayList<String>();
@@ -205,6 +228,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
         }
 
+        params.getVMParametersList().addProperty("idea.version=", MavenUtil.getIdeaVersionToPassToMavenProcess());
+
         boolean xmxSet = false;
 
         if (mavenEmbedderVMOptions != null) {
@@ -233,6 +258,11 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         String mavenEmbedderDebugPort = System.getProperty("idea.maven.embedder.debug.port");
         if (mavenEmbedderDebugPort != null) {
           params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" + mavenEmbedderDebugPort);
+        }
+
+        String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
+        if (mavenEmbedderParameters != null) {
+          params.getProgramParametersList().addParametersString(mavenEmbedderParameters);
         }
 
         return params;
@@ -272,19 +302,24 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     return new File(pluginFileOrDir.getParentFile(), "maven3");
   }
 
-  public static List<File> collectClassPathAndLibsFolder() {
+  public List<File> collectClassPathAndLibsFolder() {
     File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
 
     List<File> classpath = new ArrayList<File>();
 
     String root = pluginFileOrDir.getParent();
 
+    boolean useMaven2 = this.useMaven2;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      useMaven2 = true;
+    }
+
     if (pluginFileOrDir.isDirectory()) {
       classpath.add(new File(root, "maven-server-api"));
 
       File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
 
-      if (getInstance().isUseMaven2()) {
+      if (useMaven2) {
         classpath.add(new File(root, "maven2-server-impl"));
         addDir(classpath, new File(luceneLib.getParentFile().getParentFile().getParentFile(), "maven2-server-impl/lib"));
       }
@@ -304,7 +339,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     else {
       classpath.add(new File(root, "maven-server-api.jar"));
 
-      if (getInstance().isUseMaven2()) {
+      if (useMaven2) {
         classpath.add(new File(root, "maven2-server-impl.jar"));
 
         addDir(classpath, new File(root, "maven2"));
@@ -336,6 +371,9 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           settings = settings.clone();
           settings.setOffline(false);
         }
+
+        settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
+
         return MavenServerManager.this.getOrCreateWrappee().createEmbedder(settings);
       }
     };
@@ -452,25 +490,44 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-    this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
+    if (!mavenEmbedderVMOptions.trim().equals(this.mavenEmbedderVMOptions.trim())) {
+      this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
+      shutdown(false);
+    }
+  }
+
+  @NotNull
+  public String getEmbedderJdk() {
+    return embedderJdk;
+  }
+
+  public void setEmbedderJdk(@NotNull String embedderJdk) {
+    if (!this.embedderJdk.equals(embedderJdk)) {
+      this.embedderJdk = embedderJdk;
+      shutdown(false);
+    }
   }
 
   @Nullable
   @Override
   public Element getState() {
     final Element element = new Element("maven-version");
-    element.setAttribute("version", useMaven2 ? "2" : "3");
+    element.setAttribute("version", useMaven2 ? "2.x" : "3.x");
     element.setAttribute("vmOptions", mavenEmbedderVMOptions);
+    element.setAttribute("embedderJdk", embedderJdk);
     return element;
   }
 
   @Override
   public void loadState(Element state) {
     String version = state.getAttributeValue("version");
-    useMaven2 = !"3".equals(version);
+    useMaven2 = "2.x".equals(version);
 
     String vmOptions = state.getAttributeValue("vmOptions");
     mavenEmbedderVMOptions = vmOptions == null ? DEFAULT_VM_OPTIONS : vmOptions;
+
+    String embedderJdk = state.getAttributeValue("embedderJdk");
+    this.embedderJdk = embedderJdk == null ? MavenRunnerSettings.USE_INTERNAL_JAVA : embedderJdk;
   }
 
   private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {

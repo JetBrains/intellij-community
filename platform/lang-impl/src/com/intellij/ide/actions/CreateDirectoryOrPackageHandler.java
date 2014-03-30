@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,16 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +45,9 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private final Project myProject;
   @NotNull private final PsiDirectory myDirectory;
   private final boolean myIsDirectory;
-  @Nullable private PsiDirectory myCreatedElement = null;
-  @NotNull private String myDelimiters;
-  @Nullable private Component myDialogParent;
+  @Nullable private PsiFileSystemItem myCreatedElement = null;
+  @NotNull private final String myDelimiters;
+  @Nullable private final Component myDialogParent;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
@@ -64,10 +68,12 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     myDialogParent = dialogParent;
   }
 
+  @Override
   public boolean checkInput(String inputString) {
     return true;
   }
 
+  @Override
   public String getErrorText(String inputString) {
     if (FileTypeManager.getInstance().isFileIgnored(inputString)) {
       return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
@@ -78,6 +84,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     return null;
   }
 
+  @Override
   public boolean canClose(String inputString) {
     final String subDirName = inputString;
 
@@ -96,10 +103,39 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return false;
       }
     }
+    
+    boolean createFile = false;
+    if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
+      FileType fileType = findFileTypeBoundToName(subDirName);
+      if (fileType != null) {
+        String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";
+        int ec = Messages.showYesNoDialog(myProject, message,
+                                           "File Name Detected", "Yes, create file",
+                                           "No, create " + (myIsDirectory ? "directory" : "packages"),
+                                           fileType.getIcon());
+        if (ec == Messages.YES) {
+          createFile = true;
+        }
+      }
+    }
 
+    doCreateElement(subDirName, createFile);
+
+    return myCreatedElement != null;
+  }
+
+  @Nullable
+  public static FileType findFileTypeBoundToName(String name) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    return fileType instanceof UnknownFileType ? null : fileType;
+  }
+
+  private void doCreateElement(final String subDirName, final boolean createFile) {
     Runnable command = new Runnable() {
+      @Override
       public void run() {
         final Runnable run = new Runnable() {
+          @Override
           public void run() {
             LocalHistoryAction action = LocalHistoryAction.NULL;
             try {
@@ -108,10 +144,15 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
               actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
               action = LocalHistory.getInstance().startAction(actionName);
 
-              createDirectories(subDirName);
+              if (createFile) {
+                myCreatedElement = myDirectory.createFile(subDirName);
+              } else {
+                createDirectories(subDirName);
+              }
             }
             catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   showErrorDialog(CreateElementActionBase.filterMessage(ex.getMessage()));
                 }
@@ -125,11 +166,10 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         ApplicationManager.getApplication().runWriteAction(run);
       }
     };
-    CommandProcessor.getInstance().executeCommand(myProject, command, myIsDirectory
+    CommandProcessor.getInstance().executeCommand(myProject, command, createFile ? IdeBundle.message("command.create.file") 
+                                                                                 : myIsDirectory
                                                                       ? IdeBundle.message("command.create.directory")
                                                                       : IdeBundle.message("command.create.package"), null);
-
-    return myCreatedElement != null;
   }
 
   private void showErrorDialog(String message) {
@@ -148,7 +188,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   }
 
   @Nullable
-  public PsiDirectory getCreatedElement() {
+  public PsiFileSystemItem getCreatedElement() {
     return myCreatedElement;
   }
 }

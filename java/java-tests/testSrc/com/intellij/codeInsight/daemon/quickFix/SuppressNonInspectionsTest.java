@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -14,12 +13,10 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SuppressNonInspectionsTest extends LightQuickFixTestCase {
-
+public class SuppressNonInspectionsTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_3;
   }
 
   @NotNull

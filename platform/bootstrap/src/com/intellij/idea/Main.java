@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,139 +13,215 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
 public class Main {
+  public static final int UPDATE_FAILED = 1;
+  public static final int STARTUP_EXCEPTION = 2;
+  public static final int STARTUP_IMPOSSIBLE = 3;
+  public static final int LICENSE_ERROR = 4;
+  public static final int PLUGIN_ERROR = 5;
+
+  private static final String AWT_HEADLESS = "java.awt.headless";
+  private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  private static final String[] NO_ARGS = {};
+
   private static boolean isHeadless;
+  private static boolean isCommandLine;
 
-  private Main() {
-  }
+  private Main() { }
 
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
-  public static void main(final String[] args) {
-    isHeadless = isHeadless(args);
-    if (isHeadless) {
-      System.setProperty("java.awt.headless", Boolean.TRUE.toString());
-    }
-    else if (GraphicsEnvironment.isHeadless()) {
-      throw new HeadlessException("Unable to detect graphics environment");
+  public static void main(String[] args) {
+    if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
     }
 
-    if (!isHeadless) {
-      try {
-        installPatch();
+    setFlags(args);
+
+    if (isHeadless()) {
+      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
+    }
+    else {
+      if (GraphicsEnvironment.isHeadless()) {
+        throw new HeadlessException("Unable to detect graphics environment");
       }
-      catch (IOException e) {
-        e.printStackTrace();
 
-        File log = null;
+      if (args.length == 0) {
         try {
-          log = FileUtilRt.createTempFile("patch", ".log", false);
-          PrintWriter writer = new PrintWriter(log);
-          try {
-            e.printStackTrace(writer);
-          }
-          finally {
-            writer.close();
-          }
+          installPatch();
         }
-        catch (IOException ignore) {
-          ignore.printStackTrace();
+        catch (Throwable t) {
+          showMessage("Update Failed", t);
+          System.exit(UPDATE_FAILED);
         }
-
-        try {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (Throwable ignore) {
-        }
-        String message = e.getMessage()
-                         + "\n" + (log == null ? "Log cannot be saved" : "Log is saved in " + log)
-                         + "\n\nPlease download and install update manually" ;
-        JOptionPane.showMessageDialog(null, message, "Cannot Apply Patch", JOptionPane.ERROR_MESSAGE);
       }
     }
 
-    Bootstrap.main(args, Main.class.getName() + "Impl", "start");
-  }
-
-  public static boolean isHeadless(final String[] args) {
-    final Boolean forceEnabledHeadlessMode = Boolean.valueOf(System.getProperty("java.awt.headless"));
-
-    @NonNls final String antAppCode = "ant";
-    @NonNls final String duplocateCode = "duplocate";
-    @NonNls final String traverseUI = "traverseUI";
-    if (args.length == 0) {
-      return false;
+    try {
+      Bootstrap.main(args, Main.class.getName() + "Impl", "start");
     }
-    final String firstArg = args[0];
-    return forceEnabledHeadlessMode ||
-           Comparing.strEqual(firstArg, antAppCode) ||
-           Comparing.strEqual(firstArg, duplocateCode) ||
-           Comparing.strEqual(firstArg, traverseUI) ||
-           (firstArg.length() < 20 && firstArg.endsWith("inspect"));
-  }
-
-  public static boolean isUITraverser(final String[] args) {
-    return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
-  }
-
-  public static boolean isCommandLine(final String[] args) {
-    if (isHeadless(args)) return true;
-    @NonNls final String diffAppCode = "diff";
-    return args.length > 0 && Comparing.strEqual(args[0], diffAppCode);
+    catch (Throwable t) {
+      showMessage("Start Failed", t);
+      System.exit(STARTUP_EXCEPTION);
+    }
   }
 
   public static boolean isHeadless() {
     return isHeadless;
   }
 
+  public static boolean isCommandLine() {
+    return isCommandLine;
+  }
+
+  public static void setFlags(String[] args) {
+    isHeadless = isHeadless(args);
+    isCommandLine = isCommandLine(args);
+  }
+
+  private static boolean isHeadless(String[] args) {
+    if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
+      return true;
+    }
+
+    if (args.length == 0) {
+      return false;
+    }
+
+    String firstArg = args[0];
+    return Comparing.strEqual(firstArg, "ant") ||
+           Comparing.strEqual(firstArg, "duplocate") ||
+           Comparing.strEqual(firstArg, "traverseUI") ||
+           (firstArg.length() < 20 && firstArg.endsWith("inspect"));
+  }
+
+  private static boolean isCommandLine(String[] args) {
+    if (isHeadless()) return true;
+    return args.length > 0 && Comparing.strEqual(args[0], "diff");
+  }
+
+  public static boolean isUITraverser(final String[] args) {
+    return args.length > 0 && Comparing.strEqual(args[0], "traverseUI");
+  }
+
   private static void installPatch() throws IOException {
-    String platform = System.getProperty("idea.platform.prefix", "idea");
+    String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-    File originalPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName);
-    File copyPatchFile = new File(System.getProperty("java.io.tmpdir"), patchFileName + "_copy");
+    String tempDir = System.getProperty("java.io.tmpdir");
 
     // always delete previous patch copy
-    if (!FileUtilRt.delete(copyPatchFile)) throw new IOException("Cannot create temporary patch file");
-
-    if (!originalPatchFile.exists()) return;
-
-    if (!originalPatchFile.renameTo(copyPatchFile) || !FileUtilRt.delete(originalPatchFile)) {
-      throw new IOException("Cannot create temporary patch file");
+    File patchCopy = new File(tempDir, patchFileName + "_copy");
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
+    if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy)) {
+      throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
-    List<String> args = new ArrayList<String>();
-    if (SystemInfo.isWindows) {
-      args.add(Restarter.createTempExecutable(new File(PathManager.getBinPath(), "vistalauncher.exe")).getPath());
+    File patch = new File(tempDir, patchFileName);
+    if (!patch.exists()) return;
+    File log4j = new File(PathManager.getLibPath(), "log4j.jar");
+    if (!log4j.exists()) throw new IOException("Log4J missing: " + log4j);
+    copyFile(patch, patchCopy, true);
+    copyFile(log4j, log4jCopy, false);
+
+    int status = 0;
+    if (Restarter.isSupported()) {
+      List<String> args = new ArrayList<String>();
+
+      if (SystemInfoRt.isWindows) {
+        File launcher = new File(PathManager.getBinPath(), "VistaLauncher.exe");
+        args.add(Restarter.createTempExecutable(launcher).getPath());
+      }
+
+      Collections.addAll(args,
+                         System.getProperty("java.home") + "/bin/java",
+                         "-Xmx500m",
+                         "-classpath",
+                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath(),
+                         "-Djava.io.tmpdir=" + tempDir,
+                         "-Didea.updater.log=" + PathManager.getLogPath(),
+                         "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
+                         "com.intellij.updater.Runner",
+                         "install",
+                         PathManager.getHomePath());
+
+      status = Restarter.scheduleRestart(ArrayUtilRt.toStringArray(args));
+    }
+    else {
+      String message = "Patch update is not supported - please do it manually";
+      showMessage("Update Error", message, true);
     }
 
-    Collections.addAll(args,
-                       System.getProperty("java.home") + "/bin/java",
-                       "-Xmx500m",
-                       "-classpath",
-                       copyPatchFile.getPath(),
-                       "com.intellij.updater.Runner",
-                       "install",
-                       PathManager.getHomePath());
+    System.exit(status);
+  }
 
-    System.exit(Restarter.scheduleRestart(args.toArray(new String[args.size()])));
+  private static void copyFile(File original, File copy, boolean move) throws IOException {
+    if (move) {
+      if (!original.renameTo(copy) || !FileUtilRt.delete(original)) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
+    else {
+      FileUtilRt.copy(original, copy);
+      if (!copy.exists()) {
+        throw new IOException("Cannot create temporary file: " + copy);
+      }
+    }
+  }
+
+  public static void showMessage(String title, Throwable t) {
+    StringWriter message = new StringWriter();
+    message.append("Internal error. Please report to http://");
+    boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
+    message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
+    message.append("\n\n");
+    t.printStackTrace(new PrintWriter(message));
+    showMessage(title, message.toString(), true);
+  }
+
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
+  public static void showMessage(String title, String message, boolean error) {
+    if (isCommandLine()) {
+      PrintStream stream = error ? System.err : System.out;
+      stream.println("\n" + title + ": " + message);
+    }
+    else {
+      try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
+      catch (Throwable ignore) { }
+
+      JTextPane textPane = new JTextPane();
+      textPane.setEditable(false);
+      textPane.setText(message.replaceAll("\t", "    "));
+      textPane.setBackground(Color.white);
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(
+        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height >= maxHeight) {
+        Object setting = UIManager.get("ScrollBar.width");
+        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+      }
+
+      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+    }
   }
 }

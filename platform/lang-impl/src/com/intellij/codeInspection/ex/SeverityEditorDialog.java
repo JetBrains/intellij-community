@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.daemon.impl.SeverityUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -84,7 +85,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof SeverityBasedTextAttributes) {
-          setText(((SeverityBasedTextAttributes)value).getSeverity().toString());
+          setText(((SeverityBasedTextAttributes)value).getSeverity().getName());
         }
         return rendererComponent;
       }
@@ -130,8 +131,7 @@ public class SeverityEditorDialog extends DialogWrapper {
           if (name == null) return;
           final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
           HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
-                                                                                                     com.intellij.openapi.editor.colors
-                                                                                                       .TextAttributesKey
+                                                                                                     TextAttributesKey
                                                                                                        .createTextAttributesKey(name));
 
           SeverityBasedTextAttributes newSeverityBasedTextAttributes = new SeverityBasedTextAttributes(textAttributes.clone(), info);
@@ -251,7 +251,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       try {
         final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
         LOG.assertTrue(javaPage != null);
-        ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);
+        ShowSettingsUtil.getInstance().editConfigurable(CommonDataKeys.PROJECT.getData(dataContext), javaPage);
       }
       finally {
         for (Configurable configurable : configurables) {
@@ -265,9 +265,9 @@ public class SeverityEditorDialog extends DialogWrapper {
   private void fillList(final HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
-    final List<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityRegistrar.SeverityBasedTextAttributes>();
-    infoTypes.addAll(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
-    Collections.sort(infoTypes, new Comparator<SeverityRegistrar.SeverityBasedTextAttributes>() {
+    final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
+    infoTypes.addAll(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
+    Collections.sort(infoTypes, new Comparator<SeverityBasedTextAttributes>() {
       @Override
       public int compare(SeverityBasedTextAttributes attributes1,
                          SeverityBasedTextAttributes attributes2) {
@@ -317,8 +317,8 @@ public class SeverityEditorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
-    final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
-      new HashSet<SeverityRegistrar.SeverityBasedTextAttributes>(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
+    final Collection<SeverityBasedTextAttributes> infoTypes =
+      new HashSet<SeverityBasedTextAttributes>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {

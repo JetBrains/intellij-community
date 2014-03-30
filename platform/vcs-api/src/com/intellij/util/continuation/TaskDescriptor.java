@@ -15,6 +15,10 @@
  */
 package com.intellij.util.continuation;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +39,6 @@ public abstract class TaskDescriptor {
     mySurviveKit = new HashMap<Object, Object>();
   }
 
-  @Nullable
   public abstract void run(final ContinuationContext context);
 
   public final void addCure(final Object disaster, final Object cure) {
@@ -61,5 +64,33 @@ public abstract class TaskDescriptor {
 
   public void setHaveMagicCure(boolean haveMagicCure) {
     myHaveMagicCure = haveMagicCure;
+  }
+
+  public void canceled() {
+  }
+
+  public static TaskDescriptor createForBackgroundableTask(@NotNull final Task.Backgroundable backgroundable) {
+    return new TaskDescriptor(backgroundable.getTitle(), Where.POOLED) {
+      @Override
+      public void run(ContinuationContext context) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        try {
+          backgroundable.run(indicator);
+        } catch (ProcessCanceledException e) {
+          //
+        }
+        final boolean canceled = indicator.isCanceled();
+        context.next(new TaskDescriptor("", Where.AWT) {
+          @Override
+          public void run(ContinuationContext context) {
+            if (canceled) {
+              backgroundable.onCancel();
+            } else {
+              backgroundable.onSuccess();
+            }
+          }
+        });
+      }
+    };
   }
 }

@@ -1,10 +1,25 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiNamedElement;
@@ -27,7 +42,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     String myName = element.getName();
     if (myName == null) myName = "<anonymous>";
     this.myName = myName;
-    myElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
+    myElementPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     myIcon = icon;
   }
@@ -84,7 +99,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
   }
 
   @Override
-  public int compareTo(final UsageGroup o) {
+  public int compareTo(@NotNull final UsageGroup o) {
     String name;
     if (o instanceof NamedPresentably) {
       name = ((NamedPresentably)o).getPresentableName();
@@ -109,8 +124,8 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
 
   public void calcData(final DataKey key, final DataSink sink) {
     if (!isValid()) return;
-    if (LangDataKeys.PSI_ELEMENT == key) {
-      sink.put(LangDataKeys.PSI_ELEMENT, getElement());
+    if (CommonDataKeys.PSI_ELEMENT == key) {
+      sink.put(CommonDataKeys.PSI_ELEMENT, getElement());
     }
     if (UsageView.USAGE_INFO_KEY == key) {
       T element = getElement();

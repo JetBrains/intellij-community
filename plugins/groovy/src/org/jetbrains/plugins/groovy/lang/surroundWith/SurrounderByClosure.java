@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,8 @@ public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
         final GroovyResolveResult newResult = ref.advancedResolve();
         final PsiElement oldElement = oldResult.getElement();
         final PsiElement newElement = newResult.getElement();
-        if (oldElement != newElement || oldResult.getCurrentFileResolveContext() != newResult.getCurrentFileResolveContext()) {
+        if (!ref.getManager().areElementsEquivalent(oldElement, newElement) ||
+            oldResult.getCurrentFileResolveContext() != newResult.getCurrentFileResolveContext()) {
           final GrReferenceExpression qualifier = GroovyPsiElementFactory.getInstance(ref.getProject()).createReferenceExpressionFromText("owner");
           ref.setQualifier(qualifier);
         }

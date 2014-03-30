@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,13 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private final boolean isDirectory;
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
+    this(fileSystem, ioFile, ioFile.isDirectory());
+  }
+
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
-    isDirectory = ioFile.isDirectory();
+    this.isDirectory = isDirectory;
   }
 
   @NotNull
@@ -52,9 +56,10 @@ public class CoreLocalVirtualFile extends VirtualFile {
     return myFileSystem;
   }
 
+  @NotNull
   @Override
   public String getPath() {
-    return myIoFile.getAbsolutePath();
+    return FileUtil.toSystemIndependentName(myIoFile.getAbsolutePath());
   }
 
   @Override

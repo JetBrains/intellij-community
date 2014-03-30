@@ -17,13 +17,14 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -35,19 +36,19 @@ import java.util.List;
  */
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
-  
-  
+
+
   @Override
   public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiExpression innerMethodCall,
                                                                           PsiExpressionList expressionList,
-                                                                          PsiCallExpression contextCall,
+                                                                          @NotNull PsiCallExpression contextCall,
                                                                           PsiTypeParameter typeParameter) {
     PsiExpression[] expressions = expressionList.getExpressions();
     PsiElement parent = innerMethodCall;
     while (parent.getParent() instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    int i = ArrayUtil.find(expressions, parent);
+    int i = ArrayUtilRt.find(expressions, parent);
     if (i < 0) return null;
     PsiMethod owner = (PsiMethod)typeParameter.getOwner();
     if (owner == null) return null;
@@ -56,6 +57,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       final JavaResolveResult[] results = getResults(contextCall, i);
       final PsiType innerReturnType = owner.getReturnType();
       for (final JavaResolveResult result : results) {
+        if (result == null) continue;
         final PsiSubstitutor substitutor = getSubstitutor(contextCall, expressions, i, result);
         final Pair<PsiType, ConstraintType> constraint = inferConstraint(typeParameter, innerMethodCall, i, innerReturnType, result, substitutor);
         if (constraint != null) return constraint;
@@ -71,7 +73,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
   protected PsiSubstitutor getSubstitutor(PsiCallExpression contextCall, PsiExpression[] expressions, int i, JavaResolveResult result) {
     if (result instanceof MethodCandidateInfo) {
       List<PsiExpression> leftArgs = getExpressions(expressions, i);
-      return ((MethodCandidateInfo)result).inferTypeArguments(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
+      return ((MethodCandidateInfo)result).inferSubstitutorFromArgs(this, leftArgs.toArray(new PsiExpression[leftArgs.size()]));
     }
     else {
       return result.getSubstitutor();
@@ -107,9 +109,9 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
             return substitutor.substitute(finalParameter.getType());
           }
         });
+        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(finalParameter);
         final Pair<PsiType, ConstraintType> constraint =
-          PsiResolveHelperImpl.getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false,
-                                                                         PsiUtil.getLanguageLevel(finalParameter));
+          new PsiOldInferenceHelper(element.getManager()).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);
         if (constraint != null) return constraint;
       }
     }
@@ -117,8 +119,9 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
   }
 
   @NotNull
-  protected JavaResolveResult[] getResults(PsiCallExpression contextCall, final int exprIdx) throws MethodProcessorSetupFailedException {
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall);
+  protected JavaResolveResult[] getResults(@NotNull PsiCallExpression contextCall, final int exprIdx) throws MethodProcessorSetupFailedException {
+    PsiFile containingFile = contextCall.getContainingFile();
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall, containingFile);
     //can't call resolve() since it obtains full substitution, that may result in infinite recursion
     PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
     return processor.getResult();

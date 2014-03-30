@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -53,6 +54,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -62,16 +64,16 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-class AnnotateStackTraceAction extends AnAction {
+class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private final EditorHyperlinkSupport myHyperlinks;
   private Map<Integer, VcsFileRevision> cache;
   private int newestLine = -1;
   private int maxDateLength = 0;
   private final Editor myEditor;
   private boolean myGutterShowed = false;
-  private HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
+  private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
-  AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
+  AnnotateStackTraceAction(@NotNull ConsoleViewImpl consoleView) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
     myHyperlinks = consoleView.getHyperlinks();
     myEditor = consoleView.getEditor();
@@ -145,13 +147,13 @@ class AnnotateStackTraceAction extends AnAction {
           public String getToolTip(int line, Editor editor) {
             final VcsFileRevision revision = cache.get(line);
             if (revision != null) {
-              return "<html>" +
-                     revision.getAuthor() +
-                     " " +
-                     DateFormatUtil.formatDateTime(revision.getRevisionDate()) +
-                     "<br/>" +
-                     revision.getCommitMessage() +
-                     "</html>";
+              return XmlStringUtil.wrapInHtml(
+                revision.getAuthor() +
+                " " +
+                DateFormatUtil.formatDateTime(revision.getRevisionDate()) +
+                "<br/>" +
+                revision.getCommitMessage()
+              );
             }
             return null;
           }
@@ -242,6 +244,7 @@ class AnnotateStackTraceAction extends AnAction {
                       cache.put(line, revision);
                     }
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
                       public void run() {
                         if (!myGutterShowed) {
                           showGutter();

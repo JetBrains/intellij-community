@@ -1,13 +1,10 @@
 class Test {
-    private int f;
+  private int f;
 
-    void foo () {
-        f = 0;
-        int k = f;
-    }
+  public void bar() {
+    foo(() -> {f++;});
+  }
 
-    int bar () {
-        f = 5;
-        return f;
-    }
+  private void foo(Runnable r) {
+  }
 }

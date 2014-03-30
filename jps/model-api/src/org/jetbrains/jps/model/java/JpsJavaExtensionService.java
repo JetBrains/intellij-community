@@ -115,4 +115,10 @@ public abstract class JpsJavaExtensionService {
 
   @NotNull
   public abstract JpsApplicationRunConfigurationProperties createRunConfigurationProperties(JpsApplicationRunConfigurationState state);
+
+  @NotNull
+  public abstract JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix, boolean isGenerated);
+
+  @NotNull
+  public abstract JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix);
 }

@@ -10,4 +10,18 @@ public class InstanceofChain {
 
         }
     }
+
+    void m(boolean b, Object o) {
+        if (o instanceof String) {
+
+        } else if (o instanceof Boolean) {
+
+        } else if (b) {}
+    }
+
+    void n(Object o) {
+        if (o instanceof Integer) {}
+        if (o instanceof Byte) {}
+        if (o instanceof Long) {}
+    }
 }

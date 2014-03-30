@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.wm.WelcomeScreen;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class WelcomePane extends JPanel {
-  public WelcomePane(ActionGroup actions) {
+  public WelcomePane(ActionGroup actions, WelcomeScreen screen) {
     super(new GridBagLayout());
 
     JPanel actionsPanel = new CardActionsPanel(actions) {
@@ -39,7 +40,7 @@ public class WelcomePane extends JPanel {
     actionsPanel.setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
 
     JPanel recentsPanel = new JPanel(new BorderLayout(30, 30));
-    recentsPanel.add(new RecentProjectPanel());
+    recentsPanel.add(new RecentProjectPanel(screen));
 
     GridBagConstraints c = new GridBagConstraints();
     c.gridx = 0;

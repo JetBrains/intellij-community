@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
@@ -212,10 +212,6 @@ public abstract class GroovyElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitLabel(GrLabel label) {
-    visitElement(label);
-  }
-
   public void visitArgumentList(GrArgumentList list) {
     visitElement(list);
   }
@@ -260,6 +256,26 @@ public abstract class GroovyElementVisitor {
     visitElement(typeDefinition);
   }
 
+  public void visitClassDefinition(GrClassDefinition classDefinition) {
+    visitTypeDefinition(classDefinition);
+  }
+
+  public void visitEnumDefinition(GrEnumTypeDefinition enumDefinition) {
+    visitTypeDefinition(enumDefinition);
+  }
+
+  public void visitInterfaceDefinition(GrInterfaceDefinition interfaceDefinition) {
+    visitTypeDefinition(interfaceDefinition);
+  }
+
+  public void visitAnonymousClassDefinition(GrAnonymousClassDefinition anonymousClassDefinition) {
+    visitTypeDefinition(anonymousClassDefinition);
+  }
+
+  public void visitAnnotationTypeDefinition(GrAnnotationTypeDefinition annotationTypeDefinition) {
+    visitTypeDefinition(annotationTypeDefinition);
+  }
+
   public void visitExtendsClause(GrExtendsClause extendsClause) {
     visitElement(extendsClause);
   }
@@ -278,10 +294,6 @@ public abstract class GroovyElementVisitor {
 
   public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
     visitMethod(annotationMethod);
-  }
-
-  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
-    visitElement(defaultAnnotationValue);
   }
 
   public void visitMethod(GrMethod method) {
@@ -442,5 +454,13 @@ public abstract class GroovyElementVisitor {
 
   public void visitTypeParameter(GrTypeParameter typeParameter) {
     visitTypeDefinition(typeParameter);
+  }
+
+  public void visitTupleExpression(GrTupleExpression tupleExpression) {
+    visitExpression(tupleExpression);
+  }
+
+  public void visitSpreadArgument(GrSpreadArgument spreadArgument) {
+    visitExpression(spreadArgument);
   }
 }

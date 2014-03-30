@@ -49,7 +49,7 @@ public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormatting
   public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
-                                                  int endOffset, CodeStyleSettings codeStyleSettings) {
+                                                  int endOffset, CodeStyleSettings codeStyleSettings, ASTNode nodeAfter) {
     return whiteSpaceText;
   }
 

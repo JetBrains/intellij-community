@@ -17,6 +17,7 @@ package com.intellij.testIntegration;
 
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
@@ -33,7 +34,7 @@ public class GotoTestRelatedProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     List<PsiElement> result;
     final boolean isTest = TestFinderHelper.isTest(file);
     if (isTest) {

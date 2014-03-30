@@ -22,10 +22,12 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.NotNull;
 
 public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClassesSearch.SearchParameters> {
   public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.allClassesSearch");
@@ -36,20 +38,22 @@ public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClasse
     private final Project myProject;
     private final Condition<String> myShortNameCondition;
 
-    public SearchParameters(final SearchScope scope, final Project project) {
-      this(scope, project, Condition.TRUE);
+    public SearchParameters(@NotNull SearchScope scope, @NotNull Project project) {
+      this(scope, project, Conditions.<String>alwaysTrue());
     }
 
-    public SearchParameters(final SearchScope scope, final Project project, final Condition<String> shortNameCondition) {
+    public SearchParameters(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<String> shortNameCondition) {
       myScope = scope;
       myProject = project;
       myShortNameCondition = shortNameCondition;
     }
 
+    @NotNull
     public SearchScope getScope() {
       return myScope;
     }
 
+    @NotNull
     public Project getProject() {
       return myProject;
     }
@@ -59,11 +63,13 @@ public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClasse
     }
   }
 
-  public static Query<PsiClass> search(SearchScope scope, Project project) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project) {
     return INSTANCE.createQuery(new SearchParameters(scope, project));
   }
 
-  public static Query<PsiClass> search(SearchScope scope, Project project, Condition<String> shortNameCondition) {
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<String> shortNameCondition) {
     return INSTANCE.createQuery(new SearchParameters(scope, project, shortNameCondition));
   }
 }

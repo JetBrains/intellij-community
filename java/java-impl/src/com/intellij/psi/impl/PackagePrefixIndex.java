@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collection;
 import java.util.List;
@@ -58,7 +59,7 @@ public class PackagePrefixIndex {
     map = new MultiMap<String, Module>();
     for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-        for (final SourceFolder folder : entry.getSourceFolders()) {
+        for (final SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String prefix = folder.getPackagePrefix();
           if (StringUtil.isNotEmpty(prefix)) {
             map.putValue(prefix, module);

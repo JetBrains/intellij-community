@@ -17,15 +17,13 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * Represents a frame of execution stack. The selected frame is shown in 'Variables' panel of 'Debug' tool window.
@@ -64,50 +62,17 @@ public abstract class XStackFrame extends XValueContainer {
 
   /**
    * Customize presentation of the stack frame in frames list
-   *
    * @param component component
    */
-  public void customizePresentation(SimpleColoredComponent component) {
-    customizePresentation(new ColoredTextContainerComponent(component));
-  }
-
-  /**
-   * Customize presentation of the stack frame in frames list
-   * @param component component
-   */
-  public void customizePresentation(ColoredTextContainer component) {
+  public void customizePresentation(@NotNull ColoredTextContainer component) {
     XSourcePosition position = getSourcePosition();
     if (position != null) {
-      //FileColorManager.getInstance()
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      component.append(":" + (position.getLine()+1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(":" + (position.getLine() + 1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.setIcon(AllIcons.Debugger.StackFrame);
     }
     else {
       component.append(XDebuggerBundle.message("invalid.frame"), SimpleTextAttributes.ERROR_ATTRIBUTES);
-    }
-  }
-
-  public interface ColoredTextContainer {
-    void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes);
-    void setIcon(@Nullable final Icon icon);
-  }
-
-  static class ColoredTextContainerComponent implements ColoredTextContainer {
-    private final SimpleColoredComponent component;
-
-    ColoredTextContainerComponent(SimpleColoredComponent component) {
-      this.component = component;
-    }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-      component.append(fragment, attributes);
-    }
-
-    @Override
-    public void setIcon(@Nullable Icon icon) {
-      component.setIcon(icon);
     }
   }
 }

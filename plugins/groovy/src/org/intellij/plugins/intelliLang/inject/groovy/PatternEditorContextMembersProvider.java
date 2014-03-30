@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.patterns.compiler.PatternClassBean;
 import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.*;
@@ -35,7 +36,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
@@ -87,7 +87,8 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
       @Override
       public Result<List<PsiElement>> compute() {
         return new Result<List<PsiElement>>(Collections.<PsiElement>singletonList(
-          getRootByClasses(InjectorUtils.getPatternClasses(injection.getSupportId()), file.getProject())), ArrayUtil.EMPTY_OBJECT_ARRAY);
+          getRootByClasses(InjectorUtils.getPatternClasses(injection.getSupportId()), file.getProject())),
+                                            ModificationTracker.NEVER_CHANGED);
       }
     };
   }

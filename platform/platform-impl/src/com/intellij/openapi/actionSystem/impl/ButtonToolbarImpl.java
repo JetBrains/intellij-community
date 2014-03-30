@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,7 @@ public class ButtonToolbarImpl extends JPanel {
   private final ArrayList<ActionJButton> myActions = new ArrayList<ActionJButton>();
 
   public ButtonToolbarImpl(final String place,
-                           final ActionGroup actionGroup,
+                           @NotNull ActionGroup actionGroup,
                            DataManager dataManager,
                            ActionManagerEx actionManager) {
     super(new GridBagLayout());
@@ -57,7 +58,7 @@ public class ButtonToolbarImpl extends JPanel {
 
   }
 
-  private void initButtons(final ActionGroup actionGroup) {
+  private void initButtons(@NotNull ActionGroup actionGroup) {
     final AnAction[] actions = actionGroup.getChildren(null);
 
     if (actions.length > 0) {

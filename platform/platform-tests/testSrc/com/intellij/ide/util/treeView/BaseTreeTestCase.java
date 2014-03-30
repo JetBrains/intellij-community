@@ -282,11 +282,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   static AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
     final AbstractTreeUpdater updater = new AbstractTreeUpdater(builder) {
       @Override
-      protected void invokeLater(Runnable runnable) {
-        runnable.run();
-      }
-
-      @Override
       protected boolean isEdt() {
         return SwingUtilities.isEventDispatchThread();
       }
@@ -422,7 +417,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   void select(final Object element, final boolean addToSelection) throws Exception {
     select(new Object[] {element}, addToSelection);
   }
-  
+
   void select(final Object[] elements, final boolean addToSelection) throws Exception {
     select(elements, addToSelection, false);
   }

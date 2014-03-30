@@ -1,0 +1,60 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+target('run_cucumber_tests': "Run cucumber tests") {
+  if (!isDefined("cucumber_test_dirs")) {
+    return
+  }
+
+  cucumber_test_dirs.each {
+    def m = findModule(it[0])
+    def platformPrefix = it[1]
+    def testsDir = it[2]
+    def stepDefsPackage = it[3]
+
+
+    ant.java(failonerror: "true", classname: "com.intellij.cucumber.CucumberMain", fork: "true", dir: testsDir) {
+      jvmarg(line: "-Xmx512m")
+      jvmarg(line: "-XX:MaxPermSize=350m")
+      jvmarg(line: "-XX:+HeapDumpOnOutOfMemoryError")
+      jvmarg(line: "-ea")
+      jvmarg(line: "-Didea.platform.prefix=$platformPrefix")
+
+      System.getProperties().entrySet().each {
+        if (it.key.startsWith("pass.")) {
+          def trimmed = it.key.substring("pass.".length());
+          jvmarg(value: "-D${trimmed}=${it.value}");
+        };
+      }
+
+      arg(value: "--format")
+      arg(value: "org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatter")
+      arg(value: "--glue")
+      arg(value: stepDefsPackage)
+      arg(value: ".")
+
+      classpath() {
+        projectBuilder.moduleRuntimeClasspath(findModule("cucumber-test-runner"), false).each {
+          pathelement(location: it)
+        }
+        projectBuilder.moduleRuntimeClasspath(m, true).each {
+          pathelement(location: it)
+        }
+      }
+    }
+
+  }
+
+}

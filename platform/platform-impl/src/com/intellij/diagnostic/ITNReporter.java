@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -95,7 +96,7 @@ public class ITNReporter extends ErrorReportSubmitter {
                                final ErrorBean errorBean,
                                final String description) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final ErrorReportConfigurable errorReportConfigurable = ErrorReportConfigurable.getInstance();
     if (!errorReportConfigurable.KEEP_ITN_PASSWORD &&
@@ -143,7 +144,7 @@ public class ITNReporter extends ErrorReportSubmitter {
       login = "idea_anonymous";
       password = "guest";
     }
-    
+
     ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       @Override
@@ -156,20 +157,20 @@ public class ITNReporter extends ErrorReportSubmitter {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            StringBuilder text = new StringBuilder("<html>");
+            StringBuilder text = new StringBuilder();
             final String url = IdeErrorsDialog.getUrl(reportInfo, true);
             IdeErrorsDialog.appendSubmissionInformation(reportInfo, text, url);
             text.append(".");
             if (reportInfo.getStatus() != SubmittedReportInfo.SubmissionStatus.FAILED) {
               text.append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
             }
-            text.append("</html>");
+
             NotificationType type = reportInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED
                                     ? NotificationType.ERROR
                                     : NotificationType.INFORMATION;
             NotificationListener listener = url != null ? new NotificationListener.UrlOpeningListener(true) : null;
             ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
-                                                    text.toString(),
+                                                    XmlStringUtil.wrapInHtml(text),
                                                     type, listener).setImportant(false).notify(project);
           }
         });
@@ -196,7 +197,7 @@ public class ITNReporter extends ErrorReportSubmitter {
                 showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
-            else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != 0) {
+            else if (showYesNoDialog(parentComponent, project, msg, ReportMessages.ERROR_REPORT, Messages.getErrorIcon()) != Messages.YES) {
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }
             else {
@@ -232,6 +233,7 @@ public class ITNReporter extends ErrorReportSubmitter {
     }
   }
 
+  @Messages.YesNoResult
   private static int showYesNoDialog(Component parentComponent, Project project, String message, String title, Icon icon) {
     if (parentComponent.isShowing()) {
       return Messages.showYesNoDialog(parentComponent, message, title, icon);

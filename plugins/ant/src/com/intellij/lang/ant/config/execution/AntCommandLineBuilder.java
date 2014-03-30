@@ -106,6 +106,8 @@ public class AntCommandLineBuilder {
 
     final String antHome = AntInstallation.HOME_DIR.get(antInstallation.getProperties());
     vmParametersList.add("-Dant.home=" + antHome);
+    final String libraryDir = antHome + (antHome.endsWith("/") || antHome.endsWith(File.separator) ? "" : File.separator) + "lib";
+    vmParametersList.add("-Dant.library.dir=" + libraryDir);
 
     String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
     final String jdkHome = homeDirectory.getPath().replace('/', File.separatorChar);

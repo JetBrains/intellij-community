@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -36,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -46,33 +47,33 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
   }
 
   @NotNull
-  private static PsiClass[] getDeriverCandidates(PsiClass clazz, GlobalSearchScope scope) {
+  private static List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope) {
     final String name = clazz.getName();
-    if (name == null) return GrTypeDefinition.EMPTY_ARRAY;
+    if (name == null) return Collections.emptyList();
     final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
-    for (GrReferenceList list : StubIndex.getInstance().safeGet(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
+    for (GrReferenceList list : StubIndex.getElements(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
                                                       GrReferenceList.class)) {
       final PsiElement parent = list.getParent();
       if (parent instanceof GrTypeDefinition) {
-        inheritors.add(GrClassSubstitutor.getSubstitutedClass(((GrTypeDefinition)parent)));
+        inheritors.add((PsiClass)parent);
       }
     }
     final Collection<GrAnonymousClassDefinition> classes =
-      StubIndex.getInstance().get(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope);
+      StubIndex.getElements(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope, GrAnonymousClassDefinition.class);
     for (GrAnonymousClassDefinition aClass : classes) {
       inheritors.add(aClass);
     }
-    return inheritors.toArray(new PsiClass[inheritors.size()]);
+    return inheritors;
   }
 
   public boolean execute(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
-      final PsiClass[] candidates = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-        public PsiClass[] compute() {
-          if (!clazz.isValid()) return PsiClass.EMPTY_ARRAY;
-          return getDeriverCandidates(clazz, (GlobalSearchScope)scope);
+      final List<PsiClass> candidates = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiClass>>() {
+        public List<PsiClass> compute() {
+          if (!clazz.isValid()) return Collections.emptyList();
+          return getDerivingClassCandidates(clazz, (GlobalSearchScope)scope);
         }
       });
       for (final PsiClass candidate : candidates) {

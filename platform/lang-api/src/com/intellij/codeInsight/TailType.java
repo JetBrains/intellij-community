@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,6 +57,7 @@ public abstract class TailType {
   }
 
   public static final TailType UNKNOWN = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -68,6 +69,7 @@ public abstract class TailType {
   };
 
   public static final TailType NONE = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -81,6 +83,7 @@ public abstract class TailType {
   @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
       if (styleSettings.SPACE_BEFORE_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
@@ -96,7 +99,7 @@ public abstract class TailType {
 
   protected static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
     final PsiFile psiFile = getFile(editor);
-    Language language = PsiUtilBase.getLanguageAtOffset(psiFile, tailOffset);
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
 
     final Project project = editor.getProject();
     assert project != null;
@@ -149,6 +152,7 @@ public abstract class TailType {
 
   public static final TailType CASE_COLON = new CharTailType(':');
   public static final TailType COND_EXPR_COLON = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
@@ -177,6 +181,7 @@ public abstract class TailType {
       return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
 
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();

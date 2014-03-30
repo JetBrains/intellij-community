@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.ui.MessageType;
@@ -29,20 +26,16 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +45,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -61,7 +52,8 @@ import java.util.List;
  * User: spLeaner
  */
 public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
-  private InfoAndProgressPanel myInfoAndProgressPanel;
+  private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
+  private final InfoAndProgressPanel myInfoAndProgressPanel;
   private IdeFrame myFrame;
 
   private enum Position {LEFT, RIGHT, CENTER}
@@ -81,6 +73,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private final List<String> myCustomComponentIds = new ArrayList<String>();
 
   private final Set<IdeStatusBarImpl> myChildren = new HashSet<IdeStatusBarImpl>();
+  //private ToolWindowsWidget myToolWindowWidget;
 
   private static class WidgetBean {
     JComponent component;
@@ -130,6 +123,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     void update(IdeStatusBarImpl child);
   }
 
+  @Override
   public StatusBar createChild() {
     final IdeStatusBarImpl bar = new IdeStatusBarImpl(this);
     myChildren.add(bar);
@@ -160,7 +154,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     setLayout(new BorderLayout(2, 0));
     setBorder(BorderFactory.createEmptyBorder(1, 4, 0, SystemInfo.isMac ? 2 : 0));
 
-    myInfoAndProgressPanel = new InfoAndProgressPanel(master == null);
+    myInfoAndProgressPanel = new InfoAndProgressPanel();
     addWidget(myInfoAndProgressPanel, Position.CENTER);
 
     setOpaque(true);
@@ -171,8 +165,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
 
     if (master == null) {
-      addWidget(new ToolWindowsWidget(), Position.LEFT);
+      addWidget(new ToolWindowsWidget(this), Position.LEFT);
     }
+
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
 
@@ -180,10 +177,22 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     this(null);
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+    if (size == null) return null;
+    
+    Insets insets = getInsets();
+    int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
+    return new Dimension(size.width, Math.max(size.height, minHeight));
+  }
+
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget) {
     addWidget(widget, Position.RIGHT, "__AUTODETECT__");
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor) {
     addWidget(widget, Position.RIGHT, anchor);
   }
@@ -192,24 +201,29 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     addWidget(widget, pos, "__IGNORED__");
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Disposable parentDisposable) {
     addWidget(widget);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeWidget(widget.ID());
       }
     });
   }
 
+  @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull String anchor, @NotNull final Disposable parentDisposable) {
     addWidget(widget, anchor);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeWidget(widget.ID());
       }
     });
   }
 
+  @Override
   public void removeCustomIndicationComponents() {
     for (final String id : myCustomComponentIds) {
       removeWidget(id);
@@ -218,25 +232,31 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myCustomComponentIds.clear();
   }
 
+  @Override
   public void addCustomIndicationComponent(@NotNull final JComponent c) {
     final String customId = c.getClass().getName() + new Random().nextLong();
     addWidget(new CustomStatusBarWidget() {
+      @Override
       @NotNull
       public String ID() {
         return customId;
       }
 
+      @Override
       @Nullable
       public WidgetPresentation getPresentation(@NotNull PlatformType type) {
         return null;
       }
 
+      @Override
       public void install(@NotNull StatusBar statusBar) {
       }
 
+      @Override
       public void dispose() {
       }
 
+      @Override
       public JComponent getComponent() {
         return c;
       }
@@ -245,6 +265,30 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myCustomComponentIds.add(customId);
   }
 
+  //@Override
+  //protected void processMouseMotionEvent(MouseEvent e) {
+  //  final Point point = e.getPoint();
+  //  if (myToolWindowWidget != null) {
+  //    if(point.x < 42 && 0 <= point.y && point.y <= getHeight()) {
+  //      myToolWindowWidget.mouseEntered();
+  //    } else {
+  //      myToolWindowWidget.mouseExited();
+  //    }
+  //  }
+  //  super.processMouseMotionEvent(e);
+  //}
+
+  //@Override
+  //protected void processMouseEvent(MouseEvent e) {
+  //  if (e.getID() == MouseEvent.MOUSE_EXITED && myToolWindowWidget != null) {
+  //    if (!new Rectangle(0,0,22, getHeight()).contains(e.getPoint())) {
+  //      myToolWindowWidget.mouseExited();
+  //    }
+  //  }
+  //  super.processMouseEvent(e);
+  //}
+
+  @Override
   public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     final Set<String> keySet = myWidgetMap.keySet();
     final String[] keys = ArrayUtil.toStringArray(keySet);
@@ -257,6 +301,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
+  @Override
   public void dispose() {
     myWidgetMap.clear();
     myChildren.clear();
@@ -386,6 +431,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
+  @Override
   public void setInfo(@Nullable final String s) {
     setInfo(s, null);
   }
@@ -393,6 +439,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public void setInfo(@Nullable final String s, @Nullable final String requestor) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         if (myInfoAndProgressPanel != null) {
           Pair<String, String> pair = myInfoAndProgressPanel.setText(s, requestor);
@@ -403,6 +450,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public String getInfo() {
     return myInfo;
   }
@@ -412,7 +460,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myRequestor;
   }
 
-  public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
+  @Override
+  public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) {
     myInfoAndProgressPanel.addProgress(indicator, info);
   }
 
@@ -421,14 +470,17 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myInfoAndProgressPanel.getBackgroundProcesses();
   }
 
+  @Override
   public void setProcessWindowOpen(final boolean open) {
     myInfoAndProgressPanel.setProcessWindowOpen(open);
   }
 
+  @Override
   public boolean isProcessWindowOpen() {
     return myInfoAndProgressPanel.isProcessWindowOpen();
   }
 
+  @Override
   public void startRefreshIndication(final String tooltipText) {
     myInfoAndProgressPanel.setRefreshToolTipText(tooltipText);
     myInfoAndProgressPanel.setRefreshVisible(true);
@@ -441,6 +493,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public void stopRefreshIndication() {
     myInfoAndProgressPanel.setRefreshVisible(false);
 
@@ -452,10 +505,12 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
     return notifyProgressByBalloon(type, htmlBody, null, null);
   }
 
+  @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
                                                 @NotNull String htmlBody,
                                                 @Nullable Icon icon,
@@ -463,6 +518,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
   }
 
+  @Override
   public void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor) {
     new NotificationPopup(this, content, backgroundColor);
   }
@@ -501,6 +557,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return wrapper;
   }
 
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }
@@ -520,23 +577,34 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     }
   }
 
-  @Override
-  protected void paintChildren(final Graphics g) {
-    if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
-      final Graphics2D g2d = (Graphics2D)g.create();
-      //g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
-      super.paintChildren(g2d);
-      g2d.dispose();
-    }
-    else {
-      super.paintChildren(g);
-    }
-  }
+  //@Override
+  //protected void paintChildren(final Graphics g) {
+  //  if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
+  //    final Graphics2D g2d = (Graphics2D)g.create();
+  //    //g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.4f));
+  //    super.paintChildren(g2d);
+  //    g2d.dispose();
+  //  }
+  //  else {
+  //    super.paintChildren(g);
+  //  }
+  //}
 
   public StatusBarUI getUI() {
     return (StatusBarUI)ui;
   }
 
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+    if (UIUtil.isUnderDarcula()) {
+      //IDEA-112093
+      g.setColor(UIUtil.getPanelBackground());
+      g.drawLine(0, getHeight(), getWidth(), getHeight());
+    }
+  }
+
+  @Override
   public void removeWidget(@NotNull final String id) {
     final WidgetBean bean = myWidgetMap.get(id);
     if (bean != null) {
@@ -572,6 +640,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     myOrderedWidgets.remove(id);
   }
 
+  @Override
   public void updateWidgets() {
     for (final String s : myWidgetMap.keySet()) {
       updateWidget(s);
@@ -585,8 +654,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     });
   }
 
+  @Override
   public void updateWidget(@NotNull final String id) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         final WidgetBean bean = myWidgetMap.get(id);
         if (bean != null) {
@@ -621,14 +692,14 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
-      super(presentation.getMaxValue());
+      super();
       myPresentation = presentation;
 
       putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());
       new ClickListener() {
         @Override
-        public boolean onClick(MouseEvent e, int clickCount) {
+        public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           final ListPopup popup = myPresentation.getPopupStep();
           if (popup == null) return false;
           final Dimension dimension = popup.getContent().getPreferredSize();
@@ -642,6 +713,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
+    @Override
     public void beforeUpdate() {
       setText(myPresentation.getSelectedValue());
     }
@@ -679,7 +751,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     private boolean myMouseOver;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
-      super(presentation.getMaxPossibleText());
+      super();
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
 
@@ -716,6 +788,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       return myPresentation.getTooltipText();
     }
 
+    @Override
     public void beforeUpdate() {
       setText(myPresentation.getText());
     }
@@ -746,6 +819,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setOpaque(false);
     }
 
+    @Override
     public void beforeUpdate() {
       myIcon = myPresentation.getIcon();
     }
@@ -776,7 +850,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(24, 18);
+      return new Dimension(24, MIN_ICON_HEIGHT);
     }
 
     @Override
@@ -788,112 +862,5 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public IdeFrame getFrame() {
     return myFrame;
-  }
-
-  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
-                                                                   UISettingsListener, PropertyChangeListener {
-
-    private StatusBar myStatusBar;
-
-    private ToolWindowsWidget() {
-      new BaseButtonBehavior(this, TimedDeadzone.NULL) {
-        @Override
-        protected void execute(MouseEvent e) {
-          performAction();
-        }
-      }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
-
-      UISettings.getInstance().addUISettingsListener(this, this);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", this);
-    }
-
-
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-      updateIcon();
-    }
-
-    @Override
-    public void uiSettingsChanged(UISettings source) {
-      updateIcon();
-    }
-
-    private void performAction() {
-      if (isActive()) {
-        UISettings.getInstance().HIDE_TOOL_STRIPES = !UISettings.getInstance().HIDE_TOOL_STRIPES;
-        UISettings.getInstance().fireUISettingsChanged();
-      }
-    }
-
-    private void updateIcon() {
-      if (isActive()) {
-        boolean changes = false;
-
-        if (!isVisible()) {
-          setVisible(true);
-          changes = true;
-        }
-
-        Icon icon = UISettings.getInstance().HIDE_TOOL_STRIPES ? AllIcons.General.TbShown : AllIcons.General.TbHidden;
-        if (icon != getIcon()) {
-          setIcon(icon);
-          changes = true;
-        }
-
-        Set<Integer> vks = ToolWindowManagerImpl.getActivateToolWindowVKs();
-        String text = "Click to show or hide the tool window bars";
-        if (vks.size() == 1) {
-          Integer stroke = vks.iterator().next();
-          String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(stroke.intValue(), 0));
-          text += ".\nDouble-press and hold " + keystrokeText + " to show tool window bars when hidden.";
-        }
-        if (!text.equals(getToolTipText())) {
-          setToolTipText(text);
-          changes = true;
-        }
-
-        if (changes) {
-          revalidate();
-          repaint();
-        }
-      }
-      else {
-        setVisible(false);
-        setToolTipText(null);
-      }
-    }
-
-    private boolean isActive() {
-      return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public String ID() {
-      return "ToolWindows Widget";
-    }
-
-    @Override
-    public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-      return null;
-    }
-
-    @Override
-    public void install(@NotNull StatusBar statusBar) {
-      myStatusBar = statusBar;
-      updateIcon();
-    }
-
-    @Override
-    public void dispose() {
-      Disposer.dispose(this);
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener("focusOwner", this);
-      myStatusBar = null;
-    }
   }
 }

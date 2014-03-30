@@ -20,9 +20,9 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -71,11 +71,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * Creates new project for each test.
  * @author mike
  */
 class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixture {
 
-  @NonNls private static final String PROJECT_FILE_PREFIX = "temp";
   @NonNls private static final String PROJECT_FILE_SUFFIX = ProjectFileType.DOT_DEFAULT_EXTENSION;
 
   private Project myProject;
@@ -193,15 +193,15 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (PlatformDataKeys.PROJECT.is(dataId)) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+      else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         if (myProject == null) return null;
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {
-        Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
+        Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
           FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
           return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);

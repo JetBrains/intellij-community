@@ -23,14 +23,15 @@ package com.intellij.openapi.util.text;
  * @see StringUtil#findFirst(String, CharFilter)
 */
 public interface CharFilter {
-
   CharFilter WHITESPACE_FILTER = new CharFilter() {
+    @Override
     public boolean accept(char ch) {
       return Character.isWhitespace(ch);
     }
   };
 
   CharFilter NOT_WHITESPACE_FILTER = new CharFilter() {
+    @Override
     public boolean accept(char ch) {
       return !Character.isWhitespace(ch);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -22,6 +24,7 @@ import java.util.Arrays;
 public class UnsyncByteArrayOutputStream extends OutputStream {
   protected byte[] myBuffer;
   protected int myCount;
+  private boolean myIsShared;
 
   public UnsyncByteArrayOutputStream() {
     this(32);
@@ -31,15 +34,18 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     myBuffer = new byte[size];
   }
 
+  @Override
   public void write(int b) {
     int newcount = myCount + 1;
-    if (newcount > myBuffer.length) {
-      myBuffer = Arrays.copyOf(myBuffer, Math.max(myBuffer.length << 1, newcount));
+    if (newcount > myBuffer.length || myIsShared) {
+      myBuffer = Arrays.copyOf(myBuffer, newcount > myBuffer.length ? Math.max(myBuffer.length << 1, newcount):myBuffer.length);
+      myIsShared = false;
     }
     myBuffer[myCount] = (byte)b;
     myCount = newcount;
   }
 
+  @Override
   public void write(byte b[], int off, int len) {
     if ((off < 0) || (off > b.length) || (len < 0) ||
         ((off + len) > b.length) || ((off + len) < 0)) {
@@ -48,8 +54,9 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
       return;
     }
     int newcount = myCount + len;
-    if (newcount > myBuffer.length) {
-      myBuffer = Arrays.copyOf(myBuffer, Math.max(myBuffer.length << 1, newcount));
+    if (newcount > myBuffer.length || myIsShared) {
+      myBuffer = Arrays.copyOf(myBuffer, newcount > myBuffer.length ? Math.max(myBuffer.length << 1, newcount): myBuffer.length);
+      myIsShared = false;
     }
     System.arraycopy(b, off, myBuffer, myCount, len);
     myCount = newcount;
@@ -64,6 +71,10 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   public byte[] toByteArray() {
+    if (myBuffer.length == myCount) {
+      myIsShared = true;
+      return myBuffer;
+    }
     return Arrays.copyOf(myBuffer, myCount);
   }
 

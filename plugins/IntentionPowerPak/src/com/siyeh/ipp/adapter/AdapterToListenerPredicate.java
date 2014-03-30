@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package com.siyeh.ipp.adapter;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NonNls;
 
-public class AdapterToListenerPredicate implements PsiElementPredicate {
+class AdapterToListenerPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
@@ -48,7 +49,7 @@ public class AdapterToListenerPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiClass aClass = (PsiClass)target;
-    final String className = aClass.getName();
+    @NonNls final String className = aClass.getName();
     if (!className.endsWith("Adapter")) {
       return false;
     }
@@ -56,14 +57,13 @@ public class AdapterToListenerPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiReferenceList implementsList = aClass.getImplementsList();
-    final PsiJavaCodeReferenceElement[] implementsReferences =
-      implementsList.getReferenceElements();
-    //final List<PsiJavaCodeReferenceElement> listenerReferences =
-    //        new ArrayList();
-    for (PsiJavaCodeReferenceElement implementsReference :
-      implementsReferences) {
-      final String name = implementsReference.getReferenceName();
-      if (!name.endsWith("Listener")) {
+    if (implementsList == null) {
+      return false;
+    }
+    final PsiJavaCodeReferenceElement[] implementsReferences = implementsList.getReferenceElements();
+    for (PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
+      @NonNls final String name = implementsReference.getReferenceName();
+      if (name == null || !name.endsWith("Listener")) {
         continue;
       }
       final PsiElement implementsTarget = implementsReference.resolve();
@@ -75,7 +75,6 @@ public class AdapterToListenerPredicate implements PsiElementPredicate {
         continue;
       }
       return true;
-      //listenerReferences.add(implementsReference);
     }
     return false;
   }

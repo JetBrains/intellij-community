@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
-    private final String myRootPath;
     private final boolean myToWatchRecursively;
     private String myFSRootPath;
     private boolean myDominated;
@@ -62,7 +62,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
-      if (index > 0 || !rootFile.isDirectory()) {
+      if (index > 0 || !(FileUtil.isRootPath(rootFile) || rootFile.isDirectory())) {
         File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
           throw new FileNotFoundException(rootPath);
@@ -73,20 +73,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
 
       myFSRootPath = rootFile.getAbsolutePath();
-      myRootPath = FileUtil.toSystemIndependentName(myFSRootPath);
       myToWatchRecursively = toWatchRecursively;
     }
 
     @Override
     @NotNull
     public String getRootPath() {
-      return myRootPath;
-    }
-
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @Override
-    public String getFileSystemRootPath() {
-      return myFSRootPath;
+      return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
     @Override
@@ -94,21 +87,15 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       return myToWatchRecursively;
     }
 
-    /** @deprecated implementation details (to remove in IDEA 13) */
-    @Override
-    public boolean dominates(@NotNull WatchRequest other) {
-      return LocalFileSystemImpl.dominates(this, (WatchRequestImpl)other);
-    }
-
     @Override
     public String toString() {
-      return myRootPath;
+      return getRootPath();
     }
   }
 
   private static class TreeNode {
     private WatchRequestImpl watchRequest = null;
-    private Map<String, TreeNode> nodes = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+    private Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
@@ -137,19 +124,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   @NotNull
   public String getComponentName() {
     return "LocalFileSystem";
-  }
-
-  @TestOnly
-  public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
-    PersistentFS.getInstance().clearIdCache();
-
-    myRootsToWatch.clear();
   }
 
   private WatchRequestImpl[] normalizeRootsForRefresh() {
@@ -266,14 +240,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     // if we reach here it means that the exact path is already present in the graph -
     // then this request is assumed to be present only if it is not being watched recursively
     return !request.isToWatchRecursively() && currentNode.watchRequest != null;
-  }
-
-  private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
-    if (request.myToWatchRecursively) {
-      return other.myRootPath.startsWith(request.myRootPath);
-    }
-
-    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
   }
 
   private void storeRefreshStatusToFiles() {
@@ -559,5 +525,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   @NonNls
   public String toString() {
     return "LocalFileSystem";
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
+      }
+    });
+    PersistentFS.getInstance().clearIdCache();
+    myRootsToWatch.clear();
   }
 }

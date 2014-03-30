@@ -20,7 +20,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleMatchCase extends EditorHeaderToggleAction {
-  private static final String CASE_SENSITIVE = "&Match Case";
+  private static final String CASE_SENSITIVE = "Match &Case";
 
   public ToggleMatchCase(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent, CASE_SENSITIVE);

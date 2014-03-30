@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.injected.editor;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -163,17 +164,17 @@ public class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
-  public boolean addListener(@NotNull FoldingListener listener) {
-    return myDelegate.addListener(listener);
-  }
-
-  @Override
-  public boolean removeListener(@NotNull FoldingListener listener) {
-    return myDelegate.removeListener(listener);
+  public void addListener(@NotNull FoldingListener listener, @NotNull Disposable parentDisposable) {
+    myDelegate.addListener(listener, parentDisposable);
   }
 
   @Override
   public void rebuild() {
     myDelegate.rebuild();
+  }
+
+  @Override
+  public void clearFoldRegions() {
+    myDelegate.clearFoldRegions();
   }
 }

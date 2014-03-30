@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HttpFileSystemImpl extends HttpFileSystemBase {
   public HttpFileSystemImpl() {
-    super(PROTOCOL);
+    super(URLUtil.HTTP_PROTOCOL);
   }
 
   public static HttpFileSystemImpl getInstanceImpl() {

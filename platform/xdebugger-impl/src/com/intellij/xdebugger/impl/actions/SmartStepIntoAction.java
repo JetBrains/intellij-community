@@ -15,13 +15,14 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class SmartStepIntoAction extends XDebuggerActionBase {
+final class SmartStepIntoAction extends XDebuggerActionBase {
+  @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
     return debuggerSupport.getSmartStepIntoHandler();

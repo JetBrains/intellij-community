@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,15 +55,19 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   public ConversionResult convertSilently(@NotNull String projectPath) {
     return convertSilently(projectPath, new ConversionListener() {
+      @Override
       public void conversionNeeded() {
       }
 
+      @Override
       public void successfullyConverted(File backupDir) {
       }
 
+      @Override
       public void error(String message) {
       }
 
+      @Override
       public void cannotWriteToFiles(List<File> readonlyFiles) {
       }
     });
@@ -168,18 +172,23 @@ public class ConversionServiceImpl extends ConversionService {
     return converters;
   }
 
-  public static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
-    final ConversionContextImpl context = new ConversionContextImpl(projectPath);
-    final List<ConversionRunner> runners = getSortedConverters(context);
-    if (runners.isEmpty()) {
-      return false;
-    }
-    for (ConversionRunner runner : runners) {
-      if (runner.isConversionNeeded()) {
-        return true;
+  public static boolean isConversionNeeded(String projectPath) {
+    try {
+      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
+      final List<ConversionRunner> runners = getSortedConverters(context);
+      if (runners.isEmpty()) {
+        return false;
       }
+      for (ConversionRunner runner : runners) {
+        if (runner.isConversionNeeded()) {
+          return true;
+        }
+      }
+      saveConversionResult(context);
     }
-    saveConversionResult(context);
+    catch (CannotConvertException e) {
+      LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
+    }
     return false;
   }
 
@@ -240,6 +249,7 @@ public class ConversionServiceImpl extends ConversionService {
     }
     final Comparator<ConverterProvider> comparator = builder.comparator();
     Collections.sort(runners, new Comparator<ConversionRunner>() {
+      @Override
       public int compare(ConversionRunner o1, ConversionRunner o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
       }
@@ -294,6 +304,7 @@ public class ConversionServiceImpl extends ConversionService {
     return new File(PathManager.getSystemPath() + File.separator + "conversion" + File.separator + dirName + ".xml");
   }
 
+  @Override
   @NotNull
   public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
     final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
@@ -307,7 +318,7 @@ public class ConversionServiceImpl extends ConversionService {
 
     final int res = Messages.showYesNoDialog(project, IdeBundle.message("message.module.file.has.an.older.format.do.you.want.to.convert.it"),
                                              IdeBundle.message("dialog.title.convert.module"), Messages.getQuestionIcon());
-    if (res != 0) {
+    if (res != Messages.YES) {
       return ConversionResultImpl.CONVERSION_CANCELED;
     }
     if (!moduleFile.canWrite()) {
@@ -379,10 +390,12 @@ public class ConversionServiceImpl extends ConversionService {
       myProviders = providers;
     }
 
+    @Override
     public Collection<ConverterProvider> getNodes() {
       return Arrays.asList(myProviders);
     }
 
+    @Override
     public Iterator<ConverterProvider> getIn(ConverterProvider n) {
       List<ConverterProvider> preceding = new ArrayList<ConverterProvider>();
       for (String id : n.getPrecedingConverterIds()) {

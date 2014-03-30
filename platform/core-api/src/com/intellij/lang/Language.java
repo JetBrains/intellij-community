@@ -198,6 +198,15 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
+  public final boolean isKindOf(String anotherLanguageId) {
+    Language l = this;
+    while (l != null) {
+      if (l.getID().equals(anotherLanguageId)) return true;
+      l = l.getBaseLanguage();
+    }
+    return false;
+  }
+
   public List<Language> getDialects() {
     return myDialects;
   }
@@ -211,5 +220,12 @@ public abstract class Language extends UserDataHolderBase {
       }
     }
     return null;
+  }
+
+  /** Fake language identifier without registering */
+  protected Language(String id, @SuppressWarnings("UnusedParameters") boolean register) {
+    myID = id;
+    myBaseLanguage = null;
+    myMimeTypes = null;
   }
 }

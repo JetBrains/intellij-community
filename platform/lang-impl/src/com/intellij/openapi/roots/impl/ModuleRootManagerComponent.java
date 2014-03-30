@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 
@@ -27,7 +28,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
   name = "NewModuleRootManager",
   storages = {
     @Storage(
-      id = ClasspathStorage.DEFAULT_STORAGE,
+      id = ClassPathStorageUtil.DEFAULT_STORAGE,
       file = "$MODULE_FILE$"
     ),
 
@@ -50,8 +51,8 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
   public static class StorageChooser implements StateStorageChooser<ModuleRootManagerImpl> {
     @Override
     public Storage[] selectStorages(Storage[] storages, ModuleRootManagerImpl moduleRootManager, final StateStorageOperation operation) {
-      final String storageType = ClasspathStorage.getStorageType(moduleRootManager.getModule());
-      final String id = storageType.equals(ClasspathStorage.DEFAULT_STORAGE)? ClasspathStorage.DEFAULT_STORAGE: ClasspathStorage.SPECIAL_STORAGE;
+      final boolean isDefaultStorageType = ClassPathStorageUtil.isDefaultStorage(moduleRootManager.getModule());
+      final String id = isDefaultStorageType ? ClassPathStorageUtil.DEFAULT_STORAGE: ClasspathStorage.SPECIAL_STORAGE;
       for (Storage storage : storages) {
         if (storage.id().equals(id)) return new Storage[]{storage};
       }

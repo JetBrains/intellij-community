@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,12 @@ public class TokenSet {
 
   private final short myShift;
   private final short myMax;
-  private final short myTop;
   private final long[] myWords;
   private volatile IElementType[] myTypes;
 
   private TokenSet(short shift, short max) {
     myShift = shift;
     myMax = max;
-    myTop = IElementType.getAllocatedTypesCount();
     final int size = (max >> 6) + 1 - shift;
     myWords = size > 0 ? new long[size] : ArrayUtil.EMPTY_LONG_ARRAY;
   }
@@ -190,26 +188,6 @@ public class TokenSet {
       final int ai = newSet.myShift - a.myShift + i;
       final int bi = newSet.myShift - b.myShift + i;
       newSet.myWords[i] = (0 <= ai && ai < a.myWords.length ? a.myWords[ai] : 0l) & ~(0 <= bi && bi < b.myWords.length ? b.myWords[bi] : 0l);
-    }
-    return newSet;
-  }
-
-  /** @deprecated please use {@linkplain #andNot(TokenSet, TokenSet)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public TokenSet minus(@NotNull TokenSet t) {
-    return andNot(this, t);
-  }
-
-  /** @deprecated please use {@linkplain IElementType#enumerate(com.intellij.psi.tree.IElementType.Predicate)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public static TokenSet not(@NotNull TokenSet set) {
-    final TokenSet newSet = new TokenSet((short)0, set.myTop);
-    for (int i = 0; i < newSet.myWords.length; i++) {
-      int wordIndex = i - set.myShift;
-      long word = wordIndex >= 0 && wordIndex < set.myWords.length ? set.myWords[wordIndex] : 0;
-      newSet.myWords[i] = ~word;
     }
     return newSet;
   }

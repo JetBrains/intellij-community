@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -39,16 +40,19 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
     super(id);
   }
 
+  @NotNull
   @Override
   public EmptyModuleBuilder createModuleBuilder() {
     return new EmptyModuleBuilder();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return ProjectBundle.message("module.type.empty.name");
   }
 
+  @NotNull
   @Override
   public String getDescription() {
     return ProjectBundle.message("module.type.empty.description");

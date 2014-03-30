@@ -29,14 +29,15 @@ import javax.swing.undo.UndoManager;
  * @author yole
  */
 public class TextComponentUndoProvider implements Disposable {
-  private final JTextComponent myTextComponent;
-  private final UndoManager myUndoManager = new UndoManager();
+  protected final JTextComponent myTextComponent;
+  protected final UndoManager myUndoManager = new UndoManager();
   private UndoableEditListener myUndoableEditListener;
 
   public TextComponentUndoProvider(final JTextComponent textComponent) {
     myTextComponent = textComponent;
 
     myUndoableEditListener = new UndoableEditListener() {
+      @Override
       public void undoableEditHappened(UndoableEditEvent e) {
         myUndoManager.addEdit(e.getEdit());
       }
@@ -48,28 +49,55 @@ public class TextComponentUndoProvider implements Disposable {
 
     AnAction undoAction = new AnAction() {
       @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(canUndo());
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
-        if (myUndoManager.canUndo()) {
-          myUndoManager.undo();
-        }
+        undo();
       }
     };
 
     AnAction redoAction = new AnAction() {
       @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(canRedo());
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
-        if (myUndoManager.canRedo()) {
-          myUndoManager.redo();
-        }
+        redo();
       }
     };
 
     undoAction.registerCustomShortcutSet(new CustomShortcutSet(undoShortcuts), myTextComponent);
     redoAction.registerCustomShortcutSet(new CustomShortcutSet(redoShortcuts), myTextComponent);
-
-
   }
 
+  protected boolean canUndo() {
+    return myUndoManager.canUndo();
+  }
+
+  protected boolean canRedo() {
+    return myUndoManager.canRedo();
+  }
+
+  protected void redo() {
+    if (myUndoManager.canRedo()) {
+      myUndoManager.redo();
+    }
+  }
+
+  protected void undo() {
+    if (myUndoManager.canUndo()) {
+      myUndoManager.undo();
+    }
+  }
+
+  @Override
   public void dispose() {
     if (myUndoableEditListener != null) {
       myTextComponent.getDocument().removeUndoableEditListener(myUndoableEditListener);

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -48,7 +48,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   private final PsiClass myClass;
 
-  public CreateConstructorMatchingSuperFix(PsiClass aClass) {
+  public CreateConstructorMatchingSuperFix(@NotNull PsiClass aClass) {
     myClass = aClass;
   }
 
@@ -67,7 +67,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
     PsiClass baseClass = myClass.getSuperClass();
     LOG.assertTrue(baseClass != null);
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, myClass, PsiSubstitutor.EMPTY);
@@ -96,7 +96,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
     LOG.assertTrue(constructors.length >=1); // Otherwise we won't have been messing with all this stuff
     boolean isCopyJavadoc = true;
-    if (constructors.length > 1) {
+    if (constructors.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
       chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();

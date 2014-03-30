@@ -25,26 +25,30 @@ import java.awt.*;
  * author: lesya
  */
 public abstract class OptionsDialog extends DialogWrapper  {
-
   protected final Project myProject;
 
   private class MyDoNotAsk implements DoNotAskOption {
+    @Override
     public boolean isToBeShown() {
       return OptionsDialog.this.isToBeShown();
     }
 
+    @Override
     public void setToBeShown(boolean value, int exitCode) {
       OptionsDialog.this.setToBeShown(value, DialogWrapper.CANCEL_EXIT_CODE != exitCode);
     }
 
+    @Override
     public boolean canBeHidden() {
       return OptionsDialog.this.canBeHidden();
     }
 
+    @Override
     public boolean shouldSaveOptionsOnCancel() {
       return OptionsDialog.this.shouldSaveOptionsOnCancel();
     }
 
+    @Override
     public String getDoNotShowMessage() {
       return OptionsDialog.this.getDoNotShowMessage();
     }
@@ -77,7 +81,6 @@ public abstract class OptionsDialog extends DialogWrapper  {
   public static boolean shiftIsPressed(int inputEventModifiers) {
     return (inputEventModifiers & Event.SHIFT_MASK) != 0;
   }
-
 
   protected abstract boolean isToBeShown();
 

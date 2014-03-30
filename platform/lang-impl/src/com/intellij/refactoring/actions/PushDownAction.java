@@ -25,6 +25,7 @@ public class PushDownAction extends BasePlatformRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }

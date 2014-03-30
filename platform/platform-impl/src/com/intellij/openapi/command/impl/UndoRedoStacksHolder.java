@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class UndoRedoStacksHolder {
 
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<UndoableGroup>();
   private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<DocumentReference, LinkedList<UndoableGroup>>();
-  private final WeakList<Document> myDocumentsWithStacks = new WeakList<Document>();
+  private final List<Document> myDocumentsWithStacks = new WeakList<Document>();
 
   public UndoRedoStacksHolder(boolean isUndo) {
     myUndo = isUndo;

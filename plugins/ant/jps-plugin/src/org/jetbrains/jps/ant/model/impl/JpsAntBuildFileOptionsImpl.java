@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.ant.model.impl;
 
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 
 import java.util.ArrayList;
@@ -30,8 +32,9 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   private String myCustomJdkName = "";
   private boolean myUseProjectDefaultAnt = true;
   private String myAntInstallationName;
-  private List<String> myClasspath = new ArrayList<String>();
-  private List<String> myJarDirectories = new ArrayList<String>();
+  private final List<String> myClasspath = new ArrayList<String>();
+  private final List<String> myJarDirectories = new ArrayList<String>();
+  private final List<BuildFileProperty> myProperties = new ArrayList<BuildFileProperty>();
 
   public void setMaxStackSize(int maxStackSize) {
     myMaxStackSize = maxStackSize;
@@ -42,6 +45,7 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
     myAntCommandLineParameters = antCommandLineParameters;
   }
 
+  @Override
   public void setUseProjectDefaultAnt(boolean useProjectDefaultAnt) {
     myUseProjectDefaultAnt = useProjectDefaultAnt;
   }
@@ -55,11 +59,13 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
     myAntInstallationName = antInstallationName;
   }
 
-  public void addJarPath(String path) {
+  @Override
+  public void addJarPath(@NotNull String path) {
     myClasspath.add(path);
   }
 
-  public void addJarDirectory(String directoryPath) {
+  @Override
+  public void addJarDirectory(@NotNull String directoryPath) {
     myJarDirectories.add(directoryPath);
   }
 
@@ -99,5 +105,16 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
   @Override
   public List<String> getAdditionalClasspath() {
     return JpsAntInstallationImpl.getClasspath(myClasspath, myJarDirectories);
+  }
+
+  @Override
+  public void addProperty(@NotNull String name, @NotNull String value) {
+    myProperties.add(new BuildFileProperty(name, value));
+  }
+
+  @Override
+  @NotNull
+  public List<BuildFileProperty> getProperties() {
+    return myProperties;
   }
 }

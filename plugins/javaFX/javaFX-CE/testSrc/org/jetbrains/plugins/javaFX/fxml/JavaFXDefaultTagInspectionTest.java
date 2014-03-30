@@ -15,56 +15,37 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection;
-
-import java.util.List;
 
 /**
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFXDefaultTagInspectionTest extends DaemonAnalyzerTestCase {
-  @Override
-  protected void setUpModule() {
-    super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
-  }
+public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new JavaFxDefaultTagInspection()};
+  protected void enableInspections() {
+    myFixture.enableInspections(new JavaFxDefaultTagInspection());
   }
 
 
   public void testChildren() throws Exception {
-    doTest("children");
+    doLaunchQuickfixTest("children");
   }
 
   public void testEmptyChildren() throws Exception {
-    doTest("children");
+    doLaunchQuickfixTest("children");
   }
 
   public void testStylesheets() throws Exception {
-    checkNotAvailable("stylesheets");
+    checkQuickFixNotAvailable("stylesheets");
   }
 
-  private void doTest(String tagName) throws Exception {
-    configureByFiles(null, getTestName(true) + ".fxml");
-    final List<HighlightInfo> infos = doHighlighting();
-    findAndInvokeIntentionAction(infos, "Unwrap '" + tagName + "'", getEditor(), getFile());
-    checkResultByFile(getTestName(true) + "_after.fxml");
-  }
-  
-  private void checkNotAvailable(String tagName) throws Exception {
-    configureByFiles(null, getTestName(true) + ".fxml");
-    final List<HighlightInfo> infos = doHighlighting();
-    assertNull(findIntentionAction(infos, "Unwrap '" + tagName + "'", getEditor(), getFile()));
+  @Override
+  protected String getHint(String tagName) {
+    return "Unwrap '" + tagName + "'";
   }
 
   @NotNull

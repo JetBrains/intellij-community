@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
@@ -32,12 +31,16 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
-import git4idea.*;
+import git4idea.GitPlatformFacade;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
@@ -442,10 +445,9 @@ public class GitUnstashDialog extends DialogWrapper {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Conflicts were not resolved during unstash",
-                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "<a href='resolve'>Resolve</a> conflicts.",
-                                                NotificationType.WARNING, new NotificationListener() {
+      VcsNotifier.getInstance(myProject).notifyImportantWarning("Conflicts were not resolved during unstash",
+                                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                "<a href='resolve'>Resolve</a> conflicts.", new NotificationListener() {
           @Override
           public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -454,7 +456,8 @@ public class GitUnstashDialog extends DialogWrapper {
               }
             }
           }
-      }).notify(myProject);
+        }
+      );
     }
   }
 

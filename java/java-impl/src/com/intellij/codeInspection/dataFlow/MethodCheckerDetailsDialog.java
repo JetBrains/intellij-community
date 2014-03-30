@@ -39,17 +39,17 @@ import static com.intellij.codeInsight.ConditionChecker.Type.*;
  * Dialog that appears when the user clicks the Add Button or double clicks a row item in a MethodsPanel.  The MethodsPanel is accessed from the ConditionCheckDialog
  */
 class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChangeListener, ItemListener {
-  private final @NotNull ConditionChecker.Type myType;
-  private final @NotNull Project myProject;
-  private final @NotNull ParameterDropDown parameterDropDown;
-  private final @NotNull MethodDropDown methodDropDown;
-  private final @NotNull ClassField classField;
-  private final @NotNull Set<ConditionChecker> myOtherCheckers;
-  private final @Nullable ConditionChecker myPreviouslySelectedChecker;
+  @NotNull private final ConditionChecker.Type myType;
+  @NotNull private final Project myProject;
+  @NotNull private final ParameterDropDown parameterDropDown;
+  @NotNull private final MethodDropDown methodDropDown;
+  @NotNull private final ClassField classField;
+  @NotNull private final Set<ConditionChecker> myOtherCheckers;
+  @Nullable private final ConditionChecker myPreviouslySelectedChecker;
   /**
    * Set by the OK and/or Cancel actions so that the caller can retrieve it via a call to getMethodIsNullIsNotNullChecker
    */
-  private @Nullable ConditionChecker mySelectedChecker;
+  @Nullable private ConditionChecker mySelectedChecker;
 
   MethodCheckerDetailsDialog(@Nullable ConditionChecker previouslySelectedChecker,
                              @NotNull ConditionChecker.Type type,
@@ -244,6 +244,7 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
     }
   }
 
+  @Override
   public boolean isOKActionEnabled() {
     if (!myOKAction.isEnabled()) return false;
     PsiClass psiClass = classField.getPsiClass();
@@ -262,8 +263,8 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
    */
   static class ClassField extends EditorTextFieldWithBrowseButton implements ActionListener, DocumentListener {
     public static final String PROPERTY_PSICLASS = "ClassField.myPsiClass";
-    private final @NotNull Project myProject;
-    private @Nullable PsiClass myPsiClass;
+    @NotNull private final Project myProject;
+    @Nullable private PsiClass myPsiClass;
 
     public ClassField(@NotNull Project project, @Nullable PsiClass psiClass) {
       super(project, true, buildVisibilityChecker());
@@ -340,9 +341,9 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
    * Drop Down for picking Method Name
    */
   static class MethodDropDown extends JComboBox implements PropertyChangeListener {
-    private final @NotNull ConditionChecker.Type myType;
-    private final @NotNull SortedComboBoxModel<MethodWrapper> myModel;
-    private @Nullable PsiClass myPsiClass;
+    @NotNull private final ConditionChecker.Type myType;
+    @NotNull private final SortedComboBoxModel<MethodWrapper> myModel;
+    @Nullable private PsiClass myPsiClass;
 
     MethodDropDown(@Nullable PsiClass psiClass,
                    @Nullable PsiMethod psiMethod,
@@ -477,9 +478,9 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
    * Drop Down for picking Parameter Name
    */
   static class ParameterDropDown extends JComboBox implements PropertyChangeListener, ItemListener {
-    private final @NotNull SortedComboBoxModel<ParameterWrapper> myModel;
-    private final @NotNull ConditionChecker.Type myType;
-    private @Nullable PsiMethod myPsiMethod;
+    @NotNull private final SortedComboBoxModel<ParameterWrapper> myModel;
+    @NotNull private final ConditionChecker.Type myType;
+    @Nullable private PsiMethod myPsiMethod;
 
     public ParameterDropDown(@Nullable PsiMethod psiMethod,
                              @Nullable PsiParameter psiParameter,
@@ -581,8 +582,8 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
     }
 
     class ParameterWrapper implements Comparable<ParameterWrapper> {
-      private final @NotNull String id;
-      private final @NotNull PsiParameter psiParameter;
+      @NotNull private final String id;
+      @NotNull private final PsiParameter psiParameter;
       private final int index;
 
       ParameterWrapper(@NotNull PsiParameter psiParameter, int index) {
@@ -623,8 +624,8 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
   }
 
   static class MethodWrapper implements Comparable<MethodWrapper> {
-    private final @NotNull PsiMethod myPsiMethod;
-    private final @NotNull String myId;
+    @NotNull private final PsiMethod myPsiMethod;
+    @NotNull private final String myId;
 
     MethodWrapper(@NotNull PsiMethod psiMethod) {
       this.myPsiMethod = psiMethod;

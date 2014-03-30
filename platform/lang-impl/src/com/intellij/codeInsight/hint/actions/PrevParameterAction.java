@@ -25,5 +25,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 public class PrevParameterAction extends EditorAction {
   public PrevParameterAction() {
     super(new PrevNextParameterHandler(false));
+    setInjectedContext(true);
   }
 }

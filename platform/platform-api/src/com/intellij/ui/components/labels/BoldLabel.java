@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components.labels;
 
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
@@ -54,6 +55,8 @@ public class BoldLabel extends JLabel {
 
   private static String toHtml(String text) {
     if (text.startsWith("<html>")) return text;
-    return "<html><b>" + text.replaceAll("\\n", "<br>") + "</b></html>";
+    return XmlStringUtil.wrapInHtml(
+      "<b>" + text.replaceAll("\\n", "<br>") + "</b>"
+    );
   }
 }

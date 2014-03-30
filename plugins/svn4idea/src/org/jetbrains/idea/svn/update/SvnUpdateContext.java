@@ -54,13 +54,24 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
   }
 
   public boolean shouldRunFor(final File ioRoot) {
-    if (myUpdatedExternals.contains(ioRoot)) return false;
-    if (FilePathUtil.isNested(myContentRoots, ioRoot)) {
+    boolean result = true;
+
+    if (myUpdatedExternals.contains(ioRoot)) {
+      result = false;
+    }
+    else if (FilePathUtil.isNested(myContentRoots, ioRoot)) {
       final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
+
       if (info != null) {
-        return ! NestedCopyType.switched.equals(info.getType());
+        if (NestedCopyType.switched.equals(info.getType())) {
+          result = false;
+        }
+        else if (NestedCopyType.external.equals(info.getType())) {
+          result = !myVcs.getSvnConfiguration().isIgnoreExternals();
+        }
       }
     }
-    return true;
+
+    return result;
   }
 }

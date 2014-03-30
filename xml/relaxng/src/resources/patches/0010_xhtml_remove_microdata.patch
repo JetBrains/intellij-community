@@ -1,0 +1,8 @@
+--- /Users/denofevil/Code/sandbox/checker/syntax/relaxng/xhtml5full-xhtml-rdfa.rnc	2014-01-24 12:19:52.000000000 +0400
++++ html5/xhtml5full-xhtml-rdfa.rnc	2014-01-26 16:54:54.000000000 +0400
+@@ -35,5 +35,4 @@
+ 				)
+ 			)
+ }
+-include "microdata.rnc"
+ include "rdfa.rnc"

@@ -16,13 +16,11 @@
 
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
+import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.SuppressManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,18 +41,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 /**
  * @author peter
  */
-public class SuppressForMemberFix extends SuppressIntentionAction {
-  private final String myID;
+public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private String myKey;
   private final boolean myForClass;
 
-  public SuppressForMemberFix(HighlightDisplayKey key, boolean forClass) {
-    myID = key.getID();
+  public SuppressForMemberFix(@NotNull HighlightDisplayKey key, boolean forClass) {
+    super(key.getID(), false);
     myForClass = forClass;
   }
 
+  @Override
   @Nullable
-  protected GrDocCommentOwner getContainer(final PsiElement context) {
+  public GrDocCommentOwner getContainer(final PsiElement context) {
     if (context == null || context instanceof PsiFile) {
       return null;
     }
@@ -76,7 +74,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     if (myForClass) {
       while (container != null ) {
         final GrTypeDefinition parentClass = PsiTreeUtil.getParentOfType(container, GrTypeDefinition.class);
-        if ((parentClass == null) && container instanceof GrTypeDefinition){
+        if (parentClass == null && container instanceof GrTypeDefinition){
           return container;
         }
         container = parentClass;
@@ -85,28 +83,29 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     return container;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myKey != null ? InspectionsBundle.message(myKey) : "Suppress for member";
   }
 
 
-  @NotNull
-  public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.family");
-  }
-
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
+  @Override
+  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass ? "suppress.inspection.class" : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
     return container != null && context.getManager().isInProject(context);
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    GrDocCommentOwner container = getContainer(element);
-    assert container != null;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
-    final GrModifierList modifierList = (GrModifierList)container.getModifierList();
+  @Override
+  protected boolean replaceSuppressionComments(PsiElement container) {
+    return false;
+  }
+
+  @Override
+  protected void createSuppression(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement container)
+    throws IncorrectOperationException {
+    final GrModifierList modifierList = (GrModifierList)((PsiModifierListOwner)container).getModifierList();
     if (modifierList != null) {
       addSuppressAnnotation(project, modifierList, myID);
     }
@@ -114,7 +113,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
   }
 
   private static void addSuppressAnnotation(final Project project, final GrModifierList modifierList, final String id) throws IncorrectOperationException {
-    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = modifierList.findAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"" + id + "\"");
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(null);
@@ -129,7 +128,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
       }
     }
     else {
-      modifierList.addAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME).setDeclaredAttributeValue(null, toAdd);
+      modifierList.addAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME).setDeclaredAttributeValue(null, toAdd);
     }
   }
 

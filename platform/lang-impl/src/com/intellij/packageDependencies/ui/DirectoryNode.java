@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.file.DirectoryIconProvider;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
@@ -111,6 +112,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return dirName;
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
@@ -151,8 +153,9 @@ public class DirectoryNode extends PackageDependenciesNode {
     return VfsUtilCore.getRelativePath(directory, contentRoot, '/');
   }
 
+  @Override
   public PsiElement getPsiElement() {
-    return getPsiDirectory();
+    return getTargetDirectory();
   }
 
   @Nullable
@@ -167,14 +170,15 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public PsiDirectory getTargetDirectory() {
     DirectoryNode dirNode = this;
-    while (dirNode.getCompactedDirNode() != null) {
-      dirNode = dirNode.getCompactedDirNode();
-      assert dirNode != null;
+    DirectoryNode compacted;
+    while ((compacted = dirNode.getCompactedDirNode()) != null) {
+      dirNode = compacted;
     }
 
     return dirNode.getPsiDirectory();
   }
 
+  @Override
   public int getWeight() {
     return 3;
   }
@@ -197,7 +201,11 @@ public class DirectoryNode extends PackageDependenciesNode {
     return toString().hashCode();
   }
 
+  @Override
   public Icon getIcon() {
+    if (myDirectory != null) {
+      return new DirectoryIconProvider().getIcon(myDirectory, 0);
+    }
     return PlatformIcons.PACKAGE_ICON;
   }
 
@@ -225,10 +233,12 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
 
+  @Override
   public boolean isValid() {
     return myVDirectory != null && myVDirectory.isValid();
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }

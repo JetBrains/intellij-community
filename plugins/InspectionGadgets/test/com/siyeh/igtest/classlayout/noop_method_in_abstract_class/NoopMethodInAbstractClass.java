@@ -5,4 +5,6 @@ abstract class NoopMethodInAbstractClass {
   void foo() {}
 
   native int bar();
+
+  final void noop() {}
 }

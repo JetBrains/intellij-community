@@ -40,12 +40,12 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   private boolean myChildrenBuilt = false;
   private BlockWithParent myParent;
 
-  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull CodeStyleSettings settings, 
+  protected TemplateLanguageBlock(@NotNull TemplateLanguageBlockFactory blockFactory, @NotNull CodeStyleSettings settings,
                                   @NotNull ASTNode node, @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
     this(node, null, null, blockFactory, settings, foreignChildren);
   }
-  
-  protected TemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment, 
+
+  protected TemplateLanguageBlock(@NotNull ASTNode node, @Nullable Wrap wrap, @Nullable Alignment alignment,
                                   @NotNull TemplateLanguageBlockFactory blockFactory,
                                   @NotNull CodeStyleSettings settings,
                                   @Nullable List<DataLanguageBlockWrapper> foreignChildren) {
@@ -55,6 +55,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     mySettings = settings;
   }
 
+  @Override
   protected List<Block> buildChildren() {
     myChildrenBuilt = true;
     if (isLeaf()) {
@@ -100,6 +101,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     }
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
@@ -108,16 +110,19 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return null;
   }
 
+  @Override
   public boolean isLeaf() {
     return noForeignChildren() && getNode().getFirstChildNode() == null;
   }
 
   protected abstract IElementType getTemplateTextElementType();
 
+  @Override
   public BlockWithParent getParent() {
     return myParent;
   }
 
+  @Override
   public void setParent(BlockWithParent newParent) {
     myParent = newParent;
   }

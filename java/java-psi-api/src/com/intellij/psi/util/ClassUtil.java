@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public class ClassUtil {
     if (className == null){
       return null;
     }
-    if (qualifiedName == null || qualifiedName.length() == 0){
+    if (qualifiedName == null || qualifiedName.isEmpty()){
       return className;
     }
     return qualifiedName + "." + extractClassName(className);
@@ -121,7 +120,7 @@ public class ClassUtil {
   public static PsiClass findNonQualifiedClassByIndex(final String indexName, @NotNull final PsiClass containingClass,
                                                       final boolean jvmCompatible) {
     String prefix = getDigitPrefix(indexName);
-    final int idx = prefix.length() > 0 ? Integer.parseInt(prefix) : -1;
+    final int idx = !prefix.isEmpty() ? Integer.parseInt(prefix) : -1;
     final String name = prefix.length() < indexName.length() ? indexName.substring(prefix.length()) : null;
     final PsiClass[] result = new PsiClass[1];
     containingClass.accept(new JavaRecursiveElementVisitor() {
@@ -168,23 +167,15 @@ public class ClassUtil {
     return result[0];
   }
 
-  private static String getDigitPrefix(final String indexName) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < indexName.length(); i++) {
-        final char c = indexName.charAt(i);
-        if (Character.isDigit(c)) {
-          builder.append(c);
-        }
-        else {
-          break;
-        }
+  private static String getDigitPrefix(@NotNull String indexName) {
+    int i;
+    for (i = 0; i < indexName.length(); i++) {
+      final char c = indexName.charAt(i);
+      if (!Character.isDigit(c)) {
+        break;
       }
-      return builder.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return i == 0 ? "" : indexName.substring(0, i);
   }
 
 

@@ -17,8 +17,6 @@ package com.intellij.ide.startup.impl;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -177,12 +176,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     runActivities(myDumbAwarePostStartupActivities);
     DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
       public void run() {
+        //noinspection SynchronizeOnThis
         synchronized (StartupManagerImpl.this) {
           app.assertIsDispatchThread();
           if (myProject.isDisposed()) return;
           runActivities(myDumbAwarePostStartupActivities); // they can register activities while in the dumb mode
           runActivities(myNotDumbAwarePostStartupActivities);
-
           myPostStartupActivitiesPassed = true;
         }
       }
@@ -219,24 +218,22 @@ public class StartupManagerImpl extends StartupManagerEx {
     VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
     if (roots.length == 0) return;
 
-    boolean nonWatched = false;
-    loop:
+    List<String> nonWatched = new SmartList<String>();
     for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
       String rootPath = root.getPath();
       for (String manualWatchRoot : manualWatchRoots) {
         if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
-          LOG.info("'" + root + "' is under manual watch root '" + manualWatchRoot + "', others are " + manualWatchRoot);
-          nonWatched = true;
-          break loop;
+          nonWatched.add(rootPath);
         }
       }
     }
 
-    if (nonWatched) {
-      String title = ApplicationBundle.message("watcher.slow.sync");
+    if (!nonWatched.isEmpty()) {
       String message = ApplicationBundle.message("watcher.non.watchable.project");
-      Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.getValue().createNotification(title, message, NotificationType.WARNING, null));
+      watcher.notifyOnFailure(message, null);
+      LOG.info("unwatched roots: " + nonWatched);
+      LOG.info("manual watches: " + manualWatchRoots);
     }
   }
 
@@ -270,12 +267,12 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
+  @Override
   public synchronized void runWhenProjectIsInitialized(@NotNull final Runnable action) {
-    final Runnable runnable;
-
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
+    final Runnable runnable;
     if (DumbService.isDumbAware(action)) {
       runnable = new DumbAwareRunnable() {
         public void run() {

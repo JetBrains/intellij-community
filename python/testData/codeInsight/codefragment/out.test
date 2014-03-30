@@ -1,0 +1,10 @@
+def foo():
+    print("start")
+    <begin>
+    aaa = 123
+    <end>
+    print(aaa)
+<result>
+In:
+Out:
+aaa

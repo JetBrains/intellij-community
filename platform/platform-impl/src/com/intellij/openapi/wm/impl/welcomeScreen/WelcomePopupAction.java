@@ -75,7 +75,7 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
       .createActionGroupPopup(getCaption(),
                               group,
                               context,
-                              JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING,
+                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                               true);
 
     JComponent contextComponent = null;

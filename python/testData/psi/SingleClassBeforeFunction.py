@@ -1,0 +1,5 @@
+class
+
+
+def foo():
+    pass

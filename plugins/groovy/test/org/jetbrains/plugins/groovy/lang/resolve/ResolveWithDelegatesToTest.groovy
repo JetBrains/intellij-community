@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,35 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 class ResolveWithDelegatesToTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() { null }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
+    myFixture.addClass('''\
+package groovy.lang;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.PARAMETER})
+public @interface DelegatesTo {
+    Class value() default Target.class;
+    int strategy() default Closure.OWNER_FIRST;
+
+    String target() default "";
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @java.lang.annotation.Target({ElementType.PARAMETER})
+    public static @interface Target {
+        String value() default ""; // optional id
+    }
+}
+''')
+  }
 
   void testShouldChooseMethodFromOwner() {
     assertScript '''
@@ -319,6 +348,339 @@ test()
 
 ''', 'HashMap'
   }
+  void testShouldChooseMethodFromOwnerInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+            class Abc {
+                static int doIt(@DelegatesTo(Delegate.class) Closure cl) {
+                    cl.delegate = new Delegate()
+                    cl() as int
+                }
+            }
+''')
+    assertScript '''
+            class Delegate {
+                int foo() { 2 }
+            }
+            class Owner {
+                int foo() { 1 }
+
+                int test() {
+                    Abc.doIt {
+                        @ASTTest(phase=INSTRUCTION_SELECTION, value={
+                            node = node.rightExpression
+                            def target = node.getNodeMetaData(DIRECT_METHOD_CALL_TARGET)
+                            assert target != null
+                            assert target.declaringClass.name == 'Owner'
+                        })
+                        def x = fo<caret>o() // as the delegation strategy is owner first, should return 1
+                        x
+                    }
+                }
+            }
+            def o = new Owner()
+            assert o.test() == 1
+        ''', 'Owner'
+  }
+
+  void testShouldChooseMethodFromDelegateInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+                static int doIt(@DelegatesTo(strategy=Closure.DELEGATE_FIRST, value=Delegate.class) Closure cl) {
+                    cl.delegate = new Delegate()
+                    cl.resolveStrategy = Closure.DELEGATE_FIRST
+                    cl() as int
+                }
+
+}''')
+
+    assertScript '''
+            class Delegate {
+                int foo() { 2 }
+            }
+            class Owner {
+                int foo() { 1 }
+                int test() {
+                    Abc.doIt {
+                        @ASTTest(phase=INSTRUCTION_SELECTION, value={
+                            node = node.rightExpression
+                            def target = node.getNodeMetaData(DIRECT_METHOD_CALL_TARGET)
+                            assert target != null
+                            assert target.declaringClass.name == 'Delegate'
+                        })
+                        def x = f<caret>oo() // as the delegation strategy is delegate first, should return 2
+                        x
+                    }
+                }
+            }
+            def o = new Owner()
+            assert o.test() == 2
+        ''', 'Delegate'
+  }
+
+  void testShouldAcceptMethodCallInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+            static void exec(ExecSpec spec, @DelegatesTo(value=ExecSpec.class, strategy=Closure.DELEGATE_FIRST) Closure param) {
+                param.delegate = spec
+                param()
+            }
+}''')
+
+    assertScript '''
+            class ExecSpec {
+                boolean called = false
+                void foo() {
+                    called = true
+                }
+            }
+
+            ExecSpec spec = new ExecSpec()
+
+            Abc.exec(spec) {
+                fo<caret>o() // should be recognized because param is annotated with @DelegatesTo(ExecSpec)
+            }
+            assert spec.isCalled()
+        ''', 'ExecSpec'
+  }
+
+  void testCallMethodFromOwnerInJava() {
+    myFixture.configureByText("Abc.java", '''
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Xml {
+                boolean called = false;
+                void bar() { called = true; }
+                void foo(@DelegatesTo(Xml.class)Closure cl) { cl.delegate=this;cl(); }
+}
+''')
+
+    assertScript '''
+            def mylist = [1]
+            def xml = new Xml()
+            xml.foo {
+             mylist.each { b<caret>ar() }
+            }
+            assert xml.called
+        ''', 'Xml'
+  }
+
+  void testShouldDelegateToParameterInJava() {
+    myFixture.configureByText('Abc.java', '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+        static void with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
+            arg.delegate = target;
+            arg();
+        }
+
+}
+''')
+    assertScript '''
+        class Foo {
+            boolean called = false
+            def foo() { called = true }
+        }
+
+        def test() {
+            def obj = new Foo()
+            Abc.with(obj) { fo<caret>o() }
+            assert obj.called
+        }
+        test()
+        ''', 'Foo'
+  }
+
+  void testShouldDelegateToParameterUsingExplicitIdInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc{
+        static void with(@DelegatesTo.Target("target") Object target, @DelegatesTo(target="target") Closure arg) {
+            arg.delegate = target;
+            arg();
+        }
+}''')
+
+    assertScript '''
+        class Foo {
+            boolean called = false
+            def foo() { called = true }
+        }
+
+        def test() {
+            def obj = new Foo()
+            Abc.with(obj) { f<caret>oo() }
+            assert obj.called
+        }
+        test()
+        ''', 'Foo'
+  }
+
+  void testInConstructorInJava() {
+    myFixture.configureByText("Abc.java", '''
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+          Abc(@DelegatesTo(Foo.class) Closure cl) {
+          }
+}
+''')
+
+    assertScript '''
+        class Foo {
+          def foo() {}
+        }
+
+        new Abc({fo<caret>o()})
+''', 'Foo'
+  }
+
+  void testNamedArgsInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+  static void with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure arg) {
+    for (Closure a : arg) {
+        a.delegate = target
+        a.resolveStrategy = Closure.DELEGATE_FIRST
+        a()
+    }
+  }
+}
+''')
+
+    addLinkedHashMap()
+    assertScript '''
+@CompileStatic
+def test() {
+    Abc.with(a:2) {
+        print(g<caret>et('a'))
+    }
+}
+
+test()
+''', 'HashMap'
+  }
+
+  void testEllipsisArgsInJava() {
+    myFixture.configureByText("Abc.java", '''\
+import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
+
+class Abc {
+    static void with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure... arg) {
+        for (Closure a : arg) {
+            a.delegate = target
+            a.resolveStrategy = Closure.DELEGATE_FIRST
+            a()
+        }
+    }
+}
+''')
+
+    addLinkedHashMap()
+
+    assertScript '''
+@CompileStatic
+def test() {
+    Abc.with(a:2, {
+        print(get('a'))
+    }, {
+        print(g<caret>et('a'))
+    } )
+}
+
+test()
+
+''', 'HashMap'
+  }
+
+  void testTarget() {
+    assertScript('''
+def foo(@DelegatesTo.Target def o, @DelegatesTo Closure c) {}
+
+foo(4) {
+  intVal<caret>ue()
+}
+''', 'Integer')
+  }
+
+  void testTarget2() {
+    assertScript('''
+def foo(@DelegatesTo.Target('t') def o, @DelegatesTo(target = 't') Closure c) {}
+
+foo(4) {
+  intVal<caret>ue()
+}
+''', 'Integer')
+  }
+
+  void testGenericTypeIndex() {
+    addLinkedHashMap()
+    assertScript('''\
+public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
+
+foo([1:'ab', 2:'cde']) {
+  sub<caret>string(1)
+}
+''', 'String')
+  }
+
+  void testGenericTypeIndex1() {
+    addLinkedHashMap()
+    assertScript('''\
+public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
+
+foo([1:'ab', 2:'cde']) {
+  sub<caret>string(1)
+}
+''', 'String')
+  }
+
+  void testDelegateAndDelegatesTo() {
+    assertScript('''
+import groovy.transform.CompileStatic
+
+class Subject {
+    List list = []
+
+    void withList(@DelegatesTo(List) Closure<?> closure) {
+        list.with(closure)
+    }
+}
+
+class Wrapper {
+    @Delegate(parameterAnnotations = true)
+    Subject subject = new Subject()
+}
+
+@CompileStatic
+def staticOnWrapper() {
+    def wrapper = new Wrapper()
+    wrapper.withList {
+        ad<caret>d(1)
+    }
+    assert wrapper.list == [1]
+}
+''', 'List')
+  }
+
 
   void assertScript(String text, String resolvedClass) {
     myFixture.configureByText('_a.groovy', text)

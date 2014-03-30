@@ -1,6 +1,6 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.SmartRefElementPointer;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
@@ -29,10 +29,10 @@ public class EntryPointsConverterTest extends TestCase {
     final Element entryPoints = setUpEntryPoint(type, fqName);
 
     final HashMap<String, SmartRefElementPointer> persistentEntryPoints = new HashMap<String, SmartRefElementPointer>();
-    EntryPointsManagerImpl.convert(entryPoints, persistentEntryPoints);
+    EntryPointsManagerBase.convert(entryPoints, persistentEntryPoints);
 
     final Element testElement = new Element("comp");
-    EntryPointsManagerImpl.writeExternal(testElement, persistentEntryPoints, new JDOMExternalizableStringList());
+    EntryPointsManagerBase.writeExternal(testElement, persistentEntryPoints, new JDOMExternalizableStringList());
 
     final Element expectedEntryPoints = setUpEntryPoint(type, expectedFQName);
     expectedEntryPoints.setAttribute("version", "2.0");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 20112013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.util.Collection;
 
-public class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
+class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiAnnotation)) {

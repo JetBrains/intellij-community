@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,18 +40,18 @@ public class HgStatusCommand {
   private static final int ITEM_COUNT = 3;
   private static final int STATUS_INDEX = 0;
 
-  private final Project project;
+  @NotNull private final Project myProject;
 
-  private final boolean includeAdded;
-  private final boolean includeModified;
-  private final boolean includeRemoved;
-  private final boolean includeDeleted;
-  private final boolean includeUnknown;
-  private final boolean includeIgnored;
-  private final boolean includeCopySource;
+  private final boolean myIncludeAdded;
+  private final boolean myIncludeModified;
+  private final boolean myIncludeRemoved;
+  private final boolean myIncludeDeleted;
+  private final boolean myIncludeUnknown;
+  private final boolean myIncludeIgnored;
+  private final boolean myIncludeCopySource;
 
-  @Nullable private HgRevisionNumber baseRevision;
-  @Nullable private HgRevisionNumber targetRevision;
+  @Nullable private final HgRevisionNumber myBaseRevision;
+  @Nullable private final HgRevisionNumber myTargetRevision;
 
 
   public static class Builder {
@@ -62,6 +63,9 @@ public class HgStatusCommand {
     private boolean includeIgnored;
     private boolean includeCopySource;
 
+    private HgRevisionNumber baseRevision;
+    private HgRevisionNumber targetRevision;
+
     public Builder(boolean initValue) {
       includeAdded = initValue;
       includeModified = initValue;
@@ -70,46 +74,52 @@ public class HgStatusCommand {
       includeUnknown = initValue;
       includeIgnored = initValue;
       includeCopySource = initValue;
+      baseRevision = null;
+      targetRevision = null;
     }
 
-    public Builder includeUnknown(boolean val) {
+    public Builder unknown(boolean val) {
       includeUnknown = val;
       return this;
     }
 
-    public Builder includeIgnored(boolean val) {
+    public Builder ignored(boolean val) {
       includeIgnored = val;
       return this;
     }
 
-    public Builder includeCopySource(boolean val) {
+    public Builder copySource(boolean val) {
       includeCopySource = val;
       return this;
     }
 
-    public HgStatusCommand build(Project project) {
+    public Builder baseRevision(HgRevisionNumber val) {
+      baseRevision = val;
+      return this;
+    }
+
+    public Builder targetRevision(HgRevisionNumber val) {
+      targetRevision = val;
+      return this;
+    }
+
+    public HgStatusCommand build(@NotNull Project project) {
       return new HgStatusCommand(project, this);
     }
 
   }
 
-  private HgStatusCommand(Project project, Builder builder) {
-    this.project = project;
-    includeAdded = builder.includeAdded;
-    includeModified = builder.includeModified;
-    includeRemoved = builder.includeRemoved;
-    includeDeleted = builder.includeDeleted;
-    includeUnknown = builder.includeUnknown;
-    includeIgnored = builder.includeIgnored;
-    includeCopySource = builder.includeCopySource;
-  }
-
-  public void setBaseRevision(@Nullable HgRevisionNumber base) {
-    baseRevision = base;
-  }
-
-  public void setTargetRevision(@Nullable HgRevisionNumber target) {
-    targetRevision = target;
+  private HgStatusCommand(@NotNull Project project, @NotNull Builder builder) {
+    myProject = project;
+    myIncludeAdded = builder.includeAdded;
+    myIncludeModified = builder.includeModified;
+    myIncludeRemoved = builder.includeRemoved;
+    myIncludeDeleted = builder.includeDeleted;
+    myIncludeUnknown = builder.includeUnknown;
+    myIncludeIgnored = builder.includeIgnored;
+    myIncludeCopySource = builder.includeCopySource;
+    myBaseRevision = builder.baseRevision;
+    myTargetRevision = builder.targetRevision;
   }
 
   public Set<HgChange> execute(VirtualFile repo) {
@@ -121,37 +131,37 @@ public class HgStatusCommand {
       return Collections.emptySet();
     }
 
-    HgCommandExecutor executor = new HgCommandExecutor(project, null);
+    HgCommandExecutor executor = new HgCommandExecutor(myProject, null);
     executor.setSilent(true);
 
     List<String> options = new LinkedList<String>();
-    if (includeAdded) {
+    if (myIncludeAdded) {
       options.add("--added");
     }
-    if (includeModified) {
+    if (myIncludeModified) {
       options.add("--modified");
     }
-    if (includeRemoved) {
+    if (myIncludeRemoved) {
       options.add("--removed");
     }
-    if (includeDeleted) {
+    if (myIncludeDeleted) {
       options.add("--deleted");
     }
-    if (includeUnknown) {
+    if (myIncludeUnknown) {
       options.add("--unknown");
     }
-    if (includeIgnored) {
+    if (myIncludeIgnored) {
       options.add("--ignored");
     }
-    if (includeCopySource) {
+    if (myIncludeCopySource) {
       options.add("--copies");
     }
-    if (baseRevision != null && !baseRevision.getRevision().isEmpty()) {
+    if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");
-      options.add(baseRevision.getChangeset().isEmpty() ? baseRevision.getRevision() : baseRevision.getChangeset());
-      if (targetRevision != null) {
+      options.add(StringUtil.isEmptyOrSpaces(myBaseRevision.getChangeset()) ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
+      if (myTargetRevision != null) {
         options.add("--rev");
-        options.add(targetRevision.getChangeset());
+        options.add(myTargetRevision.getChangeset());
       }
     }
 
@@ -173,11 +183,21 @@ public class HgStatusCommand {
     return changes;
   }
 
-  private static Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result, List<String> args) {
+  private  Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result, List<String> args) {
     final Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
     if (result == null) {
       return changes;
+    }
+    List<String> errors = result.getErrorLines();
+    if (errors != null && !errors.isEmpty()) {
+      if (result.getExitValue() != 0) {
+        String title = "Could not execute hg status command ";
+        LOG.warn(title + errors.toString());
+        VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
+        return changes;
+      }
+      LOG.warn(errors.toString());
     }
     for (String line : result.getOutputLines()) {
       if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {

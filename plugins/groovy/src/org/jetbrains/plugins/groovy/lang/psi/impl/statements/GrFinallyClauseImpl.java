@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -38,9 +39,9 @@ public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinal
     return "Finally clause";
   }
 
-  @NotNull
+  @Nullable
   public GrOpenBlock getBody() {
-    return findNotNullChildByClass(GrOpenBlock.class);
+    return findChildByClass(GrOpenBlock.class);
   }
 
 }

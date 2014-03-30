@@ -237,6 +237,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
+  public boolean isValid() {
+    return super.isValid() && myInferenceSubstitutor.isValid() && getSubstitutor().isValid();
+  }
+
+  @Override
   public void renderElement(LookupElementPresentation presentation) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
 

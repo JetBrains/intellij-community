@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private final SmartPsiElementPointer myMethod;
@@ -147,12 +149,14 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
 
-  protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
+  @NotNull
+  @Override
+  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
 
     final Collection<PsiClass> subclasses = getSubclasses(psiClass);
 
-    final ArrayList<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.size());
+    List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>(subclasses.size());
     for (final PsiClass aClass : subclasses) {
       if (HierarchyBrowserManager.getInstance(myProject).getState().HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED) {
         if (shouldHideClass(aClass)) {

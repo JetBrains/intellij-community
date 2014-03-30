@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.ipp.psiutils.ImportUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,14 +79,15 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
     }
     newCall.append(toMethodName).append('(');
     final PsiExpressionList argumentList = call.getArgumentList();
-    final PsiExpression[] args = argumentList.getExpressions();
-    if (args.length == 1) {
-      newCall.append(BoolUtils.getNegatedExpressionText(args[0]));
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length == 1) {
+      newCall.append(BoolUtils.getNegatedExpressionText(arguments[0]));
     }
     else {
-      newCall.append(BoolUtils.getNegatedExpressionText(args[1]));
+      newCall.append(arguments[0].getText()).append(',');
+      newCall.append(BoolUtils.getNegatedExpressionText(arguments[1]));
     }
     newCall.append(')');
-    replaceExpression(newCall.toString(), call);
+    PsiReplacementUtil.replaceExpression(call, newCall.toString());
   }
 }

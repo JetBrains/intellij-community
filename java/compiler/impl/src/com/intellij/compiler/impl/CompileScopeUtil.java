@@ -17,7 +17,9 @@ package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 
@@ -27,6 +29,12 @@ import java.util.*;
  * @author nik
  */
 public class CompileScopeUtil {
+  private static final Key<List<TargetTypeBuildScope>> BASE_SCOPE_FOR_EXTERNAL_BUILD = Key.create("SCOPE_FOR_EXTERNAL_BUILD");
+
+  public static void setBaseScopeForExternalBuild(@NotNull CompileScope scope, @NotNull List<TargetTypeBuildScope> scopes) {
+    scope.putUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD, scopes);
+  }
+
   public static void addScopesForModules(Collection<Module> modules, List<TargetTypeBuildScope> scopes, boolean forceBuild) {
     if (!modules.isEmpty()) {
       for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
@@ -37,6 +45,10 @@ public class CompileScopeUtil {
         scopes.add(builder.build());
       }
     }
+  }
+
+  public static List<TargetTypeBuildScope> getBaseScopeForExternalBuild(@NotNull CompileScope scope) {
+    return scope.getUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD);
   }
 
   public static List<TargetTypeBuildScope> mergeScopes(List<TargetTypeBuildScope> scopes1, List<TargetTypeBuildScope> scopes2) {

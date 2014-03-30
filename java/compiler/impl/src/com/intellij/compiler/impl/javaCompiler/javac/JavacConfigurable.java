@@ -34,7 +34,6 @@ public class JavacConfigurable implements Configurable{
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private JTextField myJavacMaximumHeapField;
   private final JpsJavaCompilerOptions myJavacSettings;
 
   public JavacConfigurable(final JpsJavaCompilerOptions javacSettings) {
@@ -56,8 +55,6 @@ public class JavacConfigurable implements Configurable{
 
   public boolean isModified() {
     boolean isModified = false;
-    isModified |= ComparingUtils.isModified(myJavacMaximumHeapField, myJavacSettings.MAXIMUM_HEAP_SIZE);
-
     isModified |= ComparingUtils.isModified(myCbDeprecation, myJavacSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
@@ -66,17 +63,6 @@ public class JavacConfigurable implements Configurable{
   }
 
   public void apply() throws ConfigurationException {
-
-    try {
-      myJavacSettings.MAXIMUM_HEAP_SIZE = Integer.parseInt(myJavacMaximumHeapField.getText());
-      if(myJavacSettings.MAXIMUM_HEAP_SIZE < 1) {
-        myJavacSettings.MAXIMUM_HEAP_SIZE = 128;
-      }
-    }
-    catch(NumberFormatException exception) {
-      myJavacSettings.MAXIMUM_HEAP_SIZE = 128;
-    }
-
     myJavacSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
@@ -84,7 +70,6 @@ public class JavacConfigurable implements Configurable{
   }
 
   public void reset() {
-    myJavacMaximumHeapField.setText(Integer.toString(myJavacSettings.MAXIMUM_HEAP_SIZE));
     myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);

@@ -37,8 +37,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  * @author peter
  */
 public class GrMapType extends GrLiteralClassType {
-  private static final PsiType[] RAW_PARAMETERS = new PsiType[]{null, null};
-  
   private final Map<String, PsiType> myStringEntries;
   private final List<Pair<PsiType, PsiType>> myOtherEntries;
   private final String myJavaClassName;
@@ -85,16 +83,11 @@ public class GrMapType extends GrLiteralClassType {
 
   @NotNull
   @Override
-  public PsiClassType rawType() {
-    return new GrMapType(myFacade, getResolveScope(), Collections.<String, PsiType>emptyMap(), Collections.<Pair<PsiType,PsiType>>emptyList(), getLanguageLevel());
-  }
-
-  @NotNull
-  @Override
   protected String getJavaClassName() {
     return myJavaClassName;
   }
 
+  @Override
   @NotNull
   public String getClassName() {
     return StringUtil.getShortName(myJavaClassName);
@@ -118,7 +111,7 @@ public class GrMapType extends GrLiteralClassType {
       result.add(entry.first);
     }
     result.remove(null);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(createArray(result.size()));
   }
 
   public PsiType[] getAllValueTypes() {
@@ -128,23 +121,26 @@ public class GrMapType extends GrLiteralClassType {
       result.add(entry.second);
     }
     result.remove(null);
-    return result.toArray(new PsiType[result.size()]);
+    return result.toArray(createArray(result.size()));
   }
 
+  @Override
   @NotNull
   public PsiType[] getParameters() {
     final PsiType[] keyTypes = getAllKeyTypes();
     final PsiType[] valueTypes = getAllValueTypes();
     if (keyTypes.length == 0 && valueTypes.length == 0) {
-      return RAW_PARAMETERS;
+      return EMPTY_ARRAY;
     }
 
     return new PsiType[]{getLeastUpperBound(keyTypes), getLeastUpperBound(valueTypes)};
   }
 
+  @Override
+  @NotNull
   public String getInternalCanonicalText() {
-    if (myStringEntries.size() == 0) {
-      if (myOtherEntries.size() == 0) return "[:]";
+    if (myStringEntries.isEmpty()) {
+      if (myOtherEntries.isEmpty()) return "[:]";
       String name = getJavaClassName();
       final PsiType[] params = getParameters();
       return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
@@ -167,6 +163,7 @@ public class GrMapType extends GrLiteralClassType {
     return param == null ? "null" : param.getInternalCanonicalText();
   }
 
+  @Override
   public boolean isValid() {
     for (PsiType type : myStringEntries.values()) {
       if (type != null && !type.isValid()) {
@@ -185,6 +182,7 @@ public class GrMapType extends GrLiteralClassType {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrMapType(myFacade, getResolveScope(), myStringEntries, myOtherEntries, languageLevel);
@@ -197,8 +195,9 @@ public class GrMapType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
+  @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
-    return type instanceof GrMapType || myFacade.getElementFactory().createTypeFromText(getJavaClassName(), null).isAssignableFrom(type);
+    return type instanceof GrMapType || super.isAssignableFrom(type);
   }
 
   public static GrMapType merge(GrMapType l, GrMapType r) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-
 
 /**
  * Represents the type of a variable arguments array passed as a method parameter.
@@ -30,27 +28,39 @@ public class PsiEllipsisType extends PsiArrayType {
    *
    * @param componentType the type of the varargs array component.
    */
-  public PsiEllipsisType(PsiType componentType) {
+  public PsiEllipsisType(@NotNull PsiType componentType) {
     super(componentType);
   }
 
+  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+    super(componentType, annotations);
+  }
+
+  @NotNull
+  public static PsiType createEllipsis(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+    return new PsiEllipsisType(componentType, annotations);
+  }
+
+  @NotNull
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(getComponentType().getPresentableText(), getAnnotationsTextPrefix(true, true), "...");
+    return getText(getComponentType().getPresentableText(), "...", false, true);
   }
 
+  @NotNull
   @Override
-  public String getCanonicalText() {
-    return StringUtil.joinOrNull(getComponentType().getCanonicalText(), "...");
+  public String getCanonicalText(boolean annotated) {
+    return getText(getComponentType().getCanonicalText(annotated), "...", true, annotated);
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(getComponentType().getInternalCanonicalText(), getAnnotationsTextPrefix(true, true), "...");
+    return getText(getComponentType().getInternalCanonicalText(), "...", true, true);
   }
 
   @Override
-  public boolean equalsToText(String text) {
+  public boolean equalsToText(@NotNull String text) {
     return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3)) ||
            super.equalsToText(text);
   }
@@ -61,7 +71,7 @@ public class PsiEllipsisType extends PsiArrayType {
    * @return the array type instance.
    */
   public PsiType toArrayType() {
-    return getComponentType().createArrayType();
+    return getComponentType().createArrayType(getAnnotations());
   }
 
   @Override

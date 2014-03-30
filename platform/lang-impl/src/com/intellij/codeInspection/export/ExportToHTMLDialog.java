@@ -40,6 +40,7 @@ public class ExportToHTMLDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     OptionGroup optionGroup = new OptionGroup();
 
@@ -49,6 +50,7 @@ public class ExportToHTMLDialog extends DialogWrapper{
     return optionGroup.createPanel();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     if (!myCanBeOpenInBrowser) return null;
     OptionGroup optionGroup = new OptionGroup();

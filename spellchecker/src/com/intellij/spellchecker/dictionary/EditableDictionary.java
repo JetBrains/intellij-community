@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Set;
 
 public interface EditableDictionary extends Dictionary {
-
   void addToDictionary(@Nullable String word);
 
   void removeFromDictionary(@Nullable String word);
@@ -34,6 +33,4 @@ public interface EditableDictionary extends Dictionary {
 
   @Nullable
   Set<String> getEditableWords();
-
-
 }

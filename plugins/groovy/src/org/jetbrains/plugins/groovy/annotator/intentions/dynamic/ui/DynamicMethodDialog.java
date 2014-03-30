@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class DynamicMethodDialog extends DynamicDialog {
 
   private class TypeColumnInfo extends ColumnInfo<ParamInfo, String> {
     public TypeColumnInfo() {
-      super(GroovyBundle.message("dynamic.name"));
+      super(GroovyBundle.message("dynamic.type"));
     }
 
     public String valueOf(ParamInfo pair) {
@@ -123,14 +123,13 @@ public class DynamicMethodDialog extends DynamicDialog {
         return;
       }
 
-      if (type == null) return;
-      pair.type =type.getCanonicalText();
+      pair.type = type.getCanonicalText();
     }
   }
 
   private static class NameColumnInfo extends ColumnInfo<ParamInfo, String> {
     public NameColumnInfo() {
-      super(GroovyBundle.message("dynamic.type"));
+      super(GroovyBundle.message("dynamic.name"));
     }
 
     public boolean isCellEditable(ParamInfo myPair) {

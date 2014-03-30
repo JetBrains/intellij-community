@@ -30,6 +30,8 @@ import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
@@ -44,7 +46,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Used by Installer's build buildSearchableOptions step. In order to run locally use TraverseUi configuration. 
+ * Used by Installer's build buildSearchableOptions step. In order to run locally use TraverseUi configuration.
  * Pass corresponding -Didea.platform.prefix=YOUR_IDE_PREFIX to vm options and choose main_YOUR_IDE module
  */
 @SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
@@ -59,16 +61,19 @@ public class TraverseUIStarter implements ApplicationStarter {
   @NonNls private static final String PATH = "path";
   @NonNls private static final String HIT = "hit";
 
+  @Override
   @NonNls
   public String getCommandName() {
     return "traverseUI";
   }
 
 
+  @Override
   public void premain(String[] args) {
     OUTPUT_PATH = args[1];
   }
 
+  @Override
   public void main(String[] args){
     System.out.println("Starting searchable options index builder");
     try {
@@ -94,6 +99,12 @@ public class TraverseUIStarter implements ApplicationStarter {
       configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
       final TreeSet<OptionDescription> sortedOptions = options.get(configurable);
       writeOptions(configurableElement, sortedOptions);
+      if (configurable instanceof ConfigurableWrapper) {
+        final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
+        if (wrapped instanceof SearchableConfigurable) {
+          configurable = (SearchableConfigurable)wrapped;
+        }
+      }
       if (configurable instanceof KeymapPanel){
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){
@@ -150,7 +161,7 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar,
                                      TreeSet<OptionDescription> options,
-                                     String text, 
+                                     String text,
                                      String path) {
     final Set<String> strings = optionsRegistrar.getProcessedWordsWithoutStemming(text);
     for (String word : strings) {

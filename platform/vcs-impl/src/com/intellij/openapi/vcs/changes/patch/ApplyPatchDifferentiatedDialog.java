@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +197,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCanChangePatchFile) {
       myListener = new VirtualFileAdapter() {
         @Override
-        public void contentsChanged(VirtualFileEvent event) {
+        public void contentsChanged(@NotNull VirtualFileEvent event) {
           if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
               myRecentPathFileChange.get().getVf().equals(event.getFile())) {
             queueRequest();
@@ -395,23 +396,15 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCenterPanel == null) {
       myCenterPanel = new JPanel(new GridBagLayout());
       final GridBagConstraints gb =
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
+        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
 
       myPatchFileLabel = new JLabel(VcsBundle.message("patch.apply.file.name.field"));
       myPatchFileLabel.setLabelFor(myPatchFile);
       myCenterPanel.add(myPatchFileLabel, gb);
 
-      ++ gb.gridx;
       gb.fill = GridBagConstraints.HORIZONTAL;
-      gb.weightx = 1;
-      myCenterPanel.add(myPatchFile, gb);
-
-      gb.gridx = 0;
       ++ gb.gridy;
-      gb.weightx = 1;
-      gb.weighty = 0;
-      gb.fill = GridBagConstraints.HORIZONTAL;
-      gb.gridwidth = 2;
+      myCenterPanel.add(myPatchFile, gb);
 
       final DefaultActionGroup group = new DefaultActionGroup();
       final AnAction[] treeActions = myChangesTreeList.getTreeActions();
@@ -436,31 +429,24 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
+      ++ gb.gridy;
+      gb.fill = GridBagConstraints.HORIZONTAL;
       myCenterPanel.add(toolbar.getComponent(), gb);
 
-      gb.gridx = 0;
       ++ gb.gridy;
       gb.weighty = 1;
-      gb.gridwidth = 2;
       gb.fill = GridBagConstraints.BOTH;
       myCenterPanel.add(myChangesTreeList, gb);
 
-      final JPanel wrapper = new JPanel(new GridBagLayout());
-      final GridBagConstraints gb1 =
-        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(1, 1, 1, 1), 0, 0);
-      wrapper.add(myChangeListChooser, gb1);
-      ++ gb1.gridx;
-      gb1.fill = GridBagConstraints.NONE;
-      gb1.weightx = 0;
-      gb1.insets.left = 10;
-      wrapper.add(myCommitLegendPanel.getComponent(), gb1);
-
-      gb.gridx = 0;
       ++ gb.gridy;
-      gb.weightx = 1;
       gb.weighty = 0;
+      gb.fill = GridBagConstraints.NONE;
+      gb.insets.bottom = UIUtil.DEFAULT_VGAP;
+      myCenterPanel.add(myCommitLegendPanel.getComponent(), gb);
+
+      ++ gb.gridy;
       gb.fill = GridBagConstraints.HORIZONTAL;
-      myCenterPanel.add(wrapper, gb);
+      myCenterPanel.add(myChangeListChooser, gb);
     }
     return myCenterPanel;
   }

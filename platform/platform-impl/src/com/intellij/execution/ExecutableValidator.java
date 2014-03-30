@@ -46,7 +46,7 @@ public abstract class ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
 
-  private final NotificationGroup myNotificationGroup = new NotificationGroup("External Executable Critical Failures",
+  private static final NotificationGroup ourNotificationGroup = new NotificationGroup("External Executable Critical Failures",
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
   @NotNull private final NotificationsManager myNotificationManager;
@@ -91,7 +91,8 @@ public abstract class ExecutableValidator {
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
       ProcessOutput result = handler.runProcess(60 * 1000);
       return !result.isTimeout() && (result.getExitCode() == 0) && result.getStderr().isEmpty();
-    } catch (Throwable e) {
+    }
+    catch (Throwable ignored) {
       return false;
     }
   }
@@ -110,7 +111,7 @@ public abstract class ExecutableValidator {
       return;
     }
 
-    LOG.info("Git executable is not valid: " + getCurrentExecutable());
+    LOG.info("Executable is not valid: " + getCurrentExecutable());
     if (myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject).length == 0) { // show only once
       new ExecutableNotValidNotification().notify(myProject.isDefault() ? null : myProject);
     }
@@ -128,14 +129,14 @@ public abstract class ExecutableValidator {
     }
   }
 
-  private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
+  protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
     showSettings();
     if (isExecutableValid(getCurrentExecutable())) {
       notification.expire();
     }
   }
 
-  private void showSettings() {
+  protected void showSettings() {
     Configurable configurable = getConfigurable();
     ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
   }
@@ -199,14 +200,12 @@ public abstract class ExecutableValidator {
 
   private class ExecutableNotValidNotification extends Notification {
     private ExecutableNotValidNotification() {
-      super(myNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener() {
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-            showSettingsAndExpireIfFixed(notification);
-          }
+      super(ourNotificationGroup.getDisplayId(), "", prepareDescription(), NotificationType.ERROR, new NotificationListener.Adapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          showSettingsAndExpireIfFixed(notification);
         }
       });
     }
   }
-
 }

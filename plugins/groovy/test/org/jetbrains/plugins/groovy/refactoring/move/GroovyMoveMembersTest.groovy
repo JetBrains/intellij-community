@@ -107,7 +107,7 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     //final File expectedDir = new File(getTestDataPath() + getTestName(true) + "/after");
     performAction(sourceClassName, targetClassName, memberIndices);
     try {
-      PlatformTestUtil.assertDirectoriesEqual(expectedDir, actualDir, VirtualFileFilter.ALL);
+      PlatformTestUtil.assertDirectoriesEqual(expectedDir, actualDir);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

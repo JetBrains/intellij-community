@@ -55,7 +55,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   protected void registerInTree(int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    ((DocumentImpl)myDocument).addRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
+    myDocument.registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
   protected boolean unregisterInTree() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -56,7 +57,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String SET_PREFIX = "set";
 
-  public CreatePropertyFromUsageFix(PsiMethodCallExpression methodCall) {
+  public CreatePropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     myMethodCall = methodCall;
   }
 
@@ -81,7 +82,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     String methodName = myMethodCall.getMethodExpression().getReferenceName();
     LOG.assertTrue(methodName != null);
     String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName == null || propertyName.length() == 0) return false;
+    if (propertyName == null || propertyName.isEmpty()) return false;
 
     String getterOrSetter = null;
     if (methodName.startsWith(GET_PREFIX) || methodName.startsWith(IS_PREFIX)) {
@@ -100,7 +101,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     if (classes.isEmpty()) return false;
 
     if (!checkTargetClasses(classes, methodName)) return false;
-    
+
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         setText(getterOrSetter);
@@ -226,7 +227,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiElement typeReference;
     PsiCodeBlock body;
     if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateGetterPrototype(field));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateGetterPrototype(field));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
@@ -248,7 +249,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
     builder.setEndVariableAfter(body.getLBrace());
 
-    accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
+    accessor = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(accessor);
     LOG.assertTrue(accessor != null);
     targetClass = accessor.getContainingClass();
     LOG.assertTrue(targetClass != null);
@@ -325,7 +326,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(methodCall.getProject());
     String methodName = methodCall.getMethodExpression().getReferenceName();
     String propertyName = PropertyUtil.getPropertyName(methodName);
-    if (propertyName != null && propertyName.length() > 0) {
+    if (propertyName != null && !propertyName.isEmpty()) {
       VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
       return codeStyleManager.propertyNameToVariableName(propertyName, kind);
     }

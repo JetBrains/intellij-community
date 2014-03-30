@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
 */
 public class GeneralHighlightingPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
-  public GeneralHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
+  public GeneralHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar, DefaultHighlightVisitor dhi) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
                                                                  null,
                                                                  new int[]{Pass.UPDATE_FOLDING}, false, Pass.UPDATE_ALL);
+    assert dhi != null;
   }
 
   @Override
@@ -52,11 +53,15 @@ public class GeneralHighlightingPassFactory extends AbstractProjectComponent imp
     TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
     ProperTextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor);
+    return new GeneralHighlightingPass(myProject, file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, new DefaultHighlightInfoProcessor());
   }
 
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
-    return new GeneralHighlightingPass(myProject, file, document, 0, file.getTextLength(), true);
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    // no applying to the editor - for read-only analysis only
+    return new GeneralHighlightingPass(myProject, file, document, 0, file.getTextLength(),
+                                       true, new ProperTextRange(0, document.getTextLength()), null, highlightInfoProcessor);
   }
 }

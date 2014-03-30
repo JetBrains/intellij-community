@@ -13,7 +13,7 @@ public boolean foo() {
 java.lang.Integer a = 5;
 
 org.codehaus.groovy.runtime.DefaultGroovyMethods.times(a, new groovy.lang.Closure<java.lang.Integer>(this, this) {
-public java.lang.Integer doCall(java.lang.Object it) {
+public java.lang.Integer doCall(java.lang.Integer it) {
 if (it == 2)return 5;
 }
 

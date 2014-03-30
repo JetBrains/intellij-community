@@ -59,11 +59,11 @@ public class MessageBusImpl implements MessageBus {
 
   @SuppressWarnings("UnusedDeclaration")
   public MessageBusImpl() {
-    this(null, null);
+    this("?", null);
   }
 
-  public MessageBusImpl(final Object owner, MessageBus parentBus) {
-    myOwner = owner == null ? null : owner.toString();
+  public MessageBusImpl(@NotNull Object owner, MessageBus parentBus) {
+    myOwner = owner.toString();
     myParentBus = (MessageBusImpl)parentBus;
     if (myParentBus != null) {
       myParentBus.notifyChildBusCreated(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,14 @@ import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,13 +39,18 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -78,6 +81,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<PluginId, THashSet<String>>();
   private final TObjectIntHashMap<String> myId2Index = new TObjectIntHashMap<String>();
   private final Map<Object,String> myAction2Id = new THashMap<Object, String>();
+  private final MultiMap<String,String> myId2GroupId = new MultiMap<String, String>();
   private final List<String> myNotRegisteredInternalActionIds = new ArrayList<String>();
   private MyTimer myTimer;
 
@@ -88,6 +92,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private final DataManager myDataManager;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
+
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
   @NonNls public static final String GROUP_ELEMENT_NAME = "group";
   @NonNls public static final String ACTIONS_ELEMENT_NAME = "actions";
@@ -101,8 +106,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String DESCRIPTION = "description";
   @NonNls public static final String TEXT_ATTR_NAME = "text";
   @NonNls public static final String POPUP_ATTR_NAME = "popup";
+  @NonNls public static final String COMPACT_ATTR_NAME = "compact";
   @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
   @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
+  @NonNls public static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
   @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
   @NonNls public static final String ANCHOR_ELEMENT_NAME = "anchor";
   @NonNls public static final String FIRST = "first";
@@ -118,8 +125,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
   @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
   @NonNls public static final String REF_ATTR_NAME = "ref";
+  @NonNls public static final String VALUE_ATTR_NAME = "value";
   @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
   @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  @NonNls public static final String OVERRIDES_ATTR_NAME = "overrides";
+  @NonNls public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
 
   private final List<ActionPopupMenuImpl> myPopups = new ArrayList<ActionPopupMenuImpl>();
 
@@ -136,8 +146,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     registerPluginActions();
   }
 
+  @Override
   public void initComponent() {}
 
+  @Override
   public void disposeComponent() {
     if (myTimer != null) {
       myTimer.stop();
@@ -145,10 +157,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public void addTimerListener(int delay, final TimerListener listener) {
     _addTimerListener(listener, false);
   }
 
+  @Override
   public void removeTimerListener(TimerListener listener) {
     _removeTimerListener(listener, false);
   }
@@ -184,23 +198,26 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return new ActionPopupMenuImpl(place, group, this, presentationFactory);
   }
 
+  @Override
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
     return new ActionPopupMenuImpl(place, group, this, null);
   }
 
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal) {
+  @Override
+  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
-  public ActionToolbar createActionToolbar(final String place, final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
+  @Override
+  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, (KeymapManagerEx)myKeymapManager);
   }
 
 
   private void registerPluginActions() {
-    final IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
+    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManager.shouldSkipPlugin(plugin)) continue;
+      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
       final List<Element> elementList = plugin.getActionsDescriptionElements();
       if (elementList != null) {
         for (Element e : elementList) {
@@ -210,6 +227,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public AnAction getAction(@NotNull String id) {
     return getActionImpl(id, false);
   }
@@ -227,7 +245,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   /**
    * Converts action's stub to normal action.
    */
-  private AnAction convert(ActionStub stub) {
+  @NotNull
+  private AnAction convert(@NotNull ActionStub stub) {
     LOG.assertTrue(myAction2Id.containsKey(stub));
     myAction2Id.remove(stub);
 
@@ -273,7 +292,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     if (!(obj instanceof AnAction)) {
-      throw new IllegalStateException("class with name \"" + className + "\" should be instance of " + AnAction.class.getName());
+      throw new IllegalStateException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
     }
 
     AnAction anAction = (AnAction)obj;
@@ -283,7 +302,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     String iconPath = stub.getIconPath();
     if (iconPath != null) {
-      setIconFromClass(anAction.getClass(), anAction.getClass().getClassLoader(), iconPath, stub.getClassName(), anAction.getTemplatePresentation(), stub.getPluginId());
+      Class<? extends AnAction> actionClass = anAction.getClass();
+      setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
 
     myId2Action.put(stub.getId(), obj);
@@ -292,6 +312,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return anAction;
   }
 
+  @Override
   public String getId(@NotNull AnAction action) {
     LOG.assertTrue(!(action instanceof ActionStub));
     synchronized (myLock) {
@@ -299,6 +320,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public String[] getActionIds(@NotNull String idPrefix) {
     synchronized (myLock) {
       ArrayList<String> idList = new ArrayList<String>();
@@ -311,14 +333,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public boolean isGroup(@NotNull String actionId) {
     return getActionImpl(actionId, true) instanceof ActionGroup;
   }
 
-  public JComponent createButtonToolbar(final String actionPlace, final ActionGroup messageActionGroup) {
+  @Override
+  public JComponent createButtonToolbar(final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
   }
 
+  @Override
   public AnAction getActionOrStub(String id) {
     return getActionImpl(id, true);
   }
@@ -337,13 +362,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       return null;
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       reportActionError(pluginId, "action element should have specified \"class\" attribute");
       return null;
     }
     // read ID and register loaded action
     String id = element.getAttributeValue(ID_ATTR_NAME);
-    if (id == null || id.length() == 0) {
+    if (id == null || id.isEmpty()) {
       id = StringUtil.getShortName(className);
     }
     if (Boolean.valueOf(element.getAttributeValue(INTERNAL_ATTR_NAME)).booleanValue() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
@@ -382,6 +407,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       else if (MOUSE_SHORTCUT_ELEMENT_NAME.equals(e.getName())) {
         processMouseShortcutNode(e, id, pluginId);
       }
+      else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
+        processAbbreviationNode(e, id);
+      }
       else {
         reportActionError(pluginId, "unexpected name of element \"" + e.getName() + "\"");
         return null;
@@ -391,14 +419,41 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       ((KeymapManagerEx)myKeymapManager).bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
     }
 
-    // register action
-    registerAction(id, stub, pluginId);
+    registerOrReplaceActionInner(element, id, stub, pluginId);
     return stub;
+  }
+
+  private void registerOrReplaceActionInner(@NotNull Element element, @NotNull String id, @NotNull AnAction action, @Nullable PluginId pluginId) {
+    synchronized (myLock) {
+      if (Boolean.valueOf(element.getAttributeValue(OVERRIDES_ATTR_NAME))) {
+        if (getActionOrStub(id) == null) {
+          throw new RuntimeException(element.getName() + " '" + id + "' doesn't override anything");
+        }
+        AnAction prev = replaceAction(id, action, pluginId);
+        if (action instanceof DefaultActionGroup && prev instanceof DefaultActionGroup) {
+          if (Boolean.valueOf(element.getAttributeValue(KEEP_CONTENT_ATTR_NAME))) {
+            ((DefaultActionGroup)action).copyFromGroup((DefaultActionGroup)prev);
+          }
+        }
+      }
+      else {
+        registerAction(id, action, pluginId);
+      }
+    }
+  }
+
+  private static void processAbbreviationNode(Element e, String id) {
+    final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
+    if (!StringUtil.isEmpty(abbr)) {
+      final AbbreviationManagerImpl abbreviationManager = ((AbbreviationManagerImpl)AbbreviationManager.getInstance());
+      abbreviationManager.register(abbr, id, true);
+    }
   }
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
+    @NonNls final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
+                                         ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
       bundle = AbstractBundle.getResourceBundle(resBundleName, loader);
@@ -410,13 +465,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return "true".equalsIgnoreCase(element.getAttributeValue(SECONDARY));
   }
 
-  private static void setIcon(@Nullable final String iconPath, final String className, final ClassLoader loader, final Presentation presentation,
+  private static void setIcon(@Nullable final String iconPath,
+                              @NotNull String className,
+                              @NotNull ClassLoader loader,
+                              @NotNull Presentation presentation,
                               final PluginId pluginId) {
     if (iconPath == null) return;
 
     try {
       final Class actionClass = Class.forName(className, true, loader);
-      setIconFromClass(actionClass, loader, iconPath, className, presentation, pluginId);
+      setIconFromClass(actionClass, loader, iconPath, presentation, pluginId);
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
@@ -428,9 +486,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
-  private static void setIconFromClass(@NotNull final Class actionClass, @NotNull final ClassLoader classLoader, @NotNull final String iconPath, final String className,
-                                       final Presentation presentation, final PluginId pluginId) {
-
+  private static void setIconFromClass(@NotNull final Class actionClass,
+                                       @NotNull final ClassLoader classLoader,
+                                       @NotNull final String iconPath,
+                                       @NotNull Presentation presentation,
+                                       final PluginId pluginId) {
     final IconLoader.LazyIcon lazyIcon = new IconLoader.LazyIcon() {
       @Override
       protected Icon compute() {
@@ -441,7 +501,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         }
 
         if (icon == null) {
-          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action class='" + className + "'");
+          reportActionError(pluginId, "Icon cannot be found in '" + iconPath + "', action '" + actionClass + "'");
         }
 
         return icon;
@@ -485,27 +545,38 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
-      className = DefaultActionGroup.class.getName();
+      if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
+        className = DefaultCompactActionGroup.class.getName();
+      } else {
+        className = DefaultActionGroup.class.getName();
+      }
     }
     try {
-      Class aClass = Class.forName(className, true, loader);
-      Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+      ActionGroup group;
+      if (DefaultActionGroup.class.getName().equals(className)) {
+        group = new DefaultActionGroup();
+      } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
+        group = new DefaultCompactActionGroup();
+      } else {
+        Class aClass = Class.forName(className, true, loader);
+        Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
-      if (!(obj instanceof ActionGroup)) {
-        reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
-        return null;
-      }
-      if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
-        if (!(obj instanceof DefaultActionGroup)) {
-          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                      " because there are children specified");
+        if (!(obj instanceof ActionGroup)) {
+          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
           return null;
         }
+        if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
+          if (!(obj instanceof DefaultActionGroup)) {
+            reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
+                                        " because there are children specified");
+            return null;
+          }
+        }
+        group = (ActionGroup)obj;
       }
-      ActionGroup group = (ActionGroup)obj;
       // read ID and register loaded group
       String id = element.getAttributeValue(ID_ATTR_NAME);
-      if (id != null && id.length() == 0) {
+      if (id != null && id.isEmpty()) {
         reportActionError(pluginId, "ID of the group cannot be an empty string");
         return null;
       }
@@ -515,7 +586,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       }
 
       if (id != null) {
-        registerAction(id, group);
+        registerOrReplaceActionInner(element, id, group, pluginId);
       }
       Presentation presentation = group.getTemplatePresentation();
 
@@ -548,7 +619,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           AnAction action = processActionElement(child, loader, pluginId);
           if (action != null) {
             assertActionIsGroupOrStub(action);
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else if (SEPARATOR_ELEMENT_NAME.equals(name)) {
@@ -557,7 +628,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (GROUP_ELEMENT_NAME.equals(name)) {
           AnAction action = processGroupElement(child, loader, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).add(action, this);
+            addToGroupInner(group, action, Constraints.LAST, false);
           }
         }
         else if (ADD_TO_GROUP_ELEMENT_NAME.equals(name)) {
@@ -566,7 +637,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child, pluginId);
           if (action != null) {
-            ((DefaultActionGroup)group).addAction(action, Constraints.LAST, this).setAsSecondary(isSecondary(child));
+            addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
         else {
@@ -613,8 +684,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   /**\
    * @param element description of link
-   * @param pluginId
-   * @param secondary
    */
   private void processAddToGroupNode(AnAction action, Element element, final PluginId pluginId, boolean secondary) {
     // Real subclasses of AnAction should not be here
@@ -622,7 +691,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       assertActionIsGroupOrStub(action);
     }
 
-    String actionName = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
+    String actionName = String.format(
+      "%s (%s)", action instanceof ActionStub? ((ActionStub)action).getClassName() : action.getClass().getName(),
+      action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action));
 
     if (!ADD_TO_GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
@@ -636,8 +707,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     // anchor attribute
-    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME),
-                                      actionName, pluginId);
+    final Anchor anchor = parseAnchor(element.getAttributeValue(ANCHOR_ELEMENT_NAME), actionName, pluginId);
     if (anchor == null) {
       return;
     }
@@ -646,8 +716,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (!checkRelativeToAction(relativeToActionId, anchor, actionName, pluginId)) {
       return;
     }
-    final DefaultActionGroup group = (DefaultActionGroup)parentGroup;
-    group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
+    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), secondary);
+  }
+
+  private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
+    ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
+    myId2GroupId.putValue(myAction2Id.get(action), myAction2Id.get(group));
   }
 
   public static boolean checkRelativeToAction(final String relativeToActionId,
@@ -691,7 +765,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   public AnAction getParentGroup(final String groupId,
                                  @Nullable final String actionName,
                                  @Nullable final PluginId pluginId) {
-    if (groupId == null || groupId.length() == 0) {
+    if (groupId == null || groupId.isEmpty()) {
       reportActionError(pluginId, actionName + ": attribute \"group-id\" should be defined");
       return null;
     }
@@ -754,7 +828,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.trim().length() == 0) {
+    if (keymapName == null || keymapName.trim().isEmpty()) {
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
@@ -779,7 +853,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
-    if (keystrokeString == null || keystrokeString.trim().length() == 0) {
+    if (keystrokeString == null || keystrokeString.trim().isEmpty()) {
       reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
       return;
     }
@@ -793,7 +867,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.length() == 0) {
+    if (keymapName == null || keymapName.isEmpty()) {
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
@@ -824,7 +898,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       ref = element.getAttributeValue(ID_ATTR_NAME);
     }
 
-    if (ref == null || ref.length() == 0) {
+    if (ref == null || ref.isEmpty()) {
       reportActionError(pluginId, "ID of reference element should be defined");
       return null;
     }
@@ -869,10 +943,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action, @Nullable PluginId pluginId) {
     synchronized (myLock) {
       if (myId2Action.containsKey(actionId)) {
-        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action.toString() + 
+        reportActionError(pluginId, "action with the ID \"" + actionId + "\" was already registered. Action being registered is " + action +
                                     "; Registered action is " +
                                        myId2Action.get(actionId) + getPluginInfo(pluginId));
         return;
@@ -897,7 +972,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
-  private static void reportActionError(final PluginId pluginId, @NonNls final String message) {
+  private static void reportActionError(final PluginId pluginId, @NonNls @NotNull String message) {
     if (pluginId == null) {
       LOG.error(message);
     }
@@ -921,10 +996,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return "";
   }
 
+  @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
     registerAction(actionId, action, null);
   }
 
+  @Override
   public void unregisterAction(@NotNull String actionId) {
     synchronized (myLock) {
       if (!myId2Action.containsKey(actionId)) {
@@ -945,19 +1022,24 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ActionManager";
   }
 
+  @Override
   public Comparator<String> getRegistrationOrderComparator() {
     return new Comparator<String>() {
+      @Override
       public int compare(String id1, String id2) {
         return myId2Index.get(id1) - myId2Index.get(id2);
       }
     };
   }
 
+  @NotNull
+  @Override
   public String[] getPluginActions(PluginId pluginName) {
     if (myPlugin2Id.containsKey(pluginName)){
       final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
@@ -977,6 +1059,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
     if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
@@ -986,6 +1069,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
 
+  @Override
   public boolean isActionPopupStackEmpty() {
     return myPopups.isEmpty();
   }
@@ -993,6 +1077,33 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @Override
   public boolean isTransparentOnlyActionsUpdateNow() {
     return myTransparentOnlyUpdate;
+  }
+
+  //@Override
+  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
+  //  synchronized (myLock) {
+  //    return replaceAction(actionId, newAction, null);
+  //  }
+  //}
+
+  private AnAction replaceAction(@NotNull String actionId, @NotNull AnAction newAction, @Nullable PluginId pluginId) {
+    AnAction oldAction = getActionOrStub(actionId);
+    if (oldAction != null) {
+      boolean isGroup = oldAction instanceof ActionGroup;
+      if (isGroup != newAction instanceof ActionGroup) {
+        throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
+      }
+      unregisterAction(actionId);
+      if (isGroup) {
+        myId2GroupId.values().remove(actionId);
+      }
+    }
+    registerAction(actionId, newAction, pluginId);
+    for (String groupId : myId2GroupId.get(actionId)) {
+      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+      group.replaceAction(oldAction, newAction);
+    }
+    return oldAction;
   }
 
   private void flushActionPerformed() {
@@ -1005,23 +1116,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     myQueuedNotificationsEvents.clear();
   }
 
+  @Override
   public void addAnActionListener(AnActionListener listener) {
     myActionListeners.add(listener);
   }
 
+  @Override
   public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
     addAnActionListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeAnActionListener(listener);
       }
     });
   }
 
+  @Override
   public void removeAnActionListener(AnActionListener listener) {
     myActionListeners.remove(listener);
   }
 
+  @Override
   public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
@@ -1034,6 +1150,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
@@ -1068,6 +1185,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return null;
   }
 
+  @Override
   public void fireBeforeEditorTyping(char c, DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     for (AnActionListener listener : myActionListeners) {
@@ -1075,10 +1193,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public String getLastPreformedActionId() {
     return myLastPreformedActionId;
   }
 
+  @Override
   public String getPrevPreformedActionId() {
     return myPrevPerformedActionId;
   }
@@ -1094,8 +1214,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   public void preloadActions() {
     if (myPreloadActionsRunnable == null) {
       myPreloadActionsRunnable = new Runnable() {
+        @Override
         public void run() {
-          doPreloadActions();
+          try {
+            doPreloadActions();
+          } catch (RuntimeInterruptedException ignore) {
+          }
         }
       };
       ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
@@ -1107,12 +1231,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       Thread.sleep(5000); // wait for project initialization to complete
     }
     catch (InterruptedException e) {
-      // ignore
+      return; // IDEA exited
     }
     preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
     preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
     preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
     preloadActionGroup(IdeActions.GROUP_MAIN_MENU);
+    preloadActionGroup(IdeActions.GROUP_NEW);
     // TODO anything else?
     LOG.debug("Actions preloading completed");
   }
@@ -1127,6 +1252,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   private void preloadActionGroup(final ActionGroup group) {
     final Application application = ApplicationManager.getApplication();
     final AnAction[] children = application.runReadAction(new Computable<AnAction[]>() {
+      @Override
       public AnAction[] compute() {
         if (application.isDisposed()) {
           return AnAction.EMPTY_ARRAY;
@@ -1142,21 +1268,23 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       else if (action instanceof ActionGroup) {
         preloadActionGroup((ActionGroup)action);
       }
-      
+
       myActionsPreloaded++;
       if (myActionsPreloaded % 10 == 0) {
         try {
           //noinspection BusyWait
           Thread.sleep(300);
         }
-        catch (InterruptedException ignored) { }
+        catch (InterruptedException ignored) {
+          throw new RuntimeInterruptedException(ignored);
+        }
       }
     }
   }
 
   private class MyTimer extends Timer implements ActionListener {
-    private final List<TimerListener> myTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
-    private final List<TimerListener> myTransparentTimerListeners = Collections.synchronizedList(new ArrayList<TimerListener>());
+    private final List<TimerListener> myTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+    private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
 
     MyTimer() {
@@ -1184,21 +1312,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     public void addTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-        myTransparentTimerListeners.add(listener);
-      } else {
-        myTimerListeners.add(listener);
-      }
+      (transparent ? myTransparentTimerListeners : myTimerListeners).add(listener);
     }
 
     public void removeTimerListener(TimerListener listener, boolean transparent){
-      if (transparent) {
-       myTransparentTimerListeners.remove(listener);
-      } else {
-        myTimerListeners.remove(listener);
-      }
+      (transparent ? myTransparentTimerListeners : myTimerListeners).remove(listener);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       if (myLastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
         return;
@@ -1212,7 +1333,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {
-        HashSet<TimerListener> notified = new HashSet<TimerListener>();
+        Set<TimerListener> notified = new HashSet<TimerListener>();
         myTransparentOnlyUpdate = transparentOnly;
         notifyListeners(myTransparentTimerListeners, notified);
 
@@ -1228,13 +1349,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
-      final TimerListener[] listeners = timerListeners.toArray(new TimerListener[timerListeners.size()]);
-      for (TimerListener listener : listeners) {
-        if (timerListeners.contains(listener)) {
-          if (!notified.contains(listener)) {
-            notified.add(listener);
-            runListenerAction(listener);
-          }
+      for (TimerListener listener : timerListeners) {
+        if (notified.add(listener)) {
+          runListenerAction(listener);
         }
       }
     }
@@ -1256,6 +1373,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
   }
 
+  @Override
   public ActionCallback tryToExecute(@NotNull final AnAction action, @NotNull final InputEvent inputEvent, @Nullable final Component contextComponent, @Nullable final String place,
                                      boolean now) {
 
@@ -1264,6 +1382,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
     final ActionCallback result = new ActionCallback();
     final Runnable doRunnable = new Runnable() {
+      @Override
       public void run() {
         tryToExecuteNow(action, inputEvent, contextComponent, place, result);
       }
@@ -1275,15 +1394,15 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(doRunnable);
     }
-    
-    return result;
 
+    return result;
   }
 
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presentation = action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
+      @Override
       public void run() {
         final DataContext context = getContextBy(contextComponent);
 
@@ -1315,6 +1434,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         fireBeforeActionPerformed(action, context, event);
 
         UIUtil.addAwtListener(new AWTEventListener() {
+          @Override
           public void eventDispatched(AWTEvent event) {
             if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
               if (!result.isProcessed()) {

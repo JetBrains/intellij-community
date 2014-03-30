@@ -15,7 +15,6 @@
  */
 package com.intellij.projectView;
 
-import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -43,7 +42,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
     final StructureViewBuilder structureViewBuilder =
       StructureViewBuilder.PROVIDER.getStructureViewBuilder(virtualFile.getFileType(), virtualFile, myProject);
     assertNotNull(structureViewBuilder);
-    final StructureViewModel structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel();
+    final StructureViewModel structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel(null);
 
     final EditorFactory factory = EditorFactory.getInstance();
     assertNotNull(factory);
@@ -53,12 +52,12 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
     final Editor editor = factory.createEditor(document);
     try {
       final FileStructureDialog dialog =
-        ViewStructureAction.createStructureViewBasedDialog(structureViewModel, editor, myProject, psiClass, new Disposable() {
+        new FileStructureDialog(structureViewModel, editor, myProject, psiClass, new Disposable() {
           @Override
           public void dispose() {
             structureViewModel.dispose();
           }
-        });
+        }, true);
       try {
         final CommanderPanel panel = dialog.getPanel();
         assertListsEqual((ListModel)panel.getModel(), "Inner1\n" + "Inner2\n" + "__method(): void\n" + "_myField1: int\n" + "_myField2: String\n");

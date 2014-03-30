@@ -46,6 +46,7 @@ public abstract class InputTool {
   protected int myCurrentScreenX;
   protected int myCurrentScreenY;
   protected InputEvent myInputEvent;
+  protected int myModifiers;
   protected int myButton;
   protected int myStartScreenX;
   protected int myStartScreenY;
@@ -167,12 +168,35 @@ public abstract class InputTool {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public void keyTyped(KeyEvent event, EditableArea area) throws Exception {
+    setEvent(event);
+    setArea(area);
   }
 
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    setEvent(event);
+    setArea(area);
   }
 
   public void keyReleased(KeyEvent event, EditableArea area) throws Exception {
+    setEvent(event);
+    setArea(area);
+  }
+
+  private void setEvent(KeyEvent event) {
+    myInputEvent = event;
+    myModifiers = event.getModifiers();
+  }
+
+  protected final boolean isShiftPressed() {
+    return (myModifiers & InputEvent.SHIFT_MASK) != 0;
+  }
+
+  protected final boolean isAltOptionPressed() {
+    return (myModifiers & InputEvent.ALT_MASK) != 0;
+  }
+
+  protected final boolean isCtrlCmdPressed() {
+    return (myModifiers & (InputEvent.CTRL_MASK | InputEvent.META_DOWN_MASK)) != 0;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +209,7 @@ public abstract class InputTool {
   private void setEvent(MouseEvent event) {
     myCurrentScreenX = event.getX();
     myCurrentScreenY = event.getY();
+    myModifiers = event.getModifiers();
     myButton = event.getButton();
     myInputEvent = event;
     myToolProvider.setEvent(event);

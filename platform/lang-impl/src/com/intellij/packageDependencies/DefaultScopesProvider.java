@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
-import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,43 +43,38 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, DefaultScopesProvider.class);
   }
 
-  public DefaultScopesProvider(Project project) {
+  public DefaultScopesProvider(@NotNull Project project) {
     myProject = project;
     final NamedScope projectScope = new ProjectFilesScope();
     final NamedScope nonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
-      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-        return holder.getProject() == myProject
+      @Override
+      public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
+        return contains(file, holder.getProject(), holder);
+      }
+
+      @Override
+      public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
+        return project == myProject
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
       }
     });
     myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope);
   }
 
+  @Override
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return myScopes;
   }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-  private static class AllScopeHolder {
-    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
-      public boolean contains(final VirtualFile file, final NamedScopesHolder scopesHolder) {
-        return true;
-      }
-    });
-  }
-
-  public static NamedScope getAllScope() {
-    return AllScopeHolder.ALL;
-  }
-
+  @NotNull
   public NamedScope getProblemsScope() {
     return myProblemsScope;
   }
 
+  @NotNull
   public List<NamedScope> getAllCustomScopes() {
     final List<NamedScope> scopes = new ArrayList<NamedScope>();
     for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, myProject)) {

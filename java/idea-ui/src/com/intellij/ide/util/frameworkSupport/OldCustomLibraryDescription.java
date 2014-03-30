@@ -20,6 +20,7 @@ import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
+import com.intellij.framework.FrameworkAvailabilityCondition;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
 import com.intellij.framework.library.impl.DownloadableLibraryFileDescriptionImpl;
@@ -61,7 +62,9 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
                                                                    downloadingInfo.getFileNameSuffix(), null, null, false));
         }
       }
-      libraryVersions.add(new FrameworkLibraryVersionImpl(version.getVersionName(), downloads, version.getLibraryName()));
+      String libraryName = version.getLibraryName();
+      libraryVersions.add(new FrameworkLibraryVersionImpl(libraryName, version.getVersionName(), FrameworkAvailabilityCondition.ALWAYS_TRUE, downloads,
+                                                          libraryName));
     }
     myDownloadableDescription = !libraryVersions.isEmpty() ? new DownloadableLibraryDescriptionImpl(libraryVersions) : null;
   }

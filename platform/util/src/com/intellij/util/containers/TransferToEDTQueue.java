@@ -27,7 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Allows to process elements in the EDT.
- * Processes elements in batches, no longer than 200ms per batch, and reschedules processing later for longer batches.
+ * Processes elements in batches, no longer than 200ms (or maxUnitOfWorkThresholdMs constructor parameter) per batch,
+ * and reschedules processing later for longer batches.
  * Usage: {@link TransferToEDTQueue#offer(Object)} } : schedules element for processing in EDT (via invokeLater)
  */
 public class TransferToEDTQueue<T> {
@@ -38,7 +39,7 @@ public class TransferToEDTQueue<T> {
   private final Condition<?> myShutUpCondition;
   private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
-  private final Queue<T> myQueue = new Queue<T>(10);
+  private final Queue<T> myQueue = new Queue<T>(10); // guarded by myQueue
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
@@ -51,13 +52,8 @@ public class TransferToEDTQueue<T> {
       }
       long start = System.currentTimeMillis();
       int processed = 0;
-      while (true) {
-        if (processNext()) {
-          processed++;
-        }
-        else {
-          break;
-        }
+      while (processNext()) {
+        processed++;
         long finish = System.currentTimeMillis();
         if (myMaxUnitOfWorkThresholdMs != -1 && finish - start > myMaxUnitOfWorkThresholdMs) break;
       }
@@ -67,11 +63,24 @@ public class TransferToEDTQueue<T> {
     }
   };
 
-  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition, int maxUnitOfWorkThresholdMs) {
+  public TransferToEDTQueue(@NotNull @NonNls String name,
+                            @NotNull Processor<T> processor,
+                            @NotNull Condition<?> shutUpCondition,
+                            int maxUnitOfWorkThresholdMs) {
     myName = name;
     myProcessor = processor;
     myShutUpCondition = shutUpCondition;
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
+  }
+  
+  public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
+    return new TransferToEDTQueue<Runnable>(name, new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, Condition.FALSE, maxUnitOfWorkThresholdMs);
   }
 
   private boolean isEmpty() {
@@ -80,7 +89,8 @@ public class TransferToEDTQueue<T> {
     }
   }
 
-  protected boolean processNext() {
+  // return true if element was pulled from the queue and processed successfully
+  private boolean processNext() {
     T thing = pullFirst();
     if (thing == null) return false;
     if (!myProcessor.process(thing)) {
@@ -91,11 +101,9 @@ public class TransferToEDTQueue<T> {
   }
 
   protected T pullFirst() {
-    T thing;
     synchronized (myQueue) {
-      thing = myQueue.isEmpty() ? null : myQueue.pullFirst();
+      return myQueue.isEmpty() ? null : myQueue.pullFirst();
     }
-    return thing;
   }
 
   public boolean offer(@NotNull T thing) {
@@ -107,9 +115,8 @@ public class TransferToEDTQueue<T> {
   }
 
   public boolean offerIfAbsent(@NotNull final T thing, @NotNull final Equality<T> equality) {
-    boolean absent;
     synchronized (myQueue) {
-      absent = myQueue.process(new Processor<T>() {
+      boolean absent = myQueue.process(new Processor<T>() {
         @Override
         public boolean process(T t) {
           return !equality.equals(t, thing);
@@ -119,8 +126,8 @@ public class TransferToEDTQueue<T> {
         myQueue.addLast(thing);
         scheduleUpdate();
       }
+      return absent;
     }
-    return absent;
   }
 
   private void scheduleUpdate() {
@@ -144,18 +151,13 @@ public class TransferToEDTQueue<T> {
   public void drain() {
     int processed = 0;
     long start = System.currentTimeMillis();
-    while (true) {
-      if (processNext()) {
-        processed++;
-      }
-      else {
-        break;
-      }
+    while (processNext()) {
+      processed++;
     }
     long finish = System.currentTimeMillis();
-    int i  = 0;
   }
 
+  // blocks until all elements in the queue are processed
   public void waitFor() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();

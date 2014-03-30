@@ -29,11 +29,14 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 9/17/12 11:51 AM
  */
-public interface ArrangementSettings {
+public interface ArrangementSettings extends Cloneable {
 
   @NotNull
   List<ArrangementGroupingRule> getGroupings();
   
   @NotNull
   List<? extends ArrangementMatchRule> getRules();
+
+  @NotNull
+  ArrangementSettings clone();
 }

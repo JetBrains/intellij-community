@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +31,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     myExpression = expression;
   }
 
+  @Override
   @NotNull
   public String getExpression() {
     return myExpression;

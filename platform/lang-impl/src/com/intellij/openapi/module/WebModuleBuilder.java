@@ -24,14 +24,13 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
 * @author Dmitry Avdeev
@@ -63,6 +62,16 @@ public class WebModuleBuilder extends ModuleBuilder {
   }
 
   @Override
+  public String getPresentableName() {
+    return getGroupName();
+  }
+
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
+  @Override
   public String getGroupName() {
     return GROUP_NAME;
   }
@@ -72,13 +81,14 @@ public class WebModuleBuilder extends ModuleBuilder {
     return myTemplate != null ? myTemplate.getIcon() : ICON;
   }
 
+  @Nullable
   @Override
-  public List<Module> commit(Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-    List<Module> modules = super.commit(project, model, modulesProvider);
-    if (modules != null && !modules.isEmpty() && myTemplate != null) {
-      doGenerate(myTemplate, modules.get(0));
+  public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    Module module = super.commitModule(project, model);
+    if (module != null && myTemplate != null) {
+      doGenerate(myTemplate, module);
     }
-    return modules;
+    return module;
   }
 
   private static <T> void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {
@@ -94,11 +104,11 @@ public class WebModuleBuilder extends ModuleBuilder {
 
   @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
-    WebProjectGenerator.GeneratorPeer peer = myTemplate.getPeer();
+    final WebProjectGenerator.GeneratorPeer peer = myTemplate.getPeer();
     peer.buildUI(settingsStep);
     return new ModuleWizardStep() {
       @Override
@@ -109,7 +119,13 @@ public class WebModuleBuilder extends ModuleBuilder {
       @Override
       public void updateDataModel() {
       }
+
+      @Override
+      public boolean validate() throws ConfigurationException {
+        ValidationInfo info = peer.validate();
+        if (info != null) throw new ConfigurationException(info.message);
+        return true;
+      }
     };
   }
-
 }

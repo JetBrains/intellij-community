@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
 import com.intellij.openapi.diff.actions.PreviousDiffAction;
+import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
@@ -146,11 +147,13 @@ public class MergePanel2 implements DiffViewer {
         toolbar.addAction(PreviousDiffAction.find());
         toolbar.addAction(NextDiffAction.find());
         toolbar.addSeparator();
-        toolbar.addAction(new OpenPartialDiffAction(1, 0, AllIcons.Diff.LeftDiff));
+        toolbar.addAction(new OpenPartialDiffAction(0, 1, AllIcons.Diff.LeftDiff));
         toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
         toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
         toolbar.addSeparator();
         toolbar.addAction(new ApplyNonConflicts(myPanel));
+        toolbar.addSeparator();
+        toolbar.addAction(new ToggleAutoScrollAction());
         Project project = myData.getProject();
         if (project != null) {
           toolbar.addSeparator();
@@ -225,28 +228,26 @@ public class MergePanel2 implements DiffViewer {
   private void tryInitView() {
     if (!hasAllEditors()) return;
     if (myMergeList != null) return;
-    try {
-      myMergeList = MergeList.create(myData);
-      myMergeList.addListener(myDividersRepainter);
-      myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
-      Editor left = getEditor(0);
-      Editor base = getEditor(1);
-      Editor right = getEditor(2);
+    myMergeList = MergeList.create(myData);
+    myMergeList.addListener(myDividersRepainter);
+    myStatusUpdater = StatusUpdater.install(myMergeList, myPanel);
+    Editor left = getEditor(0);
+    Editor base = getEditor(1);
+    Editor right = getEditor(2);
 
-      myMergeList.setMarkups(left, base, right);
-      EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
-      myScrollSupport.install(sides);
-      for (int i = 0; i < myDividers.length; i++) {
-        myDividers[i].listenEditors(sides[i]);
-      }
-      if (myScrollToFirstDiff) {
-        myPanel.requestScrollEditors();
-      }
+    myMergeList.setMarkups(left, base, right);
+    EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
+    myScrollSupport.install(sides);
+    for (int i = 0; i < myDividers.length; i++) {
+      myDividers[i].listenEditors(sides[i]);
     }
-    catch (final FilesTooBigForDiffException e) {
+    if (myScrollToFirstDiff) {
+      myPanel.requestScrollEditors();
+    }
+    if (myMergeList.getErrorMessage() != null) {
       myPanel.insertTopComponent(new EditorNotificationPanel() {
         {
-          myLabel.setText(e.getMessage());
+          myLabel.setText(myMergeList.getErrorMessage());
         }
       });
     }
@@ -260,6 +261,14 @@ public class MergePanel2 implements DiffViewer {
   @NotNull
   EditingSides getSecondEditingSide() {
     return new MyEditingSides(FragmentSide.SIDE2);
+  }
+
+  public void setAutoScrollEnabled(boolean enabled) {
+    myScrollSupport.setEnabled(enabled);
+  }
+
+  public boolean isAutoScrollEnabled() {
+    return myScrollSupport.isEnabled();
   }
 
   public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {

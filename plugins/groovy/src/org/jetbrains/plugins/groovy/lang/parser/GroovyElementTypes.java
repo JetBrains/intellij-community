@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl;
@@ -125,7 +123,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void indexStub(GrMethodStub stub, IndexSink sink) {
+    public void indexStub(@NotNull GrMethodStub stub, @NotNull IndexSink sink) {
       super.indexStub(stub, sink);
       String name = stub.getName();
       sink.occurrence(GrAnnotationMethodNameIndex.KEY, name);
@@ -182,7 +180,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
       return new GrEnumConstantListImpl(stub);
     }
   };
-  GroovyElementType IMPORT_STATEMENT = new GroovyElementType("Import statement");
+  GrImportStatementElementType IMPORT_STATEMENT = new GrImportStatementElementType("Import statement");
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("Continue statement");
@@ -226,8 +224,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   GroovyElementType PATH_INDEX_PROPERTY = new GroovyElementType("Index property");
   GroovyElementType PARENTHESIZED_EXPRESSION = new GroovyElementType("Parenthesized expression");
-  // Plain label
-  GroovyElementType LABEL = new GroovyElementType("Label");
 
   // Arguments
   GroovyElementType ARGUMENTS = new GroovyElementType("Arguments");
@@ -246,19 +242,21 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
 
   GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
-  
+
   GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("Disjunction type element");
 
   // GStrings
   GroovyElementType GSTRING = new GroovyElementType("GString");
-  IElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
+  GroovyElementType GSTRING_INJECTION =new GroovyElementType("Gstring injection");
+  GroovyElementType GSTRING_CONTENT = new GroovyElementType("GString content element");
+
 
   GroovyElementType REGEX = new GroovyElementType("Regular expression");
   //types
   GroovyElementType REFERENCE_ELEMENT = new GroovyElementType("reference element");
   GroovyElementType ARRAY_DECLARATOR = new GroovyElementType("array declarator");
 
-  GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments");
+  GroovyElementType TYPE_ARGUMENTS = new GroovyElementType("type arguments", true);
   GroovyElementType TYPE_ARGUMENT = new GroovyElementType("type argument");
   EmptyStubElementType<GrTypeParameterList> TYPE_PARAMETER_LIST = new EmptyStubElementType<GrTypeParameterList>("type parameter list", GroovyFileType.GROOVY_LANGUAGE) {
     @Override
@@ -279,12 +277,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void serialize(GrTypeParameterStub stub, StubOutputStream dataStream) throws IOException {
+    public void serialize(@NotNull GrTypeParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
       dataStream.writeName(stub.getName());
     }
 
+    @NotNull
     @Override
-    public GrTypeParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    public GrTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
       return new GrTypeParameterStub(parentStub, dataStream.readName());
     }
   };
@@ -302,34 +301,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType EXPLICIT_CONSTRUCTOR = new GroovyElementType("explicit constructor invokation");
 
   //throws
-  GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
+  GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause", true);
   //annotation
   GroovyElementType ANNOTATION_ARRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
-  GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
+  GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments", true);
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
 
-  GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrStubElementType<GrAnnotationStub, GrAnnotation>("annotation") {
-
-    @Override
-    public GrAnnotation createPsi(@NotNull GrAnnotationStub stub) {
-      return new GrAnnotationImpl(stub);
-    }
-
-    @Override
-    public GrAnnotationStub createStub(@NotNull GrAnnotation psi, StubElement parentStub) {
-      return new GrAnnotationStub(parentStub, psi);
-    }
-
-    @Override
-    public void serialize(GrAnnotationStub stub, StubOutputStream dataStream) throws IOException {
-      dataStream.writeName(stub.getAnnotationName());
-    }
-
-    @Override
-    public GrAnnotationStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
-      return new GrAnnotationStub(parentStub, dataStream.readName());
-    }
-  };
+  GrStubElementType<GrAnnotationStub, GrAnnotation> ANNOTATION = new GrAnnotationElementType("annotation");
   //parameters
   EmptyStubElementType<GrParameterList> PARAMETERS_LIST = new EmptyStubElementType<GrParameterList>("parameters list", GroovyFileType.GROOVY_LANGUAGE) {
     @Override
@@ -351,14 +329,15 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void serialize(GrParameterStub stub, StubOutputStream dataStream) throws IOException {
+    public void serialize(@NotNull GrParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
       dataStream.writeName(stub.getName());
       GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
       GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
     }
 
+    @NotNull
     @Override
-    public GrParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    public GrParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
       final StringRef name = dataStream.readName();
       final String[] annotations = GrStubUtils.readStringArray(dataStream);
       final String typeText = GrStubUtils.readNullableString(dataStream);
@@ -417,7 +396,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
         return new GrVariableDeclarationImpl(stub);
       }
     };
-  IElementType MULTIPLE_VARIABLE_DEFINITION = new GroovyElementType("multivariable definition");
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
   GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
 
@@ -430,16 +408,4 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
-
-  TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
-          BLOCK_STATEMENT,
-          CONSTRUCTOR_BODY,
-          OPEN_BLOCK,
-          ENUM_BODY,
-          CLASS_BODY);
-
-  TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
-  TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
-  TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT, DISJUNCTION_TYPE_ELEMENT);
-
 }

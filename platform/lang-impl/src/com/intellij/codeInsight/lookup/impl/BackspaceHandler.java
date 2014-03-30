@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
@@ -31,10 +32,10 @@ public class BackspaceHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, final DataContext dataContext){
+  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null){
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 
@@ -44,15 +45,19 @@ public class BackspaceHandler extends EditorActionHandler {
       hideOffset = originalStart - 1;
     }
     
-    truncatePrefix(dataContext, lookup, myOriginalHandler, hideOffset);
+    truncatePrefix(dataContext, lookup, myOriginalHandler, hideOffset, caret);
   }
 
-  static void truncatePrefix(final DataContext dataContext, LookupImpl lookup, final EditorActionHandler handler, final int hideOffset) {
+  static void truncatePrefix(final DataContext dataContext,
+                             LookupImpl lookup,
+                             final EditorActionHandler handler,
+                             final int hideOffset,
+                             final Caret caret) {
     final Editor editor = lookup.getEditor();
     if (!lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
-        handler.execute(editor, dataContext);
+        handler.execute(editor, caret, dataContext);
       }
     })) {
       return;

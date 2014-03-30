@@ -17,7 +17,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.impl.TransferableWrapper;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -43,11 +43,11 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FavoritesPanel {
-  private Project myProject;
-  private FavoritesTreeViewPanel myViewPanel;
-  private DnDAwareTree myTree;
-  private AbstractTreeBuilder myTreeBuilder;
-  private FavoritesTreeStructure myTreeStructure;
+  private final Project myProject;
+  private final FavoritesTreeViewPanel myViewPanel;
+  private final DnDAwareTree myTree;
+  private final AbstractTreeBuilder myTreeBuilder;
+  private final FavoritesTreeStructure myTreeStructure;
 
   public FavoritesPanel(Project project) {
     myProject = project;

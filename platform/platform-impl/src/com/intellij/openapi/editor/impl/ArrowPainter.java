@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,19 @@ import java.awt.*;
 public class ArrowPainter {
 
   private final ColorProvider myColorHolder;
+  private final Computable<Integer> myWidthProvider;
   private final Computable<Integer> myHeightProvider;
 
-  public ArrowPainter(@NotNull ColorProvider colorHolder, @NotNull Computable<Integer> heightProvider) {
+  /**
+   * Creates an ArrowPainter with specified parameters.
+   *
+   * @param colorHolder defines arrow color
+   * @param widthProvider defines character width, it is used to calculate an inset for the arrow's tip
+   * @param heightProvider defines character height, it's used to calculate an arrow's width and height
+   */
+  public ArrowPainter(@NotNull ColorProvider colorHolder, @NotNull Computable<Integer> widthProvider, @NotNull Computable<Integer> heightProvider) {
     myColorHolder = colorHolder;
+    myWidthProvider = widthProvider;
     myHeightProvider = heightProvider;
   }
 
@@ -46,7 +55,7 @@ public class ArrowPainter {
    * @param stop    ending <code>'x'</code> position to use during drawing
    */
   public void paint(Graphics g, int y, int start, int stop) {
-    stop -= g.getFontMetrics().charWidth(' ') / 2;
+    stop -= myWidthProvider.compute() / 4;
     Color oldColor = g.getColor();
     g.setColor(myColorHolder.getColor());
     final int height = myHeightProvider.compute();

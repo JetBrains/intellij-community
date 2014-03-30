@@ -2,7 +2,6 @@ package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.DefaultProgramRunner;
@@ -44,20 +43,18 @@ public class XsltDebuggerRunner extends DefaultProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(Project project,
-                                           Executor executor,
-                                           RunProfileState state,
+  protected RunContentDescriptor doExecute(@NotNull Project project,
+                                           @NotNull RunProfileState state,
                                            RunContentDescriptor contentToReuse,
-                                           ExecutionEnvironment env) throws ExecutionException {
+                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return createContentDescriptor(project, executor, state, contentToReuse, env);
+    return createContentDescriptor(project, state, contentToReuse, env);
   }
 
   protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         final Executor executor,
                                                          final RunProfileState runProfileState,
                                                          RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment executionEnvironment) throws ExecutionException {
+                                                         final ExecutionEnvironment executionEnvironment) throws ExecutionException {
     final XDebugSession debugSession =
       XDebuggerManager.getInstance(project).startSession(this, executionEnvironment, contentToReuse, new XDebugProcessStarter() {
         @NotNull
@@ -65,7 +62,7 @@ public class XsltDebuggerRunner extends DefaultProgramRunner {
           ACTIVE.set(Boolean.TRUE);
           try {
             final XsltCommandLineState c = (XsltCommandLineState)runProfileState;
-            final ExecutionResult result = runProfileState.execute(executor, XsltDebuggerRunner.this);
+            final ExecutionResult result = runProfileState.execute(executionEnvironment.getExecutor(), XsltDebuggerRunner.this);
             return new XsltDebugProcess(session, result, c.getExtensionData().getUserData(XsltDebuggerExtension.VERSION));
           } finally {
             ACTIVE.remove();

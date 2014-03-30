@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public class MockVirtualFile extends VirtualFile {
     return ourFileSystem;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     String prefix = myParent == null ? "MOCK_ROOT:" : myParent.getPath();
@@ -101,6 +102,7 @@ public class MockVirtualFile extends VirtualFile {
     return myIsWritable;
   }
 
+  @Override
   public void setWritable(boolean b) {
     myIsWritable = b;
   }

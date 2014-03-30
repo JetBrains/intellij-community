@@ -21,11 +21,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -36,6 +39,7 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,9 +78,10 @@ public class JavaBuilderUtil {
 
       final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
+      final boolean errorsDetected = Utils.errorsDetected(context);
       if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
-          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getName() + "]"));
+          context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getPresentableShortName() + "]"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
           final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
@@ -112,7 +117,6 @@ public class JavaBuilderUtil {
           if (incremental) {
             final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
-            newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
             LOG.info(infoMessage);
@@ -138,27 +142,31 @@ public class JavaBuilderUtil {
               for (File file : newlyAffectedFiles) {
                 FSOperations.markDirtyIfNotDeleted(context, file);
               }
-              additionalPassRequired = !isForcedRecompilationJava(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
           }
           else {
-            final String messageText = "Marking " + chunk.getName() + " and direct dependants for recompilation";
+            final String messageText = "Marking " + chunk.getPresentableShortName() + " and direct dependants for recompilation";
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
-            additionalPassRequired = !isForcedRecompilationJava(context);
+            additionalPassRequired = isCompileJavaIncrementally(context);
             FSOperations.markDirtyRecursively(context, chunk);
           }
         }
         else {
-          globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+          if (!errorsDetected) { // makes sense only if we are going to integrate changes
+            globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+          }
         }
       }
       else {
-        globalMappings.differentiateOnRebuild(delta);
+        if (!errorsDetected) { // makes sense only if we are going to integrate changes
+          globalMappings.differentiateOnRebuild(delta);
+        }
       }
 
-      if (Utils.errorsDetected(context)) {
+      if (errorsDetected) {
         // important: perform dependency analysis and mark found dependencies even if there were errors during the first phase of make.
         // Integration of changes should happen only if the corresponding phase of make succeeds
         // In case of errors this wil ensure that all dependencies marked after the first phase
@@ -166,18 +174,14 @@ public class JavaBuilderUtil {
         return false;
       }
 
-      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getName() + "]"));
+      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
 
       globalMappings.integrate(delta);
 
       return additionalPassRequired;
     }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw ((IOException)cause);
-      }
-      throw e;
+    catch (BuildDataCorruptedException e) {
+      throw e.getCause();
     }
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
@@ -186,12 +190,13 @@ public class JavaBuilderUtil {
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
     CompileScope scope = context.getScope();
-    return scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.TEST);
+    return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isBuildForcedForAllTargets(
+      JavaModuleBuildTargetType.TEST);
   }
 
-  public static boolean isForcedRecompilationJava(CompileContext context) {
+  public static boolean isCompileJavaIncrementally(CompileContext context) {
     CompileScope scope = context.getScope();
-    return scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.TEST);
+    return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
   private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,
@@ -266,31 +271,45 @@ public class JavaBuilderUtil {
     JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
     if (reference == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
 
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
     if (sdkLibrary == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
                                                  "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
     return sdkLibrary.getProperties();
+  }
+
+  @Nullable
+  public static JavaCompilingTool findCompilingTool(@NotNull String compilerId) {
+    for (JavaCompilingTool tool : JpsServiceManager.getInstance().getExtensions(JavaCompilingTool.class)) {
+      if (compilerId.equals(tool.getId()) || compilerId.equals(tool.getAlternativeId())) {
+        return tool;
+      }
+    }
+    return null;
   }
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<JpsModule> myChunkModules;
+    private final Set<ModuleBuildTarget> myChunkTargets;
     private final Map<JpsModule, Set<JpsModule>> myCache = new HashMap<JpsModule, Set<JpsModule>>();
+    private final BuildRootIndex myBuildRootIndex;
 
     private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
       myContext = context;
       myChunkModules = chunk.getModules();
+      myChunkTargets = chunk.getTargets();
+      myBuildRootIndex = context.getProjectDescriptor().getBuildRootIndex();
     }
 
     @Override
     public boolean accept(File file) {
-      final JavaSourceRootDescriptor rd = myContext.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(myContext, file);
+      final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       if (rd == null) {
         return true;
       }
@@ -304,6 +323,12 @@ public class JavaBuilderUtil {
         myCache.put(moduleOfFile, moduleOfFileWithDependencies);
       }
       return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
+    }
+
+    @Override
+    public boolean belongsToCurrentTargetChunk(File file) {
+      final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
+      return rd != null && myChunkTargets.contains(rd.target);
     }
   }
 }

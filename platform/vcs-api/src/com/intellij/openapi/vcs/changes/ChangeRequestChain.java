@@ -38,4 +38,10 @@ public interface ChangeRequestChain {
 
   @Nullable
   DiffRequest moveTo(DiffRequestPresentable request);
+
+  /**
+   * Returns the diff request which is currently shown in the diff dialog.
+   */
+  @Nullable
+  DiffRequestPresentable getCurrentRequest();
 }

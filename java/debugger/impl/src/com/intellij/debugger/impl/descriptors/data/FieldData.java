@@ -30,7 +30,7 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl>{
     myField = field;
   }
 
-  protected FieldDescriptorImpl createDescriptorImpl(Project project) {
+  protected FieldDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new FieldDescriptorImpl(project, myObjRef, myField);
   }
 

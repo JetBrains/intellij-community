@@ -28,8 +28,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -56,7 +55,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.intellij.lang.regexp.RegExpFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +63,10 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -221,7 +222,9 @@ public class FindDialog extends DialogWrapper {
   private void updateReplaceVisibility() {
     myReplacePrompt.setVisible(myModel.isReplaceState());
     myReplaceComboBox.setVisible(myModel.isReplaceState());
-    myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    if (myCbToSkipResultsWhenOneUsage != null) {
+      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    }
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
 
@@ -454,14 +457,12 @@ public class FindDialog extends DialogWrapper {
     }
     else {
       String message = validationInfo.message;
-      if (message != null) {
-        Messages.showMessageDialog(
-          myProject,
-          message,
-          CommonBundle.getErrorTitle(),
-          Messages.getErrorIcon()
-        );
-      }
+      Messages.showMessageDialog(
+        myProject,
+        message,
+        CommonBundle.getErrorTitle(),
+        Messages.getErrorIcon()
+      );
     }
   }
 
@@ -619,6 +620,18 @@ public class FindDialog extends DialogWrapper {
 
     myCbInCommentsOnly = createCheckbox(FindBundle.message("find.options.comments.only"));
     myCbInStringLiteralsOnly = createCheckbox(FindBundle.message("find.options.string.literals.only"));
+    ItemListener itemListener = new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getSource() == myCbInCommentsOnly) {
+          if (myCbInCommentsOnly.isSelected()) myCbInStringLiteralsOnly.setSelected(false);
+        } else if (e.getSource() == myCbInStringLiteralsOnly) {
+          if (myCbInStringLiteralsOnly.isSelected()) myCbInCommentsOnly.setSelected(false);
+        }
+      }
+    };
+    myCbInCommentsOnly.addItemListener(itemListener);
+    myCbInStringLiteralsOnly.addItemListener(itemListener);
 
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       findOptionsPanel.add(myCbInCommentsOnly);
@@ -654,15 +667,10 @@ public class FindDialog extends DialogWrapper {
     final Component editorComponent = inputComboBox.getEditor().getEditorComponent();
 
     if (editorComponent instanceof EditorTextField) {
-      boolean selected = myCbRegularExpressions.isSelectedWhenSelectable();
-      @NonNls final String s = selected ? "*.regexp" : "*.txt";
-      FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(s);
-
-      if (selected && fileType == FileTypes.UNKNOWN) {
-        fileType = FileTypeManager.getInstance().getFileTypeByFileName("*.txt"); // RegExp plugin is not installed
-      }
-
-      final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(s, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
+      boolean isRegexp = myCbRegularExpressions.isSelectedWhenSelectable();
+      FileType fileType = isRegexp ? RegExpFileType.INSTANCE : PlainTextFileType.INSTANCE;
+      String fileName = isRegexp ? "a.regexp" : "a.txt";
+      final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, ((EditorTextField)editorComponent).getText(), -1, true);
 
       ((EditorTextField)editorComponent).setNewDocumentAndFileType(fileType, PsiDocumentManager.getInstance(myProject).getDocument(file));
     }
@@ -754,7 +762,7 @@ public class FindDialog extends DialogWrapper {
     }
 
     Arrays.sort(names,String.CASE_INSENSITIVE_ORDER);
-    myModuleComboBox = new ComboBox(names, -1);
+    myModuleComboBox = new ComboBox(names);
     scopePanel.add(myModuleComboBox, gbConstraints);
 
     if (modules.length == 1) {
@@ -956,7 +964,8 @@ public class FindDialog extends DialogWrapper {
     }
     if (selected != null && selected.indexOf('\n') < 0) {
       strings = ArrayUtil.remove(strings, selected);
-      strings = ArrayUtil.append(strings, selected);
+      // this ensures that last searched string will be selected if selected == ""
+      if (!selected.isEmpty()) strings = ArrayUtil.append(strings, selected);
     }
     for(int i = strings.length - 1; i >= 0; i--){
       combo.addItem(strings[i]);
@@ -997,17 +1006,12 @@ public class FindDialog extends DialogWrapper {
 
     model.setRegularExpressions(myCbRegularExpressions.isSelected());
     String stringToFind = getStringToFind();
-    if (!stringToFind.isEmpty()) {
-      model.setStringToFind(stringToFind);
-    }
+    model.setStringToFind(stringToFind);
 
     if (model.isReplaceState()){
       model.setPromptOnReplace(true);
       model.setReplaceAll(false);
       String stringToReplace = getStringToReplace();
-      if (stringToReplace == null){
-        stringToReplace = "";
-      }
       model.setStringToReplace(StringUtil.convertLineSeparators(stringToReplace));
     }
 

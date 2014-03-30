@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -51,7 +53,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements Disposable {
+public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
@@ -61,10 +63,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
-  private JPanel myButtonPanel;
+  private final JPanel myButtonPanel;
   private final ToolWindowHeader.ActionButton myGearButton;
 
-  public ToolWindowHeader(final ToolWindowImpl toolWindow, WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
+  public ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
     setLayout(new BorderLayout());
 
     myToolWindow = toolWindow;
@@ -165,7 +167,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
-    
+
     addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
         if (!e.isPopupTrigger()) {
@@ -186,6 +188,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     setOpaque(true);
     setBorder(BorderFactory.createEmptyBorder(TabsUtil.TABS_BORDER, 1, TabsUtil.TABS_BORDER, 1));
+
+    UISettings.getInstance().addUISettingsListener(this, toolWindow.getContentUI());
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    clearCaches();
   }
 
   private void addDefaultActions(JPanel eastPanel) {
@@ -288,44 +297,48 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
     Image image;
     if (isActive()) {
-      if (myActiveImage == null || myActiveImage.getHeight() != r.height || type != myImageType) {
+      if (myActiveImage == null || /*myActiveImage.getHeight() != r.height ||*/ type != myImageType) {
         myActiveImage = drawToBuffer(true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
-      
+
       image = myActiveImage;
     } else {
-      if (myImage == null || myImage.getHeight() != r.height || type != myImageType) {
+      if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
         myImage = drawToBuffer(false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
-      
+
       image = myImage;
     }
-    
+
     myImageType = myToolWindow.getType();
 
     Rectangle clipBounds = clip.getBounds();
     for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x+=150) {
-      g2d.drawImage(image, x, 0, null);
+      UIUtil.drawImage(g, image, x, 0, null);
     }
   }
-  
+
   private static BufferedImage drawToBuffer(boolean active, int height, boolean floating) {
     final int width = 150;
-    
+
     BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
-    UIUtil.drawHeader(g, 0, width, height, active, true, !floating);
+    UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();
 
-    return image; 
+    return image;
   }
 
   @Override
   public void setUI(PanelUI ui) {
+    clearCaches();
+
+    super.setUI(ui);
+  }
+
+  public void clearCaches() {
     myImage = null;
     myActiveImage = null;
-    
-    super.setUI(ui);
   }
 
   @Override
@@ -340,7 +353,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       graphics.setColor(new Color(255, 255, 255, 30));
       graphics.fill(r);
     }
-    
+
     graphics.dispose();
   }
 
@@ -367,10 +380,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {
     private final InplaceButton myButton;
     private final AnAction myAction;
-    private AnAction myAlternativeAction;
-    private Icon myActiveIcon;
-    private Icon myInactiveIcon;
-    private Icon myAlternativeIcon;
+    private final AnAction myAlternativeAction;
+    private final Icon myActiveIcon;
+    private final Icon myInactiveIcon;
+    private final Icon myAlternativeIcon;
 
     private AnAction myCurrentAction;
 
@@ -417,7 +430,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
       addPropertyChangeListener(listener);
     }
-    
+
     public void updateTooltip() {
       myButton.setToolTipText(getToolTipTextByAction(myCurrentAction));
     }
@@ -469,7 +482,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         myAlternativeAction != null && (e.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK ? myAlternativeAction : myAction;
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null; 
+      InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;
       final AnActionEvent event =
         new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
                           ActionManager.getInstance(),
@@ -512,12 +525,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   }
 
   private static String getToolTipTextByAction(AnAction action) {
-    String text = AnAction.createTooltipText(action.getTemplatePresentation().getText(), action);
+    String text = KeymapUtil.createTooltipText(action.getTemplatePresentation().getText(), action);
 
     if (action instanceof HideAction) {
       text += String.format(" (Click with %s to Hide Side)", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-    } 
-     
+    }
+
     return text;
   }
 

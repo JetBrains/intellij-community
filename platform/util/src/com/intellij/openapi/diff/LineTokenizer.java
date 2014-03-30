@@ -16,81 +16,65 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class LineTokenizer {
+public class LineTokenizer extends LineTokenizerBase<String> {
   private final char[] myChars;
   private final String myText;
-  private int myIndex = 0;
-  private String myLineSeparator = null;
 
-  public LineTokenizer(String text) {
+  public LineTokenizer(@NotNull String text) {
     myChars = text.toCharArray();
     myText = text;
   }
 
+  @NotNull
   public String[] execute() {
     ArrayList<String> lines = new ArrayList<String>();
-    while (notAtEnd()) {
-      int begin = myIndex;
-      skipToEOL();
-      int endIndex = myIndex;
-      String line;
-      boolean appendNewLine = false;
-      if (notAtEnd() && isAtEOL()) {
-        if (myChars[endIndex] == '\n') endIndex++;
-        else appendNewLine = true;
-        skipEOL();
-      }
-      line = myText.substring(begin, endIndex);
-      if (appendNewLine) line += "\n";
-      lines.add(line);
-    }
+    doExecute(lines);
     return ArrayUtil.toStringArray(lines);
   }
 
-  private void skipEOL() {
-    int eolStart = myIndex;
-    boolean nFound = false;
-    boolean rFound = false;
-    while (notAtEnd()) {
-      boolean n = myChars[myIndex] == '\n';
-      boolean r = myChars[myIndex] == '\r';
-      if (!n && !r) break;
-      if ((nFound && n) || (rFound && r)) break;
-      nFound |= n;
-      rFound |= r;
-      myIndex++;
+  @Override
+  protected void addLine(List<String> lines, int start, int end, boolean appendNewLine) {
+    if (appendNewLine) {
+      lines.add(myText.substring(start, end) + "\n");
     }
-    if (myLineSeparator == null) myLineSeparator = new String(myChars, eolStart, myIndex - eolStart);
+    else {
+      lines.add(myText.substring(start, end));
+    }
   }
 
-  public String getLineSeparator() { return myLineSeparator; }
-
-  private void skipToEOL() {
-    while (myIndex < myChars.length &&
-           !(myChars[myIndex] == '\r' || myChars[myIndex] == '\n')) myIndex++;
+  @Override
+  protected char charAt(int index) {
+    return myChars[index];
   }
 
-  private boolean notAtEnd() {
-    return myIndex < myChars.length;
+  @Override
+  protected int length() {
+    return myChars.length;
   }
 
-  private boolean isAtEOL() {
-    return myChars[myIndex] == '\r' || myChars[myIndex] == '\n';
+  @NotNull
+  @Override
+  protected String substring(int start, int end) {
+    return myText.substring(start, end);
   }
 
-  public static String concatLines(String[] lines) {
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
+  @NotNull
+  public static String concatLines(@NotNull String[] lines) {
+    StringBuilder buffer = new StringBuilder();
+    for (String line : lines) {
       buffer.append(line);
     }
     return buffer.substring(0, buffer.length());
   }
 
-  public static String correctLineSeparators(String text) {
+  @NotNull
+  public static String correctLineSeparators(@NotNull String text) {
     return concatLines(new LineTokenizer(text).execute());
   }
+
 }

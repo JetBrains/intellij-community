@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
@@ -118,6 +119,24 @@ public class NamePathComponent extends JPanel{
                                                  insets, 0, 0));
   }
 
+  public static NamePathComponent initNamePathComponent(WizardContext context) {
+    NamePathComponent component = new NamePathComponent(
+      IdeBundle.message("label.project.name"),
+      IdeBundle.message("label.project.files.location"),
+      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
+      IdeBundle.message("description.select.project.file.directory", StringUtil
+        .capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      true, false
+    );
+    final String baseDir = context.getProjectFileDirectory();
+    final String projectName = context.getProjectName();
+    final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
+    component.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
+    component.setNameValue(initialProjectName);
+    component.getNameComponent().select(0, initialProjectName.length());
+    return component;
+  }
+
   private String getProjectFilePath(boolean isDefault) {
     if (isDefault) {
       return getPath() + "/" + getNameValue() + ProjectFileType.DOT_DEFAULT_EXTENSION;
@@ -159,7 +178,7 @@ public class NamePathComponent extends JPanel{
       int answer = Messages.showYesNoDialog(
         IdeBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName()),
         IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-      shouldContinue = (answer == 0);
+      shouldContinue = (answer == Messages.YES);
     }
 
     return shouldContinue;

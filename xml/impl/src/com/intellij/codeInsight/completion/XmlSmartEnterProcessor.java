@@ -86,11 +86,12 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
 
           final PsiElement element = psiFile.findElementAt(probableCommaOffset);
           final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
+          boolean shouldInsertClosingTag = shouldAfterWrapTextWithTag(caretAt, probableCommaOffset) || shouldInsertClosingTag(xmlAttribute, tagAtCaret);
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, !shouldInsertClosingTag);
 
           if (tag != null && tag.getTextRange().getStartOffset() == probableCommaOffset) {
             doc.insertString(caretAt, text2insert);
-            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+            if (shouldInsertClosingTag) {
               doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
             }
 
@@ -98,7 +99,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
           }
           else {
             doc.insertString(caretAt, text2insert);
-            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+            if (shouldInsertClosingTag) {
               doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
             }
 
@@ -153,6 +154,10 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     return false;
   }
 
+  protected boolean shouldAfterWrapTextWithTag(int caretAt, int probableCommaOffset) {
+    return probableCommaOffset > caretAt;
+  }
+
   private void commitChanges(Project project, Editor editor, PsiFile psiFile, int caretOffset, @Nullable XmlTag tagToReformat) {
     if (isUncommited(project)) {
       commit(editor);
@@ -189,7 +194,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   }
 
   protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
-    return true;
+    return xmlAttribute == null || getClosingQuote(xmlAttribute).length() != 0;
   }
 
   protected String getClosingPart(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret, final boolean emptyTag) {

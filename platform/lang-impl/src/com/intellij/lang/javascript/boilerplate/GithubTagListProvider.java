@@ -71,6 +71,7 @@ public class GithubTagListProvider {
             final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
             LOG.info(getGeneratorName() + "Cache has been successfully updated");
             UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
               public void run() {
                 peer.onTagsUpdated(tags);
               }

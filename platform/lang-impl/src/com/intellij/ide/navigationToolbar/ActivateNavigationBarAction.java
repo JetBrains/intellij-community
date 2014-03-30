@@ -18,6 +18,7 @@ package com.intellij.ide.navigationToolbar;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -30,8 +31,9 @@ import com.intellij.openapi.wm.impl.IdeRootPane;
  * @author Konstantin Bulenkov
  */
 public class ActivateNavigationBarAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR){
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
@@ -40,9 +42,11 @@ public class ActivateNavigationBarAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final boolean enabled = project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    UISettings settings = UISettings.getInstance();
+    final boolean enabled = project != null && settings.SHOW_NAVIGATION_BAR && !settings.PRESENTATION_MODE;
     e.getPresentation().setEnabled(enabled);
   }
 }

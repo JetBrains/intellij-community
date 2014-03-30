@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
-import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -38,7 +38,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 09/16/2010
  */
-public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorProcessingOnDocumentModificationTest {
+public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorTest {
 
   private boolean mySmartHome;
   
@@ -1055,28 +1055,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
   
   private void init(final int visibleWidth, @NotNull String fileText, @NotNull TestFileType fileType, final int symbolWidth) throws IOException {
     init(fileText, fileType);
-    myEditor.getSettings().setUseSoftWraps(true);
-    SoftWrapModelImpl model = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
-    model.reinitSettings();
-
-    SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
-      @Override
-      public int getVisibleAreaWidth() {
-        return visibleWidth;
-      }
-    });
-
-    if (symbolWidth > 0) {
-      applianceManager.setRepresentationHelper(new DefaultEditorTextRepresentationHelper(myEditor) {
-        @Override
-        public int charWidth(char c, int fontType) {
-          return symbolWidth;
-        }
-      });
-    }
-    
-    applianceManager.registerSoftWrapIfNecessary();
+    EditorTestUtil.configureSoftWraps(myEditor, visibleWidth, symbolWidth);
   }
 
   private static void checkSoftWraps(int... startOffsets) {

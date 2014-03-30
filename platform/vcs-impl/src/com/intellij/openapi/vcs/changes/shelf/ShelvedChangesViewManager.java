@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,7 +340,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
         sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
-      } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
+      } else if (CommonDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
         List<ShelvedChange> shelvedChanges = new ArrayList<ShelvedChange>(TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
         final ArrayDeque<Navigatable> navigatables = new ArrayDeque<Navigatable>();
         final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
@@ -362,7 +362,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           }
         }
 
-        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
       }
     }
 
@@ -495,7 +495,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ? VcsBundle.message("shelve.changes.delete.confirm", shelvedChangeLists.get(0).DESCRIPTION)
         : VcsBundle.message("shelve.changes.delete.multiple.confirm", shelvedChangeLists.size());
       int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (rc != 0) return;
+      if (rc != Messages.OK) return;
       for(ShelvedChangeList changeList: shelvedChangeLists) {
         ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
       }
@@ -524,7 +524,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(@NotNull DataContext dataContext) {
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return;
@@ -536,7 +536,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       final String message = VcsBundle.message("shelve.changes.delete.files.from.list", (changes == null ? 0 : changes.size()) +
                                                                                         (binaryFiles == null ? 0 : binaryFiles.size()));
       int rc = Messages.showOkCancelDialog(myProject, message, VcsBundle.message("shelve.changes.delete.files.from.list.title"), Messages.getWarningIcon());
-      if (rc != 0) return;
+      if (rc != Messages.OK) return;
 
       final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<ShelvedBinaryFile>(list.getBinaryFiles());
       final ArrayList<ShelvedChange> oldChanges = new ArrayList<ShelvedChange>(list.getChanges(project));

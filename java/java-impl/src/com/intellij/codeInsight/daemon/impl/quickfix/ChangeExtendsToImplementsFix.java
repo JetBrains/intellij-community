@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class ChangeExtendsToImplementsFix extends ExtendsListFix {
   private final String myName;
 
-  public ChangeExtendsToImplementsFix(PsiClass aClass, PsiClassType classToExtendFrom) {
+  public ChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
     myName = QuickFixBundle.message("exchange.extends.implements.keyword",
                                     aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,

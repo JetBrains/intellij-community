@@ -38,10 +38,12 @@ public class InspectionSeverityGroupNode extends InspectionTreeNode{
     myProject = project;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return myLevel.getIcon();
   }
 
+  @Override
   public boolean appearsBold() {
     return true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,13 @@ public class DomFileIconProvider extends IconProvider implements DumbAware {
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof XmlFile) {
       DomFileDescription<?> description = DomManager.getDomManager(element.getProject()).getDomFileDescription((XmlFile)element);
-      return description == null ? null : description.getFileIcon(flags);
+      if (description == null) {
+        return null;
+      }
+      final Icon fileIcon = description.getFileIcon(flags);
+      if (fileIcon != null) {
+        return ElementBase.createLayeredIcon(element, fileIcon, ElementBase.transformFlags(element, flags));
+      }
     }
     return null;
   }

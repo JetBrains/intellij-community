@@ -227,7 +227,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
     }
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     PaletteItem item = getActiveItem();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,11 @@ package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Evgeny Gerashchenko
- * @since 3/20/12
- */
+/** @deprecated API no longer supported, use {@link com.intellij.psi.compiled.ClassFileDecompilers} instead (to remove in IDEA 14) */
+@SuppressWarnings({"UnusedDeclaration", "deprecation"})
 public interface ClsFileDecompiledPsiFileProvider {
   ExtensionPointName<ClsFileDecompiledPsiFileProvider> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsDecompiledFileProvider");
 
-  /**
-   * Returns decompiled PSI associated with this classfile
-   *
-   * @param clsFile instance of ClsFile
-   * @return decompiled PSI file
-   */
-  @Nullable
   PsiFile getDecompiledPsiFile(@NotNull PsiJavaFile clsFile);
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -25,11 +26,11 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     PsiFile element = aClass.getContainingFile();
 
-    checkNavigateFromSourceBehaviour(element, element.getVirtualFile(), createPane());
+    myStructure.checkNavigateFromSourceBehaviour(element, element.getVirtualFile(), myStructure.createPane());
   }
 
   public void testShowClassMembers() throws IncorrectOperationException, IOException {
-    myShowMembers = true;
+    myStructure.setShowMembers(true);
     useStandardProviders();
     final PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(getPackageDirectory());
     sortClassesByName(classes);
@@ -48,9 +49,9 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
     PsiField innerClass1Field = innerClass14.getFields()[0];
     PsiField innerClass2Field = innerClass24.getFields()[0];
 
-    final AbstractProjectViewPSIPane pane = createPane();
+    final AbstractProjectViewPSIPane pane = myStructure.createPane();
 
-    checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
+    myStructure.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 
     IdeaTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                  " -PsiDirectory: showClassMembers\n" +
@@ -78,9 +79,9 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
                                                  " +External Libraries\n"
     );
 
-    assertFalse(isExpanded(innerClass15.getFields()[0], pane));
-    assertFalse(isExpanded(innerClass1Field, pane));
-    assertTrue(isExpanded(innerClass2Field, pane));
+    assertFalse(ProjectViewTestUtil.isExpanded(innerClass15.getFields()[0], pane));
+    assertFalse(ProjectViewTestUtil.isExpanded(innerClass1Field, pane));
+    assertTrue(ProjectViewTestUtil.isExpanded(innerClass2Field, pane));
 
     VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);

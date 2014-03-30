@@ -21,6 +21,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +44,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
 
   public GotoFileModel(@NotNull Project project) {
     super(project, Extensions.getExtensions(ChooseByNameContributor.FILE_EP_NAME));
-    myMaxSize = WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
+    myMaxSize = ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
 
   @Override
@@ -98,13 +101,16 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public boolean loadInitialCheckBoxState() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    return propertiesComponent.isTrueValue("GoToClass.includeJavaFiles");
+    return propertiesComponent.isTrueValue("GoToClass.toSaveIncludeLibraries") &&
+           propertiesComponent.isTrueValue("GoToFile.includeJavaFiles");
   }
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("GoToClass.includeJavaFiles", Boolean.toString(state));
+    if (propertiesComponent.isTrueValue("GoToClass.toSaveIncludeLibraries")) {
+      propertiesComponent.setValue("GoToFile.includeJavaFiles", Boolean.toString(state));
+    }
   }
 
   @Override
@@ -113,11 +119,16 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   }
 
   @Override
+  public boolean sameNamesForProjectAndLibraries() {
+    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
+  }
+
+  @Override
   @Nullable
   public String getFullName(final Object element) {
-    if (element instanceof PsiFile) {
-      final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-      return virtualFile != null ? virtualFile.getPath() : null;
+    if (element instanceof PsiFileSystemItem) {
+      final VirtualFile virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
+      return virtualFile != null ? GotoFileCellRenderer.getRelativePath(virtualFile, myProject) : null;
     }
 
     return getElementName(element);
@@ -137,5 +148,14 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> {
   @Override
   public boolean willOpenEditor() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
+    if ((pattern.endsWith("/") || pattern.endsWith("\\"))) {
+      return pattern.substring(0, pattern.length() - 1);
+    }
+    return pattern;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,10 +220,6 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   @NotNull
   public HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return myMethod.getHierarchicalMethodSignature();
-  }
-
-  public PsiType getReturnTypeNoResolve() {
-    return myMethod.getReturnTypeNoResolve();
   }
 
   @Override

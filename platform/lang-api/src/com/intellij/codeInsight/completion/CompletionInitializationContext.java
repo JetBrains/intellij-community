@@ -35,13 +35,13 @@ public class CompletionInitializationContext {
   /**
    * A default string that is inserted to the file before completion to guarantee that there'll always be some non-empty element there
    */
-  public static @NonNls final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz ";
-  public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = "IntellijIdeaRulezzz";
+  public static @NonNls final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
+  public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
   private final Editor myEditor;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
   private final OffsetMap myOffsetMap;
-  private FileCopyPatcher myFileCopyPatcher = new DummyIdentifierPatcher(DUMMY_IDENTIFIER);
+  private String myDummyIdentifier = DUMMY_IDENTIFIER;
 
   public CompletionInitializationContext(final Editor editor, final PsiFile file, final CompletionType completionType) {
     myEditor = editor;
@@ -49,28 +49,32 @@ public class CompletionInitializationContext {
     myCompletionType = completionType;
     myOffsetMap = new OffsetMap(editor.getDocument());
 
-    final int caretOffset = editor.getCaretModel().getOffset();
+    myOffsetMap.addOffset(START_OFFSET, calcStartOffset(editor));
+    myOffsetMap.addOffset(SELECTION_END_OFFSET, calcSelectionEnd(editor));
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(editor)));
+  }
+
+  private static int calcSelectionEnd(Editor editor) {
     final SelectionModel selectionModel = editor.getSelectionModel();
-    myOffsetMap.addOffset(START_OFFSET, selectionModel.hasSelection() ? selectionModel.getSelectionStart() : caretOffset);
+    return selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : editor.getCaretModel().getOffset();
+  }
 
-    final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
-    myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
+  public static int calcStartOffset(Editor editor) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+  }
 
+  static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
-    int idEnd = selectionEndOffset;
+    int idEnd = startFrom;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
       idEnd++;
     }
-    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
+    return idEnd;
   }
 
   public void setDummyIdentifier(@NotNull String dummyIdentifier) {
-    setFileCopyPatcher(new DummyIdentifierPatcher(dummyIdentifier));
-  }
-
-  @Deprecated
-  public void setFileCopyPatcher(@NotNull final FileCopyPatcher fileCopyPatcher) {
-    myFileCopyPatcher = fileCopyPatcher;
+    myDummyIdentifier = dummyIdentifier;
   }
 
   @NotNull
@@ -78,9 +82,8 @@ public class CompletionInitializationContext {
     return PsiUtilBase.getLanguageInEditor(getEditor(), getProject());
   }
 
-  @NotNull
-  public FileCopyPatcher getFileCopyPatcher() {
-    return myFileCopyPatcher;
+  public String getDummyIdentifier() {
+    return myDummyIdentifier;
   }
 
   @NotNull

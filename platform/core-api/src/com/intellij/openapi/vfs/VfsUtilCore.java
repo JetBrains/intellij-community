@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,35 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.DistinctRootsCollection;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+
+  public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  private static final String PROTOCOL_DELIMITER = ":";
 
   /**
    * Checks whether the <code>ancestor {@link com.intellij.openapi.vfs.VirtualFile}</code> is parent of <code>file
@@ -55,6 +65,32 @@ public class VfsUtilCore {
       if (parent == null) return false;
       if (parent.equals(ancestor)) return true;
       parent = parent.getParent();
+    }
+  }
+
+  /**
+   * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
+   */
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+    if (roots == null || roots.isEmpty()) return false;
+
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (roots.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
+    if (ancestorUrl.equals(fileUrl)) return true;
+    if (StringUtil.endsWithChar(ancestorUrl, '/')) {
+      return fileUrl.startsWith(ancestorUrl);
+    }
+    else {
+      return StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
     }
   }
 
@@ -271,7 +307,7 @@ public class VfsUtilCore {
    * Returns {@code true} if given virtual file represents broken symbolic link (which points to non-existent file).
    */
   public static boolean isBrokenLink(@NotNull VirtualFile file) {
-    return file.isSymLink() && file.getCanonicalPath() == null;
+    return file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null;
   }
 
   /**
@@ -319,7 +355,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static String pathToUrl(@NonNls @NotNull String path) {
-    return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
   public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
@@ -329,6 +365,228 @@ public class VfsUtilCore {
         return virtualToIoFile(file);
       }
     });
+  }
+
+  @NotNull
+  public static String toIdeaUrl(@NotNull String url) {
+    return toIdeaUrl(url, true);
+  }
+
+  @NotNull
+  public static String toIdeaUrl(@NotNull String url, boolean removeLocalhostPrefix) {
+    int index = url.indexOf(":/");
+    if (index < 0 || (index + 2) >= url.length()) {
+      return url;
+    }
+
+    if (url.charAt(index + 2) != '/') {
+      String prefix = url.substring(0, index);
+      String suffix = url.substring(index + 2);
+
+      if (SystemInfoRt.isWindows) {
+        return prefix + URLUtil.SCHEME_SEPARATOR + suffix;
+      }
+      else if (removeLocalhostPrefix && prefix.equals(URLUtil.FILE_PROTOCOL) && suffix.startsWith(LOCALHOST_URI_PATH_PREFIX)) {
+        // sometimes (e.g. in Google Chrome for Mac) local file url is prefixed with 'localhost' so we need to remove it
+        return prefix + ":///" + suffix.substring(LOCALHOST_URI_PATH_PREFIX.length());
+      }
+      else {
+        return prefix + ":///" + suffix;
+      }
+    }
+    else if (url.charAt(index + 3) == '/' && SystemInfoRt.isWindows && url.regionMatches(0, StandardFileSystems.FILE_PROTOCOL_PREFIX, 0, StandardFileSystems.FILE_PROTOCOL_PREFIX.length())) {
+      // file:///C:/test/file.js -> file://C:/test/file.js
+      for (int i = index + 4; i < url.length(); i++) {
+        char c = url.charAt(i);
+        if (c == '/') {
+          break;
+        }
+        else if (c == ':') {
+          return StandardFileSystems.FILE_PROTOCOL_PREFIX + url.substring(index + 4);
+        }
+      }
+      return url;
+    }
+    return url;
+  }
+
+  @NotNull
+  public static String fixURLforIDEA(@NotNull String url) {
+    // removeLocalhostPrefix - false due to backward compatibility reasons
+    return toIdeaUrl(url, false);
+  }
+
+  @NotNull
+  public static String convertFromUrl(@NotNull URL url) {
+    String protocol = url.getProtocol();
+    String path = url.getPath();
+    if (protocol.equals(URLUtil.JAR_PROTOCOL)) {
+      if (StringUtil.startsWithConcatenation(path, URLUtil.FILE_PROTOCOL, PROTOCOL_DELIMITER)) {
+        try {
+          URL subURL = new URL(path);
+          path = subURL.getPath();
+        }
+        catch (MalformedURLException e) {
+          throw new RuntimeException(VfsBundle.message("url.parse.unhandled.exception"), e);
+        }
+      }
+      else {
+        throw new RuntimeException(new IOException(VfsBundle.message("url.parse.error", url.toExternalForm())));
+      }
+    }
+    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+      while (!path.isEmpty() && path.charAt(0) == '/') {
+        path = path.substring(1, path.length());
+      }
+    }
+
+    path = URLUtil.unescapePercentSequences(path);
+    return protocol + "://" + path;
+  }
+
+  @NotNull
+  public static String fixIDEAUrl(@NotNull String ideaUrl ) {
+    int idx = ideaUrl.indexOf("://");
+    if( idx >= 0 ) {
+      String s = ideaUrl.substring(0, idx);
+
+      if (s.equals(StandardFileSystems.JAR_PROTOCOL)) {
+        //noinspection HardCodedStringLiteral
+        s = "jar:file";
+      }
+      ideaUrl = s+":/"+ideaUrl.substring(idx+3);
+    }
+    return ideaUrl;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
+  public static VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
+    if (base != null) {
+      if (!base.isValid()){
+        LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);
+      }
+    }
+
+    uri = uri.replace('\\', '/');
+
+    if (uri.startsWith("file:///")) {
+      uri = uri.substring("file:///".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+    }
+    else if (uri.startsWith("file:/")) {
+      uri = uri.substring("file:/".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+    }
+    else if (uri.startsWith("file:")) {
+      uri = uri.substring("file:".length());
+    }
+
+    VirtualFile file = null;
+
+    if (uri.startsWith("jar:file:/")) {
+      uri = uri.substring("jar:file:/".length());
+      if (!SystemInfo.isWindows) uri = "/" + uri;
+      file = VirtualFileManager.getInstance().findFileByUrl(StandardFileSystems.JAR_PROTOCOL_PREFIX + uri);
+    }
+    else {
+      if (!SystemInfo.isWindows && StringUtil.startsWithChar(uri, '/')) {
+        file = StandardFileSystems.local().findFileByPath(uri);
+      }
+      else if (SystemInfo.isWindows && uri.length() >= 2 && Character.isLetter(uri.charAt(0)) && uri.charAt(1) == ':') {
+        file = StandardFileSystems.local().findFileByPath(uri);
+      }
+    }
+
+    if (file == null && uri.contains(URLUtil.JAR_SEPARATOR)) {
+      file = StandardFileSystems.jar().findFileByPath(uri);
+      if (file == null && base == null) {
+        file = VirtualFileManager.getInstance().findFileByUrl(uri);
+      }
+    }
+
+    if (file == null) {
+      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
+      if (!base.isDirectory()) base = base.getParent();
+      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
+      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
+      if (file == null) return null;
+    }
+
+    return file;
+  }
+
+  public static boolean processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
+    if (!processor.process(root)) return false;
+
+    if (root.isDirectory()) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return false;
+          if (file.isDirectory()) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
+    }
+
+    return true;
+  }
+
+  /**
+   * Gets the common ancestor for passed files, or null if the files do not have common ancestors.
+   *
+   * @param file1 fist file
+   * @param file2 second file
+   * @return common ancestor for the passed files. Returns <code>null</code> if
+   *         the files do not have common ancestor
+   */
+  @Nullable
+  public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    if (!file1.getFileSystem().equals(file2.getFileSystem())) {
+      return null;
+    }
+
+    VirtualFile[] path1 = getPathComponents(file1);
+    VirtualFile[] path2 = getPathComponents(file2);
+
+    int lastEqualIdx = -1;
+    for (int i = 0; i < path1.length && i < path2.length; i++) {
+      if (path1[i].equals(path2[i])) {
+        lastEqualIdx = i;
+      }
+      else {
+        break;
+      }
+    }
+    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
+  }
+
+  /**
+   * Gets an array of files representing paths from root to the passed file.
+   *
+   * @param file the file
+   * @return virtual files which represents paths from root to the passed file
+   */
+  @NotNull
+  static VirtualFile[] getPathComponents(@NotNull VirtualFile file) {
+    ArrayList<VirtualFile> componentsList = new ArrayList<VirtualFile>();
+    while (file != null) {
+      componentsList.add(file);
+      file = file.getParent();
+    }
+    int size = componentsList.size();
+    VirtualFile[] components = new VirtualFile[size];
+    for (int i = 0; i < size; i++) {
+      components[i] = componentsList.get(size - i - 1);
+    }
+    return components;
   }
 
   /**
@@ -349,6 +607,29 @@ public class VfsUtilCore {
     @Override
     protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
       return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
+    }
+  }
+
+  public static void processFilesRecursively(@NotNull VirtualFile root,
+                                             @NotNull Processor<VirtualFile> processor,
+                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
+    if (!processor.process(root)) return;
+
+    if (root.isDirectory() && directoryFilter.convert(root)) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return;
+          if (file.isDirectory() && directoryFilter.convert(file)) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
     }
   }
 }

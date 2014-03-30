@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,30 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class ExternalIntegerKeyDescriptor implements KeyDescriptor<Integer> {
+  @Override
   public int getHashCode(final Integer value) {
     return value.intValue();
   }
 
+  @Override
   public boolean isEqual(final Integer val1, final Integer val2) {
     return val1.equals(val2);
   }
 
-  public void save(final DataOutput out, final Integer value) throws IOException {
+  @Override
+  public void save(@NotNull final DataOutput out, final Integer value) throws IOException {
     DataInputOutputUtil.writeINT(out, value.intValue());
   }
 
-  public Integer read(final DataInput in) throws IOException {
+  @Override
+  public Integer read(@NotNull final DataInput in) throws IOException {
     return DataInputOutputUtil.readINT(in);
   }
 }

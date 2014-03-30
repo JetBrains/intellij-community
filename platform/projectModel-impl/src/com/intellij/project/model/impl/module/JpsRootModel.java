@@ -19,7 +19,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.RootModelBase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import org.jetbrains.annotations.NotNull;
@@ -72,28 +71,6 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   @Override
   public OrderEntry[] getOrderEntries() {
     return myOrderEntries.toArray(new OrderEntry[myOrderEntries.size()]);
-  }
-
-  @Override
-  public VirtualFile getExplodedDirectory() {
-    throw new UnsupportedOperationException("'getExplodedDirectory' not implemented in " + getClass().getName());
-  }
-
-  @Override
-  public String getExplodedDirectoryUrl() {
-    throw new UnsupportedOperationException("'getExplodedDirectoryUrl' not implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile[] getRootPaths(OrderRootType rootType) {
-    throw new UnsupportedOperationException("'getRootPaths' not implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  public String[] getRootUrls(OrderRootType rootType) {
-    throw new UnsupportedOperationException("'getRootUrls' not implemented in " + getClass().getName());
   }
 
   @Override

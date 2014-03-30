@@ -12,13 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
+import org.zmlx.hg4idea.repo.HgRepository;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -34,7 +39,9 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
 
   private final Project project;
 
-  public HgRunConflictResolverDialog(Project project) {
+  public HgRunConflictResolverDialog(@NotNull Project project,
+                                     @NotNull Collection<HgRepository> repositories,
+                                     @Nullable HgRepository selectedRepo) {
     super(project, false);
     this.project = project;
     repositorySelector.addActionListener(new ActionListener() {
@@ -44,14 +51,17 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     });
     setTitle("Resolve Conflicts");
     init();
+    setRoots(repositories, selectedRepo);
   }
 
-  public VirtualFile getRepository() {
+  @NotNull
+  public HgRepository getRepository() {
     return repositorySelector.getRepository();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
-    repositorySelector.setRoots(repos);
+  private void setRoots(@NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+    repositorySelector.setRoots(repositories);
+    repositorySelector.setSelectedRoot(selectedRepo);
     onChangeRepository();
   }
 
@@ -60,24 +70,30 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
   }
 
   private void onChangeRepository() {
-    VirtualFile repo = repositorySelector.getRepository();
+    VirtualFile repo = repositorySelector.getRepository().getRoot();
     HgResolveCommand command = new HgResolveCommand(project);
+    final ModalityState modalityState = ApplicationManager.getApplication().getModalityStateForComponent(getRootPane());
     command.list(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
       @Override
       public void consume(Map<HgFile, HgResolveStatusEnum> status) {
-        DefaultListModel model = new DefaultListModel();
+        final DefaultListModel model = new DefaultListModel();
         for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
           if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
             model.addElement(entry.getKey().getRelativePath());
           }
         }
-        setOKActionEnabled(!model.isEmpty());
-        if (model.isEmpty()) {
-          model.addElement("No conflicts to resolve");
-        }
-        conflictsList.setModel(model);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            setOKActionEnabled(!model.isEmpty());
+            if (model.isEmpty()) {
+              model.addElement("No conflicts to resolve");
+            }
+            conflictsList.setModel(model);
+          }
+        }, modalityState);
       }
     });
   }
-
 }

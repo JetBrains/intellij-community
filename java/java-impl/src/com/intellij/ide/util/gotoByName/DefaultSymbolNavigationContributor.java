@@ -16,23 +16,28 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   @Override
@@ -52,45 +57,93 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
-    PsiMethod[] methods = cache.getMethodsByName(name, scope);
-    methods = filterInheritedMethods(methods);
-    PsiField[] fields = cache.getFieldsByName(name, scope);
-    PsiClass[] classes = cache.getClassesByName(name, scope);
-
     List<PsiMember> result = new ArrayList<PsiMember>();
-    ContainerUtil.addAll(result, methods);
-    ContainerUtil.addAll(result, fields);
-    ContainerUtil.addAll(result, classes);
-    filterOutNonOpenable(result);
+    for (PsiMethod method : cache.getMethodsByName(name, scope)) {
+      if (!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method)) {
+        result.add(method);
+      }
+    }
+    for (PsiField field : cache.getFieldsByName(name, scope)) {
+      if (isOpenable(field)) {
+        result.add(field);
+      }
+    }
+    for (PsiClass aClass : cache.getClassesByName(name, scope)) {
+      if (isOpenable(aClass)) {
+        result.add(aClass);
+      }
+    }
     PsiMember[] array = result.toArray(new PsiMember[result.size()]);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
   }
 
-  private static void filterOutNonOpenable(List<PsiMember> members) {
-    ListIterator<PsiMember> it = members.listIterator();
-    while (it.hasNext()) {
-      PsiMember member = it.next();
-      if (isNonOpenable(member)) {
-        it.remove();
+  private static boolean isOpenable(PsiMember member) {
+    return member.getContainingFile().getVirtualFile() != null;
+  }
+
+  private static boolean hasSuperMethod(PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+
+    for (PsiMethod candidate : containingClass.findMethodsByName(method.getName(), true)) {
+      if (candidate.getContainingClass() != containingClass && PsiSuperMethodImplUtil.isSuperMethodSmart(method, candidate)) {
+        return true;
       }
     }
+    return false;
   }
 
-  private static boolean isNonOpenable(PsiMember member) {
-    return member.getContainingFile().getVirtualFile() == null;
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+    cache.processAllClassNames(processor, scope, filter);
+    cache.processAllFieldNames(processor, scope, filter);
+    cache.processAllMethodNames(processor, scope, filter);
   }
 
-  private static PsiMethod[] filterInheritedMethods(PsiMethod[] methods) {
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(methods.length);
-    for (PsiMethod method : methods) {
-      ProgressManager.checkCanceled();
-      if (method.isConstructor()) continue;
-      PsiMethod[] supers = method.findSuperMethods();
-      if (supers.length > 0) continue;
-      list.add(method);
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+
+    GlobalSearchScope scope = parameters.getSearchScope();
+    IdFilter filter = parameters.getIdFilter();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+    //noinspection UnusedDeclaration
+    final Set<PsiMethod> collectedMethods = new THashSet<PsiMethod>();
+    boolean success = cache.processFieldsWithName(name, new Processor<PsiField>() {
+      @Override
+      public boolean process(PsiField field) {
+        if (isOpenable(field)) return processor.process(field);
+        return true;
+      }
+    }, scope, filter) &&
+                    cache.processClassesWithName(name, new Processor<PsiClass>() {
+                      @Override
+                      public boolean process(PsiClass aClass) {
+                        if (isOpenable(aClass)) return processor.process(aClass);
+                        return true;
+                      }
+                    }, scope, filter) &&
+                    cache.processMethodsWithName(name, new Processor<PsiMethod>() {
+                      @Override
+                      public boolean process(PsiMethod method) {
+                        if(!method.isConstructor() && isOpenable(method)) {
+                          collectedMethods.add(method);
+                        }
+                        return true;
+                      }
+                    }, scope, filter);
+    if (success) {
+      // hashSuperMethod accesses index and can not be invoked without risk of the deadlock in processMethodsWithName
+      Iterator<PsiMethod> iterator = collectedMethods.iterator();
+      while(iterator.hasNext()) {
+        PsiMethod method = iterator.next();
+        if (!hasSuperMethod(method) && !processor.process(method)) return;
+        ProgressManager.checkCanceled();
+        iterator.remove();
+      }
     }
-    return list.toArray(new PsiMethod[list.size()]);
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{

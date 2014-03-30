@@ -17,6 +17,7 @@ package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultLogger extends Logger {
@@ -42,17 +43,19 @@ public class DefaultLogger extends Logger {
 
   @Override
   @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-  public void error(String message, @Nullable Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     System.err.println("ERROR: " + message);
     if (t != null) t.printStackTrace();
-    if (details != null && details.length > 0) {
+    if (details.length > 0) {
       System.out.println("details: ");
       for (String detail : details) {
         System.out.println(detail);
       }
     }
 
-    throw new AssertionError(message);
+    AssertionError error = new AssertionError(message);
+    error.initCause(t);
+    throw error;
   }
 
   @Override

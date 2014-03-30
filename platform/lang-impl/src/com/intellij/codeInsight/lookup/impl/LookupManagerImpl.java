@@ -25,6 +25,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -39,8 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -109,7 +109,7 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
-  public LookupEx showLookup(final Editor editor,
+  public LookupEx showLookup(@NotNull final Editor editor,
                            @NotNull LookupElement[] items,
                            @NotNull final String prefix,
                            @NotNull final LookupArranger arranger) {
@@ -118,11 +118,12 @@ public class LookupManagerImpl extends LookupManager {
     }
 
     LookupImpl lookup = createLookup(editor, items, prefix, arranger);
-    return lookup != null && lookup.showLookup() ? lookup : null;
+    return lookup.showLookup() ? lookup : null;
   }
 
+  @NotNull
   @Override
-  public LookupImpl createLookup(final Editor editor,
+  public LookupImpl createLookup(@NotNull final Editor editor,
                                  @NotNull LookupElement[] items,
                                  @NotNull final String prefix,
                                  @NotNull final LookupArranger arranger) {
@@ -135,25 +136,21 @@ public class LookupManagerImpl extends LookupManager {
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(lookup);
 
-   final UiNotifyConnector connector = new UiNotifyConnector(editor.getContentComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-      }
-
-      @Override
-      public void hideNotify() {
-        hideActiveLookup();
-      }
-    });
-
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
+        if (myActiveLookup != lookup) return;
+        
+        LookupElement currentItem = lookup.getCurrentItem();
+        if (currentItem != null && currentItem.isValid()) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
           if (completion != null && !completion.isAutopopupCompletion()) {
-            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+            try {
+              DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+            }
+            catch (IndexNotReadyException ignored) {
+            }
           }
         }
       }
@@ -197,8 +194,6 @@ public class LookupManagerImpl extends LookupManager {
         myActiveLookupEditor = null;
         lookup.removeLookupListener(this);
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
-
-        Disposer.dispose(connector);
       }
     });
 
@@ -208,12 +203,13 @@ public class LookupManagerImpl extends LookupManager {
         myActiveLookup.addItem(item, matcher);
       }
       myActiveLookup.refreshUi(true, true);
-    } else {
+    }
+    else {
       alarm.cancelAllRequests(); // no items -> no doc
     }
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
-    return myActiveLookup;
+    return lookup;
   }
 
   @Override
@@ -238,12 +234,23 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   @Override
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.addPropertyChangeListener(listener);
   }
 
   @Override
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener, @NotNull Disposable disposable) {
+    addPropertyChangeListener(listener);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removePropertyChangeListener(listener);
+      }
+    });
+  }
+
+  @Override
+  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 

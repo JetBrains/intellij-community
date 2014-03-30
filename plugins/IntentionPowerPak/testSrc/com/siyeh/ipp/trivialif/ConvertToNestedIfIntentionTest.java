@@ -24,6 +24,9 @@ public class ConvertToNestedIfIntentionTest extends IPPTestCase {
   public void testStaircase() { doTest(); }
   public void testOneLevelStaircase() { assertIntentionNotAvailable(); }
 
+  public void testAndOrMixed() { doTest(); }
+  public void testOrAndMixed() { doTest(); }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("convert.to.nested.if.intention.name");

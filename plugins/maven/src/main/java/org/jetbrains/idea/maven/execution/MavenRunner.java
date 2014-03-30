@@ -19,7 +19,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -57,6 +56,7 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
     return mySettings;
   }
 
+  @NotNull
   public MavenRunnerSettings getState() {
     return mySettings;
   }

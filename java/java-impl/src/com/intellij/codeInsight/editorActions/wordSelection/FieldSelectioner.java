@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.javadoc.PsiDocComment;
 
 import java.util.List;
 
@@ -49,6 +50,12 @@ public class FieldSelectioner extends WordSelectioner {
     final TextRange firstRange = first.getTextRange();
     final PsiElement last = field.getInitializer();
     final int end = last == null ? firstRange.getEndOffset() : last.getTextRange().getEndOffset();
+
+    PsiDocComment comment = field.getDocComment();
+    if (comment != null) {
+      TextRange commentTextRange = comment.getTextRange();
+      addRangeElem(result, editorText, comment, commentTextRange.getEndOffset());
+    }
     addRangeElem(result, editorText, first, end);
     //addRangeElem (result, editorText, field, textLength, field.getTypeElement(), end);
     addRangeElem(result, editorText, field.getModifierList(), range.getEndOffset());

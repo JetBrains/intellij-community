@@ -18,6 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
@@ -119,7 +120,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (name != null) {
       if (parentStub instanceof PsiJavaFileStub) {
         final String pkg = ((PsiJavaFileStub)parentStub).getPackageName();
-        if (pkg.length() > 0) qualifiedName = pkg + '.' + name; else qualifiedName = name;
+        if (!pkg.isEmpty()) qualifiedName = pkg + '.' + name; else qualifiedName = name;
       }
       else if (parentStub instanceof PsiClassStub) {
         final String parentFqn = ((PsiClassStub)parentStub).getQualifiedName();
@@ -147,11 +148,12 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public void serialize(final PsiClassStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiClassStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());
+      dataStream.writeByte(stub.getLanguageLevel().ordinal());
       dataStream.writeName(stub.getSourceFileName());
     }
     else {
@@ -159,19 +161,21 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
+  @NotNull
   @Override
-  public PsiClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
-
-    final boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
-    final boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
-    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
+    boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
+    boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
+    JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
 
     if (!isAnonymous) {
       StringRef name = dataStream.readName();
       StringRef qname = dataStream.readName();
-      final StringRef sourceFileName = dataStream.readName();
-      final PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      int languageLevelId = dataStream.readByte();
+      StringRef sourceFileName = dataStream.readName();
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      classStub.setLanguageLevel(LanguageLevel.values()[languageLevelId]);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
@@ -182,7 +186,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public void indexStub(final PsiClassStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiClassStub stub, @NotNull final IndexSink sink) {
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();

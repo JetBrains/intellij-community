@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,12 +59,12 @@ public class FixDocCommentAction extends EditorAction {
   private static final class MyHandler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return;
       }
 
-      PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (psiFile == null) {
         return;
       }
@@ -79,7 +79,7 @@ public class FixDocCommentAction extends EditorAction {
       return;
     }
 
-    Language language = PsiUtilBase.getLanguageAtOffset(file, offset);
+    Language language = PsiUtilCore.getLanguageAtOffset(file, offset);
     final CodeDocumentationProvider docProvider;
     final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
     if (langDocumentationProvider instanceof CompositeDocumentationProvider) {

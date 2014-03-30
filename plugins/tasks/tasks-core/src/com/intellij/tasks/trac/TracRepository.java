@@ -18,6 +18,7 @@ package com.intellij.tasks.trac;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -118,7 +119,7 @@ public class TracRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  private static Task getTask(int id, XmlRpcClient client, Transport transport) throws IOException, XmlRpcException {
+  private Task getTask(int id, XmlRpcClient client, Transport transport) throws IOException, XmlRpcException {
     XmlRpcRequest request = new XmlRpcRequest("ticket.get", new Vector(Arrays.asList(id)));
     Object response = client.execute(request, transport);
     if (response == null) return null;
@@ -161,8 +162,9 @@ public class TracRepository extends BaseRepositoryImpl {
       public TaskType getType() {
         TaskType taskType = TaskType.OTHER;
         String type = map.get("type");
-        if ("Feature".equals(type) || type.equals("enhancement")) taskType = TaskType.FEATURE;
-        else if ("Bug".equals(type) || type.equals("defect") || type.equals("error")) taskType = TaskType.BUG;
+        if (type == null) return taskType;
+        if ("Feature".equals(type) || "enhancement".equals(type)) taskType = TaskType.FEATURE;
+        else if ("Bug".equals(type) || "defect".equals(type) || "error".equals(type)) taskType = TaskType.BUG;
         else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
         return taskType;
       }
@@ -193,6 +195,12 @@ public class TracRepository extends BaseRepositoryImpl {
       @Override
       public String getIssueUrl() {
         return null;
+      }
+
+      @Nullable
+      @Override
+      public TaskRepository getRepository() {
+        return TracRepository.this;
       }
     };
   }
@@ -261,6 +269,6 @@ public class TracRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
   }
 }

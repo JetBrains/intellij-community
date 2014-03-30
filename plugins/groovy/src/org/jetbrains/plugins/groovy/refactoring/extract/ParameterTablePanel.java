@@ -16,17 +16,13 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.ui.TypeSelector;
-import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TableUtil;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.EditableModel;
@@ -38,6 +34,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -71,9 +68,13 @@ public abstract class ParameterTablePanel extends JPanel {
 
     myTable.setTableHeader(null);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setCellRenderer(new CheckBoxTableCellRenderer());
-    myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
+
+    TableColumn checkBoxColumn = myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN);
+    TableUtil.setupCheckboxColumn(checkBoxColumn);
+    checkBoxColumn.setCellRenderer(new CheckBoxTableCellRenderer());
+
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         ParameterInfo info = myParameterInfos[row];
@@ -111,10 +112,12 @@ public abstract class ParameterTablePanel extends JPanel {
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellEditor(new AbstractTableCellEditor() {
       TypeSelector myCurrentSelector;
 
+      @Override
       public Object getCellEditorValue() {
         return myCurrentSelector.getSelectedType();
       }
 
+      @Override
       public Component getTableCellEditorComponent(final JTable table,
                                                    final Object value,
                                                    final boolean isSelected,
@@ -126,6 +129,7 @@ public abstract class ParameterTablePanel extends JPanel {
     });
 
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_TYPE_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (myParameterTypeSelectors[row].getComponent() instanceof JComboBox) {
           myTypeRendererCombo.setSelectedIndex(row);
@@ -149,6 +153,7 @@ public abstract class ParameterTablePanel extends JPanel {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
     @NonNls final ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -171,6 +176,7 @@ public abstract class ParameterTablePanel extends JPanel {
     // F2 should edit the name
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
     actionMap.put("edit_parameter_name", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myTable.isEditing()) {
           int row = myTable.getSelectedRow();
@@ -184,6 +190,7 @@ public abstract class ParameterTablePanel extends JPanel {
     // make ENTER work when the table has focus
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "invokeImpl");
     actionMap.put("invokeImpl", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null) {
@@ -197,6 +204,7 @@ public abstract class ParameterTablePanel extends JPanel {
 
     // make ESCAPE work when the table has focus
     actionMap.put("doCancel", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         TableCellEditor editor = myTable.getCellEditor();
         if (editor != null) {
@@ -256,14 +264,17 @@ public abstract class ParameterTablePanel extends JPanel {
       return true;
     }
 
+    @Override
     public int getRowCount() {
       return myParameterInfos.length;
     }
 
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
@@ -281,6 +292,7 @@ public abstract class ParameterTablePanel extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
@@ -308,6 +320,7 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN:
@@ -323,6 +336,7 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECKMARK_COLUMN) {
         return Boolean.class;
@@ -332,6 +346,7 @@ public abstract class ParameterTablePanel extends JPanel {
   }
 
   private class CheckBoxTableCellRenderer extends BooleanTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       rendererComponent.setEnabled(ParameterTablePanel.this.isEnabled());

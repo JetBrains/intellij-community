@@ -37,7 +37,7 @@ import com.intellij.util.Consumer;
 import git4idea.*;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SymbolicRefs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -185,12 +185,12 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
     final FilePathImpl filePath = new FilePathImpl(file);
 
-    final List<GitCommit> gitCommits =
+    final List<GitHeavyCommit> gitCommits =
       GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));
     if (gitCommits.size() != 1) {
       return null;
     }
-    final GitCommit gitCommit = gitCommits.get(0);
+    final GitHeavyCommit gitCommit = gitCommits.get(0);
     CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
                                                             gitCommit.getDescription(), gitCommit.getAuthor(), (GitRevisionNumber)number,
                                                             new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(), true);

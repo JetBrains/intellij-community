@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +65,10 @@ public class GroovyPsiManager {
                                                                                 JAVA_LANG_STRING);
   private final Project myProject;
 
-  private volatile Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
+  private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<String, GrTypeDefinition>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
+  private final Map<String, Map<GlobalSearchScope, PsiClass>> myClassCache = new ConcurrentSoftValueHashMap<String, Map<GlobalSearchScope, PsiClass>>();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = new ConcurrentHashMap<PsiMember, Boolean>();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
@@ -81,11 +77,13 @@ public class GroovyPsiManager {
     myProject = project;
 
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
+      @Override
       public void run() {
         dropTypesCache();
       }
     });
     ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnChange(new Runnable() {
+      @Override
       public void run() {
         myClassCache.clear();
       }
@@ -93,6 +91,7 @@ public class GroovyPsiManager {
 
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
         myClassCache.clear();
@@ -172,11 +171,10 @@ public class GroovyPsiManager {
 
   @Nullable
   public PsiClass findClassWithCache(@NotNull String fqName, @NotNull GlobalSearchScope resolveScope) {
-    SoftReference<Map<GlobalSearchScope, PsiClass>> reference = myClassCache.get(fqName);
-    Map<GlobalSearchScope, PsiClass> map = reference == null ? null : reference.get();
+    Map<GlobalSearchScope, PsiClass> map = myClassCache.get(fqName);
     if (map == null) {
       map = new ConcurrentHashMap<GlobalSearchScope, PsiClass>();
-      myClassCache.put(fqName, new SoftReference<Map<GlobalSearchScope, PsiClass>>(map));
+      myClassCache.put(fqName, map);
     }
     PsiClass cached = map.get(resolveScope);
     if (cached != null) {
@@ -190,8 +188,8 @@ public class GroovyPsiManager {
     return result;
   }
 
+  private static final PsiType UNKNOWN_TYPE = new GrPsiTypeStub();
 
-  private static final PsiType UNKNOWN_TYPE = new PsiPrimitiveType("unknown type", PsiAnnotation.EMPTY_ARRAY);
   @Nullable
   public <T extends GroovyPsiElement> PsiType getType(@NotNull T element, @NotNull Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);

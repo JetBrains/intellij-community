@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,6 @@ import java.util.List;
 public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   public static final Key<PsiCompiledElement> COMPILED_ELEMENT = Key.create("COMPILED_ELEMENT");
 
-  protected static final Object LAZY_BUILT_LOCK = new String("lazy cls tree initialization lock");
   protected static final String CAN_NOT_MODIFY_MESSAGE = JavaCoreBundle.message("psi.error.attempt.to.edit.class.file");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
@@ -97,7 +95,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       return PsiElement.EMPTY_ARRAY;
     }
 
-    List<PsiElement> list = ContainerUtil.newArrayListWithExpectedSize(children.length);
+    List<PsiElement> list = ContainerUtil.newArrayListWithCapacity(children.length);
     for (PsiElement child : children) {
       if (child != null) {
         list.add(child);
@@ -228,15 +226,10 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     PsiElement mirror = getMirror();
     if (mirror != null) return mirror.getText();
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      appendMirrorText(0, buffer);
-      LOG.error("Mirror wasn't set for " + this + ", expected text:\n" + buffer);
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    StringBuilder buffer = new StringBuilder();
+    appendMirrorText(0, buffer);
+    LOG.error("Mirror wasn't set for " + this + " in " + getContainingFile() + ", expected text '" + buffer + "'");
+    return buffer.toString();
   }
 
   @Override
@@ -295,7 +288,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       throw new InvalidMirrorException(element.getElementType() + " != " + type);
     }
 
-    element.putUserData(COMPILED_ELEMENT, this);
+    element.getPsi().putUserData(COMPILED_ELEMENT, this);
     myMirror = element;
   }
 
@@ -316,20 +309,19 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected static <T extends  PsiElement> void setMirrors(@NotNull T[] stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
-    if (stubs.length != mirrors.length) {
-      throw new InvalidMirrorException(stubs, mirrors);
-    }
-    for (int i = 0; i < stubs.length; i++) {
-      setMirror(stubs[i], mirrors[i]);
-    }
+    setMirrors(Arrays.asList(stubs), Arrays.asList(mirrors));
   }
 
   protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
-    if (stubs.size() != mirrors.length) {
+    setMirrors(stubs, Arrays.asList(mirrors));
+  }
+
+  protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull List<T> mirrors) throws InvalidMirrorException {
+    if (stubs.size() != mirrors.size()) {
       throw new InvalidMirrorException(stubs, mirrors);
     }
     for (int i = 0; i < stubs.size(); i++) {
-      setMirror(stubs.get(i), mirrors[i]);
+      setMirror(stubs.get(i), mirrors.get(i));
     }
   }
 
@@ -346,8 +338,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       this("stub:" + Arrays.toString(stubElements) + "; mirror:" + Arrays.toString(mirrorElements));
     }
 
-    public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull PsiElement[] mirrorElements) {
-      this("stub:" + stubElements + "; mirror:" + Arrays.toString(mirrorElements));
+    public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull List<? extends PsiElement> mirrorElements) {
+      this("stub:" + stubElements + "; mirror:" + mirrorElements);
     }
   }
 }

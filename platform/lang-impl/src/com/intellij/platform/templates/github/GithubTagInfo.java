@@ -14,6 +14,7 @@ public class GithubTagInfo {
   private final String myName;
   private final String myZipballUrl;
   private Version myVersion;
+  private boolean myRecentTag = false;
 
   public GithubTagInfo(@NotNull String name, @NotNull String zipballUrl) {
     myName = name;
@@ -28,6 +29,14 @@ public class GithubTagInfo {
   @NotNull
   public String getZipballUrl() {
     return myZipballUrl;
+  }
+
+  public void setRecentTag(boolean recentTag) {
+    myRecentTag = recentTag;
+  }
+
+  public boolean isRecentTag() {
+    return myRecentTag;
   }
 
   @NotNull

@@ -309,7 +309,7 @@ public class VcsHistoryProviderBackgroundableProxy {
     final FilePath correctedFilePath =
       ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(cached);
 
-    if (VcsType.distibuted.equals(myType)) {
+    if (VcsType.distributed.equals(myType)) {
       final FilePath path = correctedFilePath != null ? correctedFilePath : filePath;
       path.hardRefresh();
       final VirtualFile virtualFile = path.getVirtualFile();

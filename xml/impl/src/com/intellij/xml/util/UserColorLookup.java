@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -30,7 +29,10 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorPickerListener;
 import com.intellij.ui.ColorPickerListenerFactory;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.Function;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -40,18 +42,32 @@ import java.awt.*;
  */
 public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
+  private static final Function<Color,String> COLOR_TO_STRING_CONVERTER = new Function<Color, String>() {
+    @Override
+    public String fun(Color color) {
+      return '#' + ColorUtil.toHex(color);
+    }
+  };
 
   public UserColorLookup() {
+    this(COLOR_TO_STRING_CONVERTER);
+  }
+
+  public UserColorLookup(final Function<Color, String> colorToStringConverter) {
+    this(colorToStringConverter, LookupValueWithPriority.HIGH);
+  }
+
+  public UserColorLookup(final Function<Color, String> colorToStringConverter, int priority) {
     super(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(COLOR_STRING).withInsertHandler(
       new InsertHandler<LookupElement>() {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
-          handleUserSelection(context);
+          handleUserSelection(context, colorToStringConverter);
         }
-      }), LookupValueWithPriority.HIGH));
+      }), priority));
   }
 
-  private static void handleUserSelection(InsertionContext context) {
+  private static void handleUserSelection(InsertionContext context, @NotNull Function<Color, String> colorToStringConverter) {
     Color myColorAtCaret = null;
 
     Editor selectedTextEditor = context.getEditor();
@@ -65,19 +81,11 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
     ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(element);
     Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()),
-                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners);
+                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
 
     if (color != null) {
-      String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);
-      if (s.length() != 6) {
-        StringBuilder buf = new StringBuilder(s);
-        for (int i = 6 - buf.length(); i > 0; --i) {
-          buf.insert(0, '0');
-        }
-        s = buf.toString();
-      }
-      s = "#" + s;
-      context.getDocument().insertString(context.getStartOffset(), s);
+      String colorString = colorToStringConverter.fun(color);
+      context.getDocument().insertString(context.getStartOffset(), colorString);
       context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
     }
   }
@@ -86,6 +94,6 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   public static Color getColorFromElement(final PsiElement element) {
     if (!(element instanceof XmlToken)) return null;
 
-    return ColorSampleLookupValue.getColor(element.getText());
+    return ColorMap.getColor(element.getText());
   }
 }

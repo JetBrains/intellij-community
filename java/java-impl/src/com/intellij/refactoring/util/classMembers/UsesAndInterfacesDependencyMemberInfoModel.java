@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,11 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.classMembers.ANDCombinedMemberInfoModel;
 import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMemberInfoModel<PsiMember, MemberInfo> {
+public class UsesAndInterfacesDependencyMemberInfoModel<T extends PsiMember, M extends MemberInfoBase<T>> extends DelegatingMemberInfoModel<T, M> {
   public static final InterfaceContainmentVerifier DEFAULT_CONTAINMENT_VERIFIER = new InterfaceContainmentVerifier() {
                       public boolean checkedInterfacesContain(PsiMethod psiMethod) {
                         return false;
@@ -41,9 +42,9 @@ public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMember
 
   public UsesAndInterfacesDependencyMemberInfoModel(PsiClass aClass, @Nullable PsiClass superClass, boolean recursive,
                                                     @NotNull final InterfaceContainmentVerifier interfaceContainmentVerifier) {
-    super(new ANDCombinedMemberInfoModel<PsiMember, MemberInfo>(
-            new UsesDependencyMemberInfoModel<PsiMember, PsiClass, MemberInfo>(aClass, superClass, recursive) {
-              public int checkForProblems(@NotNull MemberInfo memberInfo) {
+    super(new ANDCombinedMemberInfoModel<T, M>(
+            new UsesDependencyMemberInfoModel<T, PsiClass, M>(aClass, superClass, recursive) {
+              public int checkForProblems(@NotNull M memberInfo) {
                 final int problem = super.checkForProblems(memberInfo);
                 if (problem == OK) return OK;
                 final PsiMember member = memberInfo.getMember();
@@ -53,7 +54,7 @@ public class UsesAndInterfacesDependencyMemberInfoModel extends DelegatingMember
                 return problem;
               }
             },
-            new InterfaceDependencyMemberInfoModel(aClass))
+            new InterfaceDependencyMemberInfoModel<T, M>(aClass))
     );
   }
 

@@ -4,11 +4,13 @@
  */
 package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -17,7 +19,11 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
@@ -85,8 +91,22 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("AxBxCxDxEx", myItems[1].getLookupString());
     assertEquals("AyByCyDyEy", myItems[0].getLookupString());
   }
+  
+  static class CacheVerifyingContributor extends CompletionContributor {
+    @Override
+    void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(parameters.position, PsiClass)
+      for (ci in OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, true)) {
+        assert ci.element.valid
+      }
+      for (ci in OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, false)) {
+        assert ci.element.valid
+      }
+    }
+  }
 
   public void testMapsInvalidation() throws Exception {
+    JavaAutoPopupTest.registerCompletionContributor(CacheVerifyingContributor, testRootDisposable, LoadingOrder.FIRST)
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(), LocalFileSystem.class); // otherwise the completion copy won't be preserved which is critical here
     myFixture.completeBasic();
@@ -123,5 +143,30 @@ public class Test {
     myFixture.assertPreferredCompletionItems 0, 'getBuilder'
   }
 
+  public void testNoJavaStructureModificationOnSecondInvocation() {
+    myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
+    def oldCount = PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+    assert !myFixture.completeBasic()
+    assert !myFixture.completeBasic()
+    assert oldCount == PsiManager.getInstance(project).modificationTracker.javaStructureModificationCount
+  }
+
+  public void testNoJavaStructureModificationOnSecondInvocationAfterTyping() {
+    myFixture.configureByText 'a.java', 'class Foo { Xxxxx<caret> }'
+
+    def tracker = PsiManager.getInstance(project).modificationTracker
+    def oldCount = tracker.javaStructureModificationCount
+    assert !myFixture.completeBasic()
+    assert oldCount == tracker.javaStructureModificationCount
+
+    myFixture.type 'x'
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert oldCount != tracker.javaStructureModificationCount
+    oldCount = tracker.javaStructureModificationCount
+    
+    assert !myFixture.completeBasic()
+    assert !myFixture.completeBasic()
+    assert oldCount == tracker.javaStructureModificationCount
+  }
 
 }

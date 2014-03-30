@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,12 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     myProject = project;
   }
 
+  @Override
   public void dispose() {
     releaseAll();
   }
 
+  @Override
   public void selectInEditor(VirtualFile file, final int startOffset, final int endOffset, final boolean toSelectLine, final boolean toUseNormalSelection){
     releaseAll();
     final TextRange textRange;
@@ -74,6 +76,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     final Editor editor = openEditor(file, textRange.getStartOffset());
 
     SwingUtilities.invokeLater(new Runnable(){ // later to let focus listener chance to handle events
+      @Override
       public void run() {
         if (editor != null && !editor.isDisposed()) {
           doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
@@ -126,15 +129,26 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     myEditor.getCaretModel().addCaretListener(this);
   }
 
+  @Override
   public void focusGained(FocusEvent e) {
     releaseAll();
   }
 
+  @Override
   public void focusLost(FocusEvent e) {
   }
 
+  @Override
   public void caretPositionChanged(CaretEvent e) {
     releaseAll();
+  }
+
+  @Override
+  public void caretAdded(CaretEvent e) {
+  }
+
+  @Override
+  public void caretRemoved(CaretEvent e) {
   }
 
   private void releaseAll() {

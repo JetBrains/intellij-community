@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
@@ -35,11 +35,16 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
   }
 
   @Override
+  protected boolean prepareForWriting() {
+    return false;
+  }
+
+  @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiPolyadicExpression)) {
       return;
     }
-    PsiPolyadicExpression concatenationExpression = (PsiPolyadicExpression)element;
+    final PsiPolyadicExpression concatenationExpression = (PsiPolyadicExpression)element;
     final IElementType tokenType = concatenationExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.PLUS) {
       return;

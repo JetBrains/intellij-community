@@ -51,9 +51,11 @@ public class EditLogPatternDialog extends DialogWrapper {
     setOKActionEnabled(pattern != null && pattern.length() > 0);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myFilePattern.addBrowseFolderListener(UIBundle.message("file.chooser.default.title"), null, null, FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myFilePattern.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         setOKActionEnabled(myFilePattern.getText() != null && myFilePattern.getText().length() > 0);
       }
@@ -61,6 +63,7 @@ public class EditLogPatternDialog extends DialogWrapper {
     return myWholePanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class GrMethodConflictUtil {
 
     String newName = prototype.getName();
     PsiMethod[] methods = clazz.findMethodsByName(newName, false);
-    MultiMap<MethodSignature, PsiMethod> signatures = GrClosureSignatureUtil.findMethodSignatures(methods);
+    MultiMap<MethodSignature, PsiMethod> signatures = GrClosureSignatureUtil.findRawMethodSignatures(methods, clazz);
     for (MethodSignature prototypeSignature : prototypeSignatures) {
       for (PsiMethod method : signatures.get(prototypeSignature)) {
         if (method != refactoredMethod) {

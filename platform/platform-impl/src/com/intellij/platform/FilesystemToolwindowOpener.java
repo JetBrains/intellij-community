@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,7 +28,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 public class FilesystemToolwindowOpener implements StartupActivity, DumbAware {
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     final VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
     if (baseDir == null || !baseDir.isDirectory()) return;
     ToolWindowManager.getInstance(project).invokeLater(new Runnable() {

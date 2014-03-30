@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -40,8 +41,6 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
  * which means showing combined error information, proposing to rollback, etc.
- *
- * @author Kirill Likhodedov
  */
 abstract class GitBranchOperation {
 
@@ -154,7 +153,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifySuccess(@NotNull String message) {
-    myUiHandler.notifySuccess(message);
+    VcsNotifier.getInstance(myProject).notifySuccess(message);
   }
 
   protected final void notifySuccess() {
@@ -189,7 +188,7 @@ abstract class GitBranchOperation {
   }
 
   protected void notifyError(@NotNull String title, @NotNull String message) {
-    myUiHandler.notifyError(title, message);
+    VcsNotifier.getInstance(myProject).notifyError(title, message);
   }
 
   @NotNull

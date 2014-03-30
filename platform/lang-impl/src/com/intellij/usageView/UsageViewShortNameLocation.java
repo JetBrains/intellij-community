@@ -16,6 +16,7 @@
 
 package com.intellij.usageView;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
@@ -45,7 +46,7 @@ public class UsageViewShortNameLocation extends ElementDescriptionLocation {
 
       if (element instanceof PsiMetaOwner) {
         PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
-        if (metaData!=null) return UsageViewUtil.getMetaDataName(metaData);
+        if (metaData!=null) return DescriptiveNameUtil.getMetaDataName(metaData);
       }
 
       if (element instanceof PsiNamedElement) {

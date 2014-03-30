@@ -13,6 +13,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
     return (WebModuleType)ModuleTypeManager.getInstance().findByID(WEB_MODULE);
   }
 
+  @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
     return new WebModuleBuilder();

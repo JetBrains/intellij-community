@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,21 +34,25 @@ public enum LineSeparator {
   CRLF("\r\n"),
   CR("\r");
 
+  private static final Logger LOG = Logger.getInstance(LineSeparator.class);
   private final String mySeparatorString;
 
-  LineSeparator(String separatorString) {
+  LineSeparator(@NotNull String separatorString) {
     mySeparatorString = separatorString;
   }
 
-  public static LineSeparator fromString(String string) {
+  @NotNull
+  public static LineSeparator fromString(@NotNull String string) {
     for (LineSeparator separator : values()) {
       if (separator.getSeparatorString().equals(string)) {
         return separator;
       }
     }
-    throw new IllegalArgumentException("Invalid string for line separator: " + string);
+    LOG.error("Invalid string for line separator: " + StringUtil.escapeStringCharacters(string));
+    return getSystemLineSeparator();
   }
 
+  @NotNull
   public String getSeparatorString() {
     return mySeparatorString;
   }

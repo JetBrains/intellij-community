@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Implement this abstract class in order to provide new inspection tool functionality. The major API limitation here is
@@ -29,98 +27,19 @@ import org.jetbrains.annotations.Nullable;
  * lie under corresponding first parameter of one method.
  *
  * @see GlobalInspectionTool
+ *
+ * Please note that if your inspection/fixes/suppressions don't need UI components (e.g. Editor) to run, consider using
+ * {@link BaseJavaBatchLocalInspectionTool} instead.
  */
-public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  implements CustomSuppressableInspectionTool {
-  /**
-   * Override this to report problems at method level.
-   *
-   * @param method     to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
-   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at method level.
-   */
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
-  /**
-   * Override this to report problems at class level.
-   *
-   * @param aClass     to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
-   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at class level.
-   */
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
-  /**
-   * Override this to report problems at field level.
-   *
-   * @param field      to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
-   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-   * @return <code>null</code> if no problems found or not applicable at field level.
-   */
-  @Nullable
-  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
-  /**
-     * Override this to report problems at file level.
-     *
-     * @param file       to check.
-     * @param manager    InspectionManager to ask for ProblemDescriptor's from.
-     * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-     * @return <code>null</code> if no problems found or not applicable at file level.
-     */
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    return null;
-  }
-
-  @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
-        addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
-      }
-
-      @Override public void visitClass(PsiClass aClass) {
-        addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
-      }
-
-      @Override public void visitField(PsiField field) {
-        addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
-      }
-
-      @Override public void visitFile(PsiFile file) {
-        addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
-      }
-      private void addDescriptors(final ProblemDescriptor[] descriptors) {
-        if (descriptors != null) {
-          for (ProblemDescriptor descriptor : descriptors) {
-            holder.registerProblem(descriptor);
-          }
-        }
-      }
-    };
-  }
-
-  @Override
-  public PsiNamedElement getProblemElement(final PsiElement psiElement) {
-    return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
-  }
-
+public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   @Override
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
+    String shortName = getShortName();
+    HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key == null) {
+      throw new AssertionError("HighlightDisplayKey.find(" + shortName + ") is null. Inspection: "+getClass());
+    }
+    return SuppressManager.getInstance().createSuppressActions(key);
   }
 
   @Override
@@ -129,12 +48,6 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
   }
 
   public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
-    final SuppressManager manager = SuppressManager.getInstance();
-    String alternativeId;
-    String id;
-    return manager.isSuppressedFor(element, id = tool.getID()) ||
-           (alternativeId = tool.getAlternativeID()) != null &&
-             !alternativeId.equals(id) &&
-             manager.isSuppressedFor(element, alternativeId);
+    return BaseJavaBatchLocalInspectionTool.isSuppressedFor(element, tool);
   }
 }

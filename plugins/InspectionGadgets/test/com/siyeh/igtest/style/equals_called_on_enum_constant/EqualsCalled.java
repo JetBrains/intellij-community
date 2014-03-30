@@ -13,3 +13,12 @@ public class EqualsCalled {
         A.equals(1);
     }
 }
+class Main {
+  enum Suit {
+    SPADES, HEARTS, DIAMONDS, CLUBS
+  }
+
+  private boolean equalsType(Suit suit, String type) {
+    return suit.equals(type);
+  }
+}

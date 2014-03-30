@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -339,9 +339,9 @@ class ExceptionUtils {
       final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)expression;
       calculateExceptionsThrownForPostfixExpression(postfixExpression, exceptionTypes);
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      calculateExceptionsThrownForBinaryExpression(binaryExpression, exceptionTypes);
+    else if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      calculateExceptionsThrownForPolyadicExpression(polyadicExpression, exceptionTypes);
     }
     else if (expression instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
@@ -350,6 +350,11 @@ class ExceptionUtils {
     else if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       calculateExceptionsThrownForConditionalExpression(conditionalExpression, exceptionTypes);
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      final PsiExpression innerExpression = parenthesizedExpression.getExpression();
+      calculateExceptionsThrownForExpression(innerExpression, exceptionTypes);
     }
   }
 
@@ -414,11 +419,11 @@ class ExceptionUtils {
     calculateExceptionsThrownForExpression(thenExpression, exceptionTypes);
   }
 
-  private static void calculateExceptionsThrownForBinaryExpression(PsiBinaryExpression binaryExpression, Set<PsiType> exceptionTypes) {
-    final PsiExpression lOperand = binaryExpression.getLOperand();
-    calculateExceptionsThrownForExpression(lOperand, exceptionTypes);
-    final PsiExpression rhs = binaryExpression.getROperand();
-    calculateExceptionsThrownForExpression(rhs, exceptionTypes);
+  private static void calculateExceptionsThrownForPolyadicExpression(PsiPolyadicExpression polyadicExpression, Set<PsiType> exceptionTypes) {
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    for (PsiExpression operand : operands) {
+      calculateExceptionsThrownForExpression(operand, exceptionTypes);
+    }
   }
 
   private static void calculateExceptionsThrownForAssignmentExpression(PsiAssignmentExpression assignmentExpression,

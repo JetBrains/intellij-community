@@ -32,10 +32,12 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -101,19 +103,39 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllClassNames() {
-    final Collection<String> names = JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllClassNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaShortClassNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    processAllClassNames(new CommonProcessors.CollectProcessor<String>(set));
+  }
+
+  @Override
+  public boolean processAllClassNames(Processor<String> processor) {
+    return JavaShortClassNameIndex.getInstance().processAllKeys(myManager.getProject(), processor);
+  }
+
+  @Override
+  public boolean processAllClassNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, processor, scope, filter);
+  }
+
+  @Override
+  public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.METHODS, processor, scope, filter);
+  }
+
+  @Override
+  public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FIELDS, processor, scope, filter);
   }
 
   @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
-    Collection<PsiMethod> methods = StubIndex.getInstance().get(JavaStubIndexKeys.METHODS, name, myManager.getProject(), new JavaSourceFilterScope(scope));
+    Collection<PsiMethod> methods = StubIndex.getElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(),
+                                                          new JavaSourceFilterScope(scope), PsiMethod.class);
     if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
 
     List<PsiMethod> list = filterMembers(methods, scope);
@@ -125,8 +147,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     final List<PsiMethod> methods = new SmartList<PsiMethod>();
-    StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiMethod>(methods){
-      @Override
+    StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, PsiMethod.class, new
+                                            CommonProcessors.CollectProcessor < PsiMethod > (methods){
+    @Override
       public boolean process(PsiMethod method) {
         return methods.size() != maxCount && super.process(method);
       }
@@ -141,27 +164,27 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiMethod> processor) {
-    return StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, processor);
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, PsiMethod.class, processor);
   }
 
   @Override
   @NotNull
   public String[] getAllMethodNames() {
-    final Collection<String> names = JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaMethodNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    JavaMethodNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
   }
 
   @Override
   @NotNull
   public PsiField[] getFieldsByNameIfNotMoreThan(@NotNull String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     final List<PsiField> methods = new SmartList<PsiField>();
-    StubIndex.getInstance().process(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiField>(methods){
-      @Override
+    StubIndex.getInstance().processElements(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, PsiField.class, new
+                                            CommonProcessors.CollectProcessor < PsiField > (methods){
+    @Override
       public boolean process(PsiField method) {
         return methods.size() != maxCount && super.process(method);
       }
@@ -186,13 +209,39 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public String[] getAllFieldNames() {
-    final Collection<String> names = JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject());
-    return ArrayUtil.toStringArray(names);
+    return ArrayUtil.toStringArray(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
   }
 
   @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
-    set.addAll(JavaFieldNameIndex.getInstance().getAllKeys(myManager.getProject()));
+    JavaFieldNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
+  }
+
+  @Override
+  public boolean processFieldsWithName(@NotNull String name,
+                                       @NotNull Processor<? super PsiField> processor,
+                                       @NotNull GlobalSearchScope scope,
+                                       @Nullable IdFilter filter) {
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), new JavaSourceFilterScope(scope),
+                                                   filter, PsiField.class, processor);
+  }
+
+  @Override
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull Processor<? super PsiMethod> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(),
+                                                   new JavaSourceFilterScope(scope), filter, PsiMethod.class, processor);
+  }
+
+  @Override
+  public boolean processClassesWithName(@NotNull String name,
+                                        @NotNull Processor<? super PsiClass> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
+    return StubIndex.getInstance().processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, name, myManager.getProject(),
+                                                   new JavaSourceFilterScope(scope), filter, PsiClass.class, processor);
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {

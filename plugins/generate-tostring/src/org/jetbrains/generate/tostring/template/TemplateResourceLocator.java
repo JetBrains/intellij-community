@@ -29,11 +29,12 @@ import java.io.InputStreamReader;
 public class TemplateResourceLocator {
 
   private static final String DEFAULT_CONCAT = "/org/jetbrains/generate/tostring/template/DefaultConcatMember.vm";
+  private static final String DEFAULT_CONCAT_GROOVY = "/org/jetbrains/generate/tostring/template/DefaultConcatMemberGroovy.vm";
   private static final String DEFAULT_CONCAT_SUPER = "/org/jetbrains/generate/tostring/template/DefaultConcatMemberSuper.vm";
   private static final String DEFAULT_BUFFER = "/org/jetbrains/generate/tostring/template/DefaultBuffer.vm";
   private static final String DEFAULT_BUILDER = "/org/jetbrains/generate/tostring/template/DefaultBuilder.vm";
-  private static final String DEFAULT_OBJECTS = "/org/jetbrains/generate/tostring/template/DefaultObjectsToString.vm";
   private static final String DEFAULT_TOSTRINGBUILDER = "/org/jetbrains/generate/tostring/template/DefaultToStringBuilder.vm";
+  private static final String DEFAULT_TOSTRINGBUILDER3 = "/org/jetbrains/generate/tostring/template/DefaultToStringBuilder3.vm";
   private static final String DEFAULT_GUAVA = "/org/jetbrains/generate/tostring/template/DefaultGuava.vm";
 
   private TemplateResourceLocator() {}
@@ -48,9 +49,10 @@ public class TemplateResourceLocator {
         new TemplateResource("String concat (+) and super.toString()", readFile(DEFAULT_CONCAT_SUPER), true),
         new TemplateResource("StringBuffer", readFile(DEFAULT_BUFFER), true),
         new TemplateResource("StringBuilder (JDK 1.5)", readFile(DEFAULT_BUILDER), true),
-        new TemplateResource("Objects.toString() (JDK 1.7)", readFile(DEFAULT_OBJECTS), true),
-        new TemplateResource("ToStringBuilder (Apache Commons)", readFile(DEFAULT_TOSTRINGBUILDER), true),
-        new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true)
+        new TemplateResource("ToStringBuilder (Apache commons-lang)", readFile(DEFAULT_TOSTRINGBUILDER), true),
+        new TemplateResource("ToStringBuilder (Apache commons-lang 3)", readFile(DEFAULT_TOSTRINGBUILDER3), true),
+        new TemplateResource("Objects.toStringHelper (Guava)", readFile(DEFAULT_GUAVA), true),
+        new TemplateResource("Groovy: String concat (+)", readFile(DEFAULT_CONCAT_GROOVY), true),
       };
     }
     catch (IOException e) {

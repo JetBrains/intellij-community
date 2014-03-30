@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.diff.FileAwareSimpleContent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -86,7 +87,7 @@ public abstract class DiffActionExecutor {
       if (content == null) {
         throw new VcsException("Failed to load content");
       }
-      return new SimpleContent(content, mySelectedFile.getFileType());
+      return new FileAwareSimpleContent(myProject, fileRevision.getFile(), content, mySelectedFile.getFileType());
     }
     return null;
   }

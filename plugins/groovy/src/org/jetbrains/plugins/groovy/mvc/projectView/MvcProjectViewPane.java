@@ -32,20 +32,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -171,19 +169,23 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
 
+  @Override
   public String getTitle() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Icon getIcon() {
     return myDescriptor.getFramework().getIcon();
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   public int getWeight() {
     throw new UnsupportedOperationException();
   }
@@ -193,6 +195,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SelectInTarget createSelectInTarget() {
     throw new UnsupportedOperationException();
   }
@@ -201,12 +204,14 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   @Override
   protected BaseProjectTreeBuilder createBuilder(final DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
+      @Override
       protected AbstractTreeUpdater createUpdater() {
         return createTreeUpdater(this);
       }
     };
   }
 
+  @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     final Project project = myProject;
     final String id = getId();
@@ -217,28 +222,33 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
         return myViewState.hideEmptyMiddlePackages;
       }
 
+      @Override
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new MvcProjectNode(project, this, myDescriptor);
       }
     };
   }
 
+  @Override
   protected ProjectViewTree createTree(final DefaultTreeModel treeModel) {
     return new ProjectViewTree(myProject, treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
       }
 
+      @Override
       public DefaultMutableTreeNode getSelectedNode() {
         return MvcProjectViewPane.this.getSelectedNode();
       }
     };
   }
 
+  @Override
   protected AbstractTreeUpdater createTreeUpdater(final AbstractTreeBuilder treeBuilder) {
     return new AbstractTreeUpdater(treeBuilder);
   }
 
+  @Override
   @Nullable
   protected PsiElement getPSIElement(@Nullable final Object element) {
     // E.g is used by Project View's DataProvider
@@ -307,20 +317,23 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     return content == null ? null : (MvcProjectViewPane)content.getDisposer();
   }
 
+  @Override
   public void selectElement(PsiElement element) {
     PsiFileSystemItem psiFile;
-
-    if (!(element instanceof PsiFileSystemItem)) {
-      psiFile = element.getContainingFile();
-    }
-    else {
+    if (element instanceof PsiFileSystemItem) {
       psiFile = (PsiFileSystemItem)element;
     }
-
-    if (psiFile == null) return;
+    else {
+      psiFile = element.getContainingFile();
+      if (psiFile == null) {
+        return;
+      }
+    }
 
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return;
+    if (virtualFile == null) {
+      return;
+    }
 
     selectFile(virtualFile, false);
 
@@ -339,10 +352,12 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
   }
 
+  @Override
   public PsiDirectory[] getDirectories() {
     return getSelectedDirectories();
   }
 
+  @Override
   public PsiDirectory getOrChooseDirectory() {
     return DirectoryChooserUtil.getOrChooseDirectory(this);
   }
@@ -362,7 +377,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       return null;
     }
 
-    final Module module = ModuleUtil.findModuleForFile(file, project);
+    final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module == null || !framework.hasSupport(module)) {
       return null;
     }
@@ -388,7 +403,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
             if (descriptor instanceof AbstractFolderNode) {
               final AbstractFolderNode folderNode = (AbstractFolderNode)descriptor;
               final VirtualFile dir = folderNode.getVirtualFile();
-              if (dir != null && VfsUtil.isAncestor(dir, file, false)) {
+              if (dir != null && VfsUtilCore.isAncestor(dir, file, false)) {
                 cur = folderNode;
                 result.add(folderNode);
                 if (dir.equals(file)) {
@@ -415,7 +430,19 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     return getSelectPath(file) != null;
   }
 
-  public void selectFile(VirtualFile file, boolean requestFocus) {
+  private void selectElementAtCaret(Editor editor, boolean requestFocus) {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    selectFile(file, requestFocus);
+  }
+
+  public void selectFile(@Nullable PsiFile file, boolean requestFocus) {
+    if (file == null) return;
+    selectFile(file.getVirtualFile(), requestFocus);
+  }
+
+  public void selectFile(@Nullable VirtualFile file, boolean requestFocus) {
+    if (file == null) return;
+
     final List<Object> path = getSelectPath(file);
     if (path == null) return;
 
@@ -424,19 +451,24 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   }
 
   public void scrollFromSource() {
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    //final FileEditor[] editors = fileEditorManager.getSelectedEditors();
-    //for (FileEditor fileEditor : editors) {
-    //  if (fileEditor instanceof TextEditor) {
-    //    Editor editor = ((TextEditor)fileEditor).getEditor();
-    //    selectElement();
-    //    selectElementAtCaret(editor);
-    //    return;
-    //  }
-    //}
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
+    if (selectedTextEditor != null) {
+      selectElementAtCaret(selectedTextEditor, false);
+      return;
+    }
+    final FileEditor[] editors = fileEditorManager.getSelectedEditors();
+    for (FileEditor fileEditor : editors) {
+      if (fileEditor instanceof TextEditor) {
+        Editor editor = ((TextEditor)fileEditor).getEditor();
+        selectElementAtCaret(editor, false);
+        return;
+      }
+    }
     final VirtualFile[] selectedFiles = fileEditorManager.getSelectedFiles();
     if (selectedFiles.length > 0) {
-      selectFile(selectedFiles[0], false);
+      PsiFile file = PsiManager.getInstance(myProject).findFile(selectedFiles[0]);
+      selectFile(file, false);
     }
   }
 
@@ -491,6 +523,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
       return myViewState.hideEmptyMiddlePackages;
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       myViewState.hideEmptyMiddlePackages = flag;
       TreeUtil.collapseAll(myTree, 1);

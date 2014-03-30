@@ -139,7 +139,7 @@ public class GrAliasImportIntention extends Intention {
 
     final PsiElement aliasNameElement = templateImport.getAliasNameElement();
     assert aliasNameElement != null;
-    templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, true, null));
+    templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null));
     Template built = templateBuilder.buildTemplate();
 
     final Editor newEditor = QuickfixUtil.positionCursor(project, file, templateImport);

@@ -8,6 +8,6 @@ abstract class Test {
 class TImple extends Test {
     @Override
     public void foo(@Nullable String a) {
-        <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -51,6 +52,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -74,6 +76,7 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -119,16 +122,17 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       @NotNull
-      public InspectionTool[] getInspectionTools(PsiElement element) {
+      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
         Collection<InspectionToolWrapper> values = myAvailableTools.values();
-        return values.toArray(new InspectionTool[values.size()]);
+        return values.toArray(new InspectionToolWrapper[values.size()]);
       }
 
+      @NotNull
       @Override
-      public List<ToolsImpl> getAllEnabledInspectionTools(Project project) {
-        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
-        for (InspectionProfileEntry entry : getInspectionTools(null)) {
-          result.add(new ToolsImpl(entry, entry.getDefaultLevel(), true));
+      public List<Tools> getAllEnabledInspectionTools(Project project) {
+        List<Tools> result = new ArrayList<Tools>();
+        for (InspectionToolWrapper toolWrapper : getInspectionTools(null)) {
+          result.add(new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true));
         }
         return result;
       }
@@ -140,12 +144,12 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
       @Override
       public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        final InspectionProfileEntry localInspectionTool = myAvailableTools.get(key.toString());
+        final InspectionToolWrapper localInspectionTool = myAvailableTools.get(key.toString());
         return localInspectionTool != null ? localInspectionTool.getDefaultLevel() : HighlightDisplayLevel.WARNING;
       }
 
       @Override
-      public InspectionTool getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
+      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
         return myAvailableTools.get(shortName);
       }
     };
@@ -187,19 +191,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
-    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(!LightPlatformTestCase.isLight(getProject()));
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
     super.tearDown();
     //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
-  protected void enableInspectionTool(InspectionProfileEntry tool){
-    InspectionToolWrapper wrapper = InspectionToolRegistrar.wrapTool(tool);
-    final String shortName = wrapper.getShortName();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null) {
-      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), ((LocalInspectionToolWrapper)wrapper).getID());
-    }
-    myAvailableTools.put(shortName, wrapper);
+  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+    InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
+    LightPlatformTestCase.enableInspectionTool(myAvailableTools, toolWrapper);
   }
 
   protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
@@ -255,10 +254,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @NotNull
   @SuppressWarnings("TestMethodWithIncorrectSignature")
   protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
-    return new HighlightTestInfo(getTestRootDisposable(), filePath){
+    return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
-      public HighlightTestInfo doTest() throws Exception {
-        configureByFiles(projectRoot, filePaths);
+      public HighlightTestInfo doTest() {
+        try { configureByFiles(projectRoot, filePaths); }
+        catch (Exception e) { throw new RuntimeException(e); }
         ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile);
         if (checkSymbolNames) data.checkSymbolNames();
         checkHighlighting(data);
@@ -286,8 +286,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return doDoTest(checkWarnings, checkInfos, false);
   }
 
-  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    return checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile));
+  protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
+    return ContainerUtil.filter(
+      checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
+      new Condition<HighlightInfo>() {
+        @Override
+        public boolean value(HighlightInfo info) {
+          return (info.getSeverity() == HighlightSeverity.INFORMATION) && checkInfos ||
+                 (info.getSeverity() == HighlightSeverity.WARNING) && checkWarnings ||
+                 (info.getSeverity() == HighlightSeverity.WEAK_WARNING) && checkWeakWarnings ||
+                  info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0;
+        }
+      });
   }
 
   @NotNull
@@ -310,19 +320,22 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     }
     final JavaPsiFacadeEx facade = getJavaFacade();
     if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter); // check repository work
+      facade.setAssertOnFileLoadingFilter(myFileTreeAccessFilter, myTestRootDisposable); // check repository work
     }
 
-    Collection<HighlightInfo> infos = doHighlighting();
+    try {
+      Collection<HighlightInfo> infos = doHighlighting();
 
-    if (facade != null) {
-      facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+      String text = myEditor.getDocument().getText();
+      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
+      data.checkResult(infos, text);
+      return infos;
     }
-
-    String text = myEditor.getDocument().getText();
-    data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(getFile()), getProject()), text);
-    data.checkResult(infos, text);
-    return infos;
+    finally {
+      if (facade != null) {
+        facade.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+      }
+    }
   }
 
   public void allowTreeAccessForFile(@NotNull VirtualFile file) {
@@ -356,6 +369,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (forceExternalValidation()) {
       toIgnore.add(Pass.LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
+      toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.POST_UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_ALL);
@@ -368,7 +382,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     if (!canChange) {
       Document document = getDocument(getFile());
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileStatusMap().assertAllDirtyScopesAreNull(document);
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      daemonCodeAnalyzer.getFileStatusMap().assertAllDirtyScopesAreNull(document);
     }
 
     return infos;

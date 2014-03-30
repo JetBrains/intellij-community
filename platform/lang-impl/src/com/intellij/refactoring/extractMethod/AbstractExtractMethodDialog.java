@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +38,9 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   private JPanel myContentPane;
   private AbstractParameterTablePanel myParametersPanel;
   private JTextField myMethodNameTextField;
-  private JTextArea mySignaturePreviewTextArea;
+  private MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
+  private final Project myProject;
   private final String myDefaultName;
   private final ExtractMethodValidator myValidator;
   private final ExtractMethodDecorator myDecorator;
@@ -47,20 +50,23 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
 
   private final List<String> myArguments;
   private final ArrayList<String> myOutputVariables;
+  private final FileType myFileType;
 
   public AbstractExtractMethodDialog(final Project project,
-                             final String defaultName,
-                             final CodeFragment fragment,
-                             final ExtractMethodValidator validator,
-                             final ExtractMethodDecorator decorator) {
+                                     final String defaultName,
+                                     final CodeFragment fragment,
+                                     final ExtractMethodValidator validator,
+                                     final ExtractMethodDecorator decorator,
+                                     final FileType type) {
     super(project, true);
+    myProject = project;
     myDefaultName = defaultName;
-    CodeFragment fragment1 = fragment;
     myValidator = validator;
     myDecorator = decorator;
-    myArguments = new ArrayList<String>(fragment1.getInputVariables());
+    myFileType = type;
+    myArguments = new ArrayList<String>(fragment.getInputVariables());
     Collections.sort(myArguments);
-    myOutputVariables = new ArrayList<String>(fragment1.getOutputVariables());
+    myOutputVariables = new ArrayList<String>(fragment.getOutputVariables());
     Collections.sort(myOutputVariables);
     setModal(true);
     setTitle(RefactoringBundle.message("extract.method.title"));
@@ -94,6 +100,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     updateOkStatus();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myMethodNameTextField;
   }
@@ -133,9 +140,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
         Messages.showInfoMessage(error, RefactoringBundle.message("error.title"));
         return;
       }
-      final StringBuilder builder = new StringBuilder();
-      builder.append(error).append(". ").append(RefactoringBundle.message("do.you.wish.to.continue"));
-      if (Messages.showOkCancelDialog(builder.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != 0){
+      if (Messages.showOkCancelDialog(error + ". " + RefactoringBundle.message("do.you.wish.to.continue"), RefactoringBundle.message("warning.title"), Messages.getWarningIcon()) != Messages.OK){
         return;
       }
     }
@@ -147,25 +152,30 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     return "refactoring.extractMethod";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myContentPane;
   }
 
   private void createUIComponents() {
     myParametersPanel = new AbstractParameterTablePanel(myValidator){
+      @Override
       protected void doCancelAction() {
         AbstractExtractMethodDialog.this.doCancelAction();
       }
 
+      @Override
       protected void doEnterAction() {
         doOKAction();
       }
 
+      @Override
       protected void updateSignature() {
         updateOutputVariables();
         AbstractExtractMethodDialog.this.updateSignature();
       }
     };
+    mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, myFileType);
   }
 
   private void updateOutputVariables() {
@@ -187,17 +197,19 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
   }
 
   private void updateSignature() {
-    mySignaturePreviewTextArea.setText(myDecorator.createMethodPreview(getMethodName(), myVariableData));
+    mySignaturePreviewTextArea.setSignature(myDecorator.createMethodPreview(getMethodName(), myVariableData));
   }
 
   private void updateOkStatus() {
     setOKActionEnabled(myValidator.isValidName(getMethodName()));
   }
 
+  @Override
   public String getMethodName() {
     return myMethodNameTextField.getText().trim();
   }
 
+  @Override
   public AbstractVariableData[] getVariableData() {
     return myVariableData;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
@@ -76,38 +75,52 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       g.fillRect(0,0, size.width, size.height);
     }
 
+    int rad = 5;
 
     // Paint the radio button
-    final int x = iconRect.x + 2;
-    final int y = iconRect.y + 2;
-    final int w = iconRect.width - 4;
-    final int h = iconRect.height - 4;
+    final int x = iconRect.x + (rad-1)/2;
+    final int y = iconRect.y + (rad-1)/2;
+    final int w = iconRect.width - (rad + 5) / 2;
+    final int h = iconRect.height - (rad + 5) / 2;
 
     g.translate(x, y);
 
     //setup AA for lines
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    g.setPaint(
-      UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5), 0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
-    g.fillOval(0, 1, w - 1, h - 1);
-
-    if (b.hasFocus()) {
-      int sysOffX = SystemInfo.isMac ? 0 : 1;
-      int sysOffY = SystemInfo.isMac ? 0 : -1;
-      DarculaUIUtil.paintFocusOval(g, x-6  + sysOffX, y-3 + sysOffY, w-2, h-2);
+    final boolean focus = b.hasFocus();
+    g.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.shift(c.getBackground(), 1.5),
+                                       0, c.getHeight(), ColorUtil.shift(c.getBackground(), 1.2)));
+    if (focus) {
+      g.fillOval(0, 1, w, h);
     } else {
-      g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
-      g.drawOval(0, 2, w - 1, h - 1);
+      g.fillOval(0, 1, w - 1, h - 1);
+    }
 
-      g.setPaint(Gray._40.withAlpha(200));
-      g.drawOval(0, 1, w - 1, h - 1);
+    if (focus) {
+      if (UIUtil.isRetina()) {
+        DarculaUIUtil.paintFocusOval(g, 1, 2, w-2, h-2);
+      } else {
+        DarculaUIUtil.paintFocusOval(g, 0, 1, w, h);
+      }
+    } else {
+      if (UIUtil.isUnderDarcula()) {
+        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
+        g.drawOval(0, 2, w - 1, h - 1);
+
+        g.setPaint(Gray._40.withAlpha(200));
+        g.drawOval(0, 1, w - 1, h - 1);
+      } else {
+        g.setPaint(b.isEnabled() ? Gray._30 : Gray._130);
+        g.drawOval(0, 1, w - 1, h - 1);
+      }
     }
 
     if (b.isSelected()) {
-      g.setColor(Gray._0.withAlpha(120));
-      g.fillOval(w/2 - 3, h/2 - 1, 5, 5);
-      g.setColor(Gray._255.withAlpha(180));
-      g.fillOval(w/2 - 3, h/2 - 2, 5, 5);
+      final boolean enabled = b.isEnabled();
+      g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));// ? Gray._30 : Gray._60);
+      g.fillOval(w/2 - rad/2, h/2 , rad, rad);
+      g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledColor" : "RadioButton.darcula.selectionDisabledColor")); //Gray._170 : Gray._120);
+      g.fillOval(w/2 - rad/2, h/2 - 1, rad, rad);
     }
     config.restore();
     g.translate(-x, -y);

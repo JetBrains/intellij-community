@@ -16,8 +16,9 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,6 +41,7 @@ import java.util.Collection;
 public class I18nizeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeAction");
 
+  @Override
   public void update(AnActionEvent e) {
     boolean active = getHandler(e) != null;
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -55,7 +57,7 @@ public class I18nizeAction extends AnAction {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
 
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return null;
 
     TextRange range = JavaI18nUtil.getSelectedRange(editor, psiFile);
@@ -92,7 +94,7 @@ public class I18nizeAction extends AnAction {
   }
 
   private static Editor getEditor(final AnActionEvent e) {
-    return PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    return CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public static void doI18nSelectedString(final @NotNull Project project,
@@ -107,20 +109,33 @@ public class I18nizeAction extends AnAction {
       return;
     }
 
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      JavaI18nizeQuickFixDialog.isAvailable(psiFile);
+    }
+
+    try {
+      ResourceBundleManager.getManager(psiFile);
+    }
+    catch (ResourceBundleManager.ResourceBundleNotFoundException e) {
+      return;
+    }
+
     final JavaI18nizeQuickFixDialog dialog = handler.createDialog(project, editor, psiFile);
     if (dialog == null) return;
     dialog.show();
     if (!dialog.isOK()) return;
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+          @Override
           public void run() {
             try {
               handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), StringUtil.unescapeStringCharacters(dialog.getValue()),
@@ -136,11 +151,12 @@ public class I18nizeAction extends AnAction {
     });
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();
     assert project != null;
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     final I18nQuickFixHandler handler = getHandler(e);
     if (handler == null) return;

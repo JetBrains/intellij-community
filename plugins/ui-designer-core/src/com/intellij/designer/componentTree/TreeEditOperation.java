@@ -23,7 +23,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -47,6 +46,10 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     return true;
   }
 
+  protected Object[] getChildren() {
+    return myContainer.getTreeChildren();
+  }
+
   @Override
   public void showFeedback() {
     Point location = myContext.getLocation();
@@ -68,12 +71,12 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
   }
 
   protected final boolean isChildren(RadComponent component) {
-    return ArrayUtil.indexOf(myContainer.getTreeChildren(), component) != -1;
+    return ArrayUtil.indexOf(getChildren(), component) != -1;
   }
 
   @Override
   public void eraseFeedback() {
-    myContext.getArea().getFeedbackTreeLayer().mark(null, FeedbackTreeLayer.INSERT_AFTER);
+    myContext.getArea().getFeedbackTreeLayer().unmark();
   }
 
   @Override
@@ -86,10 +89,10 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
         return false;
       }
 
-      List<RadComponent> children = myContainer.getChildren();
-      int index = children.indexOf(myTarget) + (myInsertBefore ? -1 : 1);
-      if (0 <= index && index < children.size()) {
-        return !myComponents.contains(children.get(index));
+      Object[] children = getChildren();
+      int index = ArrayUtil.indexOf(children, myTarget) + (myInsertBefore ? -1 : 1);
+      if (0 <= index && index < children.length) {
+        return !myComponents.contains(children[index]);
       }
     }
     return true;
@@ -104,10 +107,10 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
       execute(myTarget);
     }
     else {
-      List<RadComponent> children = myContainer.getChildren();
-      int index = children.indexOf(myTarget) + 1;
-      if (index < children.size()) {
-        execute(children.get(index));
+      Object[] children = getChildren();
+      int index = ArrayUtil.indexOf(children, myTarget) + 1;
+      if (index < children.length) {
+        execute((RadComponent)children[index]);
       }
       else {
         execute(null);

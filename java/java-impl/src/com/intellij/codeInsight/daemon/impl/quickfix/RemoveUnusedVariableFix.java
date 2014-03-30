@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,9 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,23 +66,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
     removeVariableAndReferencingStatements(editor);
-  }
-
-  private static void deleteReferences(PsiVariable variable, List<PsiElement> references, int mode) throws IncorrectOperationException {
-    for (PsiElement expression : references) {
-      processUsage(expression, variable, null, mode);
-    }
-  }
-
-  private static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
-    context.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (expression.resolve() == variable) references.add(expression);
-        super.visitReferenceExpression(expression);
-      }
-    });
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {
@@ -94,13 +77,13 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     try {
       PsiElement context = myVariable instanceof PsiField ? ((PsiField)myVariable).getContainingClass() : PsiUtil.getVariableCodeBlock(myVariable, null);
       if (context != null) {
-        collectReferences(context, myVariable, references);
+        RemoveUnusedVariableUtil.collectReferences(context, myVariable, references);
       }
       // do not forget to delete variable declaration
       references.add(myVariable);
       // check for side effects
       for (PsiElement element : references) {
-        Boolean result = processUsage(element, myVariable, sideEffects, SideEffectWarningDialog.CANCEL);
+        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveUnusedVariableUtil.CANCEL);
         if (result == null) return;
         canCopeWithSideEffects[0] &= result;
       }
@@ -115,7 +98,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       @Override
       public void run() {
         try {
-          deleteReferences(myVariable, references, deleteMode);
+          RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -130,11 +113,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                            boolean canCopeWithSideEffects,
                                            @NonNls String beforeText,
                                            @NonNls String afterText) {
-    if (sideEffects.isEmpty()) return SideEffectWarningDialog.DELETE_ALL;
+    if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
-             ? SideEffectWarningDialog.MAKE_STATEMENT
-             : SideEffectWarningDialog.DELETE_ALL;
+             ? RemoveUnusedVariableUtil.MAKE_STATEMENT
+             : RemoveUnusedVariableUtil.DELETE_ALL;
     }
     Project project = editor.getProject();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -160,235 +143,16 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       final PsiElement sideEffect = sideEffects.get(0);
       if (sideEffect instanceof PsiExpression) {
         text = PsiExpressionTrimRenderer.render((PsiExpression)sideEffect);
-      } else {
+      }
+      else {
         text = sideEffect.getText();
       }
     }
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
-  /**
-   *
-   * @param element
-   * @param variable
-   * @param sideEffects if null, delete usages, otherwise collect side effects
-   * @return true if there are at least one unrecoverable side effect found, false if no side effects,
-   *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
-   * @throws IncorrectOperationException
-   */
-  private static Boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, int deleteMode)
-    throws IncorrectOperationException {
-    if (!element.isValid()) return null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
-    while (element != null) {
-      if (element instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
-        PsiExpression lExpression = expression.getLExpression();
-        // there should not be read access to the variable, otherwise it is not unused
-        if (!(lExpression instanceof PsiReferenceExpression) || variable != ((PsiReferenceExpression)lExpression).resolve()) {
-          return null;
-        }
-        PsiExpression rExpression = expression.getRExpression();
-        rExpression = PsiUtil.deparenthesizeExpression(rExpression);
-        if (rExpression == null) return true;
-        // replace assignment with expression and resimplify
-        boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
-        if (!(element.getParent() instanceof PsiExpressionStatement) || PsiUtil.isStatement(rExpression)) {
-          if (deleteMode == SideEffectWarningDialog.MAKE_STATEMENT ||
-              deleteMode == SideEffectWarningDialog.DELETE_ALL && !(element.getParent() instanceof PsiExpressionStatement)) {
-            element = replaceElementWithExpression(rExpression, factory, element);
-            while (element.getParent() instanceof PsiParenthesizedExpression) {
-              element = element.getParent().replace(element);
-            }
-            List<PsiElement> references = new ArrayList<PsiElement>();
-            collectReferences(element, variable, references);
-            deleteReferences(variable, references, deleteMode);
-          }
-          else if (deleteMode == SideEffectWarningDialog.DELETE_ALL) {
-            deleteWholeStatement(element, factory);
-          }
-          return true;
-        }
-        else {
-          if (deleteMode != SideEffectWarningDialog.CANCEL) {
-            deleteWholeStatement(element, factory);
-          }
-          return !sideEffectFound;
-        }
-      }
-      else if (element instanceof PsiExpressionStatement && deleteMode != SideEffectWarningDialog.CANCEL) {
-        element.delete();
-        break;
-      }
-      else if (element instanceof PsiVariable && element == variable) {
-        PsiExpression expression = variable.getInitializer();
-        if (expression != null) {
-          expression = PsiUtil.deparenthesizeExpression(expression);
-        }
-        boolean sideEffectsFound = checkSideEffects(expression, variable, sideEffects);
-        if (expression != null && PsiUtil.isStatement(expression) && variable instanceof PsiLocalVariable
-            &&
-            !(variable.getParent() instanceof PsiDeclarationStatement &&
-              ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length > 1)) {
-          if (deleteMode == SideEffectWarningDialog.MAKE_STATEMENT) {
-            element = element.replace(createStatementIfNeeded(expression, factory, element));
-            List<PsiElement> references = new ArrayList<PsiElement>();
-            collectReferences(element, variable, references);
-            deleteReferences(variable, references, deleteMode);
-          }
-          else if (deleteMode == SideEffectWarningDialog.DELETE_ALL) {
-            element.delete();
-          }
-          return true;
-        }
-        else {
-          if (deleteMode != SideEffectWarningDialog.CANCEL) {
-            if (element instanceof PsiField) {
-              ((PsiField)element).normalizeDeclaration();
-            }
-            element.delete();
-          }
-          return !sideEffectsFound;
-        }
-      }
-      element = element.getParent();
-    }
-    return true;
-  }
-
-  private static void deleteWholeStatement(PsiElement element, PsiElementFactory factory)
-    throws IncorrectOperationException {
-    // just delete it altogether
-    if (element.getParent() instanceof PsiExpressionStatement) {
-      PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
-      if (parent.getParent() instanceof PsiCodeBlock) {
-        parent.delete();
-      }
-      else {
-        // replace with empty statement (to handle with 'if (..) i=0;' )
-        parent.replace(createStatementIfNeeded(null, factory, element));
-      }
-    }
-    else {
-      element.delete();
-    }
-  }
-
-  private static PsiElement createStatementIfNeeded(PsiExpression expression,
-                                                    PsiElementFactory factory,
-                                                    PsiElement element) throws IncorrectOperationException {
-    // if element used in expression, subexpression will do
-    if (!(element.getParent() instanceof PsiExpressionStatement) &&
-        !(element.getParent() instanceof PsiDeclarationStatement)) {
-      return expression;
-    }
-    return factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
-  }
-
-  private static PsiElement replaceElementWithExpression(PsiExpression expression,
-                                                         PsiElementFactory factory,
-                                                         PsiElement element) throws IncorrectOperationException {
-    PsiElement elementToReplace = element;
-    PsiElement expressionToReplaceWith = expression;
-    if (element.getParent() instanceof PsiExpressionStatement) {
-      elementToReplace = element.getParent();
-      expressionToReplaceWith =
-      factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
-    }
-    else if (element.getParent() instanceof PsiDeclarationStatement) {
-      expressionToReplaceWith =
-      factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
-    }
-    return elementToReplace.replace(expressionToReplaceWith);
-  }
-
-    public static boolean checkSideEffects(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects) {
-    if (sideEffects == null || element == null) return false;
-    if (element instanceof PsiMethodCallExpression) {
-      final PsiMethod psiMethod = ((PsiMethodCallExpression)element).resolveMethod();
-      if (psiMethod == null || !PropertyUtils.isSimpleGetter(psiMethod) && !PropertyUtils.isSimpleSetter(psiMethod)) {
-        sideEffects.add(element);
-        return true;
-      }
-    }
-    if (element instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)element;
-      if (newExpression.getArrayDimensions().length == 0
-          && newExpression.getArrayInitializer() == null
-          && !isSideEffectFreeConstructor(newExpression)) {
-        sideEffects.add(element);
-        return true;
-      }
-    }
-    if (element instanceof PsiAssignmentExpression
-        && !(((PsiAssignmentExpression)element).getLExpression() instanceof PsiReferenceExpression
-             && ((PsiReferenceExpression)((PsiAssignmentExpression)element).getLExpression()).resolve() == variable)) {
-      sideEffects.add(element);
-      return true;
-    }
-    PsiElement[] children = element.getChildren();
-
-      for (PsiElement child : children) {
-        checkSideEffects(child, variable, sideEffects);
-      }
-    return !sideEffects.isEmpty();
-  }
-
-  private static final Set<String> ourSideEffectFreeClasses = new THashSet<String>();
-  static {
-    ourSideEffectFreeClasses.add(Object.class.getName());
-    ourSideEffectFreeClasses.add(Short.class.getName());
-    ourSideEffectFreeClasses.add(Character.class.getName());
-    ourSideEffectFreeClasses.add(Byte.class.getName());
-    ourSideEffectFreeClasses.add(Integer.class.getName());
-    ourSideEffectFreeClasses.add(Long.class.getName());
-    ourSideEffectFreeClasses.add(Float.class.getName());
-    ourSideEffectFreeClasses.add(Double.class.getName());
-    ourSideEffectFreeClasses.add(String.class.getName());
-    ourSideEffectFreeClasses.add(StringBuffer.class.getName());
-    ourSideEffectFreeClasses.add(Boolean.class.getName());
-
-    ourSideEffectFreeClasses.add(ArrayList.class.getName());
-    ourSideEffectFreeClasses.add(Date.class.getName());
-    ourSideEffectFreeClasses.add(HashMap.class.getName());
-    ourSideEffectFreeClasses.add(HashSet.class.getName());
-    ourSideEffectFreeClasses.add(Hashtable.class.getName());
-    ourSideEffectFreeClasses.add(LinkedHashMap.class.getName());
-    ourSideEffectFreeClasses.add(LinkedHashSet.class.getName());
-    ourSideEffectFreeClasses.add(LinkedList.class.getName());
-    ourSideEffectFreeClasses.add(Stack.class.getName());
-    ourSideEffectFreeClasses.add(TreeMap.class.getName());
-    ourSideEffectFreeClasses.add(TreeSet.class.getName());
-    ourSideEffectFreeClasses.add(Vector.class.getName());
-    ourSideEffectFreeClasses.add(WeakHashMap.class.getName());
-  }
-
-  private static boolean isSideEffectFreeConstructor(PsiNewExpression newExpression) {
-    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
-    String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
-    if (qualifiedName == null) return false;
-    if (ourSideEffectFreeClasses.contains(qualifiedName)) return true;
-
-    PsiFile file = aClass.getContainingFile();
-    PsiDirectory directory = file.getContainingDirectory();
-    PsiPackage classPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    String packageName = classPackage == null ? null : classPackage.getQualifiedName();
-
-    // all Throwable descendants from java.lang are side effects free
-    if ("java.lang".equals(packageName) || "java.io".equals(packageName)) {
-      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
-      if (throwableClass != null && InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean startInWriteAction() {
     return false;
   }
-
-
 }

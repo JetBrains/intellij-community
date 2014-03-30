@@ -18,7 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 
 public interface SuspendContext extends StackFrameContext {
-  public int getSuspendPolicy();
+  int getSuspendPolicy();
 
   ThreadReferenceProxy getThread();
 }

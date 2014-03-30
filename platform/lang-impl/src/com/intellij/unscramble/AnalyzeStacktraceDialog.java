@@ -37,9 +37,10 @@ public class AnalyzeStacktraceDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Put a thread dump here:"), BorderLayout.NORTH);
+    panel.add(new JLabel("Put a stacktrace here:"), BorderLayout.NORTH);
     myEditorPanel = AnalyzeStacktraceUtil.createEditorPanel(myProject, myDisposable);
     myEditorPanel.pasteTextFromClipboard();
     panel.add(myEditorPanel, BorderLayout.CENTER);

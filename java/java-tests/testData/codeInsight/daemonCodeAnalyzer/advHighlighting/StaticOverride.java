@@ -2,7 +2,7 @@
 import java.io.*;
 import java.net.*;
 
-public class a extends a1 {
+class a extends a1 {
  <error descr="Static method 'f()' in 'a' cannot override instance method 'f()' in 'a1'">public static void f()</error> { }
  <error descr="Instance method 'f1()' in 'a' cannot override static method 'f1()' in 'a1'">public void f1()</error> { }
 }
@@ -75,13 +75,13 @@ class MyInterfaceImpl implements MyInterface
 
 
 // Sun-style inheritance
-public class Sunc {
+class Sunc {
   protected void f() {}
 }
-public class Suncc extends Sunc  {
+class Suncc extends Sunc  {
   public void f() {}
 }
-public interface Suni {
+interface Suni {
   public void f();
 }
 class Sunccc extends Suncc implements Suni {
@@ -103,7 +103,7 @@ class StB extends StA {
 class Foo {
     protected static void foo(String s) {}
 }
-public class Bar extends Foo{
+class Bar extends Foo{
     <error descr="'foo(String)' in 'Bar' clashes with 'foo(String)' in 'Foo'; attempting to assign weaker access privileges ('private'); was 'protected'">private</error> static void foo(String s) {}
 }
 

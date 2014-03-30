@@ -1,0 +1,1 @@
+var = <warning descr="Python version 2.4, 2.5, 2.6, 3.0 do not support dictionary comprehensions">{k: v for k, v in zip('abc', <caret>range(3)) if k % 2}</warning>

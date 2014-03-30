@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 06.12.2007
-*/
+/**
+ * @author Sascha Weinreuter
+ */
 public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(ConvertContext context) {
@@ -42,10 +37,12 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
 
     final Collection<String> dependencies = ExtensionDomExtender.getDependencies(ideaPlugin);
     final List<IdeaPlugin> depPlugins = new ArrayList<IdeaPlugin>();
+    final Set<String> depPluginsIds = new HashSet<String>();
     for (IdeaPlugin plugin : IdeaPluginConverter.getAllPlugins(context.getProject())) {
       final String value = plugin.getPluginId();
-      if (value != null && dependencies.contains(value)) {
+      if (value != null && dependencies.contains(value) && !depPluginsIds.contains(value)) {
         depPlugins.add(plugin);
+        depPluginsIds.add(value);
       }
     }
     return depPlugins;

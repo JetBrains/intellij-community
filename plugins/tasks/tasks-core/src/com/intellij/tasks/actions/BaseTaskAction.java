@@ -18,6 +18,7 @@ package com.intellij.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -49,7 +50,7 @@ public abstract class BaseTaskAction extends AnAction implements DumbAware {
 
   @Nullable
   public static Project getProject(@Nullable AnActionEvent event) {
-    return event == null ? null : PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    return event == null ? null : CommonDataKeys.PROJECT.getData(event.getDataContext());
   }
 
   @Nullable

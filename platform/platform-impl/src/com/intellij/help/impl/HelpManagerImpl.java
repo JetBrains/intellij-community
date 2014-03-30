@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,17 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.help.BadIDException;
 import javax.help.HelpSet;
 import java.awt.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 
 public class HelpManagerImpl extends HelpManager {
@@ -41,17 +46,25 @@ public class HelpManagerImpl extends HelpManager {
 
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
+  private Object myFXHelpBrowser = null;
 
   public void invokeHelp(@Nullable String id) {
-    if (MacHelpUtil.isApplicable()) {
-      if (MacHelpUtil.invokeHelp(id)) return;
-    }
+
     if (myHelpSet == null) {
       myHelpSet = createHelpSet();
     }
 
+    if (SystemInfo.isJavaVersionAtLeast("1.7.0.40") && Registry.is("ide.help.fxbrowser")) {
+      showHelpInFXBrowser(id);
+      return;
+    }
+
+    if (MacHelpUtil.isApplicable()) {
+      if (MacHelpUtil.invokeHelp(id)) return;
+    }
+
     if (myHelpSet == null) {
-      BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
+      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
       return;
     }
 
@@ -72,6 +85,46 @@ public class HelpManagerImpl extends HelpManager {
       }
     }
     myBroker.setDisplayed(true);
+  }
+
+  private void showHelpInFXBrowser(final String id) {
+    if (myHelpSet == null) {
+      Messages.showInfoMessage("Looks like you have enabled 'ide.help.fxbrowser' registry key but we cannot load JavaHelp bundle. " +
+                               "Please put ideahelp.jar in the help directory.",
+                               "Cannot find JavaHelp bundle");
+      return;
+    }
+    try {
+      final Class<?> myFXHelpBrowserClass = Class.forName("com.intellij.help.impl.FXHelpBrowser");
+
+      if (myFXHelpBrowser == null) {
+        Object[] arguments = {myHelpSet};
+
+        Class[] argTypes = {HelpSet.class};
+        Constructor constructor = myFXHelpBrowserClass.getDeclaredConstructor(argTypes);
+        myFXHelpBrowser = constructor.newInstance(arguments);
+      }
+      Class[] showDocumentationMethodArgTypes = {String.class};
+      Method showDocumentationMethod = myFXHelpBrowserClass.getDeclaredMethod("showDocumentationById", showDocumentationMethodArgTypes);
+      showDocumentationMethod.invoke(myFXHelpBrowser, id);
+
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+    catch (NoSuchMethodException e) {
+      LOG.error(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+
   }
 
   @Nullable

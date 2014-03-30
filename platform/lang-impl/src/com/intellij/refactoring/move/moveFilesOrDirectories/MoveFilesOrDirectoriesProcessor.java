@@ -30,15 +30,18 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -83,11 +86,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     myMoveCallback = moveCallback;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, myNewParent);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
@@ -124,6 +129,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
@@ -136,6 +142,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     // If files are being moved then I need to collect some information to delete these
     // filese from CVS. I need to know all common parents of the moved files and releative
@@ -172,11 +179,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         elementListener.elementMoved(element);
       }
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
-      Arrays.sort(usages, new Comparator<UsageInfo>() {
-        public int compare(final UsageInfo o1, final UsageInfo o2) {
-          return o1.getElement() == o2.getElement() ? o2.getRangeInElement().getStartOffset() - o1.getRangeInElement().getStartOffset() : 0;
-        }
-      });
+      CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {
@@ -198,6 +201,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       final int index = message != null ? message.indexOf("java.io.IOException") : -1;
       if (index >= 0) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 Messages.showMessageDialog(myProject, message.substring(index + "java.io.IOException".length()),
                                            RefactoringBundle.message("error.title"),
@@ -209,6 +213,28 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
+  }
+
+  @Nullable
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.move";
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElements(myElementsToMove);
+    return data;
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myNewParent);
+    return data;
   }
 
   private static void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
@@ -258,6 +284,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
   }
 
+  @Override
   protected String getCommandName() {
     return RefactoringBundle.message("move.title"); //TODO!!
   }

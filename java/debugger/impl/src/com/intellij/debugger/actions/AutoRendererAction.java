@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -26,21 +27,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class AutoRendererAction extends AnAction{
   public void actionPerformed(AnActionEvent e) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-    final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(e.getDataContext());
 
-    if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
-      debuggerContext.getDebugProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
-          public void threadAction() {
-            for (int i = 0; i < selectedNodes.length; i++) {
-              DebuggerTreeNodeImpl selectedNode = selectedNodes[i];
-              NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-              if (descriptor instanceof ValueDescriptorImpl) {
-                ((ValueDescriptorImpl) descriptor).setRenderer(null);
-                selectedNode.calcRepresentation();
+    if(debuggerContext != null) {
+      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+      if(debugProcess != null) {
+        final DebuggerTreeNodeImpl[] selectedNodes = DebuggerAction.getSelectedNodes(e.getDataContext());
+        if (selectedNodes != null) {
+          debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+              public void threadAction() {
+                for (DebuggerTreeNodeImpl selectedNode : selectedNodes) {
+                  final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+                  if (descriptor instanceof ValueDescriptorImpl) {
+                    ((ValueDescriptorImpl)descriptor).setRenderer(null);
+                    selectedNode.calcRepresentation();
+                  }
+                }
               }
-            }
-          }
-        });
+            });
+        }
+      }
     }
   }
 }

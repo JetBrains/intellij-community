@@ -34,7 +34,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   private final SmartPsiElementPointer<PsiNameValuePair> myNameValuePair;
 
-  public CreateAnnotationMethodFromUsageFix(PsiNameValuePair valuePair) {
+  public CreateAnnotationMethodFromUsageFix(@NotNull PsiNameValuePair valuePair) {
     myNameValuePair = SmartPointerManager.getInstance(valuePair.getProject()).createSmartPsiElementPointer(valuePair);
   }
 

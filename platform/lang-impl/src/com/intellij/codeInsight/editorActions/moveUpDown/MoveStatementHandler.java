@@ -22,6 +22,7 @@ package com.intellij.codeInsight.editorActions.moveUpDown;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class MoveStatementHandler extends BaseMoveHandler {
@@ -32,7 +33,7 @@ class MoveStatementHandler extends BaseMoveHandler {
 
   @Override
   @Nullable
-  protected MoverWrapper getSuitableMover(final Editor editor, final PsiFile file) {
+  protected MoverWrapper getSuitableMover(@NotNull final Editor editor, @NotNull final PsiFile file) {
     // order is important!
     final StatementUpDownMover[] movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP);
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();

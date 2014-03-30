@@ -24,9 +24,9 @@ import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 @State(
   name = "EclipseCompilerSettings",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class EclipseCompilerConfiguration implements PersistentStateComponent<EclipseCompilerOptions> {
   private final EclipseCompilerOptions mySettings = new EclipseCompilerOptions();

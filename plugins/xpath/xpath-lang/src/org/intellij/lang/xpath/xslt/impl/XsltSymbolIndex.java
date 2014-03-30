@@ -132,25 +132,25 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         };
     }
 
+    @NotNull
     @Override
     public DataExternalizer<Kind> getValueExternalizer() {
         return new EnumDataDescriptor<Kind>(Kind.class);
     }
 
+    @NotNull
     @Override
     public KeyDescriptor<String> getKeyDescriptor() {
         return new EnumeratorStringDescriptor();
     }
 
+    @NotNull
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
-        return new FileBasedIndex.InputFilter() {
+        return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML) {
             @Override
-            public boolean acceptInput(VirtualFile file) {
-                if (file.getFileSystem() instanceof JarFileSystem) {
-                  return false; // there is lots and lots of custom XML inside zip files
-                }
-                return file.getFileType() == StdFileTypes.XML;
+            public boolean acceptInput(@NotNull VirtualFile file) {
+                return !(file.getFileSystem() instanceof JarFileSystem);
             }
         };
     }
@@ -166,7 +166,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
     }
 
     @SuppressWarnings({ "UnusedDeclaration" })
-    public static Collection<String> getSymbolNames(Project project, boolean includeNonProjectItems) {
+    public static Collection<String> getSymbolNames(Project project) {
         return FileBasedIndex.getInstance().getAllKeys(NAME, project);
     }
 

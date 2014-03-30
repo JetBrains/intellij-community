@@ -36,15 +36,18 @@ public class TopLevelNode extends AbstractTreeNode {
     setIcon(AllIcons.Nodes.UpLevel);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return Collections.emptyList();
   }
 
+  @Override
   public String getName() {
     return super.getName();
   }
 
+  @Override
   protected void update(PresentationData presentation) {
   }
 

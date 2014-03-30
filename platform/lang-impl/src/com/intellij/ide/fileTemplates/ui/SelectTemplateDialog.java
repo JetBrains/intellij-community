@@ -49,6 +49,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     loadCombo();
 
@@ -62,6 +63,7 @@ public class SelectTemplateDialog extends DialogWrapper{
     centerPanel.add(editTemplatesButton,       new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0));
 
     editTemplatesButton.addActionListener(new ActionListener(){
+      @Override
       public void actionPerformed(ActionEvent e){
         onEditTemplates();
       }
@@ -104,16 +106,19 @@ public class SelectTemplateDialog extends DialogWrapper{
     return mySelectedTemplate;
   }
 
+  @Override
   protected void doOKAction(){
     mySelectedTemplate = (FileTemplate)myCbxTemplates.getSelectedItem();
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction(){
     mySelectedTemplate = null;
     super.doCancelAction();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myCbxTemplates;
   }

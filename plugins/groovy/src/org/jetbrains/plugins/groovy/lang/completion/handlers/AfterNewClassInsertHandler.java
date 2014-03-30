@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
       ParenthesesInsertHandler.NO_PARAMETERS.handleInsert(context, item);
     }
 
-    GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
+    shortenRefsInGenerics(context);
     if (hasParams) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
@@ -83,6 +83,18 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
 
       context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
 
+    }
+  }
+
+  private static void shortenRefsInGenerics(InsertionContext context) {
+    int offset = context.getStartOffset();
+
+    final String text = context.getDocument().getText();
+    while (text.charAt(offset) != '<' && text.charAt(offset) != '(') {
+      offset++;
+    }
+    if (text.charAt(offset) == '<') {
+      GroovyCompletionUtil.shortenReference(context.getFile(), offset);
     }
   }
 

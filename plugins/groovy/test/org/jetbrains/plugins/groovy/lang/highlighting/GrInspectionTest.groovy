@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryContinueInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
+import org.jetbrains.plugins.groovy.codeInspection.exception.GroovyEmptyCatchBlockInspection
 import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
+
 /**
  * @author Max Medvedev
  */
@@ -143,29 +146,6 @@ boolean bar(def list) {
 ''', MissingReturnInspection)
   }
 
-  void testReassignedVarInClosureInspection() {
-    addCompileStatic()
-    testHighlighting("""\
-test() {
-    def var = "abc"
-    def cl = {
-        <warning descr="Local variable var is reassigned in closure with other type">var</warning> = new Date()
-    }
-    cl()
-    var.toUpperCase()
-}
-
-test2() {
-    def var = "abc"
-    def cl = {
-        var = 'cde'
-    }
-    cl()
-    var.toUpperCase()
-}
-""", GrReassignedInClosureLocalVarInspection)
-  }
-
   void testPackageDefinition() {
     myFixture.addFileToProject('cde/bar.groovy', '//empty file')
     myFixture.addFileToProject('abc/foo.groovy', '''\
@@ -207,6 +187,22 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
 ''', GroovyAccessibilityInspection)
   }
 
+  public void testStaticImportCapsProperty() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+class Foo {
+  static def FOO = 2
+  private static def BAR = 2
+}
+''')
+    testHighlighting('''\
+import static Foo.FOO
+import static Foo.<warning descr="Access to 'BAR' exceeds its access rights">BAR</warning>
+
+print FOO + <warning descr="Access to 'BAR' exceeds its access rights">BAR</warning>
+''', GroovyAccessibilityInspection)
+  }
+
+
   public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
 
   public void testMethodMayBeStaticForCategoryClasses() {
@@ -225,4 +221,107 @@ class I{
 }
 ''', GrMethodMayBeStaticInspection)
   }
+
+  void testDelegatesTo() {
+    testHighlighting('''
+
+def with1(@DelegatesTo.Target() Object target, @DelegatesTo() Closure arg) { //unused
+    arg.delegate = target
+    arg()
+}
+
+def with2(@<warning descr="@Target is unused">DelegatesTo.Target</warning>('abc') Object target, @DelegatesTo() Closure arg) { //unused
+    arg.delegate = target
+    arg()
+}
+
+def with3(@DelegatesTo.Target('abc') Object target, @DelegatesTo(target='abc') Closure arg) { //unused
+    arg.delegate = target
+    arg()
+}
+
+def with4(@<warning descr="@Target is unused">DelegatesTo.Target</warning>('abcd') Object target, @DelegatesTo(target=<warning descr="Target 'abc' does not exist">'abc'</warning>) Closure arg) { //unused
+    arg.delegate = target
+    arg()
+}
+
+def with5(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Object target, @DelegatesTo(target=<warning descr="Target 'abc' does not exist">'abc'</warning>) Closure arg) { //unused
+    arg.delegate = target
+    arg()
+}
+
+def with6(@<warning descr="@Target is unused">DelegatesTo.Target</warning>() Object target, @DelegatesTo(String) Closure arg) {
+    arg.delegate = target
+    arg()
+}
+
+''', DelegatesToInspection)
+  }
+
+  void testUnnecessaryContinue() {
+    testHighlighting('''
+for(i in []) {
+  print 2
+  <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+}
+
+for(i in []) {
+  print 2
+  continue
+  print 3
+}
+
+for(i in []) {
+  print 2
+  switch(i) {
+    case not_last:
+      continue
+    case last:
+      <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+  }
+}
+
+for(i in []) {
+  if (cond) {
+      print 2
+      <warning descr="continue is unnecessary as the last statement in a loop">continue</warning>
+  }
+  else {
+    continue
+    print 4
+  }
+}
+''', GroovyUnnecessaryContinueInspection)
+  }
+
+  void testEmptyCatchBlock1() {
+    testHighlighting('''
+try{} <warning descr="Empty 'catch' block">catch</warning>(IOException e) {}
+try{} catch(IOException ignored) {}
+try{} catch(IOException ignore) {}
+try{} catch(IOException e) {/*comment*/}
+''', GroovyEmptyCatchBlockInspection)
+  }
+
+  void testEmptyCatchBlock2() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock3() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myIgnore = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException ignored) {}')
+  }
+
+  void testEmptyCatchBlock4() {
+    GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection()
+    inspection.myCountCommentsAsContent = false
+    myFixture.enableInspections(inspection)
+    testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
+  }
+
 }

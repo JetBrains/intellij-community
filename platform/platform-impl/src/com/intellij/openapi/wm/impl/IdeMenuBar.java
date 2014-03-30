@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -30,32 +31,41 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
+import org.java.ayatana.ApplicationMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.RoundRectangle2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Made non-final public for Fabrique.
- *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar {
-
+public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher {
   private static final int COLLAPSED_HEIGHT = 2;
-  private final ClockPanel myClockPanel;
-  private IdeMenuBar.MyBorderDelegator myBorderDelegator;
 
   private enum State {
     EXPANDED, COLLAPSING, COLLAPSED, EXPANDING, TEMPORARY_EXPANDED;
@@ -66,19 +76,20 @@ public class IdeMenuBar extends JMenuBar {
   }
 
   private final MyTimerListener myTimerListener;
-  private ArrayList<AnAction> myVisibleActions;
-  private ArrayList<AnAction> myNewVisibleActions;
+  private List<AnAction> myVisibleActions;
+  private List<AnAction> myNewVisibleActions;
   private final MenuItemPresentationFactory myPresentationFactory;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private boolean DISABLED = false;
+  private boolean myDisabled = false;
 
+  @Nullable private final ClockPanel myClockPanel;
+  @Nullable private final MyExitFullScreenButton myButton;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
   private double myProgress = 0;
-  private boolean myMouseInside = false;
   private boolean myActivated = false;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
@@ -88,118 +99,91 @@ public class IdeMenuBar extends JMenuBar {
     myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
-    if (SystemInfo.isWindows) {
-      addMouseListener(new MouseAdapter() {});//event catcher for "floating" fulscreen menu
-      myAnimator = new Animator("MenuBarAnimator", 16, 300, false) {
-        @Override
-        public void paintNow(int frame, int totalFrames, int cycle) {
-          myProgress = (1 - Math.cos(Math.PI * ((float)frame / totalFrames))) / 2;
-          revalidate();
-          repaint();
-        }
 
-        @Override
-        protected void paintCycleEnd() {
-          myProgress = 1;
-          switch (myState) {
-            case COLLAPSING:
-              setState(State.COLLAPSED);
-              break;
-            case EXPANDING:
-              setState(State.TEMPORARY_EXPANDED);
-              break;
-            default:
-          }
-          revalidate();
-          repaint();
-        }
-      };
-      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-        @Override
-        public void eventDispatched(AWTEvent event) {
-          MouseEvent mouseEvent = (MouseEvent)event;
-          Component component = findActualComponent(mouseEvent);
-
-          if (myState != State.EXPANDED && !myState.isInProgress()) {
-            myMouseInside = myActivated || isDescendingFrom(component, IdeMenuBar.this);
-            if (myMouseInside && myState == State.COLLAPSED) {
-              setState(State.EXPANDING);
-              restartAnimator();
-            }
-            else if (!myMouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
-              setState(State.COLLAPSING);
-              restartAnimator();
-            }
-          }
-        }
-
-        private Component findActualComponent(MouseEvent mouseEvent) {
-          Component component = mouseEvent.getComponent();
-          Component deepestComponent;
-          if (myState != State.EXPANDED &&
-              !myState.isInProgress() &&
-              contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), IdeMenuBar.this))) {
-            deepestComponent = IdeMenuBar.this;
-          }
-          else {
-            deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-          }
-          if (deepestComponent != null) {
-            component = deepestComponent;
-          }
-          return component;
-        }
-      }, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
-      myActivationWatcher = new Timer(100, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myState == State.EXPANDED || myState == State.EXPANDING) {
-            return;
-          }
-          boolean activated = isActivated();
-          if (myActivated && !activated && myState == State.TEMPORARY_EXPANDED) {
-            myActivated = false;
-            setState(State.COLLAPSING);
-            restartAnimator();
-          }
-          if (activated) {
-            myActivated = true;
-          }
+    if (WindowManagerImpl.isFloatingMenuBarSupported()) {
+      myAnimator = new MyAnimator();
+      myActivationWatcher = new Timer(100, new MyActionListener());
+      myClockPanel = new ClockPanel();
+      myButton = new MyExitFullScreenButton();
+      add(myClockPanel);
+      add(myButton);
+      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
+        @Override public void propertyChange(PropertyChangeEvent evt) {
+          updateState();
         }
       });
-      myClockPanel = new ClockPanel();
-      add(myClockPanel);
+      addMouseListener(new MyMouseListener());
     }
     else {
       myAnimator = null;
       myActivationWatcher = null;
       myClockPanel = null;
+      myButton = null;
     }
+  }
+
+  @Override
+  public Border getBorder() {
+    //avoid moving lines
+    if (myState == State.EXPANDING || myState == State.COLLAPSING) {
+      return new EmptyBorder(0,0,0,0);
+    }
+
+    //fix for Darcula double border
+    if (myState == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
+      return new CustomLineBorder(Gray._75, 0, 0, 1, 0);
+    }
+
+    //save 1px for mouse handler
+    if (myState == State.COLLAPSED) {
+      return new EmptyBorder(0, 0, 1, 0);
+    }
+
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    //otherwise, there will be 1px line on top
+    if (myState == State.COLLAPSED) {
+      return;
+    }
+    super.paint(g);
   }
 
   @Override
   public void doLayout() {
     super.doLayout();
-    if (myClockPanel != null) {
+    if (myClockPanel != null && myButton != null) {
       if (myState != State.EXPANDED) {
         myClockPanel.setVisible(true);
-        Dimension preferredSize = myClockPanel.getPreferredSize();
-        myClockPanel.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
+        myButton.setVisible(true);
+        Dimension preferredSize = myButton.getPreferredSize();
+        myButton.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
+        preferredSize = myClockPanel.getPreferredSize();
+        myClockPanel.setBounds(getBounds().width - preferredSize.width - myButton.getWidth(), 0, preferredSize.width, preferredSize.height);
       }
       else {
         myClockPanel.setVisible(false);
+        myButton.setVisible(false);
       }
     }
   }
 
   @Override
   public void menuSelectionChanged(boolean isIncluded) {
-    if (!getSelectionModel().isSelected()) return;
-    if (myState == State.COLLAPSED) {
+    if (!isIncluded && myState == State.TEMPORARY_EXPANDED) {
+      myActivated = false;
+      setState(State.COLLAPSING);
+      restartAnimator();
+      return;
+    }
+    if (isIncluded && myState == State.COLLAPSED) {
       myActivated = true;
       setState(State.TEMPORARY_EXPANDED);
       revalidate();
       repaint();
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -214,40 +198,6 @@ public class IdeMenuBar extends JMenuBar {
     super.menuSelectionChanged(isIncluded);
   }
 
-  @Override
-  public void setBorder(Border border) {
-    if (border == null || !SystemInfo.isWindows) {
-      super.setBorder(border);
-      myBorderDelegator = null;
-      return;
-    }
-
-    if (myBorderDelegator == null) {
-      myBorderDelegator = new MyBorderDelegator(border);
-    }
-    else {
-      myBorderDelegator.setSource(border);
-    }
-
-    super.setBorder(myBorderDelegator);
-  }
-
-  private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
-    while (a != null) {
-      if (a == b) {
-        return true;
-      }
-
-      if (a instanceof JPopupMenu) {
-        a = ((JPopupMenu)a).getInvoker();
-      }
-      else {
-        a = a.getParent();
-      }
-    }
-    return false;
-  }
-
   private boolean isActivated() {
     int index = getSelectionModel().getSelectedIndex();
     if (index == -1) {
@@ -256,9 +206,36 @@ public class IdeMenuBar extends JMenuBar {
     return getMenu(index).isPopupMenuVisible();
   }
 
+  private void updateState() {
+    if (myAnimator != null) {
+      Window window = SwingUtilities.getWindowAncestor(this);
+      if (window instanceof IdeFrameEx) {
+        boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
+        if (fullScreen) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+        else {
+          myAnimator.suspend();
+          setState(State.EXPANDED);
+          if (myClockPanel != null) {
+            myClockPanel.setVisible(false);
+            myButton.setVisible(false);
+          }
+        }
+      }
+    }
+  }
 
   private void setState(@NotNull State state) {
     myState = state;
+    if (myState == State.EXPANDING && myActivationWatcher != null && !myActivationWatcher.isRunning()) {
+      myActivationWatcher.start();
+    } else if (myActivationWatcher != null && myActivationWatcher.isRunning()) {
+      if (state == State.EXPANDED || state == State.COLLAPSED) {
+        myActivationWatcher.stop();
+      }
+    }
   }
 
   @Override
@@ -281,27 +258,12 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
   @Override
   public void addNotify() {
     super.addNotify();
+
     updateMenuActions();
-    Window window = SwingUtilities.getWindowAncestor(this);
-    if (SystemInfo.isWindows && window instanceof IdeFrameImpl) {
-      boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((IdeFrameImpl)window);
-      if (fullScreen) {
-        setState(State.COLLAPSING);
-        restartAnimator();
-      }
-      else {
-        if (myAnimator != null) {
-          myAnimator.suspend();
-        }
-        setState(State.EXPANDED);
-      }
-    }
+
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
     UISettingsListener UISettingsListener = new UISettingsListener() {
@@ -312,20 +274,12 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
-    if (myActivationWatcher != null) {
-      myActivationWatcher.start();
-    }
+    IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
-  /**
-   * Invoked when enclosed frame is being disposed.
-   */
   @Override
   public void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (myActivationWatcher != null) {
-        myActivationWatcher.stop();
-      }
       if (myAnimator != null) {
         myAnimator.suspend();
       }
@@ -334,11 +288,50 @@ public class IdeMenuBar extends JMenuBar {
     super.removeNotify();
   }
 
+  @Override
+  public boolean dispatch(AWTEvent e) {
+    if (e instanceof MouseEvent) {
+      MouseEvent mouseEvent = (MouseEvent)e;
+      Component component = findActualComponent(mouseEvent);
+
+      if (myState != State.EXPANDED /*&& !myState.isInProgress()*/) {
+        boolean mouseInside = myActivated || UIUtil.isDescendingFrom(component, this);
+        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+        if (mouseInside && myState == State.COLLAPSED) {
+          setState(State.EXPANDING);
+          restartAnimator();
+        }
+        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+      }
+    }
+    return false;
+  }
+
+  private Component findActualComponent(MouseEvent mouseEvent) {
+    Component component = mouseEvent.getComponent();
+    Component deepestComponent;
+    if (myState != State.EXPANDED &&
+        !myState.isInProgress() &&
+        contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
+      deepestComponent = this;
+    }
+    else {
+      deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+    }
+    if (deepestComponent != null) {
+      component = deepestComponent;
+    }
+    return component;
+  }
+
   void updateMenuActions() {
     myNewVisibleActions.clear();
-    final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
 
-    if (!DISABLED) {
+    if (!myDisabled) {
+      DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
       expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
     }
 
@@ -346,7 +339,7 @@ public class IdeMenuBar extends JMenuBar {
       // should rebuild UI
       final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
-      final ArrayList<AnAction> temp = myVisibleActions;
+      final List<AnAction> temp = myVisibleActions;
       myVisibleActions = myNewVisibleActions;
       myNewVisibleActions = temp;
 
@@ -358,8 +351,9 @@ public class IdeMenuBar extends JMenuBar {
 
       fixMenuBackground();
       updateMnemonicsVisibility();
-      if (SystemInfo.isWindows) {
+      if (myClockPanel != null) {
         add(myClockPanel);
+        add(myButton);
       }
       validate();
 
@@ -382,7 +376,7 @@ public class IdeMenuBar extends JMenuBar {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -390,10 +384,7 @@ public class IdeMenuBar extends JMenuBar {
 
   @Override
   protected void paintChildren(Graphics g) {
-    if (SystemInfo.isWindows && myState == State.COLLAPSED) {
-      return;
-    }
-    if (SystemInfo.isWindows && myState.isInProgress()) {
+    if (myState.isInProgress()) {
       Graphics2D g2 = (Graphics2D)g;
       AffineTransform oldTransform = g2.getTransform();
       AffineTransform newTransform = oldTransform != null ? new AffineTransform(oldTransform) : new AffineTransform();
@@ -402,7 +393,7 @@ public class IdeMenuBar extends JMenuBar {
       super.paintChildren(g2);
       g2.setTransform(oldTransform);
     }
-    else {
+    else if (myState != State.COLLAPSED) {
       super.paintChildren(g);
     }
   }
@@ -420,7 +411,7 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  private void expandActionGroup(final DataContext context, final ArrayList<AnAction> newVisibleActions, ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final List<AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
@@ -438,6 +429,12 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
+  @Override
+  public int getMenuCount() {
+    int menuCount = super.getMenuCount();
+    return myClockPanel != null ? menuCount - 2: menuCount;
+  }
+
   private void updateMnemonicsVisibility() {
     final boolean enabled = !UISettings.getInstance().DISABLE_MNEMONICS;
     for (int i = 0; i < getMenuCount(); i++) {
@@ -446,12 +443,12 @@ public class IdeMenuBar extends JMenuBar {
   }
 
   public void disableUpdates() {
-    DISABLED = true;
+    myDisabled = true;
     updateMenuActions();
   }
 
   public void enableUpdates() {
-    DISABLED = false;
+    myDisabled = false;
     updateMenuActions();
   }
 
@@ -492,34 +489,181 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  private class MyBorderDelegator implements Border {
-    @NotNull private Border mySource;
-
-    private MyBorderDelegator(@NotNull Border source) {
-      setSource(source);
-    }
-
-    void setSource(@NotNull Border source) {
-      mySource = source;
+  private class MyAnimator extends Animator {
+    public MyAnimator() {
+      super("MenuBarAnimator", 16, 300, false);
     }
 
     @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      mySource.paintBorder(c, g, x, y, width, height);
+    public void paintNow(int frame, int totalFrames, int cycle) {
+      myProgress = (1 - Math.cos(Math.PI * ((float)frame / totalFrames))) / 2;
+      revalidate();
+      repaint();
     }
 
     @Override
-    public Insets getBorderInsets(Component c) {
-      Insets insets = mySource.getBorderInsets(c);
-      if (myState != State.EXPANDED) {
-        insets.top = 0;//get rid of "passive top pixel" in fullscreen mode
+    protected void paintCycleEnd() {
+      myProgress = 1;
+      switch (myState) {
+        case COLLAPSING:
+          setState(State.COLLAPSED);
+          break;
+        case EXPANDING:
+          setState(State.TEMPORARY_EXPANDED);
+          break;
+        default:
       }
-      return insets;
+      revalidate();
+      if (myState == State.COLLAPSED) {
+        //we should repaint parent, to clear 1px on top when menu is collapsed
+        getParent().repaint();
+      } else {
+        repaint();
+      }
+    }
+  }
+
+  private class MyActionListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myState == State.EXPANDED || myState == State.EXPANDING) {
+        return;
+      }
+      boolean activated = isActivated();
+      if (myActivated && !activated && myState == State.TEMPORARY_EXPANDED) {
+        myActivated = false;
+        setState(State.COLLAPSING);
+        restartAnimator();
+      }
+      if (activated) {
+        myActivated = true;
+      }
+    }
+  }
+
+  private static class MyMouseListener extends MouseAdapter {
+    @Override
+    public void mousePressed(MouseEvent e) {
+      Component c = e.getComponent();
+      if (c instanceof IdeMenuBar) {
+        Dimension size = c.getSize();
+        Insets insets = ((IdeMenuBar)c).getInsets();
+        Point p = e.getPoint();
+        if (p.y < insets.top || p.y >= size.height - insets.bottom) {
+          Component item = ((IdeMenuBar)c).findComponentAt(p.x, size.height / 2);
+          if (item instanceof JMenuItem) {
+            // re-target border clicks as a menu item ones
+            item.dispatchEvent(
+              new MouseEvent(item, e.getID(), e.getWhen(), e.getModifiers(), 1, 1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+            e.consume();
+            return;
+          }
+        }
+      }
+
+      super.mouseClicked(e);
+    }
+  }
+
+  public static void installAppMenuIfNeeded(@NotNull final JFrame frame) {
+    if (SystemInfo.isLinux && Registry.is("linux.native.menu") && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          ApplicationMenu.tryInstall(frame);
+        }
+      });
+    }
+  }
+
+  private static class MyExitFullScreenButton extends JButton {
+    private MyExitFullScreenButton() {
+      setFocusable(false);
+      addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          Window window = SwingUtilities.getWindowAncestor(MyExitFullScreenButton.this);
+          if (window instanceof IdeFrameEx) {
+            ((IdeFrameEx)window).toggleFullScreen(false);
+          }
+        }
+      });
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          model.setRollover(true);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          model.setRollover(false);
+        }
+      });
+    }
+    @Override
+    public Dimension getPreferredSize() {
+      int height;
+      Container parent = getParent();
+      if (isVisible() && parent != null) {
+        height = parent.getSize().height - parent.getInsets().top - parent.getInsets().bottom;
+      }
+      else {
+        height = super.getPreferredSize().height;
+      }
+      return new Dimension(height, height);
     }
 
     @Override
-    public boolean isBorderOpaque() {
-      return mySource.isBorderOpaque();
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      Graphics2D g2d = (Graphics2D)g.create();
+      try {
+        g2d.setColor(UIManager.getColor("Label.background"));
+        g2d.fillRect(0, 0, getWidth()+1, getHeight()+1);
+        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+        double s = (double)getHeight() / 13;
+        g2d.translate(s, s);
+        Shape plate = new RoundRectangle2D.Double(0, 0, s * 11, s * 11, s, s);
+        Color color = UIManager.getColor("Label.foreground");
+        boolean hover = model.isRollover() || model.isPressed();
+        g2d.setColor(ColorUtil.withAlpha(color, hover? .25: .18));
+        g2d.fill(plate);
+        g2d.setColor(ColorUtil.withAlpha(color, hover? .4 : .33));
+        g2d.draw(plate);
+        g2d.setColor(ColorUtil.withAlpha(color, hover ? .7 : .66));
+        GeneralPath path = new GeneralPath();
+        path.moveTo(s * 2, s * 6);
+        path.lineTo(s * 5, s * 6);
+        path.lineTo(s * 5, s * 9);
+        path.lineTo(s * 4, s * 8);
+        path.lineTo(s * 2, s * 10);
+        path.quadTo(s * 2 - s/ Math.sqrt(2), s * 9 + s/Math.sqrt(2), s, s * 9);
+        path.lineTo(s * 3, s * 7);
+        path.lineTo(s * 2, s * 6);
+        path.closePath();
+        g2d.fill(path);
+        g2d.draw(path);
+        path = new GeneralPath();
+        path.moveTo(s * 6, s * 2);
+        path.lineTo(s * 6, s * 5);
+        path.lineTo(s * 9, s * 5);
+        path.lineTo(s * 8, s * 4);
+        path.lineTo(s * 10, s * 2);
+        path.quadTo(s * 9 + s/ Math.sqrt(2), s * 2 - s/Math.sqrt(2), s * 9 , s);
+        path.lineTo(s * 7, s * 3);
+        path.lineTo(s * 6, s * 2);
+        path.closePath();
+        g2d.fill(path);
+        g2d.draw(path);
+      } finally {
+        g2d.dispose();
+      }
     }
   }
 }

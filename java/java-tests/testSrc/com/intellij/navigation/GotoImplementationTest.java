@@ -28,7 +28,7 @@ public class GotoImplementationTest extends CodeInsightTestCase {
 
   private static Collection<PsiClass> getClassImplementations(final PsiClass psiClass) {
     CommonProcessors.CollectProcessor<PsiClass> processor = new CommonProcessors.CollectProcessor<PsiClass>();
-    ClassImplementationsSearch.processImplementations(psiClass, processor);
+    ClassImplementationsSearch.processImplementations(psiClass, processor, psiClass.getUseScope());
 
     return processor.getResults();
   }
@@ -60,21 +60,22 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     Module module1 = moduleManager.findModuleByName("test1");
     Module module2 = moduleManager.findModuleByName("test2");
     Module module3 = moduleManager.findModuleByName("test3");
-    PsiClass test1 = myJavaFacade.findClass("com.test.TestI", GlobalSearchScope.moduleScope(module1));
+    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module1);
+    PsiClass test1 = myJavaFacade.findClass("com.test.TestI", moduleScope);
     PsiClass test2 = myJavaFacade.findClass("com.test.TestI", GlobalSearchScope.moduleScope(module2));
     PsiClass test3 = myJavaFacade.findClass("com.test.TestI", GlobalSearchScope.moduleScope(module3));
     HashSet<PsiClass> expectedImpls1 = new HashSet<PsiClass>(Arrays.asList(
-      myJavaFacade.findClass("com.test.TestIImpl1", GlobalSearchScope.moduleScope(module1)),
-      myJavaFacade.findClass("com.test.TestIImpl2", GlobalSearchScope.moduleScope(module1))
+      myJavaFacade.findClass("com.test.TestIImpl1", moduleScope),
+      myJavaFacade.findClass("com.test.TestIImpl2", moduleScope)
     ));
     assertEquals(expectedImpls1, new HashSet<PsiClass>(getClassImplementations(test1)));
 
     PsiMethod psiMethod = test1.findMethodsByName("test", false)[0];
     Set<PsiMethod> expectedMethodImpl1 = new HashSet<PsiMethod>(Arrays.asList(
-      myJavaFacade.findClass("com.test.TestIImpl1", GlobalSearchScope.moduleScope(module1)).findMethodsByName("test",false)[0],
-      myJavaFacade.findClass("com.test.TestIImpl2", GlobalSearchScope.moduleScope(module1)).findMethodsByName("test",false)[0]
+      myJavaFacade.findClass("com.test.TestIImpl1", moduleScope).findMethodsByName("test",false)[0],
+      myJavaFacade.findClass("com.test.TestIImpl2", moduleScope).findMethodsByName("test",false)[0]
     ));
-    assertEquals(expectedMethodImpl1, new HashSet<PsiMethod>(Arrays.asList(MethodImplementationsSearch.getMethodImplementations(psiMethod))));
+    assertEquals(expectedMethodImpl1, new HashSet<PsiMethod>(Arrays.asList(MethodImplementationsSearch.getMethodImplementations(psiMethod, moduleScope))));
 
     HashSet<PsiClass> expectedImpls2 = new HashSet<PsiClass>(Arrays.asList(
       myJavaFacade.findClass("com.test.TestIImpl1", GlobalSearchScope.moduleScope(module2)),

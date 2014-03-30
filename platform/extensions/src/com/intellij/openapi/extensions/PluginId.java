@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +36,11 @@ public class PluginId implements Comparable<PluginId> {
   }
 
   @Override
-  public int compareTo(PluginId o) {
+  public int compareTo(@NotNull PluginId o) {
     return myIdString.compareTo(o.myIdString);
   }
 
+  @NotNull
   public static PluginId getId(String idString) {
     PluginId pluginId = ourRegisteredIds.get(idString);
     if (pluginId == null) {

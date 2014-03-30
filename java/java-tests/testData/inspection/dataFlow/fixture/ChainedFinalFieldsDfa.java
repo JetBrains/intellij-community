@@ -1,5 +1,5 @@
 import org.jetbrains.annotations.Nullable;
-public class BrokenAlignment {
+class BrokenAlignment {
 
   void main(Data data) {
     if (data.text != null) {

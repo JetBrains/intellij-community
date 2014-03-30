@@ -33,6 +33,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
+ * to determine the run classpath.
+ */
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends RuntimeConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
   private final ConfigurationModule myModule;
@@ -42,6 +46,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public ModuleBasedConfiguration(final String name,
                                   final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
     super(name, configurationModule.getProject(), factory);
+    myModule = configurationModule;
+  }
+
+  public ModuleBasedConfiguration(final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
+    super("", configurationModule.getProject(), factory);
     myModule = configurationModule;
   }
 
@@ -55,9 +64,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.setModule(module);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException{
     super.readExternal(element);
   }
+  @Override
   public void writeExternal(Element element) throws WriteExternalException{
     super.writeExternal(element);
   }
@@ -74,8 +85,14 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 
-  protected abstract ModuleBasedConfiguration createInstance();
+  protected ModuleBasedConfiguration createInstance() {
+    ModuleBasedConfiguration<ConfigurationModule> configuration =
+      (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
+    configuration.setName(getName());
+    return configuration;
+  }
 
+  @Override
   public ModuleBasedConfiguration clone() {
     final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
@@ -94,9 +111,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     }
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
+      @Override
       @SuppressWarnings({"ConstantConditions"})
       public Module[] compute() {
         final Module module = getConfigurationModule().getModule();

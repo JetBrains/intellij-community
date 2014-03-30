@@ -7,6 +7,6 @@ public enum Operation {
 
     abstract int eval(int x, int y);
 
-    private Operation() {
+    Operation() {
     }
 }

@@ -17,6 +17,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +31,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final DefaultMutableTreeNode myTargetsNode;
 
   private final UsageTarget[] myTargets;
+  private final UsageViewPresentation myPresentation;
   private UsageTargetNode[] myTargetNodes;
   private final String myTargetsNodeText;
   private final boolean myDetachedMode;
@@ -37,6 +39,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   public UsageViewTreeModelBuilder(UsageViewPresentation presentation, UsageTarget[] targets) {
     //noinspection HardCodedStringLiteral
     super(new DefaultMutableTreeNode("temp root"));
+    myPresentation = presentation;
     myRootNode = new RootGroupNode();
     setRoot(myRootNode);
 
@@ -123,5 +126,9 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
 
   public boolean isDetachedMode() {
     return myDetachedMode;
+  }
+
+  public boolean isFilterDuplicatedLine() {
+    return myPresentation.isMergeDupLinesAvailable() && UsageViewSettings.getInstance().isFilterDuplicatedLine();
   }
 }

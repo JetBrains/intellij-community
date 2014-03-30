@@ -20,6 +20,12 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 
+/**
+ * This group hides itself when there's no registered children.
+ *
+ * @see com.intellij.ide.actions.SmartPopupActionGroup
+ * @see com.intellij.ide.actions.NonTrivialActionGroup
+ */
 public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware {
   public NonEmptyActionGroup() {
     super();

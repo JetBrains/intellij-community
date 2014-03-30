@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.quickFix.ChangeNewOperatorTypeTest;
 import com.intellij.codeInsight.daemon.quickFix.Simplify2DiamondInspectionsTest;
-import com.intellij.refactoring.*;
+import com.intellij.refactoring.IntroduceParameterTest;
+import com.intellij.refactoring.IntroduceVariableTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

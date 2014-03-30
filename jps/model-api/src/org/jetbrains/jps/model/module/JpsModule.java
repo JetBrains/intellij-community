@@ -45,12 +45,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   Iterable<JpsTypedModuleSourceRoot<P>> getSourceRoots(@NotNull JpsModuleSourceRootType<P> type);
 
   @NotNull
-  <P extends JpsElement, Type extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull Type rootType);
+  <P extends JpsElement>
+  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType);
 
   @NotNull
   <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
+
+  void addSourceRoot(@NotNull JpsModuleSourceRoot root);
 
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 

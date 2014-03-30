@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>FieldCount.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Class with too many fields</problem_class>
+    <description>&lt;code&gt;FieldCount&lt;/code&gt; has too many fields (field count = 14) #loc</description>
+  </problem>
+</problems>

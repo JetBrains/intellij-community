@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -52,7 +49,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public PsiPackage findPackage(@NotNull String packageName) {
     final List<VirtualFile> files = findDirectoriesByPackageName(packageName);
-    if (files.size() > 0) {
+    if (!files.isEmpty()) {
       return new PsiPackageImpl(myPsiManager, packageName);
     }
     return null;
@@ -138,36 +135,48 @@ public class CoreJavaFileManager implements JavaFileManager {
         if (classes.length == 1) {
           PsiClass curClass = classes[0];
 
-          if (bucks > 0) {
-            int newComponentStart = 0;
-            int lookupStart = 0;
+            if (bucks > 0) {
+              Stack<ClassAndOffsets> currentPath = new Stack<ClassAndOffsets>();
+              currentPath.add(new ClassAndOffsets(curClass, 0, 0));
+              currentPath.add(currentPath.peek());
 
-            while (lookupStart <= className.length()) {
-              int b = className.indexOf("$", lookupStart);
-              b =  b < 0 ? className.length(): b;
+              while (currentPath.size() > 1) {
+                ClassAndOffsets classAndOffset = currentPath.pop();
+                int newComponentStart = classAndOffset.componentStart;
+                int lookupStart = classAndOffset.lookupStart;
+                curClass = currentPath.peek().clazz; //owner class
 
-              String component = className.substring(newComponentStart, b);
-              PsiClass inner = curClass.findInnerClassByName(component, false);
+                while (lookupStart <= className.length()) {
+                  int bucksIndex = className.indexOf("$", lookupStart);
+                  bucksIndex =  bucksIndex < 0 ? className.length(): bucksIndex;
 
-              lookupStart = b + 1;
-              if (inner == null) {
-                continue;
+                  String component = className.substring(newComponentStart, bucksIndex);
+                  PsiClass inner = curClass.findInnerClassByName(component, false);
+
+                  lookupStart = bucksIndex + 1;
+                  if (inner == null) {
+                    continue;
+                  }
+
+                  currentPath.add(new ClassAndOffsets(inner, newComponentStart, lookupStart));
+
+                  newComponentStart = lookupStart;
+                  curClass = inner;
+                }
+
+                if (lookupStart == newComponentStart) {
+                  return curClass;
+                }
               }
 
-              newComponentStart = lookupStart;
-              curClass = inner;
-            }
-
-            if (lookupStart != newComponentStart) {
               return null;
+
+            } else {
+              return curClass;
             }
           }
-
-
-          return curClass;
         }
       }
-    }
 
     return null;
   }
@@ -189,11 +198,20 @@ public class CoreJavaFileManager implements JavaFileManager {
     return Collections.emptyList();
   }
 
-  @Override
-  public void initialize() {
-  }
-
   public void addToClasspath(VirtualFile root) {
     myClasspath.add(root);
+  }
+
+  private static class ClassAndOffsets {
+
+    final PsiClass clazz;
+    final int componentStart;
+    final int lookupStart;
+
+    ClassAndOffsets(PsiClass clazz, int componentStart, int lookupStart) {
+      this.clazz = clazz;
+      this.componentStart = componentStart;
+      this.lookupStart = lookupStart;
+    }
   }
 }

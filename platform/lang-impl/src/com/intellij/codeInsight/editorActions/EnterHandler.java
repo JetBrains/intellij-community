@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -56,6 +56,7 @@ public class EnterHandler extends BaseEnterHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public EnterHandler(EditorActionHandler originalHandler) {
+    super(true);
     myOriginalHandler = originalHandler;
   }
 
@@ -65,32 +66,32 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   @Override
-  public void executeWriteAction(final Editor editor, final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+  public void executeWriteAction(final Editor editor, final Caret caret, final DataContext dataContext) {
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null && !project.isDefault()) {
       PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(new Runnable() {
         @Override
         public void run() {
-          executeWriteActionInner(editor, dataContext, project);
+          executeWriteActionInner(editor, caret, dataContext, project);
         }
       });
     }
     else {
-      executeWriteActionInner(editor, dataContext, project);
+      executeWriteActionInner(editor, caret, dataContext, project);
     }
   }
 
-  private void executeWriteActionInner(Editor editor, DataContext dataContext, Project project) {
+  private void executeWriteActionInner(Editor editor, Caret caret, DataContext dataContext, Project project) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (project == null) {
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
     final Document document = editor.getDocument();
     final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
 
     if (file == null) {
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
       return;
     }
 
@@ -107,7 +108,7 @@ public class EnterHandler extends BaseEnterHandler {
         int offset2 = CharArrayUtil.shiftForward(text, offset1 + 1, " \t");
         boolean isEmptyLine = offset2 >= length || text.charAt(offset2) == '\n';
         if (!isEmptyLine) { // we are in leading spaces of a non-empty line
-          myOriginalHandler.execute(editor, dataContext);
+          myOriginalHandler.execute(editor, caret, dataContext);
           return;
         }
       }
@@ -148,7 +149,7 @@ public class EnterHandler extends BaseEnterHandler {
     final boolean insertSpace =
       !isFirstColumn && !(caretOffset >= text.length() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
     editor.getCaretModel().moveToOffset(caretOffset);
-    myOriginalHandler.execute(editor, dataContext);
+    myOriginalHandler.execute(editor, caret, dataContext);
     if (!editor.isInsertMode() || forceSkipIndent) {
       return;
     }
@@ -189,7 +190,7 @@ public class EnterHandler extends BaseEnterHandler {
     if (!commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
-    final Language language = comment.getParent().getLanguage();
+    final Language language = containingFile.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       return true;
@@ -220,6 +221,9 @@ public class EnterHandler extends BaseEnterHandler {
         }
       }
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
+        return false;
+      }
+      if (tokenType == commenter.getLineCommentTokenType() && lexer.getTokenText().contains(commentPrefix)) {
         return false;
       }
       if (lexer.getTokenEnd() == commentText.length()) {
@@ -369,7 +373,7 @@ public class EnterHandler extends BaseEnterHandler {
           if (element instanceof PsiComment && commentContext.commenter.getBlockCommentTokenType() == ((PsiComment)element).getTokenType()) {
             final PsiComment comment = (PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
-            if (myOffset >= commentEnd) {
+            if (myOffset >= commentEnd && myOffset < myFile.getTextRange().getEndOffset()) {
               commentContext.docStart = false;
             }
             else {
@@ -447,7 +451,7 @@ public class EnterHandler extends BaseEnterHandler {
         }
 
         if ((commentContext.docAsterisk || commentContext.slashSlash) && !commentContext.docStart) {
-          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().length() : 1;
+          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().trim().length() : 1;
         }
       }
       catch (IncorrectOperationException e) {

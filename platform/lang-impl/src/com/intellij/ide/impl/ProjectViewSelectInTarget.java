@@ -50,6 +50,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     super(project);
   }
 
+  @Override
   protected final void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
@@ -73,6 +74,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (requestFocus) {
           projectView.changeView(viewId, subviewId);
@@ -92,6 +94,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
 
+  @Override
   @NotNull
   public Collection<SelectInTarget> getSubTargets(SelectInContext context) {
     List<SelectInTarget> result = new ArrayList<SelectInTarget>();
@@ -117,6 +120,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return pane.getPresentableSubIdName(subId);
   }
 
+  @Override
   public void select(PsiElement element, final boolean requestFocus) {
     PsiElement toSelect = null;
     for (TreeStructureProvider provider : getProvidersDumbAware()) {
@@ -148,10 +152,12 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return dumbAware.toArray(new TreeStructureProvider[dumbAware.size()]);
   }
 
+  @Override
   public final String getToolWindowId() {
     return ToolWindowId.PROJECT_VIEW;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return true;
   }

@@ -19,6 +19,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,9 @@ public class MavenRunnerSettings implements Cloneable {
   @NotNull private String vmOptions = "";
   private boolean skipTests = false;
   private Map<String, String> mavenProperties = new LinkedHashMap<String, String>();
+
+  private Map<String, String> environmentProperties = new HashMap<String, String>();
+  private boolean passParentEnv = true;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -89,6 +93,26 @@ public class MavenRunnerSettings implements Cloneable {
     this.mavenProperties = mavenProperties;
   }
 
+  @NotNull
+  public Map<String, String> getEnvironmentProperties() {
+    return environmentProperties;
+  }
+
+  public void setEnvironmentProperties(@NotNull Map<String, String> envs) {
+    if (envs == environmentProperties) return;
+
+    environmentProperties.clear();
+    environmentProperties.putAll(envs);
+  }
+
+  public boolean isPassParentEnv() {
+    return passParentEnv;
+  }
+
+  public void setPassParentEnv(boolean passParentEnv) {
+    this.passParentEnv = passParentEnv;
+  }
+
   public void addListener(Listener l) {
     myListeners.add(l);
   }
@@ -118,6 +142,8 @@ public class MavenRunnerSettings implements Cloneable {
     if (!jreName.equals(that.jreName)) return false;
     if (mavenProperties != null ? !mavenProperties.equals(that.mavenProperties) : that.mavenProperties != null) return false;
     if (!vmOptions.equals(that.vmOptions)) return false;
+    if (!environmentProperties.equals(that.environmentProperties)) return false;
+    if (passParentEnv != that.passParentEnv) return false;
 
     return true;
   }
@@ -128,6 +154,7 @@ public class MavenRunnerSettings implements Cloneable {
     result = 31 * result + jreName.hashCode();
     result = 31 * result + vmOptions.hashCode();
     result = 31 * result + (skipTests ? 1 : 0);
+    result = 31 * result + environmentProperties.hashCode();
     result = 31 * result + (mavenProperties != null ? mavenProperties.hashCode() : 0);
     return result;
   }
@@ -138,6 +165,7 @@ public class MavenRunnerSettings implements Cloneable {
       final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
       clone.myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+      clone.environmentProperties = new HashMap<String, String>(environmentProperties);
       return clone;
     }
     catch (CloneNotSupportedException e) {

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +155,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected String getLineBreaker(PsiElement token) {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject());
+    CommonCodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject()).getCommonSettings(token.getLanguage());
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 

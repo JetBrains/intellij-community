@@ -30,22 +30,25 @@ import java.awt.event.ActionListener;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
   private AnalyzeDependenciesSettingPanel myPanel;
-  
+
   public AnalyzeDependenciesAction() {
     super(AnalysisScopeBundle.message("action.forward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
 
   }
 
-  protected void analyze(@NotNull final Project project, AnalysisScope scope) {
+  @Override
+  protected void analyze(@NotNull final Project project, @NotNull AnalysisScope scope) {
     new AnalyzeDependenciesHandler(project, scope, myPanel.myTransitiveCB.isSelected() ? ((SpinnerNumberModel)myPanel.myBorderChooser.getModel()).getNumber().intValue() : 0).analyze();
     myPanel = null;
   }
 
+  @Override
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new AnalyzeDependenciesSettingPanel();
     myPanel.myTransitiveCB.setText("Show transitive dependencies. Do not travel deeper than");
     myPanel.myTransitiveCB.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myPanel.myBorderChooser.setEnabled(myPanel.myTransitiveCB.isSelected());
       }

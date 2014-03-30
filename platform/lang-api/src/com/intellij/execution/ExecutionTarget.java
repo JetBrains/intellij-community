@@ -21,7 +21,26 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Execution targets allow running same run configuration on various targets such as devices, simulators etc.<br>
+ * IDE can suggest possible targets for every configuration depending on its type or settings.<br>
+ * <br>
+ * When a run configuration is executed on a specific target, it becomes associated with this target and all the following actions (e.g. rerun, rerun failed tests)
+ * are be performed on this target, even if another target is selected in the UI.<br> 
+ * <br>
+ * Example:<br> 
+ *   AppCode suggests available iOS Devices and iOS Simulators for iOS run configuration,<br> 
+ *   while only showing OS X 32-bit/64-bit targets for OS X configurations.<br>
+ * <br>   
+ * RunConfiguration can decide, if it can be run on a given target<br>
+ * (see {@link com.intellij.execution.RunnerAndConfigurationSettings#canRunOn(com.intellij.execution.ExecutionTarget)} and {@link com.intellij.execution.configurations.TargetAwareRunProfile#canRunOn(com.intellij.execution.ExecutionTarget)})<br>
+ * <br>   
+ * Targets are collected from {@link com.intellij.execution.ExecutionTargetProvider} 
+ */
 public abstract class ExecutionTarget {
+  /**
+   * Id is used to save selected target between restarts
+   */
   @NotNull
   public abstract String getId();
 
@@ -31,6 +50,9 @@ public abstract class ExecutionTarget {
   @Nullable
   public abstract Icon getIcon();
 
+  /**
+   * Implementation-specific logic should decide whether to suggest this target for the given configuration. 
+   */
   public abstract boolean canRun(@NotNull RunnerAndConfigurationSettings configuration);
 
   @Override

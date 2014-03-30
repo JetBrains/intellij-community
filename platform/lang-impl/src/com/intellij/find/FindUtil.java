@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -303,10 +305,10 @@ public class FindUtil {
     return usages;
   }
 
-  public static void findAllAndShow(final Project project, final Editor editor, final FindModel findModel) {
+  public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
     List<Usage> usages = findAll(project, editor, findModel);
     if (usages == null) return;
-    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())};
+    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
@@ -539,7 +541,8 @@ public class FindUtil {
       String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
       String toReplace;
       try {
-        toReplace = findManager.getStringToReplace(foundString, model, startOffset, document.getText());
+        CharSequence textToMatch = document.getCharsSequence().subSequence(offset, document.getTextLength());
+        toReplace = findManager.getStringToReplace(foundString, model, startOffset - offset, textToMatch);
       }
       catch (FindManager.MalformedReplacementStringException e) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -750,7 +753,7 @@ public class FindUtil {
     return result;
   }
 
-  private static class MyListener implements CaretListener {
+  private static class MyListener extends CaretAdapter {
     private final Editor myEditor;
     private final RangeHighlighter mySegmentHighlighter;
 
@@ -816,7 +819,7 @@ public class FindUtil {
           position = HintManager.ABOVE;
         }
       }
-      CaretListener listener = new CaretListener() {
+      CaretListener listener = new CaretAdapter() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           editor.putUserData(KEY, null);
@@ -826,12 +829,17 @@ public class FindUtil {
       editor.getCaretModel().addCaretListener(listener);
     }
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
-    final LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
-                                                     HintManager.HIDE_BY_ANY_KEY |
-                                                     HintManager.HIDE_BY_TEXT_CHANGE |
-                                                     HintManager.HIDE_BY_SCROLLING,
-                                                     0, false);
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LivePreview.processNotFound();
+    } else {
+      final LightweightHint hint = new LightweightHint(component);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
+                                                       HintManager.HIDE_BY_ANY_KEY |
+                                                       HintManager.HIDE_BY_TEXT_CHANGE |
+                                                       HintManager.HIDE_BY_SCROLLING,
+                                                       0, false);
+    }
   }
 
   public static TextRange doReplace(final Project project,
@@ -924,22 +932,20 @@ public class FindUtil {
     final UsageTarget[] usageTargets =
       sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
-    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor = 
-      sourceElement != null ? new UsageInfoToUsageConverter.TargetElementsDescriptor(sourceElement)
-                            : new UsageInfoToUsageConverter.TargetElementsDescriptor(PsiElement.EMPTY_ARRAY);
-    final Usage[] usages = {UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(targets[0]))};
+    final PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
+    final Usage[] usages = {UsageInfoToUsageConverter.convert(primary, new UsageInfo(targets[0]))};
     final UsageView view =
       UsageViewManager.getInstance(project).showUsages(usageTargets, usages, presentation);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        
         for (int i = 1; i < targets.length; i++) {
           if (((UsageViewImpl)view).isDisposed()) break;
           final PsiElement target = targets[i];
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
-              final Usage usage = UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(target));
+              final Usage usage = UsageInfoToUsageConverter.convert(primary, new UsageInfo(target));
               view.appendUsage(usage);
             }
           });

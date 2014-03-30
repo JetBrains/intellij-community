@@ -15,20 +15,24 @@
  */
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.OutputFileConsumer;
 import org.jetbrains.jps.javac.OutputFileObject;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -39,6 +43,7 @@ import java.util.Set;
 *         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
@@ -82,47 +87,33 @@ class OutputFilesSink implements OutputFileConsumer {
         }
       }
 
-      if (!isTemp && outKind == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(myContext)) {
+      if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
         // register in mappings any non-temp class file
-        final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-        myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
+        try {
+          final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
+        }
+        catch (Throwable e) {
+          // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation  
+          final String message = "Class dependency information may be incomplete! Error parsing generated class " + fileObject.getFile().getPath();
+          LOG.info(message, e);
+          myContext.processMessage(new CompilerMessage(
+            JavaBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+          );
+        }
       }
     }
 
     if (outKind == JavaFileObject.Kind.CLASS) {
-      // generated sources and resources are handled separately
-      try {
-        writeToDisk(fileObject, isTemp);
-      }
-      catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+      myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
+      if (!isTemp && srcFile != null) {
+        mySuccessfullyCompiled.add(srcFile);
       }
     }
   }
 
   public Set<File> getSuccessfullyCompiled() {
     return Collections.unmodifiableSet(mySuccessfullyCompiled);
-  }
-
-  private void writeToDisk(@NotNull OutputFileObject fileObject, boolean isTemp) throws IOException {
-    myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
-
-    final File file = fileObject.getFile();
-    final BinaryContent content = fileObject.getContent();
-    if (content == null) {
-      throw new IOException("Missing content for file " + file);
-    }
-
-    content.saveToFile(file);
-
-    final File source = fileObject.getSourceFile();
-    if (!isTemp && source != null) {
-      mySuccessfullyCompiled.add(source);
-      //final String className = fileObject.getClassName();
-      //if (className != null) {
-      //  myContext.processMessage(new ProgressMessage("Compiled " + className));
-      //}
-    }
   }
 
   public void markError(@NotNull final File sourceFile) {

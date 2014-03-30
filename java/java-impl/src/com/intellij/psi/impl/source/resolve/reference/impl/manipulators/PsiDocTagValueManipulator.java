@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
@@ -29,7 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDocTag> {
 
   @Override
-  public PsiDocTag handleContentChange(PsiDocTag tag, TextRange range, String newContent) throws IncorrectOperationException {
+  public PsiDocTag handleContentChange(@NotNull PsiDocTag tag, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
     final StringBuilder replacement = new StringBuilder( tag.getText() );
 
     replacement.replace(
@@ -40,8 +41,9 @@ public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDoc
     return (PsiDocTag)tag.replace(JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(replacement.toString()));
   }
 
+  @NotNull
   @Override
-  public TextRange getRangeInElement(final PsiDocTag tag) {
+  public TextRange getRangeInElement(@NotNull final PsiDocTag tag) {
     final PsiElement[] elements = tag.getDataElements();
     if (elements.length == 0) {
       final PsiElement name = tag.getNameElement();

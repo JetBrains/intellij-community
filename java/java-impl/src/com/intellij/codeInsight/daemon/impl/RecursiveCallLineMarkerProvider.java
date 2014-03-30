@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * @author Danila Ponomarenko
  */
-public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, DumbAware {
+public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
@@ -49,6 +49,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, Dumb
     final Set<PsiStatement> statements = new HashSet<PsiStatement>();
 
     for (PsiElement element : elements) {
+      ProgressManager.checkCanceled();
       if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
         final PsiStatement statement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement.class, true, PsiMethod.class);
@@ -62,7 +63,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, Dumb
 
   public static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
     final PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
-    if (method == null) {
+    if (method == null || !method.getName().equals(methodCall.getMethodExpression().getReferenceName())) {
       return false;
     }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiDiamondTypeElementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -44,6 +43,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +81,7 @@ public class CodeInsightUtil {
   }
 
   public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass) {
-    return CodeInsightUtilBase.findElementInRange(file, startOffset, endOffset, klass, StdLanguages.JAVA);
+    return CodeInsightUtilCore.findElementInRange(file, startOffset, endOffset, klass, StdLanguages.JAVA);
   }
 
   @NotNull
@@ -109,7 +109,7 @@ public class CodeInsightUtil {
         break;
       }
       if (parent instanceof PsiCodeBlock) break;
-      if (JspPsiUtil.isInJspFile(parent) && parent instanceof PsiFile) break;
+      if (FileTypeUtils.isInServerPageFile(parent) && parent instanceof PsiFile) break;
       if (parent instanceof PsiCodeFragment) break;
       if (parent == null || parent instanceof PsiFile) return PsiElement.EMPTY_ARRAY;
       parent = parent.getParent();
@@ -203,7 +203,7 @@ public class CodeInsightUtil {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
-        if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
+        if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
           array.add((PsiExpression)child);
           continue;
         }
@@ -233,30 +233,6 @@ public class CodeInsightUtil {
     }
   }
 
-  public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
-    return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement o1, PsiElement o2) {
-        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter && ((PsiParameter)o1).getDeclarationScope() instanceof PsiMethod) {
-          return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
-        }
-        return 1;
-      }
-    }, new Comparator<PsiElement>() {
-        @Override
-        public int compare(PsiElement o1, PsiElement o2) {
-          if (!o1.textMatches(o2)) return 1;
-
-          if (o1 instanceof PsiDiamondTypeElementImpl && o2 instanceof PsiDiamondTypeElementImpl) {
-            final PsiDiamondType.DiamondInferenceResult thisInferenceResult = new PsiDiamondTypeImpl(o1.getManager(), (PsiTypeElement)o1).resolveInferredTypes();
-            final PsiDiamondType.DiamondInferenceResult otherInferenceResult = new PsiDiamondTypeImpl(o2.getManager(), (PsiTypeElement)o2).resolveInferredTypes();
-            return thisInferenceResult.equals(otherInferenceResult) ? 0 : 1;
-          }
-          return 0;
-        }
-      }, null, false);
-  }
-
   public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
@@ -266,7 +242,7 @@ public class CodeInsightUtil {
   }
 
   public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
-    return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
+    return FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
   public static void processSubTypes(PsiType psiType,

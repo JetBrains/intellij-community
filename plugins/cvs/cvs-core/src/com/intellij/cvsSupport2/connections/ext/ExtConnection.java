@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,7 @@ public class ExtConnection extends ConnectionOnProcess {
     if (isOpen()) throw new RuntimeException(CvsBundle.message("error.message.connection.already.open"));
 
     GeneralCommandLine command = createRshCommand(myHost, myUserName, myConfiguration);
-
-    for (String command1 : commands) {
-      command.addParameter(command1);
-    }
-
+    command.addParameters(commands);
     execute(command);
 
     if (expectedResult != null) {
@@ -80,16 +76,15 @@ public class ExtConnection extends ConnectionOnProcess {
   private void check(ICvsCommandStopper stopper, String expectedResult) throws IOException, AuthenticationException {
     InputStreamWrapper streamWrapper = new InputStreamWrapper(myInputStream, stopper, new ReadWriteStatistics());
     try {
-      int i;
       StringBuilder buffer = new StringBuilder();
       while (true) {
-        i = streamWrapper.read();
+        int i = streamWrapper.read();
         if (i == -1 || i == '\n' || i == ' ' || i == '\r') break;
         buffer.append((char)i);
       }
       String read = buffer.toString().trim();
       if (!expectedResult.equals(read)) {
-        if (StringUtil.startsWithConcatenationOf(read, myUserName + "@", myHost)) {
+        if (StringUtil.startsWithConcatenation(read, myUserName, "@", myHost)) {
           throw new AuthenticationException(CvsBundle.message("exception.text.ext.server.rejected.access"), null);
         }
         else {
@@ -114,12 +109,12 @@ public class ExtConnection extends ConnectionOnProcess {
     command.addParameter("-l");
     command.addParameter(userName);
 
-    if (config.PRIVATE_KEY_FILE.length() > 0) {
+    if (!config.PRIVATE_KEY_FILE.isEmpty()) {
       command.addParameter("-i");
       command.addParameter(config.PRIVATE_KEY_FILE);
     }
 
-    if (config.ADDITIONAL_PARAMETERS.length() > 0) {
+    if (!config.ADDITIONAL_PARAMETERS.isEmpty()) {
       StringTokenizer parameters = new StringTokenizer(config.ADDITIONAL_PARAMETERS, " ");
       while (parameters.hasMoreTokens()) command.addParameter(parameters.nextToken());
     }

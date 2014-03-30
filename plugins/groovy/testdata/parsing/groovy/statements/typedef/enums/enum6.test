@@ -9,6 +9,8 @@ Groovy script
     PsiElement(enum)('enum')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('B')
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')

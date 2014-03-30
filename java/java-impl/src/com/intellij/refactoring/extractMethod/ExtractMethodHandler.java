@@ -16,7 +16,9 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -43,6 +45,8 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.listeners.RefactoringEventData;
+import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
@@ -59,8 +63,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (dataContext != null) {
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (file != null && editor != null) {
         invokeOnElements(project, editor, file, elements);
       }
@@ -80,8 +84,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
-      final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
-      final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
+      final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, true);
       if (expressions.isEmpty()) {
         editor.getSelectionModel().selectLineAtCaret();
       }
@@ -150,7 +153,15 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Runnable() {
           public void run() {
             try {
+              final RefactoringEventData beforeData = new RefactoringEventData();
+              beforeData.addElements(processor.myElements);
+              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
+              
               processor.doRefactoring();
+
+              final RefactoringEventData data = new RefactoringEventData();
+              data.addElement(processor.getExtractedMethod());
+              project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -166,7 +177,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                                                      final Project project,
                                                      final PsiFile file,
                                                      final Editor editor,
-                                                     final boolean showErrorMessages, 
+                                                     final boolean showErrorMessages,
                                                      final @Nullable Pass<ExtractMethodProcessor> pass) {
     if (elements == null || elements.length == 0) {
       if (showErrorMessages) {
@@ -178,7 +189,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
 
     for (PsiElement element : elements) {
-      if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
+      if (element instanceof PsiStatement && JavaHighlightUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));

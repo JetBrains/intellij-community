@@ -17,12 +17,18 @@
 package com.intellij.navigation;
 
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ThrowableRunnable;
+
+import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
@@ -47,6 +53,66 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
     assertEquals(2, impls.length);
+  }
+
+  public void testToStringOnUnqualified() throws Throwable {
+    final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
+                                                                "    {\n" +
+                                                                "        <caret>toString();\n" +
+                                                                "    }\n" +
+                                                                "}\n" +
+                                                                "class FixImpl1 extends Fix {\n" +
+                                                                "    @Override\n" +
+                                                                "    public String toString() {\n" +
+                                                                "        return \"Impl1\";\n" +
+                                                                "    }\n" +
+                                                                "}\n" +
+                                                                "class FixImpl2 extends Fix {\n" +
+                                                                "    @Override\n" +
+                                                                "    public String toString() {\n" +
+                                                                "        return \"Impl2\";\n" +
+                                                                "    }\n" +
+                                                                "}\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+     PlatformTestUtil.startPerformanceTest(getTestName(false), 50, new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+        assertEquals(3, impls.length);
+      }
+    }).cpuBound().usesAllCPUCores().assertTiming();
+  }
+
+  public void testToStringOnQualified() throws Throwable {
+    final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
+                                                                "    {\n" +
+                                                                "        Fix ff = new FixImpl1();\n" +
+                                                                "        ff.<caret>toString();\n" +
+                                                                "    }\n" +
+                                                                "}\n" +
+                                                                "class FixImpl1 extends Fix {\n" +
+                                                                "    @Override\n" +
+                                                                "    public String toString() {\n" +
+                                                                "        return \"Impl1\";\n" +
+                                                                "    }\n" +
+                                                                "}\n" +
+                                                                "class FixImpl2 extends Fix {\n" +
+                                                                "    @Override\n" +
+                                                                "    public String toString() {\n" +
+                                                                "        return \"Impl2\";\n" +
+                                                                "    }\n" +
+                                                                "}\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 50, new ThrowableRunnable() {
+      @Override
+      public void run() throws Exception {
+        final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+        assertEquals(3, impls.length);
+      }
+    }).cpuBound().usesAllCPUCores().assertTiming();
+    
   }
 
   public void testShowSelfNonAbstract() throws Throwable {
@@ -120,5 +186,33 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
     assertNotNull(aClass);
     assertEquals(aClass.getName(), "X");
+  }
+
+  public void testImplicitInheritance() throws Throwable {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface PackContainer {\n" +
+                                                          "    void foo();\n" +
+                                                          "}\n" +
+                                                          "interface PsiPackage extends PackContainer {}\n" +
+                                                          "class PsiPackageBase implements PackContainer {\n" +
+                                                          "    public void foo() {}\n" +
+                                                          "}\n" +
+                                                          "class PsiPackageImpl extends PsiPackageBase implements PsiPackage {}\n" +
+                                                          "\n" +
+                                                          "class Foo {\n" +
+                                                          "    class Bar {\n" +
+                                                          "        void bar(PsiPackage i) {\n" +
+                                                          "            i.fo<caret>o();\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
+    assertEquals(1, impls.length);
+    final PsiElement meth = impls[0];
+    assertTrue(meth instanceof PsiMethod);
+    final PsiClass aClass = ((PsiMethod)meth).getContainingClass();
+    assertNotNull(aClass);
+    assertEquals(aClass.getName(), "PsiPackageBase");
   }
 }

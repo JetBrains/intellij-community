@@ -114,10 +114,9 @@ public class StackTraceLine {
     }
   }
 
-  private PsiClass findClass(final Project project, final String className, final int lineNumber) {
+  private static PsiClass findClass(final Project project, final String className, final int lineNumber) {
     if (project == null) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
-    if (psiManager == null) return null;
     PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
     if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
     psiClass = (PsiClass)psiClass.getNavigationElement();
@@ -132,8 +131,7 @@ public class StackTraceLine {
     if (methods.length == 0) return null;
     final PsiFile psiFile = methods[0].getContainingFile();
     final int offset = offsetOfLine(psiFile, lineNumber);
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
+    for (final PsiMethod method : methods) {
       if (method.getTextRange().contains(offset)) return method;
     }
     //if (!methods.hasNext() || location == null) return null;
@@ -152,7 +150,6 @@ public class StackTraceLine {
   private static int offsetOfLine(final PsiFile psiFile, final int lineNumber) {
     final LineTokenizer lineTokenizer = new LineTokenizer(psiFile.getViewProvider().getContents());
     for (int i = 0; i < lineNumber; i++) lineTokenizer.advance();
-    final int offset = lineTokenizer.getOffset();
-    return offset;
+    return lineTokenizer.getOffset();
   }
 }

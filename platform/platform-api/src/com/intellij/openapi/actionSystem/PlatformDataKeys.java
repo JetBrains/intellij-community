@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,10 @@ import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.content.ContentManager;
 
 import java.awt.*;
@@ -33,18 +31,7 @@ import java.util.Comparator;
 /**
  * @author yole
  */
-public class PlatformDataKeys {
-  public static final DataKey<Project> PROJECT = DataKey.create("project");
-  public static final DataKey<Editor> EDITOR = DataKey.create("editor");
-
-  /**
-   * Returns com.intellij.openapi.editor.Editor even if focus currently is in find bar
-   */
-  public static final DataKey<Editor> EDITOR_EVEN_IF_INACTIVE = DataKey.create("editor.even.if.inactive");
-  public static final DataKey<Navigatable> NAVIGATABLE = DataKey.create("Navigatable");
-  public static final DataKey<Navigatable[]> NAVIGATABLE_ARRAY = DataKey.create("NavigatableArray");
-  public static final DataKey<VirtualFile> VIRTUAL_FILE = DataKey.create("virtualFile");
-  public static final DataKey<VirtualFile[]> VIRTUAL_FILE_ARRAY = DataKey.create("virtualFileArray");
+public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
 
   /**
@@ -111,6 +98,9 @@ public class PlatformDataKeys {
    * <p/>
    * Current key allows to specify custom actions sorter to use if any. I.e. every component can define it's custom
    * sorting rule in order to define priorities for target actions (classes of actions).
+   *
+   * @deprecated use com.intellij.openapi.actionSystem.ActionPromoter
    */
+  @Deprecated
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

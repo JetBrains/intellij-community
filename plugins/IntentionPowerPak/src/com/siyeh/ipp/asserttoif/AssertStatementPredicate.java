@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.asserttoif;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class AssertStatementPredicate implements PsiElementPredicate {
 
@@ -26,11 +25,7 @@ class AssertStatementPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiAssertStatement)) {
       return false;
     }
-    final PsiAssertStatement assertStatement =
-      (PsiAssertStatement)element;
-    if (assertStatement.getAssertCondition() == null) {
-      return false;
-    }
-    return !ErrorUtil.containsError(element);
+    final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
+    return assertStatement.getAssertCondition() != null;
   }
 }

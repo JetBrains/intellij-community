@@ -81,11 +81,13 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
     return ServiceManager.getService(PrintSettings.class);
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("print")};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return CodeEditorBundle.message("title.print.settings");
@@ -107,10 +109,12 @@ public class PrintSettings implements PersistentStateComponent<PrintSettings>, E
     myIncludeSubdirectories = includeSubdirectories;
   }
 
+  @Override
   public PrintSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final PrintSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

@@ -17,11 +17,12 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 
 //todo test3 should be checked if it compiles - as now javac infers Object instead of String?!
-public class Simplify2DiamondInspectionsTest extends LightQuickFixTestCase {
+public class Simplify2DiamondInspectionsTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
@@ -37,4 +38,8 @@ public class Simplify2DiamondInspectionsTest extends LightQuickFixTestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/explicit2diamond";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
+  }
 }

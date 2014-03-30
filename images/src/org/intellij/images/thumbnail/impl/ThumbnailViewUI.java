@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
@@ -58,10 +58,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final VirtualFileListener vfsListener = new VFSListener();
@@ -416,21 +413,21 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     @Nullable
     public Object getData(String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
             return thumbnailView.getProject();
-        } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+        } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? selectedFiles[0] : null;
-        } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        } else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
             return getSelectedFiles();
-        } else if (LangDataKeys.PSI_FILE.is(dataId)) {
-            return getData(LangDataKeys.PSI_ELEMENT.getName());
-        } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+        } else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+            return getData(CommonDataKeys.PSI_ELEMENT.getName());
+        } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
         } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
             return getSelectedElements();
-        } else if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+        } else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
         } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
@@ -441,7 +438,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return copyPasteSupport.getPasteProvider();
         } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
             return deleteProvider;
-        } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        } else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
             for (VirtualFile selectedFile : selectedFiles) {
@@ -472,7 +469,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 psiElements.add(element);
             }
         }
-      return PsiUtilBase.toPsiElementArray(psiElements);
+      return PsiUtilCore.toPsiElementArray(psiElements);
     }
 
     @NotNull
@@ -526,7 +523,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private final class VFSListener extends VirtualFileAdapter {
-        public void contentsChanged(VirtualFileEvent event) {
+        public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
                 int index = ((DefaultListModel) list.getModel()).indexOf(file);
@@ -537,7 +534,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
-        public void fileDeleted(VirtualFileEvent event) {
+        public void fileDeleted(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             VirtualFile root = thumbnailView.getRoot();
             if (root != null && VfsUtil.isAncestor(file, root, false)) {
@@ -548,15 +545,15 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
         }
 
-        public void propertyChanged(VirtualFilePropertyEvent event) {
+        public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
             refresh();
         }
 
-        public void fileCreated(VirtualFileEvent event) {
+        public void fileCreated(@NotNull VirtualFileEvent event) {
             refresh();
         }
 
-        public void fileMoved(VirtualFileMoveEvent event) {
+        public void fileMoved(@NotNull VirtualFileMoveEvent event) {
             refresh();
         }
     }

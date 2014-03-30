@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,13 +100,6 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getLocation() {
-    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
-  }
-
-  @Override
   @NotNull
   public String getProjectFilePath() {
     return "";
@@ -136,8 +129,9 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
+  @NotNull
   @Override
-  public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
+  public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 

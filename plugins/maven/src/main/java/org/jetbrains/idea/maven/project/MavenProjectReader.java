@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -34,7 +33,8 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -353,19 +353,19 @@ public class MavenProjectReader {
 
     Properties props = mavenModelBase.getProperties();
 
-    for (Element each : (Iterable<? extends Element>)xmlProperties.getChildren()) {
+    for (Element each : xmlProperties.getChildren()) {
       String name = each.getName();
       String value = each.getTextTrim();
-      if (!props.containsKey(name) && !StringUtil.isEmptyOrSpaces(value)) {
+      if (!props.containsKey(name) && !isEmptyOrSpaces(name)) {
         props.setProperty(name, value);
       }
     }
   }
 
-  private ProfileApplicationResult applyProfiles(MavenModel model,
-                                                 File basedir,
-                                                 Collection<String> explicitProfiles,
-                                                 Collection<String> alwaysOnProfiles) {
+  private static ProfileApplicationResult applyProfiles(MavenModel model,
+                                                        File basedir,
+                                                        Collection<String> explicitProfiles,
+                                                        Collection<String> alwaysOnProfiles) {
     return MavenServerManager.getInstance().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 

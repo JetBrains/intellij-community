@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,18 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -50,7 +50,6 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +58,8 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 
 /**
@@ -67,11 +68,13 @@ import java.nio.charset.Charset;
 public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final TextPanel myComponent;
   private boolean actionEnabled;
+  private final Alarm update;
+  private volatile Reference<Editor> myEditor = new WeakReference<Editor>(null); // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
-
-    myComponent = new TextPanel(getMaxValue()) {
+    update = new Alarm(this);
+    myComponent = new TextPanel() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -86,7 +89,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         update();
         showPopup(e);
         return true;
@@ -105,14 +108,22 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    VirtualFile newFile = event.getNewFile();
+    fileChanged(newFile);
+  }
+
+  private void fileChanged(VirtualFile newFile) {
+    FileEditor fileEditor = newFile == null ? null : FileEditorManager.getInstance(getProject()).getSelectedEditor(newFile);
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    myEditor = new WeakReference<Editor>(editor);
     update();
   }
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
-    update();
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+    fileChanged(file);
   }
 
   @Override
@@ -131,12 +142,6 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     return null;
   }
 
-  @NonNls
-  @NotNull
-  private static String getMaxValue() {
-    return "windows-1251";
-  }
-
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
@@ -145,37 +150,45 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(EncodingManagerImpl.PROP_CACHED_ENCODING_CHANGED)) {
-          update();
+          Document document = evt.getSource() instanceof Document ? (Document)evt.getSource() : null;
+          updateForDocument(document);
         }
       }
     }, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
       @Override
-      public void propertyChanged(VirtualFilePropertyEvent event) {
+      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
-          update();
+          updateForFile(event.getFile());
         }
       }
     }));
-    final Alarm update = new Alarm();
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
-        Editor selectedEditor = getEditor();
-        if (selectedEditor == null || selectedEditor.getDocument() != document) return;
-        update.cancelAllRequests();
-        update.addRequest(new Runnable() {
-                              @Override
-                              public void run() {
-                                if (!isDisposed()) update();
-                              }
-                            }, 200);
+        updateForDocument(document);
       }
     }, this);
   }
 
-  private void showPopup(MouseEvent e) {
+  private void updateForDocument(@Nullable("null means update anyway") Document document) {
+    Editor selectedEditor = myEditor.get();
+    if (document != null && (selectedEditor == null || selectedEditor.getDocument() != document)) return;
+    update();
+  }
+
+  private void updateForFile(@Nullable("null means update anyway") VirtualFile file) {
+    if (file == null) {
+      update();
+    }
+    else {
+      updateForDocument(FileDocumentManager.getInstance().getCachedDocument(file));
+    }
+  }
+
+  private void showPopup(@NotNull MouseEvent e) {
     if (!actionEnabled) {
       return;
     }
@@ -194,46 +207,79 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   private DataContext getContext() {
     Editor editor = getEditor();
     DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
-    return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
-           SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(),
+    return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
+           SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), getProject(),
            SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent)
            ));
   }
 
   private void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    if (update.isDisposed()) return;
+
+    update.cancelAllRequests();
+    update.addRequest(new Runnable() {
       @Override
       public void run() {
+        if (isDisposed()) return;
+
         VirtualFile file = getSelectedFile();
-        String fromBytes = file == null ? null : LoadTextUtil.wasCharsetDetectedFromBytes(file);
-        Charset charset = fromBytes == null ? cachedCharsetFromContent(file) : null;
-        if (charset == null && file != null) charset = file.getCharset();
+        actionEnabled = false;
+        String charsetName = null;
+        Pair<Charset, String> check = null;
 
-        String text = charset == null ? "" : charset.displayName();
-        Pair<Charset,String> check = file == null ? null : EncodingUtil.checkSomeActionEnabled(file);
-        String failReason = check == null ? null : check.second;
-        Charset currentCharset = check == null ? null : check.first;
-        actionEnabled = failReason == null;
+        if (file != null) {
+          check = EncodingUtil.checkSomeActionEnabled(file);
+          Charset charset = null;
 
-        String toolTip = "File Encoding" +
-                         (currentCharset == null ? "" : ": "+currentCharset.displayName()) +
-                         (actionEnabled ? "" : " (change disabled: " + failReason + ")");
-        myComponent.setToolTipText(toolTip);
-        myComponent.setText(text);
+          if (LoadTextUtil.wasCharsetDetectedFromBytes(file) != null) {
+            charset = cachedCharsetFromContent(file);
+          }
+
+          if (charset == null) {
+            charset = file.getCharset();
+          }
+
+          actionEnabled = check == null || check.second == null;
+
+          if (!actionEnabled) {
+            charset = check.first;
+          }
+
+          if (charset != null) {
+            charsetName = charset.displayName();
+          }
+        }
+
+        if (charsetName == null) {
+          charsetName = "n/a";
+        }
+
+        String toolTipText;
 
         if (actionEnabled) {
+          toolTipText = String.format(
+            "File Encoding%n%s", charsetName);
+
           myComponent.setForeground(UIUtil.getActiveTextColor());
+          myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
         }
         else {
+          String failReason = check == null ? "" : check.second;
+          toolTipText = String.format("File encoding is disabled%n%s",
+                                      failReason);
+
           myComponent.setForeground(UIUtil.getInactiveTextColor());
+          myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
         }
+
+        myComponent.setToolTipText(toolTipText);
+        myComponent.setText(charsetName);
 
         if (myStatusBar != null) {
           myStatusBar.updateWidget(ID());
         }
       }
-    });
-    
+    }, 200, ModalityState.any());
   }
 
   @Override

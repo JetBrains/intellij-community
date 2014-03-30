@@ -72,7 +72,7 @@ public class PushDownConflicts {
     }
   }
 
-  public boolean checkTargetClassConflicts(final PsiClass targetClass, final boolean checkStatic, final PsiElement context) {
+  public void checkTargetClassConflicts(final PsiClass targetClass, final boolean checkStatic, final PsiElement context) {
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
@@ -98,43 +98,39 @@ public class PushDownConflicts {
         });
       }
     }
-    Runnable searchConflictsRunnable = new Runnable() {
-      public void run() {
-        Members:
-        for (PsiMember member : myMovedMembers) {
-          for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
-            final PsiElement element = ref.getElement();
-            if (element instanceof PsiReferenceExpression) {
-              final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-              final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-              if (qualifier != null) {
-                final PsiType qualifierType = qualifier.getType();
-                PsiClass aClass = null;
-                if (qualifierType instanceof PsiClassType) {
-                  aClass = ((PsiClassType)qualifierType).resolve();
-                }
-                else {
-                  if (!checkStatic) continue;
-                  if (qualifier instanceof PsiReferenceExpression) {
-                    final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
-                    if (resolved instanceof PsiClass) {
-                      aClass = (PsiClass)resolved;
-                    }
-                  }
-                }
-
-                if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
-                  myConflicts.putValue(referenceExpression, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
-                  break Members;
+    Members:
+    for (PsiMember member : myMovedMembers) {
+      for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
+        final PsiElement element = ref.getElement();
+        if (element instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+          final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+          if (qualifier != null) {
+            final PsiType qualifierType = qualifier.getType();
+            PsiClass aClass = null;
+            if (qualifierType instanceof PsiClassType) {
+              aClass = ((PsiClassType)qualifierType).resolve();
+            }
+            else {
+              if (!checkStatic) continue;
+              if (qualifier instanceof PsiReferenceExpression) {
+                final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+                if (resolved instanceof PsiClass) {
+                  aClass = (PsiClass)resolved;
                 }
               }
             }
+
+            if (!InheritanceUtil.isInheritorOrSelf(aClass, targetClass, true)) {
+              myConflicts.putValue(referenceExpression, RefactoringBundle.message("pushed.members.will.not.be.visible.from.certain.call.sites"));
+              break Members;
+            }
           }
         }
-        RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers);
       }
-    };
-    return !ProgressManager.getInstance().runProcessWithProgressSynchronously(searchConflictsRunnable, RefactoringBundle.message("detecting.possible.conflicts"), false, context.getProject());
+    }
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(myMovedMembers, targetClass, myConflicts, null, context, myAbstractMembers);
+    
   }
 
   public void checkMemberPlacementInTargetClassConflict(final PsiClass targetClass, final PsiMember movedMember) {

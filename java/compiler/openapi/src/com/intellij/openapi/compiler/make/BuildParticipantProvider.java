@@ -24,7 +24,9 @@ import java.util.Collection;
 /**
  * @author nik
  *
- * @deprecated use interfaces from {@link com.intellij.openapi.compiler.Compiler}'s hierarchy instead
+ * @deprecated this class is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public abstract class BuildParticipantProvider {
   public static final ExtensionPointName<BuildParticipantProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.buildParticipantProvider");

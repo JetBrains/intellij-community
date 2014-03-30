@@ -23,16 +23,20 @@ import java.awt.image.BufferedImage;
  * @author Alexander Lobas
  */
 public class RootView extends JComponent {
-  private final int myX;
-  private final int myY;
+  protected int myX;
+  protected int myY;
   protected BufferedImage myImage;
 
   public RootView(int x, int y, BufferedImage image) {
-    this(x, y);
+    updateLocation(x, y);
     setImage(image);
   }
 
   public RootView(int x, int y) {
+    updateLocation(x, y);
+  }
+
+  public void updateLocation(int x, int y) {
     myX = x;
     myY = y;
   }

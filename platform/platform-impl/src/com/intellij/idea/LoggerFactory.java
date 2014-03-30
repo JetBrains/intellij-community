@@ -33,12 +33,6 @@ public class LoggerFactory implements Logger.Factory {
 
   private boolean myInitialized = false;
 
-  private static final LoggerFactory ourInstance = new LoggerFactory();
-
-  public static LoggerFactory getInstance() {
-    return ourInstance;
-  }
-
   private LoggerFactory() { }
 
   @Override

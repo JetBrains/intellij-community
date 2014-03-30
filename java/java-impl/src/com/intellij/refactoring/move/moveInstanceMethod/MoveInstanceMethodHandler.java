@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,7 +50,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   static final String REFACTORING_NAME = RefactoringBundle.message("move.instance.method.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null) {
       element = file.findElementAt(editor.getCaretModel().getOffset());
@@ -97,7 +95,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         for (PsiClass aClass : classes) {
           if (aClass instanceof JspClass) {
             message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
-            Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
             break;
           }
@@ -120,7 +118,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         final String suggestToMakeStaticMessage = "Would you like to make method \'" + method.getName() + "\' static and then move?";
         if (Messages
           .showYesNoCancelDialog(project, message + ". " + suggestToMakeStaticMessage,
-                                 REFACTORING_NAME, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                 REFACTORING_NAME, Messages.getErrorIcon()) == Messages.YES) {
           MakeStaticHandler.invoke(method);
         }
       }
@@ -133,7 +131,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   private static void showErrorHint(Project project, DataContext dataContext, String message) {
-    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
   }
 

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
@@ -65,16 +65,12 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
   @NotNull
   private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
     final List<PsiMethod> result = new ArrayList<PsiMethod>(constructors);
-
-    final Iterator<PsiMethod> iterator = result.iterator();
-    //noinspection ForLoopThatDoesntUseLoopVariable
-    for (PsiMethod constructor = iterator.next(); iterator.hasNext(); constructor = iterator.next()) {
-      final List<PsiMethod> chained = HighlightControlFlowUtil.getChainedConstructors(constructor);
-      if (chained != null) {
+    for (Iterator<PsiMethod> iterator = result.iterator(); iterator.hasNext(); ) {
+      final PsiMethod constructor = iterator.next();
+      if (JavaHighlightUtil.getChainedConstructors(constructor) != null) {
         iterator.remove();
       }
     }
-
     return result;
   }
 

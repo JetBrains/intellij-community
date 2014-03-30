@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,16 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -30,14 +36,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -65,13 +72,13 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
-  private final MavenProjectsManager myProjectsManager;
-  private final MavenTasksManager myTasksManager;
-  private final MavenShortcutsManager myShortcutsManager;
+  private MavenProjectsManager myProjectsManager;
+  private MavenTasksManager myTasksManager;
+  private MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
-  private ToolWindow myToolWindow;
+  private ToolWindowEx myToolWindow;
 
   public static MavenProjectsNavigator getInstance(Project project) {
     return project.getComponent(MavenProjectsNavigator.class);
@@ -139,6 +146,28 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     }
   }
 
+  public boolean getAlwaysShowArtifactId() {
+    return myState.alwaysShowArtifactId;
+  }
+
+  public void setAlwaysShowArtifactId(boolean value) {
+    if (myState.alwaysShowArtifactId != value) {
+      myState.alwaysShowArtifactId = value;
+      scheduleStructureUpdate();
+    }
+  }
+
+  public boolean getShowVersions() {
+    return myState.showVersions;
+  }
+
+  public void setShowVersions(boolean value) {
+    if (myState.showVersions != value) {
+      myState.showVersions = value;
+      scheduleStructureUpdate();
+    }
+  }
+
   @Override
   public void initComponent() {
     if (!isNormalProject()) return;
@@ -157,6 +186,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     if (isUnitTestMode()) return;
     MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         initToolWindow();
       }
     });
@@ -164,6 +194,8 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
   @Override
   public void disposeComponent() {
+    myToolWindow = null;
+    myProjectsManager = null;
   }
 
   private void listenForProjectsChanges() {
@@ -209,14 +241,44 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
         });
       }
     });
+
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+      private void changed() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateRunConfigurations();
+          }
+        });
+      }
+
+      @Override
+      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
+      }
+
+      @Override
+      public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
+      }
+
+      @Override
+      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
+      }
+    });
   }
 
   private void initToolWindow() {
     initTree();
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
+    AnAction removeAction = ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration");
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, myProject);
+    AnAction editSource = ActionManager.getInstance().getAction("Maven.EditRunConfiguration");
+    editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
+
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-    myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = (ToolWindowEx)manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(MavenIcons.ToolWindowMaven);
 
     final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
@@ -232,6 +294,18 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     };
     manager.addToolWindowManagerListener(listener);
+
+    ActionManager actionManager = ActionManager.getInstance();
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(actionManager.getAction("Maven.GroupProjects"));
+    group.add(actionManager.getAction("Maven.ShowIgnored"));
+    group.add(actionManager.getAction("Maven.ShowBasicPhasesOnly"));
+    group.add(actionManager.getAction("Maven.AlwaysShowArtifactId"));
+    group.add(actionManager.getAction("Maven.ShowVersions"));
+
+    myToolWindow.setAdditionalGearActions(group);
+
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
         manager.removeToolWindowManagerListener(listener);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -74,9 +73,9 @@ public class ExportTestResultsAction extends DumbAwareAction {
 
   private TestFrameworkRunningModel myModel;
   private String myToolWindowId;
-  private RuntimeConfiguration myRunConfiguration;
+  private RunConfiguration myRunConfiguration;
 
-  public static ExportTestResultsAction create(String toolWindowId, RuntimeConfiguration runtimeConfiguration) {
+  public static ExportTestResultsAction create(String toolWindowId, RunConfiguration runtimeConfiguration) {
     ExportTestResultsAction action = new ExportTestResultsAction();
     action.copyFrom(ActionManager.getInstance().getAction(ID));
     action.myToolWindowId = toolWindowId;
@@ -98,7 +97,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
       return false;
     }
 
-    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+    if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
       return false;
     }
 
@@ -107,7 +106,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     LOG.assertTrue(project != null);
     final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
 
@@ -127,7 +126,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
                ExecutionBundle.message("export.test.results.file.exists.message", filename),
                ExecutionBundle.message("export.test.results.file.exists.title"),
                Messages.getQuestionIcon()
-             ) != DialogWrapper.OK_EXIT_CODE;
+             ) != Messages.OK;
     }
 
     final String filename_ = filename;

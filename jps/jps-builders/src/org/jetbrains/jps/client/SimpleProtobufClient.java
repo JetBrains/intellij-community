@@ -17,17 +17,17 @@ package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jboss.netty.bootstrap.ClientBootstrap;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
-import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.RequestFuture;
 
-import java.net.InetSocketAddress;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,28 +39,27 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
 
-  private static enum State {
+  private enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
 
   private final AtomicReference<State> myState = new AtomicReference<State>(State.DISCONNECTED);
-  protected final ChannelPipelineFactory myPipelineFactory;
-  protected final ChannelFactory myChannelFactory;
+  protected final ChannelInitializer myChannelInitializer;
+  protected final EventLoopGroup myEventLoopGroup;
   protected volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
     myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
-    myChannelFactory = new NioClientSocketChannelFactory(asyncExec, asyncExec, 1);
-    myPipelineFactory = new ChannelPipelineFactory() {
-      public ChannelPipeline getPipeline() throws Exception {
-        return Channels.pipeline(
-          new ProtobufVarint32FrameDecoder(),
-          new ProtobufDecoder(msgDefaultInstance),
-          new ProtobufVarint32LengthFieldPrepender(),
-          new ProtobufEncoder(),
-          myMessageHandler
-        );
+    myEventLoopGroup = new NioEventLoopGroup(1, asyncExec);
+    myChannelInitializer = new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) throws Exception {
+        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                   new ProtobufDecoder(msgDefaultInstance),
+                                   new ProtobufVarint32LengthFieldPrepender(),
+                                   new ProtobufEncoder(),
+                                   myMessageHandler);
       }
     };
   }
@@ -76,15 +75,10 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
       boolean success = false;
 
       try {
-        final ClientBootstrap bootstrap = new ClientBootstrap(myChannelFactory);
-        bootstrap.setPipelineFactory(myPipelineFactory);
-        bootstrap.setOption("tcpNoDelay", true);
-        bootstrap.setOption("keepAlive", true);
-        final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
-        future.awaitUninterruptibly();
-
+        final Bootstrap bootstrap = new Bootstrap().group(myEventLoopGroup).channel(NioSocketChannel.class).handler(myChannelInitializer);
+        bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+        final ChannelFuture future = bootstrap.connect(host, port).syncUninterruptibly();
         success = future.isSuccess();
-
         if (success) {
           myConnectFuture = future;
           try {
@@ -94,13 +88,6 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
             LOG.error(e);
           }
         }
-        else {
-          final Throwable reason = future.getCause();
-          if (reason != null) {
-            throw reason;
-          }
-        }
-
         return success;
       }
       finally {
@@ -129,7 +116,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
           catch (Throwable e) {
             LOG.error(e);
           }
-          final ChannelFuture closeFuture = future.getChannel().close();
+          final ChannelFuture closeFuture = future.channel().close();
           closeFuture.awaitUninterruptibly();
         }
       }
@@ -154,9 +141,10 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     final RequestFuture<T> requestFuture = new RequestFuture<T>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
     final ChannelFuture connectFuture = myConnectFuture;
-    final Channel channel = connectFuture != null? connectFuture.getChannel() : null;
-    if (channel != null && channel.isConnected()) {
-      Channels.write(channel, message).addListener(new ChannelFutureListener() {
+    final Channel channel = connectFuture != null? connectFuture.channel() : null;
+    if (channel != null && channel.isActive()) {
+      channel.writeAndFlush(message).addListener(new ChannelFutureListener() {
+        @Override
         public void operationComplete(ChannelFuture future) throws Exception {
           if (!future.isSuccess()) {
             notifyTerminated(messageId, requestFuture, responseHandler);

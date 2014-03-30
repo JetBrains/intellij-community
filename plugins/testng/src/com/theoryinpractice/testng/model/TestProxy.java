@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
@@ -79,7 +80,7 @@ public class TestProxy extends AbstractTestProxy {
     if (psiElement != null) {
       final Project project = psiElement.getProject();
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      this.psiElement = SmartPointerManager.getInstance(project).createLazyPointer(psiElement);
+      this.psiElement = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
     } else {
       this.psiElement = null;
     }
@@ -156,7 +157,7 @@ public class TestProxy extends AbstractTestProxy {
     return !isNotPassed();
   }
 
-  public Location getLocation(final Project project) {
+  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
     if (psiElement == null) return null;
     final PsiElement element = psiElement.getElement();
     if (element == null) return null;

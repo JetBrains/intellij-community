@@ -29,12 +29,17 @@ public interface MavenServerEmbedder extends Remote {
   void customize(@Nullable MavenWorkspaceMap workspaceMap,
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenServerConsole console,
-                 @NotNull MavenServerProgressIndicator indicator) throws RemoteException;
+                 @NotNull MavenServerProgressIndicator indicator,
+                 boolean alwaysUpdateSnapshots) throws RemoteException;
 
   @NotNull
   MavenServerExecutionResult resolveProject(@NotNull File file,
                                             @NotNull Collection<String> activeProfiles) throws RemoteException,
                                                                                                MavenServerProcessCanceledException;
+
+  @Nullable
+  String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) throws RemoteException,
+                                                                                                 MavenServerProcessCanceledException;
 
   @NotNull
   MavenArtifact resolve(@NotNull MavenArtifactInfo info,

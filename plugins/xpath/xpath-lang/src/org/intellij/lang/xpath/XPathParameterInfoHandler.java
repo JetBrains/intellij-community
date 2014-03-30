@@ -43,7 +43,7 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    public XPathFunctionCall findElementForParameterInfo(CreateParameterInfoContext context) {
+    public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {
             final XPathFunction function = call.resolve();
@@ -72,15 +72,15 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return null;
     }
 
-    public void showParameterInfo(@NotNull XPathFunctionCall call, CreateParameterInfoContext context) {
+    public void showParameterInfo(@NotNull XPathFunctionCall call, @NotNull CreateParameterInfoContext context) {
         context.showHint(call, call.getTextOffset() + 1, this);
     }
 
-    public XPathFunctionCall findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+    public XPathFunctionCall findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
         return findFunctionCall(context.getFile(), context.getOffset());
     }
 
-    public void updateParameterInfo(@NotNull XPathFunctionCall call, UpdateParameterInfoContext context) {
+    public void updateParameterInfo(@NotNull XPathFunctionCall call, @NotNull UpdateParameterInfoContext context) {
         int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(call.getNode(), context.getOffset(), XPathTokenTypes.COMMA);
         context.setCurrentParameter(currentParameterIndex);
     }
@@ -93,7 +93,7 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
         return true;
     }
 
-    public void updateUI(XPathFunction function, ParameterInfoUIContext context) {
+    public void updateUI(XPathFunction function, @NotNull ParameterInfoUIContext context) {
         final Function declaration = function.getDeclaration();
         if (declaration != null) {
             if (declaration.getParameters().length > 0) {

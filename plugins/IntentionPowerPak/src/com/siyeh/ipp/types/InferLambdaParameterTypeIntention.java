@@ -16,7 +16,9 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -46,13 +48,14 @@ public class InferLambdaParameterTypeIntention extends Intention {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
     final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-    final String buf = getInferredTypes(functionalInterfaceType, lambdaExpression);
-    lambdaExpression.getParameterList().replace(JavaPsiFacade.getElementFactory(element.getProject()).createMethodFromText("void foo" + buf,
-                                                                                                                           element).getParameterList());
+    final String buf = getInferredTypes(functionalInterfaceType, lambdaExpression, true);
+    final Project project = element.getProject();
+    final PsiMethod methodFromText = JavaPsiFacade.getElementFactory(project).createMethodFromText("void foo" + buf, element);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(lambdaExpression.getParameterList().replace(methodFromText.getParameterList()));
   }
 
   @Nullable
-  private static String getInferredTypes(PsiType functionalInterfaceType, final PsiLambdaExpression lambdaExpression) {
+  private static String getInferredTypes(PsiType functionalInterfaceType, final PsiLambdaExpression lambdaExpression, boolean useFQN) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final StringBuilder buf = new StringBuilder();
     buf.append("(");
@@ -63,9 +66,9 @@ public class InferLambdaParameterTypeIntention extends Intention {
     if (parameters.length != lambdaParameters.length) return null;
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      final PsiType psiType = GenericsUtil.eliminateWildcards(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType()));
+      final PsiType psiType = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType());
       if (psiType != null) {
-        buf.append(psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
+        buf.append(useFQN ? psiType.getCanonicalText() : psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
       }
       else {
         buf.append(lambdaParameters[i].getName());
@@ -94,7 +97,7 @@ public class InferLambdaParameterTypeIntention extends Intention {
         if (PsiTreeUtil.isAncestor(lambdaExpression.getParameterList(), element, false)) {
           final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
           if (functionalInterfaceType != null && LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType)) {
-            myInferredTypesText = getInferredTypes(functionalInterfaceType, lambdaExpression);
+            myInferredTypesText = getInferredTypes(functionalInterfaceType, lambdaExpression, false);
             return myInferredTypesText != null;
           }
         }

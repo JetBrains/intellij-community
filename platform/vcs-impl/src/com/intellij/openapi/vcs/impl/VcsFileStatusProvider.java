@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -60,18 +61,22 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     myFileStatusManager.setFileStatusProvider(this);
 
     changeListManager.addChangeListListener(new ChangeListAdapter() {
+      @Override
       public void changeListAdded(ChangeList list) {
         fileStatusesChanged();
       }
 
+      @Override
       public void changeListRemoved(ChangeList list) {
         fileStatusesChanged();
       }
 
+      @Override
       public void changeListChanged(ChangeList list) {
         fileStatusesChanged();
       }
 
+      @Override
       public void changeListUpdateDone() {
         if (myHaveEmptyContentRevisions) {
           myHaveEmptyContentRevisions = false;
@@ -89,7 +94,9 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     myFileStatusManager.fileStatusesChanged();
   }
 
-  public FileStatus getFileStatus(final VirtualFile virtualFile) {
+  @Override
+  @NotNull
+  public FileStatus getFileStatus(@NotNull final VirtualFile virtualFile) {
     final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
     if (vcs == null) {
       return FileStatusManagerImpl.getDefaultStatus(virtualFile);
@@ -110,33 +117,35 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     return FileDocumentManager.getInstance().isFileModified(virtualFile);
   }
 
-  public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {
+  @Override
+  public void refreshFileStatusFromDocument(@NotNull final VirtualFile virtualFile, @NotNull final Document doc) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + file.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
+      LOG.debug("refreshFileStatusFromDocument: file.getModificationStamp()=" + virtualFile.getModificationStamp() + ", document.getModificationStamp()=" + doc.getModificationStamp());
     }
-    FileStatus cachedStatus = myFileStatusManager.getCachedStatus(file);
-    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(file)) {
-      final AbstractVcs vcs = myVcsManager.getVcsFor(file);
+    FileStatus cachedStatus = myFileStatusManager.getCachedStatus(virtualFile);
+    if (cachedStatus == null || cachedStatus == FileStatus.NOT_CHANGED || !isDocumentModified(virtualFile)) {
+      final AbstractVcs vcs = myVcsManager.getVcsFor(virtualFile);
       if (vcs == null) return;
-      if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(file)) {
+      if (cachedStatus == FileStatus.MODIFIED && !isDocumentModified(virtualFile)) {
         if (!((ReadonlyStatusHandlerImpl) ReadonlyStatusHandlerImpl.getInstance(myProject)).getState().SHOW_DIALOG) {
           RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
           if (rollbackEnvironment != null) {
-            rollbackEnvironment.rollbackIfUnchanged(file);
+            rollbackEnvironment.rollbackIfUnchanged(virtualFile);
           }
         }
       }
-      myFileStatusManager.fileStatusChanged(file);
+      myFileStatusManager.fileStatusChanged(virtualFile);
       ChangeProvider cp = vcs.getChangeProvider();
       if (cp != null && cp.isModifiedDocumentTrackingRequired()) {
-        myDirtyScopeManager.fileDirty(file);
+        myDirtyScopeManager.fileDirty(virtualFile);
       }
     }
   }
 
+  @NotNull
   @Override
-  public ThreeState getNotChangedDirectoryParentingStatus(VirtualFile vf) {
-    return myConfiguration.SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(vf) : ThreeState.NO;
+  public ThreeState getNotChangedDirectoryParentingStatus(@NotNull VirtualFile virtualFile) {
+    return myConfiguration.SHOW_DIRTY_RECURSIVELY ? myChangeListManager.haveChangesUnder(virtualFile) : ThreeState.NO;
   }
 
   @Override
@@ -164,6 +173,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
 
     if (isDocumentModified(file)) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           return LoadTextUtil.loadText(file).toString();
         }

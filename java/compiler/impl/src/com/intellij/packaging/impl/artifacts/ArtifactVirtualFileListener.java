@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
 
 
   @Override
-  public void fileMoved(VirtualFileMoveEvent event) {
+  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     final String oldPath = event.getOldParent().getPath() + "/" + event.getFileName();
     filePathChanged(oldPath, event.getNewParent().getPath() + "/" + event.getFileName());
   }
@@ -98,7 +98,7 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
   }
 
   @Override
-  public void propertyChanged(VirtualFilePropertyEvent event) {
+  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       final VirtualFile parent = event.getParent();
       if (parent != null) {

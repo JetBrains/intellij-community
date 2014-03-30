@@ -62,4 +62,24 @@ public class TooBroadCatchBlock{
       try (java.io.FileInputStream in = new java.io.FileInputStream("asdf")) {}
     } catch (IOException e) {}
   }
+
+  boolean m() {
+    try {
+      new java.io.FileInputStream("");
+      return new java.io.File("can_reset").isFile();
+    } catch (FileNotFoundException e) {
+      return false;
+    } catch (Exception e ) {
+      return false;
+    }
+  }
+
+  boolean m2() {
+    try {
+      new java.io.FileInputStream("");
+      return new java.io.File("can_reset").isFile();
+    } catch (Exception e ) {
+      return false;
+    }
+  }
 }

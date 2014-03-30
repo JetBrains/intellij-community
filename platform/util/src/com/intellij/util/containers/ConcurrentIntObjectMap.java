@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * @see java.util.concurrent.ConcurrentMap
  */
 public interface ConcurrentIntObjectMap<V> {
-  // concurrency related methods
-
   /**
    * @return written value
    */
@@ -43,4 +41,13 @@ public interface ConcurrentIntObjectMap<V> {
 
   @NotNull
   int[] keys();
+
+  /**
+   * @return Approximate number of elements in the map.
+   * The usage is discouraged since
+   * First, in concurrent context it doesn't have much sense
+   * and Second, for weak- or soft- keyed maps it returns the total number of references
+   *         rather than alive values because otherwise it would be too expensive
+   */
+  int size();
 }

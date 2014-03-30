@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
 
   public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
     List<String> refNames = new ArrayList<String>();
-    for (GrCodeReferenceElement element : psi.getReferenceElements()) {
+    for (GrCodeReferenceElement element : psi.getReferenceElementsGroovy()) {
       final String name = element.getText();
       if (StringUtil.isNotEmpty(name)) {
         refNames.add(name);
@@ -54,20 +54,26 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
 
   }
 
-  public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     GrStubUtils.writeStringArray(dataStream, stub.getBaseClasses());
   }
 
-  public GrReferenceListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrReferenceListStub(parentStub, this, GrStubUtils.readStringArray(dataStream));
   }
 
-  public void indexStub(GrReferenceListStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrReferenceListStub stub, @NotNull IndexSink sink) {
     for (String name : stub.getBaseClasses()) {
       if (name != null) {
         sink.occurrence(GrDirectInheritorsIndex.KEY, PsiNameHelper.getShortClassName(name));
       }
     }
+  }
+
+  @Override
+  public boolean isLeftBound() {
+    return true;
   }
 }
 

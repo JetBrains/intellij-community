@@ -54,23 +54,28 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   }
 
+  @Override
   public int getFileCount(final SmartTodoItemPointer val) {
     return 1;
   }
 
+  @Override
   public int getTodoItemCount(final SmartTodoItemPointer val) {
     return 1;
   }
 
+  @Override
   public ArrayList<HighlightedRegion> getHighlightedRegions(){
     return myHighlightedRegions;
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return Collections.emptyList();
   }
 
+  @Override
   public void update(PresentationData presentation) {
     TodoItem todoItem=getValue().getTodoItem();
     RangeMarker myRangeMarker=getValue().getRangeMarker();
@@ -165,6 +170,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     presentation.setIcon(newIcon);
   }
 
+  @Override
   public String getTestPresentation() {
     return "Item: "+getValue().getTodoItem().getTextRange();
   }

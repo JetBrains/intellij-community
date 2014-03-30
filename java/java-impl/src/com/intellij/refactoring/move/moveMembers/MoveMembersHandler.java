@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
   private static boolean isFieldOrStaticMethod(final PsiElement element) {
     if (element instanceof PsiField) return true;
     if (element instanceof PsiMethod) {
-      if (element instanceof JspHolderMethod) return false;
+      if (element instanceof SyntheticElement) return false;
       return ((PsiMethod) element).hasModifierProperty(PsiModifier.STATIC);
     }
     return false;

@@ -59,4 +59,9 @@ class serializableSubclassOfAbstractNoSerializable extends abstractNoSerializabl
   public static void main(String[] args) {
     System.out.println(new serializableSubclassOfAbstractNoSerializable().toString());
   }
+  static {
+    new a();
+    new b();
+  }
+  static final long serialVersionUID = 20130808044800000L;
 }

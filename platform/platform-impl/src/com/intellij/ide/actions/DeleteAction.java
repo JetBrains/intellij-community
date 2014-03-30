@@ -62,7 +62,7 @@ public class DeleteAction extends AnAction implements DumbAware {
     else
       presentation.setText(IdeBundle.message("action.delete"));
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -35,19 +37,19 @@ public class CompilerMessage extends BuildMessage {
   private final long myLine;
   private final long myColumn;
 
-  public CompilerMessage(String compilerName, Throwable internalError) {
+  public CompilerMessage(@NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText) {
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText, String sourcePath) {
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText, String sourcePath) {
     this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(String compilerName, Kind kind, String messageText,
+  public CompilerMessage(@NotNull String compilerName, Kind kind, String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,
@@ -64,6 +66,7 @@ public class CompilerMessage extends BuildMessage {
     myColumn = locationColumn;
   }
 
+  @NotNull
   public String getCompilerName() {
     return myCompilerName;
   }
@@ -97,11 +100,11 @@ public class CompilerMessage extends BuildMessage {
     return getCompilerName() + ":" + getKind().name() + ":" + super.toString();
   }
 
-  private static String getTextFromThrowable(Throwable internalError) {
+  public static String getTextFromThrowable(Throwable internalError) {
     StringBuilder text = new StringBuilder();
     text.append("Error: ");
     final String msg = internalError.getMessage();
-    if (msg != null) {
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
       text.append(msg);
     }
     else {

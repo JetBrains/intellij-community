@@ -1,0 +1,20 @@
+class A extends {}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    PsiWhiteSpace(' ')
+    Extends clause
+      PsiElement(extends)('extends')
+      PsiErrorElement:Identifier expected
+        <empty list>
+    Implements clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiElement(})('}')

@@ -25,7 +25,8 @@ contributor([gdslScriptContext]) {
   method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
   method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
   method name: "contribute", params: [pointcut: "Pointcut", body: {}], type: void
-  
+  method name: "scriptSuperClass", params: [args: [pattern: 'java.lang.String', superClass: 'java.lang.String']]
+
   method name: "currentType", params: [qName: String.name], type: "Pointcut", doc:'Matches when the current (qualifier or this) type is a subtype of the type described by the parameter'
 
   method name: "category", params: [categoryClass: "java.lang.String", isStatic:"java.lang.Boolean"], type: void

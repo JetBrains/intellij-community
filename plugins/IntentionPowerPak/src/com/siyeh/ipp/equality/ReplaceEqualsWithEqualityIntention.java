@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package com.siyeh.ipp.equality;
 
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceEqualsWithEqualityIntention extends Intention {
@@ -70,6 +71,6 @@ public class ReplaceEqualsWithEqualityIntention extends Intention {
     else {
       strippedTargetText = strippedTarget.getText();
     }
-    replaceExpression(strippedTargetText + "==" + strippedArgText, call);
+    PsiReplacementUtil.replaceExpression(call, strippedTargetText + "==" + strippedArgText);
   }
 }

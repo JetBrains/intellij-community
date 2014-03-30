@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,40 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.speedSearch.FilteringListModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ListUtil {
+  public static final String SELECTED_BY_MOUSE_EVENT = "byMouseEvent";
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.ListUtil");
+
+  public static MouseMotionListener installAutoSelectOnMouseMove(final JList list) {
+    final MouseMotionAdapter listener = new MouseMotionAdapter() {
+      boolean myIsEngaged = false;
+
+      public void mouseMoved(MouseEvent e) {
+        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+          Point point = e.getPoint();
+          int index = list.locationToIndex(point);
+          list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.TRUE);
+          list.setSelectedIndex(index);
+          list.putClientProperty(SELECTED_BY_MOUSE_EVENT, Boolean.FALSE);
+        }
+        else {
+          myIsEngaged = true;
+        }
+      }
+    };
+    list.addMouseMotionListener(listener);
+    return listener;
+  }
 
   public abstract static class Updatable {
     private final JButton myButton;

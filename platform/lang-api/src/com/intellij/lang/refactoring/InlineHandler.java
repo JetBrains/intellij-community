@@ -46,6 +46,7 @@ public interface InlineHandler {
      * Special settings for the case when inline cannot be performed due to already reported (by error hint) problem
      */
     Settings CANNOT_INLINE_SETTINGS = new Settings() {
+      @Override
       public boolean isOnlyOneReferenceToInline() {
         return false;
       }

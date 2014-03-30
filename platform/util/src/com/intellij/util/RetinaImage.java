@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,51 @@
  */
 package com.intellij.util;
 
-import apple.awt.CImage;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+/**
+ * @author Anton Makeev
+ * @author Konstantin Bulenkov
+ */
 public class RetinaImage {
+
   public static Image createFrom(Image image, final int scale, Component ourComponent) {
     int w = image.getWidth(ourComponent);
     int h = image.getHeight(ourComponent);
 
-    Image hidpi = create(w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
-
-    Graphics2D g = (Graphics2D)hidpi.getGraphics();
-    g.scale(1f / scale, 1f / scale);
-    g.drawImage(image, 0, 0, null);
-    g.dispose();
+    Image hidpi = create(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
+    if (SystemInfo.isAppleJvm) {
+      Graphics2D g = (Graphics2D)hidpi.getGraphics();
+      g.scale(1f / scale, 1f / scale);
+      g.drawImage(image, 0, 0, null);
+      g.dispose();
+    }
 
     return hidpi;
   }
 
   public static BufferedImage create(final int width, int height, int type) {
-    return new CImage.HiDPIScaledImage(width, height, type) {
-      @Override
-      protected void drawIntoImage(BufferedImage image, float scale) {
+    return create(null, width, height, type);
+  }
+
+
+  private static BufferedImage create(Image image, final int width, int height, int type) {
+    if (SystemInfo.isAppleJvm) {
+      return AppleHiDPIScaledImage.create(width, height, type);
+    } else {
+      if (image == null) {
+        return new JBHiDPIScaledImage(width, height, type);
+      } else {
+        return new JBHiDPIScaledImage(image, width, height, type);
       }
-    };
+    }
+  }
+
+  public static boolean isAppleHiDPIScaledImage(Image image) {
+    return UIUtil.isAppleRetina() && AppleHiDPIScaledImage.is(image);
   }
 }

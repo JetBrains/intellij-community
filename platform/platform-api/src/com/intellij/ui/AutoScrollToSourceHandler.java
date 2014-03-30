@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -33,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -54,7 +56,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount > 1) return false;
 
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
@@ -85,7 +87,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount >= 2) return false;
 
         Component location = table.getComponentAt(e.getPoint());
@@ -116,7 +118,7 @@ public abstract class AutoScrollToSourceHandler {
     myAutoScrollAlarm = new Alarm();
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (clickCount >= 2) return false;
         final Object source = e.getSource();
         final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component ? (Component)source : null, e.getPoint(), jList));
@@ -188,7 +190,7 @@ public abstract class AutoScrollToSourceHandler {
       @Override
       public void run() {
         DataContext context = DataManager.getInstance().getDataContext(tree);
-        final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(context);
+        final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
         if (vFile != null) {
           // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
           // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
@@ -197,7 +199,7 @@ public abstract class AutoScrollToSourceHandler {
           //IDEA-84881 Don't autoscroll to very large files
           if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
         }
-        Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context);
+        Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
         if (navigatables != null) {
           if (navigatables.length > 1) {
             return;
@@ -207,7 +209,7 @@ public abstract class AutoScrollToSourceHandler {
             if (!navigatable.canNavigateToSource()) return;
           }
         }
-        OpenSourceUtil.openSourcesFrom(context, false);
+        OpenSourceUtil.navigate(false, true, navigatables);
       }
     });
   }

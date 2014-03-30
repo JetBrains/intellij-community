@@ -37,14 +37,13 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -188,30 +187,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   }
 
   @Override
-  public PsiType getReturnTypeNoResolve() {
-    if (isConstructor()) return null;
-
-    final PsiMethodStub stub = getStub();
-    if (stub != null) {
-      final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
-      if (typeText == null) return null;
-
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    PsiTypeElement typeElement = getReturnTypeElement();
-    if (typeElement == null) return null;
-    PsiParameterList parameterList = getParameterList();
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, parameterList, this);
-  }
-
-  @Override
   public PsiType getReturnType() {
     if (isConstructor()) return null;
 
@@ -220,14 +195,11 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
       final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(true));
       if (typeText == null) return null;
 
-      SoftReference<PsiType> cachedType = myCachedType;
-      if (cachedType != null) {
-        PsiType type = cachedType.get();
-        if (type != null) return type;
-      }
+      PsiType type = SoftReference.dereference(myCachedType);
+      if (type != null) return type;
 
       try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
+        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
         myCachedType = new SoftReference<PsiType>(type);
         return type;
       }
@@ -241,7 +213,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     PsiTypeElement typeElement = getReturnTypeElement();
     if (typeElement == null) return null;
     PsiParameterList parameterList = getParameterList();
-    return JavaSharedImplUtil.getType(typeElement, parameterList, this);
+    return JavaSharedImplUtil.getType(typeElement, parameterList);
   }
 
   @Override
@@ -335,7 +307,17 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor){
+  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+    if (substitutor == PsiSubstitutor.EMPTY) {
+      return CachedValuesManager.getCachedValue(this, new CachedValueProvider<MethodSignature>() {
+        @Nullable
+        @Override
+        public Result<MethodSignature> compute() {
+          MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
+          return Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
+    }
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
@@ -343,9 +325,12 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public PsiElement getOriginalElement() {
     final PsiClass containingClass = getContainingClass();
     if (containingClass != null) {
-      final PsiMethod originalMethod = ((PsiClass)containingClass.getOriginalElement()).findMethodBySignature(this, false);
-      if (originalMethod != null) {
-        return originalMethod;
+      PsiElement original = containingClass.getOriginalElement();
+      if (original != containingClass) {
+        final PsiMethod originalMethod = ((PsiClass)original).findMethodBySignature(this, false);
+        if (originalMethod != null) {
+          return originalMethod;
+        }
       }
     }
     return this;

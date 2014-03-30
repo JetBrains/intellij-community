@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +64,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     final ProgressManager progressManager = ProgressManager.getInstance();
     final int totalFiles = scope.getFileCount();
 
@@ -130,7 +129,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                    "' library with IDEA nullity annotations. Would you like to add the dependenc";
         message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies") + " now?";
         if (Messages.showOkCancelDialog(project, message, INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) ==
-            DialogWrapper.OK_EXIT_CODE) {
+            Messages.OK) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
@@ -139,14 +138,16 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               }
             }
           });
+          restartAnalysis(project, scope);
         }
       }
       else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
                                                     " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
                                                     "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
                                                     " IntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
-                                           INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                           INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == Messages.OK) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             final LocateLibraryDialog dialog =
               new LocateLibraryDialog(modulesWithoutAnnotations.iterator().next(), PathManager.getLibPath(), "annotations.jar",
@@ -155,12 +156,14 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (dialog.isOK()) {
               final String path = dialog.getResultingLibraryPath();
               new WriteCommandAction(project) {
+                @Override
                 protected void run(final Result result) throws Throwable {
                   for (Module module : modulesWithoutAnnotations) {
                     OrderEntryFix.addBundledJarToRoots(project, null, module, null, AnnotationUtil.NOT_NULL, path);
                   }
                 }
               }.execute();
+              restartAnalysis(project, scope);
             }
           }
         });
@@ -218,6 +221,15 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       }
     };
     SwingUtilities.invokeLater(applyRunnable);
+  }
+
+  private void restartAnalysis(final Project project, final AnalysisScope scope) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        analyze(project, scope);
+      }
+    });
   }
 
 

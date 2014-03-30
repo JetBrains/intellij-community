@@ -172,6 +172,7 @@ public class NameSuggester {
    */
   private TreeMap<Pair<Integer, Integer>, String> calculateReplacements(String[] propertyWords, TIntIntHashMap matches) {
     TreeMap<Pair<Integer,Integer>, String> replacements = new TreeMap<Pair<Integer,Integer>, String>(new Comparator<Pair<Integer, Integer>>() {
+      @Override
       public int compare(Pair<Integer, Integer> pair, Pair<Integer, Integer> pair1) {
         return pair.getFirst().compareTo(pair1.getFirst());
       }

@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
@@ -42,6 +43,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Date: 10/23/12
  * Time: 2:27 PM
  */
+// TODO: Locking functionality which is tested by this test is not required anymore. Likely test needs to be removed.
+@Ignore
 public class SvnLockingTest extends TestCase {
   private File myWorkingCopyRoot;
   private SvnTestWriteOperationLocks myLocks;

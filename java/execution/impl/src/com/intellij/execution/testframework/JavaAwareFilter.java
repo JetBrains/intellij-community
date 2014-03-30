@@ -25,15 +25,16 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 
 public class JavaAwareFilter {
   private JavaAwareFilter() {
   }
 
-  public static Filter METHOD(final Project project) {
+  public static Filter METHOD(final Project project, final GlobalSearchScope searchScope) {
     return new Filter() {
       public boolean shouldAccept(final AbstractTestProxy test) {
-        final Location location = test.getLocation(project);
+        final Location location = test.getLocation(project, searchScope);
         if (location instanceof MethodLocation) return true;
         if (location instanceof PsiLocation && location.getPsiElement() instanceof PsiMethod) return true;
         return false;

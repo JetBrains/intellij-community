@@ -17,7 +17,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,9 +114,6 @@ public abstract class WindowManager {
   @NotNull
   public abstract IdeFrame[] getAllProjectFrames();
 
-  /** @deprecated Use {@linkplain #getAllProjectFrames()} instead (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public IdeFrame[] getAllFrames() { return getAllProjectFrames(); }
-
   public abstract JFrame findVisibleFrame();
 
   public abstract void addListener(WindowManagerListener listener);
@@ -127,7 +123,7 @@ public abstract class WindowManager {
   /**
    * @return <code>true</code> if full screen mode is supported in current OS.
    */
-  public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfo.isWindows;
-  }
+  public abstract boolean isFullScreenSupportedInCurrentOS();
+
+  public abstract void requestUserAttention(@NotNull IdeFrame frame, boolean critical);
 }

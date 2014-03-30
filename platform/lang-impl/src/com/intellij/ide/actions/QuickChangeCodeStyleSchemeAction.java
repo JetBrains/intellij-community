@@ -33,12 +33,14 @@ import java.util.Collection;
  * @author max
  */
 public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
+  @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(project);
     if (manager.PER_PROJECT_SETTINGS != null) {
       //noinspection HardCodedStringLiteral
       group.add(new AnAction("<project>", "",
                              manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
+        @Override
         public void actionPerformed(AnActionEvent e) {
           manager.USE_PER_PROJECT_SETTINGS = true;
         }
@@ -72,6 +74,7 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
                                 final boolean addScheme) {
     group.add(new AnAction(scheme.getName(), "",
                            scheme == currentScheme && !manager.USE_PER_PROJECT_SETTINGS ? ourCurrentAction : ourNotCurrentAction) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (addScheme) {
           CodeStyleSchemes.getInstance().addScheme(scheme);
@@ -83,12 +86,14 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
     });
   }
 
+  @Override
   protected boolean isEnabled() {
     return CodeStyleSchemes.getInstance().getSchemes().length > 1;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(PlatformDataKeys.PROJECT.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(CommonDataKeys.PROJECT.getData(e.getDataContext()) != null);
   }
 }

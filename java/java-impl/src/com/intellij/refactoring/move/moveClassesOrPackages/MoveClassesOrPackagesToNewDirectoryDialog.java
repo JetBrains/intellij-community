@@ -191,6 +191,19 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
     return myDestDirectoryField.getTextField();
   }
 
+  //for scala plugin
+  @NotNull
+  protected MoveClassesOrPackagesProcessor createMoveClassesOrPackagesProcessor(Project project,
+                                                                          PsiElement[] elements,
+                                                                          @NotNull final MoveDestination moveDestination,
+                                                                          boolean searchInComments,
+                                                                          boolean searchInNonJavaFiles,
+                                                                          MoveCallback moveCallback) {
+
+    return new MoveClassesOrPackagesProcessor(project, elements, moveDestination,
+        searchInComments, searchInNonJavaFiles, moveCallback);
+  }
+
   protected void performRefactoring(Project project, PsiDirectory directory, PsiPackage aPackage,
                                     boolean searchInComments,
                                     boolean searchForTextOccurences) {
@@ -205,9 +218,9 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                                         ? factory.createSourceFolderPreservingMoveDestination(aPackage.getQualifiedName())
                                         : factory.createSourceRootMoveDestination(aPackage.getQualifiedName(), sourceRoot);
 
-    MoveClassesOrPackagesProcessor processor = new MoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
-                                                                                  searchInComments, searchForTextOccurences,
-                                                                                  myMoveCallback);
+    MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
+        searchInComments, searchForTextOccurences, myMoveCallback);
+
     if (processor.verifyValidPackageName()) {
       processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
         @Override

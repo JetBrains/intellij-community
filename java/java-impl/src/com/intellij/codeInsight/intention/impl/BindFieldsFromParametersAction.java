@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.java.JavaLanguage;
@@ -154,7 +154,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
     PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiMethod method = myParameter != null ? (PsiMethod)myParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
 

@@ -26,7 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
+import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +42,7 @@ public class MethodParameterInjection extends BaseInjection {
   private final Map<String, MethodInfo> myParameterMap = new THashMap<String, MethodInfo>();
 
   public MethodParameterInjection() {
-    super(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+    super(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
   }
 
   @NotNull

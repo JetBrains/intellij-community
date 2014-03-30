@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
@@ -105,6 +104,7 @@ public class GitRebaseEditor extends DialogWrapper {
     myGitRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
+
     if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
       final int prefixSize = CYGDRIVE_PREFIX.length();
       file = file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
@@ -114,9 +114,15 @@ public class GitRebaseEditor extends DialogWrapper {
     myTableModel.load(file);
     myCommitsTable.setModel(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+
+    final JComboBox editorComboBox = new JComboBox();
+    for (Object option : GitRebaseEntry.Action.values()) {
+      editorComboBox.addItem(option);
+    }
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION);
-    actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
+    actionColumn.setCellEditor(new DefaultCellEditor(editorComboBox));
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+
     myCommitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         myViewButton.setEnabled(myCommitsTable.getSelectedRowCount() == 1);

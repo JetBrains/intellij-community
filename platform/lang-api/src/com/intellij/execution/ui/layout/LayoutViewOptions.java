@@ -54,6 +54,8 @@ public interface LayoutViewOptions {
   AnAction[] getLayoutActionsList();
 
   @NotNull
+  LayoutViewOptions setTabPopupActions(@NotNull ActionGroup group);
+  @NotNull
   LayoutViewOptions setAdditionalFocusActions(@NotNull ActionGroup group);
 
   AnAction getSettingsActions();

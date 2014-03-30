@@ -29,7 +29,7 @@ import java.util.List;
 
 public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSuperFix {
 
-  public CreateConstructorFromSuperFix(PsiMethodCallExpression methodCall) {
+  public CreateConstructorFromSuperFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);
   }
 

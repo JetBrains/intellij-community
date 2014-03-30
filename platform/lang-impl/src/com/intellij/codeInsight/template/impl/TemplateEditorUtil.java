@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -45,8 +45,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class TemplateEditorUtil {
   private TemplateEditorUtil() {}
 
@@ -54,16 +52,16 @@ public class TemplateEditorUtil {
     return createEditor(isReadOnly, text, null);
   }
 
-  public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable Map<TemplateContextType, Boolean> context) {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+  public static Editor createEditor(boolean isReadOnly, CharSequence text, @Nullable TemplateContext context) {
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     return createEditor(isReadOnly, createDocument(text, context, project), project);
   }
 
-  private static Document createDocument(CharSequence text, @Nullable Map<TemplateContextType, Boolean> context, Project project) {
+  private static Document createDocument(CharSequence text, @Nullable TemplateContext context, Project project) {
     if (context != null) {
-      for (Map.Entry<TemplateContextType, Boolean> entry : context.entrySet()) {
-        if (entry.getValue()) {
-          return entry.getKey().createDocument(text, project);
+      for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+        if (context.isExplicitlyEnabled(type)) {
+          return type.createDocument(text, project);
         }
       }
     }

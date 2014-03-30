@@ -19,6 +19,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -38,10 +39,11 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
+  @Override
   public final boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (editor == null || file == null) return false;
 
     if (ourPreventInlineRenameFlag.get() != null) {
@@ -53,17 +55,19 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
 
-    final RefactoringSupportProvider
-      supportProvider = element != null ? LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()):null;
+    RefactoringSupportProvider supportProvider =
+      element == null ? null : LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage());
     return supportProvider != null &&
            editor.getSettings().isVariableInplaceRenameEnabled() &&
            supportProvider.isInplaceRenameAvailable(element, nameSuggestionContext);
   }
 
+  @Override
   public final boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     if (element == null) {
@@ -88,11 +92,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     LOG.assertTrue(element != null);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (checkAvailable(element, editor, dataContext)) {
       doRename(element, editor, dataContext);
     }
@@ -126,7 +131,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     try {
       ourPreventInlineRenameFlag.set(Boolean.TRUE);
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
-      assert handler != null;
+      assert handler != null : elementToRename;
       handler.invoke(
         elementToRename.getProject(),
         editor,

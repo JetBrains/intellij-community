@@ -47,17 +47,18 @@ public class FileColorsModel implements Cloneable {
   private final List<FileColorConfiguration> myConfigurations;
   private final List<FileColorConfiguration> mySharedConfigurations;
   private static final Map<String, String> globalScopes;
-  private static Map<String, String> globalScopesColors;
+  private static final Map<String, String> globalScopesColors;
   static {
     globalScopes = new HashMap<String, String>();
     globalScopes.put(NonProjectFilesScope.NAME, "file.colors.enable.non.project");
-    if (PlatformUtils.isIntelliJ()) {
+    if (PlatformUtils.isIntelliJ() || PlatformUtils.isRubyMine()) {
       globalScopes.put(TestsScope.NAME, "file.colors.enable.tests");
     }
 
     globalScopesColors = new HashMap<String, String>();
   }
 
+  @NotNull
   private final Project myProject;
 
   FileColorsModel(@NotNull final Project project) {
@@ -92,8 +93,8 @@ public class FileColorsModel implements Cloneable {
 
   private void initGlobalScopes() {
     for (String scopeName : globalScopes.keySet()) {
-      if (findConfiguration(scopeName, false) == null) {        
-        final String color = PropertiesComponent.getInstance().getOrInit(globalScopes.get(scopeName), globalScopesColors.get(scopeName));        
+      if (findConfiguration(scopeName, false) == null) {
+        final String color = PropertiesComponent.getInstance().getOrInit(globalScopes.get(scopeName), globalScopesColors.get(scopeName));
         if (color.length() != 0) {
           final Color col = ColorUtil.fromHex(color, null);
           final String name = col == null ? null : FileColorManagerImpl.getColorName(col);
@@ -120,7 +121,7 @@ public class FileColorsModel implements Cloneable {
 
     configurations.clear();
 
-    final List<Element> list = (List<Element>)e.getChildren(FILE_COLOR);
+    final List<Element> list = e.getChildren(FILE_COLOR);
     final Map<String, String> global = new HashMap<String, String>(globalScopes);
     for (Element child : list) {
       final FileColorConfiguration configuration = FileColorConfiguration.load(child);
@@ -146,6 +147,7 @@ public class FileColorsModel implements Cloneable {
     }
   }
 
+  @Override
   public FileColorsModel clone() throws CloneNotSupportedException {
     final List<FileColorConfiguration> regular = new ArrayList<FileColorConfiguration>();
     for (final FileColorConfiguration configuration : myConfigurations) {
@@ -196,12 +198,8 @@ public class FileColorsModel implements Cloneable {
     if (!psiFile.isValid()) {
       return null;
     }
-
-    final FileColorConfiguration configuration = findConfiguration(psiFile);
-    if (configuration != null && configuration.isValid(psiFile.getProject())) {
-      return configuration.getColorName();
-    }
-    return null;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    return virtualFile == null? null : getColor(virtualFile, psiFile.getProject());
   }
 
   @Nullable
@@ -218,38 +216,13 @@ public class FileColorsModel implements Cloneable {
   }
 
   @Nullable
-  private FileColorConfiguration findConfiguration(@NotNull final PsiFile colored) {
-    for (final FileColorConfiguration configuration : myConfigurations) {
-      final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-          return configuration;
-        }
-      }
-    }
-
-    for (FileColorConfiguration configuration : mySharedConfigurations) {
-      final NamedScope scope = NamedScopeManager.getScope(myProject, configuration.getScopeName());
-      if (scope != null) {
-        final NamedScopesHolder namedScopesHolder = NamedScopeManager.getHolder(myProject, configuration.getScopeName(), null);
-        if (scope.getValue() != null && namedScopesHolder != null && scope.getValue().contains(colored, namedScopesHolder)) {
-          return configuration;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
     for (final FileColorConfiguration configuration : myConfigurations) {
       final NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
       if (scope != null) {
         final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
         final PackageSet packageSet = scope.getValue();
-        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
           return configuration;
         }
       }
@@ -260,7 +233,7 @@ public class FileColorsModel implements Cloneable {
       if (scope != null) {
         final NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
         final PackageSet packageSet = scope.getValue();
-        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, namedScopesHolder)) {
+        if (packageSet instanceof PackageSetBase && namedScopesHolder != null && ((PackageSetBase)packageSet).contains(colored, myProject, namedScopesHolder)) {
           return configuration;
         }
       }

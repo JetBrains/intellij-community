@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler;
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -30,7 +29,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyMembersWithDocSelectioner implements ExtendWordSelectionHandler {
+public class GroovyMembersWithDocSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof GrDocComment || e instanceof GrDocCommentOwner;

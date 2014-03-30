@@ -20,6 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -47,7 +49,9 @@ public class JavaStylePropertiesUtil {
     }
     else if (isSetterInvocation(call) && invoked instanceof GrReferenceExpression) {
       final GrStatement newCall = genRefForSetter(call, accessorName);
-      call.replaceWithStatement(newCall);
+      if(newCall != null) {
+        call.replaceWithStatement(newCall);
+      }
     }
   }
 
@@ -55,14 +59,22 @@ public class JavaStylePropertiesUtil {
     return !isInvokedOnMap(call) && (isGetterInvocation(call) || isSetterInvocation(call));
   }
 
+  @Nullable
   private static GrAssignmentExpression genRefForSetter(GrMethodCall call, String accessorName) {
     String name = getPropertyNameBySetterName(accessorName);
+    if(name == null) return null;
     GrExpression value = call.getExpressionArguments()[0];
     GrReferenceExpression refExpr = (GrReferenceExpression)call.getInvokedExpression();
-    String oldNameStr = refExpr.getReferenceNameElement().getText();
-    String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
+
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
-    return (GrAssignmentExpression)factory.createStatementFromText(newRefExpr + " = " + value.getText(), call);
+    final GrAssignmentExpression assignment = (GrAssignmentExpression)factory.createStatementFromText("yyy = xxx", call);
+
+    GrReferenceExpression lvalueRef = (GrReferenceExpression)assignment.getLValue();
+    lvalueRef.setQualifier(refExpr.getQualifier());
+    lvalueRef.handleElementRenameSimple(name);
+    assignment.getRValue().replaceWithExpression(value, true);
+
+    return assignment;
   }
 
   private static GrExpression genRefForGetter(GrMethodCall call, String accessorName) {
@@ -110,16 +122,18 @@ public class JavaStylePropertiesUtil {
     }
 
     GrAssignmentExpression assignment = genRefForSetter(call, refExpr.getReferenceName());
-    GrExpression value = assignment.getLValue();
-    if (value instanceof GrReferenceExpression &&
-        call.getManager().areElementsEquivalent(((GrReferenceExpression)value).resolve(), method)) {
-      return true;
+    if(assignment != null) {
+      GrExpression value = assignment.getLValue();
+      if (value instanceof GrReferenceExpression &&
+          call.getManager().areElementsEquivalent(((GrReferenceExpression)value).resolve(), method)) {
+        return true;
+      }
     }
 
     return false;
   }
 
-  private static boolean isGetterInvocation(GrMethodCall call) {
+  private static boolean isGetterInvocation(@NotNull GrMethodCall call) {
     GrExpression expr = call.getInvokedExpression();
     if (!(expr instanceof GrReferenceExpression)) return false;
 

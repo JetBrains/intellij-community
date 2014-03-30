@@ -18,12 +18,15 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -163,12 +166,6 @@ public class LineStatusTrackerDrawing {
     group.add(new ShowLineStatusRangeDiffAction(tracker, range, editor));
     group.add(new CopyLineStatusRangeAction(tracker, range));
 
-    @SuppressWarnings("unchecked")
-    final List<AnAction> actionList = (List<AnAction>)editorComponent.getClientProperty(AnAction.ourClientProperty);
-
-    actionList.remove(globalShowPrevAction);
-    actionList.remove(globalShowNextAction);
-
     final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, group, true).getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
@@ -219,20 +216,25 @@ public class LineStatusTrackerDrawing {
       EditorFactory.getInstance().releaseEditor(uEditor);
     }
 
+    final List<AnAction> actionList = ActionUtil.getActions(editorComponent);
     final LightweightHint lightweightHint = new LightweightHint(component);
-    lightweightHint.addHintListener(new HintListener() {
+    HintListener closeListener = new HintListener() {
       public void hintHidden(final EventObject event) {
         actionList.remove(rollback);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
-        actionList.add(globalShowPrevAction);
-        actionList.add(globalShowNextAction);
       }
-    });
+    };
+    lightweightHint.addHintListener(closeListener);
 
     HintManagerImpl.getInstanceImpl().showEditorHint(lightweightHint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE |
                                                                              HintManagerImpl.HIDE_BY_SCROLLING,
                                                                              -1, false, new HintHint(editor, point));
+
+    if (!lightweightHint.isVisible()) {
+      closeListener.hintHidden(null);
+    }
+    
   }
 
   private static String getFileName(final Document document) {

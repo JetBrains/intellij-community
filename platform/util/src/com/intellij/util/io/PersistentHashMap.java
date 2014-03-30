@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,18 +284,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    final String baseName = prefixFile.getName();
-    final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
-      @Override
-      public boolean accept(@NotNull final File pathName) {
-        return pathName.getName().startsWith(baseName);
-      }
-    });
-    if (files != null) {
-      for (File f : files) {
-        FileUtil.delete(f);
-      }
-    }
+    IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
   @NotNull
@@ -640,8 +629,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
     LOG.info("Loaded mappings:"+(System.currentTimeMillis() - started) + "ms, keys:"+infos.size());
     started = System.currentTimeMillis();
-    int fragments = 0;
-    if (infos.size() > 0) {
+    long fragments = 0;
+    if (!infos.isEmpty()) {
       try {
         fragments = myValueStorage.compactValues(infos, newStorage);
       } catch (Throwable t) {
@@ -650,7 +639,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
     }
 
-    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+fragments);
+    LOG.info("Compacted values for:"+(System.currentTimeMillis() - started) + "ms fragments:"+((int)fragments) + ", newfragments:"+(fragments >> 32));
 
     started = System.currentTimeMillis();
     try {
@@ -712,7 +701,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
 
     if (defaultSizeInfo) {
-      myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value | USED_LONG_VALUE_MASK);
+      value |= USED_LONG_VALUE_MASK;
+
+      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, (int)(value >>> 32) );
+      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset + 4, (int)value);
+
       if (newKey) ++largeKeys;
     }
 
@@ -722,7 +715,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
     if (doHardConsistencyChecks) {
       long checkRecord = readValueId(keyId);
-      if (checkRecord != value) {
+      if (checkRecord != (value & ~USED_LONG_VALUE_MASK)) {
         assert false:value;
       }
     }

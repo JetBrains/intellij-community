@@ -16,37 +16,33 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit2.info.LocationUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 
 
 public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
-  private PsiPackage myPackage = null;
-
-  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
-    final Project project = location.getProject();
-    final PsiElement element = location.getPsiElement();
-    myPackage = checkPackage(element);
-    if (myPackage == null) return null;
-    if (!LocationUtil.isJarAttached(location, myPackage, JUnitUtil.TESTCASE_CLASS)) return null;
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
+    if (psiPackage == null) return false;
+    sourceElement.set(psiPackage);
+    if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TESTCASE_CLASS)) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
-    data.PACKAGE_NAME = myPackage.getQualifiedName();
+    data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-    data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
+    data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
+    return true;
   }
 
-  public PsiElement getSourceElement() {
-    return myPackage;
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return !other.isProducedBy(AllInDirectoryConfigurationProducer.class) && !other.isProducedBy(PatternConfigurationProducer.class);
   }
 }

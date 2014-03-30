@@ -51,9 +51,9 @@ Groovy script
         PsiWhiteSpace(' ')
         PsiElement(identifier)('a')
     PsiElement())(')')
-    PsiWhiteSpace(' ')
     Throw clause
       <empty list>
+    PsiWhiteSpace(' ')
     Open block
       PsiElement({)('{')
       PsiElement(})('}')

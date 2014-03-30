@@ -28,6 +28,7 @@ public class BlockStatementEvaluator implements Evaluator {
     myStatements = statements;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object result = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf();
     for (Evaluator statement : myStatements) {
@@ -36,6 +37,7 @@ public class BlockStatementEvaluator implements Evaluator {
     return result;
   }
 
+  @Override
   public Modifier getModifier() {
     return myStatements.length > 0 ? myStatements[myStatements.length - 1].getModifier() : null;
   }

@@ -4,7 +4,7 @@ interface Generic<T> {
 
 class II implements Generic<Object> {
     public SomeGeneric<?> foo() {
-        <selection>return null;  //To change body of implemented methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 }
 

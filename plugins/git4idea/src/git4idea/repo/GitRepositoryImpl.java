@@ -15,14 +15,12 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBus;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -32,54 +30,37 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryImpl implements GitRepository, Disposable {
+public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, Disposable {
 
-  private static final Object STUB_OBJECT = new Object();
-
-  private final Project myProject;
   @NotNull private final GitPlatformFacade myPlatformFacade;
-  private final VirtualFile myRootDir;
-  private final GitRepositoryReader myReader;
-  private final VirtualFile myGitDir;
-  private final MessageBus myMessageBus;
-  private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  private final QueueProcessor<Object> myNotifier;
+  @NotNull private final GitRepositoryReader myReader;
+  @NotNull private final VirtualFile myGitDir;
+  @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
 
-  @NotNull private volatile State myState;
-  @Nullable private volatile String myCurrentRevision;
-  @Nullable private volatile GitLocalBranch myCurrentBranch;
-  @NotNull private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
-  @NotNull private volatile Collection<GitRemote> myRemotes = Collections.emptyList();
-  @NotNull private volatile Collection<GitBranchTrackInfo> myBranchTrackInfos;
+  @NotNull private volatile GitRepoInfo myInfo;
 
   /**
    * Get the GitRepository instance from the {@link GitRepositoryManager}.
    * If you need to have an instance of GitRepository for a repository outside the project, use
-   * {@link #getLightInstance(VirtualFile, Project, PlatformFacade, Disposable)}.
+   * {@link #getLightInstance(VirtualFile, Project, git4idea.GitPlatformFacade, Disposable)}
    */
+  @SuppressWarnings("ConstantConditions")
   protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull GitPlatformFacade facade, @NotNull Project project,
-                            @NotNull Disposable parentDisposable, final boolean light) {
-    myRootDir = rootDir;
+                              @NotNull Disposable parentDisposable, final boolean light) {
+    super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
-    myProject = project;
-    Disposer.register(parentDisposable, this);
-
-    myGitDir = GitUtil.findGitDir(myRootDir);
+    myGitDir = GitUtil.findGitDir(rootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
-
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
-
-    myMessageBus = project.getMessageBus();
-    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus, this), myProject.getDisposed());
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
-    } else {
+    }
+    else {
       myUntrackedFilesHolder = null;
     }
     update();
@@ -100,10 +81,11 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
+  @NotNull
   public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
                                               @NotNull Disposable parentDisposable) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, facade, project, parentDisposable, false);
-    repository.myUntrackedFilesHolder.setupVfsListener(project);
+    repository.myUntrackedFilesHolder.setupVfsListener(project);  //myUntrackedFilesHolder cannot be null because it is not light instance
     repository.setupUpdater();
     return repository;
   }
@@ -113,32 +95,11 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
     Disposer.register(this, updater);
   }
 
-  @Override
-  public void dispose() {
-  }
 
-  @Override
   @NotNull
-  public VirtualFile getRoot() {
-    return myRootDir;
-  }
-
   @Override
-  @NotNull
   public VirtualFile getGitDir() {
     return myGitDir;
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableUrl() {
-    return getRoot().getPresentableUrl();
-  }
-
-  @Override
-  @NotNull
-  public Project getProject() {
-    return myProject;
   }
 
   @Override
@@ -152,20 +113,26 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @Override
   @NotNull
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  @Nullable
-  public String getCurrentRevision() {
-    return myCurrentRevision;
+  public GitRepoInfo getInfo() {
+    return myInfo;
   }
 
   @Override
   @Nullable
   public GitLocalBranch getCurrentBranch() {
-    return myCurrentBranch;
+    return myInfo.getCurrentBranch();
+  }
+
+  @Nullable
+  @Override
+  public String getCurrentRevision() {
+    return myInfo.getCurrentRevision();
+  }
+
+  @NotNull
+  @Override
+  public State getState() {
+    return myInfo.getState();
   }
 
   /**
@@ -174,24 +141,20 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   @Override
   @NotNull
   public GitBranchesCollection getBranches() {
-    return new GitBranchesCollection(myBranches);
+    GitRepoInfo info = myInfo;
+    return new GitBranchesCollection(info.getLocalBranches(), info.getRemoteBranches());
   }
 
   @Override
   @NotNull
   public Collection<GitRemote> getRemotes() {
-    return myRemotes;
+    return myInfo.getRemotes();
   }
 
   @Override
   @NotNull
   public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-    return myBranchTrackInfos;
-  }
-
-  @Override
-  public boolean isMergeInProgress() {
-    return getState() == State.MERGING;
+    return myInfo.getBranchTrackInfos();
   }
 
   @Override
@@ -211,74 +174,58 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
   @Override
   public void update() {
-    File configFile = new File(VfsUtilCore.virtualToIoFile(myGitDir), "config");
-    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
-    myRemotes = config.parseRemotes();
-    readRepository(myRemotes);
-    myBranchTrackInfos = config.parseTrackInfos(myBranches.getLocalBranches(), myBranches.getRemoteBranches());
-
-    notifyListeners();
+    myInfo = readRepoInfo(this, myPlatformFacade, myReader, myInfo);
   }
 
-  private void readRepository(@NotNull Collection<GitRemote> remotes) {
-    myState = myReader.readState();
-    myCurrentRevision = myReader.readCurrentRevision();
-    myCurrentBranch = myReader.readCurrentBranch();
-    myBranches = myReader.readBranches(remotes);
+  @NotNull
+  private static GitRepoInfo readRepoInfo(@NotNull GitRepository repository, @NotNull GitPlatformFacade platformFacade,
+                                          @NotNull GitRepositoryReader reader, @Nullable GitRepoInfo previousInfo) {
+    File configFile = new File(VfsUtilCore.virtualToIoFile(repository.getGitDir()), "config");
+    GitConfig config = GitConfig.read(platformFacade, configFile);
+    Collection<GitRemote> remotes = config.parseRemotes();
+    TempState tempState = readRepository(reader, remotes);
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(tempState.myBranches.getLocalBranches(),
+                                                                       tempState.myBranches.getRemoteBranches());
+    GitRepoInfo info = new GitRepoInfo(tempState.myCurrentBranch, tempState.myCurrentRevision, tempState.myState,
+                                       remotes, tempState.myBranches.getLocalBranches(),
+                                       tempState.myBranches.getRemoteBranches(), trackInfos);
+    notifyListeners(repository, previousInfo, info);
+    return info;
   }
 
-  protected void notifyListeners() {
-    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
+  private static TempState readRepository(GitRepositoryReader reader, @NotNull Collection<GitRemote> remotes) {
+    return new TempState(reader.readState(), reader.readCurrentRevision(), reader.readCurrentBranch(), reader.readBranches(remotes));
   }
 
-  private static class NotificationConsumer implements Consumer<Object> {
-
-    private final Project myProject;
-    private final MessageBus myMessageBus;
-    private final GitRepository myRepository;
-
-    NotificationConsumer(Project project, MessageBus messageBus, GitRepository repository) {
-      myProject = project;
-      myMessageBus = messageBus;
-      myRepository = repository;
+  // previous info can be null before the first update
+  private static void notifyListeners(@NotNull GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+    if (Disposer.isDisposed(repository.getProject())) {
+      return;
     }
-
-    @Override
-    public void consume(Object o) {
-      if (!Disposer.isDisposed(myProject)) {
-        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged(myRepository);
-      }
+    if (!info.equals(previousInfo)) {
+      repository.getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
     }
   }
 
+  @NotNull
   @Override
   public String toLogString() {
-    return String.format("GitRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
-                         myCurrentBranch, myCurrentRevision, myState, myRootDir);
+    return String.format("GitRepository " + getRoot() + " : " + myInfo);
   }
 
-  @Override
-  public String toString() {
-    return getPresentableUrl();
+  private static class TempState {
+    private final State myState;
+    private final String myCurrentRevision;
+    private final GitLocalBranch myCurrentBranch;
+    private final GitBranchesCollection myBranches;
+
+    public TempState(@NotNull State state, @Nullable String currentRevision, @Nullable GitLocalBranch currentBranch,
+                     @NotNull GitBranchesCollection branches) {
+      myState = state;
+      myCurrentRevision = currentRevision;
+      myCurrentBranch = currentBranch;
+      myBranches = branches;
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GitRepositoryImpl that = (GitRepositoryImpl)o;
-
-    if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
-    if (myRootDir != null ? !myRootDir.equals(that.myRootDir) : that.myRootDir != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myProject != null ? myProject.hashCode() : 0;
-    result = 31 * result + (myRootDir != null ? myRootDir.hashCode() : 0);
-    return result;
-  }
 }

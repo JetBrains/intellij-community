@@ -58,11 +58,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private boolean myTrackUiActivity;
   private UiActivity myUiActivity;
 
-  public MergingUpdateQueue(@NonNls String name, int mergingTimeSpan, boolean isActive, JComponent modalityStateComponent) {
+  public MergingUpdateQueue(@NonNls @NotNull String name, int mergingTimeSpan, boolean isActive, @Nullable JComponent modalityStateComponent) {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, null);
   }
 
-  public MergingUpdateQueue(@NonNls String name,
+  public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
                             @Nullable JComponent modalityStateComponent,
@@ -70,7 +70,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, null);
   }
 
-  public MergingUpdateQueue(@NonNls String name,
+  public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
                             @Nullable JComponent modalityStateComponent,
@@ -79,7 +79,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     this(name, mergingTimeSpan, isActive, modalityStateComponent, parent, activationComponent, true);
   }
 
-  public MergingUpdateQueue(@NonNls String name,
+  public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
                             @Nullable JComponent modalityStateComponent,
@@ -90,7 +90,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
          executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.POOLED_THREAD);
   }
 
-  public MergingUpdateQueue(@NonNls String name,
+  public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
                             @Nullable JComponent modalityStateComponent,

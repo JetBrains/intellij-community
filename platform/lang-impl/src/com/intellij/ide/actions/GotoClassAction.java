@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
@@ -34,6 +33,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -46,6 +46,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -62,7 +63,7 @@ import java.util.List;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
     if (!DumbService.getInstance(project).isDumb()) {
       super.actionPerformed(e);
@@ -78,7 +79,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void gotoActionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -108,7 +109,10 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
             }
             if (psiElement != null && file != null && popup.getMemberPattern() != null) {
               NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-              findMember(popup.getMemberPattern(), psiElement, file);
+              Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+              if (member != null) {
+                member.navigate(true);
+              }
             }
 
             NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
@@ -124,37 +128,41 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     }, "Classes matching pattern", true);
   }
 
-  private static void findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+  @Nullable private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
+    if (builder == null || editors.length == 0) {
+      return null;
+    }
 
-    if (builder != null && editors.length > 0) {
-      final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
-      final StructureViewModel model = view.getTreeModel();
-      final StructureViewTreeElement root = model.getRoot();
-      final StructureViewTreeElement element = findElement(root, psiElement, 4);
-      if (element != null) {
-        final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-        int max = Integer.MIN_VALUE;
-        Object target = null;
-        for (TreeElement treeElement : element.getChildren()) {
-          if (treeElement instanceof StructureViewTreeElement) {
-            final ItemPresentation presentation = treeElement.getPresentation();
-            if (presentation != null) {
-              final int degree = matcher.matchingDegree(presentation.getPresentableText());
-              if (degree > max) {
-                max = degree;
-                target = ((StructureViewTreeElement)treeElement).getValue();
-              }
+    final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
+    try {
+      final StructureViewTreeElement element = findElement(view.getTreeModel().getRoot(), psiElement, 4);
+      if (element == null) {
+        return null;
+      }
+
+      final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      int max = Integer.MIN_VALUE;
+      Object target = null;
+      for (TreeElement treeElement : element.getChildren()) {
+        if (treeElement instanceof StructureViewTreeElement) {
+          final ItemPresentation presentation = treeElement.getPresentation();
+          String presentableText = presentation == null ? null : presentation.getPresentableText();
+          if (presentableText != null) {
+            final int degree = matcher.matchingDegree(presentableText);
+            if (degree > max) {
+              max = degree;
+              target = ((StructureViewTreeElement)treeElement).getValue();
             }
           }
         }
-
-        if (target instanceof Navigatable) {
-          ((Navigatable)target).navigate(true);
-        }
       }
+      return target instanceof Navigatable ? (Navigatable)target : null;
+    }
+    finally {
+      Disposer.dispose(view);
     }
   }
 
@@ -177,7 +185,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return null;
   }
 
-  private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {
+  private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
       final String[] classes = path.split("\\$");
@@ -206,16 +214,18 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return element;
   }
 
-  static PsiElement[] getAnonymousClasses(PsiElement element) {
+  @NotNull
+  private static PsiElement[] getAnonymousClasses(@NotNull PsiElement element) {
     for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
       final PsiElement[] elements = provider.getAnonymousElements(element);
-      if (elements != null && elements.length > 0) {
+      if (elements.length > 0) {
         return elements;
       }
     }
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }

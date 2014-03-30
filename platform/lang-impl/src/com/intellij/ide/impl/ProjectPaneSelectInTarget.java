@@ -37,12 +37,14 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     return SelectInManager.PROJECT;
   }
 
+  @Override
   public boolean canSelect(PsiFileSystemItem file) {
     if (!super.canSelect(file)) return false;
     final VirtualFile vFile = file.getVirtualFile();
     return canSelect(vFile);
   }
 
+  @Override
   public boolean isSubIdSelectable(String subId, SelectInContext context) {
     return canSelect(context);
   }
@@ -64,14 +66,17 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     return false;
   }
 
+  @Override
   public String getMinorViewId() {
     return ProjectViewPane.ID;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.PROJECT_WEIGHT;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return false;
   }

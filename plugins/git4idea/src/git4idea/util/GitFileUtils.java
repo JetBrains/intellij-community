@@ -15,6 +15,7 @@
  */
 package git4idea.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,6 +37,7 @@ import java.util.*;
  * File utilities for the git
  */
 public class GitFileUtils {
+  private static final Logger LOG = Logger.getInstance(GitFileUtils.class.getName());
 
   /**
    * The private constructor for static utility class
@@ -74,9 +76,11 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static void deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
+  public static void deleteFiles(Project project, VirtualFile root, Collection<VirtualFile> files, String... additionalOptions)
+    throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+      handler.addParameters(additionalOptions);
       handler.endOptions();
       handler.addParameters(paths);
       handler.run();
@@ -97,24 +101,47 @@ public class GitFileUtils {
   }
 
   /**
+   * Delete files from cache (mark untracked)
+   *
+   * @param project the project
+   * @param root    a vcs root
+   * @param files   files to delete
+   * @return a result of operation
+   * @throws VcsException in case of git problem
+   */
+  public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    deleteFiles(project, root, files, "--cached");
+    updateUntrackedFilesHolderOnFileRemove(project, root, files);
+  }
+
+  /**
    * Add files to the Git index.
    */
-  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root,
-                              @NotNull Collection<VirtualFile> files) throws VcsException {
+  public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
     addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
                                                           @NotNull Collection<VirtualFile> addedFiles) {
-    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
+    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
       return;
     }
-    final GitRepository repository = manager.getRepositoryForRoot(root);
-    if (repository != null) {
-      repository.getUntrackedFilesHolder().remove(addedFiles);
+    repository.getUntrackedFilesHolder().remove(addedFiles);
+  }
+
+  private static void updateUntrackedFilesHolderOnFileRemove(@NotNull Project project, @NotNull VirtualFile root,
+                                                             @NotNull Collection<VirtualFile> removedFiles) {
+    final GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
+    if (repository == null) {
+      LOG.error("Repository not found for root " + root.getPresentableUrl());
+      return;
     }
+    repository.getUntrackedFilesHolder().add(removedFiles);
   }
 
   /**

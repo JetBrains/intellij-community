@@ -17,12 +17,14 @@ package com.intellij.xdebugger.evaluation;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,9 +68,7 @@ public abstract class XDebuggerEvaluator {
    * @param expression expression to evaluate
    * @param callback   used to notify that the expression has been evaluated or an error occurs
    */
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition) {
-    evaluate(expression, callback);
-  }
+  public abstract void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition);
 
   /**
      * Start evaluating expression.
@@ -78,15 +78,8 @@ public abstract class XDebuggerEvaluator {
      * @param callback   used to notify that the expression has been evaluated or an error occurs
      * @param mode       code fragment or expression
      */
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @Nullable EvaluationMode mode) {
+  public void evaluate(@NotNull String expression, @NotNull XEvaluationCallback callback, @Nullable XSourcePosition expressionPosition, @NotNull EvaluationMode mode) {
     evaluate(expression, callback, expressionPosition);
-  }
-
-  /**
-   * @deprecated override {@link #evaluate(String, XEvaluationCallback, com.intellij.xdebugger.XSourcePosition)} instead
-   */
-  @Deprecated
-  public void evaluate(@NotNull String expression, XEvaluationCallback callback) {
   }
 
   /**
@@ -97,16 +90,6 @@ public abstract class XDebuggerEvaluator {
    */
   public boolean isCodeFragmentEvaluationSupported() {
     return true;
-  }
-
-  /**
-   * @deprecated override {@link #getExpressionRangeAtOffset(com.intellij.openapi.project.Project, com.intellij.openapi.editor.Document, int, boolean)} instead
-   */
-  @Nullable
-  @Deprecated
-  @SuppressWarnings({"MethodMayBeStatic"})
-  public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset) {
-    return null;
   }
 
   /**
@@ -121,7 +104,28 @@ public abstract class XDebuggerEvaluator {
    */
   @Nullable
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, int offset, boolean sideEffectsAllowed) {
-    return sideEffectsAllowed ? null : getExpressionRangeAtOffset(project, document, offset);
+    return null;
+  }
+
+  /**
+   * Return text range of expression which can be evaluated.
+   *
+   * @param project            project
+   * @param document           document
+   * @param offset             offset
+   * @param sideEffectsAllowed if this parameter is false, the expression should not have any side effects when evaluated
+   *                           (such expressions are evaluated in quick popups)
+   * @return pair of text range of expression (to highlight as link) and actual expression to evaluate (optional, could be null)
+   */
+  @Nullable
+  public Pair<TextRange, String> getExpressionAtOffset(@NotNull Project project, @NotNull Document document, int offset, boolean sideEffectsAllowed) {
+    TextRange range = getExpressionRangeAtOffset(project, document, offset, sideEffectsAllowed);
+    if (range == null) {
+      return null;
+    }
+    else {
+      return Pair.create(range, null);
+    }
   }
 
   /**
@@ -139,10 +143,7 @@ public abstract class XDebuggerEvaluator {
     return 700;
   }
 
-  public interface XEvaluationCallback {
-
+  public interface XEvaluationCallback extends XValueCallback {
     void evaluated(@NotNull XValue result);
-
-    void errorOccurred(@NotNull String errorMessage);
   }
 }

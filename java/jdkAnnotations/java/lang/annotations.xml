@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.lang.Boolean boolean getBoolean(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.lang.CharSequence java.lang.String toString()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.lang.Class boolean isAssignableFrom(java.lang.Class&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Class boolean isInstance(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val val="&quot;null-&gt;false&quot;"/>
+    </annotation>
   </item>
   <item name="java.lang.Class int getModifiers()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -9,6 +20,9 @@
     </annotation>
   </item>
   <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.lang.Class java.lang.Class&lt;?&gt; forName(java.lang.String, boolean, java.lang.ClassLoader) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="java.lang.Class java.lang.reflect.Field getDeclaredField(java.lang.String) 0">
@@ -20,10 +34,10 @@
   <item name="java.lang.Class java.lang.reflect.Method getDeclaredMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0">
+  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
+  <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="java.lang.ClassLoader InputStream getResourceAsStream(java.lang.String) 0">
@@ -38,7 +52,22 @@
   <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name="java.lang.Comparable int compareTo(T) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.Iterable Iterator&lt;T&gt; iterator()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.Runtime Process exec(java.lang.String[]) 0">
@@ -55,17 +84,187 @@
       <val name="valuesFromClass" val="java.lang.reflect.Member.class" />
     </annotation>
   </item>
+  <item name="java.lang.String String(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int, java.lang.String) 3">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int, java.nio.charset.Charset) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], int, int, java.nio.charset.Charset) 3">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.lang.String String(byte[], java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], java.nio.charset.Charset) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(byte[], java.nio.charset.Charset) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(char[], boolean) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(int[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(java.lang.StringBuffer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String String(java.lang.StringBuilder) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean contains(java.lang.CharSequence) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean contentEquals(java.lang.CharSequence) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean contentEquals(java.lang.StringBuffer) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean endsWith(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.String boolean matches(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean regionMatches(boolean, int, java.lang.String, int, int) 2">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean regionMatches(int, java.lang.String, int, int) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean startsWith(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String boolean startsWith(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String byte[] getBytes()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String byte[] getBytes(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.String byte[] getBytes(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.lang.String byte[] getBytes(java.nio.charset.Charset)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.lang.String byte[] getBytes(java.nio.charset.Charset) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String char[] toCharArray()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int compareTo(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int indexOf(char[], int, int, java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int indexOf(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int indexOf(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int lastIndexOf(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String int lastIndexOf(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.CharSequence subSequence(int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String concat(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String concat(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String copyValueOf(char[])">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String copyValueOf(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String copyValueOf(char[], int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String copyValueOf(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String format(java.lang.String, java.lang.Object...) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.lang.String java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.lang.String java.lang.String intern()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replace(char, char)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replaceAll(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replaceAll(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replaceFirst(java.lang.String, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String replaceFirst(java.lang.String, java.lang.String) 1">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String substring(int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String substring(int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String toLowerCase()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale)">
@@ -74,14 +273,71 @@
   <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.lang.String java.lang.String toUpperCase()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.lang.String java.lang.String trim()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(boolean)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(char)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(char[])">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(char[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(char[], int, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(char[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(double)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(float)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String valueOf(long)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String[] split(java.lang.String)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String[] split(java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String[] split(java.lang.String, int)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String java.lang.String[] split(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String void getBytes(int, int, byte[], int) 2">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.String void getChars(int, int, char[], int) 2">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.lang.System java.lang.String getProperty(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.lang.System java.lang.String getProperty(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 0">
@@ -91,6 +347,17 @@
   <item name="java.lang.System java.lang.String setProperty(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="target" val="&quot;dest&quot;"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.lang.Thread Thread(java.lang.Runnable, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />

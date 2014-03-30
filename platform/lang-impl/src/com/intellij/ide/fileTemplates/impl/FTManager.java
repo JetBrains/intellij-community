@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -43,15 +44,22 @@ class FTManager {
   public static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   public static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
   public static final String CONTENT_ENCODING = CharsetToolkit.UTF8;
+  private static final String ENCODED_NAME_EXT_DELIMITER = "\u0F0Fext\u0F0F.";
 
   private final String myName;
+  private final boolean myInternal;
   private final String myTemplatesDir;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<DefaultTemplate>();
 
   FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName) {
+    this(name, defaultTemplatesDirName, false);
+  }
+
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName, boolean internal) {
     myName = name;
+    myInternal = internal;
     myTemplatesDir = TEMPLATES_DIR + (defaultTemplatesDirName.equals(".") ? "" : File.separator + defaultTemplatesDirName);
   }
 
@@ -65,17 +73,18 @@ class FTManager {
     if (sorted == null) {
       sorted = new ArrayList<FileTemplateBase>(myTemplates.values());
       Collections.sort(sorted, new Comparator<FileTemplateBase>() {
+        @Override
         public int compare(FileTemplateBase t1, FileTemplateBase t2) {
           return t1.getName().compareToIgnoreCase(t2.getName());
         }
       });
       mySortedTemplates = sorted;
     }
-    
+
     if (includeDisabled) {
       return Collections.unmodifiableCollection(sorted);
     }
-    
+
     final List<FileTemplateBase> list = new ArrayList<FileTemplateBase>(sorted.size());
     for (FileTemplateBase template : sorted) {
       if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isEnabled()) {
@@ -112,8 +121,11 @@ class FTManager {
     // templateName must be non-qualified name, since previous lookup found nothing
     for (FileTemplateBase t : getAllTemplates(false)) {
       final String qName = t.getQualifiedName();
-      if (qName.startsWith(templateName) && qName.charAt(templateName.length()) == '.') {
-        return t;
+      if (qName.startsWith(templateName) && qName.length() > templateName.length()) {
+        String remainder = qName.substring(templateName.length());
+        if (remainder.startsWith(ENCODED_NAME_EXT_DELIMITER) || remainder.charAt(0) == '.') {
+          return t;
+        }
       }
     }
     return null;
@@ -147,7 +159,7 @@ class FTManager {
     }
   }
 
-  public void updateTemplates(Collection<FileTemplate> newTemplates) {
+  public void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<String>();
     for (DefaultTemplate template : myDefaultTemplates) {
       toDisable.add(template.getQualifiedName());
@@ -169,23 +181,24 @@ class FTManager {
       _template.setReformatCode(template.isReformatCode());
     }
   }
-  
+
   public void addDefaultTemplate(DefaultTemplate template) {
     myDefaultTemplates.add(template);
     createAndStoreBundledTemplate(template);
   }
 
   private BundledFileTemplate createAndStoreBundledTemplate(DefaultTemplate template) {
-    final BundledFileTemplate bundled = new BundledFileTemplate(template);
+    final BundledFileTemplate bundled = new BundledFileTemplate(template, myInternal);
     final String qName = bundled.getQualifiedName();
     final FileTemplateBase previous = myTemplates.put(qName, bundled);
     mySortedTemplates = null;
 
-    LOG.assertTrue(previous == null, "Duplicate bundled template " + qName);
+    LOG.assertTrue(previous == null, "Duplicate bundled template " + qName +
+                                     " [" + template.getTemplateURL() + ", " + previous + ']');
     return bundled;
   }
 
-  void saveTemplates() {
+  public void saveTemplates() {
     final File configRoot = getConfigRoot(true);
 
     final File[] files = configRoot.listFiles();
@@ -254,7 +267,7 @@ class FTManager {
    *  todo: review saving algorithm
    */
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
-    final File templateFile = new File(parentDir, template.getName() + "." + template.getExtension());
+    final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
 
     FileOutputStream fileOutputStream;
     try {
@@ -301,5 +314,22 @@ class FTManager {
   public String toString() {
     return myName + " file template manager";
   }
-  
+
+  public static String encodeFileName(String templateName, String extension) {
+    String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
+    return templateName + nameExtDelimiter + extension;
+  }
+
+  public static Pair<String,String> decodeFileName(String fileName) {
+    String name = fileName;
+    String ext = "";
+    String nameExtDelimiter = fileName.contains(ENCODED_NAME_EXT_DELIMITER) ? ENCODED_NAME_EXT_DELIMITER : ".";
+    int extIndex = fileName.lastIndexOf(nameExtDelimiter);
+    if (extIndex >= 0) {
+      name = fileName.substring(0, extIndex);
+      ext = fileName.substring(extIndex + nameExtDelimiter.length());
+    }
+    return new Pair<String,String>(name, ext);
+  }
+
 }

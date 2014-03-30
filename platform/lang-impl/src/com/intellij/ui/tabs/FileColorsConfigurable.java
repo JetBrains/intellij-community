@@ -38,15 +38,18 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
     myProject = project;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "File Colors";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.ide.settings.file-colors";
   }
 
+  @Override
   public JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new FileColorsConfigurablePanel((FileColorManagerImpl) FileColorManager.getInstance(myProject));
@@ -55,18 +58,22 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myPanel != null) myPanel.apply();
   }
 
+  @Override
   public void reset() {
     if (myPanel != null) myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel !=  null) {
       Disposer.dispose(myPanel);

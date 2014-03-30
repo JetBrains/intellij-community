@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -64,7 +65,8 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
     Assert.assertNotNull(breakpoint);
-    Assert.assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    Assert
+      .assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     Assert.assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
@@ -77,9 +79,8 @@ public class XDebuggerTestUtil {
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
     return new WriteAction<XBreakpoint<P>>() {
       protected void run(final Result<XBreakpoint<P>> result) {
-        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager()
-                           .addBreakpoint((XBreakpointType<XBreakpoint<P>, P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass),
-                                          properties));
+        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
+          XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
       }
     }.execute().getResultObject();
   }
@@ -93,7 +94,7 @@ public class XDebuggerTestUtil {
   }
 
   public static void assertPosition(XSourcePosition pos, VirtualFile file, int line) throws IOException {
-    Assert.assertNotNull(pos);
+    Assert.assertNotNull("No current position", pos);
     Assert.assertEquals(new File(file.getPath()).getCanonicalPath(), new File(pos.getFile().getPath()).getCanonicalPath());
     if (line != -1) Assert.assertEquals(line, pos.getLine());
   }
@@ -116,9 +117,13 @@ public class XDebuggerTestUtil {
   }
 
   public static List<XStackFrame> collectStacks(@NotNull XExecutionStack thread) throws InterruptedException {
+    return collectStacks(thread, TIMEOUT * 2);
+  }
+
+  public static List<XStackFrame> collectStacks(XExecutionStack thread, long timeout) throws InterruptedException {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
-    return container.waitFor(TIMEOUT * 2).first;
+    return container.waitFor(timeout).first;
   }
 
   public static Pair<XValue, String> evaluate(XDebugSession session, String expression) throws InterruptedException {
@@ -163,12 +168,16 @@ public class XDebuggerTestUtil {
   }
 
   public static XTestValueNode computePresentation(@NotNull XValue value) throws InterruptedException {
+    return computePresentation(value, TIMEOUT);
+  }
+
+  public static XTestValueNode computePresentation(XValue value, long timeout) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
-    if (value instanceof XNamedValue) {
+    if (value instanceof com.intellij.xdebugger.frame.XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
     }
     value.computePresentation(node, XValuePlace.TREE);
-    Assert.assertTrue("timed out", node.waitFor(TIMEOUT));
+    node.waitFor(timeout);
     return node;
   }
 
@@ -196,20 +205,20 @@ public class XDebuggerTestUtil {
 
   public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
                                                 @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     assertVariableValueMatches(var, name, null, valuePattern);
   }
 
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable String type,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) Assert.assertEquals(name, node.myName);
     if (type != null) Assert.assertEquals(type, node.myType);
@@ -295,7 +304,8 @@ public class XDebuggerTestUtil {
     expectedNames.removeAll(actualNames);
     UsefulTestCase.assertTrue("Missing variables:" + StringUtil.join(expectedNames, ", ")
                               + "\nAll Variables: " + StringUtil.join(actualNames, ", "),
-                              expectedNames.isEmpty());
+                              expectedNames.isEmpty()
+    );
   }
 
   public static void assertSourcePosition(final XValue value, VirtualFile file, int offset) {
@@ -358,8 +368,23 @@ public class XDebuggerTestUtil {
   public static void removeAllBreakpoints(@NotNull final Project project) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
-    for (XBreakpoint b : breakpoints) {
-      breakpointManager.removeBreakpoint(b);
+    for (final XBreakpoint b : breakpoints) {
+      new WriteAction() {
+        @Override
+        protected void run(Result result) throws Throwable {
+          breakpointManager.removeBreakpoint(b);
+        }
+      }.execute();
+    }
+  }
+
+  public static <B extends XBreakpoint<?>>
+  void setDefaultBreakpointEnabled(@NotNull final Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointType<B, ?> bpType = XDebuggerUtil.getInstance().findBreakpointType(bpTypeClass);
+    XBreakpoint<?> bp = breakpointManager.getDefaultBreakpoint(bpType);
+    if (bp != null) {
+      bp.setEnabled(enabled);
     }
   }
 
@@ -431,12 +456,8 @@ public class XDebuggerTestUtil {
     }
 
     @Override
-    public void errorOccurred(String errorMessage) {
+    public void errorOccurred(@NotNull String errorMessage) {
       setErrorMessage(errorMessage);
-    }
-
-    public void errorOccured(String errorMessage) {
-      errorOccurred(errorMessage);
     }
   }
 

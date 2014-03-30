@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.Messages;
@@ -47,7 +47,7 @@ public class ChangeFieldTypeFix extends QuickFix {
   public void run() {
     final PsiFile psiFile = myField.getContainingFile();
     if (psiFile == null) return;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(psiFile)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(psiFile)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {

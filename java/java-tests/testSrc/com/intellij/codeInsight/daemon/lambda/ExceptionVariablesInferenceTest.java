@@ -37,11 +37,23 @@ public class ExceptionVariablesInferenceTest extends LightDaemonAnalyzerTestCase
     doTest();
   }
 
+  public void testIDEA116441() throws Exception {
+    doTest();
+  }
+
+  public void testLambdaBodyUncaughtExceptionsForOuterCallInference() throws Exception {
+    doTest();
+  }
+
+  public void testMethodRefUncaughtExceptionsForOuterCallInference() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

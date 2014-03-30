@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +80,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       if (!lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
-          EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, String.valueOf(charTyped), true);
+          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(editor, String.valueOf(charTyped), true);
         }
       })) {
         return Result.STOP;
@@ -92,7 +91,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
         if (completion != null) {
           completion.scheduleRestart();
         } else {
-          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor, null);
+          AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
         }
       }
 
@@ -119,7 +118,7 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
     }
 
     lookup.hide();
-    TypedHandler.autoPopupCompletion(editor, charTyped, project);
+    TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return Result.CONTINUE;
   }
 
@@ -148,10 +147,6 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
     final CharFilter.Result filtersDecision = getFiltersDecision(charTyped, lookup);
-    if (!Registry.is("ide.completion.allow.finishing.by.chars") &&
-        filtersDecision == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP) {
-      return CharFilter.Result.HIDE_LOOKUP;
-    }
 
     final LookupElement currentItem = lookup.getCurrentItem();
     if (currentItem != null && charTyped != ' ') {

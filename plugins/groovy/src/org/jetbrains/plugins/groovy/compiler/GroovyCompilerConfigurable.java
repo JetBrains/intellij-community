@@ -35,9 +35,9 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,7 +73,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
       ContainerUtil.map(ModuleManager.getInstance(project).getModules(), new Function<Module, List<VirtualFile>>() {
         @Override
         public List<VirtualFile> fun(final Module module) {
-          return Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
+          return ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
         }
       })));
     return new ExcludedEntriesConfigurable(project, descriptor, configuration);

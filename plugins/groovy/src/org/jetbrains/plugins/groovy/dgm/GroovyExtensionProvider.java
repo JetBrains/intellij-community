@@ -19,6 +19,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
@@ -57,7 +58,7 @@ public class GroovyExtensionProvider {
     List<String> instanceClasses = new ArrayList<String>();
     List<String> staticClasses = new ArrayList<String>();
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
-      PsiFile file = directory.findFile("org.codehaus.groovy.runtime.ExtensionModule");
+      PsiFile file = directory.findFile(ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
       if (file instanceof PropertiesFile) {
         IProperty inst = ((PropertiesFile)file).findPropertyByKey("extensionClasses");
         IProperty stat = ((PropertiesFile)file).findPropertyByKey("staticExtensionClasses");
@@ -76,5 +77,13 @@ public class GroovyExtensionProvider {
     value = value.trim();
     String[] qnames = value.split("\\s*,\\s*");
     ContainerUtil.addAll(classes, qnames);
+  }
+  
+  public static class GroovyExtensionVetoSPI implements Condition<String> {
+
+    @Override
+    public boolean value(String s) {
+      return ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE.equals(s);
+    }
   }
 }

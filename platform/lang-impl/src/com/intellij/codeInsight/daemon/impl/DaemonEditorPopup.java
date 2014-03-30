@@ -21,8 +21,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.ui.JBCheckboxMenuItem;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.psi.PsiFile;
@@ -86,6 +89,18 @@ public class DaemonEditorPopup extends PopupHandler {
         component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
       }
     });
+
+    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
+    popupMenu.addSeparator();
+    popupMenu.add(previewCheckbox);
+    previewCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        UISettings.getInstance().SHOW_EDITOR_TOOLTIP = previewCheckbox.isSelected();
+        UISettings.getInstance().fireUISettingsChanged();
+      }
+    });
+
     PsiFile file = myPsiFile;
     if (file != null && DaemonCodeAnalyzer.getInstance(myPsiFile.getProject()).isHighlightingAvailable(file)) {
       popupMenu.show(comp, x, y);

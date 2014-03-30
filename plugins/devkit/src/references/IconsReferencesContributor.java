@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +75,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new PsiReference[] {
           new PsiReferenceBase<PsiElement>(element, true) {
             @Override
@@ -155,7 +159,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PlatformUtils.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new FileReferenceSet(element) {
           @Override
           protected Collection<PsiFileSystemItem> getExtraContexts() {
@@ -295,7 +299,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setCaseSensitive(true);
         model.setFindAll(true);
         model.setWholeWordsOnly(true);
-        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false, new Processor<UsageInfo>() {
+        FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, new Processor<UsageInfo>() {
           @Override
           public boolean process(final UsageInfo usage) {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -312,7 +316,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                       value = value.getParent();
                     }
                     if (value != null) {
-                      final FileReference reference = FileReferenceUtil.findFileReference(value);
+                      final PsiFileReference reference = FileReferenceUtil.findFileReference(value);
                       if (reference != null) {
                         consumer.process(reference);
                       }
@@ -323,7 +327,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             });
             return true;
           }
-        });
+        }, new FindUsagesProcessPresentation(new UsageViewPresentation()));
       }
     }
     return true;

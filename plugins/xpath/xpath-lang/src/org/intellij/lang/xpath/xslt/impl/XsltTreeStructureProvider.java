@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltConfig;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,8 +44,9 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
     myProject = project;
   }
 
+  @NotNull
   @SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
-  public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
+  public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     Collection<AbstractTreeNode> l = children;
     int i = 0;
     for (AbstractTreeNode o : children) {

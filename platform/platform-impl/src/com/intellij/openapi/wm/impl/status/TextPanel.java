@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,28 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends JComponent {
-  private String myText;
-  private final String myMaxPossibleString;
-  private Integer myPrefHeight;
+  @Nullable private String  myText;
+  @Nullable private Color myCustomColor;
+
+  private Integer   myPrefHeight;
   private Dimension myExplicitSize;
 
   private boolean myDecorate = true;
   private float myAlignment;
+  private int myRightPadding = 20;
 
   protected TextPanel() {
-    this(null);
+    setOpaque(false);
+  }
+
+  @Override
+  public Font getFont() {
+    return SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont();
   }
 
   protected TextPanel(final boolean decorate) {
-    this(null);
+    this();
     myDecorate = decorate;
-  }
-
-  protected TextPanel(@Nullable final String maxPossibleString) {
-    myMaxPossibleString = maxPossibleString;
-
-    setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
-    setOpaque(false);
   }
 
   public void recomputeSize() {
@@ -56,6 +56,14 @@ public class TextPanel extends JComponent {
 
   public void setDecorate(boolean decorate) {
     myDecorate = decorate;
+  }
+
+  public void resetColor() {
+    myCustomColor = null;
+  }
+
+  public void setCustomColor(@Nullable Color customColor) {
+    myCustomColor = customColor;
   }
 
   @Override
@@ -97,11 +105,11 @@ public class TextPanel extends JComponent {
 
     final int y = UIUtil.getStringY(s, bounds, g2);
     if (SystemInfo.isMac && !UIUtil.isUnderDarcula() && myDecorate) {
-      g2.setColor(Gray._215);
+      g2.setColor(myCustomColor == null ? Gray._215 : myCustomColor);
       g2.drawString(s, x, y + 1);
     }
 
-    g2.setColor(getForeground());
+    g2.setColor(myCustomColor == null ? getForeground() : myCustomColor);
     g2.drawString(s, x, y);
   }
 
@@ -133,6 +141,8 @@ public class TextPanel extends JComponent {
 
   public final void setText(@Nullable final String text) {
     myText = text == null ? "" : text;
+    setPreferredSize(getPanelDimensionFromFontMetrics(myText));
+    revalidate();
     repaint();
   }
 
@@ -145,15 +155,19 @@ public class TextPanel extends JComponent {
       return myExplicitSize;
     }
 
-    int max = 0;
     String text = getTextForPreferredSize();
-    if (text != null) max = getFontMetrics(getFont()).stringWidth(text);
+    return getPanelDimensionFromFontMetrics(text);
+  }
 
-    if (myPrefHeight != null) {
-      return new Dimension(20 + max, myPrefHeight);
-    }
+  public void setRightPadding(int rightPadding) {
+    myRightPadding = rightPadding;
+  }
 
-    return new Dimension(20 + max, getMinimumSize().height);
+  private Dimension getPanelDimensionFromFontMetrics (String text) {
+    int width = (text == null) ? 0 : myRightPadding + getFontMetrics(getFont()).stringWidth(text);
+    int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
+
+    return new Dimension(width, height);
   }
 
   /**
@@ -161,7 +175,7 @@ public class TextPanel extends JComponent {
    */
   @Nullable
   protected String getTextForPreferredSize() {
-    return myMaxPossibleString;
+    return myText;
   }
 
   public void setExplicitSize(@Nullable Dimension explicitSize) {

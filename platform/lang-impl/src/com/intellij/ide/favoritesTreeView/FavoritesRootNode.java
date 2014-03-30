@@ -34,6 +34,7 @@ public class FavoritesRootNode extends AbstractTreeNode<String> {
     super(project, "");
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     if (myFavoritesRoots == null) {
@@ -46,6 +47,7 @@ public class FavoritesRootNode extends AbstractTreeNode<String> {
     myFavoritesRoots = null;
   }
 
+  @Override
   public void update(final PresentationData presentation) {
   }
 }

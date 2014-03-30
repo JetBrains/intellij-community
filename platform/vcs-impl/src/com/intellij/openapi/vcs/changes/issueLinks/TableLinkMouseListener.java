@@ -18,11 +18,10 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.TreeTableView;
-import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -31,10 +30,11 @@ import java.awt.event.MouseEvent;
  * @author yole
  */
 public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
+  @Override
   @Nullable
-  protected Object getTagAt(final MouseEvent e) {
+  public Object getTagAt(@NotNull final MouseEvent e) {
     // TODO[yole]: don't update renderer on every event, like it's done in TreeLinkMouseListener
-    Object tag = null;
+    Object tag;
     JTable table = (JTable)e.getSource();
     int row = table.rowAtPoint(e.getPoint());
     int column = table.columnAtPoint(e.getPoint());
@@ -59,13 +59,9 @@ public class TableLinkMouseListener extends AbstractBaseTagMouseListener {
     return null;
   }
 
-  private Object forColoredRenderer(MouseEvent e, JTable table, int row, int column, ColoredTableCellRenderer renderer) {
+  private static Object forColoredRenderer(MouseEvent e, JTable table, int row, int column, ColoredTableCellRenderer renderer) {
     renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
     final Rectangle rc = table.getCellRect(row, column, false);
-    int index = renderer.findFragmentAt(e.getPoint().x - rc.x);
-    if (index >= 0) {
-      return renderer.getFragmentTag(index);
-    }
-    return null;
+    return renderer.getFragmentTagAt(e.getX() - rc.x);
   }
 }

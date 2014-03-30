@@ -34,15 +34,18 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     myTemplate = template;
   }
 
+  @Override
   @Nullable
   protected AnAction getReplacedAction(final FileTemplate template) {
     return null;
   }
 
+  @Override
   protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
     return myTemplate;
   }
 
+  @Override
   public void update(AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();

@@ -2,62 +2,35 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.updateSettings.impl.NoUpdatesDialog.NoUpdatesPanel">
   <grid id="18751" binding="myPanel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="63" y="44" width="604" height="510"/>
+      <xy x="89" y="44" width="578" height="56"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <component id="6b492" class="javax.swing.JLabel" binding="myPluginsToUpdateLabel">
+      <component id="8b5e0" class="javax.swing.JLabel" binding="myNothingToUpdateLabel">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag top="0" left="0" bottom="3" right="0" weightx="1.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <maximumSize width="-2147483645" height="30"/>
-          <minimumSize width="64" height="30"/>
-          <preferredSize width="268" height="30"/>
-          <text value="&lt;html&gt;&lt;b&gt;Plugins from configured hosts are ready to update.&lt;/b&gt;&lt;br&gt; Uncheck plugins you do not want to update. &lt;/html&gt;"/>
-        </properties>
-      </component>
-      <grid id="3559e" binding="myPluginsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
           <gridbag weightx="1.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <autoscrolls value="false"/>
-          <maximumSize width="600" height="400"/>
-          <minimumSize width="600" height="400"/>
-          <preferredSize width="600" height="400"/>
-        </properties>
-        <border type="none"/>
-        <children/>
-      </grid>
-      <component id="8b5e0" class="javax.swing.JLabel" binding="myNothingFoundToUpdateLabel">
-        <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
-          <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
-        </constraints>
-        <properties>
-          <text value="&lt;html&gt;&lt;b&gt;Nothing found to update&lt;/b&gt;&lt;/html&gt;"/>
+          <text value="(nothing to update)"/>
         </properties>
       </component>
-      <component id="bc72e" class="javax.swing.JEditorPane" binding="myEditorPane">
+      <component id="bc72e" class="javax.swing.JEditorPane" binding="myMessageArea">
         <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="1" fill="1" indent="0" use-parent-layout="false">
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="250" height="70"/>
           </grid>
           <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
           <contentType value="text/html"/>
-          <maximumSize width="2147483647" height="25"/>
-          <text value="&lt;html&gt;&#13;&#10;  &lt;head&gt;&#13;&#10;&#13;&#10;  &lt;/head&gt;&#13;&#10;  &lt;body&gt;&#13;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#13;&#10;      &#13;&#10;    &lt;/p&gt;&#13;&#10;  &lt;/body&gt;&#13;&#10;&lt;/html&gt;&#13;&#10;"/>
+          <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;p style=&quot;margin-top: 0&quot;&gt;&#10;      &#10;    &lt;/p&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
         </properties>
       </component>
       <vspacer id="bf1d9">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="1.0"/>
         </constraints>
       </vspacer>

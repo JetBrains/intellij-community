@@ -286,6 +286,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
     }
 
+    if (myCurrentComponent == tooltip.getComponent() && myCurrentTipUi != null) {
+      myCurrentTipUi.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+      return;
+    }
 
     if (myCurrentComponent == tooltip.getComponent() && effectivePoint.equals(new Point(myX, myY))) {
       return;
@@ -296,9 +300,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
-      .setPreferredPosition(tooltip.getPreferredPosition())
       .setFillColor(bg)
       .setBorderColor(border)
+      .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
       .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
@@ -317,6 +321,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     myCurrentTipUi = (BalloonImpl)builder.createBalloon();
+    myCurrentTipUi.setAnimationEnabled(animationEnabled);
     tooltip.setUi(myCurrentTipUi);
     myCurrentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
@@ -337,7 +342,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }, tooltip.getDismissDelay());
   }
-  
+
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
@@ -356,12 +361,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
     AllIcons.General.Mdot.getIconWidth();  // keep icon reference
-    return "/general/mdot.png";
+    return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
-    return new JBColor(Color.darkGray, new Color(154, 154, 102));
+    return new JBColor(Gray._160, new Color(154, 154, 102));
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
@@ -379,14 +384,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return UIManager.getFont("ToolTip.font");
   }
 
+  public boolean hasCurrent() {
+    return myCurrentTooltip != null;
+  }
+
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, action, event, true);
+    return hideCurrent(me, action, event, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
     if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
-      return false;
+      if (me.getButton() == MouseEvent.NOBUTTON || myCurrentTipUi == null || myCurrentTipUi.isBlockClicks()) {
+        return false;
+      }
     }
+
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -421,7 +433,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     };
 
-    if (me != null) {
+    if (me != null && me.getButton() == MouseEvent.NOBUTTON) {
       myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
     }
     else {
@@ -600,7 +612,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public static void setColors(JComponent pane) {
-    pane.setForeground(JBColor.foreground);
+    pane.setForeground(JBColor.foreground());
     pane.setBackground(HintUtil.INFORMATION_COLOR);
     pane.setOpaque(true);
   }

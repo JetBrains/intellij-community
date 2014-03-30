@@ -59,14 +59,12 @@ public class ColumnDuration extends BaseColumn implements Comparator<SMTestProxy
 
   @Override
   public TableCellRenderer getRenderer(final SMTestProxy proxy) {
-    return new DurationCellRenderer(proxy);
+    return new DurationCellRenderer();
   }
 
   public static class DurationCellRenderer extends ColoredTableCellRenderer implements ColoredRenderer {
-    private final SMTestProxy myProxy;
 
-    public DurationCellRenderer(final SMTestProxy proxy) {
-      myProxy = proxy;
+    public DurationCellRenderer() {
     }
 
     public void customizeCellRenderer(final JTable table,
@@ -77,17 +75,7 @@ public class ColumnDuration extends BaseColumn implements Comparator<SMTestProxy
                                          final int column) {
       assert value != null;
 
-      final String title = value.toString();
-
-      final SimpleTextAttributes attributes;
-      if (myProxy.isSuite() && ColumnTest.TestsCellRenderer.isFirstLine(row)) {
-        //Black bold for parent suite of items in statistics
-        attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      } else {
-        //Black, regular for other suites and tests
-        attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-      }
-      append(title, attributes);
+      append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }

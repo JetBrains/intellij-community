@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInspection.actions;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -27,8 +26,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +37,6 @@ import java.awt.*;
 */
 @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
 public class InspectionListCellRenderer extends DefaultListCellRenderer implements MatcherHolder {
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-
   private Matcher myMatcher;
   private final SimpleTextAttributes SELECTED;
   private final SimpleTextAttributes PLAIN;
@@ -56,6 +53,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
   }
 
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setOpaque(true);
@@ -66,19 +64,19 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     panel.setForeground(fg);
 
     SimpleTextAttributes attr = sel ? SELECTED : PLAIN;
-    if (value instanceof InspectionProfileEntry) {
-      final InspectionProfileEntry tool = (InspectionProfileEntry)value;
+    if (value instanceof InspectionToolWrapper) {
+      final InspectionToolWrapper toolWrapper = (InspectionToolWrapper)value;
       final SimpleColoredComponent c = new SimpleColoredComponent();
-      SpeedSearchUtil.appendColoredFragmentForMatcher("  " + tool.getDisplayName(), c, attr, myMatcher, bg, sel);
+      SpeedSearchUtil.appendColoredFragmentForMatcher("  " + toolWrapper.getDisplayName(), c, attr, myMatcher, bg, sel);
       panel.add(c, BorderLayout.WEST);
 
       final SimpleColoredComponent group = new SimpleColoredComponent();
-      SpeedSearchUtil.appendColoredFragmentForMatcher(tool.getGroupDisplayName() + "  ", group, attr, myMatcher, bg, sel);
+      SpeedSearchUtil.appendColoredFragmentForMatcher(toolWrapper.getGroupDisplayName() + "  ", group, attr, myMatcher, bg, sel);
       final JPanel right = new JPanel(new BorderLayout());
       right.setBackground(bg);
       right.setForeground(fg);
       right.add(group, BorderLayout.CENTER);
-      final JLabel icon = new JLabel(getIcon(tool));
+      final JLabel icon = new JLabel(getIcon(toolWrapper));
       icon.setBackground(bg);
       icon.setForeground(fg);
       right.add(icon, BorderLayout.EAST);
@@ -93,15 +91,14 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     return panel;
   }
 
-  private static Icon getIcon(InspectionProfileEntry tool) {
+  @NotNull
+  private static Icon getIcon(@NotNull InspectionToolWrapper tool) {
     Icon icon = null;
-    if (tool instanceof LocalInspectionToolWrapper) {
-      final Language language = Language.findLanguageByID(((LocalInspectionToolWrapper)tool).getLanguage());
-      if (language != null) {
-        final LanguageFileType fileType = language.getAssociatedFileType();
-        if (fileType != null) {
-          icon = fileType.getIcon();
-        }
+    final Language language = Language.findLanguageByID(tool.getLanguage());
+    if (language != null) {
+      final LanguageFileType fileType = language.getAssociatedFileType();
+      if (fileType != null) {
+        icon = fileType.getIcon();
       }
     }
     if (icon == null) {

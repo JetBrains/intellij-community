@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -45,7 +44,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
     final String name = ((PsiNamedElement)target).getName();
     if (name == null || StringUtil.isEmptyOrSpaces(name)) return;
 
-    final SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(parameters.getEffectiveSearchScope());
+    final SearchScope onlyGroovy = GroovyScopeUtil.restrictScopeToGroovyFiles(parameters.getEffectiveSearchScope());
 
     final SearchRequestCollector collector = parameters.getOptimizer();
     final SearchSession session = collector.getSearchSession();
@@ -57,14 +56,13 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
           final String propertyName = field.getName();
           if (propertyName != null) {
             final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method), session);
-            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, processor);
+            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, method, processor);
           }
         }
       }
     }
 
-    collector.searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, new MyProcessor(target, null, session));
-
+    collector.searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, target, new MyProcessor(target, null, session));
   }
 
   private static class MyProcessor extends RequestResultProcessor {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.internal.psiView;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
@@ -32,8 +32,8 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -167,21 +167,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (o1.equals(myOnTop)) return -1;
       if (o2.equals(myOnTop)) return 1;
       return o1.compareToIgnoreCase(o2);
-    }
-  }
-
-  private static class DialectsComparator implements Comparator<Language> {
-    private final Language myDefault;
-
-    public DialectsComparator(final Language aDefault) {
-      myDefault = aDefault;
-    }
-
-    @Override
-    public int compare(final Language o1, final Language o2) {
-      if (myDefault.equals(o1)) return -1;
-      if (myDefault.equals(o2)) return 1;
-      return o1.getID().compareToIgnoreCase(o2.getID());
     }
   }
 
@@ -603,26 +588,24 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private void updateDialectsCombo(@Nullable final String lastUsed) {
     final Object source = getSource();
+    ArrayList<Language> items = new ArrayList<Language>(); 
     if (source instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)source).getLanguage();
-      final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(new DialectsComparator(baseLang));
-      model.add(baseLang);
-      model.addAll(LanguageUtil.getLanguageDialects(baseLang));
-      myDialectComboBox.setModel(model);
+      items.add(baseLang);
+      Language[] dialects = LanguageUtil.getLanguageDialects(baseLang);
+      Arrays.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
+      items.addAll(Arrays.asList(dialects));
     }
-    else {
-      myDialectComboBox.setModel(new DefaultComboBoxModel());
-    }
+    myDialectComboBox.setModel(new CollectionComboBoxModel(items));
 
-    final int size = myDialectComboBox.getModel().getSize();
+    final int size = items.size();
     final boolean visible = size > 1;
     myDialectLabel.setVisible(visible);
     myDialectComboBox.setVisible(visible);
     if (visible && (myCurrentFile != null || lastUsed != null)) {
-      final SortedComboBoxModel model = (SortedComboBoxModel)myDialectComboBox.getModel();
       String curLanguage = myCurrentFile != null ? myCurrentFile.getLanguage().toString() : lastUsed;
       for (int i = 0; i < size; ++i) {
-        if (curLanguage.equals(model.get(i).toString())) {
+        if (curLanguage.equals(items.get(i).toString())) {
           myDialectComboBox.setSelectedIndex(i);
           return;
         }
@@ -759,7 +742,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (blockNode == null) {
       LOG.error(LogMessageEx
                   .createEvent("PsiViewer: rootNode not found", "Current language: " + rootElement.getContainingFile().getLanguage(),
-                               new Attachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
+                               AttachmentFactory.createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
       blockNode = findBlockNode(rootPsi);
     }
 
@@ -839,7 +822,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Override
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       String fqn = null;
       if (myPsiTree.hasFocus()) {
         final TreePath path = myPsiTree.getSelectionPath();
@@ -978,7 +961,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       BlockTreeNode descriptor = (BlockTreeNode)blockElementsSet.iterator().next();
       PsiElement rootPsi = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(rootPsi.getContainingFile(), blockStart);
+      PsiFile file = rootPsi.getContainingFile();
+      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
+      if (currentPsiEl == null) currentPsiEl = file;
       int blockLength = descriptor.getBlock().getTextRange().getLength();
       while (currentPsiEl.getParent() != null &&
              currentPsiEl.getTextRange().getStartOffset() == blockStart &&
@@ -1225,7 +1210,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, lightFile));
   }
 
-  private class EditorListener implements CaretListener, SelectionListener, DocumentListener {
+  private class EditorListener extends CaretAdapter implements SelectionListener, DocumentListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       if (!available() || myEditor.getSelectionModel().hasSelection()) return;

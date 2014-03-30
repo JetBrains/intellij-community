@@ -63,15 +63,9 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="6b27f" class="javax.swing.JTextArea" binding="mySignaturePreviewTextArea">
+          <component id="4caa2" class="com.intellij.refactoring.ui.MethodSignatureComponent" binding="mySignaturePreviewTextArea" custom-create="true">
             <constraints/>
-            <properties>
-              <columns value="10"/>
-              <editable value="false"/>
-              <enabled value="true"/>
-              <rows value="0"/>
-              <text value="def foo()"/>
-            </properties>
+            <properties/>
           </component>
         </children>
       </scrollpane>

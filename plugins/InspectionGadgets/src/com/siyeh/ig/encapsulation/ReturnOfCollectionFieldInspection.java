@@ -16,7 +16,6 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,56 +23,15 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class ReturnOfCollectionFieldInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
-  public boolean ignorePrivateMethods = true;
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "ReturnOfCollectionOrArrayField";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("return.of.collection.array.field.display.name");
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("return.of.collection.array.field.option"),
-                                          this, "ignorePrivateMethods");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final PsiField field = (PsiField)infos[0];
-    final PsiType type = field.getType();
-    if (type instanceof PsiArrayType) {
-      return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.array");
-    }
-    else {
-      return InspectionGadgetsBundle.message("return.of.collection.array.field.problem.descriptor.collection");
-    }
-  }
+public class ReturnOfCollectionFieldInspection extends ReturnOfCollectionFieldInspectionBase {
 
   @Override
   @Nullable
@@ -101,11 +59,6 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
     return null;
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ReturnOfCollectionFieldVisitor();
-  }
-
   private static class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
 
     private final String myReplacementText;
@@ -116,6 +69,13 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
       myQualifiedClassName = qualifiedClassName;
     }
 
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Make return collection 'unmodifiable'";
+    }
+
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -130,7 +90,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
       }
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       fixContainingMethodReturnType(referenceExpression);
-      replaceExpressionAndShorten(referenceExpression, myReplacementText);
+      PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression, myReplacementText);
     }
 
     private void fixContainingMethodReturnType(PsiReferenceExpression referenceExpression) {
@@ -180,46 +140,6 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);
       HighlightUtils.highlightElement(replacement);
-    }
-  }
-
-  private class ReturnOfCollectionFieldVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
-      super.visitReturnStatement(statement);
-      final PsiExpression returnValue = statement.getReturnValue();
-      if (returnValue == null) {
-        return;
-      }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-      if (containingMethod == null) {
-        return;
-      }
-      if (ignorePrivateMethods && containingMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return;
-      }
-      final PsiClass returnStatementClass = containingMethod.getContainingClass();
-      if (returnStatementClass == null) {
-        return;
-      }
-      if (!(returnValue instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)returnValue;
-      final PsiElement referent = referenceExpression.resolve();
-      if (!(referent instanceof PsiField)) {
-        return;
-      }
-      final PsiField field = (PsiField)referent;
-      final PsiClass fieldClass = field.getContainingClass();
-      if (!returnStatementClass.equals(fieldClass)) {
-        return;
-      }
-      if (!CollectionUtils.isArrayOrCollectionField(field)) {
-        return;
-      }
-      registerError(returnValue, field, returnValue);
     }
   }
 }

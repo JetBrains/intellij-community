@@ -24,32 +24,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.test.GitTest;
+import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
 import static git4idea.history.GitLogParser.GitLogOption.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
-/**
- * Test for {@link GitLogParser}.
- *
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
- */
-@Deprecated
-public class GitLogParserTest extends GitTest {
+public class GitLogParserTest extends GitPlatformTest {
 
   public static final GitLogOption[] GIT_LOG_OPTIONS =
-    new GitLogOption[]{SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-      COMMITTER_EMAIL, SUBJECT, BODY, SHORT_PARENTS, PARENTS, RAW_BODY
+    new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
+      COMMITTER_EMAIL, SUBJECT, BODY, PARENTS, PARENTS, RAW_BODY
     };
   private VirtualFile myRoot;
   private GitLogParser myParser;
@@ -108,25 +96,21 @@ public class GitLogParserTest extends GitTest {
   public static final List<GitTestLogRecord> ALL_RECORDS = Arrays.asList(RECORD1, RECORD2, RECORD3);
 
 
-  @BeforeMethod
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
+  protected void setUp() throws Exception {
+    super.setUp();
     myRoot = new LightVirtualFile();
     myRecord = RECORD1; // for single record tests
   }
-  
-  @Test
-  public void parseAllWithoutNameStatus() throws VcsException {
+
+  public void testparseAllWithoutNameStatus() throws VcsException {
     doTestAllRecords(GitTestLogRecord.NameStatusOption.NONE);
   }
 
-  @Test
-  public void parseAllWithName() throws VcsException {
+  public void testparseAllWithName() throws VcsException {
     doTestAllRecords(GitTestLogRecord.NameStatusOption.NAME);
   }
 
-  @Test
-  public void parseAllWithNameStatus() throws VcsException {
+  public void testparseAllWithNameStatus() throws VcsException {
     doTestAllRecords(GitTestLogRecord.NameStatusOption.STATUS);
   }
 
@@ -146,20 +130,17 @@ public class GitLogParserTest extends GitTest {
     assertAllRecords(actualRecords, expectedRecords, nameStatusOption);
   }
 
-  @Test
-  public void parseOneRecordWithoutNameStatus() throws VcsException {
+  public void testparseOneRecordWithoutNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
     doTestOneRecord(GitTestLogRecord.NameStatusOption.NONE);
   }
-  
-  @Test
-  public void parseOneRecordWithName() throws VcsException {
+
+  public void testparseOneRecordWithName() throws VcsException {
     myParser = new GitLogParser(myProject, NameStatus.NAME,  GIT_LOG_OPTIONS);
     doTestOneRecord(GitTestLogRecord.NameStatusOption.NAME);
   }
 
-  @Test
-  public void parseOneRecordWithNameStatus() throws VcsException {
+  public void testparseOneRecordWithNameStatus() throws VcsException {
     myParser = new GitLogParser(myProject, NameStatus.STATUS, GIT_LOG_OPTIONS);
     doTestOneRecord(GitTestLogRecord.NameStatusOption.STATUS);
   }
@@ -188,28 +169,28 @@ public class GitLogParserTest extends GitTest {
   }
 
   private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, GitTestLogRecord.NameStatusOption option) throws VcsException {
-    assertEquals(actual.getHash(), expected.getHash());
-    assertEquals(actual.getShortHash(), expected.shortHash());
-    
-    assertEquals(actual.getCommitterName(), expected.getCommitterName());
-    assertEquals(actual.getCommitterEmail(), expected.getCommitterEmail());
-    assertEquals(actual.getDate(), expected.getCommitTime());
-    
-    assertEquals(actual.getAuthorName(), expected.getAuthorName());
-    assertEquals(actual.getAuthorEmail(), expected.getAuthorEmail());
-    assertEquals(actual.getAuthorTimeStamp(), expected.getAuthorTime().getTime() / 1000);
-    
-    assertEquals(actual.getAuthorAndCommitter(), GitUtil.adjustAuthorName(String.format("%s <%s>", expected.getAuthorName(), expected.getAuthorEmail()),
-                                                                          String.format("%s <%s>", expected.getCommitterName(), expected.getCommitterEmail())));
+    assertEquals(expected.getHash(), actual.getHash());
 
-    
-    assertEquals(actual.getSubject(), expected.getSubject());
-    assertEquals(actual.getBody(), expected.getBody());
-    assertEquals(actual.getRawBody(), expected.rawBody());
+    assertEquals(expected.getCommitterName(), actual.getCommitterName());
+    assertEquals(expected.getCommitterEmail(), actual.getCommitterEmail());
+    assertEquals(expected.getCommitTime(), actual.getDate());
 
-    assertEquals(actual.getParentsHashes(), expected.getParents());
-    assertEquals(actual.getParentsShortHashes(), expected.shortParents());
-    
+    assertEquals(expected.getAuthorName(), actual.getAuthorName());
+    assertEquals(expected.getAuthorEmail(), actual.getAuthorEmail());
+    assertEquals(expected.getAuthorTime().getTime(), actual.getAuthorTimeStamp());
+
+    String expectedAuthorAndCommitter = GitUtil.adjustAuthorName(
+                                                String.format("%s <%s>", expected.getAuthorName(), expected.getAuthorEmail()),
+                                                String.format("%s <%s>", expected.getCommitterName(), expected.getCommitterEmail()));
+    assertEquals(expectedAuthorAndCommitter, actual.getAuthorAndCommitter());
+
+
+    assertEquals(expected.getSubject(), actual.getSubject());
+    assertEquals(expected.getBody(), actual.getBody());
+    assertEquals(expected.rawBody(), actual.getRawBody());
+
+    assertSameElements(actual.getParentsHashes(), expected.getParents());
+
     if (option == GitTestLogRecord.NameStatusOption.NAME) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
     } else if (option == GitTestLogRecord.NameStatusOption.STATUS) {
@@ -219,7 +200,7 @@ public class GitLogParserTest extends GitTest {
   }
 
   private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {
-    assertEquals(actualPaths.size(), expectedPaths.size(), "Actual: " + actualPaths);
+    assertEquals("Actual: " + actualPaths, expectedPaths.size(), actualPaths.size());
     for (FilePath actualPath : actualPaths) {
       String actualRelPath = FileUtil.getRelativePath(myRoot.getPath(), actualPath.getPath(), '/');
       assertTrue(expectedPaths.contains(actualRelPath));
@@ -227,7 +208,7 @@ public class GitLogParserTest extends GitTest {
   }
 
   private void assertChanges(List<Change> actual, List<GitTestChange> expected) {
-    assertEquals(actual.size(), expected.size());
+    assertEquals(expected.size(), actual.size());
     for (int i = 0; i < actual.size(); i++) {
       Change actualChange = actual.get(i);
       GitTestChange expectedChange = expected.get(i);
@@ -328,10 +309,6 @@ public class GitLogParserTest extends GitTest {
       return (GitTestChange[])myData.get(GitTestLogRecordInfo.CHANGES);
     }
 
-    String shortHash() {
-      return getHash().substring(0, 7);
-    }
-    
     String[] shortParents() {
       String[] parents = getParents();
       String[] shortParents = new String[parents.length];
@@ -428,10 +405,6 @@ public class GitLogParserTest extends GitTest {
           return rawBody();
         case COMMIT_TIME:
           return String.valueOf(getCommitTime().getTime() / 1000);
-        case SHORT_PARENTS:
-          return shortParentsAsString();
-        case SHORT_HASH:
-          return shortHash();
         case AUTHOR_NAME:
           return getAuthorName();
         case AUTHOR_TIME:

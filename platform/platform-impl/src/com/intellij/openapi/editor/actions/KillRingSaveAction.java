@@ -16,10 +16,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
 
 /**
@@ -38,7 +39,7 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     super(new Handler(false));
   }
 
-  static class Handler extends EditorWriteActionHandler {
+  static class Handler extends EditorActionHandler {
     
     private final boolean myRemove;
 
@@ -47,21 +48,26 @@ public class KillRingSaveAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void execute(final Editor editor, final DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
         return;
       }
 
-      int start = selectionModel.getSelectionStart();
-      int end = selectionModel.getSelectionEnd();
+      final int start = selectionModel.getSelectionStart();
+      final int end = selectionModel.getSelectionEnd();
       if (start >= end) {
         return;
       }
       KillRingUtil.copyToKillRing(editor, start, end, false);
       if (myRemove) {
-        editor.getDocument().deleteString(start, end);
-      }
+        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
+          @Override
+          public void run() {
+            editor.getDocument().deleteString(start, end);
+          }
+        });
+      } 
     }
   }
 }

@@ -49,12 +49,16 @@ public class BookmarkItem extends ItemWrapper {
     return myBookmark;
   }
 
+  @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
     setupRenderer(renderer, project, myBookmark, selected);
   }
 
   public static void setupRenderer(SimpleColoredComponent renderer, Project project, Bookmark bookmark, boolean selected) {
     VirtualFile file = bookmark.getFile();
+    if (!file.isValid()) {
+      return;
+    }
 
     PsiManager psiManager = PsiManager.getInstance(project);
 
@@ -92,6 +96,7 @@ public class BookmarkItem extends ItemWrapper {
     setupRenderer(renderer, project, myBookmark, selected);
   }
 
+  @Override
   public void updateAccessoryView(JComponent component) {
     JLabel label = (JLabel)component;
     final char mnemonic = myBookmark.getMnemonic();
@@ -103,14 +108,17 @@ public class BookmarkItem extends ItemWrapper {
     }
   }
 
+  @Override
   public String speedSearchText() {
     return myBookmark.getFile().getName() + " " + myBookmark.getDescription();
   }
 
+  @Override
   public String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }
 
+  @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     panel.navigateInPreviewEditor(DetailView.PreviewEditorState.create(myBookmark.getFile(), myBookmark.getLine()));
   }

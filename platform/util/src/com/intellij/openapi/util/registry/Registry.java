@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,8 +91,7 @@ public class Registry  {
   }
 
   static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(REGISTRY_BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);
@@ -161,7 +160,7 @@ public class Registry  {
   }
 
   public boolean isInDefaultState() {
-    return getUserProperties().size() == 0;
+    return getUserProperties().isEmpty();
   }
 
   public boolean isRestartNeeded() {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
 * @author Roman.Chernyatchik
 */
-public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsProcessor {
+public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProcessor {
   private final StringBuilder myOutputBuffer = new StringBuilder();
 
   @Override
@@ -106,6 +106,7 @@ public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsP
 
   @Override
   public void dispose() {
+    super.dispose();
     myOutputBuffer.setLength(0);
   }
 

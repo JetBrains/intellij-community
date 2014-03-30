@@ -71,8 +71,8 @@ import java.util.*;
 @State(
   name = "CompilerConfiguration",
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE),
-    @Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
@@ -800,7 +800,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  private void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
 
     if (myAddNotNullAssertions != true) {

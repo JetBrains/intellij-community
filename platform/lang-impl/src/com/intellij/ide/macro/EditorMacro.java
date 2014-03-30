@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
@@ -46,15 +48,28 @@ public abstract class EditorMacro extends Macro {
 
   @Override
   public final String expand(DataContext dataContext) throws ExecutionCancelledException {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (editor != null){
         return expand(editor);
       }
     }
     return null;
+  }
+
+  /**
+   * @return 1-based column index where tabs are treated as single characters. External tools don't know about IDEA's tab size.
+   */
+  protected static String getColumnNumber(Editor editor, LogicalPosition pos) {
+    if (EditorUtil.inVirtualSpace(editor, pos)) {
+      return String.valueOf(pos.column + 1);
+    }
+
+    int offset = editor.logicalPositionToOffset(pos);
+    int lineStart = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(offset));
+    return String.valueOf(offset - lineStart + 1);
   }
 
   @Nullable

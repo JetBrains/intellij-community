@@ -21,4 +21,19 @@ public class UnnecessaryCallToStringValueOf {
       s = "abc" + String.valueOf('d') + "efg";
     }
 
+    void printStream() {
+        System.out.print(String.valueOf(7));
+    }
+
+    void builder(StringBuilder builder) {
+        builder.append(String.valueOf(0x8));
+    }
+
+    public static void main22(String[] args) {
+        foo(String.valueOf(3.0));
+    }
+
+    static void foo(String s) {
+        System.out.println(s);
+    }
 }

@@ -83,7 +83,6 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     }
   }
 
-  @Nullable
   public void quickCheckHaveStuff() throws VcsException {
     if (mySteps.isEmpty()) {
       throw new VcsException("Nothing selected to show diff");
@@ -145,6 +144,15 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     }
     myIndex = index;
     return result.getRequest();
+  }
+
+  @Nullable
+  @Override
+  public DiffRequestPresentable getCurrentRequest() {
+    if (myIndex < 0 || myIndex >= mySteps.size()) {
+      return null;
+    }
+    return mySteps.get(myIndex);
   }
 
   private int findRequest(DiffRequestPresentable presentable) {

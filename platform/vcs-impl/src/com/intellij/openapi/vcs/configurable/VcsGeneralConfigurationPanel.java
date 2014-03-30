@@ -216,8 +216,10 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myClearInitialCommitMessage.setSelected(settings.CLEAR_INITIAL_COMMIT_MESSAGE);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
-    int id = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS.getId();
-    UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, id == 0 ? 0 : id == 1 ? 2 : 1);
+    VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+    UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
+                                                             ? 0
+                                                             : value == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY ? 2 : 1);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
     if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       myFailedCommitChangelistCombo.setSelectedIndex(0);

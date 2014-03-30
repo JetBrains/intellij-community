@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -35,7 +37,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingBy
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -53,16 +54,25 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   }
 
   @Override
-  public void addListener(BreakpointsListener listener, Project project) {
-    final MyXBreakpointListener listener1 = new MyXBreakpointListener(listener);
-    XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpointListener(listener1);
+  public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    final MyXBreakpointListener listener1 = new MyXBreakpointListener(listener, breakpointManager);
+    breakpointManager.addBreakpointListener(listener1);
     myListeners.add(listener1);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        removeListener(listener);
+      }
+    });
   }
 
   @Override
-  public void removeListener(BreakpointsListener listener) {
+  protected void removeListener(BreakpointsListener listener) {
     for (MyXBreakpointListener breakpointListener : myListeners) {
       if (breakpointListener.myListener == listener) {
+        XBreakpointManager manager = breakpointListener.myBreakpointManager;
+        manager.removeBreakpointListener(breakpointListener);
         myListeners.remove(breakpointListener);
         break;
       }
@@ -96,21 +106,10 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     if (breakpoint instanceof XLineBreakpointImpl) {
       RangeHighlighter highlighter = ((XLineBreakpointImpl)breakpoint).getHighlighter();
       if (highlighter != null) {
-        return highlighter.getGutterIconRenderer();
+        return (GutterIconRenderer)highlighter.getGutterIconRenderer();
       }
     }
     return null;
-  }
-
-  @Override
-  public AnAction[] getAddBreakpointActions(@NotNull Project project) {
-    List<AnAction> result = new ArrayList<AnAction>();
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      if (type.isAddBreakpointButtonVisible()) {
-        result.add(new AddXBreakpointAction(type));
-      }
-    }
-    return result.toArray(new AnAction[result.size()]);
   }
 
   public void onDialogClosed(final Project project) {
@@ -131,9 +130,11 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   private static class MyXBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     public BreakpointsListener myListener;
+    public XBreakpointManager myBreakpointManager;
 
-    public MyXBreakpointListener(BreakpointsListener listener) {
+    public MyXBreakpointListener(BreakpointsListener listener, XBreakpointManager breakpointManager) {
       myListener = listener;
+      myBreakpointManager = breakpointManager;
     }
 
     @Override
@@ -148,6 +149,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
     @Override
     public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
+      myListener.breakpointsChanged();
     }
   }
 

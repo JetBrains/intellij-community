@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +55,10 @@ public class CutLineEndAction extends EditorAction {
       final int lineNumber = doc.getLineNumber(caretOffset);
       int lineEndOffset = doc.getLineEndOffset(lineNumber);
 
+      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && caretOffset == lineEndOffset) {
+        return;
+      }
+
       int start;
       int end;
       if (caretOffset >= lineEndOffset) {
@@ -74,6 +79,9 @@ public class CutLineEndAction extends EditorAction {
     private void delete(@NotNull Editor editor, int start, int end) {
       if (myCopyToClipboard) {
         KillRingUtil.copyToKillRing(editor, start, end, true);
+      }
+      else {
+        CopyPasteManager.getInstance().stopKillRings();
       }
       editor.getDocument().deleteString(start, end);
     }

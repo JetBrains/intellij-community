@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageInfoToUsageConverter;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -48,8 +47,6 @@ public class MigrationUsagesPanel extends UsagesPanel {
   public void showRootUsages(UsageInfo root, UsageInfo migration, final TypeMigrationLabeler labeler) {
     final PsiElement rootElement = root.getElement();
     if (rootElement == null) return;
-    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor =
-        new UsageInfoToUsageConverter.TargetElementsDescriptor(rootElement);
     final Set<PsiElement> usages = labeler.getTypeUsages((TypeMigrationUsageInfo)migration, ((TypeMigrationUsageInfo)root));
     if (usages != null) {
       final List<UsageInfo> infos = new ArrayList<UsageInfo>(usages.size());
@@ -58,9 +55,10 @@ public class MigrationUsagesPanel extends UsagesPanel {
           infos.add(new UsageInfo(usage));
         }
       }
-      showUsages(targetElementsDescriptor, infos.toArray(new UsageInfo[infos.size()]));
-    } else {
-      showUsages(targetElementsDescriptor, new UsageInfo[] {migration});
+      showUsages(new PsiElement[]{rootElement}, infos.toArray(new UsageInfo[infos.size()]));
+    }
+    else {
+      showUsages(new PsiElement[]{rootElement}, new UsageInfo[] {migration});
     }
   }
 

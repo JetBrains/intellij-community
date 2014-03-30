@@ -18,7 +18,8 @@ package git4idea;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,11 +34,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -45,6 +46,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -53,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLog;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.changes.GitCommittedChangeListProvider;
@@ -66,7 +69,7 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.NewGitUsersComponent;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.GitProjectLogManager;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
@@ -75,9 +78,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
-import git4idea.roots.GitRootChecker;
-import git4idea.roots.GitRootDetectInfo;
-import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -88,6 +88,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -98,12 +99,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public class GitVcs extends AbstractVcs<CommittedChangeList> {
-  public static final NotificationGroup NOTIFICATION_GROUP_ID = NotificationGroup.toolWindowGroup(
-    "Git Messages", ChangesViewContentManager.TOOLWINDOW_ID, true);
-  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
-    "Git Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
-  public static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
-    "Git Minor Notifications", NotificationDisplayType.BALLOON, true);
 
   static {
     NotificationsConfigurationImpl.remove("Git");
@@ -114,19 +109,23 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * Provide selected Git commit in some commit list. Use this, when {@link Change} is not enough.
    * @see VcsDataKeys#CHANGES
-   * @see #SELECTED_COMMITS
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
-  public static final DataKey<GitCommit> GIT_COMMIT = DataKey.create("Git.Commit");
+  @Deprecated
+  public static final DataKey<GitHeavyCommit> GIT_COMMIT = DataKey.create("Git.Commit");
 
   /**
    * Provides the list of Git commits selected in some list, for example, in the Git log.
-   * @see #GIT_COMMIT
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
-  public static final DataKey<List<GitCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
+  @Deprecated
+  public static final DataKey<List<GitHeavyCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
 
   /**
-   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link GitCommit} object.
+   * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link git4idea.history.browser.GitHeavyCommit} object.
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
+  @Deprecated
   public static final DataKey<GitCommitDetailsProvider> COMMIT_DETAILS_PROVIDER = DataKey.create("Git.Commits.Details.Provider");
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
@@ -144,8 +143,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitVcsApplicationSettings myAppSettings;
   private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
-  private final GitMergeProvider myMergeProvider;
-  private final GitMergeProvider myReverseMergeProvider;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
   private final @NotNull GitPlatformFacade myPlatformFacade;
 
@@ -190,8 +187,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRevSelector = new GitRevisionSelector();
     myConfigurable = new GitVcsConfigurable(gitProjectSettings, myProject);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
-    myMergeProvider = new GitMergeProvider(myProject);
-    myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
@@ -211,14 +206,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public static void runInBackground(Task.Backgroundable task) {
     task.queue();
-  }
-
-  /**
-   * @return a reverse merge provider for git (with reversed meaning of "theirs" and "yours", needed for the rebase and unstash)
-   */
-  @NotNull
-  public MergeProvider getReverseMergeProvider() {
-    return myReverseMergeProvider;
   }
 
   @Override
@@ -241,7 +228,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   @Override
   public MergeProvider getMergeProvider() {
-    return myMergeProvider;
+    return GitMergeProvider.detect(myProject);
   }
 
   @Override
@@ -327,11 +314,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public VcsRootChecker getRootChecker() {
-    return new GitRootChecker(myProject, myPlatformFacade);
-  }
-
-  @Override
   protected void start() throws VcsException {
   }
 
@@ -347,7 +329,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
     NewGitUsersComponent.getInstance(myProject).activate();
-    GitProjectLogManager.getInstance(myProject).activate();
+    if (!Registry.is("git.new.log")) {
+      GitProjectLogManager.getInstance(myProject).activate();
+    }
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myBranchWidget = new GitBranchWidget(myProject);
@@ -460,21 +444,26 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVersion = GitVersion.identifyVersion(executable);
       if (! myVersion.isSupported()) {
         log.info("Unsupported Git version: " + myVersion);
-        String message = String.format("The <a href='settings'>configured</a> version of Git is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='update'>update</a>.",
+        final String SETTINGS_LINK = "settings";
+        final String UPDATE_LINK = "update";
+        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
+                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
                                        myVersion, GitVersion.MIN);
-        IMPORTANT_ERROR_NOTIFICATION.createNotification("Unsupported Git version", message, NotificationType.ERROR,
-          new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              if (e.getDescription().equals("settings")) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
-              }
-              else if (e.getDescription().equals("update")) {
-                BrowserUtil.browse("http://git-scm.com");
-              }
-            }
-        }).notify(myProject);
+        VcsNotifier.getInstance(myProject).notifyError("Unsupported Git version", message,
+                                                       new NotificationListener.Adapter() {
+                                                         @Override
+                                                         protected void hyperlinkActivated(@NotNull Notification notification,
+                                                                                           @NotNull HyperlinkEvent e) {
+                                                           if (SETTINGS_LINK.equals(e.getDescription())) {
+                                                             ShowSettingsUtil.getInstance()
+                                                               .showSettingsDialog(myProject, getConfigurable().getDisplayName());
+                                                           }
+                                                           else if (UPDATE_LINK.equals(e.getDescription())) {
+                                                             BrowserUtil.browse("http://git-scm.com");
+                                                           }
+                                                         }
+                                                       }
+        );
       }
     } catch (Exception e) {
       if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
@@ -554,7 +543,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public VcsType getType() {
-    return VcsType.distibuted;
+    return VcsType.distributed;
   }
 
   private final VcsOutgoingChangesProvider<CommittedChangeList> myOutgoingChangesProvider;
@@ -594,8 +583,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
-        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ public interface CustomLiveTemplate {
 
   boolean supportsWrapping();
 
-  void expand(String key, @NotNull CustomTemplateCallback callback);
+  void expand(@NotNull String key, @NotNull CustomTemplateCallback callback);
 
-  void wrap(String selection, @NotNull CustomTemplateCallback callback);
+  void wrap(@NotNull String selection, @NotNull CustomTemplateCallback callback);
 
   @NotNull
   String getTitle();

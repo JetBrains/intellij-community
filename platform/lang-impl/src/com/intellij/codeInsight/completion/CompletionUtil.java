@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,13 +31,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +46,6 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
-  static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
   public static final Key<TailType> TAIL_TYPE_ATTR = LookupItem.TAIL_TYPE_ATTR;
 
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
@@ -92,7 +89,9 @@ public class CompletionUtil {
   public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
 
-    final FileType fileType = position.getParent().getLanguage().getAssociatedFileType();
+    PsiElement parent = position.getParent();
+    Language language = parent == null ? position.getLanguage() : parent.getLanguage();
+    final FileType fileType = language.getAssociatedFileType();
     if (fileType != null) {
       final CompletionData mainData = getCompletionDataByFileType(fileType);
       if (mainData != null) {
@@ -240,38 +239,7 @@ public class CompletionUtil {
 
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
-    final PsiFile file = psi.getContainingFile();
-    if (file != null && file != file.getOriginalFile() && psi.getTextRange() != null) {
-      TextRange range = psi.getTextRange();
-      Integer start = range.getStartOffset();
-      Integer end = range.getEndOffset();
-      final Document document = file.getViewProvider().getDocument();
-      if (document != null) {
-        Document hostDocument = document instanceof DocumentWindowImpl ? ((DocumentWindowImpl)document).getDelegate() : document;
-        OffsetTranslator translator = hostDocument.getUserData(RANGE_TRANSLATION);
-        if (translator != null) {
-          if (document instanceof DocumentWindowImpl) {
-            start = ((DocumentWindowImpl)document).injectedToHost(start);
-            end = ((DocumentWindowImpl)document).injectedToHost(end);
-          }
-
-          start = translator.translateOffset(start);
-          end = translator.translateOffset(end);
-          if (start == null || end == null) {
-            return null;
-          }
-
-          if (document instanceof DocumentWindowImpl) {
-            start = ((DocumentWindowImpl)document).hostToInjected(start);
-            end = ((DocumentWindowImpl)document).hostToInjected(end);
-          }
-        }
-      }
-      //noinspection unchecked
-      return (T)PsiTreeUtil.findElementOfClassAtRange(file.getOriginalFile(), start, end, psi.getClass());
-    }
-
-    return psi;
+    return CompletionUtilCoreImpl.getOriginalElement(psi);
   }
 
   @NotNull

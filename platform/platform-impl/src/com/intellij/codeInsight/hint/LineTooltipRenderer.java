@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,6 @@ import java.net.URL;
  * @author cdr
  */
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
-  @NonNls protected static final String BORDER_LINE = "<hr size=1 noshade>";
 
   @NonNls protected String myText;
 
@@ -323,9 +323,9 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     else {
       String html1 = UIUtil.getHtmlBody(myText);
       String html2 = UIUtil.getHtmlBody(text);
-      newBody = html1 + BORDER_LINE + html2;
+      newBody = html1 + UIUtil.BORDER_LINE + html2;
     }
-    myText = "<html><body>" + newBody + "</body></html>";
+    myText = XmlStringUtil.wrapInHtml(newBody);
   }
 
   public String getText() {

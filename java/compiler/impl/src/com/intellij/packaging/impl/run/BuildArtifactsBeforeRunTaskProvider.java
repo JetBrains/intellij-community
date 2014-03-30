@@ -65,7 +65,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       @Override
       public void artifactRemoved(@NotNull Artifact artifact) {
         final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-        for (RunConfiguration configuration : runManager.getAllConfigurations()) {
+        for (RunConfiguration configuration : runManager.getAllConfigurationsList()) {
           final List<BuildArtifactsBeforeRunTask> tasks = runManager.getBeforeRunTasks(configuration, ID);
           for (BuildArtifactsBeforeRunTask task : tasks) {
             final String artifactName = artifact.getName();
@@ -164,7 +164,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
 
   public boolean executeTask(DataContext context,
                              RunConfiguration configuration,
-                             ExecutionEnvironment env,
+                             final ExecutionEnvironment env,
                              final BuildArtifactsBeforeRunTask task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
@@ -195,7 +195,9 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
       public void run() {
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
-        manager.make(ArtifactCompileScope.createArtifactsScope(myProject, artifacts), compilerFilter, callback);
+        final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
+        ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.get(env));
+        manager.make(scope, compilerFilter, callback);
       }
     }, ModalityState.NON_MODAL);
 

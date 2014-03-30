@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -83,9 +82,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     ModuleBuilder builder = myType.createModuleBuilder();
-    builder.setAvailableFrameworks(Collections.<String, Boolean>emptyMap());
     return builder.createWizardSteps(wizardContext, modulesProvider);
   }
 
@@ -156,6 +154,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return myTemplate.getIcon();
   }
 
+  @Override
+  public boolean isTemplateBased() {
+    return true;
+  }
+
   @NotNull
   @Override
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
@@ -172,7 +175,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(Module module) {
-    RunConfiguration[] configurations = RunManager.getInstance(module.getProject()).getAllConfigurations();
+    List<RunConfiguration> configurations = RunManager.getInstance(module.getProject()).getAllConfigurationsList();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
@@ -205,7 +208,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         @Nullable
         @Override
         public String fun(String path) {
-          if (moduleMode && path.contains(".idea")) return null;
+          if (moduleMode && path.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
           if (basePackage != null) {
             return path.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
           }
@@ -214,11 +217,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       };
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
         @Override
-        public byte[] processContent(byte[] content, String fileName) throws IOException {
-          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
-          return fileType.isBinary() ? content : processTemplates(projectName, new String(content));
+        public byte[] processContent(byte[] content, File file) throws IOException {
+          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
+          return fileType.isBinary() ? content : processTemplates(projectName, new String(content), file);
         }
-      });
+      }, true);
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
@@ -250,7 +253,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  private byte[] processTemplates(@Nullable String projectName, String s) throws IOException {
+  @SuppressWarnings("UseOfPropertiesAsHashtable")
+  @Nullable
+  private byte[] processTemplates(@Nullable String projectName, String content, File file) throws IOException {
+    for (WizardInputField field : myAdditionalFields) {
+      if (!field.acceptFile(file)) {
+        return null;
+      }
+    }
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
@@ -258,7 +268,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     if (projectName != null) {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
-    String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
+    String merged = FileTemplateUtil.mergeTemplate(properties, content, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
 

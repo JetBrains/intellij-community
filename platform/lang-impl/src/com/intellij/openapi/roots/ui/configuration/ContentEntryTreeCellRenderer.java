@@ -21,23 +21,27 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.List;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor) {
+  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, List<ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
+    myEditHandlers = editHandlers;
   }
 
   @Override
@@ -76,9 +80,8 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   }
 
   protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
-    for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-      final VirtualFile excludePath = excludeFolder.getFile();
-      if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
+    for (VirtualFile excludePath : entry.getExcludeFolderFiles()) {
+      if (VfsUtilCore.isAncestor(excludePath, file, false)) {
         return AllIcons.Modules.ExcludeRoot;
       }
     }
@@ -86,7 +89,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       if (file.equals(sourceFolder.getFile())) {
-        return IconSet.getSourceRootIcon(sourceFolder.isTestSource());
+        return SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
     }
 
@@ -98,10 +101,23 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
         if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
-        icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource());
+        Icon folderIcon = getSourceFolderIcon(sourceFolder.getRootType());
+        if (folderIcon != null) {
+          icon = folderIcon;
+        }
         currentRoot = sourcePath;
       }
     }
     return icon;
+  }
+
+  @Nullable
+  private Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
+    for (ModuleSourceRootEditHandler<?> handler : myEditHandlers) {
+      if (handler.getRootType().equals(type)) {
+        return handler.getFolderUnderRootIcon();
+      }
+    }
+    return null;
   }
 }

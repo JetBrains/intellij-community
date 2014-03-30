@@ -63,7 +63,8 @@ public class LocationNameFieldsBinding {
                                                                            project,
                                                                            descriptor,
                                                                            TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-        protected void onFileChoosen(VirtualFile chosenFile) {
+        @Override
+        protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
           myBaseDir = chosenFile.getPath();
           if (isProjectNameChanged(nameTextField.getText()) && !nameTextField.getText().equals(chosenFile.getName())) {
             myExternalModify = true;
@@ -115,6 +116,7 @@ public class LocationNameFieldsBinding {
   private class NameFieldDocument extends PlainDocument {
     public NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
       addDocumentListener(new DocumentAdapter() {
+        @Override
         protected void textChanged(final DocumentEvent e) {
           if (!myModifyingLocation && !myExternalModify) {
             myModifyingProjectName = true;
@@ -125,6 +127,7 @@ public class LocationNameFieldsBinding {
       });
     }
 
+    @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
       boolean ok = true;
       for (int idx = 0; idx < str.length() && ok; idx++) {

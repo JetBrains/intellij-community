@@ -28,7 +28,7 @@ import java.util.Collection;
 
 public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
   public ClassSmartPointerNode(Project project, PsiClass value, ViewSettings viewSettings) {
-    super(project, SmartPointerManager.getInstance(project).createLazyPointer(value), viewSettings);
+    super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 
   public ClassSmartPointerNode(Project project, Object value, ViewSettings viewSettings) {

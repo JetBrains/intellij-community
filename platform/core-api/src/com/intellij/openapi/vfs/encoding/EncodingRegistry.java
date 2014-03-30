@@ -34,7 +34,7 @@ public abstract class EncodingRegistry {
   public abstract boolean isNative2Ascii(@NotNull VirtualFile virtualFile);
 
   /**
-   * @return name of default charset configured in Settings|File Encodings|IDE encoding
+   * @return charset configured in Settings|File Encodings|IDE encoding
    */
   @Nullable
   public abstract Charset getDefaultCharset();
@@ -52,6 +52,11 @@ public abstract class EncodingRegistry {
   public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
 
   public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);
+
+  @Nullable("null means 'use system-default'")
+  public Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
+    return null;
+  }
 
   public static EncodingRegistry getInstance() {
     if (ourInstanceGetter == null) {

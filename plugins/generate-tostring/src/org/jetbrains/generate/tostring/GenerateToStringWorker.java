@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package org.jetbrains.generate.tostring;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +103,7 @@ public class GenerateToStringWorker {
    * @param template the chosen template to use
    * @return the policy the user selected (never null)
    */
-  private ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
+  protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
     final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
     if (dupPolicy == DuplicationPolicy.ASK) {
       PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
@@ -159,8 +160,18 @@ public class GenerateToStringWorker {
 
     // create psi newMethod named toString()
     final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
-    PsiMethod newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
-    CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
+    if (topLevelFactory == null) {
+      return null;
+    }
+    PsiMethod newMethod;
+    try {
+      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
+      CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
+    } catch (IncorrectOperationException ignore) {
+      HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
+                                                      template.getFileName() + '\'');
+      return null;
+    }
 
     // insertNewMethod conflict resolution policy (add/replace, duplicate, cancel)
     PsiMethod existingMethod = clazz.findMethodBySignature(newMethod, false);
@@ -210,8 +221,8 @@ public class GenerateToStringWorker {
         // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));
       }
-      method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
     }
+    method = (PsiMethod)JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(method);
 
     // jump to method
     if (!config.isJumpToMethod() || editor == null) {

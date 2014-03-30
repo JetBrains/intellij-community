@@ -12,7 +12,8 @@ Groovy script
       PsiWhiteSpace(' ')
       Compound regular expression
         PsiElement(regex begin)('/')
-        PsiElement(regex content)('asd ')
+        GrStringContentImpl(GString content element)
+          PsiElement(regex content)('asd ')
         GString injection
           PsiElement($)('$')
           Closable block
@@ -25,6 +26,7 @@ Groovy script
                 PsiElement(regex content)('bugaga')
                 PsiElement(regex end)('/')
             PsiElement(})('}')
-        PsiElement(regex content)(' asd')
+        GrStringContentImpl(GString content element)
+          PsiElement(regex content)(' asd')
         PsiElement(regex end)('/')
       PsiElement())(')')

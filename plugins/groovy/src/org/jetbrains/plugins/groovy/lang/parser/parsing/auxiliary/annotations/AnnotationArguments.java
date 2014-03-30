@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
@@ -42,17 +43,8 @@ public class AnnotationArguments implements GroovyElementTypes {
       return;
     }
 
-    if (checkIdentAndAssign(builder)) {
+    if (builder.getTokenType() != mRPAREN) {
       parsePairs(builder, parser);
-    }
-    else {
-      PsiBuilder.Marker pairMarker = builder.mark();
-      if (parseAnnotationMemberValueInitializer(builder, parser)) {
-        pairMarker.done(ANNOTATION_MEMBER_VALUE_PAIR);
-      }
-      else {
-        pairMarker.drop();
-      }
     }
 
     ParserUtils.getToken(builder, mNLS);
@@ -61,8 +53,10 @@ public class AnnotationArguments implements GroovyElementTypes {
   }
 
   private static boolean checkIdentAndAssign(PsiBuilder builder) {
-    //def is valid name identifier
-    return ParserUtils.lookAhead(builder, mIDENT, mASSIGN) || ParserUtils.lookAhead(builder, kDEF, mASSIGN);
+    final PsiBuilder.Marker marker = builder.mark();
+    boolean result = ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS) && ParserUtils.getToken(builder, mASSIGN);
+    marker.rollbackTo();
+    return result;
   }
 
   /*
@@ -119,19 +113,29 @@ public class AnnotationArguments implements GroovyElementTypes {
   private static boolean parsePair(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
+    final PsiBuilder.Marker lfMarker;
     if (checkIdentAndAssign(builder)) {
-      if (!ParserUtils.getToken(builder, mIDENT)) {
-        ParserUtils.getToken(builder, kDEF);
-      }
+      ParserUtils.getToken(builder, TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS);
       ParserUtils.getToken(builder, mASSIGN);
+
+      lfMarker = builder.mark();
       ParserUtils.getToken(builder, mNLS);
     }
     else {
-      builder.error(GroovyBundle.message("attribute.name.expected"));
+      lfMarker = null;
     }
 
     if (!parseAnnotationMemberValueInitializer(builder, parser)) {
-      builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
+      if (lfMarker != null) {
+        lfMarker.rollbackTo();
+        builder.error(GroovyBundle.message("annotation.member.value.initializer.expected"));
+      }
+      else {
+        builder.error(GroovyBundle.message("annotation.attribute.expected"));
+      }
+    }
+    else if (lfMarker != null) {
+      lfMarker.drop();
     }
 
     marker.done(ANNOTATION_MEMBER_VALUE_PAIR);

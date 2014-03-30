@@ -47,6 +47,7 @@ public class CacheBuilderEP implements PluginAware {
   }
 
 
+  @Override
   public void setPluginDescriptor(PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }

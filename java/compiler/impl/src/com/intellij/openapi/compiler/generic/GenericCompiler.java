@@ -25,6 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
+ *
+ * @deprecated this interface is part of the obsolete build system which runs as part of the IDE process. Since IDEA 12 plugins need to
+ * integrate into 'external build system' instead (http://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
+ * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
 public abstract class GenericCompiler<Key, SourceState, OutputState> implements Compiler {
   protected static final KeyDescriptor<String> STRING_KEY_DESCRIPTOR = new EnumeratorStringDescriptor();

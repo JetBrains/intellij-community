@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 
 public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
@@ -55,29 +53,33 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
 
-    final FilePath[] roots = filterDescindingFiles(getRoots(context), project);
+    final FilePath[] roots = prepareRootsForCommit(getRoots(context), project);
+    ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
+      public void run() {
+        performCheckIn(context, project, roots);
+      }
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"),
+                                                             ModalityState.current());
+  }
 
+  protected void performCheckIn(VcsContext context, Project project, FilePath[] roots) {
+    LOG.debug("invoking commit dialog after update");
+    LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
+    Change[] changes = context.getSelectedChanges();
+    if (changes != null && changes.length > 0) {
+      CommitChangeListDialog.commitChanges(project, Arrays.asList(changes), initialSelection, getExecutor(project), null);
+    }
+    else {
+      CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
+    }
+  }
+
+  protected FilePath[] prepareRootsForCommit(FilePath[] roots, Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ApplicationManager.getApplication().saveAll();
     }
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    changeListManager.invokeAfterUpdate(new Runnable() {
-      public void run() {
-        LOG.debug("invoking commit dialog after update");
-        final LocalChangeList initialSelection = getInitiallySelectedChangeList(context, project);
-
-        Change[] changes = context.getSelectedChanges();
-        if (changes != null && changes.length > 0) {
-          Collection<Change> changeCollection = new ArrayList<Change>();
-          Collections.addAll(changeCollection, changes);
-          CommitChangeListDialog.commitChanges(project, changeCollection, initialSelection, getExecutor(project), null);
-        }
-        else {
-          CommitChangeListDialog.commitPaths(project, Arrays.asList(roots), initialSelection, getExecutor(project), null);
-        }
-      }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current());
+    return filterDescindingFiles(roots, project);
   }
 
   protected String getMnemonicsFreeActionName(VcsContext context) {

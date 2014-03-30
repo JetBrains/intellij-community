@@ -34,6 +34,7 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
@@ -245,7 +246,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       for (PsiReference reference : docRefs) {
         reference.bindToElement(method);
       }
-      VisibilityUtil.fixVisibility(usages, method, myNewVisibility);
+      VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), method, myNewVisibility);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -425,7 +426,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                 return;
               }
               if (myTargetVariable.equals(resolved)) {
-                PsiThisExpression thisExpression = RefactoringUtil.createThisExpression(manager, PsiTreeUtil.isAncestor(myMethod, PsiTreeUtil.getParentOfType(expression, PsiClass.class), true) ? myTargetClass : null);
+                PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(manager, PsiTreeUtil.isAncestor(myMethod,
+                                                                                                                              PsiTreeUtil
+                                                                                                                                .getParentOfType(
+                                                                                                                                  expression,
+                                                                                                                                  PsiClass.class),
+                                                                                                                              true)
+                                                                                                       ? myTargetClass
+                                                                                                       : null);
                 replaceMap.put(expression, thisExpression);
                 return;
               }

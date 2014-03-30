@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementEditorPredicate;
@@ -80,8 +80,8 @@ public class FlipSetterCallIntention extends Intention {
     }
     final PsiMethod setter = call.resolveMethod();
     final PsiMethod getter = methodCallExpression.resolveMethod();
-    final PsiMethod get = PropertyUtils.getReversePropertyMethod(setter);
-    final PsiMethod set = PropertyUtils.getReversePropertyMethod(getter);
+    final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);
+    final PsiMethod set = PropertyUtil.getReversePropertyMethod(getter);
     if (get == null || set == null) {
       return;
     }
@@ -107,8 +107,8 @@ public class FlipSetterCallIntention extends Intention {
     final PsiMethodCallExpression call2 = (PsiMethodCallExpression)argument;
     final PsiMethod setter = call1.resolveMethod();
     final PsiMethod getter = call2.resolveMethod();
-    final PsiMethod get = PropertyUtils.getReversePropertyMethod(setter);
-    final PsiMethod set = PropertyUtils.getReversePropertyMethod(getter);
+    final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);
+    final PsiMethod set = PropertyUtil.getReversePropertyMethod(getter);
     if (setter == null || getter == null || get == null || set == null) {
       return false;
     }

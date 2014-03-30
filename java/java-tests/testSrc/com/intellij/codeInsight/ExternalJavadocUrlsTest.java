@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,34 +19,51 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 
-/**
- * User: anna
- * Date: 11/27/11
- */
+import java.util.List;
+
 public class ExternalJavadocUrlsTest extends LightCodeInsightFixtureTestCase {
-  private void doTest(String text, String... expectedSignature) {
-    myFixture.configureByText("Test.java", text);
-    final PsiElement elementAtCaret = myFixture.getElementAtCaret();
-    final PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
-    assertNotNull(member);
-    final String signature = JavaDocumentationProvider.formatMethodSignature(member);
-    assertNotNull(signature);
-    assertEquals("found:" + signature, expectedSignature[0], signature);
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    PsiTestUtil.setJavadocUrls(myModule, "http://doc" );
   }
 
   public void testVarargs() {
     doTest("class Test {\n" +
-           " void fo<caret>o(Class<?>... cl){}\n" +
-           "}", "foo(java.lang.Class...)");
+           "  void <caret>foo(Class<?>... cl) { }\n" +
+           "}",
+
+           "foo-java.lang.Class...-", "foo-java.lang.Class<?>...-");
 
   }
-  
+
   public void testTypeParams() {
     doTest("class Test {\n" +
-           " <T> void so<caret>rt(T[] a, Comparator<? super T> c) {}\n" +
+           "  <T> void <caret>sort(T[] a, Comparator<? super T> c) { }\n" +
            "}\n" +
-           " class Comparator<X>{}", "sort(T[], Comparator)");
+           "class Comparator<X>{}",
+
+           "sort-T:A-Comparator-", "sort-T:A-Comparator<? super T>-");
+  }
+
+  protected void doTest(String text, String... expected) {
+    myFixture.configureByText("Test.java", text);
+    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    PsiMethod member = PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class, false);
+    assertNotNull(member);
+    List<String> urls = JavaDocumentationProvider.getExternalJavaDocUrl(member);
+    assertNotNull(urls);
+    List<String> actual = ContainerUtil.map(urls, new Function<String, String>() {
+      @Override
+      public String fun(String url) {
+        return url.substring(url.indexOf('#') + 1);
+      }
+    });
+    assertOrderedEquals(actual, expected);
   }
 }

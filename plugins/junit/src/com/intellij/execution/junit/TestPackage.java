@@ -26,18 +26,19 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -78,6 +79,7 @@ public class TestPackage extends TestObject {
   }
 
 
+  @Override
   public SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     return data.getScope().getSourceScope(myConfiguration);
@@ -113,15 +115,17 @@ public class TestPackage extends TestObject {
     try {
       filter = getClassFilter(data);
     }
-    catch (CantRunException e) {
+    catch (CantRunException ignored) {
       //should not happen
       return null;
     }
 
     return findTestsWithProgress(new FindCallback() {
+      @Override
       public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
         try {
           addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+            @Override
             @Nullable
             public String fun(PsiElement element) {
               if (element instanceof PsiClass) {
@@ -137,7 +141,7 @@ public class TestPackage extends TestObject {
             }
           }, getPackageName(data), false, isJunit4);
         }
-        catch (CantRunException e) {
+        catch (CantRunException ignored) {
           //can't be here
         }
       }
@@ -148,6 +152,7 @@ public class TestPackage extends TestObject {
     return getPackage(data).getQualifiedName();
   }
 
+  @Override
   protected void initialize() throws ExecutionException {
     super.initialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
@@ -155,9 +160,7 @@ public class TestPackage extends TestObject {
     configureClasspath();
 
     try {
-      myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
-      myTempFile.deleteOnExit();
-      myJavaParameters.getProgramParametersList().add("@" + myTempFile.getAbsolutePath());
+      createTempFiles();
     }
     catch (IOException e) {
       LOG.error(e);
@@ -175,6 +178,7 @@ public class TestPackage extends TestObject {
   protected void configureClasspath() throws ExecutionException {
     final ExecutionException[] exception = new ExecutionException[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           myConfiguration.configureClasspath(myJavaParameters);
@@ -212,11 +216,8 @@ public class TestPackage extends TestObject {
     return aPackage;
   }
 
+  @Override
   public String suggestActionName() {
-    final String configurationName = myConfiguration.getName();
-    if (!myConfiguration.isGeneratedName()) {
-      return "'" + configurationName + "'";
-    }
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     if (data.getPackageName().trim().length() > 0) {
       return ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName());
@@ -224,19 +225,23 @@ public class TestPackage extends TestObject {
     return ExecutionBundle.message("all.tests.scope.presentable.text");
   }
 
+  @Override
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
     if (!(element instanceof PsiPackage)) return null;
     return RefactoringListeners.getListener((PsiPackage)element, configuration.myPackage);
   }
 
+  @Override
   public boolean isConfiguredByElement(final JUnitConfiguration configuration,
                                        PsiClass testClass,
                                        PsiMethod testMethod,
-                                       PsiPackage testPackage) {
+                                       PsiPackage testPackage,
+                                       PsiDirectory testDir) {
     return testPackage != null
            && Comparing.equal(testPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final String packageName = myConfiguration.getPersistentData().getPackageName();
@@ -263,7 +268,7 @@ public class TestPackage extends TestObject {
     final MySearchForTestsTask task =
       new MySearchForTestsTask(classFilter, isJunit4, classes, callback);
     mySearchForTestsIndicator = new BackgroundableProcessIndicator(task);
-    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
     return task;
   }
 
@@ -287,7 +292,7 @@ public class TestPackage extends TestObject {
       final Set<Module> modulesWithPackage = new HashSet<Module>();
       final PsiDirectory[] directories = aPackage.getDirectories();
       for (PsiDirectory directory : directories) {
-        final Module currentModule = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
+        final Module currentModule = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
         if (module != currentModule && currentModule != null) {
           modulesWithPackage.add(currentModule);
         }
@@ -367,11 +372,6 @@ public class TestPackage extends TestObject {
     public void onCancel() {
       finish();
     }
-
-    @Override
-    public DumbModeAction getDumbModeAction() {
-      return DumbModeAction.WAIT;
-    }
   }
   private class MySearchForTestsTask extends SearchForTestsTask {
     private final TestClassFilter myClassFilter;
@@ -388,10 +388,17 @@ public class TestPackage extends TestObject {
     }
 
 
+    @Override
     public void run(@NotNull ProgressIndicator indicator) {
       try {
         mySocket = myServerSocket.accept();
-        myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+        DumbService.getInstance(myProject).repeatUntilPassesInSmartMode(new Runnable() {
+          @Override
+          public void run() {
+            myClasses.clear();
+            myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+          }
+        });
         myFoundTests = !myClasses.isEmpty();
       }
       catch (IOException e) {
@@ -435,8 +442,7 @@ public class TestPackage extends TestObject {
                                     : DefaultRunExecutor.getRunExecutorInstance();
           final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
           assert runner != null;
-          runner.execute(executor,
-                         new ExecutionEnvironment(myConfiguration, myProject, getRunnerSettings(), getConfigurationSettings(), null));
+          runner.execute(new ExecutionEnvironmentBuilder(myEnvironment).setContentToReuse(null).build());
           final Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
           if (balloon != null) {
             balloon.hide();

@@ -42,11 +42,13 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
     return myDataIndexer;
   }
 
+  @NotNull
   @Override
   public DataExternalizer<Set<String>> getValueExternalizer() {
     return myDataExternalizer;
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
@@ -58,6 +60,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
     return KEY;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
@@ -70,14 +73,27 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
   public static Collection<String> getAllRegisteredIds(Project project) {
     CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<String>();
     FileBasedIndex.getInstance().processAllKeys(KEY, processor, project);
-    return processor.getResults();
+    final Collection<String> results = new ArrayList<String>(processor.getResults());
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    for (Iterator<String> iterator = results.iterator(); iterator.hasNext(); ) {
+      final String id = iterator.next();
+      final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, searchScope);
+      if (!values.isEmpty()) {
+        final Set<String> pathSet = values.get(0);
+        if (pathSet != null) {
+          continue;
+        }
+      }
+      iterator.remove();
+    }
+    return results;
   }
 
   @NotNull

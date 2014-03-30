@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakList;
 
 import javax.management.Notification;
@@ -25,8 +26,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -36,16 +37,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class LowMemoryWatcher {
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
-  
-  private static final WeakList<LowMemoryWatcher> ourInstances = new WeakList<LowMemoryWatcher>();
-  private static final ThreadPoolExecutor ourExecutor = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2), new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      return new Thread(r, "LowMemoryWatcher janitor");
-    }
-  });
+
+  private static final List<LowMemoryWatcher> ourInstances = new WeakList<LowMemoryWatcher>();
+  private static final ThreadPoolExecutor ourExecutor = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2), ConcurrencyUtil.newNamedThreadFactory("LowMemoryWatcher janitor"));
   private static boolean ourSubmitted;
   private static final Runnable ourJanitor = new Runnable() {
     @Override
@@ -82,6 +78,7 @@ public class LowMemoryWatcher {
       }
     }
     ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
+      @Override
       public void handleNotification(Notification n, Object hb) {
         if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
           synchronized (ourJanitor) {
@@ -95,11 +92,11 @@ public class LowMemoryWatcher {
       }
     }, null, null);
   }
-  
+
   public static LowMemoryWatcher register(Runnable runnable) {
     return new LowMemoryWatcher(runnable);
   }
-  
+
   private LowMemoryWatcher(Runnable runnable) {
     myRunnable = runnable;
     ourInstances.add(this);
@@ -108,5 +105,5 @@ public class LowMemoryWatcher {
   public void stop() {
     ourInstances.remove(this);
   }
-  
+
 }

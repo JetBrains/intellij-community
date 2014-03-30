@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -39,7 +41,7 @@ import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -55,11 +57,12 @@ import java.util.regex.Pattern;
  */
 public class GradlePositionManager extends ScriptPositionManagerHelper {
 
-  private static final Logger                                     LOG                  =
-    Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
-  private static final Pattern                                    GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
-  private static final Key<CachedValue<ClassLoader>>              GRADLE_CLASS_LOADER  = Key.create("GRADLE_CLASS_LOADER");
-  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME    = Key.create("GRADLE_CLASS_NAME");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
+
+  private static final Pattern                                    GRADLE_CLASS_PATTERN  = Pattern.compile(".*_gradle_.*");
+  private static final String                                     SCRIPT_CLOSURE_PREFIX = "build_";
+  private static final Key<CachedValue<ClassLoader>>              GRADLE_CLASS_LOADER   = Key.create("GRADLE_CLASS_LOADER");
+  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME     = Key.create("GRADLE_CLASS_NAME");
 
   private final GradleInstallationManager myLibraryManager;
 
@@ -68,7 +71,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
-    return GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
+    return runtimeName.startsWith(SCRIPT_CLOSURE_PREFIX) || GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
   }
 
   public boolean isAppropriateScriptFile(@NotNull final PsiFile scriptFile) {
@@ -119,15 +122,19 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   private ClassLoader getGradleClassLoader(@NotNull final Module module) {
     final Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(module, GRADLE_CLASS_LOADER, new CachedValueProvider<ClassLoader>() {
-        public Result<ClassLoader> compute() {
-          return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
+      public Result<ClassLoader> compute() {
+        return Result.create(createGradleClassLoader(module), ProjectRootManager.getInstance(project));
         }
       }, false);
   }
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject());
+    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    if (StringUtil.isEmpty(rootProjectPath)) {
+      return null;
+    }
+    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject(), rootProjectPath);
     if (sdkHome == null) {
       return null;
     }
@@ -141,7 +148,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
       }
     }
 
-    return new UrlClassLoader(urls, null);
+    return UrlClassLoader.build().urls(urls).get();
   }
 
   private class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {

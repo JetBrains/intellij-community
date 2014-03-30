@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -49,7 +50,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     PsiElement element = findTargetMember(file, editor);
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     invokeOnElement(project, editor, element);
   }
@@ -67,7 +68,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, editor, elements[0]);
   }
 

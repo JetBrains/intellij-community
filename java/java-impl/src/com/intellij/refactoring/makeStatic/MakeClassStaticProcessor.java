@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.makeStatic;
 
-import com.intellij.codeInsight.intention.impl.BaseMoveInitializerToMethodAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
@@ -262,7 +262,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     PsiElement newQualifier;
 
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
-      final PsiClass thisClass = RefactoringUtil.getThisClass(element);
+      final PsiClass thisClass = RefactoringChangeUtil.getThisClass(element);
       @NonNls String thisText;
       if (thisClass.getManager().areElementsEquivalent(thisClass, myMember.getContainingClass())) {
         thisText = "this";

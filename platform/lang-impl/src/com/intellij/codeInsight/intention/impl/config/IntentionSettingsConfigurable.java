@@ -105,7 +105,7 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
 
   @Override
   public Runnable enableSearch(String option) {
-    return myPanel.showOption(this, option);
+    return myPanel.showOption(option);
   }
 
   @Override

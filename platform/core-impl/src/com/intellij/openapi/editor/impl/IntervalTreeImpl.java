@@ -51,8 +51,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   protected static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
-    private volatile boolean isValid = true;
-    private volatile boolean isAttachedToTree; // true if the node is inserted to the tree
+    private static final int ATTACHED_TO_TREE_FLAG = COLOR_FLAG+1; // true if the node is inserted to the tree
     protected final List<Getter<E>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
@@ -71,6 +70,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       myStart = start;
       myEnd = end;
       intervals = new SmartList<Getter<E>>(createGetter(key));
+      setValid(true);
     }
 
     @Override
@@ -141,10 +141,16 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       assert false: "interval not found: "+key +"; "+ intervals+"; isValid="+key.isValid();
       return false;
     }
+    private boolean isAttachedToTree() {
+      return isFlagSet(ATTACHED_TO_TREE_FLAG);
+    }
+    private void setAttachedToTree(boolean attached) {
+      setFlag(ATTACHED_TO_TREE_FLAG, attached);
+    }
 
     public void removeIntervalInternal(int i) {
       intervals.remove(i);
-      if (isAttachedToTree) {   // for detached node, do not update tree node count
+      if (isAttachedToTree()) {   // for detached node, do not update tree node count
         assert myIntervalTree.keySize > 0 : myIntervalTree.keySize;
         myIntervalTree.keySize--;
       }
@@ -153,7 +159,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     public void addInterval(@NotNull E interval) {
       myIntervalTree.assertUnderWriteLock();
       intervals.add(createGetter(interval));
-      if (isAttachedToTree) { // for detached node, do not update tree node count
+      if (isAttachedToTree()) { // for detached node, do not update tree node count
         myIntervalTree.keySize++;
         myIntervalTree.setNode(interval, this);
       }
@@ -262,14 +268,16 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return myEnd = end;
     }
 
+    protected static final int VALID_FLAG = ATTACHED_TO_TREE_FLAG + 1;
     @Override
     public boolean isValid() {
-      return isValid;
+      return isFlagSet(VALID_FLAG);
     }
 
     @Override
     public boolean setValid(boolean value) {
-      return isValid = value;
+      setFlag(VALID_FLAG, value);
+      return value;
     }
 
     @Override
@@ -682,7 +690,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   protected IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {
     assertUnderWriteLock();
-    node.color = Color.RED;
+    node.setRed();
     node.setParent(null);
     node.setValid(true);
     node.maxEnd = 0;
@@ -724,7 +732,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     onInsertNode();
     keySize += node.intervals.size();
     insertCase1(node);
-    node.isAttachedToTree = true;
+    node.setAttachedToTree(true);
     verifyProperties();
 
     deleteNodes(gced);
@@ -795,7 +803,9 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   private static class IntTrinity {
-    private final int first, second, third;
+    private final int first;
+    private final int second;
+    private final int third;
 
     private IntTrinity(int first, int second, int third) {
       this.first = first;
@@ -948,7 +958,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     keySize -= node.intervals.size();
     assert keySize >= 0 : keySize;
-    node.isAttachedToTree = false;
+    node.setAttachedToTree(false);
   }
 
   @Override
@@ -997,8 +1007,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     checkMax(false);
     IntervalNode<T> a = (IntervalNode<T>)root;
     IntervalNode<T> d = (IntervalNode<T>)maxPred;
-    Color acolor = a.color;
-    Color dcolor = d.color;
+    boolean acolor = a.isBlack();
+    boolean dcolor = d.isBlack();
     assert !a.isValid() || a.delta == 0 : a.delta;
     for (IntervalNode<T> n = a.getLeft(); n != null; n = n.getRight()) {
       assert !n.isValid() || n.delta == 0 : n.delta;
@@ -1011,8 +1021,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     //a.key.setIntervalEnd(d.key.intervalEnd());
 
     //correctMaxUp(a);
-    a.color = dcolor;
-    d.color = acolor;
+    a.setColor(dcolor);
+    d.setColor(acolor);
     correctMaxUp(a);
 
     checkMax(false);

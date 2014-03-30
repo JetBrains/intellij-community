@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.PsiUtilCore;
 
 /**
  * @author dsl
@@ -49,7 +50,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
 
   @Override
   public PsiJavaCodeReferenceElement getImportReference() {
-    assert isValid();
+    PsiUtilCore.ensureValid(this);
     final PsiImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getReference();
@@ -61,5 +62,10 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
   public PsiElement resolve() {
     final PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.resolve();
+  }
+
+  @Override
+  public boolean isForeignFileImport() {
+    return false;
   }
 }

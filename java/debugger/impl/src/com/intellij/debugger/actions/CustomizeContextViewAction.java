@@ -20,11 +20,12 @@ import com.intellij.debugger.settings.DebuggerDataViewsConfigurable;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.impl.FrameVariablesTree;
+import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,6 +34,8 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,11 +45,13 @@ import java.util.List;
  * Time: 4:39:53 PM
  */
 public class CustomizeContextViewAction extends DebuggerAction{
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
     Disposable disposable = Disposer.newDisposable();
     final CompositeConfigurable configurable = new TabbedConfigurable(disposable) {
+      @Override
       protected List<Configurable> createConfigurables() {
         ArrayList<Configurable> array = new ArrayList<Configurable>();
         array.add(new DebuggerDataViewsConfigurable(project));
@@ -54,17 +59,29 @@ public class CustomizeContextViewAction extends DebuggerAction{
         return array;
       }
 
+      @Override
       public void apply() throws ConfigurationException {
         super.apply();
         NodeRendererSettings.getInstance().fireRenderersChanged();
       }
 
+      @Override
       public String getDisplayName() {
         return DebuggerBundle.message("title.customize.data.views");
       }
 
+      @Override
       public String getHelpTopic() {
-        return null;
+        return "reference.debug.customize.data.view";
+      }
+
+      @Override
+      protected void createConfigurableTabs() {
+        for (Configurable configurable : getConfigurables()) {
+          JComponent component = configurable.createComponent();
+          component.setBorder(new EmptyBorder(8,8,8,8));
+          myTabbedPane.addTab(configurable.getDisplayName(), component);
+        }
       }
     };
 
@@ -73,9 +90,10 @@ public class CustomizeContextViewAction extends DebuggerAction{
     editor.show();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     DebuggerTree tree = getTree(e.getDataContext());
-    e.getPresentation().setVisible(tree instanceof FrameVariablesTree);
+    e.getPresentation().setVisible(tree instanceof FrameVariablesTree || tree instanceof WatchDebuggerTree);
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
   }
 }

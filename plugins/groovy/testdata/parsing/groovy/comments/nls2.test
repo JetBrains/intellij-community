@@ -1,4 +1,3 @@
-
 /*
 comment
 */
@@ -6,9 +5,8 @@ comment
 package a.b.c
 -----
 Groovy script
-  PsiElement(new line)('\n')
   PsiComment(block comment)('/*\ncomment\n*/')
-  PsiWhiteSpace('\n\n')
+  PsiElement(new line)('\n\n')
   Package definition
     Modifiers
       <empty list>

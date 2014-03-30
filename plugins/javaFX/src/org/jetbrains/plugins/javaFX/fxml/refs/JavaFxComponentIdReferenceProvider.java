@@ -31,10 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
 * User: anna
@@ -94,17 +91,41 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       }
       return new PsiReference[] {idReferenceBase};
     }
-    final JavaFxIdReferenceBase idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, referencesId);
     if (startsWithDollar) {
+      final JavaFxIdReferenceBase idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, referencesId);
       final TextRange rangeInElement = idReferenceBase.getRangeInElement();
       idReferenceBase.setRangeInElement(new TextRange(rangeInElement.getStartOffset() + 1, rangeInElement.getEndOffset()));
+      return new PsiReference[]{idReferenceBase};
+    } else {
+      final Set<String> acceptableIds = new HashSet<String>();
+      if (currentTag != null) {
+        final XmlTag parentTag = currentTag.getParentTag();
+        for (final String id : fileIds.keySet()) {
+          final XmlAttributeValue resolvedAttrValue = fileIds.get(id);
+          if (JavaFxPsiUtil.isClassAcceptable(parentTag, JavaFxPsiUtil.getTagClass(resolvedAttrValue)) == null) {
+            acceptableIds.add(id);
+          }
+        }
+      }
+      JavaFxIdReferenceBase idReferenceBase = new JavaFxIdReferenceBase(xmlAttributeValue, fileIds, acceptableIds, referencesId);
+      return new PsiReference[]{idReferenceBase};
     }
-    return new PsiReference[]{idReferenceBase};
   }
 
   private static class JavaFxIdReferenceBase extends PsiReferenceBase<XmlAttributeValue> {
     private final Map<String, XmlAttributeValue> myFileIds;
+    private final Set<String> myAcceptableIds;
     private final String myReferencesId;
+
+    private JavaFxIdReferenceBase(XmlAttributeValue element,
+                                  Map<String, XmlAttributeValue> fileIds, 
+                                  Set<String> acceptableIds, 
+                                  String referencesId) {
+      super(element);
+      myFileIds = fileIds;
+      myAcceptableIds = acceptableIds;
+      myReferencesId = referencesId;
+    }
 
     public JavaFxIdReferenceBase(XmlAttributeValue xmlAttributeValue,
                                  Map<String, XmlAttributeValue> fileIds,
@@ -112,6 +133,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
       super(xmlAttributeValue);
       myFileIds = fileIds;
       myReferencesId = referencesId;
+      myAcceptableIds = myFileIds.keySet();
     }
 
     @Nullable
@@ -123,7 +145,7 @@ class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @NotNull
     @Override
     public Object[] getVariants() {
-      return ArrayUtil.toStringArray(myFileIds.keySet());
+      return ArrayUtil.toStringArray(myAcceptableIds);
     }
   }
 

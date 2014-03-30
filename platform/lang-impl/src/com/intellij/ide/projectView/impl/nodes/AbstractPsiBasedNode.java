@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,7 +53,7 @@ import java.util.Collections;
  * method that extract PsiElement from Value.
  * @param <Value> Value of node descriptor
  */
-public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode {
+public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
@@ -129,6 +130,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Override
   public void update(final PresentationData data) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         if (!validate()) {
           return;
@@ -199,15 +201,20 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Override
-  public void navigate(boolean requestFocus) {
+  public void navigate(boolean requestFocus, boolean preserveState) {
     if (canNavigate()) {
-      if (requestFocus) {
-        NavigationUtil.activateFileWithPsiElement(extractPsiFromValue(), true);
+      if (requestFocus || preserveState) {
+        NavigationUtil.openFileWithPsiElement(extractPsiFromValue(), requestFocus, requestFocus);
       }
       else {
         getNavigationItem().navigate(requestFocus);
       }
     }
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    navigate(requestFocus, false);
   }
 
   @Override

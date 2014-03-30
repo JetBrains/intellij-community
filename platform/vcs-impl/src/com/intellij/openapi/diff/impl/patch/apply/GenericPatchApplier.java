@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BeforeAfter;
@@ -322,7 +323,7 @@ public class GenericPatchApplier {
           }
         }
 
-        final TextRange textRangeInOldDocument = new TextRange(fragmentResult.getStart(), fragmentResult.getEnd());
+        final TextRange textRangeInOldDocument = new UnfairTextRange(fragmentResult.getStart(), fragmentResult.getEnd());
         // ignore too short fragments
         //if (pointCanBeUsed(textRangeInOldDocument) && (! mismatchSolver.isAllowMismatch() || fragmentResult.getEnd() - fragmentResult.getStart() > 1)) {
         if (pointCanBeUsed(textRangeInOldDocument)) {
@@ -488,7 +489,7 @@ public class GenericPatchApplier {
           myHadAlreadyAppliedMet = value.isHaveAlreadyApplied();
         } else {
           // deletion
-          myTransformations.put(new TextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
+          myTransformations.put(new UnfairTextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
                                                                    value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
         }
       } else {
@@ -995,7 +996,7 @@ public class GenericPatchApplier {
   // indexes are passed inclusive
   private void iterateTransformations(final Consumer<TextRange> consumerExcluded, final Consumer<TextRange> consumerIncluded) {
     if (myTransformations.isEmpty()) {
-      consumerExcluded.consume(new TextRange(0, myLines.size() - 1));
+      consumerExcluded.consume(new UnfairTextRange(0, myLines.size() - 1));
     } else {
       final Set<Map.Entry<TextRange,MyAppliedData>> entries = myTransformations.entrySet();
       final Iterator<Map.Entry<TextRange, MyAppliedData>> iterator = entries.iterator();
@@ -1012,7 +1013,7 @@ public class GenericPatchApplier {
       while (iterator.hasNext() && previousEnd < myLines.size()) {
         final Map.Entry<TextRange, MyAppliedData> entry = iterator.next();
         final TextRange key = entry.getKey();
-        consumerExcluded.consume(new TextRange(previousEnd, key.getStartOffset() - 1));
+        consumerExcluded.consume(new UnfairTextRange(previousEnd, key.getStartOffset() - 1));
         consumerIncluded.consume(key);
         previousEnd = key.getEndOffset() + 1;
       }

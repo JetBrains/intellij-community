@@ -20,6 +20,7 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
@@ -92,15 +93,34 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       if (paths != null && paths.length > 1) {
         final List<PsiElement> els = new ArrayList<PsiElement>(paths.length);
         for (TreePath path : paths) {
+          if (isPathSelected(path.getParentPath())) continue;
           AbstractTestProxy test = getSelectedTest(path);
           if (test != null) {
-            final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, LangDataKeys.PSI_ELEMENT.getName(), myModel);
+            final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
             if (psiElement != null) {
               els.add(psiElement);
             }
           }
         }
         return els.isEmpty() ? null : els.toArray(new PsiElement[els.size()]);
+      }
+    }
+
+    if (Location.DATA_KEYS.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      if (paths != null && paths.length > 1) {
+        final List<Location<?>> locations = new ArrayList<Location<?>>(paths.length);
+        for (TreePath path : paths) {
+          if (isPathSelected(path.getParentPath())) continue;
+          AbstractTestProxy test = getSelectedTest(path);
+          if (test != null) {
+            final Location<?> location = (Location<?>)TestsUIUtil.getData(test, Location.DATA_KEY.getName(), myModel);
+            if (location != null) {
+              locations.add(location);
+            }
+          }
+        }
+        return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
       }
     }
     
@@ -113,13 +133,13 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     CopyPasteManager.getInstance().setContents(new StringSelection(CopyReferenceAction.elementToFqn(element)));
   }
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return LangDataKeys.PSI_ELEMENT.getData(dataContext) != null;
+    return CommonDataKeys.PSI_ELEMENT.getData(dataContext) != null;
   }
 
   @Override

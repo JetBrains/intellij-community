@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.palette;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -44,10 +45,10 @@ import java.util.HashMap;
  */
 public class AddComponentAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     PsiElement elementToAdd = (psiFile != null) ? findElementToAdd(psiFile) : null;
     String className = "";
     if (elementToAdd instanceof PsiClass) {
@@ -119,7 +120,7 @@ public class AddComponentAction extends AnAction {
   }
 
   @Override public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getData(GroupItem.DATA_KEY) != null ||
         e.getData(ComponentItem.DATA_KEY) != null) {
       e.getPresentation().setVisible(true);
@@ -127,7 +128,7 @@ public class AddComponentAction extends AnAction {
       e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
     }
     else {
-      PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+      PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       e.getPresentation().setVisible(psiFile != null && findElementToAdd(psiFile) != null);
     }
   }

@@ -15,54 +15,44 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.ui.BranchActionGroupPopup;
+import com.intellij.dvcs.ui.RootAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.popup.WizardPopup;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.util.List;
 
 /**
  * <p>
- *   The popup which allows to quickly switch and control Git branches.
+ * The popup which allows to quickly switch and control Git branches.
  * </p>
  * <p>
- *   Use {@link #asListPopup()} to achieve the {@link ListPopup} itself.
+ * Use {@link #asListPopup()} to achieve the {@link ListPopup} itself.
  * </p>
- * 
+ *
  * @author Kirill Likhodedov
  */
-class GitBranchPopup  {
+class GitBranchPopup {
 
   private final Project myProject;
   private final GitRepositoryManager myRepositoryManager;
@@ -121,7 +111,7 @@ class GitBranchPopup  {
       }
     };
 
-    myPopup = new GitBranchActionGroupPopup(title, project, preselectActionCondition);
+    myPopup = new BranchActionGroupPopup(title, project, preselectActionCondition, createActions());
 
     initBranchSyncPolicyIfNotInitialized();
     setCurrentBranchInfo();
@@ -145,7 +135,7 @@ class GitBranchPopup  {
     String title = "Git Branches";
     if (myRepositoryManager.moreThanOneRoot() &&
         (myMultiRootBranchConfig.diverged() || myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT)) {
-      title += " in " + GitUIUtil.getShortRepositoryName(currentRepository);
+      title += " in " + DvcsUtil.getShortRepositoryName(currentRepository);
     }
     return title;
   }
@@ -154,7 +144,7 @@ class GitBranchPopup  {
     String currentBranchText = "Current branch";
     if (myRepositoryManager.moreThanOneRoot()) {
       if (myMultiRootBranchConfig.diverged()) {
-        currentBranchText += " in " + GitUIUtil.getShortRepositoryName(myCurrentRepository) + ": " +
+        currentBranchText += " in " + DvcsUtil.getShortRepositoryName(myCurrentRepository) + ": " +
                              GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
       }
       else {
@@ -168,20 +158,24 @@ class GitBranchPopup  {
   }
 
   private void notifyAboutSyncedBranches() {
-    GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification("Synchronous branch control enabled",
-      "You have several Git roots in the project and they all are checked out at the same branch. " +
-      "We've enabled synchronous branch control for the project. <br/>" +
-      "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
-      NotificationType.INFORMATION, new NotificationListener() {
-      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getConfigurable().getDisplayName());
-          if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
-            notification.expire();
-          }
-        }
-      }
-    }).notify(myProject);
+    VcsNotifier.getInstance(myProject).notifyImportantInfo("Synchronous branch control enabled",
+                                                           "You have several Git roots in the project and they all are checked out at the same branch. " +
+                                                           "We've enabled synchronous branch control for the project. <br/>" +
+                                                           "If you wish to control branches in different roots separately, you may <a href='settings'>disable</a> the setting.",
+                                                           new NotificationListener() {
+                                                             @Override
+                                                             public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                         @NotNull HyperlinkEvent event) {
+                                                               if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                                 ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs
+                                                                   .getConfigurable().getDisplayName());
+                                                                 if (myVcsSettings.getSyncSetting() == GitBranchSyncSetting.DONT) {
+                                                                   notification.expire();
+                                                                 }
+                                                               }
+                                                             }
+                                                           }
+    );
   }
 
   private ActionGroup createActions() {
@@ -196,7 +190,7 @@ class GitBranchPopup  {
       else {
         fillPopupWithCurrentRepositoryActions(popupGroup, createRepositoriesActions());
       }
-    } 
+    }
     else {
       fillPopupWithCurrentRepositoryActions(popupGroup, null);
     }
@@ -213,7 +207,7 @@ class GitBranchPopup  {
     List<GitRepository> repositories = repositoryManager.getRepositories();
     String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
     assert currentBranch != null : "Current branch can't be null if branches have not diverged";
-    popupGroup.add(new GitBranchPopupActions.NewBranchAction(myProject, repositories));
+    popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, repositories));
 
     popupGroup.addAll(createRepositoriesActions());
 
@@ -240,7 +234,9 @@ class GitBranchPopup  {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
     for (GitRepository repository : myRepositoryManager.getRepositories()) {
-      popupGroup.add(new RootAction(repository, highlightCurrentRepo() ? myCurrentRepository : null));
+      popupGroup.add(new RootAction<GitRepository>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
+                                                   new GitBranchPopupActions(repository.getProject(), repository).createActions(null),
+                                                   GitBranchUtil.getDisplayableBranchText(repository)));
     }
     return popupGroup;
   }
@@ -251,118 +247,5 @@ class GitBranchPopup  {
 
   private void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
     popupGroup.addAll(new GitBranchPopupActions(myCurrentRepository.getProject(), myCurrentRepository).createActions(actions));
-  }
-
-  private static class RootAction extends ActionGroup {
-
-    private final GitRepository myRepository;
-
-    /**
-     * @param currentRepository Pass null in the case of common repositories - none repository will be highlighted then.
-     */
-    RootAction(@NotNull GitRepository repository, @Nullable GitRepository currentRepository) {
-      super(GitUIUtil.getShortRepositoryName(repository), true);
-      myRepository = repository;
-      if (repository.equals(currentRepository)) {
-        getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
-      }
-    }
-
-    @NotNull
-    @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      ActionGroup group = new GitBranchPopupActions(myRepository.getProject(), myRepository).createActions(null);
-      return group.getChildren(e);
-    }
-
-    @NotNull
-    public String getCaption() {
-      return "Current branch in " + GitUIUtil.getShortRepositoryName(myRepository) + ": " +
-             GitBranchUtil.getDisplayableBranchText(myRepository);
-    }
-
-    @NotNull
-    public String getBranch() {
-      return GitBranchUtil.getBranchNameOrRev(myRepository);
-    }
-  }
-
-  private class GitBranchActionGroupPopup extends PopupFactoryImpl.ActionGroupPopup {
-    public GitBranchActionGroupPopup(@NotNull String title, @NotNull Project project,
-                                     @NotNull Condition<AnAction> preselectActionCondition) {
-      super(title, GitBranchPopup.this.createActions(), SimpleDataContext.getProjectContext(project), false, false, false, true, null, -1,
-            preselectActionCondition, null);
-    }
-
-    @Override
-    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-      WizardPopup popup = super.createPopup(parent, step, parentValue);
-      RootAction rootAction = getRootAction(parentValue);
-      if (rootAction != null) {
-        popup.setAdText((rootAction).getCaption());
-      }
-      return popup;
-    }
-
-    @Nullable
-    private RootAction getRootAction(Object value) {
-      if (value instanceof PopupFactoryImpl.ActionItem) {
-        AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-        if (action instanceof RootAction) {
-          return (RootAction)action;
-        }
-      }
-      return null;
-    }
-
-    @Override
-    protected ListCellRenderer getListElementRenderer() {
-      return new PopupListElementRenderer(this) {
-
-        private ErrorLabel myBranchLabel;
-
-        @Override
-        protected void customizeComponent(JList list, Object value, boolean isSelected) {
-          super.customizeComponent(list, value, isSelected);
-
-          RootAction rootAction = getRootAction(value);
-          if (rootAction != null) {
-            myBranchLabel.setVisible(true);
-            myBranchLabel.setText(String.format("[%s]", rootAction.getBranch()));
-
-            if (isSelected) {
-              setSelected(myBranchLabel);
-            }
-            else {
-              myBranchLabel.setBackground(getBackground());
-              myBranchLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
-            }
-
-            adjustOpacity(myBranchLabel, isSelected);
-          }
-          else {
-            myBranchLabel.setVisible(false);
-          }
-        }
-
-        @Override
-        protected JComponent createItemComponent() {
-          myTextLabel = new ErrorLabel();
-          myTextLabel.setOpaque(true);
-          myTextLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-
-          myBranchLabel = new ErrorLabel();
-          myBranchLabel.setOpaque(true);
-          myBranchLabel.setBorder(BorderFactory.createEmptyBorder(1, UIUtil.DEFAULT_HGAP, 1, 1));
-
-          JPanel compoundPanel = new OpaquePanel(new BorderLayout(), Color.white);
-          compoundPanel.add(myTextLabel, BorderLayout.CENTER);
-          compoundPanel.add(myBranchLabel, BorderLayout.EAST);
-
-          return layoutComponent(compoundPanel);
-        }
-
-      };
-    }
   }
 }

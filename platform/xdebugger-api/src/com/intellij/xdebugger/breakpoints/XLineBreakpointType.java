@@ -50,17 +50,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * @deprecated implement {@link #canPutAt(com.intellij.openapi.vfs.VirtualFile, int, com.intellij.openapi.project.Project)} instead
-   */
-  public boolean canPutAt(@NotNull VirtualFile file, int line) {
-    return false;
-  }
-
-  /**
    * Return <code>true<code> if breakpoint can be put on <code>line</code> in <code>file</code>
    */
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-    return canPutAt(file, line);
+    return false;
   }
 
   /**
@@ -70,18 +63,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @Nullable
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
+  @Override
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
     return fileLineDisplayText(breakpoint.getPresentableFilePath(), breakpoint.getLine());
   }
 
-  private String fileLineDisplayText(String path, int line) {
+  private static String fileLineDisplayText(String path, int line) {
     return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
   }
-
-  //@NotNull
-  //public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
-  //  return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
-  //}
 
   /**
    * Source position for line breakpoint is determined by its file and line
@@ -110,5 +99,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   public Icon getTemporaryIcon() {
     return AllIcons.Debugger.Db_temporary_breakpoint;
+  }
+
+  /**
+   * Priority is considered when several breakpoint types can be set on the same code line,
+   * in this case we choose type with the highest priority
+   */
+  public int getPriority() {
+    return 0;
   }
 }

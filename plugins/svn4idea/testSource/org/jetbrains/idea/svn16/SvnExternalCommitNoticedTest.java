@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.Svn17TestCase;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -48,7 +48,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
   @Override
   @Before
   public void setUp() throws Exception {
-    System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "false");
+    //System.setProperty(FileWatcher.PROPERTY_WATCHER_DISABLED, "false");
     super.setUp();
 
     clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
@@ -64,9 +64,9 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    editFileInCommand(myProject, tree.myS1File, "test1");
-    editFileInCommand(myProject, tree.myS2File, "test2");
-    editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "test1");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS2File, "test2");
+    VcsTestUtil.editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
 
     myVcsDirtyScopeManager.markEverythingDirty();
     clManager.ensureUpToDate(false);
@@ -92,7 +92,7 @@ public class SvnExternalCommitNoticedTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
+    VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
 
     myVcsDirtyScopeManager.markEverythingDirty();
     clManager.ensureUpToDate(false);

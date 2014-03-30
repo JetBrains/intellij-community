@@ -55,7 +55,9 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.BraceMatcher"/>
     </extensionPoint>
     <extensionPoint name="quoteHandler"
-                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"/>
+                    beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP">
+      <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
     <extensionPoint name="extendWordSelectionHandler"
                     interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"/>
     <extensionPoint name="basicWordSelectionFilter"
@@ -103,6 +105,7 @@
     <extensionPoint name="multiHostInjector"
                     interface="com.intellij.lang.injection.MultiHostInjector"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="referenceInjector" interface="com.intellij.psi.injection.ReferenceInjector"/>
 
     <extensionPoint name="annotator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -144,11 +147,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.Commenter"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.literalEscaper"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.lang.LiteralEscaper"/>
-    </extensionPoint>
-
     <extensionPoint name="lang.braceMatcher"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
@@ -164,6 +162,11 @@
     <extensionPoint name="lang.psiStructureViewFactory"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.PsiStructureViewFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.psiElementExternalizer"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.PsiElementExternalizer"/>
     </extensionPoint>
 
     <extensionPoint name="lang.structureViewExtension"
@@ -208,8 +211,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
-
     <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
     </extensionPoint>
@@ -228,11 +229,14 @@
 
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
 
     <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
+
+    <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
 
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -285,9 +289,6 @@
                     beanClass="com.intellij.codeInspection.InspectionEP">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.GlobalInspectionTool"/>
     </extensionPoint>
-    <!-- please use localInspection or globalInspection instead-->
-    <extensionPoint name="specialTool"
-                    beanClass="com.intellij.codeInspection.InspectionEP"/>
     <extensionPoint name="inspectionToolProvider"
                     interface="com.intellij.codeInspection.InspectionToolProvider"/>
     <extensionPoint name="inspectionToolsFactory"
@@ -344,6 +345,8 @@
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
     <extensionPoint name="refactoring.moveDirectoryWithClassesHelper"
                     interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper"/>
+    <extensionPoint name="codeHighlighting.iconCreator"
+                    interface="com.intellij.codeHighlighting.HighlightDisplayLevel$IconCreator"/>
 
     <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
     <extensionPoint name="refactoring.inlineHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -390,6 +393,9 @@
     <extensionPoint name="runConfigurationExtension"
                     interface="com.intellij.execution.RunConfigurationExtension"/>
 
+    <extensionPoint name="jreProvider"
+                    interface="com.intellij.execution.ui.JreProvider"/>
+
     <extensionPoint name="stepsBeforeRunProvider"
                     interface="com.intellij.execution.BeforeRunTaskProvider"
                     area="IDEA_PROJECT"/>
@@ -402,6 +408,8 @@
 
     <extensionPoint name="configurationProducer"
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
+    <extensionPoint name="runConfigurationProducer"
+                    interface="com.intellij.execution.actions.RunConfigurationProducer"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -419,7 +427,9 @@
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean"/>
+    <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
+      <with attribute="className" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
     <extensionPoint name="patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean"/>
 
     <extensionPoint name="pom.declarationSearcher" interface="com.intellij.pom.PomDeclarationSearcher"/>
@@ -509,7 +519,9 @@
 
     <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
 
-    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
+    <extensionPoint name="referenceProviderType" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass" implements="com.intellij.psi.PsiReferenceProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="colorSettingsPage" interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
     <extensionPoint name="colorAndFontPanelFactory" interface="com.intellij.application.options.colors.ColorAndFontPanelFactory"/>
@@ -592,6 +604,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
+    <!--suppress ExtensionPointBeanClass -->
     <extensionPoint name="stubElementTypeHolder"
                     beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP"/>
 
@@ -716,7 +729,9 @@
 
     <extensionPoint name="projectViewNodeDecorator" interface="com.intellij.ide.projectView.ProjectViewNodeDecorator" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider"/>
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider"/>
+
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
 
     <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension"/>
@@ -777,10 +792,15 @@
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 
+    <extensionPoint name="projectStructure.sourceRootEditHandler"
+                    interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
+
     <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
 
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
+
+    <extensionPoint name="sdkResolveScopeProvider" interface="com.intellij.psi.SdkResolveScopeProvider"/>
   </extensionPoints>
 </idea-plugin>
 

@@ -90,7 +90,7 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       if (component == null) return;
       
-      if (TypesUtil.isAssignable(ltype, component, expression)) return;
+      if (TypesUtil.isAssignableWithoutConversions(component, ltype, expression)) return;
 
       registerError(expression, ltype, rtype);
     }

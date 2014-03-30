@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.PanelWithAnchor;
@@ -49,6 +50,12 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
 
     myFieldWithHistory = new TextFieldWithHistory();
     final ArrayList<String> foundJDKs = new ArrayList<String>();
+    for (JreProvider provider : JreProvider.EP_NAME.getExtensions()) {
+      String path = provider.getJrePath();
+      if (!StringUtil.isEmpty(path)) {
+        foundJDKs.add(path);
+      }
+    }
     final Sdk[] allJDKs = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk jdk : allJDKs) {
       foundJDKs.add(jdk.getHomePath());

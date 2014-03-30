@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
@@ -35,14 +37,16 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import icons.DevkitIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection;
 import org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import javax.swing.*;
 import java.io.File;
@@ -75,10 +79,14 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final List<VirtualFile> virtualFiles = isIntention ?
-                                           IntentionDescriptionNotFoundInspection.getPotentialRoots(myModule)
-                                           :
-                                           InspectionDescriptionNotFoundInspection.getPotentialRoots(myModule);
+    final PsiDirectory[] dirs;
+    if (isIntention) {
+      dirs = IntentionDescriptionNotFoundInspection.getIntentionDescriptionsDirs(myModule);
+    }
+    else {
+      dirs = InspectionDescriptionNotFoundInspection.getInspectionDescriptionsDirs(myModule);
+    }
+    final List<VirtualFile> virtualFiles = getPotentialRoots(myModule, dirs);
     final VirtualFile[] roots = prepare(VfsUtil.toVirtualFileArray(virtualFiles));
     if (roots.length == 1) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -120,6 +128,25 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
     }
   }
 
+  private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
+    if (dirs.length != 0) {
+      final List<VirtualFile> result = new ArrayList<VirtualFile>();
+      for (PsiDirectory dir : dirs) {
+        final PsiDirectory parent = dir.getParentDirectory();
+        if (parent != null) result.add(parent.getVirtualFile());
+      }
+      return result;
+    }
+    else {
+      ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      List<VirtualFile> resourceRoots = rootManager.getSourceRoots(JavaResourceRootType.RESOURCE);
+      if (!resourceRoots.isEmpty()) {
+        return resourceRoots;
+      }
+      return rootManager.getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    }
+  }
+
   private void createDescription(VirtualFile root) {
     if (!root.isDirectory()) return;
     final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
@@ -155,7 +182,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   public Icon getIcon(int flags) {
-    return DevkitIcons.New_html;
+    return new LayeredIcon(AllIcons.FileTypes.Html, AllIcons.Actions.New);
   }
 
   private VirtualFile[] prepare(VirtualFile[] roots) {

@@ -44,7 +44,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class MembersGetter {
-  public static final Key<Boolean> EXPECTED_TYPE_INHERITOR_MEMBER = Key.create("EXPECTED_TYPE_INHERITOR_MEMBER");
+  public static final Key<Boolean> EXPECTED_TYPE_MEMBER = Key.create("EXPECTED_TYPE_MEMBER");
   private final Set<PsiMember> myImportedStatically = new HashSet<PsiMember>();
   private final List<PsiClass> myPlaceClasses = new ArrayList<PsiClass>();
   private final List<PsiMethod> myPlaceMethods = new ArrayList<PsiMethod>();
@@ -111,12 +111,12 @@ public abstract class MembersGetter {
         if (mayProcessMembers(psiClass)) {
           final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
           psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
-          doProcessMembers(acceptMethods, results, psiType != baseType, declProcessor.getResults());
+          doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
 
           String name = psiClass.getName();
           if (name != null && searchFactoryMethods) {
             Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
-            doProcessMembers(acceptMethods, results, psiType != baseType, factoryMethods);
+            doProcessMembers(acceptMethods, results, false, factoryMethods);
           }
         }
       }
@@ -129,7 +129,7 @@ public abstract class MembersGetter {
 
   private void doProcessMembers(boolean acceptMethods,
                                 Consumer<LookupElement> results,
-                                boolean isInheritor, Collection<? extends PsiElement> declarations) {
+                                boolean isExpectedTypeMember, Collection<? extends PsiElement> declarations) {
     for (final PsiElement result : declarations) {
       if (result instanceof PsiMember && !(result instanceof PsiClass)) {
         final PsiMember member = (PsiMember)result;
@@ -144,7 +144,7 @@ public abstract class MembersGetter {
 
         final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
         if (item != null) {
-          item.putUserData(EXPECTED_TYPE_INHERITOR_MEMBER, isInheritor);
+          item.putUserData(EXPECTED_TYPE_MEMBER, isExpectedTypeMember);
           results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
         }
       }

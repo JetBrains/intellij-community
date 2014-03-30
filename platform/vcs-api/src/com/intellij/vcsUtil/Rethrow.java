@@ -25,7 +25,8 @@ public class Rethrow {
   public static void reThrowRuntime(final Throwable t) {
     if (t instanceof Error) {
       throw (Error) t;
-    } else if (t instanceof RuntimeException) {
+    }
+    if (t instanceof RuntimeException) {
       throw (RuntimeException) t;
     }
     throw new RuntimeException(t);

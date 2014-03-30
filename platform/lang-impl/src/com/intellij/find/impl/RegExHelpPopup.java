@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -52,8 +53,10 @@ public class RegExHelpPopup extends JPanel {
                          "  summary=\"Regular expression constructs, and what they match\"> \n" +
                          " \n" +
                          " <tr align=\"left\"> \n" +
-                         " <th bgcolor=\"#CCCCFF\" align=\"left\" id=\"construct\">Construct</th> \n" +
-                         " <th bgcolor=\"#CCCCFF\" align=\"left\" id=\"matches\">Matches</th> \n" +
+                         " <th bgcolor=\"" + toHTMLColor(UIUtil.getLabelBackground()) +
+                         "\" align=\"left\" id=\"construct\">Construct</th> \n" +
+                         " <th bgcolor=\"" + toHTMLColor(UIUtil.getLabelBackground()) +
+                         "\" align=\"left\" id=\"matches\">Matches</th> \n" +
                          " </tr> \n" +
                          " \n" +
                          " <tr><th>&nbsp;</th></tr> \n" +
@@ -340,4 +343,7 @@ public class RegExHelpPopup extends JPanel {
       .setTitle("Regular expressions syntax").setDimensionServiceKey(null, "RegExHelpPopup", true).createPopup();
   }
 
+  private static String toHTMLColor(Color color) {
+    return "#" + Integer.toHexString(color.getRGB() & 0xffffff);
+  }
 }

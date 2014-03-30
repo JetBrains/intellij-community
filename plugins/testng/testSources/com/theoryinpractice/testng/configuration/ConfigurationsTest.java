@@ -20,13 +20,20 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -35,6 +42,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
@@ -187,8 +195,16 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGInClassConfigurationProducer producer = new TestNGInClassConfigurationProducer();
-    final RunnerAndConfigurationSettings config = producer.createConfigurationByElement(new PsiLocation<PsiClass>(project, psiClass), null);
-    assert config != null;
+    
+    final MapDataContext dataContext = new MapDataContext();
+    
+    dataContext.put(CommonDataKeys.PROJECT, project);
+    dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(psiClass));
+    dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
+
+    final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext));
+    assert fromContext != null;
+    final RunnerAndConfigurationSettings config = fromContext.getConfigurationSettings();
     final RunConfiguration runConfiguration = config.getConfiguration();
     Assert.assertTrue(runConfiguration instanceof TestNGConfiguration);
 

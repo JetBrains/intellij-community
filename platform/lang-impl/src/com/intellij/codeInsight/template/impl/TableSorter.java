@@ -37,6 +37,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -337,7 +338,7 @@ order diminishes - it may drop very quickly.  */
     tableView.setColumnSelectionAllowed(false);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         TableColumnModel columnModel = tableView.getColumnModel();
         int viewColumn = columnModel.getColumnIndexAtX(e.getX());
         int column = tableView.convertColumnIndexToModel(viewColumn);

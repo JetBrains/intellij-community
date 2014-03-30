@@ -53,6 +53,10 @@ public class InheritorsTest extends PsiTestCase{
     doTest("x.Test", "", true, "x.Goo", "x.Zoo");
   }
 
+  public void testMultipleInheritance() throws Exception {
+    doTest("I", "", true, "A", "B");
+  }
+
   private void doTest(String className, String packageScopeName, final boolean deep, String... inheritorNames) throws Exception {
     final PsiClass aClass = myJavaFacade.findClass(className);
     assertNotNull(aClass);

@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
@@ -30,7 +31,7 @@ public class GroovyEditorHighlighter extends LayeredLexerEditorHighlighter {
 
   public GroovyEditorHighlighter(EditorColorsScheme scheme) {
     super(new GroovySyntaxHighlighter(), scheme);
-    registerGroovydocHighlighter();
+    if (!Boolean.TRUE.equals(LayeredLexer.ourDisableLayersFlag.get())) registerGroovydocHighlighter();
   }
 
   private void registerGroovydocHighlighter() {

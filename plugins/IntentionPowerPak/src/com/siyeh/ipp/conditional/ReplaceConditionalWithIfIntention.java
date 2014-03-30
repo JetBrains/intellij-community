@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
  */
 package com.siyeh.ipp.conditional;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConditionalWithIfIntention extends Intention {
+
+  private static final Logger LOG = Logger.getInstance("#" + ReplaceConditionalWithIfIntention.class.getName());
 
   @Override
   @NotNull
@@ -53,8 +59,8 @@ public class ReplaceConditionalWithIfIntention extends Intention {
     else {
       variable = null;
     }
-    final PsiExpression thenExpression = expression.getThenExpression();
-    final PsiExpression elseExpression = expression.getElseExpression();
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
     final PsiExpression condition = expression.getCondition();
     final PsiExpression strippedCondition = ParenthesesUtils.stripParentheses(condition);
     final StringBuilder newStatement = new StringBuilder();
@@ -67,9 +73,20 @@ public class ReplaceConditionalWithIfIntention extends Intention {
       final String name = variable.getName();
       newStatement.append(name);
       newStatement.append('=');
-      final PsiExpression initializer = variable.getInitializer();
+      PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
         return;
+      }
+      if (initializer instanceof PsiArrayInitializerExpression) {
+        final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
+        if (conditionIdx >= 0) {
+          initializer = (PsiExpression)initializer.replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
+          final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+          LOG.assertTrue(arrayInitializer != null, initializer.getText());
+          expression = (PsiConditionalExpression)arrayInitializer.getInitializers()[conditionIdx];
+          thenExpression = expression.getThenExpression();
+          elseExpression = expression.getElseExpression();
+        }
       }
       appendElementTextWithoutParentheses(initializer, expression, thenExpression, newStatement);
       newStatement.append("; else ");
@@ -110,7 +127,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
       if (addBraces || elseExpression == null) {
         newStatement.append('}');
       }
-      replaceStatement(newStatement.toString(), statement);
+      PsiReplacementUtil.replaceStatement(statement, newStatement.toString());
     }
   }
 
@@ -120,7 +137,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
     if (expressionParent instanceof PsiParenthesizedExpression) {
       final PsiElement grandParent = expressionParent.getParent();
       if (replacementExpression == null || !(grandParent instanceof PsiExpression) ||
-          !ParenthesesUtils.areParenthesesNeeded(replacementExpression, (PsiExpression) grandParent)) {
+          !ParenthesesUtils.areParenthesesNeeded(replacementExpression, (PsiExpression) grandParent, false)) {
         appendElementText(element, expressionParent, replacementExpression, out);
         return;
       }

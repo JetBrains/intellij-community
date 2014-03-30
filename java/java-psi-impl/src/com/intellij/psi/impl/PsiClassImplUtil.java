@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -226,7 +225,7 @@ public class PsiClassImplUtil {
     FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(
       new OrFilter(ElementClassFilter.METHOD, ElementClassFilter.FIELD, ElementClassFilter.CLASS)) {
       @Override
-      protected void add(PsiElement element, PsiSubstitutor substitutor) {
+      protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
         if (element instanceof PsiMethod) {
           methods.add(Pair.create((PsiMember)element, substitutor));
         }
@@ -386,7 +385,7 @@ public class PsiClassImplUtil {
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
     String name = method.getName();
-    if (!("main".equals(name) || "premain".equals(name))) return false;
+    if (!("main".equals(name) || "premain".equals(name) || !"agentmain".equals(name))) return false;
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
@@ -395,6 +394,8 @@ public class PsiClassImplUtil {
       if (MethodSignatureUtil.areSignaturesEqual(signature, main)) return true;
       MethodSignature premain = createSignatureFromText(factory, "void premain(String args, java.lang.instrument.Instrumentation i);");
       if (MethodSignatureUtil.areSignaturesEqual(signature, premain)) return true;
+      MethodSignature agentmain = createSignatureFromText(factory, "void agentmain(String args, java.lang.instrument.Instrumentation i);");
+      if (MethodSignatureUtil.areSignaturesEqual(signature, agentmain)) return true;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -430,6 +431,7 @@ public class PsiClassImplUtil {
                                                    @Nullable Set<PsiClass> visited,
                                                    PsiElement last,
                                                    @NotNull PsiElement place,
+                                                   @NotNull LanguageLevel languageLevel,
                                                    boolean isRaw) {
     if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) {
       return true; //TypeParameterList and ModifierList do not see our declarations
@@ -441,7 +443,6 @@ public class PsiClassImplUtil {
 
     ParameterizedCachedValue<MembersMap, PsiClass> cache = getValues(aClass); //aClass.getUserData(MAP_IN_CLASS_KEY);
     boolean upToDate = cache.hasUpToDateValue();
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(place);
     if (/*true || */upToDate) {
       final NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
@@ -478,14 +479,23 @@ public class PsiClassImplUtil {
 
         final List<Pair<PsiMember, PsiSubstitutor>> list = allFieldsMap.get(name);
         if (list != null) {
+          boolean resolved = false;
           for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
             PsiMember candidateField = candidate.getFirst();
-            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
+            PsiClass containingClass = candidateField.getContainingClass();
+            if (containingClass == null) {
+              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass());
+              continue;
+            }
+            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor, factory, languageLevel);
 
-            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
-            if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
+            if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
+              resolved = true;
+            }
           }
+          if (resolved) return false;
         }
       }
     }
@@ -509,6 +519,7 @@ public class PsiClassImplUtil {
 
           List<Pair<PsiMember, PsiSubstitutor>> list = allClassesMap.get(name);
           if (list != null) {
+            boolean resolved = false;
             for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
               PsiMember inner = candidate.getFirst();
               PsiClass containingClass = inner.getContainingClass();
@@ -516,9 +527,12 @@ public class PsiClassImplUtil {
                 PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                          substitutor, factory, languageLevel);
                 processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-                if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+                if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
+                  resolved = true;
+                }
               }
             }
+            if (resolved) return false;
           }
         }
       }
@@ -538,6 +552,7 @@ public class PsiClassImplUtil {
       Map<String, List<Pair<PsiMember, PsiSubstitutor>>> allMethodsMap = value.get(MemberType.METHOD);
       List<Pair<PsiMember, PsiSubstitutor>> list = allMethodsMap.get(name);
       if (list != null) {
+        boolean resolved = false;
         for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
           ProgressIndicatorProvider.checkCanceled();
           PsiMethod candidateMethod = (PsiMethod)candidate.getFirst();
@@ -553,8 +568,11 @@ public class PsiClassImplUtil {
                                                                    substitutor, factory, languageLevel);
           finalSubstitutor = checkRaw(isRaw, factory, candidateMethod, finalSubstitutor);
           processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-          if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+          if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
+            resolved = true;
+          }
         }
+        if (resolved) return false;
 
         if (visited != null) {
           for (Pair<PsiMember, PsiSubstitutor> aList : list) {
@@ -676,7 +694,7 @@ public class PsiClassImplUtil {
       if (superClass == null) continue;
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass,
                                                                state.get(PsiSubstitutor.KEY), factory, languageLevel);
-      if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, isRaw)) {
+      if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, languageLevel, isRaw)) {
         resolved = true;
       }
     }
@@ -1024,14 +1042,8 @@ public class PsiClassImplUtil {
   @NotNull
   private static PsiElement originalElement(@NotNull PsiClass aClass) {
     final PsiElement originalElement = aClass.getOriginalElement();
-    ASTNode node = originalElement.getNode();
-    if (node != null) {
-      final PsiCompiledElement compiled = node.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-      if (compiled != null) {
-        return compiled;
-      }
-    }
-    return originalElement;
+    final PsiCompiledElement compiled = originalElement.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    return compiled != null ? compiled : originalElement;
   }
 
   public static boolean isFieldEquivalentTo(@NotNull PsiField field, PsiElement another) {

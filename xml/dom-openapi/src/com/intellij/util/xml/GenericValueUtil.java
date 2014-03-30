@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author Gregory.Shrago
@@ -43,15 +42,15 @@ public class GenericValueUtil {
   };
 
 
-  public static boolean containsString(final List<? extends GenericValue<?>> list, String value) {
-    for (GenericValue<?> o : list) {
+  public static boolean containsString(final Collection<? extends GenericValue<?>> collection, String value) {
+    for (GenericValue<?> o : collection) {
       if (Comparing.equal(value, o.getStringValue())) return true;
     }
     return false;
   }
 
-  public static <T> boolean containsValue(final List<? extends GenericValue<? extends T>> list, T value) {
-    for (GenericValue<? extends T> o : list) {
+  public static <T> boolean containsValue(final Collection<? extends GenericValue<? extends T>> collection, T value) {
+    for (GenericValue<? extends T> o : collection) {
       if (Comparing.equal(value, o.getValue())) return true;
     }
     return false;

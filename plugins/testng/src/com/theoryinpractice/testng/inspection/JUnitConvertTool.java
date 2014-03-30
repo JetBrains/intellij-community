@@ -15,7 +15,7 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -83,7 +83,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
       try {

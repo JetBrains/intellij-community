@@ -15,12 +15,14 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +32,63 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends LineBreakpoint {
   private final boolean myRestoreBreakpoints;
+  private final SourcePosition myCustomPosition;
+  private String mySuspendPolicy;
 
-  private RunToCursorBreakpoint(Project project, RangeHighlighter highlighter, boolean restoreBreakpoints) {
-    super(project, highlighter);
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+    super(project, null);
+    myCustomPosition = pos;
     setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
+  }
+
+  @Override
+  public SourcePosition getSourcePosition() {
+    return myCustomPosition;
+  }
+
+  @Override
+  public void reload() {
+  }
+
+  @Override
+  public String getSuspendPolicy() {
+    return mySuspendPolicy;
+  }
+
+  public void setSuspendPolicy(String policy) {
+    mySuspendPolicy = policy;
+  }
+
+  protected boolean isLogEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean isLogExpressionEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
+  }
+
+  public boolean isCountFilterEnabled() {
+    return false;
+  }
+
+  public boolean isClassFiltersEnabled() {
+    return false;
+  }
+
+  public boolean isInstanceFiltersEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean isConditionEnabled() {
+    return false;
   }
 
   public boolean isRestoreBreakpoints() {
@@ -44,6 +98,11 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
   @Override
   public boolean isVisible() {
     return false;
+  }
+
+  @Override
+  public boolean isValid() {
+    return true;
   }
 
   @Override
@@ -58,14 +117,9 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
       return null;
     }
 
-    final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
-    if (highlighter == null) {
-      return null;
-    }
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    SourcePosition pos = SourcePosition.createFromLine(psiFile, lineIndex);
 
-    final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints);
-    breakpoint.getHighlighter().dispose();
-
-    return (RunToCursorBreakpoint)breakpoint.init();
+    return new RunToCursorBreakpoint(project, pos, restoreBreakpoints);
   }
 }

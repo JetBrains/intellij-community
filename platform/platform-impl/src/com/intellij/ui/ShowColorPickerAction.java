@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
@@ -33,9 +34,9 @@ public class ShowColorPickerAction extends AnAction {
     final Project project = e.getProject();
     JComponent root = rootComponent(project);
     if (root != null) {
-      ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(LangDataKeys.PSI_ELEMENT));
+      ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
       final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners);
+        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
       picker.setModal(false);
       picker.show();
     }

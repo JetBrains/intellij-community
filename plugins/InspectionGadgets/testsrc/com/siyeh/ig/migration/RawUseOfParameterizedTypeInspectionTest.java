@@ -6,7 +6,10 @@ public class RawUseOfParameterizedTypeInspectionTest extends IGInspectionTestCas
 
   public void test() throws Exception {
     final RawUseOfParameterizedTypeInspection tool = new RawUseOfParameterizedTypeInspection();
+    tool.ignoreObjectConstruction = false;
     tool.ignoreUncompilable = true;
+    tool.ignoreParametersOfOverridingMethods = true;
+    tool.ignoreTypeCasts = true;
     doTest("com/siyeh/igtest/migration/raw_use_of_parameterized_type", tool);
   }
 }

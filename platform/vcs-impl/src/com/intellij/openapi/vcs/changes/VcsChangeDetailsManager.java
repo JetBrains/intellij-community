@@ -267,7 +267,7 @@ public class VcsChangeDetailsManager {
   }
 
   private static JPanel noDifferences() {
-    return UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"), false);
+    return UIVcsUtil.errorPanel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.or.whitespaces"), false);
   }
 
   private static class FragmentedDiffDetailsProvider implements VcsChangeDetailsProvider {
@@ -339,6 +339,7 @@ public class VcsChangeDetailsManager {
     protected JPanel dataToPresentation(ValueWithVcsException<PreparedFragmentedContent> value) {
       final PreparedFragmentedContent requestForChange;
       try {
+        if (value == null) return noDifferences();
         requestForChange = value.get();
         if (requestForChange == null) return noDifferences();
         if (requestForChange.isEmpty()) {

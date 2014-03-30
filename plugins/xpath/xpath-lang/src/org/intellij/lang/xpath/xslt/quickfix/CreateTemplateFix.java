@@ -15,87 +15,73 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateTemplateFix extends AbstractFix {
-    private static final String DUMMY_NS = "urn:x__dummy__";
-    private static final String DUMMY_TAG = "<dummy xmlns='" + DUMMY_NS + "' />";
+public class CreateTemplateFix implements LocalQuickFix {
+  private static final String DUMMY_NS = "urn:x__dummy__";
+  private static final String DUMMY_TAG = "<dummy xmlns='" + DUMMY_NS + "' />";
 
-    private final XmlTag myTag;
-    private final String myName;
+  private final XmlTag myTag;
+  private final String myName;
 
-    public CreateTemplateFix(XmlTag tag, String name) {
-        myTag = tag;
-        myName = name;
+  public CreateTemplateFix(XmlTag tag, String name) {
+    myTag = tag;
+    myName = name;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Create Template '" + myName + "'";
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Create Template";
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final XmlTag tag = XsltCodeInsightUtil.getTemplateTag(myTag, false);
+    if (tag == null) {
+      return;
     }
 
-    @NotNull
-    public String getText() {
-        return "Create Template '" + myName + "'";
-    }
+    final XmlTag parentTag = tag.getParentTag();
+    assert parentTag != null;
 
-    public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-        final XmlTag tag = XsltCodeInsightUtil.getTemplateTag(myTag, false);
-        assert tag != null; // checked by isAvailable
+    XmlTag templateTag = parentTag.createChildTag("template", XsltSupport.XSLT_NS, DUMMY_TAG, false);
+    templateTag.setAttribute("name", myName);
 
-        final XmlTag parentTag = tag.getParentTag();
-        assert parentTag != null;
-        
-        XmlTag templateTag = parentTag.createChildTag("template", XsltSupport.XSLT_NS, DUMMY_TAG, false);
-        templateTag.setAttribute("name", myName);
-
-        final XmlTag[] arguments = myTag.findSubTags("with-param", XsltSupport.XSLT_NS);
-        if (arguments.length > 0) {
-            final XmlTag dummy = templateTag.findFirstSubTag("dummy");
-            for (XmlTag arg : arguments) {
-                final String argName = arg.getAttributeValue("name");
-                if (argName != null) {
-                    final XmlTag paramTag = parentTag.createChildTag("param", XsltSupport.XSLT_NS, null, false);
-                    paramTag.setAttribute("name", argName);
-                    templateTag.addBefore(paramTag, dummy);
-                }
-            }
+    final XmlTag[] arguments = myTag.findSubTags("with-param", XsltSupport.XSLT_NS);
+    if (arguments.length > 0) {
+      final XmlTag dummy = templateTag.findFirstSubTag("dummy");
+      for (XmlTag arg : arguments) {
+        final String argName = arg.getAttributeValue("name");
+        if (argName != null) {
+          final XmlTag paramTag = parentTag.createChildTag("param", XsltSupport.XSLT_NS, null, false);
+          paramTag.setAttribute("name", argName);
+          templateTag.addBefore(paramTag, dummy);
         }
-
-        // this is a bit ugly, but seems like the only way to get a newline between the closing tag of the previous and
-        // the start tag of the newly created tag
-        final XmlTag dummy1 = (XmlTag)parentTag.addAfter(XmlElementFactory.getInstance(project).createTagFromText(DUMMY_TAG, XMLLanguage.INSTANCE), tag);
-        templateTag = (XmlTag)parentTag.addAfter(templateTag, dummy1);
-      templateTag = (XmlTag)CodeStyleManager.getInstance(tag.getManager().getProject()).reformat(templateTag);
-
-        final XmlTag dummy2 = templateTag.findFirstSubTag("dummy");
-
-        moveTo(editor, dummy2);
-
-        deleteTag(dummy2);  // reverse order: preserve offsets
-        deleteTag(dummy1);
+      }
     }
 
-    private static void deleteTag(XmlTag dummy1) throws IncorrectOperationException {
-        final PsiDocumentManager manager = PsiDocumentManager.getInstance(dummy1.getProject());
-        final Document document = manager.getDocument(dummy1.getContainingFile());
-        assert document != null;
-        manager.doPostponedOperationsAndUnblockDocument(document);
-        document.deleteString(dummy1.getTextRange().getStartOffset(), dummy1.getTextRange().getEndOffset());
-    }
+    // TODO ensure we have line breaks before the new <xsl:template> and between its opening and closing tags
 
-    public boolean isAvailableImpl(@NotNull Project project, Editor editor, PsiFile file) {
-        return myTag.isValid() && XsltCodeInsightUtil.getTemplateTag(myTag, false) != null;
-    }
+    XmlTag newTemplateTag = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(templateTag);
 
-    protected boolean requiresEditor() {
-        return true;
-    }
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(project, myTag.getContainingFile().getVirtualFile(),
+                                                                   newTemplateTag.getTextRange().getStartOffset());
+    FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true);
+  }
 }

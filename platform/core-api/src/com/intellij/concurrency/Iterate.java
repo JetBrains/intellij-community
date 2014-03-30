@@ -1,5 +1,7 @@
 package com.intellij.concurrency;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Iterator;
 
 /**
@@ -9,11 +11,12 @@ public abstract class Iterate<T> extends DoWhile {
   private final Iterator<T> myIterator;
   private boolean myIsDone;
 
-  public Iterate(Iterable<T> iterable) {
+  public Iterate(@NotNull Iterable<T> iterable) {
     myIterator = iterable.iterator();
     myIsDone = false;
   }
 
+  @NotNull
   @Override
   protected final AsyncFuture<Boolean> body() {
     if (!myIterator.hasNext()) {
@@ -23,6 +26,7 @@ public abstract class Iterate<T> extends DoWhile {
     return process(myIterator.next());
   }
 
+  @NotNull
   protected abstract AsyncFuture<Boolean> process(T t);
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -42,6 +43,10 @@ public class SplitLineAction extends EditorAction {
   }
 
   private static class Handler extends EditorWriteActionHandler {
+    public Handler() {
+      super(true);
+    }
+
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       return getEnterHandler().isEnabled(editor, dataContext) &&
@@ -50,6 +55,7 @@ public class SplitLineAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
+      CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();
       final RangeMarker rangeMarker =
         document.createRangeMarker(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset() );

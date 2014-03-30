@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ public class ItemPresentationProviders extends ClassExtension<ItemPresentationPr
   }
 
   @Nullable
-  public static ItemPresentation getItemPresentation(NavigationItem element) {
+  public static ItemPresentation getItemPresentation(@NotNull NavigationItem element) {
     final ItemPresentationProvider<NavigationItem> provider = getItemPresentationProvider(element);
-    return provider != null ? provider.getPresentation(element) : null;
+    return provider == null ? null : provider.getPresentation(element);
   }
 }

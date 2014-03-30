@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -54,4 +55,9 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
 
   @Nullable
   public abstract G getGroup(@NotNull B breakpoint, @NotNull Collection<G> groups);
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  }
 }

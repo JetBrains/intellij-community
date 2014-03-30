@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -43,27 +43,44 @@ import org.jetbrains.annotations.Nullable;
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
-  private final RuntimeConfiguration myConfiguration;
+  private final RunConfiguration myConfiguration;
   protected final CompositeFilter myCustomFilter;
+  private final boolean myPrintTestingStartedTime;
 
   /**
    * @param config
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(@NotNull final RuntimeConfiguration config,
-                                    @NotNull final String testFrameworkName,
-                                    @NotNull final Executor executor)
-  {
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor) {
+    this(config, testFrameworkName, executor, true);
+  }
+
+  /**
+   * @param config
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param executor
+   */
+  public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull Executor executor,
+                                    boolean printTestingStartedTime) {
     super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
           config.getProject(),
           executor);
     myConfiguration = config;
     myCustomFilter = new CompositeFilter(config.getProject());
+    myPrintTestingStartedTime = printTestingStartedTime;
   }
 
-  public RuntimeConfiguration getConfiguration() {
+  public RunConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  public boolean isPrintTestingStartedTime() {
+    return myPrintTestingStartedTime;
   }
 
   @Override
@@ -77,7 +94,13 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     final int stacktraceLength = stacktrace.length();
     final String[] lines = StringUtil.splitByLines(stacktrace);
     for (String line : lines) {
-      final Filter.Result result = myCustomFilter.applyFilter(line, stacktraceLength);
+      final Filter.Result result;
+      try {
+        result = myCustomFilter.applyFilter(line, stacktraceLength);
+      }
+      catch (Throwable t) {
+        throw new RuntimeException("Error while applying " + myCustomFilter + " to '"+line+"'", t);
+      }
       if (result != null) {
         final HyperlinkInfo info = result.hyperlinkInfo;
 

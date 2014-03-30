@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,10 @@ import java.util.*;
 public class ClasspathStorage implements StateStorage {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.storage.ClasspathStorage");
 
-  @NonNls public static final String DEFAULT_STORAGE = "default";
   @NonNls public static final String SPECIAL_STORAGE = "special";
 
   public static final String DEFAULT_STORAGE_DESCR = ProjectBundle.message("project.roots.classpath.format.default.descr");
 
-  @NonNls public static final String CLASSPATH_OPTION = JpsProjectLoader.CLASSPATH_ATTRIBUTE;
   @NonNls public static final String CLASSPATH_DIR_OPTION = JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE;
 
   @NonNls private static final String COMPONENT_TAG = "component";
@@ -76,7 +74,7 @@ public class ClasspathStorage implements StateStorage {
 
 
   public ClasspathStorage(Module module) {
-    myConverter = getProvider(getStorageType(module)).createConverter(module);
+    myConverter = getProvider(ClassPathStorageUtil.getStorageType(module)).createConverter(module);
     final MessageBus messageBus = module.getMessageBus();
     final VirtualFileTracker virtualFileTracker =
       (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
@@ -88,7 +86,7 @@ public class ClasspathStorage implements StateStorage {
           final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
           virtualFileTracker.addTracker(file.getUrl(), new VirtualFileAdapter() {
             @Override
-            public void contentsChanged(final VirtualFileEvent event) {
+            public void contentsChanged(@NotNull final VirtualFileEvent event) {
               listener.storageFileChanged(event, ClasspathStorage.this);
             }
           }, true, module);
@@ -151,13 +149,13 @@ public class ClasspathStorage implements StateStorage {
     return true;
   }
 
-  public void setState(Object component, final String componentName, Object state) throws StateStorageException {
+  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      myConverter.setClasspath(((ModuleRootManagerImpl)component));
+      myConverter.setClasspath((ModuleRootManagerImpl)component);
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e.getMessage());
@@ -172,7 +170,7 @@ public class ClasspathStorage implements StateStorage {
   public ExternalizationSession startExternalization() {
     final ExternalizationSession session = new ExternalizationSession() {
       @Override
-      public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
+      public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec)
         throws StateStorageException {
         assert mySession == this;
         ClasspathStorage.this.setState(component, componentName, state);
@@ -185,7 +183,7 @@ public class ClasspathStorage implements StateStorage {
 
   @Override
   @NotNull
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
     final SaveSession session = new MySaveSession();
@@ -202,7 +200,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public void finishSave(final SaveSession saveSession) {
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession);
     }
@@ -212,7 +210,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @Override
-  public void reload(final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
   }
 
   public boolean needsSave() throws StateStorageException {
@@ -238,7 +236,8 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static ClasspathStorageProvider getProvider(final String type) {
+  @NotNull
+  public static ClasspathStorageProvider getProvider(@NotNull String type) {
     for (ClasspathStorageProvider provider : getProviders()) {
       if (type.equals(provider.getID())) {
         return provider;
@@ -247,6 +246,7 @@ public class ClasspathStorage implements StateStorage {
     return new UnsupportedStorageProvider(type);
   }
 
+  @NotNull
   public static List<ClasspathStorageProvider> getProviders() {
     final List<ClasspathStorageProvider> list = new ArrayList<ClasspathStorageProvider>();
     list.add(new DefaultStorageProvider());
@@ -255,12 +255,7 @@ public class ClasspathStorage implements StateStorage {
   }
 
   @NotNull
-  public static String getStorageType(final Module module) {
-    final String id = module.getOptionValue(CLASSPATH_OPTION);
-    return id != null ? id : DEFAULT_STORAGE;
-  }
-
-  public static String getModuleDir(final Module module) {
+  public static String getModuleDir(@NotNull Module module) {
     return new File(module.getModuleFilePath()).getParent();
   }
 
@@ -278,38 +273,38 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static void setStorageType(final ModuleRootModel model, final String storageID) {
+  public static void setStorageType(@NotNull ModuleRootModel model, @NotNull String storageID) {
     final Module module = model.getModule();
-    final String oldStorageType = getStorageType(module);
+    final String oldStorageType = ClassPathStorageUtil.getStorageType(module);
     if (oldStorageType.equals(storageID)) {
       return;
     }
 
     getProvider(oldStorageType).detach(module);
 
-    if (storageID.equals(DEFAULT_STORAGE)) {
-      module.clearOption(CLASSPATH_OPTION);
+    if (storageID.equals(ClassPathStorageUtil.DEFAULT_STORAGE)) {
+      module.clearOption(ClassPathStorageUtil.CLASSPATH_OPTION);
       module.clearOption(CLASSPATH_DIR_OPTION);
     }
     else {
-      module.setOption(CLASSPATH_OPTION, storageID);
+      module.setOption(ClassPathStorageUtil.CLASSPATH_OPTION, storageID);
       module.setOption(CLASSPATH_DIR_OPTION, getProvider(storageID).getContentRoot(model));
     }
   }
 
   public static void moduleRenamed(Module module, String newName) {
-    getProvider(getStorageType(module)).moduleRenamed(module, newName);
+    getProvider(ClassPathStorageUtil.getStorageType(module)).moduleRenamed(module, newName);
   }
 
   public static void modulePathChanged(Module module, String path) {
-    getProvider(getStorageType(module)).modulePathChanged(module, path);
+    getProvider(ClassPathStorageUtil.getStorageType(module)).modulePathChanged(module, path);
   }
 
   private static class DefaultStorageProvider implements ClasspathStorageProvider {
     @Override
     @NonNls
     public String getID() {
-      return DEFAULT_STORAGE;
+      return ClassPathStorageUtil.DEFAULT_STORAGE;
     }
 
     @Override
@@ -425,10 +420,11 @@ public class ClasspathStorage implements StateStorage {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       return null;
     }
 
+    @NotNull
     @Override
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       if (needsSave()) {
@@ -443,6 +439,7 @@ public class ClasspathStorage implements StateStorage {
       }
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       final List<IFile> list = new ArrayList<IFile>();

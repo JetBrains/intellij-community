@@ -20,7 +20,7 @@ import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class RedundantLambdaCodeBlockInspectionTest extends LightQuickFixTestCase {
+public class RedundantLambdaCodeBlockInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

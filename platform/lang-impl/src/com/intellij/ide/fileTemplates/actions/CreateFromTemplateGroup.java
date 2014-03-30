@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -38,6 +39,7 @@ import java.util.*;
 public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup");
 
+  @Override
   public void update(AnActionEvent event){
     super.update(event);
     Presentation presentation = event.getPresentation();
@@ -51,6 +53,8 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     presentation.setEnabled(false);
   }
 
+  @Override
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate[] templates = manager.getAllTemplates();
@@ -67,6 +71,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     }
 
     Arrays.sort(templates, new Comparator<FileTemplate>() {
+      @Override
       public int compare(FileTemplate template1, FileTemplate template2) {
         // java first
         if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
@@ -140,10 +145,12 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
       super(title,null,null);
     }
 
+    @Override
     protected AnAction getReplacedAction(final FileTemplate template) {
       return replaceAction(template);
     }
 
+    @Override
     protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
       SelectTemplateDialog dialog = new SelectTemplateDialog(project, dir);
       dialog.show();

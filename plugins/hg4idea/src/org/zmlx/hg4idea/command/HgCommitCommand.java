@@ -28,10 +28,13 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,13 +49,21 @@ public class HgCommitCommand {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final String myMessage;
+  @NotNull private final Charset myCharset;
+  private final boolean myAmend;
 
   private Set<HgFile> myFiles = Collections.emptySet();
 
-  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message, boolean amend) {
     myProject = project;
     myRoot = root;
     myMessage = message;
+    myCharset = HgEncodingUtil.getDefaultCharset(myProject);
+    myAmend = amend;
+  }
+
+  public HgCommitCommand(Project project, @NotNull VirtualFile root, String message) {
+    this(project, root, message, false);
   }
 
   public void setFiles(@NotNull Set<HgFile> files) {
@@ -66,7 +77,7 @@ public class HgCommitCommand {
     //if it's merge commit, so myFiles is Empty. Need to commit all files in changeList.
     // see HgCheckinEnviroment->commit() method
     if (myFiles.isEmpty()) {
-      commitChunkFiles(Collections.<String>emptyList());
+      commitChunkFiles(Collections.<String>emptyList(), myAmend);
     }
     else {
       List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {
@@ -75,30 +86,45 @@ public class HgCommitCommand {
           return file.getRelativePath();
         }
       });
-      for (List<String> chunk : VcsFileUtil.chunkRelativePaths(relativePaths)) {
-        commitChunkFiles(chunk);
+      List<List<String>> chunkedCommits = VcsFileUtil.chunkRelativePaths(relativePaths);
+      int size = chunkedCommits.size();
+      commitChunkFiles(chunkedCommits.get(0), myAmend);
+      HgVcs vcs = HgVcs.getInstance(myProject);
+      boolean amendCommit = vcs != null && vcs.getVersion().isAmendSupported();
+      for (int i = 1; i < size; i++) {
+        List<String> chunk = chunkedCommits.get(i);
+        commitChunkFiles(chunk, amendCommit);
       }
+    }
+    if (!myProject.isDisposed()) {
+      HgRepositoryManager manager = HgUtil.getRepositoryManager(myProject);
+      manager.updateRepository(myRoot);
     }
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
     messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(myProject, null);
   }
 
-  private void commitChunkFiles(List<String> chunk) throws VcsException {
+  private void commitChunkFiles(List<String> chunk, boolean amendCommit) throws VcsException {
     List<String> parameters = new LinkedList<String>();
     parameters.add("--logfile");
     parameters.add(saveCommitMessage().getAbsolutePath());
     parameters.addAll(chunk);
-    ensureSuccess(new HgCommandExecutor(myProject).executeInCurrentThread(myRoot, "commit", parameters));
+    if (amendCommit) {
+      parameters.add("--amend");
+    }
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setCharset(myCharset);
+    ensureSuccess(executor.executeInCurrentThread(myRoot, "commit", parameters));
   }
 
   private File saveCommitMessage() throws VcsException {
     File systemDir = new File(PathManager.getSystemPath());
     File tempFile = new File(systemDir, TEMP_FILE_NAME);
-    
     try {
-      FileUtil.writeToFile(tempFile, myMessage.getBytes(HgEncodingUtil.getDefaultCharset()));
-    } catch (IOException e) {
+      FileUtil.writeToFile(tempFile, myMessage.getBytes(myCharset));
+    }
+    catch (IOException e) {
       throw new VcsException("Couldn't prepare commit message", e);
     }
     return tempFile;

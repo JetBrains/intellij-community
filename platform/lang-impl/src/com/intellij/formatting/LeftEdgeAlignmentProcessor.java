@@ -38,7 +38,7 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
       return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
     }
     else {
-      final int offsetBeforeBlock = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock);
+      final int offsetBeforeBlock = CoreFormatterUtil.getStartColumn(offsetResponsibleBlock);
       final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
       if (prevIndentedBlock == null) {
         return new IndentData(0, offsetBeforeBlock);

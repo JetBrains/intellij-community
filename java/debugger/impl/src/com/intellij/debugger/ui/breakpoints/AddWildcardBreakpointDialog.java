@@ -30,7 +30,7 @@ public class AddWildcardBreakpointDialog extends DialogWrapper {
   private JTextField myClassPatternField;
   private JTextField myMethodNameField;
 
-  protected AddWildcardBreakpointDialog(Project project) {
+  public AddWildcardBreakpointDialog(Project project) {
     super(project, true);
     setTitle("Add Method Breakpoint");
     init();

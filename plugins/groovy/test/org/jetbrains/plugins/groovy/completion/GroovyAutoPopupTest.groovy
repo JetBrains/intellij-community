@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.INSTANCE
+    return GroovyLightProjectDescriptor.GROOVY_2_1
   }
 
   @Override
@@ -113,11 +113,11 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
   }
 
-  public void testNoClassesInUnqualifiedImports() {
-    myFixture.addClass("package xxxxx; public class Xxxxxxxxx {}")
+  public void testClassesAndPackagesInUnqualifiedImports() {
+    myFixture.addClass("package Xxxxx; public class Xxxxxxxxx {}")
     myFixture.configureByText 'a.groovy', 'package foo; import <caret>'
-    type 'xxx'
-    assert myFixture.lookupElementStrings == ['xxxxx']
+    type 'Xxx'
+    assert myFixture.lookupElementStrings == ['Xxxxxxxxx', 'Xxxxx']
   }
 
 
@@ -139,14 +139,18 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>[] a) { }"
     type '.'
-    assert !lookup
+    assert lookup
+    type '.'
+    myFixture.checkResult('void foo(Foo..<caret>[] a) { }')
   }
 
   public void testTypingFirstVarargDot2() {
     myFixture.addClass("class Foo { static class Bar {} }")
     myFixture.configureByText "a.groovy", "void foo(Foo<caret>) { }"
     type '.'
-    assert !lookup
+    assert lookup
+    type '.'
+    myFixture.checkResult('void foo(Foo..<caret>) { }')
   }
 
   public void testDotDot() {
@@ -221,16 +225,16 @@ class Foo extends Abcdefg <caret>'''
     myFixture.addClass("package bar; public class Abcdefg {}")
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'Abcde '
-    myFixture.checkResult 'Abcdefg <caret>'
+    myFixture.checkResult '''import bar.Abcdefg
+
+Abcdefg <caret>'''
   }
 
   public void testPrivate() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.addClass("package foo; public class PrimaBalerina {}")
     myFixture.configureByText 'a.groovy', 'class Foo { <caret> }'
     type 'pri'
     assert myFixture.lookupElementStrings[0] == 'private'
-    assert !('PrimaBalerina' in myFixture.lookupElementStrings)
   }
 
   public void testFieldTypeNonImported() {
@@ -262,9 +266,9 @@ class Foo extends Abcdefg <caret>'''
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'boo'
-    myFixture.assertPreferredCompletionItems 0, 'boolean', 'Boolean'
+    myFixture.assertPreferredCompletionItems 0, 'boolean'
     type '\b\b\bBoo'
-    myFixture.assertPreferredCompletionItems 0, 'Boolean', 'boolean'
+    myFixture.assertPreferredCompletionItems 0, 'Boolean'
   }
 
   public void testPackageQualifier() {
@@ -281,8 +285,10 @@ class Foo extends Abcdefg <caret>'''
 void foo(File... files) { }
 foo(new <caret>)
 '''
-    type 'File('
-    assert myFixture.file.text.contains('new File()')
+    type 'File'
+    myFixture.assertPreferredCompletionItems 0, 'File', 'File', 'FileInputStream'
+    type '('
+    assert myFixture.editor.document.text.contains('new File()')
   }
 
   public void testSecondClosureParameterName() {

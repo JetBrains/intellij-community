@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +24,14 @@ import org.jetbrains.annotations.NotNull;
  * @author mike
  */
 public abstract class SystemNotifications {
+  private static final SystemNotifications NULL = new SystemNotifications() {
+    @Override
+    public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) { }
+  };
+
   public static SystemNotifications getInstance() {
-    return ServiceManager.getService(SystemNotifications.class);
+    Application app = ApplicationManager.getApplication();
+    return app.isHeadlessEnvironment() || app.isUnitTestMode() ? NULL : ServiceManager.getService(SystemNotifications.class);
   }
 
   public abstract void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text);

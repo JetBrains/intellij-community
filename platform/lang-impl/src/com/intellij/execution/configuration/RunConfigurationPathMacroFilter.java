@@ -27,11 +27,10 @@ public class RunConfigurationPathMacroFilter extends PathMacroFilter {
   public boolean skipPathMacros(Attribute attribute) {
     final Element parent = attribute.getParent();
     final String attrName = attribute.getName();
-    if (parent.getName().equals(EnvironmentVariablesComponent.ENV) &&
-        (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))) {
-      return true;
-    }
-    return false;
+    String tagName = parent.getName();
+    return tagName.equals(EnvironmentVariablesComponent.ENV) &&
+              (attrName.equals(EnvironmentVariablesComponent.NAME) || attrName.equals(EnvironmentVariablesComponent.VALUE))
+           || tagName.equals("option") && "MAIN_CLASS_NAME".equals(parent.getAttributeValue("name"));
   }
 
   @Override

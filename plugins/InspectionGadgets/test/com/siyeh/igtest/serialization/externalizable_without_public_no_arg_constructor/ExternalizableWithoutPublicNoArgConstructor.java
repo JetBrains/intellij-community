@@ -57,4 +57,20 @@ class AnonymousTest {
     System.out.println("o = " + o);
   }
 }
+public class ExternalizableWithoutPublicNoArgConstructor implements Externalizable {
+
+  protected ExternalizableWithoutPublicNoArgConstructor() {}
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+  }
+
+  public Object writeReplace() throws ObjectStreamException {
+    return null;
+  }
+}
 

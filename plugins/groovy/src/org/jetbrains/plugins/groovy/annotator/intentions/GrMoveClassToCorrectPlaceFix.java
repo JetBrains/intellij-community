@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -25,13 +24,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 /**
  * @author Max Medvedev
  */
-public class GrMoveClassToCorrectPlaceFix implements IntentionAction {
+public class GrMoveClassToCorrectPlaceFix extends Intention {
   private static final Logger LOG = Logger.getInstance(GrMoveClassToCorrectPlaceFix.class);
 
   private final GrTypeDefinition myClass;
@@ -59,7 +60,7 @@ public class GrMoveClassToCorrectPlaceFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myClass, GrTypeDefinition.class);
     if (containingClass != null) {
       containingClass.add(myClass);
@@ -74,6 +75,17 @@ public class GrMoveClassToCorrectPlaceFix implements IntentionAction {
     }
 
     myClass.delete();
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return myClass.isValid();
+      }
+    };
   }
 
   @Override

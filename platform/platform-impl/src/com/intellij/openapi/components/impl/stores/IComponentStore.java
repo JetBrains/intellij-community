@@ -28,19 +28,18 @@ import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
-
-  void initComponent(Object component, boolean service);
-  void reinitComponents(Set<String> componentNames, boolean reloadData);
-  boolean isReloadPossible(Set<String> componentNames);
+  void initComponent(@NotNull Object component, boolean service);
+  void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData);
+  boolean isReloadPossible(@NotNull Set<String> componentNames);
 
   void load() throws IOException, StateStorageException;
   boolean isSaving();
 
+  @NotNull
   StateStorageManager getStateStorageManager();
 
 
   class SaveCancelledException extends IOException {
-
     public SaveCancelledException() {
     }
 
@@ -54,13 +53,17 @@ public interface IComponentStore {
   SaveSession startSave() throws IOException;
 
   interface SaveSession {
+    @NotNull
     List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException;
+    @NotNull
     SaveSession save() throws IOException;
     void finishSave();
     void reset();
 
     @Nullable
-    Set<String> analyzeExternalChanges(Set<Pair<VirtualFile,StateStorage>> changedFiles);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles);
+
+    @NotNull
     List<IFile> getAllStorageFiles(final boolean includingSubStructures);
   }
 

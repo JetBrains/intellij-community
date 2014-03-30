@@ -21,38 +21,37 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 /**
  * @author maxim
  */
 public abstract class NamedObjectProviderBinding<Provider> implements ProviderBinding<Provider> {
-  private final ConcurrentMap<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMap = new ConcurrentHashMap<String, List<ProviderInfo<Provider,ElementPattern>>>(5);
-  private final ConcurrentMap<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<String, List<ProviderInfo<Provider, ElementPattern>>>(5);
+  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMap = new THashMap<String, List<ProviderInfo<Provider,ElementPattern>>>(5);
+  private final Map<String, List<ProviderInfo<Provider, ElementPattern>>> myNamesToProvidersMapInsensitive = new THashMap<String, List<ProviderInfo<Provider, ElementPattern>>>(5);
 
   public void registerProvider(@NonNls @NotNull String[] names,
                                @NotNull ElementPattern filter,
                                boolean caseSensitive,
                                @NotNull Provider provider,
                                final double priority) {
-    final ConcurrentMap<String, List<ProviderInfo<Provider, ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+    final Map<String, List<ProviderInfo<Provider, ElementPattern>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (final String attributeName : names) {
       List<ProviderInfo<Provider, ElementPattern>> psiReferenceProviders = map.get(attributeName);
 
       if (psiReferenceProviders == null) {
         String key = caseSensitive ? attributeName : attributeName.toLowerCase();
-        psiReferenceProviders = ConcurrencyUtil.cacheOrGet(map, key, ContainerUtil.<ProviderInfo<Provider,ElementPattern>>createLockFreeCopyOnWriteList());
+        map.put(key, psiReferenceProviders = new SmartList<ProviderInfo<Provider, ElementPattern>>());
       }
 
       psiReferenceProviders.add(new ProviderInfo<Provider,ElementPattern>(provider, filter, priority));

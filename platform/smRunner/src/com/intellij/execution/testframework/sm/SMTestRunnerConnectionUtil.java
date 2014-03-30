@@ -18,18 +18,14 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.*;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerNotificationsHandler;
-import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.execution.testframework.sm.runner.ui.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
@@ -72,23 +68,20 @@ public class SMTestRunnerConnectionUtil {
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull final String testFrameworkName,
                                                                   @NotNull final ProcessHandler processHandler,
                                                                   @NotNull final TestConsoleProperties consoleProperties,
-                                                                  final RunnerSettings runnerSettings,
-                                                                  final ConfigurationPerRunnerSettings configurationSettings
+                                                                  ExecutionEnvironment environment
   ) throws ExecutionException {
-    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, runnerSettings, configurationSettings);
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, environment);
     console.attachToProcess(processHandler);
     return console;
   }
 
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
                                                                           @NotNull final TestConsoleProperties consoleProperties,
-                                                                          final RunnerSettings runnerSettings,
-                                                                          final ConfigurationPerRunnerSettings configurationSettings,
+                                                                          ExecutionEnvironment environment,
                                                                           @Nullable final TestLocationProvider locator) {
     return createConsoleWithCustomLocator(testFrameworkName,
                                           consoleProperties,
-                                          runnerSettings,
-                                          configurationSettings,
+                                          environment,
                                           new CompositeTestLocationProvider(locator),
                                           false,
                                           null);
@@ -96,35 +89,55 @@ public class SMTestRunnerConnectionUtil {
 
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
                                                                     @NotNull final TestConsoleProperties consoleProperties,
-                                                                    final RunnerSettings runnerSettings,
-                                                                    final ConfigurationPerRunnerSettings configurationSettings,
+                                                                    ExecutionEnvironment environment,
                                                                     @Nullable final TestLocationProvider locator,
                                                                     final boolean idBasedTreeConstruction,
-                                                                    @Nullable final TestProxyPrinterProvider printerProvider) {
-    // Console
-    final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
-    final SMTRunnerConsoleView console =
-      new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName) {
-        @Override
-        public void attachToProcess(final ProcessHandler processHandler) {
-          // attach listeners
-          super.attachToProcess(processHandler);
-          attachEventsProcessors(consoleProperties, getResultsViewer(),
-                                 getResultsViewer().getStatisticsPane(),
-                                 processHandler, testFrameworkName, locator, idBasedTreeConstruction,
-                                 printerProvider);
-        }
-      };
-    console.setHelpId("reference.runToolWindow.testResultsTab");
-    console.initUI();
-    return console;
+                                                                    @Nullable final TestProxyFilterProvider filterProvider) {
+    String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
+    SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties,
+                                                                environment,
+                                                                splitterPropertyName);
+    initConsoleView(consoleView, testFrameworkName, locator, idBasedTreeConstruction, filterProvider);
+    return consoleView;
   }
+
+  @NotNull
+  public static String getSplitterPropertyName(@NotNull String testFrameworkName) {
+    return testFrameworkName + ".Splitter.Proportion";
+  }
+
+  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
+                                     @NotNull final String testFrameworkName,
+                                     @Nullable final TestLocationProvider locator,
+                                     final boolean idBasedTreeConstruction,
+                                     @Nullable final TestProxyFilterProvider filterProvider) {
+    consoleView.addAttachToProcessListener(new AttachToProcessListener() {
+      @Override
+      public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
+        TestProxyPrinterProvider printerProvider = null;
+        if (filterProvider != null) {
+          printerProvider = new TestProxyPrinterProvider(consoleView, filterProvider);
+        }
+        SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
+        attachEventsProcessors(consoleView.getProperties(),
+                               resultsForm,
+                               resultsForm.getStatisticsPane(),
+                               processHandler,
+                               testFrameworkName,
+                               locator,
+                               idBasedTreeConstruction,
+                               printerProvider);
+      }
+    });
+    consoleView.setHelpId("reference.runToolWindow.testResultsTab");
+    consoleView.initUI();
+  }
+
   public static BaseTestsOutputConsoleView createConsole(@NotNull final String testFrameworkName,
                                                          @NotNull final TestConsoleProperties consoleProperties,
-                                                         final RunnerSettings runnerSettings,
-                                                         final ConfigurationPerRunnerSettings configurationSettings) {
+                                                         ExecutionEnvironment environment) {
 
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, runnerSettings, configurationSettings, null);
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, null);
   }
 
   /**
@@ -175,20 +188,19 @@ public class SMTestRunnerConnectionUtil {
    */
   public static ConsoleView createAndAttachConsole(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
                                                    @NotNull final CommandLineState commandLineState,
-                                                   @NotNull final RuntimeConfiguration config,
+                                                   @NotNull final ModuleRunConfiguration config,
                                                    @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName, executor);
 
     return createAndAttachConsole(testFrameworkName, processHandler, consoleProperties,
-                                  commandLineState.getRunnerSettings(),
-                                  commandLineState.getConfigurationSettings());
+                                  commandLineState.getEnvironment());
   }
 
   public static ConsoleView createConsole(@NotNull final String testFrameworkName,
                                           @NotNull final CommandLineState commandLineState,
-                                          @NotNull final RuntimeConfiguration config,
+                                          @NotNull final ModuleRunConfiguration config,
                                           @NotNull final Executor executor
   ) throws ExecutionException {
     // final String testFrameworkName
@@ -196,8 +208,7 @@ public class SMTestRunnerConnectionUtil {
 
     return createConsole(testFrameworkName,
                          consoleProperties,
-                         commandLineState.getRunnerSettings(),
-                         commandLineState.getConfigurationSettings());
+                         commandLineState.getEnvironment());
   }
 
   /**

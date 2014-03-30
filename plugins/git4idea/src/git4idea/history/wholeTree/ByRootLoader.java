@@ -100,7 +100,7 @@ public class ByRootLoader extends TaskDescriptor {
     // start is not on a branch
     if (myStartingPoints != null && (! myStartingPoints.isEmpty())) return;
 
-    final List<GitCommit> details = new ArrayList<GitCommit>();
+    final List<GitHeavyCommit> details = new ArrayList<GitHeavyCommit>();
     final List<CommitI> commits = new ArrayList<CommitI>();
     final Map<AbstractHash, String> stashMap = new HashMap<AbstractHash, String>();
     final List<List<AbstractHash>> parents = ! myGitLogFilters.haveDisordering() ? new ArrayList<List<AbstractHash>>() : null;
@@ -113,12 +113,12 @@ public class ByRootLoader extends TaskDescriptor {
           final List<String> parameters = new ArrayList<String>();
           final List<VirtualFile> paths = new ArrayList<VirtualFile>();
           ChangesFilter.filtersToParameters(filters, parameters, paths);
-          final List<Pair<String,GitCommit>> stash = GitHistoryUtils.loadStashStackAsCommits(myProject, myRootHolder.getRoot(),
+          final List<Pair<String,GitHeavyCommit>> stash = GitHistoryUtils.loadStashStackAsCommits(myProject, myRootHolder.getRoot(),
                                                                              mySymbolicRefs, parameters.toArray(new String[parameters.size()]));
           if (stash == null) return;
-          for (Pair<String, GitCommit> pair : stash) {
+          for (Pair<String, GitHeavyCommit> pair : stash) {
             ProgressManager.checkCanceled();
-            final GitCommit gitCommit = pair.getSecond();
+            final GitHeavyCommit gitCommit = pair.getSecond();
             if (stashMap.containsKey(gitCommit.getShortHash())) continue;
 
             details.add(gitCommit);
@@ -170,10 +170,10 @@ public class ByRootLoader extends TaskDescriptor {
               }
               if (! matches) continue;
             }
-            final List<GitCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(shaHash.getValue()), mySymbolicRefs);
+            final List<GitHeavyCommit> commits = myLowLevelAccess.getCommitDetails(Collections.singletonList(shaHash.getValue()), mySymbolicRefs);
             if (commits.isEmpty()) continue;
             assert commits.size() == 1;
-            final GitCommit commitDetails = commits.get(0);
+            final GitHeavyCommit commitDetails = commits.get(0);
             boolean isOk = true;
             for (ChangesFilter.Filter filter : filters) {
               isOk = filter.getMemoryFilter().applyInMemory(commitDetails);
@@ -200,14 +200,14 @@ public class ByRootLoader extends TaskDescriptor {
     }
   }
 
-  private void appendCommits(List<CommitI> result, List<GitCommit> commits) {
-    for (GitCommit commit : commits) {
+  private void appendCommits(List<CommitI> result, List<GitHeavyCommit> commits) {
+    for (GitHeavyCommit commit : commits) {
       CommitI commitObj = createCommitI(commit);
       result.add(commitObj);
     }
   }
 
-  private CommitI createCommitI(GitCommit commit) {
+  private CommitI createCommitI(GitHeavyCommit commit) {
     CommitI commitObj =
       new Commit(commit.getShortHash().getString(), commit.getDate().getTime(), myUsersIndex.put(commit.getAuthor()));
     commitObj = myRootHolder.decorateByRoot(commitObj);

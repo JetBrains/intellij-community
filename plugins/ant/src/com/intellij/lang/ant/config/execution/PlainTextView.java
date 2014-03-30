@@ -54,6 +54,11 @@ public final class PlainTextView implements AntOutputView {
     myConsole.dispose();
   }
 
+  @Override
+  public String getId() {
+    return "_text_view_";
+  }
+
   public JComponent getComponent() {
     return myConsole.getComponent();
   }

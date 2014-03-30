@@ -1,5 +1,5 @@
 import java.io.*;
 
-public class x {
+class x {
  static {int i;}
 }

@@ -35,6 +35,7 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
     mySchemesManager = manager;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     E profile = getSelectedScheme();
@@ -47,8 +48,8 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
     return selected != null && !mySchemesManager.isShared(selected);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
-
     doExport(getSelectedScheme(), mySchemesManager);
   }
 
@@ -67,11 +68,9 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
                                        Messages.getInformationIcon());            
           }
           catch (IOException e) {
-            Messages.showErrorDialog("Cannot share scheme '" + scheme.getName() + "': " + e.getLocalizedMessage(), "Share Shceme");
+            Messages.showErrorDialog("Cannot share scheme '" + scheme.getName() + "': " + e.getLocalizedMessage(), "Share Scheme");
           }
-
         }
-
       }
       catch (WriteExternalException e1) {
         Messages.showErrorDialog("Cannot share scheme: " + e1.getLocalizedMessage(), "Share Scheme");

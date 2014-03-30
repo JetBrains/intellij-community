@@ -23,6 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.TextComponentUndoProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -41,6 +43,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     super(field, browseActionListener);
     if (ApplicationManager.getApplication() != null) {
       installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+      new TextComponentUndoProvider(getTextField());
     }
   }
 
@@ -51,6 +54,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);
+  }
+
+  public void addBrowseFolderListener(@NotNull TextBrowseFolderListener listener) {
+    listener.setOwnerComponent(this);
+    addBrowseFolderListener(null, listener, true);
+    installPathCompletion(listener.getFileChooserDescriptor());
   }
 
   protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
@@ -71,10 +80,12 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   /**
    * @return trimmed text
    */
+  @Override
   public String getText(){
     return getTextField().getText();
   }
 
+  @Override
   public void setText(final String text){
     getTextField().setText(text);
   }
@@ -106,6 +117,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
       super(browseActionListener);
     }
 
+    @Override
     protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
     }
   }

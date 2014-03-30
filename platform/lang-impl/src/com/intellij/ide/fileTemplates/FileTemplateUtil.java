@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,11 @@ import org.apache.velocity.runtime.RuntimeServices;
 import org.apache.velocity.runtime.RuntimeSingleton;
 import org.apache.velocity.runtime.log.LogSystem;
 import org.apache.velocity.runtime.parser.ParseException;
-import org.apache.velocity.runtime.parser.node.ASTReference;
-import org.apache.velocity.runtime.parser.node.ASTSetDirective;
-import org.apache.velocity.runtime.parser.node.Node;
-import org.apache.velocity.runtime.parser.node.SimpleNode;
+import org.apache.velocity.runtime.parser.Token;
+import org.apache.velocity.runtime.parser.node.*;
 import org.apache.velocity.runtime.resource.Resource;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
+import org.apache.velocity.util.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +66,8 @@ public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
+  @NonNls public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
+
   private FileTemplateUtil() {
   }
 
@@ -75,9 +76,11 @@ public class FileTemplateUtil{
       final FileTemplateManager templateManager = FileTemplateManager.getInstance();
 
       LogSystem emptyLogSystem = new LogSystem() {
+        @Override
         public void init(RuntimeServices runtimeServices) throws Exception {
         }
 
+        @Override
         public void logVelocityMessage(int i, String s) {
           //todo[myakovlev] log somethere?
         }
@@ -87,9 +90,11 @@ public class FileTemplateUtil{
       Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
       Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
+        @Override
         public void init(ExtendedProperties configuration) {
         }
 
+        @Override
         public InputStream getResourceStream(String resourceName) throws ResourceNotFoundException {
           final FileTemplate include = templateManager.getPattern(resourceName);
           if (include == null) {
@@ -104,10 +109,12 @@ public class FileTemplateUtil{
           }
         }
 
+        @Override
         public boolean isSourceModified(Resource resource) {
           return true;
         }
 
+        @Override
         public long getLastModified(Resource resource) {
           return 0L;
         }
@@ -118,7 +125,7 @@ public class FileTemplateUtil{
       LOG.error("Unable to init Velocity", e);
     }
   }
-  
+
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     Set<String> propertiesNames = new HashSet<String>();
     for (Enumeration e = properties.propertyNames(); e.hasMoreElements(); ) {
@@ -136,18 +143,19 @@ public class FileTemplateUtil{
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
     SimpleNode template = RuntimeSingleton.parse(new StringReader(templateContent), "MyTemplate");
-    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies);
+    collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<String>());
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
     }
     return ArrayUtil.toStringArray(unsetAttributes);
   }
 
-  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, Set<String> propertiesNames, boolean includeDummies){
+  private static void collectAttributes(Set<String> referenced, Set<String> defined, Node apacheNode, final Set<String> propertiesNames, final boolean includeDummies, Set<String> visitedIncludes)
+    throws ParseException {
     int childCount = apacheNode.jjtGetNumChildren();
     for(int i = 0; i < childCount; i++){
       Node apacheChild = apacheNode.jjtGetChild(i);
-      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies);
+      collectAttributes(referenced, defined, apacheChild, propertiesNames, includeDummies, visitedIncludes);
       if (apacheChild instanceof ASTReference){
         ASTReference apacheReference = (ASTReference)apacheChild;
         String s = apacheReference.literal();
@@ -161,6 +169,20 @@ public class FileTemplateUtil{
         String attr = referenceToAttribute(lhs.literal(), false);
         if (attr != null) {
           defined.add(attr);
+        }
+      }
+      else if (apacheChild instanceof ASTDirective && "parse".equals(((ASTDirective)apacheChild).getDirectiveName()) && apacheChild.jjtGetNumChildren() == 1) {
+        Node literal = apacheChild.jjtGetChild(0);
+        if (literal instanceof ASTStringLiteral && literal.jjtGetNumChildren() == 0) {
+          Token firstToken = literal.getFirstToken();
+          if (firstToken != null) {
+            String s = StringUtil.unquoteString(firstToken.toString());
+            final FileTemplate includedTemplate = FileTemplateManager.getInstance().getTemplate(s);
+            if (includedTemplate != null && visitedIncludes.add(s)) {
+              SimpleNode template = RuntimeSingleton.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
+              collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes);
+            }
+          }
         }
       }
     }
@@ -220,7 +242,7 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Map attributes, String content, boolean useSystemLineSeparators) throws IOException{
-    VelocityContext context = new VelocityContext();
+    VelocityContext context = createVelocityContext();
     for (final Object o : attributes.keySet()) {
       String name = (String)o;
       context.put(name, attributes.get(name));
@@ -228,8 +250,14 @@ public class FileTemplateUtil{
     return mergeTemplate(content, context, useSystemLineSeparators);
   }
 
-  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+  private static VelocityContext createVelocityContext() {
     VelocityContext context = new VelocityContext();
+    context.put("StringUtils", StringUtils.class);
+    return context;
+  }
+
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+    VelocityContext context = createVelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
       String name = (String)names.nextElement();
@@ -246,6 +274,7 @@ public class FileTemplateUtil{
     catch (final VelocityException e) {
       LOG.error("Error evaluating template:\n"+templateContent,e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
                                    IdeBundle.message("title.velocity.error"));
@@ -253,14 +282,14 @@ public class FileTemplateUtil{
       });
     }
     final String result = stringWriter.toString();
-    
+
     if (useSystemLineSeparators) {
       final String newSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
       if (!"\n".equals(newSeparator)) {
         return StringUtil.convertLineSeparators(result, newSeparator);
       }
     }
-    
+
     return result;
   }
 
@@ -322,7 +351,7 @@ public class FileTemplateUtil{
       }
     }
 
-    //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
+    //Set escaped references to dummy values to remove leading "\" (if not already explicitly set)
     String[] dummyRefs = calculateAttributes(template.getText(), propsMap, true);
     for (String dummyRef : dummyRefs) {
       propsMap.put(dummyRef, "");
@@ -343,8 +372,10 @@ public class FileTemplateUtil{
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+      @Override
       public void run(){
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override
           public void run(){
             try{
               result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
@@ -355,7 +386,7 @@ public class FileTemplateUtil{
           }
         });
       }
-    }, template.isTemplateOfType(StdFileTypes.JAVA)
+    }, template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
        ? IdeBundle.message("command.create.class.from.template")
        : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){

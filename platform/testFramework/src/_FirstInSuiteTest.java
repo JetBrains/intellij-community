@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
  * This is should be first test in all tests so we can measure how long tests are starting up.
  * @author max
  */
+@SuppressWarnings("JUnitTestClassNamingConvention")
 public class _FirstInSuiteTest extends LightPlatformTestCase {
   public void testNothing() throws Exception {
 

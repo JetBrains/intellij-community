@@ -16,7 +16,7 @@ import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.HgVersionCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 public class HgExecutableValidator extends ExecutableValidator {
 
@@ -42,7 +42,6 @@ public class HgExecutableValidator extends ExecutableValidator {
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return new HgVersionCommand().isValid(executable, myVcs.getGlobalSettings().isRunViaBash());
+    return HgUtil.isExecutableValid(executable);
   }
-
 }

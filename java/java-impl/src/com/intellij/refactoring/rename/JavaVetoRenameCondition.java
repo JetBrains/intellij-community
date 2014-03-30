@@ -15,18 +15,19 @@
  */
 package com.intellij.refactoring.rename;
 
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.JspPsiUtil;
+import com.intellij.psi.util.FileTypeUtils;
 
 public class JavaVetoRenameCondition implements Condition<PsiElement> {
+  @Override
   public boolean value(final PsiElement element) {
     return element instanceof PsiJavaFile &&
-           !JspPsiUtil.isInJspFile(element) &&
-           !ProjectRootsUtil.isOutsideSourceRoot((PsiFile)element) &&
+           !FileTypeUtils.isInServerPageFile(element) &&
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot((PsiFile)element) &&
            ((PsiJavaFile) element).getClasses().length > 0;
   }
 }

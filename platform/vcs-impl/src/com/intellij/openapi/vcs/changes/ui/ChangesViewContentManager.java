@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author yole
@@ -51,6 +53,8 @@ import java.util.*;
 public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
   public static final String TOOLWINDOW_ID = VcsBundle.message("changes.toolwindow.name");
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
+  private static final Logger LOG = Logger.getInstance(ChangesViewContentManager.class);
+
   private MyContentManagerListener myContentManagerListener;
   private final ProjectLevelVcsManager myVcsManager;
 
@@ -63,6 +67,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private final VcsListener myVcsListener = new MyVcsListener();
   private final Alarm myVcsChangeAlarm;
   private final List<Content> myAddedContents = new ArrayList<Content>();
+  @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
   public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
     super(project);
@@ -103,9 +108,24 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
           if (contentManager.getContentCount() > 0) {
             contentManager.setSelectedContent(contentManager.getContent(0));
           }
+          myInitializationWaiter.countDown();
         }
       }
     });
+  }
+
+  /**
+   * Makes the current thread wait until the ChangesViewContentManager is initialized.
+   * When it initializes, executes the given runnable.
+   */
+  public void executeWhenInitialized(@NotNull final Runnable runnable) {
+    try {
+      myInitializationWaiter.await();
+      runnable.run();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
   }
 
   private void loadExtensionTabs() {

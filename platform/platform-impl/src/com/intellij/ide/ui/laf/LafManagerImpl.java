@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -36,8 +38,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -127,10 +134,18 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
     else {
-      lafList.add(new IdeaLookAndFeelInfo());
+      if (isIntelliJLafEnabled()) {
+        lafList.add(new IntelliJLookAndFeelInfo());
+      } else {
+        lafList.add(new IdeaLookAndFeelInfo());
+      }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
-        if (!"Metal".equalsIgnoreCase(name) && !"CDE/Motif".equalsIgnoreCase(name)) {
+        if ( !"Metal".equalsIgnoreCase(name)
+          && !"CDE/Motif".equalsIgnoreCase(name)
+          && !"Nimbus".equalsIgnoreCase(name)
+          && !"Windows Classic".equalsIgnoreCase(name)
+          && !name.startsWith("JGoodies")) {
           lafList.add(laf);
         }
       }
@@ -147,6 +162,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
       
       Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
+        @Override
         public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
           String name1 = obj1.getName();
           String name2 = obj2.getName();
@@ -158,9 +174,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myCurrentLaf = getDefaultLaf();
   }
 
+  private static boolean isIntelliJLafEnabled() {
+    return !Registry.is("idea.4.5.laf.enabled");
+  }
+
   /**
    * Adds specified listener
    */
+  @Override
   public void addLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.add(LafManagerListener.class, l);
   }
@@ -168,6 +189,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Removes specified listener
    */
+  @Override
   public void removeLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.remove(LafManagerListener.class, l);
   }
@@ -179,11 +201,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "LafManager";
   }
 
+  @Override
   public void initComponent() {
     if (myCurrentLaf != null) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
@@ -212,6 +236,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   public void disposeComponent() {
     if (myThemeChangeListener != null) {
       Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
@@ -219,6 +244,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   public void loadState(final Element element) {
     String className = null;
     for (final Object o : element.getChildren()) {
@@ -243,6 +269,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myCurrentLaf = laf;
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     if (myCurrentLaf != null) {
@@ -256,10 +283,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return element;
   }
 
+  @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels(){
     return myLaFs.clone();
   }
 
+  @Override
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel(){
     return myCurrentLaf;
   }
@@ -294,7 +323,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return defaultLaf;
       }
     }
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(IdeaLookAndFeelInfo.CLASS_NAME);
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
     if (ideaLaf != null) {
       return ideaLaf;
     }
@@ -321,6 +350,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
+  @Override
   public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
@@ -346,6 +376,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
+        JBColor.setDark(true);
+        IconLoader.setUseDarkIcons(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -434,7 +466,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       if (confirm) {
         final String[] options = {IdeBundle.message("confirm.set.look.and.feel"), CommonBundle.getCancelButtonText()};
         final int result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), options[0], options[1], Messages.getWarningIcon());
-        if (result == 0) {
+        if (result == Messages.OK) {
           myLastWarning = message;
           return true;
         }
@@ -455,6 +487,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * Updates LAF of all windows. The method also updates font of components
    * as it's configured in <code>UISettings</code>.
    */
+  @Override
   public void updateUI() {
     final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
 
@@ -485,10 +518,38 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     fixSeparatorColor(uiDefaults);
 
+    updateToolWindows();
+
     for (Frame frame : Frame.getFrames()) {
+      // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
+      // com.apple.laf.AquaNativeResources$CColorPaintUIResource
+      // a Java wrapper for ObjC MagicBackgroundColor class (Java RGB values ignored).
+      // MagicBackgroundColor always reports current Frame background.
+      // So we need to set frames background to exact and correct value.
+      frame.setBackground(new Color(UIUtil.getPanelBackground().getRGB()));
+
       updateUI(frame);
     }
     fireLookAndFeelChanged();
+  }
+
+  public static void updateToolWindows() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      for (String id : toolWindowManager.getToolWindowIds()) {
+        final ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+        for (Content content : toolWindow.getContentManager().getContents()) {
+          final JComponent component = content.getComponent();
+          if (component != null) {
+            IJSwingUtilities.updateComponentTreeUI(component);
+          }
+        }
+        final JComponent c = toolWindow.getComponent();
+        if (c != null) {
+          IJSwingUtilities.updateComponentTreeUI(c);
+        }
+      }
+    }
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
@@ -601,7 +662,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void patchFileChooserStrings(final UIDefaults defaults) {
-    if (!defaults.containsKey(ourFileChooserTextKeys [0])) {
+    if (!defaults.containsKey(ourFileChooserTextKeys[0])) {
       // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
       for (String key : ourFileChooserTextKeys) {
         defaults.put(key, IdeBundle.message(key));
@@ -658,7 +719,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if(!window.isDisplayable()){
       return;
     }
-    SwingUtilities.updateComponentTreeUI(window);
+    IJSwingUtilities.updateComponentTreeUI(window);
     Window[] children=window.getOwnedWindows();
     for (Window aChildren : children) {
       updateUI(aChildren);
@@ -668,6 +729,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Repaints all displayable window.
    */
+  @Override
   public void repaintUI(){
     Frame[] frames=Frame.getFrames();
     for (Frame frame : frames) {
@@ -758,6 +820,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       myDelegate = delegate;
     }
 
+    @Override
     public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
       final Point point = fixPopupLocation(contents, x, y);
 

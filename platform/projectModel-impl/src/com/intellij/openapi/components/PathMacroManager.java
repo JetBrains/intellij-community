@@ -26,14 +26,14 @@ public abstract class PathMacroManager implements PathMacroSubstitutor {
   }
 
   @Override
-  public abstract void expandPaths(Element element);
+  public abstract void expandPaths(@NotNull Element element);
 
   @Override
-  public abstract void collapsePaths(Element element);
+  public abstract void collapsePaths(@NotNull Element element);
 
-  public abstract void collapsePathsRecursively(Element element);
+  public abstract void collapsePathsRecursively(@NotNull Element element);
 
-  public abstract String collapsePathsRecursively(String text);
+  public abstract String collapsePathsRecursively(@NotNull String text);
 
   public abstract TrackingPathMacroSubstitutor createTrackingSubstitutor();
 }

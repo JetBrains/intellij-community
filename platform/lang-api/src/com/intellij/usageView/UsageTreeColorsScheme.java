@@ -44,6 +44,7 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
     return ServiceManager.getService(UsageTreeColorsScheme.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "FindViewColorsScheme";
@@ -53,6 +54,7 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
     return myColorsScheme;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     if (myColorsScheme == null){
       Color color = UIUtil.getTreeTextBackground();
@@ -66,6 +68,7 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
     myColorsScheme.readExternal(element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     throw new WriteExternalException();
   }

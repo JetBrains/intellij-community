@@ -37,13 +37,14 @@ import javax.swing.*;
 import java.util.Collection;
 
 public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
-  private JComboBox myScopes;
+  private final JComboBox myScopes;
 
   public ScopeBasedTodosTreeStructure(Project project, JComboBox scopes) {
     super(project);
     myScopes = scopes;
   }
 
+  @Override
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
     boolean isAffected = false;
@@ -58,14 +59,17 @@ public class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
                           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }

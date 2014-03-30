@@ -48,9 +48,9 @@ import java.util.List;
 @State(
   name = ModuleManagerImpl.COMPONENT_NAME,
   storages = {
-    @Storage( file = StoragePathMacros.PROJECT_FILE)
-   ,@Storage( file = StoragePathMacros.PROJECT_CONFIG_DIR + "/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(file = StoragePathMacros.PROJECT_FILE),
+    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/modules.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
@@ -152,7 +152,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
     ProgressIndicator progressIndicator = myProgressManager.getProgressIndicator();
     if (progressIndicator == null) {
-      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Loading modules", false, myProject);
+      myProgressManager.runProcessWithProgressSynchronously(runnableWithProgress, "Initializing modules...", false, myProject);
     }
     else {
       runnableWithProgress.run();

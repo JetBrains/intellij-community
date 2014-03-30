@@ -24,7 +24,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Ticket;
 import com.intellij.util.containers.Convertor;
 import git4idea.history.browser.ChangesFilter;
-import git4idea.history.browser.GitCommit;
+import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.LowLevelAccessImpl;
 import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.NotNull;
@@ -235,9 +235,9 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
   private void loadFull(final int count, final long continuation) {
     try {
       final Collection<ChangesFilter.Filter> filters = addContinuation(continuation);
-      myLowLevelAccess.loadCommits(myStartingPoints, Collections.<String>emptyList(), filters, new AsynchConsumer<GitCommit>() {
+      myLowLevelAccess.loadCommits(myStartingPoints, Collections.<String>emptyList(), filters, new AsynchConsumer<GitHeavyCommit>() {
         @Override
-        public void consume(GitCommit gitCommit) {
+        public void consume(GitHeavyCommit gitCommit) {
           if (gitCommit.getParentsHashes().size() <= 1) {
             myDetailsCache.acceptAnswer(Collections.singleton(gitCommit), myRootHolder.getRoot());
           }
@@ -265,8 +265,8 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     return filters;
   }
 
-  private void appendCommits(List<CommitI> result, List<List<AbstractHash>> parents, List<GitCommit> commits) {
-    for (GitCommit commit : commits) {
+  private void appendCommits(List<CommitI> result, List<List<AbstractHash>> parents, List<GitHeavyCommit> commits) {
+    for (GitHeavyCommit commit : commits) {
       final Commit commitObj =
         new Commit(commit.getShortHash().getString(), commit.getDate().getTime(), myUsersIndex.put(commit.getAuthor()));
       if (parents != null) {

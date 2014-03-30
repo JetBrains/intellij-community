@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
@@ -39,23 +41,25 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class LoadAllContentsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.LoadAllContentsAction");
+
+  private final AtomicInteger count = new AtomicInteger();
+  private final AtomicLong totalSize = new AtomicLong();
+
   public LoadAllContentsAction() {
     super("Load all files content", "Measure FileUtil.loadFile() for all files in the project", null);
   }
 
-
-  AtomicInteger count = new AtomicInteger();
-  AtomicLong totalSize = new AtomicLong();
-
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     String m = "Started loading content";
     LOG.info(m);
     System.out.println(m);
     long start = System.currentTimeMillis();
+
     count.set(0);
     totalSize.set(0);
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
@@ -64,7 +68,9 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
           @Override
           public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory() || fileOrDir.isSpecialFile()) return true;
+            if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
+              return true;
+            }
             try {
               count.incrementAndGet();
               byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
@@ -79,16 +85,17 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
         });
        }
     }, "Loading", false, project);
+
     long end = System.currentTimeMillis();
-    String message = "Finished loading content of " + count + " files. Total size=" + StringUtil.formatFileSize(totalSize.get()) +
-                     ". Elapsed=" + ((end - start) / 1000) + "sec.";
+    String message = "Finished loading content of " + count + " files. " +
+                     "Total size=" + StringUtil.formatFileSize(totalSize.get()) + ". " +
+                     "Elapsed=" + ((end - start) / 1000) + "sec.";
     LOG.info(message);
     System.out.println(message);
   }
 
-
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

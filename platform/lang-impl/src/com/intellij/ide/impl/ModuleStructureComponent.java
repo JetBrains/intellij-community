@@ -38,11 +38,13 @@ public class ModuleStructureComponent extends SimpleToolWindowPanel implements D
     setContent(myStructurePane.createComponent());
   }
 
+  @Override
   public Object getData(@NonNls String dataId) {
     return myStructurePane.getData(dataId);
   }
 
+  @Override
   public void dispose() {
-    
+
   }
 }

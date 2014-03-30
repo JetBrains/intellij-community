@@ -4,6 +4,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +32,7 @@ public class IdeFatalErrorsIcon extends JLabel {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myState != State.NoErrors) {
           myListener.actionPerformed(null);
           return true;
@@ -58,7 +59,6 @@ public class IdeFatalErrorsIcon extends JLabel {
     myState = state;
     switch (state) {
       case UnreadErrors:
-        changeVisibility(true);
         myIcon.setLayerEnabled(0, true);
         myIcon.setLayerEnabled(1, false);
         myIcon.setLayerEnabled(2, false);
@@ -68,7 +68,6 @@ public class IdeFatalErrorsIcon extends JLabel {
         break;
 
       case ReadErrors:
-        changeVisibility(true);
         stopBlinker();
         myIcon.setLayerEnabled(0, false);
         myIcon.setLayerEnabled(1, true);
@@ -80,7 +79,6 @@ public class IdeFatalErrorsIcon extends JLabel {
       case NoErrors:
         // let's keep all this layers stuff for the case if we decide not to hide the icon
         stopBlinker();
-        changeVisibility(false);
         myIcon.setLayerEnabled(0, false);
         myIcon.setLayerEnabled(1, false);
         myIcon.setLayerEnabled(2, true);
@@ -93,15 +91,6 @@ public class IdeFatalErrorsIcon extends JLabel {
     }
     repaint();
   }
-
-    private void changeVisibility(final boolean visible) {
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          setVisible(visible);
-        }
-      });
-    }
 
     private synchronized void startBlinker() {
     if (myBlinker != null) {

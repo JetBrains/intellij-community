@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +56,32 @@ public class InjectorUtils {
   private InjectorUtils() {
   }
 
+
+  public static boolean registerInjectionSimple(@NotNull PsiLanguageInjectionHost host,
+                                                @NotNull BaseInjection injection,
+                                                @Nullable LanguageInjectionSupport support,
+                                                @NotNull MultiHostRegistrar registrar) {
+    Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
+    if (language == null) return false;
+
+    InjectedLanguage injectedLanguage =
+      InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+
+    List<TextRange> ranges = injection.getInjectedArea(host);
+    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayListWithCapacity(ranges.size());
+
+    for (TextRange range : ranges) {
+      list.add(Trinity.create(host, injectedLanguage, range));
+    }
+    //if (host.getChildren().length > 0) {
+    //  host.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, Boolean.TRUE);
+    //}
+    registerInjection(language, list, host.getContainingFile(), registrar);
+    if (support != null) {
+      registerSupport(support, true, registrar);
+    }
+    return !ranges.isEmpty();
+  }
 
   public static void registerInjection(Language language, List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list, PsiFile containingFile, MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
@@ -191,12 +220,12 @@ public class InjectorUtils {
     return true;
   }
 
-  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiComment> causeRef) {
+  public static BaseInjection findCommentInjection(PsiElement context, final String supportId, final Ref<PsiElement> causeRef) {
     return findNearestComment(context, new NullableFunction<PsiComment, BaseInjection>() {
       @Nullable
       @Override
       public BaseInjection fun(PsiComment comment) {
-        causeRef.set(comment);
+        if (causeRef != null) causeRef.set(comment);
         String text = ElementManipulators.getValueText(comment).trim();
         return detectInjectionFromText(supportId, text);
       }
@@ -233,26 +262,65 @@ public class InjectorUtils {
   @Nullable
   public static <T> T findNearestComment(PsiElement element, NullableFunction<PsiComment, T> processor) {
     if (element instanceof PsiComment) return null;
-    PsiComment comment = null;
-    PsiElement start = element;
-    for (int i=0; i<2 && start != null; i++) {
-      if (start instanceof PsiFile) return null;
-      for (PsiElement e = start.getPrevSibling(); e != null; e = e.getPrevSibling()) {
+    PsiFile containingFile = element.getContainingFile();
+
+    List<PsiLanguageInjectionHost> otherHosts = new SmartList<PsiLanguageInjectionHost>();
+
+    boolean commentOrSpaces = false;
+
+    PsiElement prev = element, e = prevOrParent(element, containingFile);
+    for (int counter = 0; e != null && counter < 100; prev = e, e = prevOrParent(e, containingFile), counter ++) {
+      if (e instanceof PsiComment) {
+        commentOrSpaces = true;
+        PsiComment comment = (PsiComment)e;
+        if (!checkDepth(otherHosts, element, comment)) continue;
+        T value = processor.fun(comment);
+        if (value != null) return value;
+      }
+      else if (e instanceof PsiWhiteSpace) {
+        commentOrSpaces = true;
+      }
+      else if (e instanceof PsiLanguageInjectionHost) {
+        commentOrSpaces = StringUtil.isEmptyOrSpaces(e.getText()); // check getText only for hosts (XmlText)
+        if (!commentOrSpaces) otherHosts.add((PsiLanguageInjectionHost)e);
+      }
+      else {
+        commentOrSpaces = false;
+      }
+    }
+    if (commentOrSpaces) { // allow several comments
+      for (e = prevOrParent(prev, containingFile); e != null; e = e.getPrevSibling()) {
         if (e instanceof PsiComment) {
-          comment = (PsiComment)e;
+          PsiComment comment = (PsiComment)e;
+          if (!checkDepth(otherHosts, element, comment)) continue;
           T value = processor.fun(comment);
           if (value != null) return value;
-          else continue;
         }
-        else if (e instanceof PsiWhiteSpace) continue;
-        else if (e instanceof PsiLanguageInjectionHost) {
-          if (StringUtil.isEmptyOrSpaces(e.getText())) continue;
-          else return null;
+        else if (!(e instanceof PsiWhiteSpace)) {
+          break;
         }
-        break;
       }
-      start = element.getParent();
     }
     return null;
+  }
+
+  // allow java-like multi variable commenting: String s = "s", t = "t"
+  // a comment should cover all hosts in a subtree
+  private static boolean checkDepth(List<PsiLanguageInjectionHost> hosts, PsiElement element, PsiComment comment) {
+    if (hosts.isEmpty()) return true;
+    PsiElement parent = PsiTreeUtil.findCommonParent(comment, element);
+    for (PsiLanguageInjectionHost host : hosts) {
+      if (!PsiTreeUtil.isAncestor(parent, PsiTreeUtil.findCommonParent(host, element), true)) return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  public static PsiElement prevOrParent(PsiElement e, PsiElement scope) {
+    if (e == null || e == scope) return null;
+    PsiElement prev = e.getPrevSibling();
+    if (prev != null) return PsiTreeUtil.getDeepestLast(prev);
+    PsiElement parent = e.getParent();
+    return parent == scope || parent instanceof PsiFile ? null : parent;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -40,14 +37,16 @@ public class EditScopesAction extends AnAction implements DumbAware {
     getTemplatePresentation().setIcon(AllIcons.Ide.LocalScope);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
     final String scopeName = ProjectView.getInstance(project).getCurrentProjectViewPane().getSubId();
     LOG.assertTrue(scopeName != null);
     final ScopeChooserConfigurable scopeChooserConfigurable = new ScopeChooserConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, new Runnable(){
+      @Override
       public void run() {
         scopeChooserConfigurable.selectNodeInTree(scopeName);
       }
@@ -59,7 +58,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
     super.update(e);
     e.getPresentation().setEnabled(false);
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
       if (projectViewPane != null) {

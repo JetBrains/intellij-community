@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.file.exclude.ProjectFileExclusionManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -45,14 +44,12 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final FileBasedIndexImpl myIndex;
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
-  private final ProjectFileExclusionManagerImpl myExclusionManager;
 
   public FileBasedIndexProjectHandler(final FileBasedIndexImpl index, final Project project, final ProjectRootManagerComponent rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
-    myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
@@ -87,7 +84,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public boolean isInSet(@NotNull final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
       return !myFileTypeManager.isFileIgnored(file);
     }
     return false;
@@ -100,9 +96,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       public boolean visitFile(@NotNull VirtualFile file) {
 
         if (!isInSet(file)) return false;
-        if (!file.isDirectory()) {
-          iterator.processFile(file);
-        }
+        iterator.processFile(file);
+
         return true;
       }
     });
@@ -120,14 +115,15 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       return myIndex.getNumberOfPendingInvalidations();
     }
 
+    @NotNull
     @Override
-    public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
+    public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
       Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
       return VfsUtilCore.toVirtualFileArray(files);
     }
 
     @Override
-    public void processFile(FileContent fileContent) {
+    public void processFile(@NotNull FileContent fileContent) {
       myIndex.processRefreshedFile(myProject, fileContent);
     }
 

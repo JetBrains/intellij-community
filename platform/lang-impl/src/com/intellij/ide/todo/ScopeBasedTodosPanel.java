@@ -153,7 +153,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
         return item instanceof ScopeWrapper && ((ScopeWrapper)item).isSeparator();
       }
     };
-    
+
     JPanel chooserPanel = new JPanel(new GridBagLayout());
     final JLabel scopesLabel = new JLabel("Scope:");
     scopesLabel.setDisplayedMnemonic('S');
@@ -163,7 +163,7 @@ public class ScopeBasedTodosPanel extends TodoPanel {
                              new Insets(2, 2, 2, 2), 0, 0);
     chooserPanel.add(scopesLabel, gc);
     chooserPanel.add(myScopes, gc);
-    
+
     gc.fill = GridBagConstraints.HORIZONTAL;
     gc.weightx = 1;
     chooserPanel.add(Box.createHorizontalBox(), gc);
@@ -171,12 +171,13 @@ public class ScopeBasedTodosPanel extends TodoPanel {
     return panel;
   }
 
+  @Override
   protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
     ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, treeModel, project, myScopes);
     builder.init();
     return builder;
   }
-  
+
   public static class ScopeWrapper {
     private final String myName;
     private final boolean mySeparator;

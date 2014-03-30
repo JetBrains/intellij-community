@@ -1,40 +1,37 @@
 package org.zmlx.hg4idea.util;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
+
+import static org.zmlx.hg4idea.HgVcs.HGENCODING;
 
 /**
  * @author Kirill Likhodedov
  */
 public class HgEncodingUtil {
-  
-  private static final String WINDOWS_DEFAULT_CHARSET = "cp1251";
-  private static final String UNIX_DEFAULT_CHARSET = "UTF-8";
 
-  private HgEncodingUtil() {
-  }
-
-  /**
-   * Returns the default charset for Mercurial.
-   * It is cp1251 for Windows, and UTF-8 for Unix-like systems.
-   * The {@code HGENCODING} environment variable is not considered, because being set for IDEA it is inherited by the hg process
-   * spawned by IDEA.
-   * @return cp1251 for windows / UTF-8 for Unix-like systems.
-   */
   @NotNull
-  public static Charset getDefaultCharset() {
-    return SystemInfo.isWindows ? getCharsetForNameOrDefault(WINDOWS_DEFAULT_CHARSET) : getCharsetForNameOrDefault(UNIX_DEFAULT_CHARSET);
+  public static Charset getDefaultCharset(@NotNull Project project) {
+    if (HGENCODING != null && HGENCODING.length() > 0 && Charset.isSupported(HGENCODING)) {
+      return Charset.forName(HGENCODING);
+    }
+    Charset defaultCharset = null;
+    if (!project.isDisposed()) {
+      defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
+    }
+    return defaultCharset != null ? defaultCharset : Charset.defaultCharset();
   }
 
   @NotNull
-  private static Charset getCharsetForNameOrDefault(@NotNull String name) {
-    try {
-      return Charset.forName(name);
+  public static String getNameFor(@NotNull Charset charset) {
+    //workaround for x_MacRoman encoding etc; todo: create map with encoding aliases because some encodings name are not supported by hg
+    String name = charset.name();
+    if (name.startsWith("x-M")) {
+      return name.substring(2); // without "x-" prefix;
     }
-    catch (Exception e) {
-      return Charset.defaultCharset();
-    }
+    return name;
   }
 }

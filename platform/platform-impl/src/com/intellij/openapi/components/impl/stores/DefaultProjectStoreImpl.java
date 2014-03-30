@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.options.StreamProvider;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.options.StreamProvider;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -50,10 +50,11 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   @Nullable
   Element getStateCopy() {
     final Element element = myProjectManager.getDefaultProjectRootElement();
-    return element != null ? (Element)element.clone() : null;
+    return element != null ? element.clone() : null;
   }
 
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     Document _d = null;
@@ -69,7 +70,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     final Document document = _d;
 
     final XmlElementStorage storage = new XmlElementStorage(pathMacroManager.createTrackingSubstitutor(), componentManager,
-                                                            ROOT_TAG_NAME, StreamProvider.DEFAULT, "", ComponentRoamingManager.getInstance(),
+                                                            ROOT_TAG_NAME, null, "", ComponentRoamingManager.getInstance(),
                                                             ComponentVersionProvider.EMPTY) {
       @Override
       @Nullable
@@ -98,11 +99,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
 
+        @NotNull
         @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
+        @NotNull
         @Override
         public List<IFile> getAllStorageFiles() {
           return Collections.emptyList();
@@ -130,7 +133,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       @Nullable
-      public StateStorage getFileStateStorage(String fileName) {
+      public StateStorage getFileStateStorage(@NotNull String fileSpec) {
         return storage;
       }
 
@@ -138,18 +141,20 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
+      @NotNull
       @Override
       public ExternalizationSession startExternalization() {
         return new MyExternalizationSession(storage);
       }
 
+      @NotNull
       @Override
-      public SaveSession startSave(final ExternalizationSession externalizationSession) {
+      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
       @Override
-      public void finishSave(SaveSession saveSession) {
+      public void finishSave(@NotNull SaveSession saveSession) {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
@@ -161,7 +166,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       @Override
       @Nullable
       public StateStorage getOldStorage(Object component, final String componentName, final StateStorageOperation operation)
-      throws StateStorageException {
+        throws StateStorageException {
         return storage;
       }
 
@@ -171,11 +176,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
-        throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
+      public void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+        throw new UnsupportedOperationException("Method setStreamProvider not implemented in " + getClass());
       }
+
+      @Nullable
       @Override
-      public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
+      public com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
@@ -186,14 +193,8 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       public void reset() {
-        
       }
     };
-  }
-
-  @Override
-  public String getLocation() {
-    throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
 
   @Override
@@ -203,43 +204,45 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
-    StateStorage.ExternalizationSession externalizationSession;
+    @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(final XmlElementStorage storage) {
+    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
       externalizationSession = storage.startExternalization();
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
+    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
   }
 
   private static class MySaveSession implements StateStorageManager.SaveSession {
-    StateStorage.SaveSession saveSession;
+    @NotNull private final StateStorage.SaveSession saveSession;
 
-    public MySaveSession(final XmlElementStorage storage, final StateStorageManager.ExternalizationSession externalizationSession) {
+    public MySaveSession(@NotNull XmlElementStorage storage, @NotNull StateStorageManager.ExternalizationSession externalizationSession) {
       saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files) {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.emptyList();

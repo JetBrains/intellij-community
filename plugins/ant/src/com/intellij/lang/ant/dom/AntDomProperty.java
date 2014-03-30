@@ -188,7 +188,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         if (psiFile instanceof PropertiesFile) {
           result = new HashMap<String, String>();
           for (final IProperty property : ((PropertiesFile)psiFile).getProperties()) {
-            result.put(property.getUnescapedKey(), property.getValue());
+            result.put(property.getUnescapedKey(), property.getUnescapedValue());
           }
         }
       }
@@ -215,7 +215,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
                 final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
                 result = new HashMap<String, String>();
                 for (final IProperty property : propFile.getProperties()) {
-                  result.put(property.getUnescapedKey(), property.getValue());
+                  result.put(property.getUnescapedKey(), property.getUnescapedValue());
                 }
               }
               catch (IOException ignored) {

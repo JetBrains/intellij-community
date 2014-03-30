@@ -21,15 +21,15 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 
-import java.util.Map;
 import java.util.Set;
 
 public class ExcludeFromRunAction extends AnAction{
@@ -38,14 +38,15 @@ public class ExcludeFromRunAction extends AnAction{
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
-    final JUnitConfiguration configuration = (JUnitConfiguration)RuntimeConfiguration.DATA_KEY.getData(dataContext);
+    final JUnitConfiguration configuration = (JUnitConfiguration)RunConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
+    final GlobalSearchScope searchScope = configuration.getConfigurationModule().getSearchScope();
     final Set<String> patterns = configuration.getPersistentData().getPatterns();
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
     LOG.assertTrue(testProxy != null);
-    patterns.remove(((PsiClass)testProxy.getLocation(project).getPsiElement()).getQualifiedName());
+    patterns.remove(((PsiClass)testProxy.getLocation(project, searchScope).getPsiElement()).getQualifiedName());
   }
 
   @Override
@@ -53,15 +54,15 @@ public class ExcludeFromRunAction extends AnAction{
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(false);
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      final RuntimeConfiguration configuration = RuntimeConfiguration.DATA_KEY.getData(dataContext);
+      final RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
       if (configuration instanceof JUnitConfiguration) {
         final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
         if (data.TEST_OBJECT == JUnitConfiguration.TEST_PATTERN) {
           final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(dataContext);
           if (testProxy != null) {
-            final Location location = testProxy.getLocation(project);
+            final Location location = testProxy.getLocation(project, ((JUnitConfiguration)configuration).getConfigurationModule().getSearchScope());
             if (location != null) {
               final PsiElement psiElement = location.getPsiElement();
               if (psiElement instanceof PsiClass && data.getPatterns().contains(((PsiClass)psiElement).getQualifiedName())) {

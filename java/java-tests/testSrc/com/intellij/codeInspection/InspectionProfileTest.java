@@ -20,12 +20,14 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testCopyProjectProfile() throws Exception {
     final Element element = loadProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    final InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
@@ -67,9 +69,15 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertElementsEqual(element, copy);
   }
 
+  private static InspectionProfileImpl createProfile() {
+    InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    profile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
+    return profile;
+  }
+
   public void testConvertOldProfile() throws Exception {
     final Element element = loadOldStyleProfile();
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    final InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
@@ -168,7 +176,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                                                   "    <scope name=\"Unknown scope name\" level=\"WARNING\" enabled=\"true\" />\n" +
                                                   "  </inspection_tool>\n" +
                                                   "</inspections>").getRootElement();
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE);
+    final InspectionProfileImpl profile = createProfile();
     profile.readExternal(element);
     final ModifiableModel model = profile.getModifiableModel();
     model.commit();
@@ -178,46 +186,83 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testLockProfile() throws Exception {
-
     final List<InspectionToolWrapper> list = new ArrayList<InspectionToolWrapper>();
-    list.add(createTool("foo"));
+    list.add(createTool("foo", true));
 
-    InspectionToolRegistrar registrar = new InspectionToolRegistrar(null) {
+    InspectionToolRegistrar registrar = new InspectionToolRegistrar() {
+      @NotNull
       @Override
       public List<InspectionToolWrapper> createTools() {
-        LocalInspectionEP foo = new LocalInspectionEP();
-        foo.shortName = "foo";
         return list;
       }
     };
 
-    InspectionProfileImpl profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
-    profile.setBaseProfile(null);
-    List<ScopeToolState> tools = profile.getAllTools();
+    InspectionProfileImpl profile = createProfile(registrar);
+
+    List<ScopeToolState> tools = profile.getAllTools(getProject());
     assertEquals(1, tools.size());
-    ModifiableModel model = profile.getModifiableModel();
+    assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("foo")));
+    assertTrue(profile.getToolDefaultState("foo", getProject()).isEnabled());
+
+    InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
     model.lockProfile(true);
+    model.initInspectionTools(getProject()); // todo commit should take care of initialization
     model.commit();
+
+    assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
+                 "  <option name=\"myName\" value=\"Foo\" />\n" +
+                 "  <option name=\"myLocal\" value=\"true\" />\n" +
+                 "  <inspection_tool class=\"foo\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
+                 "</profile>",
+                 serialize(profile));
+
     Element element = new Element("element");
     profile.writeExternal(element);
 
-    list.add(createTool("bar"));
+    list.add(createTool("bar", true));
+    list.add(createTool("disabled", false));
 
-    profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
+    profile = createProfile(registrar);
     profile.readExternal(element);
 
-    profile.setBaseProfile(null);
-    tools = profile.getAllTools();
-    assertEquals(2, tools.size());
+    tools = profile.getAllTools(getProject());
+    assertEquals(3, tools.size());
 
     assertTrue(profile.isProfileLocked());
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("bar")));
+    assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("disabled")));
+
+    assertTrue(profile.getToolDefaultState("bar", getProject()).isEnabled());
+    assertFalse(profile.getToolDefaultState("disabled", getProject()).isEnabled());
+
+    assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
+                 "  <option name=\"myName\" value=\"Foo\" />\n" +
+                 "  <option name=\"myLocal\" value=\"true\" />\n" +
+                 "  <inspection_tool class=\"bar\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
+                 "  <inspection_tool class=\"disabled\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
+                 "  <inspection_tool class=\"foo\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
+                 "</profile>", serialize(profile));
+  }
+
+  private static String serialize(InspectionProfileImpl profile) throws WriteExternalException {
+    Element element;
+    element = new Element("profile");
+    profile.writeExternal(element);
+    return JDOMUtil.writeElement(element);
+  }
+
+  private static InspectionProfileImpl createProfile(InspectionToolRegistrar registrar) {
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, InspectionProfileManager.getInstance());
+    base.setBaseProfile(null);
+    InspectionProfileImpl profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
+    profile.setBaseProfile(base);
+    return profile;
   }
 
   public void testGlobalInspectionContext() throws Exception {
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
-    profile.disableAllTools();
-    profile.enableTool(new UnusedDeclarationInspection().getShortName());
+    profile.disableAllTools(getProject());
+    profile.enableTool(new UnusedDeclarationInspection().getShortName(), getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
@@ -239,7 +284,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     model = foo.getModifiableModel();
     assertEquals(0, countInitializedTools(model));
-    List<ScopeToolState> tools = ((InspectionProfileImpl)model).getAllTools();
+    List<ScopeToolState> tools = ((InspectionProfileImpl)model).getAllTools(getProject());
     for (ScopeToolState tool : tools) {
       if (!tool.isEnabled()) {
         tool.setEnabled(true);
@@ -253,23 +298,23 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl profile = new InspectionProfileImpl("profile");
     profile.setBaseProfile(InspectionProfileImpl.getDefaultProfile());
     assertEquals(0, countInitializedTools(profile));
-    InspectionProfileEntry[] tools = profile.getInspectionTools(null);
-    assertTrue(tools.length > 0);
-    InspectionProfileEntry tool = profile.getInspectionTool(new DataFlowInspection().getShortName());
-    assertNotNull(tool);
-    String id = tool.getShortName();
+    InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
+    assertTrue(toolWrappers.length > 0);
+    InspectionToolWrapper toolWrapper = profile.getInspectionTool(new DataFlowInspection().getShortName(), getProject());
+    assertNotNull(toolWrapper);
+    String id = toolWrapper.getShortName();
     System.out.println(id);
     if (profile.isToolEnabled(HighlightDisplayKey.findById(id))) {
-      profile.disableTool(id);
+      profile.disableTool(id, getProject());
     }
     else {
-      profile.enableTool(id);
+      profile.enableTool(id, getProject());
     }
     assertEquals(0, countInitializedTools(profile));
     profile.writeExternal(new Element("profile"));
-    List<InspectionProfileEntry> initializedTools = getInitializedTools(profile);
-    if (initializedTools.size() != 1) {
-      for (InspectionProfileEntry initializedTool : initializedTools) {
+    List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
+    if (initializedTools.size() > 0) {
+      for (InspectionToolWrapper initializedTool : initializedTools) {
         System.out.println(initializedTool.getShortName());
       }
       fail();
@@ -294,26 +339,32 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return getInitializedTools(foo).size();
   }
 
-  public static List<InspectionProfileEntry> getInitializedTools(Profile foo) {
-    List<InspectionProfileEntry> initialized = new ArrayList<InspectionProfileEntry>();
-    List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools();
+  @NotNull
+  public static List<InspectionToolWrapper> getInitializedTools(@NotNull Profile foo) {
+    List<InspectionToolWrapper> initialized = new ArrayList<InspectionToolWrapper>();
+    List<ScopeToolState> tools = ((InspectionProfileImpl)foo).getAllTools(getProject());
     for (ScopeToolState tool : tools) {
-      InspectionProfileEntry entry = tool.getTool();
-      assertTrue(entry instanceof InspectionToolWrapper);
-      if (entry.isInitialized()) {
-        initialized.add(entry);
+      InspectionToolWrapper toolWrapper = tool.getTool();
+      if (toolWrapper.isInitialized()) {
+        initialized.add(toolWrapper);
       }
     }
     return initialized;
   }
 
-  private static LocalInspectionToolWrapper createTool(String s) {
+  private static LocalInspectionToolWrapper createTool(String s, boolean enabled) {
     LocalInspectionEP foo = new LocalInspectionEP();
     foo.shortName = s;
     foo.displayName = s;
     foo.groupDisplayName = s;
     foo.level = "ERROR";
-    foo.enabledByDefault = true;
+    foo.enabledByDefault = enabled;
+    foo.implementationClass = TestTool.class.getName();
     return new LocalInspectionToolWrapper(foo);
+  }
+
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection")
+  public static class TestTool extends LocalInspectionTool {
+
   }
 }

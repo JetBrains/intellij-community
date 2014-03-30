@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
-import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ui.UIUtil;
@@ -86,6 +86,11 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
   }
 
+  public void testAsDefault() {
+    final RefactoringTestUtil.MemberDescriptor descriptor = new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class);
+    doTest(descriptor);
+  }
+
   public void testTypeParamErasure() {
     doTest(new RefactoringTestUtil.MemberDescriptor("f", PsiField.class));
   }
@@ -127,7 +132,7 @@ public class PullUpTest extends LightRefactoringTestCase {
   }
 
   public void testTypeParamsConflictingNames() {
-    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
   } 
 
   public void testEscalateVisibility() {
@@ -140,6 +145,10 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testPreserveOverride() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
+  public void testPublicMethodFromPrivateClassConflict() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("HM", PsiClass.class), new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
@@ -171,7 +180,7 @@ public class PullUpTest extends LightRefactoringTestCase {
       }
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    final PullUpHelper helper = new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
+    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
     UIUtil.dispatchAllInvocationEvents();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);

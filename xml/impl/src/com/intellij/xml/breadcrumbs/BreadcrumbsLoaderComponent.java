@@ -1,4 +1,3 @@
-
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -19,7 +18,7 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {  
+public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
 
   public BreadcrumbsLoaderComponent(@NotNull final Project project) {
     super(project);
@@ -41,7 +40,7 @@ public class BreadcrumbsLoaderComponent extends AbstractProjectComponent {
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
-    public void fileOpened(final FileEditorManager source, final VirtualFile file) {
+    public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       if (isEnabled() && isSuitable(source.getProject(), file)) {
         final FileEditor[] fileEditors = source.getEditors(file);
         for (final FileEditor fileEditor : fileEditors) {

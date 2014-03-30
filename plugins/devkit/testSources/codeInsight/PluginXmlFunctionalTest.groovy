@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,13 @@ package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
+import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -27,8 +32,8 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import com.intellij.util.xml.DeprecatedClassUsageInspection
 import org.jetbrains.idea.devkit.inspections.*
+
 /**
  * @author peter
  */
@@ -68,9 +73,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                            "        <extensionPoint name=\"custom\"/>\n" +
                            "    </extensionPoints>\n" +
                            "</idea-plugin>");
+    myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}");
+    myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}");
+    myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}");
 
     configureByFile();
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testDependsHighlighting() throws Throwable {
@@ -87,11 +95,34 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  public void testDependsCompletion() throws Throwable {
+    addPluginXml("platform", "<idea-plugin>\n" +
+                             "    <id>com.intellij</id>\n" +
+                             "    <module value=\"com.intellij.modules.vcs\"/>\n" +
+                             "</idea-plugin>");
+    addPluginXml("lang", "<idea-plugin>\n" +
+                         "    <id>com.intellij</id>\n" +
+                         "    <module value=\"com.intellij.modules.lang\"/>\n" +
+                         "    <module value=\"com.intellij.modules.lang.another\"/>\n" +
+                         "</idea-plugin>");
+    addPluginXml("custom", "<idea-plugin>\n" +
+                           "    <id>com.intellij.custom</id>\n" +
+                           "</idea-plugin>");
+    configureByFile();
+
+    myFixture.completeBasic()
+    assertSameElements(myFixture.lookupElementStrings,
+                       'com.intellij.modules.vcs',
+                       'com.intellij.modules.lang', 'com.intellij.modules.lang.another',
+                       'com.intellij.custom')
+  }
+
   private void configureByFile() {
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".xml", "META-INF/plugin.xml"));
   }
 
   public void testExtensionQualifiedName() throws Throwable {
+    myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}");
     configureByFile();
     myFixture.checkHighlighting(false, false, false);
   }
@@ -166,8 +197,24 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java");
   }
 
+  public void testDeprecatedAttributes() {
+    myFixture.testHighlighting("deprecatedAttributes.xml")
+  }
+
   public void testExtensionAttributeDeclaredUsingAccessors() {
     myFixture.testHighlighting("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java");
+  }
+
+  public void testLanguageAttribute() {
+    myFixture.addClass("package com.intellij.lang; " +
+                       "public class Language { " +
+                       "  protected Language(String id) {}" +
+                       "}")
+    VirtualFile myLanguageVirtualFile = myFixture.copyFileToProject("MyLanguage.java");
+    myFixture.allowTreeAccessForFile(myLanguageVirtualFile)
+
+    myFixture.testHighlighting("languageAttribute.xml",
+                               "MyLanguageAttributeEPBean.java")
   }
 
   public void testPluginModule() throws Throwable {
@@ -196,6 +243,24 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, true, true);
   }
 
+  public void testImplicitUsagesDomElement() {
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
+    myFixture.addClass("package com.intellij.util.xml; public interface GenericAttributeValue<T> extends DomElement {}")
+
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
+    myFixture.configureByFile("ImplicitUsagesDomElement.java")
+    myFixture.testHighlighting()
+  }
+
+  public void testImplicitUsagesDomElementVisitor() {
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}")
+    myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}")
+
+    myFixture.enableInspections(new UnusedSymbolLocalInspection(), new UnusedDeclarationInspection())
+    myFixture.configureByFile("ImplicitUsagesDomElementVisitor.java")
+    myFixture.testHighlighting()
+  }
+
   static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
     return Arrays.asList(
       //RegistrationProblemsInspection.class,
@@ -203,7 +268,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       ComponentNotRegisteredInspection.class,
       InspectionDescriptionNotFoundInspection.class,
       IntentionDescriptionNotFoundInspection.class,
-      InspectionMappingConsistencyInspection.class
+      InspectionMappingConsistencyInspection.class,
+      RequiredAttributesInspection.class
     );
   }
 }

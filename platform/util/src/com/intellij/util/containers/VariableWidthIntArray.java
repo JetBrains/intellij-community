@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,7 @@ public final class VariableWidthIntArray implements Cloneable {
     LOG.error("No array allocated");
   }
 
+  @Override
   public Object clone() throws CloneNotSupportedException {
     VariableWidthIntArray arr = (VariableWidthIntArray)super.clone();
     if( intArray != null ) { arr.intArray = intArray.clone(); }

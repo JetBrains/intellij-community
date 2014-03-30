@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -83,7 +84,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
     myHelpButton = new JButton(CommonBundle.getHelpButtonText());
-    myContentPanel = new JPanel(new CardLayout());
+    myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);
 
@@ -150,7 +151,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       final GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
       final GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
-      final Collection<Component> buttons = ContainerUtil.newArrayListWithExpectedSize(5);
+      final Collection<Component> buttons = ContainerUtil.newArrayListWithCapacity(5);
       final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
 
       if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {
@@ -241,6 +242,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     public void paintIcon(Graphics g) {
+      if (myIcon == null) {
+        return;
+      }
       final BufferedImage image = UIUtil.createImage(myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D gg = image.createGraphics();
       myIcon.paintIcon(this, gg, 0, 0);
@@ -277,13 +281,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel iconPanel = new JPanel(new BorderLayout());
-    iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
-    iconPanel.add(myIcon, BorderLayout.CENTER);
-
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(iconPanel, BorderLayout.WEST);
     panel.add(myContentPanel, BorderLayout.CENTER);
+    panel.add(myIcon, BorderLayout.WEST);
     return panel;
   }
 
@@ -300,7 +300,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public void addStep(@NotNull final T step) {
-    mySteps.add(step);
+    addStep(step, mySteps.size());
+  }
+
+  public void addStep(@NotNull final T step, int index) {
+    mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
       ((StepAdapter)step).registerStepListener(myStepListener);
@@ -335,7 +339,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myContentPanel.revalidate();
       myContentPanel.repaint();
     }
-    ((CardLayout)myContentPanel.getLayout()).show(myContentPanel, id);
+    ((JBCardLayout)myContentPanel.getLayout()).swipe(myContentPanel, id, JBCardLayout.SwipeDirection.AUTO);
   }
 
   protected void doPreviousAction() {
@@ -419,7 +423,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     if (mySteps.isEmpty()) {
       return;
     }
-
+    
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();
@@ -427,7 +431,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     LOG.assertTrue(myCurrentStepComponent != null);
     showStepComponent(myCurrentStepComponent);
 
-    myIcon.setIcon(step.getIcon());
+    Icon icon = step.getIcon();
+    if (icon != null) {
+      myIcon.setIcon(icon);
+      myIcon.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+    }
 
     updateButtons();
 
@@ -443,6 +451,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         focusManager.requestFocus(component, false);
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    JComponent component = getCurrentStepObject().getPreferredFocusedComponent();
+    return component == null ? super.getPreferredFocusedComponent() : component;
   }
 
   protected boolean canGoNext() {

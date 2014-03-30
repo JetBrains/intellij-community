@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * author ven
@@ -56,7 +55,7 @@ public class AccessorMethodReferencesSearcher extends QueryExecutorBase<PsiRefer
 
     if (propertyName == null) return;
 
-    final SearchScope onlyGroovyFiles = PsiUtil.restrictScopeToGroovyFiles(queryParameters.getScope());
+    final SearchScope onlyGroovyFiles = GroovyScopeUtil.restrictScopeToGroovyFiles(queryParameters.getScope(), GroovyScopeUtil.getEffectiveScope(method));
 
     queryParameters.getOptimizer().searchWord(propertyName, onlyGroovyFiles, UsageSearchContext.IN_CODE, true, method);
 

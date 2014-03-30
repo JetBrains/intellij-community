@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class ZipUtil {
                                      @Nullable Set<String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter,
                                      @NotNull FileContentProcessor contentProcessor) throws IOException {
-    while (relativeName.length() != 0 && relativeName.charAt(0) == '/') {
+    while (!relativeName.isEmpty() && relativeName.charAt(0) == '/') {
       relativeName = relativeName.substring(1);
     }
 
@@ -123,13 +123,13 @@ public class ZipUtil {
     if (jarFile != null && FileUtil.isAncestor(dir, jarFile, false)) {
       return false;
     }
-    if (relativePath.length() != 0) {
+    if (!relativePath.isEmpty()) {
       addFileToZip(outputStream, dir, relativePath, writtenItemRelativePaths, fileFilter);
     }
     final File[] children = dir.listFiles();
     if (children != null) {
       for (File child : children) {
-        final String childRelativePath = (relativePath.length() == 0 ? "" : relativePath + "/") + child.getName();
+        final String childRelativePath = (relativePath.isEmpty() ? "" : relativePath + "/") + child.getName();
         addFileOrDirRecursively(outputStream, jarFile, child, childRelativePath, fileFilter, writtenItemRelativePaths);
       }
     }
@@ -150,13 +150,13 @@ public class ZipUtil {
     }
   }
 
-  public static void extract(final @NotNull ZipFile zipFile,
+  public static void extract(@NotNull final ZipFile zipFile,
                              @NotNull File outputDir,
                              @Nullable FilenameFilter filenameFilter) throws IOException {
     extract(zipFile, outputDir, filenameFilter, true);
   }
 
-  public static void extract(final @NotNull ZipFile zipFile,
+  public static void extract(@NotNull final ZipFile zipFile,
                              @NotNull File outputDir,
                              @Nullable FilenameFilter filenameFilter,
                              boolean overwrite) throws IOException {

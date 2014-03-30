@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -108,7 +108,7 @@ public class PsiTypeLookupItem extends LookupItem {
     context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
     JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
 
-    int tail = context.getSelectionEndOffset();
+    int tail = context.getTailOffset();
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
@@ -225,7 +225,7 @@ public class PsiTypeLookupItem extends LookupItem {
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
             // inner class name should be shown qualified if its not accessible by single name
             PsiClass aClass = psiClass.getContainingClass();
-            while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
+            while (aClass != null && !PsiUtil.isInnerClass(aClass) && aClass.getName() != null) {
               name = aClass.getName() + '.' + name;
               allStrings.add(name);
               aClass = aClass.getContainingClass();
@@ -275,6 +275,9 @@ public class PsiTypeLookupItem extends LookupItem {
 
       presentation.setItemText(((PsiType)object).getCanonicalText());
       presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null || object instanceof PsiPrimitiveType);
+      if (isAddArrayInitializer()) {
+        presentation.setTailText("{...}");
+      }
 
     }
     if (myBracketsCount > 0) {
@@ -297,7 +300,7 @@ public class PsiTypeLookupItem extends LookupItem {
                                          "file.length=" + file.getTextLength() + "\n" +
                                          "document=" + context.getDocument() + "\n" +
                                          DebugUtil.currentStackTrace(),
-                                         new Attachment(context.getDocument())));
+                                         AttachmentFactory.createAttachment(context.getDocument())));
       return;
 
     }

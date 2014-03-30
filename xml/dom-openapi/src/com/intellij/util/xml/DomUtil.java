@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -48,20 +47,23 @@ import java.util.*;
  */
 public class DomUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
-  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
+  public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = GenericValue.class.getTypeParameters()[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
 
   private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
     @NotNull
     protected Class create(final Type key) {
-      final Class<?> result = ReflectionUtil.substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
+      final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
       return result == null ? DUMMY : result;
     }
   };
-
-  private DomUtil() {
-  }
+  private static final ConcurrentFactoryMap<Pair<Type, Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Pair<Type, Type>, Class>() {
+    @Nullable
+    protected Class create(final Pair<Type, Type> key) {
+      return ReflectionUtil.substituteGenericType(key.first, key.second);
+    }
+  };
 
   public static Class extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
@@ -154,6 +156,10 @@ public class DomUtil {
 
     final DomFixedChildDescription description = genericInfo.getFixedChildDescription(xmlElementName, namespace);
     return description != null ? description.getGetterMethod(description.getValues(parent).indexOf(element)) : null;
+  }
+
+  public static Class<?> substituteGenericType(Type genericType, Type classType) {
+    return ourVariableSubstitutions.get(Pair.create(genericType, classType));
   }
 
   @Nullable
@@ -306,7 +312,7 @@ public class DomUtil {
   }
 
   public static Collection<Class> getAllInterfaces(final Class aClass, final Collection<Class> result) {
-    final Class[] interfaces = ReflectionCache.getInterfaces(aClass);
+    final Class[] interfaces = aClass.getInterfaces();
     ContainerUtil.addAll(result, interfaces);
     if (aClass.getSuperclass() != null) {
       getAllInterfaces(aClass.getSuperclass(), result);
@@ -471,7 +477,7 @@ public class DomUtil {
   }
 
   public static boolean hasXml(@NotNull DomElement element) {
-    return element.getXmlElement() != null;
+    return element.exists();
   }
 
   public static Pair<TextRange, PsiElement> getProblemRange(final XmlTag tag) {

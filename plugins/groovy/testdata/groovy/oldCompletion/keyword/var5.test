@@ -12,3 +12,4 @@ class A <caret> {
 -----
 extends
 implements
+k

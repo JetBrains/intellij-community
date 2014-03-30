@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@ package com.intellij.ide.caches;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface CacheUpdater {
   int getNumberOfPendingUpdateJobs();
 
-  VirtualFile[] queryNeededFiles(ProgressIndicator indicator);
+  @NotNull
+  VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator);
 
-  void processFile(FileContent fileContent);
+  void processFile(@NotNull FileContent fileContent);
 
   void updatingDone();
 

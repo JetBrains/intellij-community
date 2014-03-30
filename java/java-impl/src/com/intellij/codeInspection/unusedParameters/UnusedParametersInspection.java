@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@
 package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
@@ -42,7 +44,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,16 +53,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class UnusedParametersInspection extends GlobalJavaInspectionTool {
-
-  @NonNls public static final String SHORT_NAME = "UnusedParameters";
-
+public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
+  @Override
   @Nullable
-  public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
-                                                final AnalysisScope scope,
-                                                final InspectionManager manager,
-                                                final GlobalInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  public CommonProblemDescriptor[] checkElement(@NotNull final RefEntity refEntity,
+                                                @NotNull final AnalysisScope scope,
+                                                @NotNull final InspectionManager manager,
+                                                @NotNull final GlobalInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
 
@@ -75,14 +74,14 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       if (refMethod.isAppMain()) return null;
 
-      final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+      final List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 
       if (unusedParameters.isEmpty()) return null;
 
       if (refMethod.isEntry()) return null;
 
       final PsiModifierListOwner element = refMethod.getElement();
-      if (element != null && EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(element)) return null;
+      if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
       for (RefParameter refParameter : unusedParameters) {
@@ -101,8 +100,9 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     return null;
   }
 
-  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
-                                                final ProblemDescriptionsProcessor processor) {
+  @Override
+  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
+                                                @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       processor.ignoreElement(entryPoint);
@@ -112,11 +112,11 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(RefEntity refEntity) {
+      public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();
-          if (element instanceof PsiMethod) { //implicit construcors are invisible
+          if (element instanceof PsiMethod) { //implicit constructors are invisible
             PsiMethod psiMethod = (PsiMethod)element;
             if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
               final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
@@ -138,6 +138,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
                       ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
                         .forEach(new PsiReferenceProcessorAdapter(
                           new PsiReferenceProcessor() {
+                            @Override
                             public boolean execute(PsiReference element) {
                               refParameter.parameterReferenced(false);
                               processor.ignoreElement(refParameter);
@@ -157,17 +158,20 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
+  @Override
   @Nullable
-  public String getHint(final QuickFix fix) {
+  public String getHint(@NotNull final QuickFix fix) {
     return ((AcceptSuggested)fix).getHint();
   }
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null, null, hint);
   }
 
-  public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
+  @Override
+  public void compose(@NotNull final StringBuffer buf, @NotNull final RefEntity refEntity, @NotNull final HTMLComposer composer) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
       final HTMLJavaHTMLComposer javaComposer = composer.getExtension(HTMLJavaHTMLComposer.COMPOSER);
@@ -208,25 +212,29 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.unused.parameter.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
-    return SHORT_NAME;
+    return UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME;
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(panel),
+    Project project = ProjectUtil.guessCurrentProject(panel);
+    panel.add(EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn(),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      new Insets(0, 0, 0, 0), 0, 0));
     return panel;
@@ -247,18 +255,21 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
       return myHint;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.parameter.delete.quickfix");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (psiMethod != null) {
         final ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();

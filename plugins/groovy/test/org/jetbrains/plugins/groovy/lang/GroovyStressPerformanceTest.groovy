@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public void testDontWalkLongInferenceChain() throws Exception {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    //RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }
@@ -135,6 +135,21 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(defs + text, 10000)
   }
 
+  public void testDeeplyNestedClosuresInCompileStatic() {
+    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+
+    String text = "println 'hi'"
+    String defs = ""
+    for (i in 1..10) {
+      text = "foo$i {a = 5; $text }"
+      defs += "def foo$i(Closure cl) {}\n"
+    }
+    myFixture.enableInspections(new MissingReturnInspection())
+
+    addCompileStatic()
+    measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 10000)
+  }
+
   public void testDeeplyNestedClosuresInGenericCalls() {
     RecursionManager.assertOnRecursionPrevention(testRootDisposable)
     String text = "println it"
@@ -142,7 +157,8 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> foo(T t, Closure cl) {}\n" + text, 10000)
+
+    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 10000)
   }
 
   public void testDeeplyNestedClosuresInGenericCalls2() {
@@ -152,7 +168,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> foo(T t, Closure<T> cl) {}\n" + text, 10000)
+    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 10000)
   }
 
   public void testManyAnnotatedScriptVariables() {

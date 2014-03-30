@@ -29,6 +29,7 @@ public final class AllTodosTreeStructure extends TodoTreeStructure {
     super(project);
   }
 
+  @Override
   public boolean accept(final PsiFile psiFile) {
     final boolean
             accept = psiFile.isValid() &&
@@ -39,14 +40,17 @@ public final class AllTodosTreeStructure extends TodoTreeStructure {
     return accept;
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     return new ToDoRootNode(myProject, new Object(),
                             myBuilder, mySummaryElement);

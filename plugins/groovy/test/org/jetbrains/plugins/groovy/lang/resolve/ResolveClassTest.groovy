@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
-
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -110,7 +106,9 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testInnerEnum() throws Throwable { doTest(); }
   public void testInnerClass()throws Throwable {doTest();}
   public void testInnerClassInSubclass()throws Throwable {doTest();}
-  public void testInnerClassUsageInsideOuterSubclass() throws Throwable{doTest();}
+  public void testInnerClassUsageInsideOuterSubclass() throws Throwable { doTest() }
+  public void testInnerClassOfInterface() { assertNull(resolve()) }
+  public void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
 
   public void testAliasedImportVsImplicitImport() throws Exception {
     PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
@@ -129,7 +127,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testEnumVsProperty() throws Exception {
     PsiReference ref = configureByFile("enumVsProperty/Test.groovy");
     final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiClass.class);
+    assertInstanceOf(resolved, PsiField.class);
   }
 
   public void testTwoStaticImports() throws Exception {
@@ -143,6 +141,12 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
+  }
+
+  public void testQualifiedRefToInnerClass() {
+    myFixture.addFileToProject('A.groovy', 'class A {class Bb {}}')
+    final PsiReference ref = configureByText('b.groovy', 'A.B<ref>b b = new A.Bb()')
+    assertNotNull(ref.resolve())
   }
 
   public void testClassVsPropertyGetter() {
@@ -259,7 +263,8 @@ print Component
 print Li<caret>st
 ''')
     def target = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
-    assertEquals('java.util.List', target.getQualifiedName())
+    assert target instanceof PsiClass
+    assertEquals('java.util.List', target.qualifiedName)
   }
 
   void testSuper() {
@@ -287,6 +292,107 @@ new Foo().Inn<caret>er
 
     assertNull(ref.resolve())
   }
+
+  void testInnerClassOfInterfaceInsideItself() {
+    resolveByText('''\
+public interface OuterInterface {
+    static enum InnerEnum {
+        ONE, TWO
+        public static Inne<caret>rEnum getSome() {
+            ONE
+        }
+    }
+}
+''', PsiClass)
+  }
+
+  void testCollisionOfClassAndPackage() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import foo.B<caret>ar
+
+print new Bar()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage2() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(args) {
+    x<caret>yz()      //should resolve to inner class
+  }
+
+  static class Bar {
+    static void xyz() {}
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+
+    PsiClass clazz = resolved.containingClass
+    assertNotNull(clazz.containingClass)
+  }
+
+
+  void testCollisionOfClassAndPackage3() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+x<caret>yz()
+''')
+
+    assertNotNull(ref.resolve())
+  }
+
+  void testCollisionOfClassAndPackage4() {
+    myFixture.addFileToProject('foo/Bar.groovy', '''\
+package foo
+
+class Bar {
+  static void xyz(){}
+}
+''')
+
+    def ref = configureByText('foo.groovy', '''\
+import static foo.Bar.xyz
+
+class foo {
+  public static void main(String[] args) {
+    x<caret>yz()
+  }
+}
+''')
+
+    PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiMethod)
+  }
+
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }

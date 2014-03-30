@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,7 +179,7 @@ public class RevisionsList {
   }
 
   public static class MyCellRenderer implements TableCellRenderer {
-    private static final Color USER_LABEL_COLOR = new Color(230, 230, 250);
+    private static final Color USER_LABEL_COLOR = new JBColor(new Color(230, 230, 250), new Color(89, 96, 74));
     private static final Insets BORDER_INSETS = new Insets(2, 5, 2, 5);
 
     private final DefaultTableCellRenderer myTemplate = new DefaultTableCellRenderer();
@@ -326,7 +326,7 @@ public class RevisionsList {
 
       myDateLabel.setForeground(isSelected ? fg : JBColor.GRAY);
       myFilesCountLabel.setForeground(myDateLabel.getForeground());
-      myTitleLabel.setForeground(isSelected || labelsAndColor.isNamed ? fg : Color.DARK_GRAY);
+      myTitleLabel.setForeground(isSelected || labelsAndColor.isNamed ? fg : JBColor.DARK_GRAY);
 
       myItemPanel.setBackground(bg);
 

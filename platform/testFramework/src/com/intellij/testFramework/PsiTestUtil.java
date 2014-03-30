@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -37,19 +36,24 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
 
 @NonNls
 public class PsiTestUtil {
@@ -60,8 +64,7 @@ public class PsiTestUtil {
     return createTestProjectStructure(project, module, rootPath, filesToDelete, true);
   }
 
-  public static VirtualFile createTestProjectStructure(Project project, Module module, Collection<File> filesToDelete)
-    throws Exception {
+  public static VirtualFile createTestProjectStructure(Project project, Module module, Collection<File> filesToDelete) throws Exception {
     return createTestProjectStructure(project, module, null, filesToDelete, true);
   }
 
@@ -71,16 +74,14 @@ public class PsiTestUtil {
                                                        Collection<File> filesToDelete,
                                                        boolean addProjectRoots) throws Exception {
     VirtualFile vDir = createTestProjectStructure(module, rootPath, filesToDelete, addProjectRoots);
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     return vDir;
   }
 
-  public static VirtualFile createTestProjectStructure(final Module module,
-                                                       final String rootPath,
-                                                       final Collection<File> filesToDelete,
-                                                       final boolean addProjectRoots) throws Exception {
+  public static VirtualFile createTestProjectStructure(Module module,
+                                                       String rootPath,
+                                                       Collection<File> filesToDelete,
+                                                       boolean addProjectRoots) throws Exception {
     return createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
   }
 
@@ -94,64 +95,50 @@ public class PsiTestUtil {
 
     final VirtualFile vDir =
       LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-    assert vDir.isDirectory() : vDir;
+    assert vDir != null && vDir.isDirectory() : dir;
 
-    final Exception[] exception = {null};
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    Project project = module != null ? module.getProject() : null;
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
         if (rootPath != null) {
           VirtualFile vDir1 = LocalFileSystem.getInstance().findFileByPath(rootPath.replace(File.separatorChar, '/'));
           if (vDir1 == null) {
-            exception[0] = new Exception(rootPath + " not found");
-            return;
+            throw new Exception(rootPath + " not found");
           }
-          try {
-            VfsUtil.copyDirectory(null, vDir1, vDir, null);
-          }
-          catch (IOException e) {
-            exception[0] = e;
-            return;
-          }
+          VfsUtil.copyDirectory(null, vDir1, vDir, null);
         }
 
         if (addProjectRoots) {
           addSourceContentToRoots(module, vDir);
         }
       }
-    });
-    if (exception[0] != null) throw exception[0];
+    }.execute().throwException();
 
     return vDir;
   }
 
-  public static void removeAllRoots(final Module module, final Sdk jdk) {
-    new WriteCommandAction.Simple(module.getProject()) {
+  public static void removeAllRoots(Module module, final Sdk jdk) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      protected void run() throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.clear();
-        rootModel.setSdk(jdk);
-        rootModel.commit();
+      public void consume(ModifiableRootModel model) {
+        model.clear();
+        model.setSdk(jdk);
       }
-    }.execute().throwException();
+    });
   }
 
   public static void addSourceContentToRoots(Module module, @NotNull VirtualFile vDir) {
     addSourceContentToRoots(module, vDir, false);
   }
 
-  public static void addSourceContentToRoots(final Module module, @NotNull final VirtualFile vDir, final boolean testSource) {
-    new WriteCommandAction.Simple(module.getProject()) {
+  public static void addSourceContentToRoots(Module module, @NotNull final VirtualFile vDir, final boolean testSource) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      protected void run() throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final ContentEntry contentEntry = rootModel.addContentEntry(vDir);
-        contentEntry.addSourceFolder(vDir, testSource);
-        rootModel.commit();
+      public void consume(ModifiableRootModel model) {
+        model.addContentEntry(vDir).addSourceFolder(vDir, testSource);
       }
-    }.execute().throwException();
+    });
   }
 
   public static void addSourceRoot(Module module, final VirtualFile vDir) {
@@ -159,17 +146,26 @@ public class PsiTestUtil {
   }
 
   public static void addSourceRoot(final Module module, final VirtualFile vDir, final boolean isTestSource) {
-    new WriteCommandAction.Simple(module.getProject()) {
+    addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
+  }
+
+  public static <P extends JpsElement> void addSourceRoot(Module module,
+                                                          final VirtualFile vDir,
+                                                          @NotNull final JpsModuleSourceRootType<P> rootType) {
+    addSourceRoot(module, vDir, rootType, rootType.createDefaultProperties());
+  }
+
+  public static <P extends JpsElement> void addSourceRoot(Module module, final VirtualFile vDir,
+                                                          @NotNull final JpsModuleSourceRootType<P> rootType, final P properties) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @SuppressWarnings("unchecked")
       @Override
-      protected void run() throws Throwable {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        ContentEntry entry = findContentEntry(rootModel, vDir);
-        if (entry == null) entry = rootModel.addContentEntry(vDir);
-        entry.addSourceFolder(vDir, isTestSource);
-        rootModel.commit();
+      public void consume(ModifiableRootModel model) {
+        ContentEntry entry = findContentEntry(model, vDir);
+        if (entry == null) entry = model.addContentEntry(vDir);
+        entry.addSourceFolder(vDir, rootType, properties);
       }
-    }.execute().throwException();
+    });
   }
 
   @Nullable
@@ -183,29 +179,31 @@ public class PsiTestUtil {
     });
   }
 
-  public static ContentEntry addContentRoot(final Module module, final VirtualFile vDir) {
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    new WriteCommandAction.Simple(module.getProject()) {
+  public static ContentEntry addContentRoot(Module module, final VirtualFile vDir) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      protected void run() throws Throwable {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.addContentEntry(vDir);
-        rootModel.commit();
+      public void consume(ModifiableRootModel model) {
+        model.addContentEntry(vDir);
       }
-    }.execute().throwException();
-    for (ContentEntry entry : rootManager.getContentEntries()) {
+    });
+
+    for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
       if (Comparing.equal(entry.getFile(), vDir)) {
         Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
         return entry;
       }
     }
+
     return null;
   }
 
-  public static void addExcludedRoot(Module module, VirtualFile dir) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
-    commitModel(model);
+  public static void addExcludedRoot(Module module, final VirtualFile dir) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        findContentEntryWithAssertion(model, dir).addExcludeFolder(dir);
+      }
+    });
   }
 
   @NotNull
@@ -217,44 +215,38 @@ public class PsiTestUtil {
     return entry;
   }
 
-  public static void removeContentEntry(final Module module, final ContentEntry e) {
-    ModuleRootManager rootModel = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel model = rootModel.getModifiableModel();
-    model.removeContentEntry(e);
-    commitModel(model);
-  }
-
-  public static void removeSourceRoot(Module module, VirtualFile root) {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    ContentEntry entry = findContentEntryWithAssertion(rootModel, root);
-    for (SourceFolder sourceFolder : entry.getSourceFolders()) {
-      if (root.equals(sourceFolder.getFile())) {
-        entry.removeSourceFolder(sourceFolder);
-        break;
-      }
-    }
-    commitModel(rootModel);
-  }
-
-  public static void removeExcludedRoot(Module module, VirtualFile root) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    ContentEntry entry = findContentEntryWithAssertion(model, root);
-    final ExcludeFolder[] excludeFolders = entry.getExcludeFolders();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      if (root.equals(excludeFolder.getFile())) {
-        entry.removeExcludeFolder(excludeFolder);
-      }
-    }
-    commitModel(model);
-  }
-
-  private static void commitModel(final ModifiableRootModel model) {
-    new WriteCommandAction.Simple(model.getProject()) {
+  public static void removeContentEntry(Module module, final ContentEntry e) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      protected void run() throws Throwable {
-        model.commit();
+      public void consume(ModifiableRootModel model) {
+        model.removeContentEntry(e);
       }
-    }.execute().throwException();
+    });
+  }
+
+  public static void removeSourceRoot(Module module, final VirtualFile root) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        ContentEntry entry = findContentEntryWithAssertion(model, root);
+        for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+          if (root.equals(sourceFolder.getFile())) {
+            entry.removeSourceFolder(sourceFolder);
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  public static void removeExcludedRoot(Module module, final VirtualFile root) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        ContentEntry entry = findContentEntryWithAssertion(model, root);
+        entry.removeExcludeFolder(root.getUrl());
+      }
+    });
   }
 
   public static void checkFileStructure(PsiFile file) throws IncorrectOperationException {
@@ -265,20 +257,21 @@ public class PsiTestUtil {
   }
 
   public static void addLibrary(final Module module, final String libName, final String libPath, final String... jarArr) {
-    new WriteCommandAction(module.getProject()) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
-      protected void run(Result result) throws Throwable {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      public void consume(ModifiableRootModel model) {
         addLibrary(module, model, libName, libPath, jarArr);
-        model.commit();
       }
-    }.execute().throwException();
+    });
   }
 
-  public static void addProjectLibrary(Module module, String libName, VirtualFile... classesRoots) {
-    final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    addProjectLibrary(module, modifiableModel, libName, classesRoots);
-    commitModel(modifiableModel);
+  public static void addProjectLibrary(final Module module, final String libName, final VirtualFile... classesRoots) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        addProjectLibrary(module, model, libName, classesRoots);
+      }
+    });
   }
 
   private static void addProjectLibrary(final Module module,
@@ -288,15 +281,23 @@ public class PsiTestUtil {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {
-        final LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
-        final Library library = libraryTable.createLibrary(libName);
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (VirtualFile root : classesRoots) {
-          libraryModel.addRoot(root, OrderRootType.CLASSES);
+        LibraryTable libraryTable = ProjectLibraryTable.getInstance(module.getProject());
+        Library library = libraryTable.createLibrary(libName);
+        Library.ModifiableModel libraryModel = library.getModifiableModel();
+        try {
+          for (VirtualFile root : classesRoots) {
+            libraryModel.addRoot(root, OrderRootType.CLASSES);
+          }
+          libraryModel.commit();
         }
-        libraryModel.commit();
+        catch (Throwable t) {
+          //noinspection SSBasedInspection
+          libraryModel.dispose();
+          throw t;
+        }
+
         model.addLibraryEntry(library);
-        final OrderEntry[] orderEntries = model.getOrderEntries();
+        OrderEntry[] orderEntries = model.getOrderEntries();
         OrderEntry last = orderEntries[orderEntries.length - 1];
         System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
         orderEntries[0] = last;
@@ -326,7 +327,7 @@ public class PsiTestUtil {
       assert root != null : "Library root folder not found: " + path + "!/";
       classesRoots.add(root);
     }
-    addProjectLibrary(module, model, libName, VfsUtil.toVirtualFileArray(classesRoots));
+    addProjectLibrary(module, model, libName, VfsUtilCore.toVirtualFileArray(classesRoots));
   }
 
   public static void addLibrary(final Module module,
@@ -334,7 +335,7 @@ public class PsiTestUtil {
                                 final String[] classRoots,
                                 final String[] sourceRoots) {
     final String parentUrl =
-      VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
+      VirtualFileManager.constructUrl((classRoots.length > 0 ? classRoots[0]:sourceRoots[0]).endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
     List<String> classesUrls = new ArrayList<String>();
     List<String> sourceUrls = new ArrayList<String>();
     for (String classRoot : classRoots) {
@@ -350,38 +351,66 @@ public class PsiTestUtil {
     return new WriteCommandAction<Module>(project) {
       @Override
       protected void run(Result<Module> result) throws Throwable {
-        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
-        moduleModel.commit();
+        String moduleName;
+        ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+        try {
+          moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
+          moduleModel.commit();
+        }
+        catch (Throwable t) {
+          moduleModel.dispose();
+          throw t;
+        }
 
-        final Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
-        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
-        final ContentEntry entry = model.addContentEntry(root);
-        entry.addSourceFolder(root, false);
+        Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        assert dep != null : moduleName;
 
-        model.commit();
+        ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+        try {
+          model.addContentEntry(root).addSourceFolder(root, false);
+          model.commit();
+        }
+        catch (Throwable t) {
+          model.dispose();
+          throw t;
+        }
+
         result.setResult(dep);
       }
     }.execute().getResultObject();
   }
 
-  public static void setCompilerOutputPath(Module module, String url, boolean forTests) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
-    extension.inheritCompilerOutputPath(false);
-    if (forTests) {
-      extension.setCompilerOutputPathForTests(url);
-    }
-    else {
-      extension.setCompilerOutputPath(url);
-    }
-    commitModel(model);
+  public static void setCompilerOutputPath(Module module, final String url, final boolean forTests) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+        extension.inheritCompilerOutputPath(false);
+        if (forTests) {
+          extension.setCompilerOutputPathForTests(url);
+        }
+        else {
+          extension.setCompilerOutputPath(url);
+        }
+      }
+    });
   }
 
-  public static void setExcludeCompileOutput(Module module, boolean exclude) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
-    extension.setExcludeOutput(exclude);
-    commitModel(model);
+  public static void setExcludeCompileOutput(Module module, final boolean exclude) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude);
+      }
+    });
+  }
+
+  public static void setJavadocUrls(Module module, final String... urls) {
+    updateModel(module, new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
+      }
+    });
   }
 }

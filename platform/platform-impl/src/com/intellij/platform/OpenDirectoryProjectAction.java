@@ -18,6 +18,7 @@ package com.intellij.platform;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +34,7 @@ import java.util.List;
 public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
       @Override

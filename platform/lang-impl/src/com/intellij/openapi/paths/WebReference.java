@@ -49,8 +49,8 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
 
     @Override
       public void navigate(boolean requestFocus) {
-        BrowserUtil.launchBrowser(getValue());
-      }
+      BrowserUtil.browse(getValue());
+    }
 
     @Override
       public String getPresentableText() {

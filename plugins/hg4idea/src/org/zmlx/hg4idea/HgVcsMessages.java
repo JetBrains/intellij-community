@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -23,26 +24,22 @@ import com.intellij.CommonBundle;
 
 public final class HgVcsMessages {
 
-  private static Reference<ResourceBundle> ourBundle;
-
-  private static final String BUNDLE = "org.zmlx.hg4idea.HgVcsMessages";
-
-  private HgVcsMessages() { }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, @Nullable Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull @Nullable Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
 
+  private static Reference<ResourceBundle> ourBundle;
+  private static final String BUNDLE = "org.zmlx.hg4idea.HgVcsMessages";
+
+  private HgVcsMessages() {
+  }
+
   private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) {
-      bundle = ourBundle.get();
-    }
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;
   }
-
 }

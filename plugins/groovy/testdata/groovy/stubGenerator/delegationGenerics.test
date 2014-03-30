@@ -7,7 +7,7 @@ class ConfigNode {
 }
 -----
 public interface DelegationGenerics<K, V> {
-public V get(K k) ;
+public abstract V get(K k) ;
 
 }
 ---

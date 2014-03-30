@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
@@ -39,7 +40,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -132,7 +132,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     //new ConflictsDialog()
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
-    final PsiElement declarationOwner = info.getStatements()[0].getParent();
+    final PsiElement declarationOwner = info.getContext().getParent();
 
     GroovyRecursiveElementVisitor visitor = new GroovyRecursiveElementVisitor() {
       @Override
@@ -185,7 +185,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
   }
 
   private void performRefactoring(@NotNull final InitialInfo initialInfo, @Nullable final Editor editor) {
-    final PsiClass owner = PsiUtil.getContextClass(initialInfo.getStatements()[0]);
+    final PsiClass owner = PsiUtil.getContextClass(initialInfo.getContext());
     LOG.assertTrue(owner!=null);
 
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
@@ -196,7 +196,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
         try {
           createMethod(helper, owner);
-          GrStatementOwner declarationOwner = GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]);
+          GrStatementOwner declarationOwner =
+            helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
           GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
 
           // move to offset
@@ -215,10 +216,10 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
   private static void createMethod(ExtractMethodInfoHelper helper, PsiClass owner) {
     final GrMethod method = ExtractUtil.createMethod(helper);
-    PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getStatements()[0]);
+    PsiElement anchor = calculateAnchorToInsertBefore(owner, helper.getContext());
     GrMethod newMethod = (GrMethod)owner.addBefore(method, anchor);
     renameParameterOccurrences(newMethod, helper);
-    GrReferenceAdjuster.shortenReferences(newMethod);
+    JavaCodeStyleManager.getInstance(newMethod.getProject()).shortenClassReferences(newMethod);
     PsiElement prev = newMethod.getPrevSibling();
     if (!PsiUtil.isLineFeed(prev)) {
       newMethod.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", newMethod.getNode());

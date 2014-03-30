@@ -16,9 +16,14 @@
 package com.intellij.framework;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -30,11 +35,43 @@ public abstract class FrameworkTypeEx extends FrameworkType {
     super(id);
   }
 
-  @NotNull
-  public abstract FrameworkSupportInModuleProvider createProvider();
+  /**
+   * Puts it under another framework.
+   * @see #getUnderlyingFrameworkTypeId()
+   */
+  @Nullable
+  public FrameworkGroup<?> getParentGroup() {
+    return null;
+  }
 
+  /**
+   * Puts it under framework group.
+   * @see #getParentGroup()
+   */
   @Nullable
   public String getUnderlyingFrameworkTypeId() {
     return null;
+  }
+
+  @NotNull
+  public abstract FrameworkSupportInModuleProvider createProvider();
+
+  public <V extends FrameworkVersion> List<V> getVersions() {
+    return Collections.emptyList();
+  }
+
+  public FrameworkRole[] getRoles() {
+    FrameworkGroup<?> parentGroup = getParentGroup();
+    if (parentGroup == null) {
+      String id = getUnderlyingFrameworkTypeId();
+      if (id != null) {
+        FrameworkSupportInModuleProvider provider = FrameworkSupportUtil.findProvider(id);
+        if (provider != null) return provider.getRoles();
+      }
+      return FrameworkRole.UNKNOWN;
+    }
+    else {
+      return new FrameworkRole[]{parentGroup.getRole()};
+    }
   }
 }

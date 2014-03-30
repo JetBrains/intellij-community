@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +66,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
         newExpression.append(qualifierText);
       }
       turnExpressionIntoChainedAppends(expression, newExpression);
-      replaceExpression(newExpression.toString(), methodCallExpression);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
     }
     else {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
@@ -76,7 +77,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       }
       turnExpressionIntoChainedAppends(expression, newExpression);
       newExpression.append(".toString()");
-      replaceExpression(newExpression.toString(), expression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
     }
   }
 

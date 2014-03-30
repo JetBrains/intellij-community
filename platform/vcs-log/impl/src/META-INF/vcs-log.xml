@@ -1,0 +1,37 @@
+<idea-plugin>
+
+  <extensionPoints>
+    <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
+                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider"/>
+
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogManager" serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
+  </extensions>
+
+  <actions>
+    <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash"
+            icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
+    <action class="com.intellij.vcs.log.ui.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch" />
+    <action class="com.intellij.vcs.log.ui.GoToRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Menu_find" use-shortcut-of="Find"
+            text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
+    <action class="com.intellij.vcs.log.ui.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
+            icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
+    
+    <group id="Vcs.Log.Toolbar">
+      <reference id="Vcs.Log.GoToRef" />
+      <reference id="Vcs.Log.QuickSettings" />
+    </group>
+    <group id="Vcs.Log.ContextMenu">
+      <reference id="Vcs.Log.CopyHash"/>
+      <reference id="Vcs.Log.CreatePatch"/>
+    </group>
+  </actions>
+
+</idea-plugin>
+

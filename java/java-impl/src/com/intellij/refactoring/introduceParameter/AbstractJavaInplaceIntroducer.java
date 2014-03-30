@@ -158,11 +158,22 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
       }
       if (parent instanceof PsiExpression) {
         expression = (PsiExpression)parent;
+        if (expression.getText().equals(exprText)) {
+          return expression;
+        }
       } else {
         return null;
       }
     }
-    return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
+    if (expression != null && expression.isValid() && expression.getText().equals(exprText)) {
+      return expression;
+    }
+
+    if (refVariableElementParent instanceof PsiExpression && refVariableElementParent.getText().equals(exprText)) {
+      return (PsiExpression)refVariableElementParent;
+    }
+
+    return null;
   }
 
    public static Expression createExpression(final TypeExpression expression, final String defaultType) {

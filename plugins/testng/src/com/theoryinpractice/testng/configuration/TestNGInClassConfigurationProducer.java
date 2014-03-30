@@ -20,95 +20,33 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer{
   private PsiElement myPsiElement = null;
 
-  public PsiElement getSourceElement() {
-    return myPsiElement;
-  }
-
-  @Nullable
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    final PsiElement[] elements = context != null ? LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext()) : null;
-    if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
-      return null;
-    }
-
-    PsiClass psiClass = null;
-    PsiElement element = location.getPsiElement();
-    while (element != null) {
-      if (element instanceof PsiClass && isTestNGClass(psiClass)) {
-        psiClass = (PsiClass)element;
-        break;
-      }
-      else if (element instanceof PsiMember) {
-        psiClass = ((PsiMember)element).getContainingClass();
-        if (isTestNGClass(psiClass)) {
-          break;
-        }
-      }
-      else if (element instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-        if (classes.length == 1) {
-          psiClass = classes[0];
-          break;
-        }
-      }
-      element = element.getParent();
-    }
-    if (!isTestNGClass(psiClass)) return null;
-
-    myPsiElement = psiClass;
-    final Project project = location.getProject();
-    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
-    final TestNGConfiguration configuration = (TestNGConfiguration)settings.getConfiguration();
-    setupConfigurationModule(context, configuration);
-    final Module originalModule = configuration.getConfigurationModule().getModule();
-    configuration.setClassConfiguration(psiClass);
-
-    PsiMethod method = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiMethod.class, false);
-    while (method != null) {
-      if (TestNGUtil.hasTest(method)) {
-        configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
-        myPsiElement = method;
-      }
-      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
-    }
-
-    configuration.restoreOriginalModule(originalModule);
-    settings.setName(configuration.getName());
-    JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
-    return settings;
-  }
-
   private static boolean isTestNGClass(PsiClass psiClass) {
     return psiClass != null && PsiClassUtil.isRunnableClass(psiClass, true, false) && TestNGUtil.hasTest(psiClass);
   }
 
-  public int compareTo(Object o) {
-    return PREFERED;
-  }
-
   @Override
-  public void perform(final ConfigurationContext context, final Runnable performRunnable) {
+  public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext fromContext, Runnable performRunnable) {
     if (myPsiElement instanceof PsiMethod || myPsiElement instanceof PsiClass) {
 
       final PsiMethod psiMethod;
@@ -144,8 +82,68 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
       };
-      if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass)) return;
+      if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass, new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass aClass) {
+          return TestNGUtil.hasTest(aClass);
+        }
+      })) return;
     }
-    super.perform(context, performRunnable);
+    super.onFirstRun(configuration, fromContext, performRunnable);
+  }
+
+  @Override
+  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    final PsiElement[] elements = context != null ? LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext()) : null;
+    if (elements != null && TestNGPatternConfigurationProducer.collectTestMembers(elements).size() > 1) {
+      return false;
+    }
+
+    PsiClass psiClass = null;
+    PsiElement element = context.getPsiLocation();
+    while (element != null) {
+      if (element instanceof PsiClass && isTestNGClass((PsiClass)element)) {
+        psiClass = (PsiClass)element;
+        break;
+      }
+      else if (element instanceof PsiMember) {
+        psiClass = ((PsiMember)element).getContainingClass();
+        if (isTestNGClass(psiClass)) {
+          break;
+        }
+      }
+      else if (element instanceof PsiClassOwner) {
+        final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+        if (classes.length == 1) {
+          psiClass = classes[0];
+          break;
+        }
+      }
+      element = element.getParent();
+    }
+    if (!isTestNGClass(psiClass)) return false;
+
+    myPsiElement = psiClass;
+    final Project project = context.getProject();
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
+    setupConfigurationModule(context, configuration);
+    final Module originalModule = configuration.getConfigurationModule().getModule();
+    configuration.setClassConfiguration(psiClass);
+
+    PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
+    while (method != null) {
+      if (TestNGUtil.hasTest(method)) {
+        configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
+        myPsiElement = method;
+      }
+      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
+    }
+
+    configuration.restoreOriginalModule(originalModule);
+    settings.setName(configuration.getName());
+    sourceElement.set(myPsiElement);
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,14 +23,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -40,12 +38,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection.isPropertyAccessInStaticMethod;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil.isPropertyAccessInStaticMethod;
 
 /**
  * @author Max Medvedev
  */
-public abstract class GrCreateFromUsageBaseFix implements IntentionAction {
+public abstract class GrCreateFromUsageBaseFix extends Intention {
   protected final SmartPsiElementPointer<GrReferenceExpression> myRefExpression;
 
   public GrCreateFromUsageBaseFix(@NotNull GrReferenceExpression refExpression) {
@@ -75,7 +73,9 @@ public abstract class GrCreateFromUsageBaseFix implements IntentionAction {
     return true;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+
+  @Override
+  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final List<PsiClass> classes = getTargetClasses();
     if (classes.size() == 1) {
       invokeImpl(project, classes.get(0));
@@ -83,6 +83,17 @@ public abstract class GrCreateFromUsageBaseFix implements IntentionAction {
     else if (!classes.isEmpty()) {
       chooseClass(classes, editor);
     }
+  }
+
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        return element instanceof GrReferenceExpression;
+      }
+    };
   }
 
   private void chooseClass(List<PsiClass> classes, Editor editor) {

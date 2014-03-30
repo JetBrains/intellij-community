@@ -89,7 +89,7 @@ public class FindByXPathAction extends AnAction {
 
         presentation.setOpenInNewTab(settings.OPEN_NEW_TAB);
 
-        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
+        final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
         processPresentation.setProgressIndicatorFactory(new Factory<ProgressIndicator>() {
             public ProgressIndicator create() {
                 return new FindProgressIndicator(project, scope.getName());

@@ -154,7 +154,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   @Override
   public boolean isModified() {
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
-    HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
+    HashSet<FileType> types = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
     return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
@@ -371,7 +371,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
       myFileTypesList = new JBList(new DefaultListModel());
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getCellRenderer(), new FileTypeRenderer.FileTypeListProvider() {
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(new FileTypeRenderer.FileTypeListProvider() {
         @Override
         public Iterable<FileType> getCurrentFileTypeList() {
           ArrayList<FileType> result = new ArrayList<FileType>();
@@ -657,7 +657,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
         final Object at = myPatternsList.getModel().getElementAt(i);
         if (at instanceof String) {
           final FileNameMatcher matcher = FileTypeManager.parseFromString((String)at);
-          if (matcher != null && matcher.accept(pattern)) {
+          if (FileNameMatcherEx.acceptsCharSequence(matcher, pattern)) {
             ListScrollingUtil.selectItem(myPatternsList, i);
             return;
           }

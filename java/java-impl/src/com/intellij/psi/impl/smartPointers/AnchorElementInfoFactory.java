@@ -15,19 +15,17 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory");
-
   @Override
   @Nullable
   public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {
@@ -55,7 +53,7 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
 
   @Nullable
   static PsiElement getAnchor(PsiElement element) {
-    LOG.assertTrue(element.isValid());
+    PsiUtilCore.ensureValid(element);
     PsiElement anchor = null;
     if (element instanceof PsiClass) {
       if (element instanceof PsiAnonymousClass) {

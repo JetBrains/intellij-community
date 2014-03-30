@@ -44,6 +44,7 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
         GrParametersOwner, GrTopLevelDefinition, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
   ArrayFactory<GrMethod> ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
+    @NotNull
     @Override
     public GrMethod[] create(int count) {
       return new GrMethod[count];

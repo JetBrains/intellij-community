@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -49,7 +50,8 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
 
-    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).restartCompletion()) {
+    if (oldPhase instanceof CompletionPhase.CommittingDocuments && ((CompletionPhase.CommittingDocuments)oldPhase).isRestartingCompletion()) {
+      oldPhase.indicator.scheduleRestart();
       return Result.STOP;
     }
 
@@ -67,7 +69,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
 
     if (Character.isLetter(charTyped) || charTyped == '_') {
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
 
@@ -80,14 +82,20 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   public static void invokeCompletion(CompletionType completionType,
                                       boolean autopopup,
                                       Project project, Editor editor, int time, boolean restart) {
-    if (editor.isDisposed()) return;
-    
+    if (editor.isDisposed()) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      return;
+    }
+
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
     Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
-    if (file == null) return;
+    if (file == null) {
+      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      return;
+    }
 
-    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
       LOG.error("Non-committed document");
       PsiDocumentManager.getInstance(project).commitAllDocuments();

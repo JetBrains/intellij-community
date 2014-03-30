@@ -6,6 +6,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -19,9 +23,9 @@ Groovy script
         Parameter list
           <empty list>
         PsiElement())(')')
-        PsiWhiteSpace(' ')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
@@ -40,7 +44,8 @@ Groovy script
                 <empty list>
               Compound Gstring
                 PsiElement(Gstring begin)('"')
-                PsiElement(Gstring content)(')')
+                GrStringContentImpl(GString content element)
+                  PsiElement(Gstring content)(')')
                 PsiErrorElement:String end expected
                   <empty list>
               PsiElement(new line)('\n  ')
@@ -57,9 +62,9 @@ Groovy script
         Parameter list
           <empty list>
         PsiElement())(')')
-        PsiWhiteSpace(' ')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
@@ -83,6 +88,10 @@ Groovy script
     PsiElement(class)('class')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('a')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')
@@ -96,9 +105,9 @@ Groovy script
         Parameter list
           <empty list>
         PsiElement())(')')
-        PsiWhiteSpace(' ')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')
@@ -122,9 +131,9 @@ Groovy script
         Parameter list
           <empty list>
         PsiElement())(')')
-        PsiWhiteSpace(' ')
         Throw clause
           <empty list>
+        PsiWhiteSpace(' ')
         Open block
           PsiElement({)('{')
           PsiWhiteSpace('\n    ')

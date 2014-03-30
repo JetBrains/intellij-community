@@ -31,6 +31,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,7 @@ public class SuggestedParamTypesTest extends LightCodeInsightTestCase {
 
     processor.prepare();
 
-    for (final ParameterTablePanel.VariableData data : processor.getInputVariables().getInputVariables()) {
+    for (final VariableData data : processor.getInputVariables().getInputVariables()) {
       final PsiExpression[] occurrences = ParameterTablePanel.findVariableOccurrences(elements, data.variable);
       final TypeSelectorManager manager = new TypeSelectorManagerImpl(project, data.type, occurrences, true) {
         @Override

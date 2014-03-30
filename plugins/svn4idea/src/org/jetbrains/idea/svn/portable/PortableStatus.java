@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNLock;
@@ -33,6 +34,9 @@ import java.util.Map;
  * Time: 12:29 PM
  */
 public class PortableStatus extends SVNStatus {
+
+  private static final Logger LOG = Logger.getInstance(PortableStatus.class);
+
   private boolean myConflicted;
   private Getter<SVNInfo> myInfoGetter;
   private SVNInfo myInfo;
@@ -117,7 +121,13 @@ public class PortableStatus extends SVNStatus {
         return null;
       }
     };
-    setWorkingCopyFormat(WorkingCopyFormat.ONE_DOT_SEVEN.getFormat());
+    setCommittedRevision(SVNRevision.UNDEFINED);
+  }
+
+  @Override
+  public int getWorkingCopyFormat() {
+    LOG.error("Do not use working copy format detection through status");
+    return 0;
   }
 
   @Override
@@ -239,6 +249,42 @@ public class PortableStatus extends SVNStatus {
     if (info == null) return null;
     SVNURL url = initInfo().getCopyFromURL();
     return url == null ? null : url.toString();
+  }
+
+  @Override
+  public SVNURL getURL() {
+    SVNURL url = super.getURL();
+
+    if (url == null) {
+      SVNInfo info = initInfo();
+      url = info != null ? info.getURL() : url;
+    }
+
+    return url;
+  }
+
+  @Override
+  public SVNURL getRepositoryRootURL() {
+    SVNURL url = super.getRepositoryRootURL();
+
+    if (url == null) {
+      SVNInfo info = initInfo();
+      url = info != null ? info.getRepositoryRootURL() : url;
+    }
+
+    return url;
+  }
+
+  @Override
+  public File getFile() {
+    File file = super.getFile();
+
+    if (file == null) {
+      SVNInfo info = initInfo();
+      file = info != null ? info.getFile() : file;
+    }
+
+    return file;
   }
 
   @Override

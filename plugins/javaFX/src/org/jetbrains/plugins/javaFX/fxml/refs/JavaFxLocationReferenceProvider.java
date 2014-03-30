@@ -15,11 +15,14 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +35,19 @@ import java.util.List;
  */
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   private boolean mySupportCommaInValue = false;
+  private final FileType[] myAcceptedFileTypes;
 
   JavaFxLocationReferenceProvider() {
+    this(false);
   }
 
-  JavaFxLocationReferenceProvider(boolean supportCommaInValue) {
+  JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileTypes) {
     mySupportCommaInValue = supportCommaInValue;
+    myAcceptedFileTypes = new FileType[acceptedFileTypes.length];
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    for (int i = 0; i < acceptedFileTypes.length; i++) {
+      myAcceptedFileTypes[i] = fileTypeManager.getFileTypeByExtension(acceptedFileTypes[i]);
+    }
   }
 
   @NotNull
@@ -55,7 +65,7 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
         List<PsiReference> refs = new ArrayList<PsiReference>();
         while (true) {
           endIdx = value.indexOf(",", startIdx);
-          Collections.addAll(refs, collectRefs(element, endIdx >= 0 ? value.substring(startIdx, endIdx) : value.substring(startIdx), startIdx + 1));
+          Collections.addAll(refs, collectRefs(element, endIdx >= 0 ? value.substring(startIdx, endIdx) : value.substring(startIdx), startIdx + 1, myAcceptedFileTypes));
           startIdx = endIdx + 1;
           if (endIdx < 0) {
             break;
@@ -63,13 +73,27 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
         }
         return refs.toArray(new PsiReference[refs.size()]);
       } else {
-        return collectRefs(element, value, 1);
+        return collectRefs(element, value, 1, myAcceptedFileTypes);
       }
     }
   }
 
-  private static PsiReference[] collectRefs(PsiElement element, String value, final int startInElement) {
-    final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true);
+  private static PsiReference[] collectRefs(@NotNull PsiElement element, String value, final int startInElement, final FileType... acceptedFileTypes) {
+    final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true){
+      @Override
+      protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
+        return new Condition<PsiFileSystemItem>() {
+          @Override
+          public boolean value(PsiFileSystemItem item) {
+            if (item instanceof PsiDirectory) return true;
+            final VirtualFile virtualFile = item.getVirtualFile();
+            if (virtualFile == null) return false;
+            final FileType fileType = virtualFile.getFileType();
+            return ArrayUtilRt.find(acceptedFileTypes, fileType) >= 0;
+          }
+        };
+      }
+    };
     if (value.startsWith("/")) {
       set.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
     }

@@ -20,17 +20,19 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.options.CurrentUserHolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectLongHashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -50,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, StreamProvider, ComponentVersionProvider {
+public abstract class StateStorageManagerImpl implements StateStorageManager, Disposable, ComponentVersionProvider {
   private static final Logger LOG = Logger.getInstance(StateStorageManagerImpl.class);
 
   private static final boolean ourHeadlessEnvironment;
@@ -59,7 +61,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     ourHeadlessEnvironment = app.isHeadlessEnvironment() || app.isUnitTestMode();
   }
 
-  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
   private final Lock myStorageLock = new ReentrantLock();
   private final Map<String, StateStorage> myStorages = new THashMap<String, StateStorage>();
   private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
@@ -68,13 +70,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   private Object mySession;
   private final PicoContainer myPicoContainer;
 
-  private Map<String, Long> myComponentVersions;
+  private TObjectLongHashMap<String> myComponentVersions;
   private final Object myComponentVersionsLock = new Object();
 
-  private String myVersionsFilePath = null;
+  private String myVersionsFilePath;
 
-  private final MultiMap<RoamingType, StreamProvider> myStreamProviders = new MultiMap<RoamingType, StreamProvider>();
   private boolean isDirty;
+
+  private StreamProvider myStreamProvider;
+
+  private final OldStreamProviderManager myOldStreamProvider = new OldStreamProviderManager();
 
   public StateStorageManagerImpl(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                                  String rootTagName,
@@ -88,16 +93,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @Override
   public TrackingPathMacroSubstitutor getMacroSubstitutor() {
     return myPathMacroSubstitutor;
   }
 
+  @Override
   public synchronized void addMacro(String macro, String expansion) {
     // avoid hundreds of $MODULE_FILE$ instances
     myMacros.put(("$" + macro + "$").intern(), expansion);
   }
 
+  @Override
   @Nullable
   public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
     String key = getStorageSpecId(storageSpec);
@@ -116,8 +123,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   @Nullable
-  public StateStorage getFileStateStorage(final String fileName) {
+  public StateStorage getFileStateStorage(@NotNull String fileName) {
     myStorageLock.lock();
     try {
       StateStorage stateStorage = myStorages.get(fileName);
@@ -132,9 +140,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
+      if (myStorages.isEmpty()) {
+        return Collections.emptyList();
+      }
       return Collections.unmodifiableCollection(myStorages.keySet());
     }
     finally {
@@ -169,12 +181,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+    if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
-    else {
-      return createFileStateStorage(storageSpec.file());
-    }
+    return createFileStateStorage(storageSpec.file());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
@@ -186,6 +196,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void clearStateStorage(@NotNull String file) {
     myStorageLock.lock();
     try {
@@ -227,12 +238,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.length() == 0) {
+    if (!ourHeadlessEnvironment && extension.isEmpty()) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 
-    return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, myRootTagName, this,
+    return new FileBasedStorage(getMacroSubstitutor(fileSpec), getStreamProvider(), expandedFile, fileSpec, myRootTagName, this,
                                 myPicoContainer, ComponentRoamingManager.getInstance(), this) {
+      @Override
       @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
@@ -240,9 +252,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     };
   }
 
+  @Override
   public long getVersion(String name) {
-    Map<String, Long> versions = getComponentVersions();
-    return versions.containsKey(name) ? versions.get(name).longValue() : 0;
+    return getComponentVersions().get(name);
   }
 
   @TestOnly
@@ -254,8 +266,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     isDirty = false;
   }
 
-  private Map<String, Long> loadVersions() {
-    THashMap<String, Long> result = new THashMap<String, Long>();
+  private TObjectLongHashMap<String> loadVersions() {
+    TObjectLongHashMap<String> result = new TObjectLongHashMap<String>();
     String filePath = getNotNullVersionsFilePath();
     if (filePath != null) {
       try {
@@ -280,21 +292,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return myVersionsFilePath;
   }
 
-  public static void loadComponentVersions(Map<String, Long> result, Document document) {
-    List componentObjects = document.getRootElement().getChildren("component");
-    for (Object componentObj : componentObjects) {
-      if (componentObj instanceof Element) {
-        Element componentEl = (Element)componentObj;
-        String name = componentEl.getAttributeValue("name");
-        String version = componentEl.getAttributeValue("version");
-
-        if (name != null && version != null) {
-          try {
-            result.put(name, Long.parseLong(version));
-          }
-          catch (NumberFormatException e) {
-            //ignore
-          }
+  public static void loadComponentVersions(TObjectLongHashMap<String> result, Document document) {
+    List<Element> componentObjects = document.getRootElement().getChildren("component");
+    for (Element component : componentObjects) {
+      String name = component.getAttributeValue("name");
+      String version = component.getAttributeValue("version");
+      if (name != null && version != null) {
+        try {
+          result.put(name, Long.parseLong(version));
+        }
+        catch (NumberFormatException ignored) {
         }
       }
     }
@@ -302,82 +309,16 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   protected abstract String getVersionsFilePath();
 
+  @Override
   public void changeVersion(String name, long version) {
     getComponentVersions().put(name, version);
     isDirty = true;
   }
 
-  public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          streamProvider.saveContent(fileSpec, content, size, roamingType, async);
-        }
-      }
-      catch (ConnectException e) {
-        LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-  }
-
-  public void deleteFile(final String fileSpec, final RoamingType roamingType) {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          streamProvider.deleteFile(fileSpec, roamingType);
-        }
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-  }
-
-  public StreamProvider[] getStreamProviders(RoamingType type) {
-    synchronized (myStreamProviders) {
-      final Collection<StreamProvider> providers = myStreamProviders.get(type);
-      return providers.isEmpty() ? EMPTY_ARRAY : providers.toArray(new StreamProvider[providers.size()]);
-    }
-  }
-
-  public Collection<StreamProvider> getStreamProviders() {
-    synchronized (myStreamProviders) {
-      return Collections.unmodifiableCollection(myStreamProviders.values());
-    }
-  }
-
-  public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
-    for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
-      try {
-        if (streamProvider.isEnabled()) {
-          InputStream content = streamProvider.loadContent(fileSpec, roamingType);
-
-          if (content != null) return content;
-        }
-      }
-      catch (ConnectException e) {
-        LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-
-    return null;
-  }
-
-  public String[] listSubFiles(final String fileSpec) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  public boolean isEnabled() {
-    for (StreamProvider provider : getStreamProviders()) {
-      if (provider.isEnabled()) return true;
-    }
-    return false;
+  @Nullable
+  @Override
+  public StreamProvider getStreamProvider() {
+    return ObjectUtils.chooseNotNull(myStreamProvider, myOldStreamProvider);
   }
 
   protected TrackingPathMacroSubstitutor getMacroSubstitutor(@NotNull final String fileSpec) {
@@ -388,6 +329,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
+  @Override
   @Nullable
   public synchronized String expandMacros(final String file) {
     final Matcher matcher = MACRO_PATTERN.matcher(file);
@@ -410,6 +352,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return actualFile;
   }
 
+  @NotNull
+  @Override
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
       LOG.error("Starting duplicate externalization session: " + mySession);
@@ -419,18 +363,22 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return session;
   }
 
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  @NotNull
+  @Override
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
     SaveSession session = createSaveSession(externalizationSession);
     mySession = session;
     return session;
   }
 
+  @NotNull
   protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
     return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
-  public void finishSave(final SaveSession saveSession) {
+  @Override
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
       ((MySaveSession)saveSession).finishSave();
@@ -441,6 +389,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void reset() {
     mySession = null;
   }
@@ -448,7 +397,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected class MyExternalizationSession implements ExternalizationSession {
     CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
 
-    public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
+    @Override
+    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
       throws StateStorageException {
       assert mySession == this;
 
@@ -461,7 +411,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
-    public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorageException {
+    @Override
+    public void setStateInOldStorage(@NotNull Object component, @NotNull final String componentName, @NotNull Object state) throws StateStorageException {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
@@ -470,6 +421,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   @Nullable
   public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
     return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
@@ -485,15 +437,20 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
     }
 
+    @Override
+    @NotNull
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
+    @Override
+    @NotNull
     public List<IFile> getAllStorageFiles() {
       return myCompoundSaveSession.getAllStorageFiles();
     }
 
+    @Override
     public void save() throws StateStorageException {
       assert mySession == this;
       myCompoundSaveSession.save();
@@ -509,38 +466,39 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
+    @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
-      Set<String> result = new HashSet<String>();
-
-      nextStorage:
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      Set<String> result = new THashSet<String>();
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
-        final StateStorage stateStorage = pair.second;
-        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(stateStorage);
-        if (saveSession == null) continue nextStorage;
-        final Set<String> s = saveSession.analyzeExternalChanges(changedFiles);
-
-        if (s == null) return null;
-        result.addAll(s);
+        final StateStorage.SaveSession saveSession = myCompoundSaveSession.getSaveSession(pair.second);
+        if (saveSession == null) {
+          continue;
+        }
+        final Set<String> changes = saveSession.analyzeExternalChanges(changedFiles);
+        if (changes == null) {
+          return null;
+        }
+        result.addAll(changes);
       }
-
       return result;
     }
   }
 
+  @Override
   public void dispose() {
   }
 
-  public void registerStreamProvider(StreamProvider streamProvider, final RoamingType type) {
-    synchronized (myStreamProviders) {
-      myStreamProviders.putValue(type, streamProvider);
+  @Override
+  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
+    synchronized (myOldStreamProvider) {
+      myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
     }
   }
 
-  public void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType) {
-    synchronized (myStreamProviders) {
-      myStreamProviders.removeValue(roamingType, streamProvider);
-    }
+  @Override
+  public void setStreamProvider(@Nullable StreamProvider streamProvider) {
+    myStreamProvider = streamProvider;
   }
 
   public void save() {
@@ -561,7 +519,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  private Map<String, Long> getComponentVersions() {
+  private TObjectLongHashMap<String> getComponentVersions() {
     synchronized (myComponentVersionsLock) {
       if (myComponentVersions == null) {
         myComponentVersions = loadVersions();
@@ -570,12 +528,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
-  public static Element createComponentVersionsXml(Map<String, Long> versions) {
+  public static Element createComponentVersionsXml(TObjectLongHashMap<String> versions) {
     Element root = new Element("versions");
-    String[] componentNames = ArrayUtil.toStringArray(versions.keySet());
+    Object[] componentNames = versions.keys();
     Arrays.sort(componentNames);
-
-    for (String name : componentNames) {
+    for (Object key : componentNames) {
+      String name = (String)key;
       long version = versions.get(name);
       if (version != 0) {
         Element element = new Element("component");
@@ -585,5 +543,104 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
     return root;
+  }
+
+  private static class OldStreamProviderManager extends StreamProvider implements CurrentUserHolder {
+    private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
+
+    @Override
+    public boolean isVersioningRequired() {
+      return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      for (StreamProvider provider : myStreamProviders) {
+        if (provider.isEnabled()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      for (StreamProvider provider : myStreamProviders) {
+        if (provider.isApplicable(fileSpec, roamingType)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      boolean result = false;
+      for (StreamProvider streamProvider : myStreamProviders) {
+        try {
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType) && streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
+            result = true;
+          }
+        }
+        catch (ConnectException e) {
+          LOG.debug("Cannot send user profile to server: " + e.getLocalizedMessage());
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return result;
+    }
+
+    @Override
+    public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
+      for (StreamProvider streamProvider : myStreamProviders) {
+        try {
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
+            InputStream content = streamProvider.loadContent(fileSpec, roamingType);
+            if (content != null) {
+              return content;
+            }
+          }
+        }
+        catch (ConnectException e) {
+          LOG.debug("Cannot send user profile o server: " + e.getLocalizedMessage());
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+
+      return null;
+    }
+
+    @Override
+    public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      for (StreamProvider streamProvider : myStreamProviders) {
+        try {
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
+            streamProvider.deleteFile(fileSpec, roamingType);
+          }
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+    }
+
+    @Override
+    public String getCurrentUserName() {
+      for (OldStreamProviderAdapter provider : myStreamProviders) {
+        if (!provider.isEnabled()) {
+          continue;
+        }
+
+        String userName = provider.getCurrentUserName();
+        if (userName != null) {
+          return userName;
+        }
+      }
+      return null;
+    }
   }
 }

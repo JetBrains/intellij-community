@@ -39,7 +39,6 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenConsoleImpl extends MavenConsole {
@@ -79,10 +78,7 @@ public class MavenConsoleImpl extends MavenConsole {
   public static TextConsoleBuilder createConsoleBuilder(final Project project) {
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
 
-    final List<Filter> filters = ExceptionFilters.getFilters(GlobalSearchScope.allScope(project));
-    for (Filter filter : filters) {
-      builder.addFilter(filter);
-    }
+    builder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(project)));
     builder.addFilter(new RegexpFilter(project, CONSOLE_FILTER_REGEXP) {
       @Nullable
       @Override
@@ -105,6 +101,8 @@ public class MavenConsoleImpl extends MavenConsole {
     });
 
     builder.addFilter(new MavenGroovyConsoleFilter(project));
+    builder.addFilter(new MavenScalaConsoleFilter(project));
+    builder.addFilter(new MavenTestConsoleFilter(project));
     return builder;
   }
 

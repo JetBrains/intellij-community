@@ -26,6 +26,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.PathManager;
@@ -45,7 +46,6 @@ import com.jgoodies.forms.layout.FormLayout;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -65,12 +65,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       appConfiguration.putUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY, settings);
     }
     if (appConfiguration.ENABLE_SWING_INSPECTOR) {
-      try {
-        settings.setLastPort(NetUtils.findAvailableSocketPort());
-      }
-      catch(IOException ex) {
-        settings.setLastPort(-1);
-      }
+      settings.setLastPort(NetUtils.tryToFindAvailableSocketPort());
     }
 
     if (appConfiguration.ENABLE_SWING_INSPECTOR && settings.getLastPort() != -1) {
@@ -84,6 +79,7 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));    // openapi
       paths.add(PathUtil.getJarPathForClass(LwComponent.class));         // UIDesignerCore
       paths.add(PathUtil.getJarPathForClass(GridConstraints.class));     // forms_rt
+      paths.add(PathUtil.getJarPathForClass(PaletteGroup.class));        // openapi
       paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
       paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
       paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));       // idea

@@ -76,6 +76,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     installComparator();
     initTree();
+
     return myComponent;
   }
 

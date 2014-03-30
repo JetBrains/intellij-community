@@ -22,8 +22,10 @@
  */
 package com.intellij.xml.refactoring;
 
+import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +41,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
@@ -91,7 +92,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   }
 
   private static String getFullName(@NotNull final XmlTag tag) {
-    final String name = UsageViewUtil.getDescriptiveName(tag);
+    final String name = DescriptiveNameUtil.getDescriptiveName(tag);
     return (UsageViewUtil.getType(tag) + " " + name).trim();
   }
 
@@ -121,7 +122,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
     final PsiReference reference = myTag.getReference();
     if (reference instanceof TagNameReference) {
-      LookupElement[] lookupItems = ((TagNameReference)reference).getVariants();
+      LookupElement[] lookupItems = TagNameReferenceCompletionProvider.getTagNameVariants(myTag, myTag.getNamespacePrefix());
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(getProject()).showLookup(editor, lookupItems, prefix);

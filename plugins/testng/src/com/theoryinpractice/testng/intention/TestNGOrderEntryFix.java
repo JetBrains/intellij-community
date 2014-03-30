@@ -20,12 +20,13 @@
  */
 package com.theoryinpractice.testng.intention;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -53,8 +54,9 @@ public class TestNGOrderEntryFix implements IntentionAction {
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
+    if (!file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
-    final PsiReference reference = TargetElementUtil.findReference(editor);
+    final PsiReference reference = TargetElementUtilBase.findReference(editor);
     if (!(reference instanceof PsiJavaCodeReferenceElement)) return false;
     if (reference.resolve() != null) return false;
     @NonNls final String referenceName = ((PsiJavaCodeReferenceElement)reference).getReferenceName();
@@ -70,12 +72,12 @@ public class TestNGOrderEntryFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtil.findReference(editor);
+    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtilBase.findReference(editor);
     LOG.assertTrue(reference != null);
     String jarPath = PathUtil.getJarPathForClass(Test.class);
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
-    OrderEntryFix.addBundledJarToRoots(project, editor, ModuleUtil.findModuleForFile(virtualFile, project), reference,
+    OrderEntryFix.addBundledJarToRoots(project, editor, ModuleUtilCore.findModuleForFile(virtualFile, project), reference,
                                        "org.testng.annotations." + reference.getReferenceName(), jarPath);
   }
 

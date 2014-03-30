@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -34,21 +35,23 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     }
   }
 
-  private void processQueue() {
-    myWeakKeyMap.processQueue();
+  // returns true if some refs were tossed
+  boolean processQueue() {
+    boolean processed = myWeakKeyMap.processQueue();
     while(true) {
       MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       WeakHashMap.Key<K> weakKey = ref.key;
       myWeakKeyMap.removeKey(weakKey);
+      processed = true;
     }
+    return processed;
   }
 
   @Override
   public V get(Object key) {
     MyValueReference<K,V> ref = myWeakKeyMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
+    return SoftReference.dereference(ref);
   }
 
   @Override
@@ -57,18 +60,18 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
     MyValueReference<K, V> reference = new MyValueReference<K, V>(weakKey, value, myQueue);
     MyValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
-    return oldRef == null ? null : oldRef.get();
+    return SoftReference.dereference(oldRef);
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
     MyValueReference<K,V> ref = myWeakKeyMap.remove(key);
-    return ref != null ? ref.get() : null;
+    return SoftReference.dereference(ref);
   }
 
   @Override
-  public void putAll(Map<? extends K, ? extends V> t) {
+  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
     throw new RuntimeException("method not implemented");
   }
 

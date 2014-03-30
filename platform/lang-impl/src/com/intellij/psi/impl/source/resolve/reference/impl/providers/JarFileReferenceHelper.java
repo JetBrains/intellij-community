@@ -37,11 +37,6 @@ public class JarFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public PsiFileSystemItem findRoot(Project project, @NotNull VirtualFile file) {
-    return null;
-  }
-
-  @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return PsiFileReferenceHelper.getContextsForModule(module, "", null);

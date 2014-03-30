@@ -22,7 +22,8 @@ import com.sun.tools.javac.util.List;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -43,9 +44,11 @@ class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
-  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
   private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
+
+  private static final boolean ourUseContentCache = Boolean.valueOf(System.getProperty("javac.use.content.cache", "false"));
+  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = ourUseContentCache? new HashMap<InputFileObject, SoftReference<CharBuffer>>() : Collections.<InputFileObject, SoftReference<CharBuffer>>emptyMap();
 
   public OptimizedFileManager() throws Throwable {
     super(new Context(), true, null);
@@ -115,15 +118,23 @@ class OptimizedFileManager extends DefaultFileManager {
       else {
         final File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
         if (recurse) {
-          collectFromDirectoryRecursively(directory, kinds, results, true, !location.isOutputLocation());
+          collectFromDirectoryRecursively(directory, kinds, results, true);
         }
         else {
-          collectFromDirectory(directory, kinds, results, !location.isOutputLocation());
+          collectFromDirectory(directory, kinds, results);
         }
       }
     }
 
     return results.toList();
+  }
+
+  // important! called via reflection, so avoid renaming or signature changing or rename carefully
+  public void fileGenerated(File file) {
+    final File parent = file.getParentFile();
+    if (parent != null) {
+      myDirectoryCache.remove(parent);
+    }
   }
 
   private boolean isFile(File root) {
@@ -168,8 +179,8 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean canUseCache) {
-    final File[] children = listChildren(directory, canUseCache);
+  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result) {
+    final File[] children = listChildren(directory);
     if (children != null) {
       final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
       for (File child : children) {
@@ -184,13 +195,13 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall, boolean canUseCache) {
-    final File[] children = listChildren(file, canUseCache);
+  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall) {
+    final File[] children = listChildren(file);
     final String name = file.getName();
     if (children != null) { // is directory
       if (isRootCall || SourceVersion.isIdentifier(name)) {
         for (File child : children) {
-          collectFromDirectoryRecursively(child, fileKinds, result, false, canUseCache);
+          collectFromDirectoryRecursively(child, fileKinds, result, false);
         }
       }
     }
@@ -202,10 +213,7 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private File[] listChildren(File file, boolean canUseCache) {
-    if (!canUseCache) {
-      return file.listFiles();
-    }
+  private File[] listChildren(File file) {
     File[] cached = myDirectoryCache.get(file);
     if (cached == null) {
       cached = file.listFiles();
@@ -346,56 +354,36 @@ class OptimizedFileManager extends DefaultFileManager {
     }
 
     public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
-      SoftReference<CharBuffer> r = myContentCache.get(this);
-      CharBuffer cb = (r == null ? null : r.get());
-      if (cb == null) {
-        InputStream in = new FileInputStream(f);
-        try {
-          final ByteBuffer bb = makeByteBuffer(in);
-          JavaFileObject prev = log.useSource(this);
-          try {
-            cb = decode(bb, ignoreEncodingErrors);
-          }
-          finally {
-            log.useSource(prev);
-          }
-          myByteBufferCache.put(bb); // save for next time
+      CharBuffer cb;
+      if (ourUseContentCache) {
+        SoftReference<CharBuffer> ref = myContentCache.get(this);
+        cb = (ref != null) ? ref.get() : null;
+        if (cb == null) {
+          cb = loadFileContent(ignoreEncodingErrors);
           if (!ignoreEncodingErrors) {
             myContentCache.put(this, new SoftReference<CharBuffer>(cb));
           }
         }
-        finally {
-          in.close();
-        }
+      }
+      else {
+        cb = loadFileContent(ignoreEncodingErrors);
       }
       return cb;
     }
 
-    //public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
-    //  final String encodingName = getEncodingName();
-    //  SoftReference<CharBuffer> r = myContentCache.get(this);
-    //  CharBuffer cb = (r == null ? null : r.get());
-    //  if (cb == null) {
-    //    InputStream in = new FileInputStream(f);
-    //    try {
-    //      JavaFileObject prev = log.useSource(this);
-    //      try {
-    //        final char[] chars = FileUtil.loadFileText(f, encodingName);
-    //        cb = CharBuffer.wrap(chars);
-    //      }
-    //      finally {
-    //        log.useSource(prev);
-    //      }
-    //      if (!ignoreEncodingErrors) {
-    //        myContentCache.put(this, new SoftReference<CharBuffer>(cb));
-    //      }
-    //    }
-    //    finally {
-    //      in.close();
-    //    }
-    //  }
-    //  return cb;
-    //}
+    private CharBuffer loadFileContent(boolean ignoreEncodingErrors) throws IOException {
+      final InputStream in = new FileInputStream(f);
+      final ByteBuffer bb = makeByteBuffer(in);
+      JavaFileObject prev = log.useSource(this);
+      try {
+        return decode(bb, ignoreEncodingErrors);
+      }
+      finally {
+        log.useSource(prev);
+        myByteBufferCache.put(bb); // save for next time
+        in.close();
+      }
+    }
 
     @Override
     public boolean equals(Object other) {
@@ -534,7 +522,36 @@ class OptimizedFileManager extends DefaultFileManager {
     void put(ByteBuffer x) {
       myCached.set(x);
     }
+
+    void clear() {
+      myCached.set(null);
+    }
   }
   private final ByteBufferCache myByteBufferCache = new ByteBufferCache();
 
+
+  private static volatile boolean ourPathCacheClearProblem = false;
+
+  public void close() {
+    try {
+      super.close();
+    }
+    finally {
+      // archives are cleared in super.close()
+      if (ourUseContentCache) {
+        myContentCache.clear();
+      }
+      myDirectoryCache.clear();
+      myByteBufferCache.clear();
+      myIsFile.clear();
+      if (!ourPathCacheClearProblem) {
+        try {
+          Paths.clearPathExistanceCache();
+        }
+        catch (Throwable ignored) {
+          ourPathCacheClearProblem = true;
+        }
+      }
+    }
+  }
 }

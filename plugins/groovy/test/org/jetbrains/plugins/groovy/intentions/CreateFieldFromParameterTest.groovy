@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.intentions
-
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.intentions.declaration.GrCreateFieldForParameterIntention
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author Max Medvedev
  */
@@ -56,8 +55,12 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
     for (intention in intentions) {
       if (intention instanceof IntentionActionWrapper) intention = intention.delegate
       if (intention instanceof GrCreateFieldForParameterIntention) {
-        intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
-        doPostponedFormatting(project)
+        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+          void run() {
+            intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
+            doPostponedFormatting(myFixture.project)
+          }
+        })
         break
       }
     }

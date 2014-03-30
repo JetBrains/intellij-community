@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class XDebugProcessStarter {
-
   /**
    * Create a new instance of {@link XDebugProcess} implementation. Note that <code>session</code> isn't initialized when this method is
    * called so in order to perform code depending on <code>session</code> parameter override {@link XDebugProcess#sessionInitialized} method
@@ -33,5 +32,4 @@ public abstract class XDebugProcessStarter {
    */
   @NotNull
   public abstract XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException;
-
 }

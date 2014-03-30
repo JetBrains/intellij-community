@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,14 +39,14 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
-    final ArrayList<FoldingTransferableData.FoldingData> list = new ArrayList<FoldingTransferableData.FoldingData>();
+    final ArrayList<FoldingData> list = new ArrayList<FoldingData>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
       for (int j = 0; j < startOffsets.length; j++) {
         if (startOffsets[j] <= region.getStartOffset() && region.getEndOffset() <= endOffsets[j]) {
           list.add(
-            new FoldingTransferableData.FoldingData(
+            new FoldingData(
               region.getStartOffset() - startOffsets[j],
               region.getEndOffset() - startOffsets[j],
               region.isExpanded()
@@ -56,7 +56,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
       }
     }
 
-    return new FoldingTransferableData(list.toArray(new FoldingTransferableData.FoldingData[list.size()]));
+    return new FoldingTransferableData(list.toArray(new FoldingData[list.size()]));
   }
 
   @Override
@@ -64,7 +64,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
   public FoldingTransferableData extractTransferableData(final Transferable content) {
     FoldingTransferableData foldingData = null;
     try {
-      final DataFlavor flavor = FoldingTransferableData.FoldingData.getDataFlavor();
+      final DataFlavor flavor = FoldingData.getDataFlavor();
       if (flavor != null) {
         foldingData = (FoldingTransferableData)content.getTransferData(flavor);
       }
@@ -89,13 +89,15 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
                                       int caretOffset,
                                       Ref<Boolean> indented,
                                       final FoldingTransferableData value) {
+    if (value.getData().length == 0) return;
+
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor, true);
 
     Runnable operation = new Runnable() {
       @Override
       public void run() {
-        for (FoldingTransferableData.FoldingData data : value.getData()) {
+        for (FoldingData data : value.getData()) {
           FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
           if (region != null) {
             region.setExpanded(data.isExpanded);

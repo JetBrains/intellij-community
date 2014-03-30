@@ -34,9 +34,9 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "<parent>" +
                      "  <groupId><caret></groupId>" +
                      "  <artifactId>junit</artifactId>" +
-                     "  <version><caret></version>" +
+                     "  <version></version>" +
                      "</parent>");
-    assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
+    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

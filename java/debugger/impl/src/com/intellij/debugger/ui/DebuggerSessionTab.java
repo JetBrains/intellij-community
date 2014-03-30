@@ -32,13 +32,11 @@ import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.execution.DefaultExecutionResult;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.ExceptionFilters;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
@@ -82,13 +80,13 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private DebugUIEnvironment myDebugUIEnvironment;
+  private final DebugUIEnvironment myDebugUIEnvironment;
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
 
   public DebuggerSessionTab(final Project project, final String sessionName, @NotNull final DebugUIEnvironment environment,
-                            @NotNull DebuggerSession debuggerSession) throws ExecutionException {
+                            @NotNull DebuggerSession debuggerSession) {
     super(project, "JavaDebugger", sessionName, debuggerSession.getSearchScope());
     myDebuggerSession = debuggerSession;
     myDebugUIEnvironment = environment;
@@ -100,6 +98,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     final DebuggerSettings debuggerSettings = DebuggerSettings.getInstance();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getContextManager().addListener(new DebuggerContextListener() {
+        @Override
         public void changeEvent(DebuggerContextImpl newContext, int event) {
           switch (event) {
             case DebuggerSession.EVENT_DETACHED:
@@ -176,12 +175,14 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
 
     myUi.addListener(new ContentManagerAdapter() {
+      @Override
       public void selectionChanged(ContentManagerEvent event) {
         updateStatus(event.getContent());
       }
     }, this);
 
     debuggerSession.getContextManager().addListener(new DebuggerContextListener() {
+      @Override
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         if (!myUi.isDisposed()) {
           attractFramesOnPause(event);
@@ -262,8 +263,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (myConsole instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)myConsole).createConsoleActions();
-      for (AnAction goaction : actions) {
-        consoleActions.add(goaction);
+      for (AnAction goAction : actions) {
+        consoleActions.add(goAction);
       }
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
@@ -346,6 +347,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   }
 
 
+  @Override
   public void dispose() {
     disposeSession();
     myFramesPanel.dispose();
@@ -426,7 +428,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   @Nullable
   @Override
   protected RunProfile getRunProfile() {
-    return myDebugUIEnvironment != null ? myDebugUIEnvironment.getRunProfile() : null;
+    return myDebugUIEnvironment.getRunProfile();
   }
 
   private void attractFramesOnPause(final int event) {
@@ -452,18 +454,14 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   public void addThreadDump(List<ThreadState> threads) {
     final Project project = getProject();
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    List<Filter> filters = ExceptionFilters.getFilters(myDebuggerSession.getSearchScope());
-    for (Filter filter : filters) {
-      consoleBuilder.addFilter(filter);
-    }
+    consoleBuilder.filters(ExceptionFilters.getFilters(myDebuggerSession.getSearchScope()));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
     final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
 
-    final Icon icon = null;
     final String id = createThreadDumpContentId();
-    final Content content = myUi.createContent(id, panel, id, icon, null);
+    final Content content = myUi.createContent(id, panel, id, null, null);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     myUi.addContent(content);
@@ -471,11 +469,13 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         myUi.removeContent(content, true);
       }
     });
     Disposer.register(content, new Disposable() {
+      @Override
       public void dispose() {
         myThreadDumpsCount -= 1;
         if (myThreadDumpsCount == 0) {
@@ -483,6 +483,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
         }
       }
     });
+    Disposer.register(content, consoleView);
     myUi.selectAndFocus(content, true, false);
     if (threads.size() > 0) {
       panel.selectStackFrame(0);
@@ -494,15 +495,18 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {
+    @Override
     public void fireStateChanged(DebuggerContextImpl newContext, int event) {
       super.fireStateChanged(newContext, event);
     }
 
+    @Override
     public DebuggerContextImpl getContext() {
       final DebuggerSession session = myDebuggerSession;
       return session != null ? session.getContextManager().getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
 
+    @Override
     public void setState(DebuggerContextImpl context, int state, int event, String description) {
       final DebuggerSession session = myDebuggerSession;
       if (session != null) {
@@ -519,6 +523,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -526,10 +531,12 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myAutoModeEnabled;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean enabled) {
       myAutoModeEnabled = enabled;
       DebuggerSettings.getInstance().AUTO_VARIABLES_MODE = enabled;
@@ -551,6 +558,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
@@ -567,10 +575,12 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
       }
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myWatchesReturnValues;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
       DebuggerSettings.getInstance().WATCH_RETURN_VALUES = watch;

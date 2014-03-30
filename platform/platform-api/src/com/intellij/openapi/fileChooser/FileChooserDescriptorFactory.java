@@ -71,6 +71,14 @@ public class FileChooserDescriptorFactory {
     return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
+  public static FileChooserDescriptorBuilder onlyFiles() {
+    return FileChooserDescriptorBuilder.onlyFiles();
+  }
+
+  public static FileChooserDescriptorBuilder filesAndFolders() {
+    return FileChooserDescriptorBuilder.filesAndFolders();
+  }
+
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String aSearchedObjectName) {
     final FileChooserDescriptor singleFolderDescriptor = createSingleFolderDescriptor();
     singleFolderDescriptor.setTitle(UIBundle.message("file.chooser.select.object.title", aSearchedObjectName));

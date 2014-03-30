@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ import java.util.List;
 
 // todo get rid of!!!!!!!!!!!!!
 public class TestVirtualFile extends VirtualFile {
-  private String myName;
+  private final String myName;
   private String myContent;
   private boolean isReadOnly;
   private long myTimestamp;
 
-  private boolean IsDirectory;
+  private final boolean IsDirectory;
   private VirtualFile myParent;
   private final List<TestVirtualFile> myChildren = new ArrayList<TestVirtualFile>();
 
@@ -76,6 +76,7 @@ public class TestVirtualFile extends VirtualFile {
     return IsDirectory;
   }
 
+  @NotNull
   @Override
   public String getPath() {
     if (myParent == null) return myName;

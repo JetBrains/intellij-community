@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText {
   private StatusText myEmptyText;
@@ -48,16 +50,27 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return JBTextField.this.getText().isEmpty();
+        return JBTextField.this.getText().isEmpty() && !isFocusOwner();
       }
 
       @Override
       protected Rectangle getTextComponentBound() {
-        Rectangle bounds = super.getTextComponentBound();
-        return new Rectangle(JBTextField.this.getInsets().left, bounds.y, bounds.width, bounds.height);
+        Rectangle b = getBounds();
+        return new Rectangle(getInsets().left >> 1, 0, b.width, b.height);
       }
     };
     myEmptyText.clear();
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,10 +108,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
       protected Collection<Pair<Change, String>> createCollection() {
         return new LinkedList<Pair<Change, String>>();
-      }
-
-      protected Collection<Pair<Change, String>> createEmptyCollection() {
-        return Collections.emptyList();
       }
     };
 
@@ -220,9 +217,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       // scope is not important: nothing had been added jet, nothing to move to "old state" members
       newList.startProcessingChanges(myProject, null);      // this is executed only when use through GATE
     }
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("ChangeListWorker.addChangeList: " + newList);
-    }
     return newList.copy();
   }
 
@@ -271,9 +265,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
 
     final LocalChangeList removed = myMap.remove(listName);
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("ChangeListWorker.removeChangeList: name = [" + name + "], removed = " + removed);
-    }
     return true;
   }
 
@@ -443,7 +434,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final Set<VirtualFile> result = ContainerUtil.newLinkedHashSet();
     for (LocalChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
         final ContentRevision before = change.getBeforeRevision();
@@ -462,7 +453,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         }
       }
     }
-    return result;
+    return new ArrayList<VirtualFile>(result);
   }
 
   public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
@@ -699,8 +690,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  public ThreeState haveChangesUnder(final VirtualFile vf) {
-    final String absolutePath = new File(vf.getPath()).getAbsolutePath();
+  @NotNull
+  public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
+    final String absolutePath = new File(virtualFile.getPath()).getAbsolutePath();
     final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
     for (String path : tailSet) {
       return FileUtil.isAncestorThreeState(absolutePath, path, false);

@@ -119,7 +119,7 @@ public class CommitHelper {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
       boolean success = doesntContainErrors(processor.getVcsExceptions());
       if (success) {
-        reportSuccess(processor);
+        reportResult(processor);
       }
       return success;
     }
@@ -140,7 +140,7 @@ public class CommitHelper {
           @Override
           public NotificationInfo notifyFinished() {
             if (myCustomResultHandler == null) {
-              String text = reportSuccess(processor);
+              String text = reportResult(processor);
               return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
             }
             return null;
@@ -182,23 +182,31 @@ public class CommitHelper {
     }
   }
 
-  private String reportSuccess(GeneralCommitProcessor processor) {
+  private String reportResult(GeneralCommitProcessor processor) {
     final List<Change> changesFailedToCommit = processor.getChangesFailedToCommit();
 
     int failed = changesFailedToCommit.size();
     int committed = myIncludedChanges.size() - failed;
 
-    String text = committed + " " + StringUtil.pluralize("change", committed) + " committed";
+    String text = committed + " " + StringUtil.pluralize("file", committed) + " committed";
     if (failed > 0) {
-      text += ", " + failed + " " + StringUtil.pluralize("change", failed) + " failed to commit";
+      text += ", " + failed + " " + StringUtil.pluralize("file", failed) + " failed to commit";
     }
     StringBuilder content = new StringBuilder(StringUtil.isEmpty(myCommitMessage) ? text : text + ": " + escape(myCommitMessage));
     for (String s : myFeedback) {
       content.append("\n");
       content.append(s);
     }
-    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), NotificationType.INFORMATION).notify(myProject);
+    NotificationType notificationType = resolveNotificationType(processor);
+    VcsBalloonProblemNotifier.NOTIFICATION_GROUP.createNotification(content.toString(), notificationType).notify(myProject);
     return text;
+  }
+
+  private static NotificationType resolveNotificationType(@NotNull GeneralCommitProcessor processor) {
+    boolean hasExceptions = !processor.getVcsExceptions().isEmpty();
+    boolean hasOnlyWarnings = doesntContainErrors(processor.getVcsExceptions());
+
+    return hasExceptions ? (hasOnlyWarnings ? NotificationType.WARNING : NotificationType.ERROR) : NotificationType.INFORMATION;
   }
 
   /*

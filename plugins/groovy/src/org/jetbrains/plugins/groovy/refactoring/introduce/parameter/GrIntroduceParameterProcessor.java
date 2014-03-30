@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -23,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -41,7 +44,10 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 import org.jetbrains.plugins.groovy.refactoring.util.AnySupers;
 
 import java.util.ArrayList;
@@ -57,12 +63,26 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   private IntroduceParameterData.ExpressionWrapper myParameterInitializer;
 
   public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings) {
-    super(settings.getProject());
-    this.mySettings = settings;
+    this(settings, createExpressionWrapper(settings));
+  }
 
-    LOG.assertTrue(mySettings.getToReplaceIn() instanceof GrMethod);
-    LOG.assertTrue(mySettings.getToSearchFor() instanceof PsiMethod);
-    myParameterInitializer = new GrExpressionWrapper(mySettings.getExpression());
+  public GrIntroduceParameterProcessor(GrIntroduceParameterSettings settings, GrExpressionWrapper expr) {
+    super(settings.getProject());
+    mySettings = settings;
+
+    myParameterInitializer = expr;
+  }
+
+  private static GrExpressionWrapper createExpressionWrapper(GrIntroduceParameterSettings settings) {
+    LOG.assertTrue(settings.getToReplaceIn() instanceof GrMethod);
+    LOG.assertTrue(settings.getToSearchFor() instanceof PsiMethod);
+
+    final StringPartInfo stringPartInfo = settings.getStringPartInfo();
+    GrVariable var = settings.getVar();
+    final GrExpression expression = stringPartInfo != null ? stringPartInfo.createLiteralFromSelected() :
+                                    var != null ? var.getInitializerGroovy()
+                                                : settings.getExpression();
+    return new GrExpressionWrapper(expression);
   }
 
   @NotNull
@@ -138,7 +158,15 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
           result.add(implicitUsageInfo);
         }
         else if (ref instanceof PsiClass) {
-          result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+          if (ref instanceof GrAnonymousClassDefinition) {
+            result.add(new ExternalUsageInfo(((GrAnonymousClassDefinition)ref).getBaseClassReferenceGroovy()));
+          }
+          else if (ref instanceof PsiAnonymousClass) {
+            result.add(new ExternalUsageInfo(((PsiAnonymousClass)ref).getBaseClassReference()));
+          }
+          else {
+            result.add(new NoConstructorClassUsageInfo((PsiClass)ref));
+          }
         }
         else if (!PsiTreeUtil.isAncestor(mySettings.getToReplaceIn(), ref, false)) {
           result.add(new ExternalUsageInfo(ref));
@@ -150,9 +178,16 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     }
 
     if (mySettings.replaceAllOccurrences()) {
-      PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
-      for (PsiElement expr : exprs) {
-        result.add(new InternalUsageInfo(expr));
+      if (mySettings.getVar() != null) {
+        for (PsiElement element : GrIntroduceHandlerBase.collectVariableUsages(mySettings.getVar(), mySettings.getToReplaceIn())) {
+          result.add(new InternalUsageInfo(element));
+        }
+      }
+      else {
+        PsiElement[] exprs = GroovyIntroduceParameterUtil.getOccurrences(mySettings);
+        for (PsiElement expr : exprs) {
+          result.add(new InternalUsageInfo(expr));
+        }
       }
     }
     else {
@@ -175,7 +210,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
   protected void performRefactoring(UsageInfo[] usages) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
-    PsiType initializerType = mySettings.getSelectedType();
+    //PsiType initializerType = mySettings.getSelectedType();
 
     // Changing external occurrences (the tricky part)
 
@@ -186,35 +221,48 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
 
     final boolean methodsToProcessAreDifferent = toReplaceIn != toSearchFor;
     if (mySettings.generateDelegate()) {
-      GroovyIntroduceParameterUtil.generateDelegate(toReplaceIn, myParameterInitializer, myProject);
-      if (methodsToProcessAreDifferent) {
-        final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, myParameterInitializer, myProject);
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && containingClass.isInterface()) {
-          final GrOpenBlock block = method.getBlock();
-          if (block != null) {
-            block.delete();
-          }
-        }
-      }
+      generateDelegate(toReplaceIn, toSearchFor, methodsToProcessAreDifferent);
     }
 
     // Changing signature of initial method
     // (signature of myMethodToReplaceIn will be either changed now or have already been changed)
-    LOG.assertTrue(initializerType == null || initializerType.isValid());
+    //LOG.assertTrue(initializerType == null || initializerType.isValid());
 
-    final FieldConflictsResolver fieldConflictsResolver =
-      new FieldConflictsResolver(mySettings.getName(), toReplaceIn.getBlock());
-    IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toReplaceIn), usages, this);
-    if (methodsToProcessAreDifferent) {
-      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, this);
+    final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(mySettings.getName(), toReplaceIn.getBlock());
+
+    processMethodSignature(usages, toReplaceIn, toSearchFor, methodsToProcessAreDifferent);
+    processUsages(usages, factory);
+    processStringPart();
+    processVar();
+
+    fieldConflictsResolver.fix();
+  }
+
+  private void processVar() {
+    final GrVariable var = mySettings.getVar();
+    if (var != null && mySettings.removeLocalVariable()) {
+      var.delete();
     }
+  }
 
+  private void processStringPart() {
+    final StringPartInfo stringPartInfo = mySettings.getStringPartInfo();
+    if (stringPartInfo != null) {
+      final GrExpression
+        expr = mySettings.getStringPartInfo().replaceLiteralWithConcatenation(mySettings.getName());
+      final Editor editor = PsiUtilBase.findEditor(expr);
+      if (editor != null) {
+        editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());
+      }
+    }
+  }
+
+  private void processUsages(UsageInfo[] usages, GroovyPsiElementFactory factory) {
     // Replacing expression occurrences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
         PsiElement element = usage.getElement();
-
         GroovyIntroduceParameterUtil.processChangedMethodCall(element, mySettings, myProject);
       }
       else if (usage instanceof InternalUsageInfo) {
@@ -229,17 +277,35 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
         }
       }
     }
+  }
 
-    final GrVariable var = mySettings.getVar();
-    if (var != null && mySettings.removeLocalVariable()) {
-      var.delete();
+  private void processMethodSignature(UsageInfo[] usages,
+                                      GrMethod toReplaceIn,
+                                      PsiMethod toSearchFor,
+                                      boolean methodsToProcessAreDifferent) {
+    IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toReplaceIn), usages, this);
+    if (methodsToProcessAreDifferent) {
+      IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(toSearchFor), usages, this);
     }
-    fieldConflictsResolver.fix();
+  }
+
+  private void generateDelegate(GrMethod toReplaceIn, PsiMethod toSearchFor, boolean methodsToProcessAreDifferent) {
+    GroovyIntroduceParameterUtil.generateDelegate(toReplaceIn, myParameterInitializer, myProject);
+    if (methodsToProcessAreDifferent) {
+      final GrMethod method = GroovyIntroduceParameterUtil.generateDelegate(toSearchFor, myParameterInitializer, myProject);
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
+        final GrOpenBlock block = method.getBlock();
+        if (block != null) {
+          block.delete();
+        }
+      }
+    }
   }
 
   @Override
   protected String getCommandName() {
-    return RefactoringBundle.message("introduce.parameter.command", UsageViewUtil.getDescriptiveName(mySettings.getToReplaceIn()));
+    return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl.win32;
 
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,10 +44,9 @@ class Win32FsCache {
 
   @NotNull
   private Map<String, FileAttributes> getMap() {
-    Reference<Map<String, FileAttributes>> cache = myCache;
-    Map<String, FileAttributes> map = cache == null ? null : cache.get();
+    Map<String, FileAttributes> map = com.intellij.reference.SoftReference.dereference(myCache);
     if (map == null) {
-      map = new THashMap<String, FileAttributes>();
+      map = new THashMap<String, FileAttributes>(FileUtil.PATH_HASHING_STRATEGY);
       myCache = new SoftReference<Map<String, FileAttributes>>(map);
     }
     return map;

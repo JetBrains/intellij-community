@@ -23,9 +23,9 @@ import org.jetbrains.annotations.NonNls;
  */
 public class LayoutCodeConstants {
 
-  public static final @NonNls String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
-  public static final @NonNls String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
-  public static final @NonNls String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
+  @NonNls public static final String OPTIMIZE_IMPORTS_KEY     = "LayoutCode.optimizeImports";
+  @NonNls public static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
+  @NonNls public static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
 
   private LayoutCodeConstants() {
   }

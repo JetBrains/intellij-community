@@ -7,13 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,6 +29,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   private final Set<ProjectStructureElement> myElementsToShowWarningIfUnused = new HashSet<ProjectStructureElement>();
   private final Map<ProjectStructureElement, ProjectStructureProblemDescription> myWarningsAboutUnused = new HashMap<ProjectStructureElement, ProjectStructureProblemDescription>();
   private final MergingUpdateQueue myAnalyzerQueue;
+  private final MergingUpdateQueue myResultsUpdateQueue;
   private final EventDispatcher<ProjectStructureDaemonAnalyzerListener> myDispatcher = EventDispatcher.create(ProjectStructureDaemonAnalyzerListener.class);
   private final AtomicBoolean myStopped = new AtomicBoolean(false);
   private final ProjectConfigurationProblems myProjectConfigurationProblems;
@@ -36,7 +37,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public ProjectStructureDaemonAnalyzer(StructureConfigurableContext context) {
     Disposer.register(context, this);
     myProjectConfigurationProblems = new ProjectConfigurationProblems(this, context);
-    myAnalyzerQueue = new MergingUpdateQueue("Project Structure Daemon Analyzer", 300, false, null, this, null, false);
+    myAnalyzerQueue = new MergingUpdateQueue("Project Structure Daemon Analyzer", 300, false, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myResultsUpdateQueue = new MergingUpdateQueue("Project Structure Analysis Results Updater", 300, false, MergingUpdateQueue.ANY_COMPONENT,
+                                                  this, null, Alarm.ThreadToUse.SWING_THREAD);
   }
 
   private void doUpdate(final ProjectStructureElement element, final boolean check, final boolean collectUsages) {
@@ -63,21 +66,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         ProjectStructureValidator.check(element, problemsHolder);
       }
     }.execute();
-    invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myStopped.get()) return;
-
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("updating problems for " + element);
-        }
-        final ProjectStructureProblemDescription warning = myWarningsAboutUnused.get(element);
-        if (warning != null)
-          problemsHolder.registerProblem(warning);
-        myProblemHolders.put(element, problemsHolder);
-        myDispatcher.getMulticaster().problemsChanged(element);
-      }
-    });
+    myResultsUpdateQueue.queue(new ProblemsComputedUpdate(element, problemsHolder));
   }
 
   private void doCollectUsages(final ProjectStructureElement element) {
@@ -92,18 +81,9 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
         result.setResult(getUsagesInElement(element));
       }
     }.execute().getResultObject();
-
-    invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myStopped.get() || usages == null) return;
-
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("updating usages for " + element);
-        }
-        updateUsages(element, usages);
-      }
-    });
+    if (usages != null) {
+      myResultsUpdateQueue.queue(new UsagesCollectedUpdate(element, usages));
+    }
   }
 
   private static List<ProjectStructureElementUsage> getUsagesInElement(final ProjectStructureElement element) {
@@ -116,11 +96,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       addUsage(usage);
     }
     myElementWithNotCalculatedUsages.remove(element);
-    reportUnusedElements();
-  }
-
-  private static void invokeLater(Runnable runnable) {
-    SwingUtilities.invokeLater(runnable);
+    myResultsUpdateQueue.queue(new ReportUnusedElementsUpdate());
   }
 
   public void queueUpdate(@NotNull final ProjectStructureElement element) {
@@ -141,20 +117,27 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   }
 
   public void removeElement(ProjectStructureElement element) {
-    myElementWithNotCalculatedUsages.remove(element);
-    myElementsToShowWarningIfUnused.remove(element);
-    myWarningsAboutUnused.remove(element);
-    myProblemHolders.remove(element);
-    final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);
-    if (usages != null) {
-      for (ProjectStructureElementUsage usage : usages) {
-        myProblemHolders.remove(usage.getContainingElement());
-      }
-    }
-    removeUsagesInElement(element);
-    myDispatcher.getMulticaster().problemsChanged(element);
-    reportUnusedElements();
+    removeElements(Collections.singletonList(element));
   }
+
+  public void removeElements(@NotNull List<? extends ProjectStructureElement> elements) {
+    myElementWithNotCalculatedUsages.removeAll(elements);
+    myElementsToShowWarningIfUnused.removeAll(elements);
+    for (ProjectStructureElement element : elements) {
+      myWarningsAboutUnused.remove(element);
+      myProblemHolders.remove(element);
+      final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.removeAll(element);
+      if (usages != null) {
+        for (ProjectStructureElementUsage usage : usages) {
+          myProblemHolders.remove(usage.getContainingElement());
+        }
+      }
+      removeUsagesInElement(element);
+      myDispatcher.getMulticaster().problemsChanged(element);
+    }
+    myResultsUpdateQueue.queue(new ReportUnusedElementsUpdate());
+  }
+
 
   private void reportUnusedElements() {
     if (!myElementWithNotCalculatedUsages.isEmpty()) return;
@@ -205,8 +188,10 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     LOG.debug("analyzer stopped");
     myStopped.set(true);
     myAnalyzerQueue.cancelAllUpdates();
+    myResultsUpdateQueue.cancelAllUpdates();
     clearCaches();
     myAnalyzerQueue.deactivate();
+    myResultsUpdateQueue.deactivate();
   }
 
   public void clearCaches() {
@@ -232,6 +217,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public void dispose() {
     myStopped.set(true);
     myAnalyzerQueue.cancelAllUpdates();
+    myResultsUpdateQueue.cancelAllUpdates();
   }
 
   @Nullable
@@ -256,6 +242,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
   public void reset() {
     LOG.debug("analyzer started");
     myAnalyzerQueue.activate();
+    myResultsUpdateQueue.activate();
     myAnalyzerQueue.queue(new Update("reset") {
       @Override
       public void run() {
@@ -270,9 +257,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     mySourceElement2Usages.clear();
     myContainingElement2Usages.clear();
     myElementWithNotCalculatedUsages.clear();
-    if (myProjectConfigurationProblems != null) {
-      myProjectConfigurationProblems.clearProblems();
-    }
+    myProjectConfigurationProblems.clearProblems();
   }
 
   private class AnalyzeElementUpdate extends Update {
@@ -310,6 +295,80 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       catch (Throwable t) {
         LOG.error(t);
       }
+    }
+  }
+
+  private class UsagesCollectedUpdate extends Update {
+    private final ProjectStructureElement myElement;
+    private final List<ProjectStructureElementUsage> myUsages;
+    private final Object[] myEqualityObjects;
+
+    public UsagesCollectedUpdate(ProjectStructureElement element, List<ProjectStructureElementUsage> usages) {
+      super(element);
+      myElement = element;
+      myUsages = usages;
+      myEqualityObjects = new Object[]{element, "usages collected"};
+    }
+
+    @NotNull
+    @Override
+    public Object[] getEqualityObjects() {
+      return myEqualityObjects;
+    }
+
+    @Override
+    public void run() {
+      if (myStopped.get()) return;
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("updating usages for " + myElement);
+      }
+      updateUsages(myElement, myUsages);
+    }
+  }
+
+  private class ProblemsComputedUpdate extends Update {
+    private final ProjectStructureElement myElement;
+    private final ProjectStructureProblemsHolderImpl myProblemsHolder;
+    private final Object[] myEqualityObjects;
+
+    public ProblemsComputedUpdate(ProjectStructureElement element, ProjectStructureProblemsHolderImpl problemsHolder) {
+      super(element);
+      myElement = element;
+      myProblemsHolder = problemsHolder;
+      myEqualityObjects = new Object[]{element, "problems computed"};
+    }
+
+    @NotNull
+    @Override
+    public Object[] getEqualityObjects() {
+      return myEqualityObjects;
+    }
+
+    @Override
+    public void run() {
+      if (myStopped.get()) return;
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("updating problems for " + myElement);
+      }
+      final ProjectStructureProblemDescription warning = myWarningsAboutUnused.get(myElement);
+      if (warning != null) {
+        myProblemsHolder.registerProblem(warning);
+      }
+      myProblemHolders.put(myElement, myProblemsHolder);
+      myDispatcher.getMulticaster().problemsChanged(myElement);
+    }
+  }
+
+  private class ReportUnusedElementsUpdate extends Update {
+    private ReportUnusedElementsUpdate() {
+      super("unused elements");
+    }
+
+    @Override
+    public void run() {
+      reportUnusedElements();
     }
   }
 }

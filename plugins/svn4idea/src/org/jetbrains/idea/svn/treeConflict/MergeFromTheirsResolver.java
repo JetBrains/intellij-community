@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -586,11 +587,15 @@ public class MergeFromTheirsResolver {
 
   private boolean getAddedFilesPlaceOption() {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    boolean add = Boolean.TRUE.equals(configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE);
-    if (configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE == null) {
-      if (! containAdditions(myTheirsChanges) && ! containAdditions(myTheirsBinaryChanges)) return false;
-      final int i = Messages.showYesNoDialog("Keep newly created file(s) in their original place?", TreeConflictRefreshablePanel.TITLE, "Keep", "Move",
-                                             Messages.getQuestionIcon(), new DialogWrapper.DoNotAskOption() {
+    boolean add = Boolean.TRUE.equals(configuration.isKeepNewFilesAsIsForTreeConflictMerge());
+    if (configuration.isKeepNewFilesAsIsForTreeConflictMerge() != null) {
+      return add;
+    }
+    if (!containAdditions(myTheirsChanges) && !containAdditions(myTheirsBinaryChanges)) {
+      return false;
+    }
+    return Messages.YES == MessageDialogBuilder.yesNo(TreeConflictRefreshablePanel.TITLE, "Keep newly created file(s) in their original place?").yesText("Keep").noText("Move").doNotAsk(
+      new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return true;
@@ -601,10 +606,10 @@ public class MergeFromTheirsResolver {
           if (!value) {
             if (exitCode == 0) {
               // yes
-              configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = true;
+              configuration.setKeepNewFilesAsIsForTreeConflictMerge(true);
             }
             else {
-              configuration.TREE_CONFLICT_MERGE_THEIRS_NEW_INTO_OLD_PLACE = false;
+              configuration.setKeepNewFilesAsIsForTreeConflictMerge(false);
             }
           }
         }
@@ -623,10 +628,7 @@ public class MergeFromTheirsResolver {
         public String getDoNotShowMessage() {
           return CommonBundle.message("dialog.options.do.not.ask");
         }
-      });
-      add = Messages.YES == i;
-    }
-    return add;
+      }).show();
   }
 
   private boolean containAdditions(final List<Change> changes) {

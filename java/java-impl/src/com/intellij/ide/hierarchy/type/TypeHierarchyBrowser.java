@@ -35,7 +35,7 @@ import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.Map;
 
-public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
+public class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
 

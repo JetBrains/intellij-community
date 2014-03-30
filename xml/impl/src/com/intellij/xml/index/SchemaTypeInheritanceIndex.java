@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,11 +133,12 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     };
   }
 
+  @NotNull
   @Override
   public DataExternalizer<Set<SchemaTypeInfo>> getValueExternalizer() {
     return new DataExternalizer<Set<SchemaTypeInfo>>() {
       @Override
-      public void save(DataOutput out, Set<SchemaTypeInfo> value) throws IOException {
+      public void save(@NotNull DataOutput out, Set<SchemaTypeInfo> value) throws IOException {
         out.writeInt(value.size());
         for (SchemaTypeInfo key : value) {
           out.writeUTF(key.getNamespaceUri());
@@ -147,7 +148,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
       }
 
       @Override
-      public Set<SchemaTypeInfo> read(DataInput in) throws IOException {
+      public Set<SchemaTypeInfo> read(@NotNull DataInput in) throws IOException {
         final Set<SchemaTypeInfo> set = new HashSet<SchemaTypeInfo>();
         final int size = in.readInt();
         for (int i = 0; i < size; i++) {

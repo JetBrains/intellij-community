@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
   @Override
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager,
+                                             @NotNull final GlobalInspectionContext globalContext,
+                                             @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     return queryExternalUsagesRequests(globalContext.getRefManager(), globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT), problemDescriptionsProcessor);
   }
 
-  protected boolean queryExternalUsagesRequests(RefManager manager, GlobalJavaInspectionContext globalContext, ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull RefManager manager, @NotNull GlobalJavaInspectionContext globalContext, @NotNull ProblemDescriptionsProcessor processor) {
     return false;
   }
 

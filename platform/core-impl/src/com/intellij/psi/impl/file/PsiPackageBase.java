@@ -44,7 +44,11 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   final PsiManager myManager;
   private final String myQualifiedName;
 
-  protected abstract Collection<PsiDirectory> getAllDirectories();
+  protected Collection<PsiDirectory> getAllDirectories() {
+    return getAllDirectories(false);
+  }
+
+  protected abstract Collection<PsiDirectory> getAllDirectories(boolean includeLibrarySources);
 
   protected abstract PsiElement findPackage(String qName);
 
@@ -81,7 +85,8 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   @NotNull
   public PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope) {
     List<PsiDirectory> result = null;
-    final Collection<PsiDirectory> directories = getAllDirectories();
+    final boolean includeLibrarySources = scope.isForceSearchingInLibrarySources();
+    final Collection<PsiDirectory> directories = getAllDirectories(includeLibrarySources);
     for (final PsiDirectory directory : directories) {
       if (scope.contains(directory.getVirtualFile())) {
         if (result == null) result = new ArrayList<PsiDirectory>();
@@ -103,7 +108,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
     if (myQualifiedName.isEmpty()) return null;
     int index = myQualifiedName.lastIndexOf('.');
-    if (index < 0) {
+    if (index <= 0) {
       return myQualifiedName;
     }
     else {

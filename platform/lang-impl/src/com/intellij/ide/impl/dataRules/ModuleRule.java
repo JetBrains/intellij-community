@@ -18,10 +18,12 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,30 +33,51 @@ import com.intellij.psi.PsiElement;
  *         Date: Feb 10, 2004
  */
 public class ModuleRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     Object moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
     if (moduleContext != null) {
       return moduleContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
+    Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     if (project == null) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
+      if (element == null) {
+        PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
+        if (psiElements != null && psiElements.length > 0) {
+          element = psiElements[0];
+        }
+      }
       if (element == null || !element.isValid()) return null;
       project = element.getProject();
     }
 
-    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider);
-    if (virtualFile == null) {
-      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(PlatformDataKeys.VIRTUAL_FILE.getName());
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    if (files == null) {
+      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
       if (dataRule != null) {
-        virtualFile = (VirtualFile)dataRule.getData(dataProvider);
+        files = (VirtualFile[])dataRule.getData(dataProvider);
       }
     }
 
-    if (virtualFile == null) {
+    if (files == null) {
       return null;
     }
 
-    return ModuleUtil.findModuleForFile(virtualFile, project);
+    Module singleModule = null;
+    for (VirtualFile file : files) {
+      Module module = ModuleUtilCore.findModuleForFile(file, project);
+      if (module == null) {
+        return null;
+      }
+      if (singleModule == null) {
+        singleModule = module;
+      }
+      else if (module != singleModule) {
+        return null;
+      }
+    }
+
+    return singleModule;
   }
 }

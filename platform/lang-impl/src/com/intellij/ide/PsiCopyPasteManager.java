@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide;
 
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
@@ -31,7 +30,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -66,27 +65,11 @@ public class PsiCopyPasteManager {
       }
     });
   }
-    
 
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
-      Transferable content = myCopyPasteManager.getContents();
-      if (content == null) {
-        return null;
-      }
-
-      Object transferData;
-      try {
-        transferData = content.getTransferData(ourDataFlavor);
-      }
-      catch (UnsupportedFlavorException e) {
-        return null;
-      }
-      catch (IOException e) {
-        return null;
-      }
-
+      Object transferData = myCopyPasteManager.getContents(ourDataFlavor);
       if (!(transferData instanceof MyData)) {
         return null;
       }
@@ -100,9 +83,7 @@ public class PsiCopyPasteManager {
       return myRecentData.getElements();
     }
     catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       return null;
     }
   }
@@ -128,19 +109,13 @@ public class PsiCopyPasteManager {
   }
 
   public void clear() {
-    Transferable old = myCopyPasteManager.getContents();
     myRecentData = null;
-    StringSelection _new = new StringSelection("");
-    myCopyPasteManager.setSystemClipboardContent(_new);
-    myCopyPasteManager.fireContentChanged(old, _new);
+    myCopyPasteManager.setContents(new StringSelection(""));
   }
 
   public void setElements(PsiElement[] elements, boolean copied) {
-    Transferable old = myCopyPasteManager.getContents();
     myRecentData = new MyData(elements, copied);
-    MyTransferable _new = new MyTransferable(myRecentData);
-    myCopyPasteManager.setSystemClipboardContent(_new);
-    myCopyPasteManager.fireContentChanged(old, _new);
+    myCopyPasteManager.setContents(new MyTransferable(myRecentData));
   }
 
   public boolean isCutElement(Object element) {
@@ -175,7 +150,7 @@ public class PsiCopyPasteManager {
   }
 
 
-  private static class MyData {
+  public static class MyData {
     private PsiElement[] myElements;
     private final boolean myIsCopied;
 
@@ -221,7 +196,7 @@ public class PsiCopyPasteManager {
     public boolean isCopied() {
       return myIsCopied;
     }
-    
+
     @Nullable
     public Project getProject() {
       if (myElements == null || myElements.length == 0) {
@@ -248,6 +223,11 @@ public class PsiCopyPasteManager {
       myDataProxy = data;
     }
 
+    public MyTransferable(PsiElement[] selectedValues) {
+      this(new PsiCopyPasteManager.MyData(selectedValues, true));
+    }
+
+    @Override
     @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (ourDataFlavor.equals(flavor)) {
@@ -273,7 +253,7 @@ public class PsiCopyPasteManager {
         }
       }
       else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {
-        return new ByteArrayInputStream("1".getBytes());
+        return new ByteArrayInputStream("1".getBytes(CharsetToolkit.UTF8_CHARSET));
       }
 
       return null;
@@ -310,12 +290,14 @@ public class PsiCopyPasteManager {
       }
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
       return myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
+      return ArrayUtilRt.find(getTransferDataFlavors(), flavor) != -1;
     }
 
     public PsiElement[] getElements() {

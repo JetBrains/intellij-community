@@ -57,17 +57,15 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
       final String text = stub.getDefaultValueText();
       if (StringUtil.isEmpty(text)) return null;
 
-      if (myCachedDefaultValue != null) {
-        final PsiAnnotationMemberValue value = myCachedDefaultValue.get();
-        if (value != null) {
-          return value;
-        }
+      PsiAnnotationMemberValue value = SoftReference.dereference(myCachedDefaultValue);
+      if (value != null) {
+        return value;
       }
 
       @NonNls final String annoText = "@interface _Dummy_ { Class foo() default " + text + "; }";
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile file = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, annoText);
-      final PsiAnnotationMemberValue value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();
+      value = ((PsiAnnotationMethod)file.getClasses()[0].getMethods()[0]).getDefaultValue();
       myCachedDefaultValue = new SoftReference<PsiAnnotationMemberValue>(value);
       return value;
     }

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
@@ -32,7 +33,8 @@ public class MarkAsOriginalTypeAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
     Collection<VirtualFile> filesToUnmark = new ArrayList<VirtualFile>();
     for (VirtualFile file : selectedFiles) {
@@ -42,13 +44,15 @@ public class MarkAsOriginalTypeAction extends AnAction {
     }
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     assert typeManager != null;
-    typeManager.unmarkPlainText(filesToUnmark.toArray(new VirtualFile[filesToUnmark.size()]));
+    if (project != null) {
+      typeManager.resetOriginalFileType(project, filesToUnmark.toArray(new VirtualFile[filesToUnmark.size()]));
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     final Presentation presentation = e.getPresentation();
     final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     presentation.setVisible(false);

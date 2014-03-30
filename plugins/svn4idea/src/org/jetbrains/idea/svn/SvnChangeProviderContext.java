@@ -74,7 +74,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
+  public void bewareRoot(VirtualFile vf, SVNURL url) {
   }
 
   public ChangelistBuilder getBuilder() {
@@ -198,10 +198,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   void processStatus(final FilePath filePath, final SVNStatus status) throws SVNException {
-    final int wcFormat = status.getWorkingCopyFormat();
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.getFormat() != wcFormat && ISVNWCDb.WC_FORMAT_17 != wcFormat) {
+    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
+    if (!WorkingCopyFormat.UNKNOWN.equals(format) && format.less(WorkingCopyFormat.ONE_DOT_SEVEN)) {
       loadEntriesFile(filePath);
     }
+
     if (status != null) {
       FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 
@@ -215,27 +216,30 @@ class SvnChangeProviderContext implements StatusReceiver {
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_ADDED)) {
         myChangelistBuilder.processChangeInList(createChange(null, CurrentContentRevision.create(filePath), fStatus, status),
-                                                changeListNameFromStatus(status), SvnVcs.getKey());
+                                                SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_CONFLICTED) ||
                SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MODIFIED) ||
                SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_REPLACED) ||
                propStatus == SVNStatusType.STATUS_MODIFIED ||
                propStatus == SVNStatusType.STATUS_CONFLICTED) {
-        myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status),
-                            CurrentContentRevision.create(filePath), fStatus, status), changeListNameFromStatus(status), SvnVcs.getKey());
+        myChangelistBuilder.processChangeInList(
+          createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath), fStatus,
+                       status), SvnUtil.getChangelistName(status), SvnVcs.getKey());
         checkSwitched(filePath, myChangelistBuilder, status, fStatus);
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_DELETED)) {
         myChangelistBuilder.processChangeInList(
           createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), null, fStatus, status),
-          changeListNameFromStatus(status), SvnVcs.getKey());
+          SvnUtil.getChangelistName(status), SvnVcs.getKey());
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_MISSING)) {
         myChangelistBuilder.processLocallyDeletedFile(createLocallyDeletedChange(filePath, status));
       }
       else if (SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_IGNORED)) {
-        myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
+        if (!myVcs.isWcRoot(filePath)) {
+          myChangelistBuilder.processIgnoredFile(filePath.getVirtualFile());
+        }
       }
       else if (status.isCopied()) {
         //
@@ -243,9 +247,9 @@ class SvnChangeProviderContext implements StatusReceiver {
       else if ((fStatus == FileStatus.NOT_CHANGED || fStatus == FileStatus.SWITCHED) && statusType != SVNStatusType.STATUS_NONE) {
         VirtualFile file = filePath.getVirtualFile();
         if (file != null && FileDocumentManager.getInstance().isFileModified(file)) {
-          myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status),
-                                                   CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), changeListNameFromStatus(status),
-                                                  SvnVcs.getKey());
+          myChangelistBuilder.processChangeInList(
+            createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status), CurrentContentRevision.create(filePath),
+                         FileStatus.MODIFIED, status), SvnUtil.getChangelistName(status), SvnVcs.getKey());
         } else if (status.getTreeConflict() != null) {
           myChangelistBuilder.processChange(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, status),
                                                    CurrentContentRevision.create(filePath), FileStatus.MODIFIED, status), SvnVcs.getKey());
@@ -257,23 +261,15 @@ class SvnChangeProviderContext implements StatusReceiver {
   
   public void addModifiedNotSavedChange(final VirtualFile file) throws SVNException {
     final FilePath filePath = new FilePathImpl(file);
-    final SVNInfo svnInfo;
-    try {
-      svnInfo = myVcs.createWCClient().doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+    final SVNInfo svnInfo = myVcs.getInfo(file);
+
+    if (svnInfo != null) {
+      final SVNStatus svnStatus = new SVNStatus();
+      svnStatus.setRevision(svnInfo.getRevision());
+      myChangelistBuilder.processChangeInList(
+        createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()), CurrentContentRevision.create(filePath),
+                     FileStatus.MODIFIED, svnStatus), (String)null, SvnVcs.getKey());
     }
-    catch (SVNException e) {
-      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
-        return;
-      }
-      throw e;
-    }
-    final SVNStatus svnStatus = new SVNStatus();
-    svnStatus.setRevision(svnInfo.getRevision());
-    myChangelistBuilder.processChangeInList(createChange(SvnContentRevision.createBaseRevision(myVcs, filePath, svnInfo.getRevision()),
-                                             CurrentContentRevision.create(filePath), FileStatus.MODIFIED, svnStatus), (String) null,
-                                            SvnVcs.getKey());
   }
 
   private void checkSwitched(final FilePath filePath, final ChangelistBuilder builder, final SVNStatus status,
@@ -368,13 +364,16 @@ class SvnChangeProviderContext implements StatusReceiver {
 
       final FilePath path = ChangesUtil.getFilePath(change);
       final File ioFile = path.getIOFile();
-      final SVNWCClient wcClient = myVcs.createWCClient();
       final File beforeFile = deletedStatus != null ? deletedStatus.getFile() : ioFile;
       final String beforeList = SVNStatusType.STATUS_ADDED.equals(propertiesStatus) && deletedStatus == null ? null :
-                                AbstractShowPropertiesDiffAction.getPropertyList(beforeFile, SVNRevision.BASE, wcClient);
+                                AbstractShowPropertiesDiffAction.getPropertyList(myVcs, beforeFile, SVNRevision.BASE);
       final String afterList = SVNStatusType.STATUS_DELETED.equals(propertiesStatus) ? null :
-                               AbstractShowPropertiesDiffAction.getPropertyList(ioFile, SVNRevision.WORKING, wcClient);
+                               AbstractShowPropertiesDiffAction.getPropertyList(myVcs, ioFile, SVNRevision.WORKING);
 
+      // TODO: There are cases when status output is like (on newly added file with some properties that is locally deleted)
+      // <entry path="some_path"> <wc-status item="missing" revision="-1" props="modified"> </wc-status> </entry>
+      // TODO: For such cases in current logic we'll have Change with before revision containing SVNRevision.UNDEFINED
+      // TODO: Analyze if this logic is OK or we should update flow somehow (for instance, to have null before revision)
       final String beforeRevisionNu = change.getBeforeRevision() == null ? null : change.getBeforeRevision().getRevisionNumber().asString();
       final String afterRevisionNu = change.getAfterRevision() == null ? null : change.getAfterRevision().getRevisionNumber().asString();
 
@@ -401,17 +400,5 @@ class SvnChangeProviderContext implements StatusReceiver {
     }
 
     return ConflictState.getInstance(treeConflict, textConflict, propertyConflict);
-  }
-
-  @Nullable
-  private static String changeListNameFromStatus(final SVNStatus status) {
-    if (WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()).supportsChangelists()) {
-      if (SVNNodeKind.FILE.equals(status.getKind())) {
-        final String clName = status.getChangelistName();
-        return (clName == null) ? null : clName;
-      }
-    }
-    // always null for earlier versions
-    return null;
   }
 }

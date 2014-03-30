@@ -43,10 +43,12 @@ public class DependencyUISettings implements PersistentStateComponent<Dependency
     return ServiceManager.getService(DependencyUISettings.class);
   }
 
+  @Override
   public DependencyUISettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(DependencyUISettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,36 @@
  */
 package com.siyeh.ipp.expression;
 
-import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.psiutils.ConcatenationUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipExpressionIntention extends MutablyNamedIntention {
 
   @Override
   public String getTextForElement(PsiElement element) {
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    final PsiJavaToken sign = expression.getOperationSign();
-    final String operatorText = sign.getText();
-    final IElementType token = sign.getTokenType();
-    final boolean commutative =
-      ParenthesesUtils.isCommutativeBinaryOperator(token);
-    if (commutative) {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name",
-                                              operatorText);
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element.getParent();
+    final PsiExpression[] operands = expression.getOperands();
+    final PsiJavaToken sign = expression.getTokenBeforeOperand(operands[1]);
+    final String operatorText = sign == null ? "" : sign.getText();
+    final IElementType tokenType = expression.getOperationTokenType();
+    final boolean commutative = ParenthesesUtils.isCommutativeOperator(tokenType);
+    if (commutative && !ConcatenationUtils.isConcatenation(expression)) {
+      return IntentionPowerPackBundle.message("flip.smth.intention.name", operatorText);
     }
     else {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name1",
-                                              operatorText);
+      return IntentionPowerPackBundle.message("flip.smth.intention.name1", operatorText);
     }
   }
 
@@ -54,24 +55,37 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    final PsiExpression lhs = expression.getLOperand();
-    final PsiExpression rhs = expression.getROperand();
-    final PsiJavaToken sign = expression.getOperationSign();
-    if (rhs == null) {
+  public void processIntention(@NotNull PsiElement element) {
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiElement parent = token.getParent();
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return;
     }
-    final String signText = sign.getText();
-    final String lhsText = lhs.getText();
-    final String rhsText = rhs.getText();
-    final StringBuilder newExpression = new StringBuilder(rhsText);
-    newExpression.append(signText);
-    if (lhsText.startsWith(signText)) {
-      newExpression.append(' ');
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    final StringBuilder newExpression = new StringBuilder();
+    String prevOperand = null;
+    final String tokenText = token.getText() + ' '; // 2- -1 without the space is not legal
+    for (PsiExpression operand : operands) {
+      final PsiJavaToken token1 = polyadicExpression.getTokenBeforeOperand(operand);
+      if (token == token1) {
+        newExpression.append(operand.getText()).append(tokenText);
+        continue;
+      }
+      if (prevOperand != null) {
+        newExpression.append(prevOperand).append(tokenText);
+      }
+      prevOperand = operand.getText();
     }
-    newExpression.append(lhsText);
-    replaceExpression(newExpression.toString(), expression);
+    newExpression.append(prevOperand);
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
+  }
+
+  @Override
+  protected void processIntention(Editor editor, @NotNull PsiElement element) {
+    final CaretModel caretModel = editor.getCaretModel();
+    final int offset = caretModel.getOffset();
+    super.processIntention(editor, element);
+    caretModel.moveToOffset(offset);
   }
 }

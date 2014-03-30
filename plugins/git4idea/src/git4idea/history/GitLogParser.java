@@ -56,13 +56,13 @@ import java.util.regex.Pattern;
  *  
  * @see git4idea.history.GitLogRecord
  */
-class GitLogParser {
+public class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
   public static final String RECORD_START = "\u0001";
   public static final String ITEMS_SEPARATOR = "\u0002";
   public static final String RECORD_END = "\u0003";
-  private static final String RECORD_START_GIT = "%x01";
+  public static final String RECORD_START_GIT = "%x01";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
   private static final String RECORD_END_GIT = "%x03";
 
@@ -110,8 +110,8 @@ class GitLogParser {
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
   enum GitLogOption {
-    SHORT_HASH("h"), HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
-    COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), SHORT_PARENTS("p"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
+    HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
+    COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
     RAW_BODY("B");
 
     private String myPlaceholder;

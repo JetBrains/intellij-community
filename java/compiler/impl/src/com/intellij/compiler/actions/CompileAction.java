@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -44,7 +43,7 @@ public class CompileAction extends CompileActionBase {
       CompilerManager.getInstance(project).compile(module, null);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (files.length > 0) {
         CompilerManager.getInstance(project).compile(files, null);
       }
@@ -63,7 +62,7 @@ public class CompileAction extends CompileActionBase {
     presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
     presentation.setVisible(true);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -72,7 +71,7 @@ public class CompileAction extends CompileActionBase {
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
-    final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
@@ -92,7 +91,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }
@@ -158,7 +157,6 @@ public class CompileAction extends CompileActionBase {
     }
     final PsiManager psiManager = PsiManager.getInstance(project);
     final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final FileTypeManager typeManager = FileTypeManager.getInstance();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     final List<VirtualFile> filesToCompile = new ArrayList<VirtualFile>();

@@ -27,6 +27,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,9 +35,9 @@ import org.jetbrains.annotations.NonNls;
 public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   public static final @NonNls Key<AnyExceptionBreakpoint> ANY_EXCEPTION_BREAKPOINT = BreakpointCategory.lookup("breakpoint_any");
 
-  protected AnyExceptionBreakpoint(Project project) {
-    super(project, null, null);
-    ENABLED = false;
+  protected AnyExceptionBreakpoint(Project project, XBreakpoint xBreakpoint) {
+    super(project, null, null, xBreakpoint);
+    //setEnabled(false);
   }
 
   public Key<AnyExceptionBreakpoint> getCategory() {
@@ -49,7 +50,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
 
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!ENABLED || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
+    if (!isEnabled() || !debugProcess.isAttached() || debugProcess.areBreakpointsMuted() || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
       return;
     }
     super.processClassPrepare(debugProcess, null);

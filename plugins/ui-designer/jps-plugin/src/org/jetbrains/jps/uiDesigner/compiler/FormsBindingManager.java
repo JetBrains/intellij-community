@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -39,6 +40,7 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -132,12 +134,14 @@ public class FormsBindingManager extends FormsBuilder {
       for (final Map.Entry<File, ModuleBuildTarget> entry : formsToCompile.entrySet()) {
         final File form = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
-        final File boundSource = findBoundSource(context, target, form);
-        if (boundSource != null && !excludes.isExcluded(boundSource)) {
-          addBinding(boundSource, form, srcToForms);
-          FSOperations.markDirty(context, boundSource);
-          filesToCompile.put(boundSource, target);
-          exitCode = ExitCode.OK;
+        final Collection<File> sources = findBoundSourceCandidates(context, target, form);
+        for (File boundSource : sources) {
+          if (!excludes.isExcluded(boundSource)) {
+            addBinding(boundSource, form, srcToForms);
+            FSOperations.markDirty(context, boundSource);
+            filesToCompile.put(boundSource, target);
+            exitCode = ExitCode.OK;
+          }
         }
       }
 
@@ -163,7 +167,7 @@ public class FormsBindingManager extends FormsBuilder {
 
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
 
-    if (config.isCopyFormsRuntimeToOutput() && !formsToCompile.isEmpty()) {
+    if (config.isCopyFormsRuntimeToOutput() && containsValidForm(formsToCompile.keySet())) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
         if (!target.isTests()) {
           final File outputDir = target.getOutputDir();
@@ -185,23 +189,41 @@ public class FormsBindingManager extends FormsBuilder {
     return exitCode;
   }
 
-  @Nullable
-  private static File findBoundSource(CompileContext context, final ModuleBuildTarget target, File form) throws IOException {
+  private static boolean containsValidForm(Set<File> files) {
+    for (File file : files) {
+      try {
+        if (FormsParsing.readBoundClassName(file) != null) {
+          return true;
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static Collection<File> findBoundSourceCandidates(CompileContext context, final ModuleBuildTarget target, File form) throws IOException {
     final List<JavaSourceRootDescriptor> targetRoots = context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context);
     if (targetRoots.isEmpty()) {
-      return null;
+      return Collections.emptyList();
     }
     final String className = FormsParsing.readBoundClassName(form);
     if (className == null) {
-      return null;
+      return Collections.emptyList();
     }
     for (JavaSourceRootDescriptor rd : targetRoots) {
       final File boundSource = findSourceForClass(rd, className);
       if (boundSource != null) {
-        return boundSource;
+        return Collections.singleton(boundSource);
       }
     }
-    return null;
+
+    final Set<File> candidates = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    for (JavaSourceRootDescriptor rd : targetRoots) {
+      candidates.addAll(findPossibleSourcesForClass(rd, className));
+    }
+    return candidates;
   }
 
   @Nullable
@@ -209,19 +231,7 @@ public class FormsBindingManager extends FormsBuilder {
     if (boundClassName == null) {
       return null;
     }
-
-    String clsName = boundClassName;
-    String prefix = rd.getPackagePrefix();
-    if (!StringUtil.isEmpty(prefix)) {
-      if (!StringUtil.endsWith(prefix, ".")) {
-        prefix += ".";
-      }
-      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.startsWith(clsName, prefix) : StringUtil.startsWithIgnoreCase(clsName, prefix)) {
-        clsName = clsName.substring(prefix.length());
-      }
-    }
-
-    String relPath = clsName.replace('.', '/') + JAVA_EXTENSION;
+    String relPath = suggestRelativePath(rd, boundClassName);
     while (true) {
       final File candidate = new File(rd.getRootFile(), relPath);
       if (candidate.exists()) {
@@ -235,4 +245,41 @@ public class FormsBindingManager extends FormsBuilder {
     }
   }
 
+  @Nullable
+  private static Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
+    if (boundClassName == null) {
+      return Collections.emptyList();
+    }
+    String relPath = suggestRelativePath(rd, boundClassName);
+    final File containingDirectory = new File(rd.getRootFile(), relPath).getParentFile();
+    if (containingDirectory == null) {
+      return Collections.emptyList();
+    }
+    final File[] files = containingDirectory.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(JAVA_EXTENSION);
+      }
+    });
+    if (files == null || files.length == 0) {
+      return Collections.emptyList();
+    }
+    return Arrays.asList(files); 
+  }
+
+  @NotNull
+  private static String suggestRelativePath(@NotNull JavaSourceRootDescriptor rd, @NotNull String className) {
+    String clsName = className;
+    String prefix = rd.getPackagePrefix();
+    if (!StringUtil.isEmpty(prefix)) {
+      if (!StringUtil.endsWith(prefix, ".")) {
+        prefix += ".";
+      }
+      if (SystemInfo.isFileSystemCaseSensitive? StringUtil.startsWith(clsName, prefix) : StringUtil.startsWithIgnoreCase(clsName, prefix)) {
+        clsName = clsName.substring(prefix.length());
+      }
+    }
+
+    return clsName.replace('.', '/') + JAVA_EXTENSION;
+  }
 }

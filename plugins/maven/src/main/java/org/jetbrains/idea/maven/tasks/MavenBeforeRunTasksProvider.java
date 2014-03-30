@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.tasks;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,15 +28,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.execution.ParametersListUtil;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenEditGoalDialog;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
-import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -43,6 +46,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
   public static final Key<MavenBeforeRunTask> ID = Key.create("Maven.BeforeRunTask");
@@ -63,32 +67,35 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
   @Override
   public Icon getIcon() {
-    return icons.MavenIcons.MavenLogo;
+    return MavenIcons.MavenLogo;
+  }
+
+  @Nullable
+  @Override
+  public Icon getTaskIcon(MavenBeforeRunTask task) {
+    return MavenIcons.MavenLogo;
   }
 
   @Override
   public String getDescription(MavenBeforeRunTask task) {
-    String desc = null;
-    Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
-    if (projectAndGoal != null) desc = projectAndGoal.first.getDisplayName() + ":" + projectAndGoal.second;
-    return desc == null
-           ? TasksBundle.message("maven.tasks.before.run.empty")
-           : TasksBundle.message("maven.tasks.before.run", desc);
+    MavenProject mavenProject = getMavenProject(task);
+    if (mavenProject == null) {
+      return TasksBundle.message("maven.tasks.before.run.empty");
+    }
+
+    String desc = mavenProject.getDisplayName() + ": " + StringUtil.notNullize(task.getGoal()).trim();
+    return TasksBundle.message("maven.tasks.before.run", desc);
   }
 
   @Nullable
-  private Pair<MavenProject, String> getProjectAndGoalChecked(MavenBeforeRunTask task) {
-    String path = task.getProjectPath();
-    String goal = task.getGoal();
-    if (path == null || goal == null) return null;
+  private MavenProject getMavenProject(MavenBeforeRunTask task) {
+    String pomXmlPath = task.getProjectPath();
+    if (StringUtil.isEmpty(pomXmlPath)) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(pomXmlPath);
     if (file == null) return null;
 
-    MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(file);
-    if (project == null) return null;
-
-    return Pair.create(project, goal);
+    return MavenProjectsManager.getInstance(myProject).findProject(file);
   }
 
   public boolean isConfigurable() {
@@ -100,15 +107,37 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   public boolean configureTask(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
-    SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(myProject,
-                                                             task.getProjectPath(),
-                                                             task.getGoal(),
-                                                             TasksBundle.message("maven.tasks.select.goal.title"));
+    MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
+
+    dialog.setTitle(TasksBundle.message("maven.tasks.select.goal.title"));
+
+    if (task.getGoal() == null) {
+      // just created empty task.
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+      List<MavenProject> rootProjects = projectsManager.getRootProjects();
+      if (rootProjects.size() > 0) {
+        dialog.setSelectedMavenProject(rootProjects.get(0));
+      }
+      else {
+        dialog.setSelectedMavenProject(null);
+      }
+    }
+    else {
+      dialog.setGoals(task.getGoal());
+      MavenProject mavenProject = getMavenProject(task);
+      if (mavenProject != null) {
+        dialog.setSelectedMavenProject(mavenProject);
+      }
+      else {
+        dialog.setSelectedMavenProject(null);
+      }
+    }
+
     dialog.show();
     if (!dialog.isOK()) return false;
 
-    task.setProjectPath(dialog.getSelectedProjectPath());
-    task.setGoal(dialog.getSelectedGoal());
+    task.setProjectPath(dialog.getWorkDirectory() + "/pom.xml");
+    task.setGoal(dialog.getGoals());
     return true;
   }
 
@@ -126,10 +155,10 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
-            final Project project = PlatformDataKeys.PROJECT.getData(context);
-            final Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
+            final Project project = CommonDataKeys.PROJECT.getData(context);
+            final MavenProject mavenProject = getMavenProject(task);
 
-            if (project == null || project.isDisposed() || projectAndGoal == null) return;
+            if (project == null || project.isDisposed() || mavenProject == null) return;
 
             FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -142,8 +171,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
                 try {
                   MavenRunnerParameters params = new MavenRunnerParameters(
                     true,
-                    projectAndGoal.first.getDirectory(),
-                    Collections.singletonList(projectAndGoal.second),
+                    mavenProject.getDirectory(),
+                    ParametersListUtil.parse(task.getGoal()),
                     explicitProfiles);
 
                   result[0] = mavenRunner.runBatch(Collections.singletonList(params),

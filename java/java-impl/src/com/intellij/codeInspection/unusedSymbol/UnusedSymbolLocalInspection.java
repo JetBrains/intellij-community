@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,13 @@
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.openapi.project.ProjectUtil;
 import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,35 +37,27 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
-
-  @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
-  @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
-
-  public boolean LOCAL_VARIABLE = true;
-  public boolean FIELD = true;
-  public boolean METHOD = true;
-  public boolean CLASS = true;
-  public boolean PARAMETER = true;
-  public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
-
-
+public class UnusedSymbolLocalInspection extends UnusedSymbolLocalInspectionBase implements PairedUnfairLocalInspectionTool {
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @Pattern(VALID_ID_PATTERN)
   @NotNull
   @NonNls
@@ -82,8 +70,15 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return "unused";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public String getInspectionForBatchShortName() {
+    return UnusedDeclarationInspection.SHORT_NAME;
   }
 
   public class OptionsPanel {
@@ -107,6 +102,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myReportUnusedParametersInPublics.setEnabled(PARAMETER);
 
       final ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
@@ -124,7 +120,8 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myCheckClassesCheckBox.addActionListener(listener);
       myCheckParametersCheckBox.addActionListener(listener);
       myReportUnusedParametersInPublics.addActionListener(listener);
-      myAnnos.add(EntryPointsManagerImpl.createConfigureAnnotationsBtn(myPanel),
+      Project project = ProjectUtil.guessCurrentProject(myPanel);
+      myAnnos.add(EntryPointsManager.getInstance(project).createConfigureAnnotationsBtn(),
                   new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                          new Insets(10, 0, 0, 0), 0, 0));
     }
@@ -134,20 +131,9 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     }
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new OptionsPanel().getPanel();
-  }
-
-  public static IntentionAction createQuickFix(@NonNls String qualifiedName, @Nls String element, Project project) {
-    final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
-    return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
-      QuickFixBundle.message("fix.unused.symbol.injection.family"),
-      entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
-  }
-
-  public static boolean isInjected(final PsiModifierListOwner modifierListOwner) {
-    return EntryPointsManagerImpl.getInstance(modifierListOwner.getProject()).isEntryPoint(modifierListOwner);
   }
 }

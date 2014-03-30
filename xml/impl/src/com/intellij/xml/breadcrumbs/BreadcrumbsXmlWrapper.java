@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -84,21 +87,24 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final FileStatusManager manager = FileStatusManager.getInstance(project);
     manager.addFileStatusListener(new FileStatusListener() {
       public void fileStatusesChanged() {
-        if (myComponent != null && myEditor != null) {
-          final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
-          myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
-          updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
-        }
+        updateCrumbs();
       }
 
       public void fileStatusChanged(@NotNull final VirtualFile virtualFile) {
       }
     }, this);
 
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        updateCrumbs();
+      }
+    }, this);
+
 
     myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
 
-    final CaretListener caretListener = new CaretListener() {
+    final CaretListener caretListener = new CaretAdapter() {
       public void caretPositionChanged(final CaretEvent e) {
         if (myUserCaretChange) {
           queueUpdate(editor);
@@ -181,6 +187,14 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     myWrapperPanel.setOpaque(false);
 
     myWrapperPanel.add(myComponent, BorderLayout.CENTER);
+  }
+
+  private void updateCrumbs() {
+    if (myComponent != null && myEditor != null) {
+      final Font editorFont = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+      myComponent.setFont(editorFont.deriveFont(Font.PLAIN, editorFont.getSize2D()));
+      updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
+    }
   }
 
   public void queueUpdate(Editor editor) {

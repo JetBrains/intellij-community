@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +32,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
@@ -52,13 +55,20 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
  */
 public class JavaMemberNameCompletionContributor extends CompletionContributor {
-  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN =
-    psiElement().afterLeaf(psiElement().withText("?").afterLeaf("<", ","));
+  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
+    afterLeaf(psiElement().withText("?").andOr(
+      psiElement().afterLeaf("<", ","),
+      psiElement().afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), psiElement(PsiAnnotation.class))));
+
   static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
+      return;
+    }
+
+    if (parameters.getInvocationCount() == 0 && TemplateManagerImpl.getTemplateState(parameters.getEditor()) != null) {
       return;
     }
 
@@ -99,7 +109,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     String propertyName = null;
     if (variableKind == VariableKind.PARAMETER) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
-      propertyName = PropertyUtil.getPropertyName(method);
+      if (method != null) {
+        propertyName = PropertyUtil.getPropertyName(method);
+      }
       if (method != null && method.getName().startsWith("with")) {
         propertyName = StringUtil.decapitalize(method.getName().substring(4));
       }
@@ -112,10 +124,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
     if (!hasStartMatches(set, matcher)) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(LookupElementBuilder.create("object"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("object")));
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(LookupElementBuilder.create("string"));
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("string")));
       }
     }
 
@@ -123,7 +135,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       addLookupItems(set, null, matcher, project, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class, PsiLambdaExpression.class);
     addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false));
     if (var instanceof PsiParameter && parent instanceof PsiMethod) {
       addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);
@@ -370,15 +382,15 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     for (final PsiField field : psiClass.getFields()) {
       if (field == element) continue;
 
-      assert field.isValid() : "invalid field: " + field;
+      PsiUtilCore.ensureValid(field);
       PsiType fieldType = field.getType();
-      assert fieldType.isValid() : "invalid field type: " + field + "; " + fieldType + " of " + fieldType.getClass();
+      PsiUtil.ensureValidType(fieldType);
 
       final PsiModifierList modifierList = field.getModifierList();
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        final String getterName = PropertyUtil.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
@@ -386,7 +398,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
 
       if (PsiType.VOID.equals(varType)) {
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = PropertyUtil.suggestSetterName(field);
         if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
              psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
           propertyHandlers.add(setterName);
@@ -410,17 +422,26 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
           continue outer;
         }
       }
-      
+
       LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
       if (callback != null) {
-        element = LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
-            callback.nameChosen(item.getLookupString());
-          }
-        });
+        element = withInsertHandler(callback, element);
       }
       lookupElements.add(element);
     }
+  }
+
+  private static LookupElementDecorator<LookupElement> withInsertHandler(final SuggestedNameInfo callback, LookupElement element) {
+    return LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+      @Override
+      public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+        TailType tailType = LookupItem.getDefaultTailType(context.getCompletionChar());
+        if (tailType != null) {
+          context.setAddCompletionChar(false);
+          tailType.processTail(context.getEditor(), context.getTailOffset());
+        }
+        callback.nameChosen(item.getLookupString());
+      }
+    });
   }
 }

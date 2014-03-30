@@ -15,8 +15,8 @@
  */
 package org.jetbrains.jps.client;
 
-import org.jboss.netty.channel.MessageEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.javac.JavacRemoteProto;
 
 import java.util.UUID;
 
@@ -25,5 +25,5 @@ import java.util.UUID;
 *         Date: 1/22/12
 */
 public interface UUIDGetter {
-  @NotNull UUID getSessionUUID(@NotNull MessageEvent e);
+  @NotNull UUID getSessionUUID(@NotNull JavacRemoteProto.Message message);
 }

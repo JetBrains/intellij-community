@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,14 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteCatchFix implements IntentionAction {
   private final PsiParameter myCatchParameter;
 
-  public DeleteCatchFix(PsiParameter myCatchParameter) {
+  public DeleteCatchFix(@NotNull PsiParameter myCatchParameter) {
     this.myCatchParameter = myCatchParameter;
   }
 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("delete.catch.text", HighlightUtil.formatType(myCatchParameter.getType()));
+    return QuickFixBundle.message("delete.catch.text", JavaHighlightUtil.formatType(myCatchParameter.getType()));
   }
 
   @Override
@@ -45,17 +45,15 @@ public class DeleteCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCatchParameter != null
-           && myCatchParameter.isValid()
-           && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
+    return myCatchParameter.isValid() && PsiManager.getInstance(project).isInProject(myCatchParameter.getContainingFile());
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myCatchParameter.getContainingFile())) return;
 
     final PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
-    if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
+    if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null && tryStatement.getResourceList() == null) {
       // unwrap entire try statement
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       PsiElement lastAddedStatement = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -35,7 +36,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -184,7 +184,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (isNegated(instanceOfExpression)) return false;
     final PsiExpression expression = statement.getExpression();
     final PsiExpression operand = instanceOfExpression.getOperand();
-    if (operand instanceof PsiReferenceExpression && expression instanceof PsiReferenceExpression && 
+    if (operand instanceof PsiReferenceExpression && expression instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)operand).resolve() == ((PsiReferenceExpression)expression).resolve()){
       return true;
     }
@@ -198,7 +198,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
@@ -206,7 +206,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(file, editor, instanceOfExpression.getOperand());
       PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression, statementInside);
       if (decl == null) return;
-      decl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl);
+      decl = (PsiDeclarationStatement)CodeStyleManager.getInstance(project).reformat(decl);
+      decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
@@ -269,15 +270,15 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
     if (blockStatement != null) {
       final PsiStatement[] statements = blockStatement.getCodeBlock().getStatements();
-      if (statements.length == 1 && 
-          statements[0] instanceof PsiExpressionStatement && 
+      if (statements.length == 1 &&
+          statements[0] instanceof PsiExpressionStatement &&
           PsiEquivalenceUtil.areElementsEquivalent(((PsiExpressionStatement)statements[0]).getExpression(), operand)) {
         return statements[0];
       }
     }
     return null;
   }
-  
+
   @Nullable
   private static PsiDeclarationStatement createLocalVariableDeclaration(final PsiInstanceOfExpression instanceOfExpression,
                                                                         final PsiStatement statementInside) throws IncorrectOperationException {
@@ -342,7 +343,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           anchorAfter = newBranch.getCodeBlock().getLBrace();
         }
         else {
-          anchorAfter = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
+          final PsiJavaToken lBrace = ((PsiBlockStatement)thenBranch).getCodeBlock().getLBrace();
+          if (lBrace != null) {
+            final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(lBrace, PsiWhiteSpace.class);
+            anchorAfter = nextSibling instanceof PsiComment ? PsiTreeUtil.skipSiblingsForward(nextSibling, PsiComment.class) : lBrace;
+          } 
         }
       }
     }

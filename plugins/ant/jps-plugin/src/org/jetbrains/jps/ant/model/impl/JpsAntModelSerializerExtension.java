@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
     return Arrays.asList(new JpsProjectAntConfigurationSerializer(), new JpsWorkspaceAntConfigurationSerializer());
   }
 
+  @NotNull
   @Override
   public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Arrays.asList(new JpsAntArtifactExtensionSerializer("ant-postprocessing", JpsAntArtifactExtensionImpl.POSTPROCESSING_ROLE),
@@ -147,6 +148,13 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
           }
           else if (dirUrl != null) {
             options.addJarDirectory(JpsPathUtil.urlToPath(dirUrl));
+          }
+        }
+        for (Element propertyTag : JDOMUtil.getChildren(buildFileTag.getChild("properties"), "property")) {
+          String name = propertyTag.getAttributeValue("name");
+          String value = propertyTag.getAttributeValue("value");
+          if (name != null && value != null) {
+            options.addProperty(name, value);
           }
         }
         optionsMap.put(url, options);

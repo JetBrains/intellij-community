@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,34 @@
 
 package com.maddyhome.idea.copyright.actions;
 
+import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SequentialTask;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.pattern.FileUtil;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UpdateCopyrightAction extends AnAction {
+public class UpdateCopyrightAction extends BaseAnalysisAction {
+  protected UpdateCopyrightAction() {
+    super(UpdateCopyrightProcessor.TITLE, UpdateCopyrightProcessor.TITLE);
+  }
+
   public void update(AnActionEvent event) {
     final boolean enabled = isEnabled(event);
     event.getPresentation().setEnabled(enabled);
@@ -41,7 +54,7 @@ public class UpdateCopyrightAction extends AnAction {
 
   private static boolean isEnabled(AnActionEvent event) {
     final DataContext context = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return false;
     }
@@ -49,8 +62,8 @@ public class UpdateCopyrightAction extends AnAction {
     if (!CopyrightManager.getInstance(project).hasAnyCopyrights()) {
       return false;
     }
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !FileTypeUtil.isSupportedFile(file)) {
@@ -94,79 +107,82 @@ public class UpdateCopyrightAction extends AnAction {
     return true;
   }
 
-  public void actionPerformed(AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
-    assert project != null;
-
-    final Module module = LangDataKeys.MODULE.getData(context);
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
-
-    PsiFile file = null;
-    PsiDirectory dir;
-    if (editor != null) {
-      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) {
-        return;
-      }
-      dir = file.getContainingDirectory();
-    }
-    else {
-      if (FileUtil.areFiles(files)) {
-        new UpdateCopyrightProcessor(project, null, FileUtil.convertToPsiFiles(files, project)).run();
-        return;
-      }
-      final Module modCtx = LangDataKeys.MODULE_CONTEXT.getData(context);
-      if (modCtx != null) {
-        new UpdateCopyrightProcessor(project, module).run();
-        return;
+  @Override
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+    if (scope.checkScopeWritable(project)) return;
+    final List<Runnable> preparations = new ArrayList<Runnable>();
+    Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        scope.accept(new PsiElementVisitor() {
+          @Override
+          public void visitFile(final PsiFile file) {
+            if (indicator.isCanceled()) {
+              return;
+            }
+            preparations.add(new UpdateCopyrightProcessor(project, ModuleUtilCore.findModuleForPsiElement(file), file).preprocessFile(file));
+          }
+        });
       }
 
-      final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
-      if (modules != null && modules.length > 0) {
-        List<PsiFile> psiFiles = new ArrayList<PsiFile>();
-        for (Module mod : modules) {
-          AbstractFileProcessor.findFiles(mod, psiFiles);
+      @Override
+      public void onSuccess() {
+        if (!preparations.isEmpty()) {
+          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE, true);
+          progressTask.setMinIterationTime(200);
+          progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            @Override
+            public void run() {
+              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  ProgressManager.getInstance().run(progressTask);
+                }
+              });
+            }
+          }, getTemplatePresentation().getText(), null);
         }
-        new UpdateCopyrightProcessor(project, null, PsiUtilCore.toPsiFileArray(psiFiles)).run();
-        return;
       }
+    };
 
-      final PsiElement psielement = LangDataKeys.PSI_ELEMENT.getData(context);
-      if (psielement == null) {
-        return;
-      }
-
-      if (psielement instanceof PsiDirectoryContainer) {
-        dir = ((PsiDirectoryContainer)psielement).getDirectories()[0];
-      }
-      else if (psielement instanceof PsiDirectory) {
-        dir = (PsiDirectory)psielement;
-      }
-      else {
-        file = psielement.getContainingFile();
-        if (file == null) {
-          return;
-        }
-        dir = file.getContainingDirectory();
-      }
-    }
-
-    final RecursionDlg recDlg = new RecursionDlg(project, file != null ? file.getVirtualFile() : dir.getVirtualFile());
-    recDlg.show();
-    if (!recDlg.isOK()) {
-      return;
-    }
-
-    if (recDlg.isAll()) {
-      new UpdateCopyrightProcessor(project, module, dir, recDlg.includeSubdirs()).run();
-    }
-    else {
-      new UpdateCopyrightProcessor(project, module, file).run();
-    }
+    ProgressManager.getInstance().run(task);
   }
 
+  private static class UpdateCopyrightSequentialTask implements SequentialTask {
+    private final int mySize;
+    private final List<Runnable> myRunnables;
+    private final SequentialModalProgressTask myProgressTask;
+    private int myIdx = 0;
+
+    private UpdateCopyrightSequentialTask(List<Runnable> runnables, SequentialModalProgressTask progressTask) {
+      myRunnables = runnables;
+      myProgressTask = progressTask;
+      mySize = myRunnables.size();
+    }
+
+    @Override
+    public void prepare() {}
+
+    @Override
+    public boolean isDone() {
+      return myIdx > mySize - 1;
+    }
+
+    @Override
+    public boolean iteration() {
+      final ProgressIndicator indicator = myProgressTask.getIndicator();
+      if (indicator != null) {
+        indicator.setFraction((double) myIdx/mySize);
+      }
+      myRunnables.get(myIdx++).run();
+      return true;
+    }
+
+    @Override
+    public void stop() {
+      myIdx = mySize;
+    }
+  }
 }

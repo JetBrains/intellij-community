@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
@@ -166,7 +167,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
-    return file.isValid() && file.isSymLink() ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
+    return file.isValid() && file.is(VFileProperty.SYMLINK) ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
   }
 
   public String getName(final VirtualFile file) {
@@ -232,19 +233,6 @@ public class FileChooserDescriptor implements Cloneable {
     myRoots.addAll(roots);
   }
 
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void setRoot(VirtualFile root) {
-    myRoots.clear();
-    myRoots.add(root);
-  }
-
-  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration")
-  public final void addRoot(VirtualFile root) {
-    myRoots.add(root);
-  }
-
   public boolean isTreeRootVisible() {
     return myIsTreeRootVisible;
   }
@@ -254,6 +242,7 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
+  @Override
   public final Object clone() {
     try {
       return super.clone();

@@ -22,11 +22,12 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class ReducingParser extends TokenParser{
+  @Override
   public final boolean parseToken(final PrattBuilder builder) {
     builder.advance();
     final IElementType type = parseFurther(builder);
     if (type == null) return false;
-    
+
     builder.reduce(type);
     return true;
   }

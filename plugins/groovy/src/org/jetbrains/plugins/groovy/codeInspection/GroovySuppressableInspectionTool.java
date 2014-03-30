@@ -44,22 +44,24 @@ import java.util.regex.Matcher;
 /**
  * @author peter
  */
-public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-  @Nullable
-  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
+public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
+  @NotNull
+  @Override
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     return getSuppressActions(getShortName());
 
   }
 
-  public static SuppressIntentionAction[] getSuppressActions(String name) {
+  public static SuppressQuickFix[] getSuppressActions(String name) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(name);
-    return new SuppressIntentionAction[]{
+    return new SuppressQuickFix[] {
       new SuppressByGroovyCommentFix(displayKey),
       new SuppressForMemberFix(displayKey, false),
       new SuppressForMemberFix(displayKey, true),
     };
   }
 
+  @Override
   public boolean isSuppressedFor(@NotNull final PsiElement element) {
     return isElementToolSuppressedIn(element, getID());
   }
@@ -124,7 +126,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     if (modifierList == null) {
       return Collections.emptyList();
     }
-    PsiAnnotation annotation = modifierList.findAnnotation(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = modifierList.findAnnotation(BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     if (annotation == null) {
       return Collections.emptyList();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,19 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
   @Override
-  public ItemPresentation getPresentation(final PsiDirectory directory) {
+  public ItemPresentation getPresentation(@NotNull final PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();
     final Project project = directory.getProject();
     final String locationString = vFile.getPath();
@@ -48,13 +51,10 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     }
 
     if (ProjectRootsUtil.isSourceRoot(directory)) {
-      if (ProjectRootsUtil.isInTestSource(directory)) {
-        return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_TEST_SOURCE_FOLDER, null);
-      }
-      else {
-        return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_SOURCE_FOLDERS_ICON, null);
+      SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
+      if (sourceRoot != null) {
+        Icon icon = SourceRootPresentation.getSourceRootIcon(sourceRoot);
+        return new PresentationData(directory.getName(), locationString, icon, null);
       }
     }
 

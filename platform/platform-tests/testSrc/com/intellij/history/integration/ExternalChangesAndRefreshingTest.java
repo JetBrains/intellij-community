@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,7 +131,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         executeSomeCommand();
       }
     };
@@ -159,7 +160,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     final String[] content = new String[1];
     VirtualFileListener l = new VirtualFileAdapter() {
       @Override
-      public void fileCreated(VirtualFileEvent e) {
+      public void fileCreated(@NotNull VirtualFileEvent e) {
         try {
           if (!e.getFile().getPath().equals(path)) return;
           content[0] = new String(e.getFile().contentsToByteArray());

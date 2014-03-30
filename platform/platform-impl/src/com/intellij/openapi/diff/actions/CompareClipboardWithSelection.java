@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.actions;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.*;
@@ -31,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 public class CompareClipboardWithSelection extends BaseDiffAction {
   @Nullable
   protected DiffRequest getDiffData(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-    Editor editorData = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editorData = CommonDataKeys.EDITOR.getData(dataContext);
     Editor editor = editorData != null ? editorData : FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return null;
     return new ClipboardSelectionContents(editor, project);

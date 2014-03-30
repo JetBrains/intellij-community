@@ -169,4 +169,9 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
       }
     };
   }
+
+  @Override
+  public int size() {
+    return myMap.size();
+  }
 }

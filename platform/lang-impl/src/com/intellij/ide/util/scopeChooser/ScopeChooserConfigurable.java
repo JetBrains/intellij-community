@@ -89,13 +89,16 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return MasterDetailsStateService.getInstance(myProject);
   }
 
+  @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<AnAction>();
     result.add(new MyAddAction(fromPopup));
     result.add(new MyDeleteAction(forAll(new Condition<Object>() {
+      @Override
       public boolean value(final Object o) {
         if (o instanceof MyNode) {
-          final Object editableObject = ((MyNode)o).getConfigurable().getEditableObject();
+          final NamedConfigurable namedConfigurable = ((MyNode)o).getConfigurable();
+          final Object editableObject = namedConfigurable != null ? namedConfigurable.getEditableObject() : null;
           return editableObject instanceof NamedScope;
         }
         return false;
@@ -108,12 +111,29 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return result;
   }
 
+  @Override
   public void reset() {
-    reloadTree();
+    myRoot.removeAllChildren();
+    loadScopes(mySharedScopesManager);
+    loadScopes(myLocalScopesManager);
+
+    loadComponentState();
+
+    final List<String> order = getScopesState().myOrder;
+    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
+      @Override
+      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
+        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
+        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
+        return idx1 - idx2;
+      }
+    });
+
     super.reset();
   }
 
 
+  @Override
   public void apply() throws ConfigurationException {
     final Set<MyNode> roots = new HashSet<MyNode>();
     roots.add(myRoot);
@@ -150,6 +170,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return (ScopeChooserConfigurableState)myState;
   }
 
+  @Override
   public boolean isModified() {
     final List<String> order = getScopesState().myOrder;
     if (myRoot.getChildCount() != order.size()) return true;
@@ -188,26 +209,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
   }
 
-  private void reloadTree() {
-    myRoot.removeAllChildren();
-    loadScopes(mySharedScopesManager);
-    loadScopes(myLocalScopesManager);
-
-    if (isModified()) {
-      loadStateOrder();
-    }
-
-
-    final List<String> order = getScopesState().myOrder;
-    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
-      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
-        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
-        return idx1 - idx2;
-      }
-    });
-  }
-
   private void loadStateOrder() {
     final List<String> order = getScopesState().myOrder;
     order.clear();
@@ -235,8 +236,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return result;
   }
 
+  @Override
   protected void initTree() {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath path = e.getOldLeadSelectionPath();
         if (path != null) {
@@ -251,6 +254,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     super.initTree();
     myTree.setShowsRootHandles(false);
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath treePath) {
         return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
       }
@@ -259,10 +263,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
   }
 
+  @Override
   protected void processRemovedItems() {
     //do nothing
   }
 
+  @Override
   protected boolean wasObjectStored(Object editableObject) {
     if (editableObject instanceof NamedScope) {
       NamedScope scope = (NamedScope)editableObject;
@@ -272,16 +278,19 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return false;
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("scopes.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getHelpTopic() {
     return PROJECT_SCOPES;  //todo help id
   }
 
+  @Override
   protected void updateSelection(@Nullable final NamedConfigurable configurable) {
     super.updateSelection(configurable);
     if (configurable instanceof ScopeConfigurable) {
@@ -289,6 +298,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
+  @Override
   protected
   @Nullable
   String getEmptySelectionString() {
@@ -325,6 +335,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private void createScope(final boolean isLocal, String title, final PackageSet set) {
     final String newName = Messages.showInputDialog(myTree, IdeBundle.message("add.scope.name.label"), title,
                                                     Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
+      @Override
       public boolean checkInput(String inputString) {
         final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
         for (NamedScope scope : holder.getPredefinedScopes()) {
@@ -335,6 +346,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         return inputString.trim().length() > 0;
       }
 
+      @Override
       public boolean canClose(String inputString) {
         return checkInput(inputString);
       }
@@ -345,12 +357,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(final String option) {
     return null;
@@ -370,6 +384,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       if (myFromPopup) {
@@ -377,18 +392,21 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     }
 
+    @Override
     @NotNull
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
         myChildren[0] = new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
                                      myLocalScopesManager.getIcon()) {
+          @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
         myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
                                      mySharedScopesManager.getIcon()) {
+          @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
           }
@@ -402,10 +420,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       return myChildren;
     }
 
+    @Override
     public ActionGroup getActionGroup() {
       return this;
     }
 
+    @Override
     public int getDefaultIndex() {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
@@ -434,10 +454,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       myDirection = direction;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
@@ -463,6 +485,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
@@ -473,6 +496,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
     }
@@ -484,6 +508,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
             AllIcons.Actions.Menu_saveall);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
@@ -504,6 +529,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
     }

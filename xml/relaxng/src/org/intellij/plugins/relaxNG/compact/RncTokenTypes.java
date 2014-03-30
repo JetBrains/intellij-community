@@ -168,7 +168,7 @@ public class RncTokenTypes {
   public static final IElementType KEYWORD_GRAMMAR = get("KEYWORD_GRAMMAR");
   public static final IElementType KEYWORD_TEXT = get("KEYWORD_TEXT");
   public static final IElementType KEYWORD_PARENT = get("KEYWORD_PARENT");
-  public static final IElementType KEYWORD_EXTERNAL = get("KEYWORD_LIST");
+  public static final IElementType KEYWORD_EXTERNAL = get("KEYWORD_EXTERNAL");
   public static final IElementType KEYWORD_NOT_ALLOWED = get("KEYWORD_NOTALLOWED");
   public static final IElementType KEYWORD_START = get("KEYWORD_START");
   public static final IElementType KEYWORD_INCLUDE = get("KEYWORD_INCLUDE");

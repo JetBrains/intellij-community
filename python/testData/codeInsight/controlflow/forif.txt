@@ -1,0 +1,11 @@
+0(1) element: null
+1(2) element: PyForStatement
+2(3,10) READ ACCESS: lines
+3(4) element: PyTargetExpression: line
+4(5) WRITE ACCESS: line
+5(6) element: PyIfStatement
+6(7,3,10) READ ACCESS: line
+7(8) element: PyStatementList. Condition: line == '@':true
+8(9) element: PyAssignmentStatement
+9(3,10) WRITE ACCESS: head
+10() element: null

@@ -18,12 +18,15 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -38,6 +41,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
@@ -54,17 +59,21 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     setLvalue(!field.isFinal());
   }
 
+  @Override
   public Field getField() {
     return myField;
   }
 
+  @Override
   public ObjectReference getObject() {
     return myObject;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
-    if (context.getFrameProxy() == null) return null;
+    if (context.getFrameProxy() == null) {
+      return null;
+    }
     final ReferenceType type = myField.declaringType();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = myField.name();
@@ -87,20 +96,44 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
     }
     else {
-      PsiClass aClass =
-        facade.findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(myProject));
-      if (aClass == null) return null;
-      aClass = (PsiClass) aClass.getNavigationElement();
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (fieldName.equals(field.getName())) {
-          return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
+      final DebuggerSession session = context.getDebuggerSession();
+      final GlobalSearchScope scope = session != null? session.getSearchScope() : GlobalSearchScope.allScope(myProject);
+      PsiClass aClass = facade.findClass(type.name().replace('$', '.'), scope);
+      if (aClass == null) {
+        // trying to search, assuming declaring class is an anonymous class
+        final DebugProcessImpl debugProcess = context.getDebugProcess();
+        if (debugProcess != null) {
+          try {
+            final List<Location> locations = type.allLineLocations();
+            if (!locations.isEmpty()) {
+              // important: use the last location to be sure the position will be within the anonymous class
+              final Location lastLocation = locations.get(locations.size() - 1);
+              final SourcePosition position = debugProcess.getPositionManager().getSourcePosition(lastLocation);
+              if (position != null) {
+                aClass = JVMNameUtil.getClassAt(position);
+              }
+            }
+          }
+          catch (AbsentInformationException ignored) {
+          }
+          catch (ClassNotPreparedException ignored) {
+          }
+        }
+      }
+
+      if (aClass != null) {
+        aClass = (PsiClass) aClass.getNavigationElement();
+        for (PsiField field : aClass.getFields()) {
+          if (fieldName.equals(field.getName())) {
+            return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
+          }
         }
       }
       return null;
     }
   }
 
+  @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     final Boolean isPrimitive = ((FieldDescriptorImpl)oldDescriptor).myIsPrimitive;
@@ -111,6 +144,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
 
+  @Override
   public boolean isPrimitive() {
     if (myIsPrimitive == null) {
       final Value value = getValue();
@@ -124,12 +158,13 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     return myIsPrimitive.booleanValue();
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       return (myObject != null) ? myObject.getValue(myField) : myField.declaringType().getValue(myField);
     }
-    catch (ObjectCollectedException e) {
+    catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
@@ -138,6 +173,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     return myIsStatic;
   }
 
+  @Override
   public String getName() {
     final String fieldName = myField.name();
     if (isOuterLocalVariableValue() && NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
@@ -150,11 +186,12 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     try {
       return DebuggerUtils.isSynthetic(myField) && myField.name().startsWith(OUTER_LOCAL_VAR_FIELD_PREFIX);
     }
-    catch (UnsupportedOperationException e) {
+    catch (UnsupportedOperationException ignored) {
       return false;
     }
   }
 
+  @Override
   public String calcValueName() {
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
@@ -171,6 +208,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     String fieldName;

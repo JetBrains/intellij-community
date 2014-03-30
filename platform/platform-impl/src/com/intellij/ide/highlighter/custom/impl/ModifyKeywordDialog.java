@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class ModifyKeywordDialog extends DialogWrapper {
     myKeywordName.setText(initialValue);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints();
@@ -64,10 +65,12 @@ public class ModifyKeywordDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected void doOKAction() {
     final String keywordName = myKeywordName.getText().trim();
     if (keywordName.length() == 0) {
@@ -83,6 +86,7 @@ public class ModifyKeywordDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myKeywordName;
   }

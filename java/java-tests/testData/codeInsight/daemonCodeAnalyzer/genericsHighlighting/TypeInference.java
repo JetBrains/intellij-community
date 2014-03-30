@@ -78,7 +78,7 @@ class U {
 //end of IDEADEV-6738
 
 ///////////////////////////////////
-public class Err {
+class Err {
     void f() {
         Decl[] extensions = getExtensions(Decl.EXTENSION_POINT_NAME);
     }

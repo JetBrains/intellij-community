@@ -41,7 +41,8 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
     super(AnalysisScopeBundle.message("action.backward.dependency.analysis"), AnalysisScopeBundle.message("action.analysis.noun"));
   }
 
-  protected void analyze(@NotNull final Project project, final AnalysisScope scope) {
+  @Override
+  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     scope.setSearchInLibraries(true); //find library usages in project
     final SearchScope selectedScope = myPanel.myCombo.getSelectedScope();
     new BackwardDependenciesHandler(project, scope, selectedScope != null ? new AnalysisScope(selectedScope, project) : new AnalysisScope(project)).analyze();
@@ -64,6 +65,7 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
     myPanel = null;
   }
 
+  @Override
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new AdditionalSettingsPanel();

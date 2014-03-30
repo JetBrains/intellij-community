@@ -27,12 +27,14 @@ public abstract class ElementFilterBase<T> implements ElementFilter{
     myClass = aClass;
   }
 
+  @Override
   public boolean isAcceptable(Object element, PsiElement context) {
     return isClassAcceptable(element.getClass()) && isElementAcceptable((T)element, context);
   }
 
   protected abstract boolean isElementAcceptable(T element, PsiElement context);
 
+  @Override
   public boolean isClassAcceptable(Class hintClass) {
     return myClass.isAssignableFrom(hintClass);
   }

@@ -55,11 +55,11 @@ class ChangeListManagerSerialization {
 
   @SuppressWarnings({"unchecked"})
   public void readExternal(final Element element) throws InvalidDataException {
-    final List<Element> listNodes = (List<Element>)element.getChildren(NODE_LIST);
+    final List<Element> listNodes = element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
       readChangeList(listNode);
     }
-    final List<Element> ignoredNodes = (List<Element>)element.getChildren(NODE_IGNORED);
+    final List<Element> ignoredNodes = element.getChildren(NODE_IGNORED);
     for (Element ignoredNode: ignoredNodes) {
       readFileToIgnore(ignoredNode);
     }
@@ -74,7 +74,7 @@ class ChangeListManagerSerialization {
                                     null);
     }
     //noinspection unchecked
-    final List<Element> changeNodes = (List<Element>)listNode.getChildren(NODE_CHANGE);
+    final List<Element> changeNodes = listNode.getChildren(NODE_CHANGE);
     for (Element changeNode : changeNodes) {
       try {
         myWorker.addChangeToList(changeListName, readChange(changeNode), null);
@@ -84,10 +84,10 @@ class ChangeListManagerSerialization {
       }
     }
 
-    if (ChangeListManagerSerialization.ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
+    if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
       myWorker.setDefault(list.getName());
     }
-    if (ChangeListManagerSerialization.ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
+    if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
       list.setReadOnly(true);
     }
 

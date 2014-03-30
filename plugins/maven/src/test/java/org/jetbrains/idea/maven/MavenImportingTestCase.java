@@ -33,7 +33,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -45,17 +44,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
+import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.io.File;
@@ -90,6 +91,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.projectClosed();
     removeFromLocalRepository("test");
     if (useJps()) {
+      CompilerTestUtil.disableExternalCompiler(myProject);
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     super.tearDown();
@@ -116,46 +118,68 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       expectedRoots[i] = VfsUtil.pathToUrl(expectedRoots[i]);
     }
 
-    assertUnorderedElementsAreEqual(actual, expectedRoots);
+    assertUnorderedPathsAreEqual(actual, Arrays.asList(expectedRoots));
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, true, false, expectedSources);
+    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  }
+
+  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    List<ContentFolder> folders = new ArrayList<ContentFolder>();
+    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
+      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
+      assertNotNull(properties);
+      if (properties.isForGeneratedSources()) {
+        folders.add(folder);
+      }
+    }
+    doAssertContentFolders(contentRoot, folders, expectedSources);
+  }
+
+  protected void assertResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
   }
 
   protected void assertTestSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, true, true, expectedSources);
+    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+  }
+
+  protected void assertTestResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
-    doAssertContentFolders(moduleName, false, false, expectedExcludes);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
-    doAssertContentFolders(getContentRoot(moduleName, contentRoot), false, false, expectedExcudes);
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
   }
 
-  private void doAssertContentFolders(String moduleName, boolean isSource, boolean isTest, String... expected) {
-    doAssertContentFolders(getContentRoot(moduleName), isSource, isTest, expected);
+  private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
   }
 
-  private static void doAssertContentFolders(ContentEntry e, boolean isSource, boolean isTest, String... expected) {
+  private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
     List<String> actual = new ArrayList<String>();
-    for (ContentFolder f : isSource ? e.getSourceFolders() : e.getExcludeFolders()) {
-      if (isSource && (isTest != ((SourceFolder)f).isTestSource())) continue;
-
+    for (ContentFolder f : folders) {
       String rootUrl = e.getUrl();
       String folderUrl = f.getUrl();
 
       if (folderUrl.startsWith(rootUrl)) {
-        int lenght = rootUrl.length() + 1;
-        folderUrl = folderUrl.substring(Math.min(lenght, folderUrl.length()));
+        int length = rootUrl.length() + 1;
+        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
       }
 
       actual.add(folderUrl);
     }
 
-    assertUnorderedElementsAreEqual(actual, expected);
+    assertUnorderedPathsAreEqual(actual, Arrays.asList(expected));
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
@@ -209,11 +233,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPaths);
   }
 
-  private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
+  private static void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
-    assertUnorderedElementsAreEqual(lib.getRootUrls(type), ArrayUtil.toStringArray(paths));
+    assertUnorderedPathsAreEqual(Arrays.asList(lib.getRootUrls(type)), paths);
     // also check the library because it may contain slight different set of urls (e.g. with duplicates)
-    assertUnorderedElementsAreEqual(lib.getLibrary().getUrls(type), ArrayUtil.toStringArray(paths));
+    assertUnorderedPathsAreEqual(Arrays.asList(lib.getLibrary().getUrls(type)), paths);
   }
 
   protected void assertModuleLibDepScope(String moduleName, String depName, DependencyScope scope) {
@@ -475,9 +499,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
     AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
-    result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
+    result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
       @Override
-      public void run(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
+      public void consume(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
         unresolved[0] = unresolvedArtifacts;
       }
     });
@@ -520,57 +544,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected static Sdk createJdk(String versionName) {
     return IdeaTestUtil.getMockJdk17(versionName);
-  }
-
-  protected void compileModules(final String... moduleNames) throws Exception {
-    final List<Module> modules = new ArrayList<Module>();
-
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (String each : moduleNames) {
-          setupJdkForModule(each);
-          modules.add(getModule(each));
-        }
-        if (useJps()) {
-          MavenProjectsManager.getInstance(myProject).generateBuildConfiguration(false);
-        }
-      }
-    });
-
-    CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY = true;
-    CompilerManagerImpl.testSetup();
-
-    List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
-    TranslatingCompilerFilesMonitor.getInstance()
-      .scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
-
-    final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        CompilerManager.getInstance(myProject).make(scope, new CompileStatusNotification() {
-          @Override
-          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-            //assertFalse(aborted);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.ERROR), 0, errors);
-            //assertEquals(collectMessages(compileContext, CompilerMessageCategory.WARNING), 0, warnings);
-            semaphore.up();
-          }
-        });
-      }
-    });
-    while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }
-    if (SwingUtilities.isEventDispatchThread()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
   }
 
   protected static AtomicInteger configConfirmationForYesAnswer() {

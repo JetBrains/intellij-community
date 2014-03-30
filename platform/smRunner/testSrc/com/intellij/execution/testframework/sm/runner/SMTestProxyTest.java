@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -592,12 +593,12 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testLocation() {
-    assertNull(mySuite.getLocation(getProject()));
+    assertNull(mySuite.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
 
     mySuite.addChild(mySimpleTest);
 
-    assertNull(mySuite.getLocation(getProject()));
-    assertNull(mySimpleTest.getLocation(getProject()));
+    assertNull(mySuite.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
+    assertNull(mySimpleTest.getLocation(getProject(), GlobalSearchScope.allScope(getProject())));
   }
 
   public void testNavigatable() {

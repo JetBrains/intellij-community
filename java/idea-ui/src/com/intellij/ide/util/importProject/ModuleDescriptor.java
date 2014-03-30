@@ -18,6 +18,7 @@ package com.intellij.ide.util.importProject;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -38,7 +39,7 @@ import java.util.*;
 */
 public class ModuleDescriptor {
   private String myName;
-  private final MultiMap<File, DetectedProjectRoot> myContentToSourceRoots = new MultiMap<File, DetectedProjectRoot>();
+  private final MultiMap<File, DetectedSourceRoot> myContentToSourceRoots = new MultiMap<File, DetectedSourceRoot>();
   private final Set<File> myLibraryFiles = new HashSet<File>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
   private static final Set<String> ourModuleNameStopList = new THashSet<String>(
@@ -50,14 +51,14 @@ public class ModuleDescriptor {
   private List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<ModuleBuilder.ModuleConfigurationUpdater>();
   private ModuleType myModuleType;
 
-  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<DetectedProjectRoot> sourceRoots) {
+  public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<? extends DetectedSourceRoot> sourceRoots) {
     myName = suggestModuleName(contentRoot);
     myContentToSourceRoots.putValues(contentRoot, sourceRoots);
     myModuleType = moduleType;
   }
 
   public ModuleDescriptor(final File contentRoot, final ModuleType moduleType,
-                          final DetectedProjectRoot sourceRoot) {
+                          final DetectedSourceRoot sourceRoot) {
     this(contentRoot, moduleType, Collections.singletonList(sourceRoot));
   }
 
@@ -110,19 +111,19 @@ public class ModuleDescriptor {
     return myContentToSourceRoots.values();
   }
 
-  public Collection<DetectedProjectRoot> getSourceRoots(File contentRoot) {
+  public Collection<DetectedSourceRoot> getSourceRoots(File contentRoot) {
     return myContentToSourceRoots.get(contentRoot);
   }
   
   public void addContentRoot(File contentRoot) {
-    myContentToSourceRoots.put(contentRoot, new HashSet<DetectedProjectRoot>());
+    myContentToSourceRoots.put(contentRoot, new HashSet<DetectedSourceRoot>());
   }
   
-  public Collection<DetectedProjectRoot> removeContentRoot(File contentRoot) {
+  public Collection<DetectedSourceRoot> removeContentRoot(File contentRoot) {
     return myContentToSourceRoots.remove(contentRoot);
   }
   
-  public void addSourceRoot(final File contentRoot, DetectedProjectRoot sourceRoot) {
+  public void addSourceRoot(final File contentRoot, DetectedSourceRoot sourceRoot) {
     myContentToSourceRoots.putValue(contentRoot, sourceRoot);
   }
   

@@ -1693,7 +1693,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=9]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
-          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Comparable<? super T>]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object, java.lang.Comparable<? super T>]
       PsiParameterListStub
         PsiParameterStub[p1:java.util.List<? extends T>]
           PsiModifierListStub[mask=0]
@@ -1704,7 +1704,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=10]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
-          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Comparable<? super T>]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object, java.lang.Comparable<? super T>]
       PsiParameterListStub
         PsiParameterStub[p1:java.util.List<? extends T>]
           PsiModifierListStub[mask=0]
@@ -1715,7 +1715,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=10]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
-          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Comparable<? super T>]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object, java.lang.Comparable<? super T>]
       PsiParameterListStub
         PsiParameterStub[p1:java.util.List<? extends T>]
           PsiModifierListStub[mask=0]
@@ -1843,7 +1843,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=9]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
-          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Comparable<? super T>]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object, java.lang.Comparable<? super T>]
       PsiParameterListStub
         PsiParameterStub[p1:java.util.Collection<? extends T>]
           PsiModifierListStub[mask=0]
@@ -1863,7 +1863,7 @@ PsiJavaFileStub [java.util]
       PsiModifierListStub[mask=9]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
-          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Comparable<? super T>]
+          PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object, java.lang.Comparable<? super T>]
       PsiParameterListStub
         PsiParameterStub[p1:java.util.Collection<? extends T>]
           PsiModifierListStub[mask=0]

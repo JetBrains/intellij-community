@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,19 +75,20 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         i.remove();
       }
     }
-    return directories.isEmpty() ? null : new CreateClassOrPackageFix(directories,
-                                                                      context,
-                                                                      fixPath ? qualifiedName : redPart,
-                                                                      redPart,
-                                                                      kind,
-                                                                      superClass,
-                                                                      templateName);
+    return new CreateClassOrPackageFix(directories,
+                                       context,
+                                       fixPath ? qualifiedName : redPart,
+                                       redPart,
+                                       kind,
+                                       superClass,
+                                       templateName);
   }
 
   @Nullable
   public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
                                                   @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind, final String superClass) {
+                                                  @Nullable ClassKind kind,
+                                                  String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
@@ -244,13 +246,15 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
         if (LOG.isDebugEnabled()) {
           LOG.debug("Package directory: " + directory);
         }
-        if (directory.isWritable() && scope.contains(directory.getVirtualFile())) {
+        VirtualFile virtualFile = directory.getVirtualFile();
+        if (directory.isWritable() && scope.contains(virtualFile)
+            && !JavaProjectRootsUtil.isInGeneratedCode(virtualFile, psiManager.getProject())) {
           writableDirectoryList.add(directory);
         }
       }
     }
     else {
-      for (VirtualFile root : ProjectRootManager.getInstance(psiManager.getProject()).getContentSourceRoots()) {
+      for (VirtualFile root : JavaProjectRootsUtil.getSuitableDestinationSourceRoots(psiManager.getProject())) {
         PsiDirectory directory = psiManager.findDirectory(root);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Root: " + root + ", directory: " + directory);

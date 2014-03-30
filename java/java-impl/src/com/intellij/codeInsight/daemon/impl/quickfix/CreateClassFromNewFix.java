@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -100,7 +100,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       setupSuperCall(aClass, constructor, templateBuilder);
 
       getReferenceElement(newExpression).bindToElement(aClass);
-      aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
+      aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
       final Template template = templateBuilder.buildTemplate();
       template.setToReformat(true);
 

@@ -43,6 +43,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
     model.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
   }
 
+  @Override
   public void update(PomModelEvent event) {
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;
@@ -103,10 +104,9 @@ public class PsiEventWrapperAspect implements PomModelAspect{
             break;
           case ChangeInfo.CONTENTS_CHANGED:
             psiEvent.setOffset(treeElement.getStartOffset());
-            psiEvent.setOldChild(psiChild);
-            psiEvent.setNewChild(psiChild);
+            psiEvent.setParent(psiChild);
             psiEvent.setOldLength(changeByChild.getOldLength());
-            manager.childReplaced(psiEvent);
+            manager.childrenChanged(psiEvent);
             break;
           case ChangeInfo.REMOVED:
             psiEvent.setOffset(changesByElement.getChildOffsetInNewTree(treeElement));

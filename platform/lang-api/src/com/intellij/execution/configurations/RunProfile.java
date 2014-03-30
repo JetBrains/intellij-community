@@ -15,26 +15,45 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Base interface for things that can be executed (run configurations explicitly managed by user, or custom run profile implementations
+ * created from code).
+ *
+ * @see RunConfiguration
+ * @see ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)
+ */
 public interface RunProfile {
    /**
-    * todo - javadoc
+    * Prepares for executing a specific instance of the run configuration.
+    *
+    * @param executor the execution mode selected by the user (run, debug, profile etc.)
+    * @param env the environment object containing additional settings for executing the configuration.
+    * @return the RunProfileState describing the process which is about to be started, or null if it's impossible to start the process.
     */
   @Nullable
-  RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException ;
+  RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException;
 
+  /**
+   * Returns the name of the run configuration.
+   *
+   * @return the name of the run configuration.
+   */
   String getName();
 
+  /**
+   * Returns the icon for the run configuration. This icon is displayed in the tab showing the results of executing the run profile,
+   * and for persistent run configurations is also used in the run configuration management UI.
+   *
+   * @return the icon for the run configuration, or null if the default executor icon should be used.
+   */
   @Nullable
   Icon getIcon();
-
-  void checkConfiguration() throws RuntimeConfigurationException;
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -40,7 +40,7 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = CollectionFactory.arrayList(e.getTextRange());
+    List<TextRange> result = ContainerUtil.newArrayList(e.getTextRange());
     result.addAll(expandToWholeLinesWithBlanks(editorText, e.getTextRange()));
 
     PsiElement firstChild = e.getFirstChild();

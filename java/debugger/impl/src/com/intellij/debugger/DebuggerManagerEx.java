@@ -35,7 +35,7 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public static DebuggerManagerEx getInstanceEx(Project project) {
     return (DebuggerManagerEx)DebuggerManager.getInstance(project);
   }
-  public abstract BreakpointManager  getBreakpointManager();
+  public abstract BreakpointManager getBreakpointManager();
 
   public abstract Collection<DebuggerSession> getSessions();
   public abstract DebuggerSession getSession(DebugProcess debugProcess);

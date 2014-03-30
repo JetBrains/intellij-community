@@ -18,19 +18,19 @@ package org.intellij.plugins.intelliLang.util;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLiteral;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base class for references in String literals.
  */
 public abstract class StringLiteralReference implements PsiReference {
-  protected final PsiLiteralExpression myValue;
+  protected final PsiLiteral myValue;
 
-  public StringLiteralReference(PsiLiteralExpression value) {
+  public StringLiteralReference(PsiLiteral value) {
     myValue = value;
   }
 

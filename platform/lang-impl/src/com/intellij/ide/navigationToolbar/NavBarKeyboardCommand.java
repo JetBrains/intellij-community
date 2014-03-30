@@ -34,7 +34,7 @@ public enum NavBarKeyboardCommand {
   NAVIGATE(KeyEvent.VK_F4),
   ESCAPE(KeyEvent.VK_ESCAPE);
 
-  private KeyStroke myKeyStroke;
+  private final KeyStroke myKeyStroke;
 
   NavBarKeyboardCommand(int keyCode) {
     myKeyStroke = KeyStroke.getKeyStroke(keyCode, 0);

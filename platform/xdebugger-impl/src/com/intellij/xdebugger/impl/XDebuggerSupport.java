@@ -50,11 +50,14 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
   private final XQuickEvaluateHandler myQuickEvaluateHandler;
   private final XDebuggerSettingsPanelProviderImpl mySettingsPanelProvider;
+
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
+  private final DebuggerActionHandler myEvaluateInConsoleActionHandler = new XEvaluateInConsoleFromEditorActionHandler();
+
   private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
   private final DebuggerActionHandler mySmartStepIntoHandler;
   private final XMarkObjectActionHandler myMarkObjectActionHandler;
-  private final EditBreakpointActionHandler myEditBreakpointActoinHandler;
+  private final EditBreakpointActionHandler myEditBreakpointActionHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -62,26 +65,31 @@ public class XDebuggerSupport extends DebuggerSupport {
     myToggleTemporaryLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler(true);
     myAddToWatchesActionHandler = new XAddToWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOver(false);
       }
     };
     myStepIntoHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepInto();
       }
     };
     myStepOutHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOut();
       }
     };
     myForceStepOverHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.stepOver(true);
       }
     };
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.forceStepInto();
       }
@@ -90,16 +98,19 @@ public class XDebuggerSupport extends DebuggerSupport {
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
     myResumeHandler = new XDebuggerActionHandler() {
+      @Override
       protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
         return session.isPaused();
       }
 
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.resume();
       }
     };
     myPauseHandler = new XDebuggerPauseActionHandler();
     myShowExecutionPointHandler = new XDebuggerSuspendedActionHandler() {
+      @Override
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.showExecutionPoint();
       }
@@ -109,64 +120,76 @@ public class XDebuggerSupport extends DebuggerSupport {
     myQuickEvaluateHandler = new XQuickEvaluateHandler();
     mySettingsPanelProvider = new XDebuggerSettingsPanelProviderImpl();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
-    myEditBreakpointActoinHandler = new XDebuggerEditBreakpointActionHandler();
+    myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
   }
 
+  @Override
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepOverHandler() {
     return myStepOverHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepIntoHandler() {
     return myStepIntoHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getSmartStepIntoHandler() {
     return mySmartStepIntoHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getStepOutHandler() {
     return myStepOutHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceStepOverHandler() {
     return myForceStepOverHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceStepIntoHandler() {
     return myForceStepIntoHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getRunToCursorHandler() {
     return myRunToCursorHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getForceRunToCursorHandler() {
     return myForceRunToCursor;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getResumeActionHandler() {
     return myResumeHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getPauseHandler() {
     return myPauseHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getToggleLineBreakpointHandler() {
     return myToggleLineBreakpointActionHandler;
@@ -178,16 +201,19 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myToggleTemporaryLineBreakpointActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateHandler;
   }
 
+  @Override
   @NotNull
   public QuickEvaluateHandler getQuickEvaluateHandler() {
     return myQuickEvaluateHandler;
@@ -199,6 +225,13 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myAddToWatchesActionHandler;
   }
 
+  @NotNull
+  @Override
+  public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
+    return myEvaluateInConsoleActionHandler;
+  }
+
+  @Override
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
@@ -218,12 +251,12 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   @Override
   public EditBreakpointActionHandler getEditBreakpointAction() {
-    return myEditBreakpointActoinHandler;
+    return myEditBreakpointActionHandler;
   }
 
+  @Override
   @NotNull
   public DebuggerSettingsPanelProvider getSettingsPanelProvider() {
     return mySettingsPanelProvider;
   }
-
 }

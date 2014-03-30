@@ -23,6 +23,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +59,7 @@ public class KeymapUtil {
   private KeymapUtil() {
   }
 
-  public static String getShortcutText(Shortcut shortcut) {
+  public static String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
     if (shortcut instanceof KeyboardShortcut) {
@@ -148,7 +150,7 @@ public class KeymapUtil {
 
     final int code = accelerator.getKeyCode();
     String keyText = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092 
+    // [vova] this is dirty fix for bug #35092
     if(CANCEL_KEY_TEXT.equals(keyText)){
       keyText = BREAK_KEY_TEXT;
     }
@@ -183,14 +185,18 @@ public class KeymapUtil {
     }
   }
 
+  @NotNull
+  public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
+    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut == null? "" : getShortcutText(shortcut);
+  }
+
+  @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (Shortcut shortcut : shortcuts) {
-      if (shortcut instanceof KeyboardShortcut) {
-        return getShortcutText(shortcut);
-      }
-    }
-    return "";
+    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
+    return shortcut == null ? "" : getShortcutText(shortcut);
   }
 
   public static String getShortcutsText(Shortcut[] shortcuts) {
@@ -329,7 +335,7 @@ public class KeymapUtil {
   public static boolean isEmacsKeymap() {
     return isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap());
   }
-  
+
   public static boolean isEmacsKeymap(@Nullable Keymap keymap) {
     for (; keymap != null; keymap = keymap.getParent()) {
       if ("Emacs".equalsIgnoreCase(keymap.getName())) {
@@ -348,5 +354,18 @@ public class KeymapUtil {
       return null;
     }
     return shortcut.getFirstKeyStroke();
+  }
+
+  @NotNull
+  public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
+    String toolTipText = name == null ? "" : name;
+    while (StringUtil.endsWithChar(toolTipText, '.')) {
+      toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
+    }
+    String shortcutsText = getFirstKeyboardShortcutText(action);
+    if (!shortcutsText.isEmpty()) {
+      toolTipText += " (" + shortcutsText + ")";
+    }
+    return toolTipText;
   }
 }

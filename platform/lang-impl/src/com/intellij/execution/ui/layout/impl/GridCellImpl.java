@@ -113,6 +113,7 @@ public class GridCellImpl implements GridCell {
         ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
       }
     }.setDataProvider(new DataProvider() {
+      @Override
       @Nullable
       public Object getData(@NonNls final String dataId) {
         if (ViewContext.CONTENT_KEY.is(dataId)) {
@@ -129,6 +130,7 @@ public class GridCellImpl implements GridCell {
       }
     });
     myTabs.getPresentation().setUiDecorator(new UiDecorator() {
+      @Override
       @NotNull
       public UiDecoration getDecoration() {
         return new UiDecoration(null, new Insets(1, -1, 1, -1));
@@ -138,6 +140,7 @@ public class GridCellImpl implements GridCell {
       .setProvideSwitchTargets(false).setTabDraggingEnabled(true).setSideComponentOnTabs(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
           // see RunnerContentUi tabMouseListener as well
@@ -148,12 +151,14 @@ public class GridCellImpl implements GridCell {
     rebuildPopupGroup();
     myTabs.addListener(new TabsListener.Adapter() {
 
+      @Override
       public void beforeSelectionChanged(TabInfo oldSelection, TabInfo newSelection) {
         if (oldSelection != null && myContext.isStateBeingRestored()) {
           saveUiState();
         }
       }
 
+      @Override
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         updateSelection(myTabs.getComponent().isShowing());
 
@@ -180,6 +185,7 @@ public class GridCellImpl implements GridCell {
     myContents.put(content, null);
 
     revalidateCell(new Runnable() {
+      @Override
       public void run() {
         myTabs.addTab(createTabInfoFor(content));
       }
@@ -195,6 +201,7 @@ public class GridCellImpl implements GridCell {
     myContents.remove(content);
 
     revalidateCell(new Runnable() {
+      @Override
       public void run() {
         myTabs.removeTab(info);
       }
@@ -313,6 +320,7 @@ public class GridCellImpl implements GridCell {
       add(content.getComponent(), BorderLayout.CENTER);
     }
 
+    @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (ViewContext.CONTENT_KEY.is(dataId)) {
@@ -372,6 +380,7 @@ public class GridCellImpl implements GridCell {
     return myContents.getKeys().toArray(new Content[myContents.size()]);
   }
 
+  @Override
   public int getContentCount() {
     return myContents.size();
   }
@@ -443,6 +452,7 @@ public class GridCellImpl implements GridCell {
       boolean isShowing = myTabs.getComponent().getRootPane() != null;
       updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
+        @Override
         public ActionCallback restoreInGrid() {
           return restore(each);
         }
@@ -468,6 +478,7 @@ public class GridCellImpl implements GridCell {
     return getContentCount() > 0;
   }
 
+  @Override
   public void minimize(Content content) {
     minimize(new Content[]{content});
   }

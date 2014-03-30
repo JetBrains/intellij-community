@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,9 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
   void testSwitch3() { doTest() }
 
   void testSwitch4() { doTest() }
+
+  void testSwitch5() { doTest() }
+  void testSwitch6() { doTest() }
 
   void _testWhile1() { doTest() }
 
@@ -189,4 +192,12 @@ public final class Matcher {
   void testSelfNavigatingOperator() { doTest() }
 
   void testComparisonToNull() { doTest() }
+
+  void testStringConverting() { doTest() }
+
+  void testInWitchClassCheck() { doTest() }
+
+  void testSwitch() { doTest() }
+
+  void testPropSelection() { doTest() }
 }

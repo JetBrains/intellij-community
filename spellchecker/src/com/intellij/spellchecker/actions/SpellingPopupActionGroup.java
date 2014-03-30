@@ -16,7 +16,7 @@
 package com.intellij.spellchecker.actions;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -48,6 +48,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e != null) {
       AnAction[] children = findActions(e);
@@ -62,11 +63,11 @@ public final class SpellingPopupActionGroup extends ActionGroup {
 
   @NotNull
   private static AnAction[] findActions(@NotNull AnActionEvent e) {
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     Project project = e.getData(LangDataKeys.PROJECT);
     Editor editor = e.getData(LangDataKeys.EDITOR);
     if (psiFile != null && project != null && editor != null) {
-      List<HighlightInfo.IntentionActionDescriptor> quickFixes = QuickFixAction.getAvailableActions(editor, psiFile, -1);
+      List<HighlightInfo.IntentionActionDescriptor> quickFixes = ShowIntentionsPass.getAvailableActions(editor, psiFile, -1);
       Map<Anchor, List<AnAction>> children = new HashMap<Anchor, List<AnAction>>();
       ArrayList<AnAction> first = new ArrayList<AnAction>();
       children.put(Anchor.FIRST, first);
@@ -123,7 +124,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+      final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       final Project project = e.getData(LangDataKeys.PROJECT);
       final Editor editor = e.getData(LangDataKeys.EDITOR);
       if (psiFile != null && project != null && editor != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class GroovyLabeledStatementInspection extends BaseInspection {
     public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
       super.visitLabeledStatement(labeledStatement);
 
-      final String name = labeledStatement.getLabelName();
+      final String name = labeledStatement.getName();
       GrLabeledStatement existing = ResolveUtil.resolveLabeledStatement(name, labeledStatement, true);
       if (existing != null && PsiTreeUtil.isAncestor(existing, labeledStatement, true)) {
         registerError(labeledStatement.getLabel(), name);

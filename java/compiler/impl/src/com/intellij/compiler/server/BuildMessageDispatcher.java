@@ -15,10 +15,13 @@
  */
 package com.intellij.compiler.server;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentHashSet;
-import org.jboss.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.AttributeKey;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -32,9 +35,13 @@ import java.util.concurrent.ConcurrentHashMap;
 * @author Eugene Zhuravlev
 *         Date: 4/25/12
 */
-class BuildMessageDispatcher extends SimpleChannelHandler {
+@ChannelHandler.Sharable
+class BuildMessageDispatcher extends SimpleChannelInboundHandler<CmdlineRemoteProto.Message> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.BuildMessageDispatcher");
-  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>();
+
+  private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
+
+  private final Map<UUID, SessionData> myMessageHandlers = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = new ConcurrentHashSet<UUID>();
 
   public void registerBuildMessageHandler(UUID sessionId,
@@ -54,7 +61,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
     if (myCanceledSessions.add(sessionId)) {
       final Channel channel = getConnectedChannel(sessionId);
       if (channel != null) {
-        Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
     }
   }
@@ -62,7 +69,7 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
   @Nullable
   public Channel getConnectedChannel(final UUID sessionId) {
     final Channel channel = getAssociatedChannel(sessionId);
-    return channel != null && channel.isConnected()? channel : null;
+    return channel != null && channel.isActive()? channel : null;
   }
 
   @Nullable
@@ -73,10 +80,8 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
 
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    final CmdlineRemoteProto.Message message = (CmdlineRemoteProto.Message)e.getMessage();
-
-    SessionData sessionData = (SessionData)ctx.getAttachment();
+  protected void messageReceived(ChannelHandlerContext context, CmdlineRemoteProto.Message message) throws Exception {
+    SessionData sessionData = context.attr(SESSION_DATA).get();
 
     UUID sessionId;
     if (sessionData == null) {
@@ -86,11 +91,11 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
 
       sessionData = myMessageHandlers.get(sessionId);
       if (sessionData != null) {
-        sessionData.channel = ctx.getChannel();
-        ctx.setAttachment(sessionData);
+        sessionData.channel = context.channel();
+        context.attr(SESSION_DATA).set(sessionData);
       }
       if (myCanceledSessions.contains(sessionId)) {
-        Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
+        context.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createCancelCommand()));
       }
     }
     else {
@@ -118,14 +123,14 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
           if (params != null) {
             handler.buildStarted(sessionId);
             sessionData.params = null;
-            Channels.write(ctx.getChannel(), CmdlineProtoUtil.toMessage(sessionId, params));
+            context.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, params));
           }
           else {
             cancelSession(sessionId);
           }
         }
         else {
-          handler.handleBuildMessage(ctx.getChannel(), sessionId, builderMessage);
+          handler.handleBuildMessage(context.channel(), sessionId, builderMessage);
         }
         break;
 
@@ -136,12 +141,12 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
   }
 
   @Override
-  public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+  public void channelInactive(ChannelHandlerContext context) throws Exception {
     try {
-      super.channelClosed(ctx, e);
+      super.channelInactive(context);
     }
     finally {
-      final SessionData sessionData = (SessionData)ctx.getAttachment();
+      final SessionData sessionData = context.attr(SESSION_DATA).get();
       if (sessionData != null) {
         final BuilderMessageHandler handler = unregisterBuildMessageHandler(sessionData.sessionId);
         if (handler != null) {
@@ -153,30 +158,9 @@ class BuildMessageDispatcher extends SimpleChannelHandler {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    final Throwable cause = e.getCause();
+  public void exceptionCaught(ChannelHandlerContext context, Throwable cause) throws Exception {
     if (cause != null) {
       LOG.info(cause);
-    }
-    ctx.sendUpstream(e);
-  }
-
-  @Override
-  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
-    try {
-      super.channelDisconnected(ctx, e);
-    }
-    finally {
-      final SessionData sessionData = (SessionData)ctx.getAttachment();
-      if (sessionData != null) { // this is the context corresponding to some session
-        final Channel channel = e.getChannel();
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            channel.close();
-          }
-        });
-      }
     }
   }
 

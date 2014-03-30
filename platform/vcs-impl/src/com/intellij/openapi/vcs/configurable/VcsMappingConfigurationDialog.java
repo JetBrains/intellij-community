@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -173,7 +174,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   }
 
   public void initProjectMessage() {
-    myProjectButtonComment.setText("<html>" + DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject) + "</html>");
+    myProjectButtonComment.setText(XmlStringUtil.wrapInHtml(DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject)));
   }
 
   private class MyBrowseFolderListener extends ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> {
@@ -182,7 +183,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
                                   FileChooserDescriptor fileChooserDescriptor) {
       super(title, description, textField, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }
-    
+
     @Override
     protected VirtualFile getInitialFile() {
       // suggest project base dir only if nothing is typed in the component.
@@ -197,7 +198,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     }
 
     @Override
-    protected void onFileChoosen(final VirtualFile chosenFile) {
+    protected void onFileChoosen(@NotNull final VirtualFile chosenFile) {
       String oldText = myDirectoryTextField.getText();
       super.onFileChoosen(chosenFile);
       final VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();

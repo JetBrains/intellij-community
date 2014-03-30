@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -91,7 +91,7 @@ public class FormClassAnnotator implements Annotator {
         }
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(field)) return;
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(field)) return;
           final PsiExpression initializer = field.getInitializer();
           LOG.assertTrue(initializer != null);
           initializer.delete();

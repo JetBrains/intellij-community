@@ -1,0 +1,6 @@
+PyFile:HelloWorld.py
+  PyPrintStatement
+    PsiElement(Py:PRINT_KEYWORD)('print')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: hello, world
+      PsiElement(Py:SINGLE_QUOTED_STRING)('"hello, world"')

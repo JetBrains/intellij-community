@@ -69,9 +69,9 @@ class HgCommandAuthenticator {
     }
   }
 
-  public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path) {
+  public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path, @Nullable ModalityState state) {
     GetPasswordRunnable runnable = new GetPasswordRunnable(project, proposedLogin, uri, path, myForceAuthorization);
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable, state == null ? ModalityState.defaultModalityState() : state);
     myRunnable = runnable;
     return runnable.isOk();
   }

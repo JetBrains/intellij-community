@@ -92,6 +92,13 @@ synchronized (x) {
 ''')
   }
 
+  public void testClassBody() {
+    doTextTest('class X<caret>', '''\
+class X {
+    <caret>
+}''')
+  }
+
   private void doTextTest(String before, String after) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT)

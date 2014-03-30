@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -23,7 +24,7 @@ import com.intellij.util.ArrayUtil;
 public class XDebugSessionData {
   private String[] myWatchExpressions;
 
-  public XDebugSessionData(final String[] watchExpressions) {
+  public XDebugSessionData(final @NotNull String[] watchExpressions) {
     myWatchExpressions = watchExpressions;
   }
 
@@ -31,10 +32,11 @@ public class XDebugSessionData {
     this(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
-  public void setWatchExpressions(String[] watchExpressions) {
+  public void setWatchExpressions(@NotNull String[] watchExpressions) {
     myWatchExpressions = watchExpressions;
   }
 
+  @NotNull
   public String[] getWatchExpressions() {
     return myWatchExpressions;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,7 +357,7 @@ public class BackwardDependenciesStorage implements Flushable, Disposable {
   }
 
   private static class MyDataExternalizer implements DataExternalizer<DependenciesSet> {
-    public void save(DataOutput out, DependenciesSet ds) throws IOException {
+    public void save(@NotNull DataOutput out, DependenciesSet ds) throws IOException {
       final TIntHashSet classes = new TIntHashSet();
       final Map<Dependency.FieldRef, TIntHashSet> fieldsMap = new HashMap<Dependency.FieldRef, TIntHashSet>();
       final Map<Dependency.MethodRef, TIntHashSet> methodsMap = new HashMap<Dependency.MethodRef, TIntHashSet>();
@@ -414,7 +414,7 @@ public class BackwardDependenciesStorage implements Flushable, Disposable {
       }
     }
 
-    public DependenciesSet read(DataInput in) throws IOException {
+    public DependenciesSet read(@NotNull DataInput in) throws IOException {
       final Set<ReferencerItem> set = new THashSet<ReferencerItem>();
 
       int classesCount = in.readInt();

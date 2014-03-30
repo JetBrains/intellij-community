@@ -36,6 +36,7 @@ import java.beans.PropertyChangeListener;
  */
 public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
 
+  @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory() || !file.isValid()) {
       return false;
@@ -43,28 +44,34 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
     return SingleRootFileViewProvider.isTooLargeForContentLoading(file);
   }
 
+  @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     return new LargeFileEditor(file);
   }
 
+  @Override
   public void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
+  @Override
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return FileEditorState.INSTANCE;
   }
 
+  @Override
   public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
   }
 
+  @Override
   @NotNull
   public String getEditorTypeId() {
     return "LargeFileEditor";
   }
 
+  @Override
   @NotNull
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;

@@ -8,7 +8,7 @@ class CLS {
     }
 }
 //////////////////////////////
-public abstract class ZZZ<K> {
+abstract class ZZZ<K> {
   public abstract <T extends String> ZZZ<T> get();
 }
 class Z2<K> extends ZZZ<K> {
@@ -44,7 +44,7 @@ interface Callable<V> {
     class B extends A {}
 }
 //////////////////////////
-public class BadCodeGreen<T, C extends Collection<? extends T>> {
+class BadCodeGreen<T, C extends Collection<? extends T>> {
     public BadCodeGreen(C c, T t) {
         c.add<error descr="'add(capture<? extends T>)' in 'java.util.Collection' cannot be applied to '(T)'">(t)</error>;
     }

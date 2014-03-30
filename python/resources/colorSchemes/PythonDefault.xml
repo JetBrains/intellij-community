@@ -1,0 +1,62 @@
+<?xml version='1.0'?>
+<list>
+  <option name="MAKO.SUBSTITUTION">
+    <value>
+      <option name="BACKGROUND" value="E6E6FA" />
+      <option name="EFFECT_TYPE" value="-1" />
+    </value>
+  </option>
+  <option name="MAKO.TAG">
+    <value>
+      <option name="EFFECT_TYPE" value="-1" />
+    </value>
+  </option>
+  <option name="PY.BUILTIN_NAME">
+    <value>
+      <option name="FOREGROUND" value="80" />
+    </value>
+  </option>
+  <option name="PY.CLASS_DEFINITION">
+    <value>
+      <option name="FOREGROUND" value="000000" />
+      <option name="EFFECT_TYPE" value="1" />
+    </value>
+  </option>
+  <option name="PY.DECORATOR">
+    <value>
+      <option name="FOREGROUND" value="0000B2" />
+    </value>
+  </option>
+  <option name="PY.FUNC_DEFINITION">
+    <value>
+      <option name="FOREGROUND" value="000000" />
+      <option name="EFFECT_TYPE" value="1" />
+    </value>
+  </option>
+  <option name="PY.KEYWORD_ARGUMENT">
+    <value>
+      <option name="FOREGROUND" value="660099" />
+    </value>
+  </option>
+  <option name="PY.PREDEFINED_DEFINITION">
+    <value>
+      <option name="FOREGROUND" value="B200B2" />
+    </value>
+  </option>
+  <option name="PY.PREDEFINED_USAGE">
+    <value>
+      <option name="FOREGROUND" value="B200B2" />
+    </value>
+  </option>
+  <option name="PY.SELF_PARAMETER">
+    <value>
+      <option name="FOREGROUND" value="94558D" />
+    </value>
+  </option>
+  <option name="PY.STRING.U">
+    <value>
+      <option name="FOREGROUND" value="008080" />
+      <option name="FONT_TYPE" value="1" />
+    </value>
+  </option>
+</list>

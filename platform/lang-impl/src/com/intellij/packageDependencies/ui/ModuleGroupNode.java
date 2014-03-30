@@ -38,6 +38,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     myModuleGroup = moduleGroup;
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
@@ -47,6 +48,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }

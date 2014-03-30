@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +43,8 @@ public class GriffonSourceInspector {
       @Override
       public Result<List<GriffonSource>> compute() {
         List<GriffonSource> sources = new ArrayList<GriffonSource>();
-        List<VirtualFile> dependencies = new ArrayList<VirtualFile>();
+        List<Object> dependencies = ContainerUtil.newArrayList();
+        dependencies.add(ProjectRootManager.getInstance(module.getProject()));
         ContainerUtil.addIfNotNull(dependencies, GriffonFramework.getInstance().getApplicationPropertiesFile(module));
         String applicationName = GriffonFramework.getInstance().getApplicationName(module);
 

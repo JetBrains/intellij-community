@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -114,7 +115,8 @@ public class FileAttributesReadingTest {
     assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
     assertFileAttributes(new File(file.getPath().replace(File.separator, StringUtil.repeat(File.separator, 3))));
     assertFileAttributes(new File(file.getPath().replace(File.separator, File.separator + "." + File.separator)));
-    assertFileAttributes(new File(myTempDirectory, File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
+    assertFileAttributes(
+      new File(myTempDirectory, File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
 
     if (SystemInfo.isUnix) {
       final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt");
@@ -150,7 +152,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(FileAttributes.SYM_LINK | FileAttributes.READ_ONLY, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
@@ -172,7 +174,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link2);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(FileAttributes.SYM_LINK | FileAttributes.READ_ONLY, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
@@ -192,7 +194,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(SystemInfo.isUnix ? FileAttributes.SYM_LINK | FileAttributes.READ_ONLY : FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
@@ -261,6 +263,46 @@ public class FileAttributesReadingTest {
   }
 
   @Test
+  public void hiddenDir() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File dir = IoTestUtil.createTestDir(myTempDirectory, "dir");
+    FileAttributes attributes = getAttributes(dir);
+    assertFalse(attributes.isHidden());
+    IoTestUtil.setHidden(dir.getPath(), true);
+    attributes = getAttributes(dir);
+    assertTrue(attributes.isHidden());
+  }
+
+  @Test
+  public void hiddenFile() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File file = IoTestUtil.createTestFile(myTempDirectory, "file");
+    FileAttributes attributes = getAttributes(file);
+    assertFalse(attributes.isHidden());
+    IoTestUtil.setHidden(file.getPath(), true);
+    attributes = getAttributes(file);
+    assertTrue(attributes.isHidden());
+  }
+
+  @Test
+  public void notSoHiddenRoot() throws Exception {
+    if (SystemInfo.isWindows) {
+      File absRoot = new File("C:\\");
+      FileAttributes absAttributes = getAttributes(absRoot);
+      assertFalse(absAttributes.isHidden());
+
+      File relRoot = new File("C:");
+      FileAttributes relAttributes = getAttributes(relRoot);
+      assertFalse(relAttributes.isHidden());
+    }
+    else {
+      File absRoot = new File("/");
+      FileAttributes absAttributes = getAttributes(absRoot);
+      assertFalse(absAttributes.isHidden());
+    }
+  }
+
+  @Test
   public void wellHiddenFile() throws Exception {
     assumeTrue(SystemInfo.isWindows);
     final File file = new File("C:\\Documents and Settings\\desktop.ini");
@@ -275,8 +317,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void extraLongName() throws Exception {
-    final String prefix = StringUtil.repeatSymbol('a', 128) + ".";
-    final File dir = FileUtil.createTempDirectory(
+    String prefix = StringUtil.repeatSymbol('a', 128) + ".";
+    File dir = FileUtil.createTempDirectory(
       FileUtil.createTempDirectory(
         FileUtil.createTempDirectory(
           FileUtil.createTempDirectory(
@@ -284,7 +326,7 @@ public class FileAttributesReadingTest {
           prefix, ".dir"),
         prefix, ".dir"),
       prefix, ".dir");
-    final File file = FileUtil.createTempFile(dir, prefix, ".txt");
+    File file = FileUtil.createTempFile(dir, prefix, ".txt");
     assertTrue(file.exists());
     FileUtil.writeToFile(file, myTestData);
 
@@ -293,8 +335,34 @@ public class FileAttributesReadingTest {
       assertDirectoriesEqual(dir);
     }
 
-    final String target = FileSystemUtil.resolveSymLink(file);
+    String target = FileSystemUtil.resolveSymLink(file);
     assertEquals(file.getPath(), target);
+
+    if (SystemInfo.isWindows) {
+      String path = myTempDirectory.getPath();
+      int length = 250 - path.length();
+      for (int i = 0; i < length / 10; i++) {
+        path += "\\x_x_x_x_x";
+      }
+
+      File baseDir = new File(path);
+      assertTrue(baseDir.mkdirs());
+      assertTrue(getAttributes(baseDir).isDirectory());
+
+      for (int i = 1; i <= 100; i++) {
+        dir = new File(baseDir, StringUtil.repeat("x", i));
+        assertTrue(dir.mkdir());
+        assertTrue(getAttributes(dir).isDirectory());
+
+        file = new File(dir, "file.txt");
+        FileUtil.writeToFile(file, "test".getBytes("UTF-8"));
+        assertTrue(file.exists());
+        assertFileAttributes(file);
+
+        target = FileSystemUtil.resolveSymLink(file);
+        assertEquals(file.getPath(), target);
+      }
+    }
   }
 
   @Test
@@ -371,6 +439,21 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.lastModified + " not in " + t1 + ".." + t2, t1 <= attributes.lastModified && attributes.lastModified <= t2);
   }
 
+  @Test
+  public void notOwned() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+    File userHome = new File(SystemProperties.getUserHome());
+
+    FileAttributes homeAttributes = getAttributes(userHome);
+    assertTrue(homeAttributes.isDirectory());
+    assertTrue(homeAttributes.isWritable());
+
+    FileAttributes parentAttributes = getAttributes(userHome.getParentFile());
+    assertTrue(parentAttributes.isDirectory());
+    assertFalse(parentAttributes.isWritable());
+  }
+
+
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {
     return getAttributes(file, true);
@@ -380,7 +463,6 @@ public class FileAttributesReadingTest {
   private static FileAttributes getAttributes(@NotNull final File file, final boolean checkList) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(attributes);
-    System.out.println(attributes + ": " + file);
 
     if (SystemInfo.isWindows && checkList) {
       final String parent = file.getParent();

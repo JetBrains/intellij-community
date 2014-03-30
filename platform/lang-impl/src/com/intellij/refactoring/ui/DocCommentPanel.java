@@ -70,6 +70,7 @@ public class DocCommentPanel extends JPanel {
     bg.setSelected(myRbJavaDocMove.getModel(), true);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
     final Dimension borderSize = myBorder.getMinimumSize(this);

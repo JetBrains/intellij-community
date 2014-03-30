@@ -1,0 +1,16 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensionPoints>
+    <extensionPoint name="myLanguageEP" beanClass="MyLanguageAttributeEPBean"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.myPlugin">
+
+    <myLanguageEP language="MyLanguageID"/>
+
+    <myLanguageEP language="<error descr="Cannot resolve language with id ''INVALID_VALUE''">INVALID_VALUE</error>"/>
+
+  </extensions>
+
+</idea-plugin>

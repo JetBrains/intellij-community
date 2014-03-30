@@ -1,52 +1,96 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HTTPMethod;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import javax.swing.*;
+import java.io.InputStream;
+import java.util.*;
+
+import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
+import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
 
 /**
- * User: Evgeny.Zakrevsky
- * Date: 10/4/12
+ * @author Evgeny.Zakrevsky
  */
 @Tag("Generic")
 public class GenericRepository extends BaseRepositoryImpl {
-  private String myTasksListURL = "";
-  private String myTaskPattern = "";
+  private static final Logger LOG = Logger.getInstance(GenericRepository.class);
+
+  @NonNls public static final String SERVER_URL = "serverUrl";
+  @NonNls public static final String USERNAME = "username";
+  @NonNls public static final String PASSWORD = "password";
+
+  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable(SERVER_URL) {
+    @NotNull
+    @Override
+    public String getValue() {
+      return GenericRepository.this.getUrl();
+    }
+  };
+  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable(USERNAME) {
+    @NotNull
+    @Override
+    public String getValue() {
+      return GenericRepository.this.getUsername();
+    }
+  };
+  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable(PASSWORD, true) {
+    @NotNull
+    @Override
+    public String getValue() {
+      return GenericRepository.this.getPassword();
+    }
+  };
+
+  public final List<TemplateVariable> PREDEFINED_TEMPLATE_VARIABLES = ContainerUtil.<TemplateVariable>newSmartList(
+    SERVER_URL_TEMPLATE_VARIABLE,
+    USERNAME_TEMPLATE_VARIABLE,
+    PASSWORD_TEMPLATE_VARIABLE
+  );
+
   private String myLoginURL = "";
-  private String myLoginMethodType = GenericRepositoryEditor.GET;
-  private String myTasksListMethodType = GenericRepositoryEditor.GET;
+  private String myTasksListUrl = "";
+  private String mySingleTaskUrl;
+
+  private HTTPMethod myLoginMethodType = HTTPMethod.GET;
+  private HTTPMethod myTasksListMethodType = HTTPMethod.GET;
+  private HTTPMethod mySingleTaskMethodType = HTTPMethod.GET;
+
   private ResponseType myResponseType = ResponseType.XML;
+
+  private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+
   private List<TemplateVariable> myTemplateVariables = new ArrayList<TemplateVariable>();
 
-  final static String SERVER_URL_PLACEHOLDER = "{serverUrl}";
-  final static String USERNAME_PLACEHOLDER = "{username}";
-  final static String PASSWORD_PLACEHOLDER = "{password}";
-  final static String ID_PLACEHOLDER = "{id}";
-  final static String SUMMARY_PLACEHOLDER = "{summary}";
-  final static String QUERY_PLACEHOLDER = "{query}";
-  final static String MAX_COUNT_PLACEHOLDER = "{count}";
-  //todo
-  final static String DESCRIPTION_PLACEHOLDER = "{description}";
-  //todo
-  final static String PAGE_PLACEHOLDER = "{page}";
+  private String mySubtypeName;
+  private boolean myDownloadTasksInSeparateRequests;
 
+  /**
+   * Serialization constructor
+   */
   @SuppressWarnings({"UnusedDeclaration"})
   public GenericRepository() {
+    // empty
   }
 
   public GenericRepository(final TaskRepositoryType type) {
@@ -54,137 +98,45 @@ public class GenericRepository extends BaseRepositoryImpl {
     resetToDefaults();
   }
 
+  /**
+   * Cloning constructor
+   */
   public GenericRepository(final GenericRepository other) {
     super(other);
-    myTasksListURL = other.getTasksListURL();
-    myTaskPattern = other.getTaskPattern();
-    myLoginURL = other.getLoginURL();
+    myLoginURL = other.getLoginUrl();
+    myTasksListUrl = other.getTasksListUrl();
+    mySingleTaskUrl = other.getSingleTaskUrl();
+
     myLoginMethodType = other.getLoginMethodType();
     myTasksListMethodType = other.getTasksListMethodType();
+    mySingleTaskMethodType = other.getSingleTaskMethodType();
+
     myResponseType = other.getResponseType();
     myTemplateVariables = other.getTemplateVariables();
-  }
-
-  @Override
-  public boolean isConfigured() {
-    return StringUtil.isNotEmpty(myTasksListURL) && StringUtil.isNotEmpty(myTaskPattern);
-  }
-
-  @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
-    final HttpClient httpClient = getHttpClient();
-
-    if (!isLoginAnonymously() && !isUseHttpAuthentication()) login(httpClient);
-
-    final List<String> placeholders = getPlaceholders(getTaskPattern());
-    if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
-      throw new Exception("Incorrect Task Pattern");
+    mySubtypeName = other.getSubtypeName();
+    myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
+    myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+    for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
+      ResponseHandler handler = e.getValue().clone();
+      handler.setRepository(this);
+      myResponseHandlersMap.put(e.getKey(), handler);
     }
-
-    final HttpMethod method = getTaskListsMethod(query != null ? query : "", max);
-    httpClient.executeMethod(method);
-    if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
-    final String response = method.getResponseBodyAsString();
-
-    final String taskPatternWithoutPlaceholders = getTaskPattern().replaceAll("\\{.+?\\}", "");
-    Matcher matcher = Pattern
-      .compile(taskPatternWithoutPlaceholders,
-               Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL | Pattern.UNICODE_CASE | Pattern.CANON_EQ)
-      .matcher(response);
-
-    List<Task> tasks = new ArrayList<Task>();
-    while (matcher.find()) {
-      final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
-      final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericTask(id, summary, this));
-    }
-
-    final boolean searchSupported = getTasksListURL().contains(QUERY_PLACEHOLDER);
-    if (!searchSupported) {
-      tasks = TaskSearchSupport.filterTasks(query != null ? query : "", tasks);
-    }
-
-    tasks = tasks.subList(0, Math.min(max, tasks.size()));
-
-    return tasks.toArray(new Task[tasks.size()]);
   }
 
-  private HttpMethod getTaskListsMethod(final String query, final int max) {
-    String requestUrl = getFullTasksUrl(query, max);
-    final HttpMethod method =
-      GenericRepositoryEditor.GET.equals(getTasksListMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
-    configureHttpMethod(method);
-    return method;
-  }
-
-  @Override
-  protected void configureHttpMethod(final HttpMethod method) {
-    super.configureHttpMethod(method);
-    method.addRequestHeader("accept", getResponseType().getMimeType());
-  }
-
-  private void login(final HttpClient httpClient) throws Exception {
-    final HttpMethod method = getLoginMethod();
-    httpClient.executeMethod(method);
-    if (method.getStatusCode() != 200) throw new Exception("Cannot login: HTTP status code " + method.getStatusCode());
-  }
-
-  private HttpMethod getLoginMethod() {
-    String requestUrl = getFullLoginUrl();
-    return GenericRepositoryEditor.GET.equals(getLoginMethodType()) ? new GetMethod(requestUrl) : getPostMethodFromURL(requestUrl);
-  }
-
-  private static HttpMethod getPostMethodFromURL(final String requestUrl) {
-    int n = requestUrl.indexOf('?');
-    if (n == -1) {
-      return new PostMethod(requestUrl);
-    }
-
-    PostMethod postMethod = new PostMethod(requestUrl.substring(0, n));
-    n = requestUrl.indexOf('?');
-    String[] requestParams = requestUrl.substring(n + 1).split("&");
-    for (String requestParam : requestParams) {
-      String[] nv = requestParam.split("=");
-      if (nv.length == 1) {
-        postMethod.addParameter(nv[0], "");
-      } else {
-        postMethod.addParameter(nv[0], nv[1]);
-      }
-    }
-    return postMethod;
-  }
-
-  private static List<String> getPlaceholders(String value) {
-    if (value == null) {
-      return ContainerUtil.emptyList();
-    }
-
-    List<String> vars = new ArrayList<String>();
-    Matcher m = Pattern.compile("\\{(.+?)\\}").matcher(value);
-    while (m.find()) {
-      vars.add(m.group(0));
-    }
-    return vars;
-  }
-
-  private String getFullTasksUrl(final String query, final int max) {
-    return replaceTemplateVariables(getTasksListURL())
-      .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
-      .replaceAll(Pattern.quote(QUERY_PLACEHOLDER), encodeUrl(query))
-      .replaceAll(Pattern.quote(MAX_COUNT_PLACEHOLDER), String.valueOf(max));
-  }
-
-  private String getFullLoginUrl() {
-    return replaceTemplateVariables(getLoginURL())
-      .replaceAll(Pattern.quote(SERVER_URL_PLACEHOLDER), getUrl())
-      .replaceAll(Pattern.quote(USERNAME_PLACEHOLDER), encodeUrl(getUsername()))
-      .replaceAll(Pattern.quote(PASSWORD_PLACEHOLDER), encodeUrl(getPassword()));
-  }
-
-  @Nullable
-  @Override
-  public Task findTask(final String id) throws Exception {
-    return null;
+  public void resetToDefaults() {
+    myLoginURL = "";
+    myTasksListUrl = "";
+    mySingleTaskUrl = "";
+    myDownloadTasksInSeparateRequests = false;
+    myLoginMethodType = HTTPMethod.GET;
+    myTasksListMethodType = HTTPMethod.GET;
+    mySingleTaskMethodType = HTTPMethod.GET;
+    myResponseType = ResponseType.XML;
+    myTemplateVariables = new ArrayList<TemplateVariable>();
+    myResponseHandlersMap = new EnumMap<ResponseType, ResponseHandler>(ResponseType.class);
+    myResponseHandlersMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
+    myResponseHandlersMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
+    myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
   }
 
   @Override
@@ -198,14 +150,103 @@ public class GenericRepository extends BaseRepositoryImpl {
     if (!(o instanceof GenericRepository)) return false;
     if (!super.equals(o)) return false;
     GenericRepository that = (GenericRepository)o;
-    if (!Comparing.equal(getTasksListURL(), that.getTasksListURL())) return false;
-    if (!Comparing.equal(getTaskPattern(), that.getTaskPattern())) return false;
-    if (!Comparing.equal(getLoginURL(), that.getLoginURL())) return false;
+    if (!Comparing.equal(getLoginUrl(), that.getLoginUrl())) return false;
+    if (!Comparing.equal(getTasksListUrl(), that.getTasksListUrl())) return false;
+    if (!Comparing.equal(getSingleTaskUrl(), that.getSingleTaskUrl())) return false;
     if (!Comparing.equal(getLoginMethodType(), that.getLoginMethodType())) return false;
     if (!Comparing.equal(getTasksListMethodType(), that.getTasksListMethodType())) return false;
+    if (!Comparing.equal(getSingleTaskMethodType(), that.getSingleTaskMethodType())) return false;
     if (!Comparing.equal(getResponseType(), that.getResponseType())) return false;
     if (!Comparing.equal(getTemplateVariables(), that.getTemplateVariables())) return false;
+    if (!Comparing.equal(getResponseHandlers(), that.getResponseHandlers())) return false;
+    if (!Comparing.equal(getDownloadTasksInSeparateRequests(), that.getDownloadTasksInSeparateRequests())) return false;
     return true;
+  }
+
+  @Override
+  public boolean isConfigured() {
+    if (!super.isConfigured()) return false;
+    for (TemplateVariable variable : getTemplateVariables()) {
+      if (variable.isShownOnFirstTab() && StringUtil.isEmpty(variable.getValue())) {
+        return false;
+      }
+    }
+    return StringUtil.isNotEmpty(myTasksListUrl) && getActiveResponseHandler().isConfigured();
+  }
+
+  @Override
+  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+    if (StringUtil.isEmpty(myTasksListUrl)) {
+      throw new Exception("'Task list URL' configuration parameter is mandatory");
+    }
+    if (!isLoginAnonymously() && !isUseHttpAuthentication()) {
+      executeMethod(getLoginMethod());
+    }
+    List<TemplateVariable> variables = concat(getAllTemplateVariables(),
+                                              new TemplateVariable("max", String.valueOf(max)),
+                                              new TemplateVariable("since", String.valueOf(since)));
+    String requestUrl = substituteTemplateVariables(getTasksListUrl(), variables);
+    String responseBody = executeMethod(getHttpMethod(requestUrl, myTasksListMethodType));
+    Task[] tasks = getActiveResponseHandler().parseIssues(responseBody, max);
+    if (myResponseType == ResponseType.TEXT) {
+      return tasks;
+    }
+    if (StringUtil.isNotEmpty(mySingleTaskUrl) && myDownloadTasksInSeparateRequests) {
+      for (int i = 0; i < tasks.length; i++) {
+        tasks[i] = findTask(tasks[i].getId());
+      }
+    }
+    return tasks;
+  }
+
+  private String executeMethod(HttpMethod method) throws Exception {
+    LOG.debug("URI is " + method.getURI());
+    String responseBody;
+    getHttpClient().executeMethod(method);
+    Header contentType = method.getResponseHeader("Content-Type");
+    if (contentType != null && contentType.getValue().contains("charset")) {
+      // ISO-8859-1 if charset wasn't specified in response
+      responseBody = StringUtil.notNullize(method.getResponseBodyAsString());
+    }
+    else {
+      InputStream stream = method.getResponseBodyAsStream();
+      responseBody = stream == null ? "" : StreamUtil.readText(stream, "utf-8");
+    }
+    switch (getResponseType()) {
+      case XML:
+        TaskUtil.prettyFormatXmlToLog(LOG, responseBody);
+        break;
+      case JSON:
+        TaskUtil.prettyFormatJsonToLog(LOG, responseBody);
+        break;
+      default:
+        LOG.debug(responseBody);
+    }
+    LOG.debug("Status code is " + method.getStatusCode());
+    if (method.getStatusCode() != HttpStatus.SC_OK) {
+      throw new Exception("Request failed with HTTP error: " + method.getStatusText());
+    }
+    return responseBody;
+  }
+
+  private HttpMethod getHttpMethod(String requestUrl, HTTPMethod type) {
+    HttpMethod method = type == HTTPMethod.GET ? new GetMethod(requestUrl) : GenericRepositoryUtil.getPostMethodFromURL(requestUrl);
+    configureHttpMethod(method);
+    return method;
+  }
+
+  private HttpMethod getLoginMethod() throws Exception {
+    String requestUrl = substituteTemplateVariables(getLoginUrl(), getAllTemplateVariables());
+    return getHttpMethod(requestUrl, myLoginMethodType);
+  }
+
+  @Nullable
+  @Override
+  public Task findTask(final String id) throws Exception {
+    List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
+    String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
+    HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);
+    return getActiveResponseHandler().parseIssue(executeMethod(method));
   }
 
   @Nullable
@@ -214,8 +255,7 @@ public class GenericRepository extends BaseRepositoryImpl {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
-        final Task[] issues = getIssues("", 1, 0);
-        if (issues.length == 0) throw new Exception("Tasks not found. Probably, you don't login.");
+        getIssues("", 1, 0);
       }
 
       @Override
@@ -224,42 +264,52 @@ public class GenericRepository extends BaseRepositoryImpl {
     };
   }
 
-  private String replaceTemplateVariables(String s) {
-    String answer = new String(s);
-    for (TemplateVariable templateVariable : getTemplateVariables()) {
-      answer = answer.replaceAll(Pattern.quote("{" + templateVariable.getName() + "}"), templateVariable.getValue());
-    }
-    return answer;
+  public void setLoginUrl(final String loginUrl) {
+    myLoginURL = loginUrl;
   }
 
-  @Nullable
-  @Override
-  public String getTaskComment(final Task task) {
-    return super.getTaskComment(task);
+  public void setTasksListUrl(final String tasksListUrl) {
+    myTasksListUrl = tasksListUrl;
   }
 
-  public String getLoginURL() {
+  public void setSingleTaskUrl(String singleTaskUrl) {
+    mySingleTaskUrl = singleTaskUrl;
+  }
+
+  public String getLoginUrl() {
     return myLoginURL;
   }
 
-  public void setLoginURL(final String loginURL) {
-    myLoginURL = loginURL;
+  public String getTasksListUrl() {
+    return myTasksListUrl;
   }
 
-  public void setLoginMethodType(final String loginMethodType) {
+  public String getSingleTaskUrl() {
+    return mySingleTaskUrl;
+  }
+
+  public void setLoginMethodType(final HTTPMethod loginMethodType) {
     myLoginMethodType = loginMethodType;
   }
 
-  public void setTasksListMethodType(final String tasksListMethodType) {
+  public void setTasksListMethodType(final HTTPMethod tasksListMethodType) {
     myTasksListMethodType = tasksListMethodType;
   }
 
-  public String getLoginMethodType() {
+  public void setSingleTaskMethodType(HTTPMethod singleTaskMethodType) {
+    mySingleTaskMethodType = singleTaskMethodType;
+  }
+
+  public HTTPMethod getLoginMethodType() {
     return myLoginMethodType;
   }
 
-  public String getTasksListMethodType() {
+  public HTTPMethod getTasksListMethodType() {
     return myTasksListMethodType;
+  }
+
+  public HTTPMethod getSingleTaskMethodType() {
+    return mySingleTaskMethodType;
   }
 
   public ResponseType getResponseType() {
@@ -270,70 +320,100 @@ public class GenericRepository extends BaseRepositoryImpl {
     myResponseType = responseType;
   }
 
-  public String getTasksListURL() {
-    return myTasksListURL;
-  }
-
-  public void setTasksListURL(final String tasksListURL) {
-    myTasksListURL = tasksListURL;
-  }
-
-  public String getTaskPattern() {
-    return myTaskPattern;
-  }
-
-  public void setTaskPattern(final String taskPattern) {
-    myTaskPattern = taskPattern;
-  }
-
   public List<TemplateVariable> getTemplateVariables() {
     return myTemplateVariables;
+  }
+
+  /**
+   * Returns all template variables including both predefined and defined by user
+   */
+  public List<TemplateVariable> getAllTemplateVariables() {
+    return ContainerUtil.concat(PREDEFINED_TEMPLATE_VARIABLES, getTemplateVariables());
   }
 
   public void setTemplateVariables(final List<TemplateVariable> templateVariables) {
     myTemplateVariables = templateVariables;
   }
 
-  public void resetToDefaults() {
-    myTasksListURL = getTasksListURLDefault();
-    myTaskPattern = getTaskPatternDefault();
-    myLoginURL = getLoginURLDefault();
-    myLoginMethodType = getLoginMethodTypeDefault();
-    myTasksListMethodType = getTasksListMethodTypeDefault();
-    myResponseType = getResponseTypeDefault();
-    myTemplateVariables = getTemplateVariablesDefault();
-  }
-
-  protected List<TemplateVariable> getTemplateVariablesDefault() {
-    return new ArrayList<TemplateVariable>();
-  }
-
-  protected ResponseType getResponseTypeDefault() {
-    return ResponseType.XML;
-  }
-
-  protected String getTasksListMethodTypeDefault() {
-    return GenericRepositoryEditor.GET;
-  }
-
-  protected String getLoginMethodTypeDefault() {
-    return GenericRepositoryEditor.GET;
-  }
-
-  protected String getLoginURLDefault() {
-    return "";
-  }
-
-  protected String getTaskPatternDefault() {
-    return "";
-  }
-
-  protected String getTasksListURLDefault() {
-    return "";
+  @Override
+  public Icon getIcon() {
+    if (mySubtypeName == null) {
+      return super.getIcon();
+    }
+    @SuppressWarnings("unchecked")
+    List<TaskRepositorySubtype> subtypes = getRepositoryType().getAvailableSubtypes();
+    for (TaskRepositorySubtype s : subtypes) {
+      if (mySubtypeName.equals(s.getName())) {
+        return s.getIcon();
+      }
+    }
+    throw new AssertionError("Unknown repository subtype");
   }
 
   @Override
   protected int getFeatures() {
     return LOGIN_ANONYMOUSLY | BASIC_HTTP_AUTHORIZATION;
+  }
+
+  public ResponseHandler getResponseHandler(ResponseType type) {
+    return myResponseHandlersMap.get(type);
+  }
+
+  public ResponseHandler getActiveResponseHandler() {
+    return myResponseHandlersMap.get(myResponseType);
+  }
+
+  @AbstractCollection(
+    elementTypes = {
+      XPathResponseHandler.class,
+      JsonPathResponseHandler.class,
+      RegExResponseHandler.class
+    },
+    surroundWithTag = false
+  )
+  public List<ResponseHandler> getResponseHandlers() {
+    Collection<ResponseHandler> handlers = myResponseHandlersMap.values();
+    return new ArrayList<ResponseHandler>(handlers);
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setResponseHandlers(List<ResponseHandler> responseHandlers) {
+    myResponseHandlersMap.clear();
+    for (ResponseHandler handler : responseHandlers) {
+      myResponseHandlersMap.put(handler.getResponseType(), handler);
+    }
+    // ResponseHandler#repository field is excluded from serialization to prevent
+    // circular dependency so it has to be done manually during serialization process
+    for (ResponseHandler handler : myResponseHandlersMap.values()) {
+      handler.setRepository(this);
+    }
+  }
+
+  public ResponseHandler getXmlResponseHandlerDefault() {
+    return new XPathResponseHandler(this);
+  }
+
+  public ResponseHandler getJsonResponseHandlerDefault() {
+    return new JsonPathResponseHandler(this);
+  }
+
+  public ResponseHandler getTextResponseHandlerDefault() {
+    return new RegExResponseHandler(this);
+  }
+
+  public String getSubtypeName() {
+    return mySubtypeName;
+  }
+
+  public void setSubtypeName(String subtypeName) {
+    mySubtypeName = subtypeName;
+  }
+
+  public boolean getDownloadTasksInSeparateRequests() {
+    return myDownloadTasksInSeparateRequests;
+  }
+
+  public void setDownloadTasksInSeparateRequests(boolean downloadTasksInSeparateRequests) {
+    myDownloadTasksInSeparateRequests = downloadTasksInSeparateRequests;
   }
 }

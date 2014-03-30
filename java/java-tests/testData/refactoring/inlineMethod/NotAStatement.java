@@ -13,7 +13,7 @@ class AAA {
 
   class Status {
     public Status(final String[] strings) {
-      //To change body of created methods use File | Settings | File Templates.
+      
     }
 
     boolean hasReadonlyFiles() {

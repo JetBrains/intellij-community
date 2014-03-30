@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public final String getVersionString(final Sdk sdk) {
+  public final String getVersionString(@NotNull final Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
   }
@@ -177,6 +177,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(plugins + "DatabaseSupport", result, "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
+    appendIdeaLibrary(plugins + "Spring", result,
+                      "spring-el.jar", "spring-jsf.jar", "spring-persistence-integration.jar", "spring-web.jar");
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
@@ -227,7 +229,10 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
 
     final int choice = Messages
-      .showChooseDialog("Select Java SDK to be used as IDEA internal platform", "Select Internal Java Platform", ArrayUtil.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+      .showChooseDialog("Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
+                        "Select Internal Java Platform",
+                        ArrayUtil.toStringArray(javaSdks), javaSdks.get(0),
+                        Messages.getQuestionIcon());
 
     if (choice != -1) {
       final String name = javaSdks.get(choice);
@@ -401,13 +406,13 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public String getBinPath(Sdk sdk) {
+  public String getBinPath(@NotNull Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getBinPath(internalJavaSdk);
   }
 
   @Nullable
-  public String getToolsPath(Sdk sdk) {
+  public String getToolsPath(@NotNull Sdk sdk) {
     final Sdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
       return JavaSdk.getInstance().getToolsPath(jdk);
@@ -416,12 +421,12 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Nullable
-  public String getVMExecutablePath(Sdk sdk) {
+  public String getVMExecutablePath(@NotNull Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getVMExecutablePath(internalJavaSdk);
   }
 
-  public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
     if (additionalData instanceof Sandbox) {
       try {
         ((Sandbox)additionalData).writeExternal(additional);
@@ -432,7 +437,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  public SdkAdditionalData loadAdditionalData(Sdk sdk, Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull Sdk sdk, Element additional) {
     Sandbox sandbox = new Sandbox(sdk);
     try {
       sandbox.readExternal(additional);

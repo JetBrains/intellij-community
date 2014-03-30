@@ -44,7 +44,7 @@ public class AnnotationUtilEx {
    * @see AnnotationUtilEx#getAnnotatedElementFor(com.intellij.psi.PsiElement, LookupType)
    */
   public enum LookupType {
-    PREFER_CONTEXT, PREFER_DECLARATION, CONTEXT_ONLY, DECLRARATION_ONLY
+    PREFER_CONTEXT, PREFER_DECLARATION, CONTEXT_ONLY, DECLARATION_ONLY
   }
 
   /**
@@ -55,13 +55,13 @@ public class AnnotationUtilEx {
   @Nullable
   public static PsiModifierListOwner getAnnotatedElementFor(@Nullable PsiElement element, LookupType type) {
     while (element != null) {
-      if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLRARATION_ONLY) {
+      if (type == LookupType.PREFER_DECLARATION || type == LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
           final PsiElement e = ((PsiReferenceExpression)element).resolve();
           if (e instanceof PsiModifierListOwner) {
             return (PsiModifierListOwner)e;
           }
-          if (type == LookupType.DECLRARATION_ONLY) {
+          if (type == LookupType.DECLARATION_ONLY) {
             return null;
           }
         }
@@ -105,7 +105,7 @@ public class AnnotationUtilEx {
 
       // If no annotation has been found through the usage context, check if the element
       // (i.e. the element the reference refers to) is annotated itself
-      if (type != LookupType.DECLRARATION_ONLY) {
+      if (type != LookupType.DECLARATION_ONLY) {
         if (element instanceof PsiReferenceExpression) {
           final PsiElement e = ((PsiReferenceExpression)element).resolve();
           if (e instanceof PsiModifierListOwner) {
@@ -186,7 +186,7 @@ public class AnnotationUtilEx {
    * <p/>
    * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
    * String and as a Set. This is done for performance reasons because the Set is required by the
-   * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unecessary object constructions.
+   * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
    */
   @NotNull
   public static PsiAnnotation[] getAnnotationFrom(PsiModifierListOwner owner,
@@ -195,6 +195,23 @@ public class AnnotationUtilEx {
                                                   boolean inHierarchy) {
     if (!PsiUtilEx.isLanguageAnnotationTarget(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
+    return getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);
+  }
+
+
+  /**
+   * The parameter <code>allowIndirect</code> determines if the method should look for indirect annotations, i.e.
+   * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
+   * one level of indirection and returns an array of [base-annotation, indirect annotation]
+   * <p/>
+   * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
+   * String and as a Set. This is done for performance reasons because the Set is required by the
+   * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
+   */
+
+  public static PsiAnnotation[] getAnnotationsFromImpl(PsiModifierListOwner owner,
+                                                        Pair<String, ? extends Set<String>> annotationName,
+                                                        boolean allowIndirect, boolean inHierarchy) {
     final PsiAnnotation directAnnotation = inHierarchy?
       AnnotationUtil.findAnnotationInHierarchy(owner, annotationName.second) :
       AnnotationUtil.findAnnotation(owner, annotationName.second);
@@ -241,11 +258,9 @@ public class AnnotationUtilEx {
   @Nullable
   public static String calcAnnotationValue(@NotNull PsiAnnotation annotation, @NonNls String attr) {
     PsiElement value = annotation.findAttributeValue(attr);
-    if (value instanceof PsiExpression) {
-      Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression(value);
-      if (o instanceof String) {
-        return (String)o;
-      }
+    Object o = CONSTANT_EVALUATION_HELPER.computeConstantExpression(value);
+    if (o instanceof String) {
+      return (String)o;
     }
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class CloneableTokenizer extends StringTokenizer implements Cloneable {
     super(str, delim, returnDelims);
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

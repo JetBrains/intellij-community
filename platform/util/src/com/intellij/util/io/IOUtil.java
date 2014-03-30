@@ -15,16 +15,20 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.UTFDataFormatException;
+import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 
 public class IOUtil {
+  public static final boolean ourByteBuffersUseNativeByteOrder = SystemProperties.getBooleanProperty("idea.bytebuffers.use.native.byte.order", true);
   private static final int STRING_HEADER_SIZE = 1;
   private static final int STRING_LENGTH_THRESHOLD = 255;
 
@@ -32,18 +36,17 @@ public class IOUtil {
 
   private IOUtil() {}
 
-  private static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
-  public static String readString(DataInput stream) throws IOException {
+  public static String readString(@NotNull DataInput stream) throws IOException {
     int length = stream.readInt();
     if (length == -1) return null;
     if (length == 0) return "";
 
     byte[] bytes = new byte[length*2];
     stream.readFully(bytes);
-    return new String(bytes, 0, length*2, UTF_16BE_CHARSET);
+    return new String(bytes, 0, length*2, CharsetToolkit.UTF_16BE_CHARSET);
   }
 
-  public static void writeString(String s, DataOutput stream) throws IOException {
+  public static void writeString(String s, @NotNull DataOutput stream) throws IOException {
     if (s == null) {
       stream.writeInt(-1);
       return;
@@ -65,7 +68,7 @@ public class IOUtil {
     stream.write(bytes);
   }
 
-  public static void writeUTFTruncated(final DataOutput stream, final String text) throws IOException {
+  public static void writeUTFTruncated(@NotNull DataOutput stream, @NotNull String text) throws IOException {
     // we should not compare number of symbols to 65635 -> it is number of bytes what should be compared
     // ? 4 bytes per symbol - rough estimation
     if (text.length() > 16383) {
@@ -76,18 +79,38 @@ public class IOUtil {
     }
   }
 
+  private static final ThreadLocal<SoftReference<byte[]>> ourReadWriteBuffersCache = new ThreadLocal<SoftReference<byte[]>>();
+
+  public static void writeUTF(@NotNull DataOutput storage, @NotNull final String value) throws IOException {
+    writeUTFFast(getThreadLocalOrCreateReadWriteUTFBuffer(), storage, value);
+  }
+
+  public static String readUTF(@NotNull DataInput storage) throws IOException {
+    return readUTFFast(getThreadLocalOrCreateReadWriteUTFBuffer(), storage);
+  }
+
+  private static byte[] getThreadLocalOrCreateReadWriteUTFBuffer() {
+    byte[] buffer = SoftReference.dereference(ourReadWriteBuffersCache.get());
+    if (buffer == null) {
+      buffer = allocReadWriteUTFBuffer();
+      ourReadWriteBuffersCache.set(new SoftReference<byte[]>(buffer));
+    }
+    return buffer;
+  }
+
+  @NotNull
   public static byte[] allocReadWriteUTFBuffer() {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
   }
 
-  public static void writeUTFFast(final byte[] buffer, final DataOutput storage, @NotNull final String value) throws IOException {
+  public static void writeUTFFast(@NotNull byte[] buffer, @NotNull DataOutput storage, @NotNull final String value) throws IOException {
     int len = value.length();
     if (len < STRING_LENGTH_THRESHOLD) {
       buffer[0] = (byte)len;
       boolean isAscii = true;
       for (int i = 0; i < len; i++) {
         char c = value.charAt(i);
-        if (c < 0 || c >= 128) {
+        if (c >= 128) {
           isAscii = false;
           break;
         }
@@ -110,7 +133,9 @@ public class IOUtil {
   }
 
   public static final Charset US_ASCII = Charset.forName("US-ASCII");
-  public static String readUTFFast(final byte[] buffer, final DataInput storage) throws IOException {
+  private static final ThreadLocal<SoftReference<char[]>> spareBufferLocal = new ThreadLocal<SoftReference<char[]>>();
+
+  public static String readUTFFast(@NotNull byte[] buffer, @NotNull DataInput storage) throws IOException {
     int len = 0xFF & (int)storage.readByte();
     if (len == 0xFF) {
       String result = storage.readUTF();
@@ -121,20 +146,95 @@ public class IOUtil {
       return result;
     }
 
+    if (len == 0) return "";
     storage.readFully(buffer, 0, len);
-    return new String(buffer, 0, len, US_ASCII);
+
+    SoftReference<char[]> reference = spareBufferLocal.get();
+    char[] chars = reference != null ? reference.get() : null;
+    if (chars == null) {
+      chars = new char[STRING_LENGTH_THRESHOLD];
+      spareBufferLocal.set(new SoftReference<char[]>(chars));
+    }
+    for(int i = 0; i < len; ++i) chars[i] = (char)(buffer[i] &0xFF);
+    return new String(chars, 0, len);
   }
 
-  public static boolean isAscii(final String str) {
-    int length = str.length();
-    for (int i = 0; i != length; ++ i) {
-      final char c = str.charAt(i);
-      if (!isAscii(c)) return false;
+  public static boolean isAscii(@NotNull String str) {
+    for (int i = 0, length = str.length(); i < length; ++ i) {
+      if (str.charAt(i) >= 128) return false;
     }
     return true;
   }
 
   public static boolean isAscii(char c) {
-    return c >= 0 && c < 128;
+    return c < 128;
+  }
+
+  public static boolean deleteAllFilesStartingWith(@NotNull File file) {
+    final String baseName = file.getName();
+    File parentFile = file.getParentFile();
+    final File[] files = parentFile != null ? parentFile.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(final File pathname) {
+        return pathname.getName().startsWith(baseName);
+      }
+    }): null;
+
+    boolean ok = true;
+    if (files != null) {
+      for (File f : files) {
+        ok &= FileUtil.delete(f);
+      }
+    }
+
+    return ok;
+  }
+
+  public static void syncStream(OutputStream stream) throws IOException {
+    stream.flush();
+
+    try {
+      Field outField = FilterOutputStream.class.getDeclaredField("out");
+      outField.setAccessible(true);
+      while (stream instanceof FilterOutputStream) {
+        Object o = outField.get(stream);
+        if (o instanceof OutputStream) {
+          stream = (OutputStream)o;
+        } else {
+          break;
+        }
+      }
+      if (stream instanceof FileOutputStream) {
+        ((FileOutputStream)stream).getFD().sync();
+      }
+    }
+    catch (NoSuchFieldException e) {
+      throw new RuntimeException(e);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, final File file) throws IOException {
+    return openCleanOrResetBroken(factoryComputable, new Runnable() {
+      @Override
+      public void run() {
+        deleteAllFilesStartingWith(file);
+      }
+    });
+  }
+
+  public static <T> T openCleanOrResetBroken(@NotNull ThrowableComputable<T, IOException> factoryComputable, Runnable cleanupCallback) throws IOException {
+    for(int i = 0; i < 2; ++i) {
+      try {
+        return factoryComputable.compute();
+      } catch (IOException ex) {
+        if (i == 1) throw ex;
+        cleanupCallback.run();
+      }
+    }
+
+    return null;
   }
 }

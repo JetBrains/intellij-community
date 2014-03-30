@@ -15,27 +15,75 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
-
-    final DataContext context = e.getDataContext();
-    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
-      if (MavenActionUtil.getProjectsManager(context).isManagedFile(each)) return true;
-    }
-    return false;
+    return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() > 0;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
-    MavenActionUtil.getProjectsManager(context).removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(context));
+
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+
+    List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
+    List<VirtualFile> removableFiles = new ArrayList<VirtualFile>();
+
+    for (VirtualFile pomXml : selectedFiles) {
+      if (projectsManager.isManagedFile(pomXml)) {
+        removableFiles.add(pomXml);
+      }
+      else {
+        notifyUserIfNeeded(context, projectsManager, selectedFiles, pomXml);
+      }
+    }
+    projectsManager.removeManagedFiles(removableFiles);
+  }
+
+  private static void notifyUserIfNeeded(DataContext context,
+                                         MavenProjectsManager projectsManager,
+                                         List<VirtualFile> selectedFiles,
+                                         VirtualFile pomXml) {
+    MavenProject mavenProject = projectsManager.findProject(pomXml);
+    assert mavenProject != null;
+
+    MavenProject aggregator = projectsManager.findAggregator(mavenProject);
+    while (aggregator != null && !projectsManager.isManagedFile(aggregator.getFile())) {
+      aggregator = projectsManager.findAggregator(aggregator);
+    }
+
+    if (aggregator != null && !selectedFiles.contains(aggregator.getFile())) {
+      notifyUser(context, mavenProject, aggregator);
+    }
+  }
+
+  private static void notifyUser(DataContext context, MavenProject mavenProject, MavenProject aggregator) {
+    String aggregatorDescription = " (" + aggregator.getMavenId().getDisplayString() + ')';
+    Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Failed to remove project",
+                                                 "You can not remove " + mavenProject.getName() + " because it's " +
+                                                 "imported as a module of another project" +
+                                                 aggregatorDescription
+                                                 + ". You can use Ignore action. Only root project can be removed.",
+                                                 NotificationType.ERROR
+    );
+
+    notification.setImportant(true);
+    notification.notify(MavenActionUtil.getProject(context));
   }
 }

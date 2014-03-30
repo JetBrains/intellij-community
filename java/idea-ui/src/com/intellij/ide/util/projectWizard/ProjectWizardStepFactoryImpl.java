@@ -15,8 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -27,18 +26,19 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Oct 6, 2004
  */
 public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
+  private static final Key<ProjectJdkStep> PROJECT_JDK_STEP_KEY = Key.create("ProjectJdkStep");
 
   public ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, String helpId) {
     return new NameLocationStep(wizardContext, builder, modulesProvider, icon, helpId);
@@ -106,26 +106,26 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
-    ModuleWizardStep projectSdkStep = wizardContext.getProjectSdkStep();
-    if (projectSdkStep instanceof ProjectJdkStep) {
+    ProjectJdkStep projectSdkStep = wizardContext.getUserData(PROJECT_JDK_STEP_KEY);
+    if (projectSdkStep != null) {
       return projectSdkStep;
     }
     projectSdkStep = new ProjectJdkStep(wizardContext) {
       public boolean isStepVisible() {
-        final Sdk newProjectJdk = AddModuleWizard.getProjectSdkByDefault(wizardContext);
+        final Sdk newProjectJdk = AbstractProjectWizard.getProjectSdkByDefault(wizardContext);
         if (newProjectJdk == null) return true;
         final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
         return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
       }
     };
-    wizardContext.setProjectSdkStep(projectSdkStep);
+    wizardContext.putUserData(PROJECT_JDK_STEP_KEY, projectSdkStep);
     return projectSdkStep;
   }
 
   @Nullable
   @Override
   public Sdk getNewProjectSdk(WizardContext wizardContext) {
-    return AddModuleWizard.getNewProjectJdk(wizardContext);
+    return AbstractProjectWizard.getNewProjectJdk(wizardContext);
   }
 
   @Override
@@ -134,17 +134,13 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   @Override
-  public ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder, ModulesProvider modulesProvider) {
-    Map<String,Boolean> availableFrameworks = builder.getAvailableFrameworks();
-    if (FrameworkSupportUtil.getProviders(builder).isEmpty() || availableFrameworks != null && availableFrameworks.isEmpty()) {
-      return null;
-    }
+  public ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider) {
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(context, modulesProvider);
     return new SupportForFrameworksStep(context, builder, container);
   }
 
   @Override
-  public ModuleWizardStep createJavaSettingsStep(SettingsStep settingsStep, ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
    return new JavaSettingsStep(settingsStep, moduleBuilder, sdkFilter);
   }
 }

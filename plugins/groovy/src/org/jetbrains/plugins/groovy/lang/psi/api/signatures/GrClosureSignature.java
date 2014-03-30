@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
  * @author Maxim.Medvedev
  */
 public interface GrClosureSignature extends GrSignature {
+  GrClosureSignature[] EMPTY_ARRAY = new GrClosureSignature[0];
 
   @NotNull PsiSubstitutor getSubstitutor();
 
@@ -37,8 +38,6 @@ public interface GrClosureSignature extends GrSignature {
 
   @Nullable
   PsiType getReturnType();
-
-  GrClosureSignature[] EMPTY_ARRAY = new GrClosureSignature[0];
 
   boolean isCurried();
 }

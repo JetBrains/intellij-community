@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import org.apache.tools.ant.Task;
+import org.apache.tools.ant.types.Reference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -247,6 +248,9 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             else if (Boolean.class.isAssignableFrom(attributeType)){
               type = Boolean.class;
               converterClass = AntBooleanConverter.class;
+            }
+            else if (isAssignableFrom(Reference.class.getName(), attributeType)) {
+              converterClass = AntDomRefIdConverter.class;
             }
           }
         }

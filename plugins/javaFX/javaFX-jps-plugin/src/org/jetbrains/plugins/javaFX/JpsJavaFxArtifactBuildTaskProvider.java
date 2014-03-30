@@ -1,20 +1,40 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.javaFX;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.BuildTask;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ExternalProcessUtil;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxManifestAttribute;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
+import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
+import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactType;
 
 import java.io.File;
 import java.util.Collections;
@@ -74,7 +94,7 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
         context.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, "Java version 7 or higher is required to build JavaFX package"));
         return;
       }
-      new JpsJavaFxPackager(myProps, context, myArtifact).createJarAndDeploy(javaSdk.getHomePath() + File.separator + "bin");
+      new JpsJavaFxPackager(myProps, context, myArtifact).buildJavaFxArtifact(javaSdk.getHomePath());
     }
   }
 
@@ -90,8 +110,8 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
-    protected String getArtifactRootName() {
-      return ((JpsArchivePackagingElement)myArtifact.getRootElement()).getArchiveName();
+    protected String getArtifactName() {
+      return myArtifact.getName();
     }
 
     @Override
@@ -101,6 +121,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof JpsArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((JpsArchivePackagingElement)element).getArchiveName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -140,11 +165,6 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
-    protected String prepareParam(String param) {
-      return ExternalProcessUtil.prepareCommand(param);
-    }
-
-    @Override
     protected String getHtmlParamFile() {
       return myProperties.myState.getHtmlParamFile();
     }
@@ -157,6 +177,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected String getUpdateMode() {
       return myProperties.myState.getUpdateMode();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return myProperties.myState.myNativeBundle;
     }
 
     @Override
@@ -187,6 +212,47 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     public boolean isEnabledSigning() {
       return myProperties.myState.isEnabledSigning();
+    }
+
+    @Override
+    public String getPreloaderClass() {
+      final JpsArtifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        final JpsJavaFxPreloaderArtifactProperties artifactProperties = (JpsJavaFxPreloaderArtifactProperties)artifact.getProperties();
+        return artifactProperties.getPreloaderClass();
+      }
+      return null;
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      final JpsArtifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        return ((JpsArchivePackagingElement)artifact.getRootElement()).getArchiveName();
+      }
+      return null;
+    }
+
+    @Override
+    public boolean convertCss2Bin() {
+      return myProperties.myState.isConvertCss2Bin();
+    }
+
+    @Override
+    public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
+      return myProperties.myState.getCustomManifestAttributes();
+    }
+
+    private JpsArtifact getPreloaderArtifact() {
+      for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof JpsArtifactOutputPackagingElement) {
+          final JpsArtifact artifact = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+          if (artifact != null && artifact.getArtifactType() instanceof JpsJavaFxPreloaderArtifactType) {
+            return artifact;
+          }
+        }
+      }
+      return null;
     }
   }
 }

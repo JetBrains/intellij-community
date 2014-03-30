@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +51,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
-import java.util.List;
 
 /**
  * @author spleaner
@@ -64,6 +63,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private Project myProject;
   private MyDialog myDialog;
   private boolean myCanBeParent;
+  private String myTitle;
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, Project project, boolean canBeParent) throws GlasspanePeerUnavailableException {
     myWrapper = wrapper;
@@ -79,7 +79,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     if (myWindowManager != null) {
 
       if (project == null) {
-        project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
 
       myProject = project;
@@ -104,7 +104,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, boolean canBeParent) throws GlasspanePeerUnavailableException {
-    this(wrapper, (Project) null, canBeParent);
+    this(wrapper, (Project)null, canBeParent);
   }
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent)
@@ -145,8 +145,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     if (myDialog != null) {
       return myDialog.getFocusTrackback();
     }
-    
-    return null;
+     return null;
   }
 
   public void setUndecorated(final boolean undecorated) {
@@ -238,7 +237,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public void setTitle(final String title) {
-    throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
+    myTitle = title;
   }
 
   // TODO: WTF?! VOID?!!!
@@ -316,10 +315,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   }
 
   public void pack() {
-  }
-
-  public void setIconImages(final List<Image> image) {
-    throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
   }
 
   public void setAppIcons() {
@@ -520,7 +515,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     protected void paintComponent(final Graphics g) {
       final Graphics2D g2 = (Graphics2D) g;
       if (shadow != null) {
-        g2.drawImage(shadow, 0, 0, null);
+        UIUtil.drawImage(g2, shadow, 0, 0, null);
       }
 
       super.paintComponent(g);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,23 @@
  */
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
@@ -28,6 +40,7 @@ import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
  * @author pegov
  */
 public class MacUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
   public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
   
   private MacUtil() {
@@ -35,7 +48,7 @@ public class MacUtil {
 
   @Nullable
   public static ID findWindowForTitle(final String title) {
-    if (title == null || title.length() == 0) return null;
+    if (title == null || title.isEmpty()) return null;
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     ID focusedWindow = null;
@@ -65,7 +78,7 @@ public class MacUtil {
 
     return focusedWindow;
   }
-  
+
   public static synchronized void startModal(JComponent component, String key) {
     try {
       if (SwingUtilities.isEventDispatchThread()) {
@@ -84,7 +97,7 @@ public class MacUtil {
             ((MenuComponent)source).dispatchEvent(event);
           }
           else {
-            System.err.println("Unable to dispatch: " + event);
+            LOG.debug("Unable to dispatch: " + event);
           }
         }
       }
@@ -103,6 +116,81 @@ public class MacUtil {
   public static synchronized void startModal(JComponent component) {
     startModal(component, MAC_NATIVE_WINDOW_SHOWING);
   }
-  
-  
+
+  public static boolean isFullKeyboardAccessEnabled() {
+    if (!SystemInfo.isMacOSSnowLeopard) return false;
+    final AtomicBoolean result = new AtomicBoolean();
+    Foundation.executeOnMainThread(new Runnable() {
+      @Override
+      public void run() {
+          result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
+      }
+    }, true, true);
+    return result.get();
+  }
+
+  public static void adjustFocusTraversal(@NotNull Disposable disposable) {
+    if (!SystemInfo.isMacOSSnowLeopard) return;
+    final AWTEventListener listener = new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (event instanceof KeyEvent
+            && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_TAB
+            && (!(event.getSource() instanceof JTextComponent))
+            && (!(event.getSource() instanceof JList))
+            && !isFullKeyboardAccessEnabled())
+          ((KeyEvent)event).consume();
+      }
+    };
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
+      }
+    });
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.KEY_EVENT_MASK);
+  }
+
+  @SuppressWarnings("deprecation")
+  public static ID findWindowFromJavaWindow(final Window w) {
+    ID windowId = null;
+    if (SystemInfo.isJavaVersionAtLeast("1.7") && Registry.is("skip.untitled.windows.for.mac.messages")) {
+      try {
+        //noinspection deprecation
+        Class <?> cWindowPeerClass  = w.getPeer().getClass();
+        Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
+        Object cPlatformWindow = getPlatformWindowMethod.invoke(w.getPeer());
+        Class <?> cPlatformWindowClass = cPlatformWindow.getClass();
+        Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
+        windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
+      }
+      catch (NoSuchMethodException e) {
+        LOG.debug(e);
+      }
+      catch (InvocationTargetException e) {
+        LOG.debug(e);
+      }
+      catch (IllegalAccessException e) {
+        LOG.debug(e);
+      }
+
+    } else {
+      String foremostWindowTitle = getWindowTitle(w);
+      windowId = findWindowForTitle(foremostWindowTitle);
+    }
+    return windowId;
+  }
+
+
+  public static String getWindowTitle(Window documentRoot) {
+    String windowTitle;
+    if (documentRoot instanceof Frame) {
+      windowTitle = ((Frame)documentRoot).getTitle();
+    } else if (documentRoot instanceof Dialog) {
+      windowTitle = ((Dialog)documentRoot).getTitle();
+    } else {
+      throw new RuntimeException("The window is not a frame and not a dialog!");
+    }
+    return windowTitle;
+  }
 }

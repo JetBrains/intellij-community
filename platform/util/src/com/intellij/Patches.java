@@ -75,11 +75,6 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_3716835 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.5");
 
   /**
-   * Lion eAWT FullScreen mode leads to visual artifacts.
-   */
-  public static final boolean APPLE_BUG_ID_10207064 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
-
-  /**
    * Minimizing and restoring application via View | Minimize leads to visual artifacts.
    */
   public static final boolean APPLE_BUG_ID_10514018 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.6.0_31");
@@ -118,7 +113,26 @@ public class Patches {
 
   /**
    * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=9000030.
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7172665.
    */
-  public static final boolean SUN_BUG_ID_9000030 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+  public static final boolean SUN_BUG_ID_7172665 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+
+  /**
+   * On some WMs modal dialogs may show behind full screen window.
+   * See http://bugs.sun.com/view_bug.do?bug_id=8013359.
+   */
+  public static final boolean SUN_BUG_ID_8013359 =
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.7.0.40");
+
+  /**
+   * No BindException when another program is using the port.
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7179799
+   */
+  public static final boolean SUN_BUG_ID_7179799 = true;
+
+  /**
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 7
+   */
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
 }

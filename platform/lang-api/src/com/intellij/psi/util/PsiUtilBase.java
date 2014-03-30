@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,10 @@ package com.intellij.psi.util;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -33,25 +32,17 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-public class PsiUtilBase extends PsiUtilCore {
-
-  public static final PsiParser NULL_PARSER = new PsiParser() {
-    @NotNull
-    public ASTNode parse(IElementType root, PsiBuilder builder) {
-      throw new IllegalAccessError();
-    }
-  };
+public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
     public int compare(Language o1, Language o2) {
@@ -80,31 +71,6 @@ public class PsiUtilBase extends PsiUtilCore {
     throw new RuntimeException("Cannot find root for: "+root);
   }
 
-  @NotNull
-  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
-    final PsiElement elt = file.findElementAt(offset);
-    if (elt == null) return file.getLanguage();
-    if (elt instanceof PsiWhiteSpace) {
-      final int decremented = elt.getTextRange().getStartOffset() - 1;
-      if (decremented >= 0) {
-        return getLanguageAtOffset(file, decremented);
-      }
-    }
-    return findLanguageFromElement(elt);
-  }
-
-  @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt) {
-    if (elt.getFirstChild() == null) { //is leaf
-      final PsiElement parent = elt.getParent();
-      if (parent != null) {
-        return parent.getLanguage();
-      }
-    }
-
-    return elt.getLanguage();
-  }
-
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == root) return true;
@@ -113,25 +79,6 @@ public class PsiUtilBase extends PsiUtilCore {
     }
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
     return host != null && isUnderPsiRoot(root, host);
-  }
-
-  /**
-   * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
-   */
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
-    final PsiFile psiFile = psiElement.getContainingFile();
-    final PsiFile originalFile = psiFile.getOriginalFile();
-    if (originalFile == psiFile) return psiElement;
-    final TextRange range = psiElement.getTextRange();
-    final PsiElement element = originalFile.findElementAt(range.getStartOffset());
-    final int maxLength = range.getLength();
-    T parent = PsiTreeUtil.getParentOfType(element, elementClass, false);
-    for (T next = parent ;
-         next != null && next.getTextLength() <= maxLength;
-         parent = next, next = PsiTreeUtil.getParentOfType(next, elementClass, true)) {
-    }
-    return parent;
   }
 
   @Nullable
@@ -166,15 +113,6 @@ public class PsiUtilBase extends PsiUtilCore {
     return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
   }
 
-  public static Language getDialect(@NotNull PsiElement element) {
-    return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
-  }
-
-  private static Language narrowLanguage(final Language language, final Language candidate) {
-    if (candidate.isKindOf(language)) return candidate;
-    return language;
-  }
-
   @Nullable
   public static PsiFile getPsiFileInEditor(@NotNull final Editor editor, @NotNull final Project project) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -202,7 +140,10 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static Language reallyEvaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+  public static Language reallyEvaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
+    if (file instanceof PsiBinaryFile) {
+      return file.getLanguage();
+    }
     Language lang = null;
     int curOffset = start;
     do {
@@ -217,7 +158,12 @@ public class PsiUtilBase extends PsiUtilCore {
           return null;
         }
       }
-      int endOffset = elt.getTextRange().getEndOffset();
+      TextRange range = elt.getTextRange();
+      if (range == null) {
+        LOG.error("Null range for element " + elt + " of " + elt.getClass() + " in file " + file + " at offset " + curOffset);
+        return file.getLanguage();
+      }
+      int endOffset = range.getEndOffset();
       curOffset = endOffset <= curOffset ? curOffset + 1 : endOffset;
     }
     while (curOffset < end);
@@ -225,7 +171,7 @@ public class PsiUtilBase extends PsiUtilCore {
   }
 
   @Nullable
-  public static Language evaluateLanguageInRange(final int start, final int end, final PsiFile file) {
+  public static Language evaluateLanguageInRange(final int start, final int end, @NotNull PsiFile file) {
     PsiElement elt = getElementAtOffset(file, start);
 
     TextRange selectionRange = new TextRange(start, end);
@@ -239,7 +185,7 @@ public class PsiUtilBase extends PsiUtilCore {
         range = elt.getTextRange();
         assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       }
-      
+
       if (elt != null) {
         return elt.getLanguage();
       }
@@ -257,6 +203,12 @@ public class PsiUtilBase extends PsiUtilCore {
       child = parent;
     }
     while (true);
+  }
+
+  @Nullable
+  @Override
+  public Editor findEditorByPsiElement(@NotNull PsiElement element) {
+    return findEditor(element);
   }
 
   /**
@@ -284,8 +236,7 @@ public class PsiUtilBase extends PsiUtilCore {
       return null;
     }
 
-    VirtualFileSystem fileSystem = virtualFile.getFileSystem();
-    if (fileSystem instanceof LocalFileSystem) {
+    if (virtualFile.isInLocalFileSystem()) {
       // Try to find editor for the real file.
       final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
       for (FileEditor editor : editors) {
@@ -298,7 +249,7 @@ public class PsiUtilBase extends PsiUtilCore {
       // We assume that data context from focus-based retrieval should success if performed from EDT.
       AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
       if (asyncResult.isDone()) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(asyncResult.getResult());
+        Editor editor = CommonDataKeys.EDITOR.getData(asyncResult.getResult());
         if (editor != null) {
           Document cachedDocument = PsiDocumentManager.getInstance(psiFile.getProject()).getCachedDocument(psiFile);
           // Ensure that target editor is found by checking its document against the one from given PSI element.
@@ -313,6 +264,15 @@ public class PsiUtilBase extends PsiUtilCore {
 
   public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {
     final VirtualFile virtualFile = element.getVirtualFile();
-    return virtualFile != null && virtualFile.isSymLink();
+    return virtualFile != null && virtualFile.is(VFileProperty.SYMLINK);
+  }
+
+  @Nullable
+  public static VirtualFile asVirtualFile(@Nullable PsiElement element) {
+    if (element instanceof PsiFileSystemItem) {
+      PsiFileSystemItem psiFileSystemItem = (PsiFileSystemItem)element;
+      return psiFileSystemItem.isValid() ? psiFileSystemItem.getVirtualFile() : null;
+    }
+    return null;
   }
 }

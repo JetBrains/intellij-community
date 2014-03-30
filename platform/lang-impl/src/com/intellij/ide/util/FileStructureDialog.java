@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -80,9 +80,9 @@ public class FileStructureDialog extends DialogWrapper {
   @NonNls private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
 
-  public FileStructureDialog(StructureViewModel structureViewModel,
-                             @Nullable Editor editor,
-                             Project project,
+  public FileStructureDialog(@NotNull StructureViewModel structureViewModel,
+                             @NotNull Editor editor,
+                             @NotNull Project project,
                              Navigatable navigatable,
                              @NotNull final Disposable auxDisposable,
                              final boolean applySortAndFilter) {
@@ -109,34 +109,38 @@ public class FileStructureDialog extends DialogWrapper {
 
     if (psiElement != null) {
       if (structureViewModel.shouldEnterElement(psiElement)) {
-        myCommanderPanel.getBuilder().enterElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
+        myCommanderPanel.getBuilder().enterElement(psiElement, PsiUtilCore.getVirtualFile(psiElement));
       }
       else {
-        myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
+        myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtilCore.getVirtualFile(psiElement));
       }
     }
 
     Disposer.register(myDisposable, auxDisposable);
   }
 
-  protected PsiFile getPsiFile(final Project project) {
+  protected PsiFile getPsiFile(@NotNull Project project) {
     return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
+  @Override
   @Nullable
   protected Border createContentPaneBorder() {
     return null;
   }
 
+  @Override
   public void dispose() {
     myCommanderPanel.dispose();
     super.dispose();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return DockManager.getInstance(myProject).getDimensionKeyForFocus("#com.intellij.ide.util.FileStructureDialog");
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCommanderPanel);
   }
@@ -155,6 +159,7 @@ public class FileStructureDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myCommanderPanel = new MyCommanderPanel(myProject);
     myTreeStructure = new MyStructureTreeStructure();
@@ -184,13 +189,16 @@ public class FileStructureDialog extends DialogWrapper {
     ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
       @Override
       protected boolean shouldEnterSingleTopLevelElement(Object rootChild) {
-        return myBaseTreeModel.shouldEnterElement(((StructureViewTreeElement)((AbstractTreeNode)rootChild).getValue()).getValue());
+        Object element = ((StructureViewTreeElement)((AbstractTreeNode)rootChild).getValue()).getValue();
+        return myBaseTreeModel.shouldEnterElement(element);
       }
 
+      @Override
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
 
+      @Override
       protected void refreshSelection() {
         myCommanderPanel.scrollSelectionInView();
         if (myShouldNarrowDown) {
@@ -198,6 +206,7 @@ public class FileStructureDialog extends DialogWrapper {
         }
       }
 
+      @Override
       protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
         ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
         for (Object childElement : childElements) {
@@ -210,6 +219,7 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel.setTitlePanelVisible(false);
 
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean succeeded = myCommanderPanel.navigateSelectedElement();
         if (succeeded) {
@@ -250,6 +260,7 @@ public class FileStructureDialog extends DialogWrapper {
     final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.the.list.on.typing"));
     checkBox.setSelected(PropertiesComponent.getInstance().isTrueValue(ourPropertyKey));
     checkBox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myShouldNarrowDown = checkBox.isSelected();
         PropertiesComponent.getInstance().setValue(ourPropertyKey, Boolean.toString(myShouldNarrowDown));
@@ -273,12 +284,12 @@ public class FileStructureDialog extends DialogWrapper {
 
     if (text == null) return;
 
-    Shortcut[] shortcuts = action instanceof FileStructureFilter ?
-                          ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
+    Shortcut[] shortcuts = FileStructurePopup.extractShortcutFor(action);
 
 
     final JCheckBox chkFilter = new JCheckBox();
     chkFilter.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         PsiElement currentParent = null;
@@ -300,7 +311,7 @@ public class FileStructureDialog extends DialogWrapper {
             boolean oldNarrowDown = myShouldNarrowDown;
             myShouldNarrowDown = false;
             try {
-              builder.enterElement(currentParent, PsiUtilBase.getVirtualFile(currentParent));
+              builder.enterElement(currentParent, PsiUtilCore.getVirtualFile(currentParent));
             }
             finally {
               myShouldNarrowDown = oldNarrowDown;
@@ -310,7 +321,7 @@ public class FileStructureDialog extends DialogWrapper {
         }
 
         if (SpeedSearchBase.hasActiveSpeedSearch(myCommanderPanel.getList())) {
-          final SpeedSearchSupply supply = SpeedSearchBase.getSupply(myCommanderPanel.getList());
+          final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myCommanderPanel.getList());
           if (supply != null && supply.isPopupActive()) supply.refreshSelection();
         }
       }
@@ -320,6 +331,7 @@ public class FileStructureDialog extends DialogWrapper {
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
       new AnAction() {
+        @Override
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();
         }
@@ -330,6 +342,7 @@ public class FileStructureDialog extends DialogWrapper {
       //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
+  @Override
   @Nullable
   protected JComponent createSouthPanel() {
     return null;
@@ -349,6 +362,7 @@ public class FileStructureDialog extends DialogWrapper {
       super(_project, false, true);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myListSpeedSearch.addChangeListener(new PropertyChangeListener() {
+        @Override
         public void propertyChange(PropertyChangeEvent evt) {
           ProjectListBuilder builder = (ProjectListBuilder)getBuilder();
           if (builder == null) {
@@ -356,6 +370,7 @@ public class FileStructureDialog extends DialogWrapper {
           }
           builder.addUpdateRequest(hasPrefixShortened(evt));
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               int index = myList.getSelectedIndex();
               if (index != -1 && index < myList.getModel().getSize()) {
@@ -367,8 +382,6 @@ public class FileStructureDialog extends DialogWrapper {
               }
             }
           });
-
-          myList.repaint(); // to update match highlighting
         }
       });
       myListSpeedSearch.setComparator(createSpeedSearchComparator());
@@ -379,10 +392,12 @@ public class FileStructureDialog extends DialogWrapper {
              ((String)evt.getNewValue()).length() < ((String)evt.getOldValue()).length();
     }
 
+    @Override
     public boolean navigateSelectedElement() {
       final Ref<Boolean> succeeded = new Ref<Boolean>();
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
           IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
@@ -394,12 +409,13 @@ public class FileStructureDialog extends DialogWrapper {
       return succeeded.get();
     }
 
+    @Override
     public Object getData(String dataId) {
       Object selectedElement = myCommanderPanel.getSelectedValue();
 
       if (selectedElement instanceof TreeElement) selectedElement = ((StructureViewTreeElement)selectedElement).getValue();
 
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return selectedElement instanceof Navigatable ? selectedElement : myNavigatable;
       }
 
@@ -429,6 +445,7 @@ public class FileStructureDialog extends DialogWrapper {
       super(FileStructureDialog.this.myProject, myTreeModel);
     }
 
+    @Override
     public Object[] getChildElements(Object element) {
       Object[] childElements = super.getChildElements(element);
 
@@ -462,6 +479,7 @@ public class FileStructureDialog extends DialogWrapper {
       return ArrayUtil.toObjectArray(filteredElements);
     }
 
+    @Override
     public void rebuildTree() {
       getChildElements(getRootElement());   // for some reason necessary to rebuild tree correctly
       super.rebuildTree();

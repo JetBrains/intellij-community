@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.IOException;
 
 /**
+ * Creates new application for each test.
  * @author peter
  */
 public interface HeavyIdeaTestFixture extends IdeaProjectTestFixture {

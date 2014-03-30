@@ -93,9 +93,8 @@ public class LastUnchangedContentTracker {
 
     LOG.assertTrue(contentId > 0, contentId);
 
-    if (ChangeListManagerImpl.DEBUG) {
-      ChangeListManagerImpl.log("LastUnchangedContentTracker.saveContentReference");
-      ChangeListManagerImpl.log("file = " + file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("saveContentReference file = " + file);
     }
 
     long stamp = file.getTimeStamp();

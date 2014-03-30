@@ -1,8 +1,21 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -10,7 +23,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.*
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -19,11 +32,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.psi.*
-
 /**
  * @author peter
  */
@@ -74,7 +84,7 @@ Y y = <warning descr="Constructor 'Y' in 'Y' cannot be applied to '(['a':java.la
 def x = new Object() {
   def foo() {
     HashMap<String, File> m1 = ['a':['b']]
-    HashMap<String, File> m2 = <warning descr="Cannot assign 'File' to 'HashMap<String, File>'">new File('aaa')</warning>
+    HashMap<String, File> <warning descr="Cannot assign 'File' to 'HashMap<String, File>'">m2</warning> = new File('aaa')
   }
 }
 """
@@ -108,7 +118,7 @@ f.mk<caret>
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "mkdir", "mkdirs"
   }
-  
+
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne2() throws Exception {
     myFixture.addClass """
 public class Some {
@@ -181,10 +191,10 @@ public interface Action {
 """
 
     testAssignability """
-Foo f = <warning descr="Cannot assign 'Closure' to 'Foo'">{ println it }</warning>
+Foo <warning descr="Cannot assign 'Closure' to 'Foo'">f</warning> = { println it }
 Function1<String, Object> f1 = { println it }
 Function1<String, Object> f2 = { x=42 -> println x }
-Function1<String, Object> f3 = <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">{ int x -> println x }</warning>
+Function1<String, Object> <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">f3</warning> = { int x -> println x }
 Runnable r = { println it }
 Action a = { println it }
 Action a1 = { a2 = 2 -> println a2 }
@@ -283,49 +293,6 @@ class Foo {
 """
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
-  }
-
-  public void testTraitHighlighting() throws Exception {
-    myFixture.configureByText "a.groovy", """
-@Trait
-abstract class Intf {
-  abstract void foo()
-  void bar() {}
-}
-<error descr="Method 'foo' is not implemented">class Foo implements Intf</error> {}
-<error descr="Method 'foo' is not implemented">class Wrong extends Foo</error> {}
-class Bar implements Intf {
-  void foo() {}
-}
-"""
-    myFixture.testHighlighting(true, false, false, myFixture.file.virtualFile)
-  }
-
-  public void testTraitImplementingAndNavigation() throws Exception {
-    myFixture.configureByText "a.groovy", """
-@Trait
-abstract class <caret>Intf {
-  abstract void foo()
-  void bar() {}
-}
-class Foo implements Intf {}
-class Bar implements Intf {
-  void foo() {}
-}
-class BarImpl extends Bar {}
-"""
-    def facade = JavaPsiFacade.getInstance(getProject())
-    def allScope = GlobalSearchScope.allScope(project)
-    assertOneElement(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo", allScope), true))
-
-    GrTypeDefinition barClass = facade.findClass("Bar", allScope) as GrTypeDefinition
-    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
-    assertTrue "bar" in OverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
-
-    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl", allScope), true))
-
-    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
-    assertEquals Arrays.toString(implementations), 3, implementations.size()
   }
 
   public void testResolveToStdLib() throws Exception {
@@ -436,41 +403,6 @@ class Point {
 
     configureGppScript "Point p = ['su<caret>per': 'a']"
     assertEquals 1, multiResolveReference().size()
-  }
-
-  public void testGotoSuperConstructorFromLiteralOnsets() throws Exception {
-    PsiClass point = myFixture.addClass("""
-class Point {
-  Point() {}
-  Point(int y) {}
-}""")
-
-    configureGppScript "Point p = <caret>[super: 2]"
-    assertEquals point.constructors[1], resolveReference()
-
-    configureGppScript "Point p = <caret>[2]"
-    assertEquals point.constructors[1], resolveReference()
-
-    configureGppScript "Point p = <caret>[]"
-    assertEquals point.constructors[0], resolveReference()
-
-    configureGppScript "Point p = <caret>[:]"
-    assertEquals point.constructors[0], resolveReference()
-
-    configureGppScript "Point p = <caret>[239, 42]"
-    assertEquals 2, multiResolveReference().size()
-
-    configureGppScript """
-def foo(Point p) {}
-foo(<caret>[2, 3])
-"""
-    assertEquals 2, multiResolveReference().size()
-
-    configureGppScript """
-def foo(Point... p) {}
-foo(<caret>['super':[2, 3]])
-"""
-    assertEquals 2, multiResolveReference().size()
   }
 
   public void testGotoClassFromLiteralOnsetsWhenNoConstructorsPresent() throws Exception {

@@ -5,11 +5,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
-import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -34,8 +35,32 @@ public class XmlRearranger
   private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(XML_TAG, XML_ATTRIBUTE); 
   private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
 
-  private static final StdArrangementSettings DEFAULT_SETTINGS = new StdArrangementSettings(
-    Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
+  private static final StdArrangementSettings DEFAULT_SETTINGS;
+
+  static {
+    DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(
+      new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, "xmlns:.*"))));
+    DEFAULT_SETTINGS = new StdRulePriorityAwareSettings(
+      Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
+  }
+
+  private static final DefaultArrangementSettingsSerializer SETTINGS_SERIALIZER = new DefaultArrangementSettingsSerializer(DEFAULT_SETTINGS);
+
+  @NotNull
+  public static StdArrangementMatchRule attrArrangementRule(@NotNull String nameFilter,
+                                                            @NotNull String namespaceFilter,
+                                                            @NotNull ArrangementSettingsToken orderType) {
+    return new StdArrangementMatchRule(new StdArrangementEntryMatcher(ArrangementUtil.combine(
+      new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter),
+      new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.XML_NAMESPACE, namespaceFilter)
+    )), orderType);
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettingsSerializer getSerializer() {
+    return SETTINGS_SERIALIZER;
+  }
 
   @Nullable
   @Override

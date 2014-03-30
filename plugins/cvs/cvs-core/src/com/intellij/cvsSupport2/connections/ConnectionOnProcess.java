@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -46,7 +45,7 @@ public abstract class ConnectionOnProcess implements IConnection {
   private final ErrorRegistry myErrorRegistry;
 
   private boolean myContainsError = false;
-  
+
   protected final StringBuffer myErrorText = new StringBuffer();
   private Future<?> myStdErrFuture;
   private ReadProcessThread myErrThread;
@@ -142,7 +141,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.setEnvParams(EnvironmentUtil.getEnvironmentProperties());
+      commandLine.setPassParentEnvironment(true);
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(

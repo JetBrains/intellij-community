@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     IN_LANGUAGE_CACHE = Key.create("EXTENSIONS_IN_LANGUAGE_"+epName);
   }
 
+  @NotNull
   @Override
-  protected String keyToString(final Language key) {
+  protected String keyToString(@NotNull final Language key) {
     return key.getID();
   }
 
@@ -66,7 +67,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   @NotNull
-  public List<T> allForLanguage(Language l) {
+  public List<T> allForLanguage(@NotNull Language l) {
     List<T> list = forKey(l);
     if (list.isEmpty()) {
       Language base = l.getBaseLanguage();
@@ -91,6 +92,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return myDefaultImplementation;
   }
 
+  @NotNull
   protected Key<T> getLanguageCache() {
     return IN_LANGUAGE_CACHE;
   }

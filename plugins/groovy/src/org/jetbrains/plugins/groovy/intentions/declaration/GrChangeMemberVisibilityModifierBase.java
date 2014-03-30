@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public abstract class GrChangeMemberVisibilityModifierBase extends Intention {
         final PsiElement parent = element.getParent();
         return parent instanceof GrMember &&
                parent instanceof GrNamedElement &&
-               (((GrNamedElement)parent).getNameIdentifierGroovy() == element || ((GrNamedElement)parent).getModifierList() == element) &&
+               (((GrNamedElement)parent).getNameIdentifierGroovy() == element || ((GrMember)parent).getModifierList() == element) &&
                ((GrMember)parent).getModifierList() != null && !((GrMember)parent).getModifierList().hasExplicitModifier(myModifier);
       }
     };

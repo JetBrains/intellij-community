@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,23 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DoubleArrayList;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorEx {
+public class ProgressIndicatorBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
+  private final boolean myReusable;
 
-  private volatile String myText;
-  private volatile double myFraction;
-  private volatile String myText2;
-
-  private volatile boolean myCanceled;
-  private volatile boolean myRunning;
-
-  private volatile boolean myIndeterminate;
-
-  private Stack<String> myTextStack;
-  private DoubleArrayList myFractionStack; 
-  private Stack<String> myText2Stack;
-  private volatile int myNonCancelableCount;
-
-  private ProgressIndicator myModalityProgress;
-  private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile boolean myModalityEntered;
 
   private volatile List<ProgressIndicatorEx> myStateDelegates;
@@ -111,19 +88,18 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     }
   };
 
+  public ProgressIndicatorBase() { this(false); }
+  public ProgressIndicatorBase(boolean reusable) {
+    myReusable = reusable;
+  }
+
   @Override
   public void start() {
     synchronized (this) {
-      LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
-      myText = "";
-      myFraction = 0;
-      myText2 = "";
-      myCanceled = false;
-      myRunning = true;
-      myWasStarted = true;
-
+      super.start();
       delegateRunningChange(START_ACTION);
     }
+    myWasStarted = true;
 
     enterModality();
   }
@@ -148,9 +124,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   @Override
   public void stop() {
-    LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
-    myRunning = false;
-
+    super.stop();
     delegateRunningChange(STOP_ACTION);
     exitModality();
   }
@@ -173,14 +147,10 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     }
   }
 
-  @Override
-  public boolean isRunning() {
-    return myRunning;
-  }
 
   @Override
   public void cancel() {
-    myCanceled = true;
+    super.cancel();
 
     ProgressManagerImpl.canceled();
 
@@ -210,7 +180,7 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   @Override
   public boolean isFinished(@NotNull final TaskInfo task) {
-    WeakList<TaskInfo> list = myFinished;
+    List<TaskInfo> list = myFinished;
     return list != null && list.contains(task);
   }
 
@@ -227,22 +197,15 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   @Override
-  public boolean isCanceled() {
-    return myCanceled;
-  }
-
-  @Override
   public final void checkCanceled() {
-    if (isCanceled() && isCancelable()) {
-      throw new ProcessCanceledException();
-    }
+    super.checkCanceled();
 
     delegate(CHECK_CANCELED_ACTION);
   }
 
   @Override
   public void setText(final String text) {
-    myText = text;
+    super.setText(text);
 
     delegateProgressChange(new IndicatorAction() {
       @Override
@@ -252,14 +215,10 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     });
   }
 
-  @Override
-  public String getText() {
-    return myText;
-  }
 
   @Override
   public void setText2(final String text) {
-    myText2 = text;
+    super.setText2(text);
 
     delegateProgressChange(new IndicatorAction() {
       @Override
@@ -269,19 +228,11 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
     });
   }
 
-  @Override
-  public String getText2() {
-    return myText2;
-  }
 
-  @Override
-  public double getFraction() {
-    return myFraction;
-  }
 
   @Override
   public void setFraction(final double fraction) {
-    myFraction = fraction;
+    super.setFraction(fraction);
 
     delegateProgressChange(new IndicatorAction() {
       @Override
@@ -293,75 +244,40 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
 
   @Override
   public synchronized void pushState() {
-    if (myTextStack == null) myTextStack = new Stack<String>(2);
-    myTextStack.push(myText);
-    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
-    myFractionStack.add(myFraction);
-    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
-    myText2Stack.push(myText2);
+    super.pushState();
 
     delegateProgressChange(PUSH_ACTION);
   }
 
   @Override
   public synchronized void popState() {
-    LOG.assertTrue(!myTextStack.isEmpty());
-    String oldText = myTextStack.pop();
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
-    String oldText2 = myText2Stack.pop();
-    setText(oldText);
-    setFraction(oldFraction);
-    setText2(oldText2);
+    super.popState();
 
     delegateProgressChange(POP_ACTION);
   }
 
   @Override
   public void startNonCancelableSection() {
-    myNonCancelableCount++;
+    super.startNonCancelableSection();
 
     delegateProgressChange(STARTNC_ACTION);
   }
 
   @Override
   public void finishNonCancelableSection() {
-    myNonCancelableCount--;
+    super.finishNonCancelableSection();
 
     delegateProgressChange(FINISHNC_ACTION);
   }
 
-  protected boolean isCancelable() {
-    return myNonCancelableCount == 0;
-  }
-
   @Override
-  public final boolean isModal() {
-    return myModalityProgress != null;
-  }
-
-  @Override
-  @NotNull
-  public final ModalityState getModalityState() {
-    return myModalityState;
-  }
-
-  @Override
-  public void setModalityProgress(ProgressIndicator modalityProgress) {
-    LOG.assertTrue(!isRunning());
-    myModalityProgress = modalityProgress;
-    ModalityState currentModality = ApplicationManager.getApplication().getCurrentModalityState();
-    myModalityState = myModalityProgress != null ? ((ModalityStateEx)currentModality).appendProgress(myModalityProgress) : currentModality;
-  }
-
-  @Override
-  public boolean isIndeterminate() {
-    return myIndeterminate;
+  protected boolean isReuseable() {
+    return myReusable;
   }
 
   @Override
   public void setIndeterminate(final boolean indeterminate) {
-    myIndeterminate = indeterminate;
-
+    super.setIndeterminate(indeterminate);
 
     delegateProgressChange(new IndicatorAction() {
       @Override
@@ -419,74 +335,20 @@ public class ProgressIndicatorBase extends UserDataHolderBase implements Progres
   }
 
   @Override
-  @NotNull
-  public Stack<String> getTextStack() {
-    if (myTextStack == null) myTextStack = new Stack<String>(2);
-    return myTextStack;
-  }
-
-  @Override
-  @NotNull
-  public DoubleArrayList getFractionStack() {
-    if (myFractionStack == null) myFractionStack = new DoubleArrayList(2);
-    return myFractionStack;
-  }
-
-  @Override
-  @NotNull
-  public Stack<String> getText2Stack() {
-    if (myText2Stack == null) myText2Stack = new Stack<String>(2);
-    return myText2Stack;
-  }
-
-  @Override
-  public int getNonCancelableCount() {
-    return myNonCancelableCount;
-  }
-
-
-  @Override
   public boolean isModalityEntered() {
     return myModalityEntered;
   }
 
   @Override
+  public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
+    super.initStateFrom(indicator);
+    if (indicator instanceof ProgressIndicatorEx) {
+      myModalityEntered = ((ProgressIndicatorEx)indicator).isModalityEntered();
+    }
+  }
+
+  @Override
   public boolean wasStarted() {
     return myWasStarted;
-  }
-
-  @Override
-  public synchronized void initStateFrom(@NotNull final ProgressIndicatorEx indicator) {
-    myRunning = indicator.isRunning();
-    myCanceled = indicator.isCanceled();
-    myModalityEntered = indicator.isModalityEntered();
-    myFraction = indicator.getFraction();
-    myIndeterminate = indicator.isIndeterminate();
-    myNonCancelableCount = indicator.getNonCancelableCount();
-
-    myTextStack = new Stack<String>(indicator.getTextStack());
-    myText = indicator.getText();
-
-    myText2Stack = new Stack<String>(indicator.getText2Stack());
-    myText2 = indicator.getText2();
-
-    myFractionStack = new DoubleArrayList(indicator.getFractionStack());
-    myFraction = indicator.getFraction();
-  }
-
-  @NonNls
-  @Override
-  public String toString() {
-    return "ProgressIndicator " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
-  }
-
-  @Override
-  public boolean isPopupWasShown() {
-    return true;
-  }
-
-  @Override
-  public boolean isShowing() {
-    return isModal();
   }
 }

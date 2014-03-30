@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -47,6 +46,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usages.UsageView;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,14 +59,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private static final Logger LOG = Logger.getInstance("#" + ImplementationViewComponent.class.getName());
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -85,7 +84,7 @@ public class ImplementationViewComponent extends JPanel {
   private final ActionToolbar myToolbar;
   private JLabel myLabel;
 
-  public void setHint(final JBPopup hint, final String title) {
+  public void setHint(final JBPopup hint, @NotNull String title) {
     myHint = hint;
     myTitle = title;
   }
@@ -171,7 +170,7 @@ public class ImplementationViewComponent extends JPanel {
     toolbarPanel.add(myToolbar.getComponent(), gc);
 
     setPreferredSize(new Dimension(600, 400));
-    
+
     update(elements, new PairFunction<PsiElement[], List<FileDescriptor>, Boolean>() {
       @Override
       public Boolean fun(final PsiElement[] psiElements, final List<FileDescriptor> fileDescriptors) {
@@ -271,7 +270,7 @@ public class ImplementationViewComponent extends JPanel {
       @Override
       public Boolean fun(PsiElement[] psiElements, List<FileDescriptor> fileDescriptors) {
         if (psiElements.length == 0) return false;
-        
+
         final Project project = psiElements[0].getProject();
         myElements = psiElements;
 
@@ -300,7 +299,7 @@ public class ImplementationViewComponent extends JPanel {
         else {
           myFileChooser.setVisible(false);
           myCountLabel.setVisible(false);
-          
+
           VirtualFile file = psiFile.getVirtualFile();
           if (file != null) {
             myLabel.setIcon(getIconForFile(psiFile));
@@ -319,9 +318,9 @@ public class ImplementationViewComponent extends JPanel {
         return true;
       }
     });
-    
+
   }
-  
+
   private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<PsiElement>(elements.length);
     List<FileDescriptor> files = new ArrayList<FileDescriptor>(elements.length);
@@ -331,6 +330,15 @@ public class ImplementationViewComponent extends JPanel {
         names.add(((PsiNamedElement)element).getName());
       }
     }
+    Arrays.sort(elements, new Comparator<PsiElement>() {
+      @Override
+      public int compare(PsiElement e1, PsiElement e2) {
+        if (e1 instanceof PsiNamedElement && e2 instanceof PsiNamedElement) {
+          return Comparing.compare(((PsiNamedElement)e1).getName(), ((PsiNamedElement)e2).getName());
+        }
+        return e1.hashCode() - e2.hashCode();
+      }
+    });
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
@@ -366,10 +374,12 @@ public class ImplementationViewComponent extends JPanel {
   private void updateEditorText() {
     disposeNonTextEditor();
 
-    final PsiElement elt = myElements[myIndex].getNavigationElement();
-    Project project = elt.getProject();
-    PsiFile psiFile = getContainingFile(elt);
-    final VirtualFile vFile = psiFile.getVirtualFile();
+    final PsiElement foundElement = myElements[myIndex];
+    final PsiElement elt = foundElement.getNavigationElement();
+    LOG.assertTrue(elt != null, foundElement);
+    final Project project = foundElement.getProject();
+    final PsiFile psiFile = getContainingFile(elt);
+    final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
     if (vFile == null) return;
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
@@ -400,25 +410,19 @@ public class ImplementationViewComponent extends JPanel {
   private void updateTextElement(final PsiElement elt) {
     final String newText = getNewText(elt);
     if (newText == null || Comparing.strEqual(newText, myEditor.getDocument().getText())) return;
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Document fragmentDoc = myEditor.getDocument();
-            fragmentDoc.setReadOnly(false);
+        Document fragmentDoc = myEditor.getDocument();
+        fragmentDoc.setReadOnly(false);
 
-            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
-            fragmentDoc.setReadOnly(true);
-            myEditor.getCaretModel().moveToOffset(0);
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        });
+        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), newText);
+        fragmentDoc.setReadOnly(true);
+        myEditor.getCaretModel().moveToOffset(0);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
   }
-
 
   @Nullable
   public static String getNewText(PsiElement elt) {

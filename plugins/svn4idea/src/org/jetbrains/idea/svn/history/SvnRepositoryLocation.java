@@ -16,18 +16,16 @@
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 
@@ -35,10 +33,17 @@ import java.io.File;
  * @author yole
  */
 public class SvnRepositoryLocation implements RepositoryLocation {
-  private final String myURL;
 
-  public SvnRepositoryLocation(final String URL) {
-    myURL = URL;
+  private final String myURL;
+  @Nullable private final FilePath myRoot;
+
+  public SvnRepositoryLocation(final String url) {
+    this(url, null);
+  }
+
+  public SvnRepositoryLocation(String url, @Nullable FilePath root) {
+    myURL = url;
+    myRoot = root;
   }
 
   public String toString() {
@@ -57,6 +62,11 @@ public class SvnRepositoryLocation implements RepositoryLocation {
     return myURL;
   }
 
+  @Nullable
+  public FilePath getRoot() {
+    return myRoot;
+  }
+
   @Override
   public void onBeforeBatch() throws VcsException {
   }
@@ -68,28 +78,20 @@ public class SvnRepositoryLocation implements RepositoryLocation {
   @Nullable
   public static FilePath getLocalPath(final String fullPath, final NotNullFunction<File, Boolean> detector, final SvnVcs vcs) {
     if (vcs.getProject().isDefault()) return null;
-    final SVNURL fullPathURL;
-    try {
-      fullPathURL = SVNURL.parseURIEncoded(fullPath);
-    }
-    catch (SVNException e) {
-      return null;
-    }
     final RootUrlInfo rootForUrl = vcs.getSvnFileUrlMapping().getWcRootForUrl(fullPath);
+    FilePath result = null;
+
     if (rootForUrl != null) {
-      return LocationDetector.filePathByUrlAndPath(fullPath, rootForUrl.getUrl().toString(), rootForUrl.getIoFile().getAbsolutePath(), detector);
-    } else {
-      final VirtualFile[] underVcs = ProjectLevelVcsManager.getInstance(vcs.getProject()).getRootsUnderVcs(vcs);
-      if (underVcs.length == 0) return null;
-      for (VirtualFile vf : underVcs) {
-        final File ioFile = new File(vf.getPath());
-        final SVNURL url = SvnUtil.getUrl(vcs, ioFile);
-        if (url != null && SVNURLUtil.isAncestor(url, fullPathURL)) {
-          return LocationDetector.filePathByUrlAndPath(fullPath, url.toString(), ioFile.getPath(), detector);
-        }
-      }
+      String relativePath = SvnUtil.getRelativeUrl(rootForUrl.getUrl(), fullPath);
+      File file = new File(rootForUrl.getPath(), relativePath);
+
+      result = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, detector);
     }
 
-    return null;
+    return result;
+  }
+
+  public SVNURL toSvnUrl() throws SvnBindException {
+    return SvnUtil.createUrl(myURL);
   }
 }

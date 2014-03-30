@@ -33,25 +33,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
 
   @NonNls private final Map<String, ModuleBuilder> myBuildersMap = new HashMap<String, ModuleBuilder>();
 
+  @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.scratch.title", context.getPresentationName());
   }
 
+  @Override
   @NotNull
   public String getDescription(final WizardContext context) {
     return ProjectBundle.message("project.new.wizard.from.scratch.description", ApplicationNamesInfo.getInstance().getFullProductName(), context.getPresentationName());
   }
 
+  @Override
   @Nullable
-  protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    ModuleBuilder[] builders = context.getAllBuilders();
+  protected StepSequence createSteps(@NotNull final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     for (ModuleBuilder builder : builders) {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }
@@ -64,16 +68,19 @@ public class CreateFromScratchMode extends WizardMode {
     return sequence;
   }
 
+  @Override
   public boolean isAvailable(WizardContext context) {
     return true;
   }
 
+  @Override
   public ModuleBuilder getModuleBuilder() {
     return myBuildersMap.get(getSelectedType());
   }
 
+  @Override
   public void onChosen(final boolean enabled) {
-    
+
   }
 
   @Override
@@ -81,6 +88,7 @@ public class CreateFromScratchMode extends WizardMode {
     return "Create from Scratch";
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myBuildersMap.clear();

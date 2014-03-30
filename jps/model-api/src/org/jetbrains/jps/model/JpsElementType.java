@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
+ * Base interface for all types of elements in JPS model
+ *
+ * <p>
+ * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for all implementations of this interface
+ * </p>
  * @author nik
  */
-public abstract class JpsElementType<P extends JpsElement> {
-  private final JpsElementChildRole<P> myPropertiesRole = new JpsElementChildRole<P>();
-
-  public final JpsElementChildRole<P> getPropertiesRole() {
-    return myPropertiesRole;
-  }
+public interface JpsElementType<P extends JpsElement> {
+  @NotNull
+  JpsElementChildRole<P> getPropertiesRole();
 }

@@ -73,6 +73,12 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     return myDesignerPanel.getPreferredFocusedComponent();
   }
 
+  @NotNull
+  @Override
+  public String getName() {
+    return "Design";
+  }
+
   @Override
   public void dispose() {
     myDesignerPanel.dispose();

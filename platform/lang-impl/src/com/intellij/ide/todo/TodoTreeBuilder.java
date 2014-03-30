@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.DumbService;
@@ -68,7 +68,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   protected final FileTree myFileTree;
   /**
-   * This set contains "dirty" files. File is "dirty" if it's currently not nkown
+   * This set contains "dirty" files. File is "dirty" if it's currently not unknown
    * whether the file contains T.O.D.O item or not. To determine this it's necessary
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
    * validated in <code>validateCache()</code> method.
@@ -108,7 +108,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * Initializes the builder. Subclasses should don't forget to call this method after constuctor has
+   * Initializes the builder. Subclasses should don't forget to call this method after constructor has
    * been invoked.
    */
   public final void init() {
@@ -116,7 +116,10 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     setTreeStructure(todoTreeStructure);
     todoTreeStructure.setTreeBuilder(this);
 
-    rebuildCache();
+    try {
+      rebuildCache();
+    }
+    catch (IndexNotReadyException ignore) {}
     initRootNode();
 
     Object selectableElement = todoTreeStructure.getFirstSelectableElement();
@@ -142,7 +145,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * Sets whenther the builder updates the tree when data change.
+   * Sets whether the builder updates the tree when data change.
    */
   final void setUpdatable(boolean updatable) {
     if (myUpdatable != updatable) {
@@ -210,7 +213,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         <b>Note, that <code>next()</code> method of iterator can return <code>null</code> elements.</b>
    *         These <code>null</code> elements correspond to the invalid PSI files (PSI file cannot be found by
    *         virtual file, or virtual file is invalid).
-   *         The reason why we return such "dirty" iterator is the peformance.
+   *         The reason why we return such "dirty" iterator is the performance.
    */
   public Iterator<PsiFile> getAllFiles() {
     final Iterator<VirtualFile> iterator = myFileTree.getFileIterator();
@@ -242,7 +245,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirctory</code>.
+   *         and which are located under specified <code>psiDirectory</code>.
    * @see com.intellij.ide.todo.FileTree#getFiles(com.intellij.openapi.vfs.VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory) {
@@ -251,15 +254,15 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirctory</code>.
+   *         and which are located under specified <code>psiDirectory</code>.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory, final boolean skip) {
-    ArrayList<VirtualFile> files = myFileTree.getFiles(psiDirectory.getVirtualFile());
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
+    List<VirtualFile> files = myFileTree.getFiles(psiDirectory.getVirtualFile());
+    List<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
-      final Module module = ModuleUtil.findModuleForPsiElement(psiDirectory);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiDirectory);
       if (module != null) {
         final boolean isInContent = ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
         if (!isInContent) continue;
@@ -279,15 +282,15 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified <code>psiDirctory</code>.
+   *         and which are located under specified <code>psiDirectory</code>.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
-    ArrayList<VirtualFile> files = myFileTree.getFilesUnderDirectory(psiDirectory.getVirtualFile());
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
+    List<VirtualFile> files = myFileTree.getFilesUnderDirectory(psiDirectory.getVirtualFile());
+    List<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : files) {
-      final Module module = ModuleUtil.findModuleForPsiElement(psiDirectory);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiDirectory);
       if (module != null) {
         final boolean isInContent = ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
         if (!isInContent) continue;
@@ -315,7 +318,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile virtualFile : contentRoots) {
-      ArrayList<VirtualFile> files = myFileTree.getFiles(virtualFile);
+      List<VirtualFile> files = myFileTree.getFiles(virtualFile);
       PsiManager psiManager = PsiManager.getInstance(myProject);
       for (VirtualFile file : files) {
         if (fileIndex.getModuleForFile(file) != module) continue;
@@ -344,7 +347,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * Marks specified PsiFile as dirty. It means that file is being add into "dirty" file set.
    * It presents in current file set also but the next validateCache call will validate this
    * "dirty" file. This method should be invoked when any modifications inside the file
-   * have happend.
+   * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
     VirtualFile vFile = psiFile.getVirtualFile();
@@ -386,7 +389,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       else { // file is valid and contains T.O.D.O items
         myFileTree.removeFile(file);
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-        if (myFile2Highlighter.containsKey(file)) { // update highlighter's text
+        if (myFile2Highlighter.containsKey(file)) { // update highlighter text
           Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
           EditorHighlighter highlighter = myFile2Highlighter.get(file);
           highlighter.setText(document.getCharsSequence());
@@ -702,14 +705,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
     @Override
     public void beforeChildRemoval(@NotNull PsiTreeChangeEvent e) {
-      // If local midification
+      // local modification
       final PsiFile file = e.getFile();
       if (file != null) {
         markFileAsDirty(file);
         updateTree(true);
         return;
       }
-      //
       PsiElement child = e.getChild();
       if (child instanceof PsiFile) { // file will be removed
         PsiFile psiFile = (PsiFile)child;
@@ -806,16 +808,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         );
         updateTree(true);
       }
-      else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName)) {
+      else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName) || PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
         PsiFile psiFile = (PsiFile)e.getElement();
-        if (!canContainTodoItems(psiFile)) { // don't do anything if file cannot contain todos
-          return;
-        }
-        updateTree(true);
-      }
-      else if (PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
-        PsiFile psiFile = (PsiFile)e.getElement();
-        if (!canContainTodoItems(psiFile)) {
+        if (!canContainTodoItems(psiFile)) { // don't do anything if file cannot contain to-do items
           return;
         }
         updateTree(true);

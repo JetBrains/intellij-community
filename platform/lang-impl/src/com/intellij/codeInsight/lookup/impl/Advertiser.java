@@ -16,12 +16,16 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,10 +38,10 @@ import java.util.Random;
  * @author peter
  */
 public class Advertiser {
-  private final List<String> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Pair<String, Color>> myTexts = ContainerUtil.createLockFreeCopyOnWriteList();
   private volatile Dimension myCachedPrefSize;
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
-    private JLabel mySample = createLabel();
+    private final JLabel mySample = createLabel();
 
     @Override
     public Dimension getPreferredSize() {
@@ -54,8 +58,8 @@ public class Advertiser {
       }
 
       int maxSize = 0;
-      for (String label : myTexts) {
-        mySample.setText(prepareText(label));
+      for (Pair<String, Color> label : myTexts) {
+        mySample.setText(prepareText(label.first));
         maxSize = Math.max(maxSize, mySample.getPreferredSize().width);
       }
 
@@ -64,8 +68,8 @@ public class Advertiser {
     }
   };
   private volatile int myCurrentItem = 0;
-  private JLabel myTextPanel = createLabel();
-  private JLabel myNextLabel;
+  private final JLabel myTextPanel = createLabel();
+  private final JLabel myNextLabel;
 
   public Advertiser() {
     myNextLabel = new JLabel(">>");
@@ -74,7 +78,7 @@ public class Advertiser {
     myNextLabel.setForeground(JBColor.blue);
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         myCurrentItem++;
         updateAdvertisements();
         return true;
@@ -86,17 +90,20 @@ public class Advertiser {
     GridBag gb = new GridBag();
     myComponent.add(myTextPanel, gb.next());
     myComponent.add(myNextLabel, gb.next());
-    myComponent.add(new JPanel(), gb.next().fillCellHorizontally().weightx(1));
+    myComponent.add(new NonOpaquePanel(), gb.next().fillCellHorizontally().weightx(1));
   }
 
   private void updateAdvertisements() {
     myNextLabel.setVisible(myTexts.size() > 1);
     if (!myTexts.isEmpty()) {
-      String text = myTexts.get(myCurrentItem % myTexts.size());
+      Pair<String, Color> pair = myTexts.get(myCurrentItem % myTexts.size());
+      String text = pair.first;
       myTextPanel.setText(prepareText(text));
+      myComponent.setBackground(pair.second);
     }
     else {
       myTextPanel.setText("");
+      myComponent.setBackground(null);
     }
     myCachedPrefSize = null;
     myComponent.revalidate();
@@ -131,9 +138,9 @@ public class Advertiser {
     return font.deriveFont((float)(font.getSize() - 2));
   }
 
-  public void addAdvertisement(@NotNull String text) {
+  public void addAdvertisement(@NotNull String text, @Nullable Color bgColor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myTexts.add(text);
+    myTexts.add(Pair.create(text, bgColor));
     updateAdvertisements();
   }
 
@@ -142,6 +149,11 @@ public class Advertiser {
   }
 
   public List<String> getAdvertisements() {
-    return myTexts;
+    return ContainerUtil.map(myTexts, new Function<Pair<String, Color>, String>() {
+      @Override
+      public String fun(Pair<String, Color> pair) {
+        return pair.first;
+      }
+    });
   }
 }

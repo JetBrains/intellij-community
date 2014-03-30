@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -65,9 +66,11 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.lang.ref.SoftReference;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
@@ -84,7 +87,10 @@ import static org.junit.Assert.assertNotNull;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-  public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
+  public static final byte[] EMPTY_JAR_BYTES = {0x50, 0x4b, 0x05, 0x06, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
+
+  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
@@ -127,7 +133,7 @@ public class PlatformTestUtil {
     StringBuilder buffer = new StringBuilder();
     final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
     for (String string : strings) {
-      buffer.append(string).append("\n");  
+      buffer.append(string).append("\n");
     }
     return buffer.toString();
   }
@@ -158,37 +164,32 @@ public class PlatformTestUtil {
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
-    final StringBuilder buff = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.repeatSymbol(buff, ' ', level);
+    final StringBuilder buff = new StringBuilder();
+    StringUtil.repeatSymbol(buff, ' ', level);
 
-      final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-      if (!defaultMutableTreeNode.isLeaf()) {
-        buff.append(expanded ? "-" : "+");
-      }
-
-      final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
-      if (withSelection && selected) {
-        buff.append("[");
-      }
-
-      buff.append(nodeText);
-
-      if (withSelection && selected) {
-        buff.append("]");
-      }
-
-      strings.add(buff.toString());
-
-      int childCount = tree.getModel().getChildCount(root);
-      if (expanded) {
-        for (int i = 0; i < childCount; i++) {
-          printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
-        }
-      }
+    final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
+    if (!defaultMutableTreeNode.isLeaf()) {
+      buff.append(expanded ? "-" : "+");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buff);
+
+    final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+    if (withSelection && selected) {
+      buff.append("[");
+    }
+
+    buff.append(nodeText);
+
+    if (withSelection && selected) {
+      buff.append("]");
+    }
+
+    strings.add(buff.toString());
+
+    int childCount = tree.getModel().getChildCount(root);
+    if (expanded) {
+      for (int i = 0; i < childCount; i++) {
+        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
+      }
     }
   }
 
@@ -289,7 +290,7 @@ public class PlatformTestUtil {
                                     int maxRowCount,
                                     char paddingChar,
                                     @Nullable Queryable.PrintInfo printInfo) {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    StringBuilder buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
     return buffer;
   }
@@ -421,14 +422,21 @@ public class PlatformTestUtil {
   }
 
   public static boolean canRunTest(@NotNull Class testCaseClass) {
-    if (GraphicsEnvironment.isHeadless()) {
-      for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-        if (clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-          System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
-          return false;
-        }
+    if (!SKIP_SLOW && !SKIP_HEADLESS) {
+      return true;
+    }
+
+    for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
+      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
+        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
+        return false;
+      }
+      if (SKIP_SLOW && clazz.getAnnotation(SkipSlowTestLocally.class) != null) {
+        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it is dog slow");
+        return false;
       }
     }
+
     return true;
   }
 
@@ -464,6 +472,7 @@ public class PlatformTestUtil {
     public void assertTiming() {
       assert expectedMs != 0 : "Must call .expect() before run test";
       if (COVERAGE_ENABLED_BUILD) return;
+      Timings.getStatistics(); // warmup, measure
 
       while (true) {
         attempts--;
@@ -604,18 +613,23 @@ public class PlatformTestUtil {
     return map;
   }
 
+  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore) throws IOException {
+    assertDirectoriesEqual(dirAfter, dirBefore, null);
+  }
+
   @SuppressWarnings("UnsafeVfsRecursion")
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile[] childrenAfter = dirAfter.getChildren();
-    if (dirAfter.isInLocalFileSystem()) {
+
+    if (dirAfter.isInLocalFileSystem() && dirAfter.getFileSystem() != TempFileSystem.getInstance()) {
       File[] ioAfter = new File(dirAfter.getPath()).listFiles();
       shallowCompare(childrenAfter, ioAfter);
     }
 
     VirtualFile[] childrenBefore = dirBefore.getChildren();
-    if (dirBefore.isInLocalFileSystem()) {
+    if (dirBefore.isInLocalFileSystem() && dirBefore.getFileSystem() != TempFileSystem.getInstance()) {
       File[] ioBefore = new File(dirBefore.getPath()).listFiles();
       shallowCompare(childrenBefore, ioBefore);
     }
@@ -707,8 +721,8 @@ public class PlatformTestUtil {
       try {
         tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
         tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-        ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-        ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
+        ZipUtil.extract(jarFile1, tempDirectory1, null);
+        ZipUtil.extract(jarFile2, tempDirectory2, null);
       }
       finally {
         jarFile2.close();
@@ -729,7 +743,7 @@ public class PlatformTestUtil {
         dirBefore.refresh(false, true);
       }
     });
-    assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
+    assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
@@ -742,18 +756,6 @@ public class PlatformTestUtil {
     final StringWriter writer = new StringWriter();
     JDOMUtil.writeElement(element, writer, "\n");
     return writer.getBuffer().toString();
-  }
-
-  public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
-    @Override
-    public boolean accept(VirtualFile file) {
-      return !file.isDirectory() || !"CVS".equals(file.getName());
-    }
-
-    @Override
-    public boolean accept(File dir, String name) {
-      return !name.contains("CVS");
-    }
   }
 
   public static String getCommunityPath() {
@@ -784,5 +786,44 @@ public class PlatformTestUtil {
   @NotNull
   public static String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
+  }
+
+  public static void tryGcSoftlyReachableObjects() {
+    List<Object> list = ContainerUtil.newArrayList();
+    for (int i = 0; i < 100; i++) {
+      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
+    }
+  }
+
+  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
+    withEncoding(encoding, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        r.run();
+      }
+    });
+  }
+
+  public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
+    Charset oldCharset = Charset.defaultCharset();
+    try {
+      try {
+        patchSystemFileEncoding(encoding);
+        r.run();
+      }
+      finally {
+        patchSystemFileEncoding(oldCharset.name());
+      }
+    }
+    catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
+  }
+
+  private static void patchSystemFileEncoding(String encoding) throws NoSuchFieldException, IllegalAccessException {
+    Field charset = Charset.class.getDeclaredField("defaultCharset");
+    charset.setAccessible(true);
+    charset.set(Charset.class, null);
+    System.setProperty("file.encoding", encoding);
   }
 }

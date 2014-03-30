@@ -138,6 +138,11 @@
         <option name="FOREGROUND" value="CCCCCC" />
       </value>
     </option>
+    <option name="COFFEESCRIPT.PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="CCCCCC" />
+      </value>
+    </option>
     <option name="COFFEESCRIPT.HEREDOC_CONTENT">
       <value>
         <option name="FOREGROUND" value="3AD900" />
@@ -1491,6 +1496,16 @@
         <option name="FOREGROUND" value="E1EFFF" />
       </value>
     </option>
+    <option name="RUBY_BRACES">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="RUBY_PARENTHESES">
+      <value>
+        <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
     <option name="RUBY_COLON">
       <value>
         <option name="FOREGROUND" value="E1EFFF" />
@@ -1795,6 +1810,42 @@
     <option name="SLIM_TAG_START">
       <value>
         <option name="FOREGROUND" value="E1EFFF" />
+      </value>
+    </option>
+    <option name="SPY-JS.FUNCTION_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="3A3A3A"/>
+        <option name="EFFECT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="SPY-JS.PROGRAM_SCOPE">
+      <value>
+        <option name="BACKGROUND" value="3A3A3A"/>
+        <option name="EFFECT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="SPY-JS.EXCEPTION">
+      <value>
+        <option name="BACKGROUND" value="532B2E"/>
+        <option name="EFFECT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_ONE">
+      <value>
+        <option name="BACKGROUND" value="425F44"/>
+        <option name="EFFECT_TYPE" value="2"/>
+      </value>
+    </option>
+    <option name="SPY-JS.PATH_LEVEL_TWO">
+      <value>
+        <option name="EFFECT_COLOR" value="a9b7c6" />
+        <option name="EFFECT_TYPE" value="1"/>
+      </value>
+    </option>
+    <option name="SPY-JS.VALUE_HINT">
+      <value>
+        <option name="EFFECT_COLOR" value="a9b7c6" />
+        <option name="EFFECT_TYPE" value="0"/>
       </value>
     </option>
     <option name="STATIC_FIELD_ATTRIBUTES">

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -26,13 +27,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,6 +52,9 @@ import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 public class MavenProjectsTree {
+
+  private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
+
   private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".6";
 
   private final Object myStateLock = new Object();
@@ -58,7 +63,7 @@ public class MavenProjectsTree {
   private final Lock myStructureWriteLock = myStructureLock.writeLock();
 
   // TODO replace with sets
-  private volatile List<String> myManagedFilesPaths = new ArrayList<String>();
+  private volatile Set<String> myManagedFilesPaths = new LinkedHashSet<String>();
   private volatile List<String> myIgnoredFilesPaths = new ArrayList<String>();
   private volatile List<String> myIgnoredFilesPatterns = new ArrayList<String>();
   private volatile Pattern myIgnoredFilesPatternsCache;
@@ -92,14 +97,10 @@ public class MavenProjectsTree {
     try {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
-        result.myManagedFilesPaths = readList(in);
-        result.myIgnoredFilesPaths = readList(in);
-        result.myIgnoredFilesPatterns = readList(in);
-        result.myExplicitProfiles = readCollection(in, new Function<Integer, Set<String>>() {
-          public Set<String> fun(Integer integer) {
-            return new THashSet<String>();
-          }
-        });
+        result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<String>());
+        result.myIgnoredFilesPaths = readCollection(in, new ArrayList<String>());
+        result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<String>());
+        result.myExplicitProfiles = readCollection(in, new THashSet<String>());
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
       }
       catch (IOException e) {
@@ -117,21 +118,19 @@ public class MavenProjectsTree {
     return result;
   }
 
-  private static List<String> readList(DataInputStream in) throws IOException {
-    return readCollection(in, new Function<Integer, List<String>>() {
-      public List<String> fun(Integer integer) {
-        return new ArrayList<String>(integer);
-      }
-    });
-  }
-
-  private static <T extends Collection<String>> T readCollection(DataInputStream in, Function<Integer, T> factory) throws IOException {
+  private static <T extends Collection<String>> T readCollection(DataInputStream in, T result) throws IOException {
     int count = in.readInt();
-    T result = factory.fun(count);
     while (count-- > 0) {
       result.add(in.readUTF());
     }
     return result;
+  }
+
+  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
+    out.writeInt(list.size());
+    for (String each : list) {
+      out.writeUTF(each);
+    }
   }
 
   private static List<MavenProject> readProjectsRecursively(DataInputStream in,
@@ -180,13 +179,6 @@ public class MavenProjectsTree {
     }
   }
 
-  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
-    out.writeInt(list.size());
-    for (String each : list) {
-      out.writeUTF(each);
-    }
-  }
-
   private void writeProjectsRecursively(DataOutputStream out, List<MavenProject> list) throws IOException {
     out.writeInt(list.size());
     for (MavenProject each : list) {
@@ -204,7 +196,7 @@ public class MavenProjectsTree {
 
   public void resetManagedFilesPathsAndProfiles(List<String> paths, Collection<String> profiles) {
     synchronized (myStateLock) {
-      myManagedFilesPaths = new ArrayList<String>(paths);
+      myManagedFilesPaths = new LinkedHashSet<String>(paths);
     }
     setExplicitProfiles(profiles);
   }
@@ -253,6 +245,14 @@ public class MavenProjectsTree {
     doChangeIgnoreStatus(new Runnable() {
       public void run() {
         myIgnoredFilesPaths = new ArrayList<String>(paths);
+      }
+    });
+  }
+
+  public void removeIgnoredFilesPaths(final Collection<String> paths) {
+    doChangeIgnoreStatus(new Runnable() {
+      public void run() {
+        myIgnoredFilesPaths.removeAll(paths);
       }
     });
   }
@@ -380,25 +380,25 @@ public class MavenProjectsTree {
   }
 
   public Collection<String> getAvailableProfiles() {
-    return getAvailableAndActiveProfiles(true, false).first;
-  }
+    Collection<String> res = new THashSet<String>();
 
-  private Pair<Collection<String>, Collection<String>> getAvailableAndActiveProfiles(boolean includeAvailable, boolean includeActive) {
-    Collection<String> available = includeAvailable ? new THashSet<String>() : null;
-    Collection<String> active = includeActive ? new THashSet<String>() : null;
     for (MavenProject each : getProjects()) {
-      if (available != null) available.addAll(each.getProfilesIds());
-      if (active != null) active.addAll(each.getActivatedProfilesIds());
+      res.addAll(each.getProfilesIds());
     }
-    return Pair.create(available, active);
+
+    return res;
   }
 
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
     Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<Pair<String, MavenProfileKind>>();
 
-    Pair<Collection<String>, Collection<String>> profiles = getAvailableAndActiveProfiles(true, true);
-    Collection<String> available = profiles.first;
-    Collection<String> active = profiles.second;
+    Collection<String> available = new THashSet<String>();
+    Collection<String> active = new THashSet<String>();
+    for (MavenProject each : getProjects()) {
+      available.addAll(each.getProfilesIds());
+      active.addAll(each.getActivatedProfilesIds());
+    }
+
     Collection<String> explicitProfiles = getExplicitProfiles();
 
     for (String each : available) {
@@ -686,10 +686,12 @@ public class MavenProjectsTree {
   }
 
   public boolean isManagedFile(String path) {
-    for (String each : getManagedFilesPaths()) {
-      if (FileUtil.pathsEqual(each, path)) return true;
+    synchronized (myStateLock) {
+      for (String each : myManagedFilesPaths) {
+        if (FileUtil.pathsEqual(each, path)) return true;
+      }
+      return false;
     }
-    return false;
   }
 
   public boolean isPotentialProject(String path) {
@@ -888,7 +890,7 @@ public class MavenProjectsTree {
 
     readLock();
     try {
-      CRC32 crc = new CRC32();
+      final CRC32 crc = new CRC32();
 
       Set<String> profiles = myExplicitProfiles;
       if (profiles != null) {
@@ -923,19 +925,51 @@ public class MavenProjectsTree {
         updateCrc(crc, mavenProject.getDirectory());
         updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
         updateCrc(crc, mavenProject.getModelMap().hashCode());
-        updateCrc(crc, mavenProject.getResources().hashCode() + 1); // @todo remove '+1' after 01.05.2013 (when 12.0.1 become out of date)
+        updateCrc(crc, mavenProject.getResources().hashCode());
         updateCrc(crc, mavenProject.getTestResources().hashCode());
         updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
         updateCrc(crc, mavenProject.getProperties().hashCode());
 
-        for (String each : mavenProject.getFilters()) {
+        for (String each : mavenProject.getFilterPropertiesFiles()) {
           File file = new File(each);
           updateCrc(crc, file.lastModified());
         }
 
-        Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeString"));
-        updateCrc(crc, MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "escapeWindowsPaths"));
+        XMLOutputter outputter = new XMLOutputter(Format.getCompactFormat());
+
+        Writer crcWriter = new Writer() {
+          @Override
+          public void write(char[] cbuf, int off, int len) throws IOException {
+            for (int i = off, end = off + len; i < end; i++) {
+              crc.update(cbuf[i]);
+            }
+          }
+
+          @Override
+          public void flush() throws IOException {
+
+          }
+
+          @Override
+          public void close() throws IOException {
+
+          }
+        };
+
+        try {
+          Element resourcePluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+          if (resourcePluginCfg != null) {
+            outputter.output(resourcePluginCfg, crcWriter);
+          }
+
+          Element warPluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
+          if (warPluginCfg != null) {
+            outputter.output(warPluginCfg, crcWriter);
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
 
       return (int)crc.getValue();
@@ -1154,21 +1188,32 @@ public class MavenProjectsTree {
     }
   }
 
+  @TestOnly
   public void resolve(@NotNull Project project,
                       @NotNull MavenProject mavenProject,
                       @NotNull MavenGeneralSettings generalSettings,
                       @NotNull MavenEmbeddersManager embeddersManager,
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    resolve(project, mavenProject, generalSettings, embeddersManager, console, new ResolveContext(), process);
+  }
+
+  public void resolve(@NotNull Project project,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenGeneralSettings generalSettings,
+                      @NotNull MavenEmbeddersManager embeddersManager,
+                      @NotNull MavenConsole console,
+                      @NotNull ResolveContext context,
+                      @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE);
-    embedder.customizeForResolve(getWorkspaceMap(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
 
     try {
       process.checkCanceled();
       process.setText(ProjectBundle.message("maven.resolving.pom", mavenProject.getDisplayName()));
       process.setText2("");
       Pair<MavenProjectChanges, NativeMavenProjectHolder> resolveResult =
-        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator);
+        mavenProject.resolve(project, generalSettings, embedder, new MavenProjectReader(), myProjectLocator, context);
 
       fireProjectResolved(Pair.create(mavenProject, resolveResult.first), resolveResult.second);
     }
@@ -1243,7 +1288,8 @@ public class MavenProjectsTree {
                         });
   }
 
-  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Collection<MavenProject> projects,
+  public MavenArtifactDownloader.DownloadResult downloadSourcesAndJavadocs(@NotNull Project project,
+                                                                           @NotNull Collection<MavenProject> projects,
                                                                            @Nullable Collection<MavenArtifact> artifacts,
                                                                            boolean downloadSources,
                                                                            boolean downloadDocs,
@@ -1256,7 +1302,7 @@ public class MavenProjectsTree {
 
     try {
       MavenArtifactDownloader.DownloadResult result =
-        MavenArtifactDownloader.download(this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
+        MavenArtifactDownloader.download(project, this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
 
       for (MavenProject each : projects) {
         fireArtifactsDownloaded(each);
@@ -1275,7 +1321,7 @@ public class MavenProjectsTree {
                                   @NotNull MavenProgressIndicator process,
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
-    embedder.customizeForResolve(getWorkspaceMap(), console, process);
+    embedder.customizeForResolve(getWorkspaceMap(), console, process, false);
     embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);

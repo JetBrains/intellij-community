@@ -8,7 +8,7 @@ class Cl implements Callable<String> {
 
 -----
 public interface Callable<V> {
-public V call() throws java.lang.Exception ;
+public abstract V call() throws java.lang.Exception ;
 
 }
 ---

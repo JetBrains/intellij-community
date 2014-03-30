@@ -56,7 +56,7 @@ import com.intellij.util.concurrency.Semaphore
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
-  protected boolean useJps() { false }
+  protected boolean useJps() { true }
 
   @Override
   protected void setUp() {
@@ -156,7 +156,7 @@ package com
 class Foo {
   static bar = 2
   int field = 3
-  
+
   String toString() { field as String }
 }""")
 
@@ -344,7 +344,9 @@ foo()
     def module2 = addModule("module2", true)
     addGroovyLibrary(module1)
     addGroovyLibrary(module2)
-    ModuleRootModificationUtil.addDependency(myModule, module1);
+    edt {
+      ModuleRootModificationUtil.addDependency(myModule, module1)
+    }
 
     def scr = myFixture.addFileToProject('module1/Scr.groovy', 'println "hello"')
     myFixture.addFileToProject('module2/Scr.groovy', 'println "hello"')
@@ -353,6 +355,39 @@ foo()
     runDebugger(createScriptConfiguration(scr.virtualFile.path, myModule)) {
       waitForBreakpoint()
       assert scr == sourcePosition.file
+    }
+  }
+
+  public void "test in static inner class"() {
+    myFixture.addFileToProject "Foo.groovy", """
+class Outer {               //1
+    static class Inner {
+        def x = 1
+
+        def test2() {
+            println x       //6
+        }
+
+        String toString() { 'str' }
+    }
+
+    def test() {
+        def z = new Inner()
+
+        println z.x
+        z.test2()
+    }
+}
+
+public static void main(String[] args) {
+    new Outer().test()
+}
+"""
+    addBreakpoint('Foo.groovy', 6)
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval 'x', '1'
+      eval 'this', 'str'
     }
   }
 

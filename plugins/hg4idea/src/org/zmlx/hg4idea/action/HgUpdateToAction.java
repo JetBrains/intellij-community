@@ -12,82 +12,56 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcs;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgUpdateToDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
-import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
-
-      @Override
-      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
-        showUpdateDialogAndExecute(project, repos, branches);
-      }
-    });
-  }
-
-  private void showUpdateDialogAndExecute(final Project project,
-                                          Collection<VirtualFile> repos,
-                                          Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
-    final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
-    dialog.setRoots(repos, branchesForRepos);
+  @Override
+  protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+    final HgUpdateToDialog dialog = new HgUpdateToDialog(project, repositories, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
-      String updateToValue = dialog.isBranchSelected()
-                             ? dialog.getBranch().getName()
-                             : dialog.isTagSelected() ? dialog.getTag().getName() : dialog.getRevision();
-      new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", updateToValue)) {
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          updateTo(dialog, project);
-          markDirtyAndHandleErrors(project, dialog.getRepository());
-        }
-      }.queue();
+      final String updateToValue = dialog.getTargetValue();
+      boolean clean = dialog.isRemoveLocalChanges();
+      String title = HgVcsMessages.message("hg4idea.progress.updatingTo", updateToValue);
+      runUpdateToInBackground(project, title, dialog.getRepository().getRoot(), updateToValue, clean);
     }
   }
 
-  public void updateTo(HgUpdateToDialog dialog, final Project project) {
-    final HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
-    command.setClean(dialog.isRemoveLocalChanges());
-    if (dialog.isRevisionSelected()) {
-      command.setRevision(dialog.getRevision());
-    }
-    if (dialog.isBranchSelected()) {
-      command.setBranch(dialog.getBranch().getName());
-    }
-    if (dialog.isTagSelected()) {
-      command.setRevision(dialog.getTag().getName());
-    }
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+  public static void runUpdateToInBackground(@NotNull final Project project,
+                                             @NotNull String title,
+                                             @NotNull final VirtualFile root,
+                                             @NotNull final String updateToValue,
+                                             final boolean clean) {
+    new Task.Backgroundable(project, title) {
       @Override
-      public void run() {
+      public void run(@NotNull ProgressIndicator indicator) {
+        final HgUpdateCommand command = new HgUpdateCommand(project, root);
+        command.setRevision(updateToValue);
+        command.setClean(clean);
         HgCommandResult result = command.execute();
+        new HgConflictResolver(project).resolve(root);
         if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
           new HgCommandResultNotifier(project).notifyError(result, "", "Update failed");
         }
-        project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
+        markDirtyAndHandleErrors(project, root);
       }
-    });
+    }.queue();
   }
 }

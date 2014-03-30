@@ -26,7 +26,7 @@ public class IndentInfo {
   private final int myLineFeeds;
 
   /** @see WhiteSpace#setForceSkipTabulationsUsage(boolean)  */
-  private boolean   myForceSkipTabulationsUsage;
+  private final boolean   myForceSkipTabulationsUsage;
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
     this(lineFeeds, indentSpaces, spaces, false);

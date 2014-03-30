@@ -18,9 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -46,6 +44,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -70,23 +69,23 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
   protected JPanel myEditorsPanel;
-  private final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
+  protected final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
   private String mySelectedEntryUrl;
 
   private VirtualFile myLastSelectedDir = null;
   private final String myModuleName;
   private final ModulesProvider myModulesProvider;
   private final ModuleConfigurationState myState;
-  private final boolean myCanMarkSources;
-  private final boolean myCanMarkTestSources;
+  private final List<ModuleSourceRootEditHandler<?>> myEditHandlers = new ArrayList<ModuleSourceRootEditHandler<?>>();
 
-  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, boolean canMarkSources, boolean canMarkTestSources) {
+  public CommonContentEntriesEditor(String moduleName, final ModuleConfigurationState state, JpsModuleSourceRootType<?>... rootTypes) {
     super(state);
     myState = state;
     myModuleName = moduleName;
-    myCanMarkSources = canMarkSources;
-    myCanMarkTestSources = canMarkTestSources;
     myModulesProvider = state.getModulesProvider();
+    for (JpsModuleSourceRootType<?> type : rootTypes) {
+      myEditHandlers.add(ModuleSourceRootEditHandler.getEditHandler(type));
+    }
     final VirtualFileManagerAdapter fileManagerListener = new VirtualFileManagerAdapter() {
       @Override
       public void afterRefreshFinish(boolean asynchronous) {
@@ -125,6 +124,10 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return NAME;
   }
 
+  protected final List<ModuleSourceRootEditHandler<?>> getEditHandlers() {
+    return myEditHandlers;
+  }
+
   @Override
   public void disposeUIResources() {
     if (myRootTreeEditor != null) {
@@ -160,17 +163,26 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     entriesPanel.add(new ToolbarPanel(myScrollPane, group), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false);
+    splitter.setProportion(0.6f);
     splitter.setHonorComponentsMinimumSize(true);
-    mainPanel.add(splitter, BorderLayout.CENTER);
-
-    final JPanel editorsPanel = new JPanel(new GridBagLayout());
-    splitter.setFirstComponent(editorsPanel);
-    editorsPanel.add(entriesPanel,
-                     new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     myRootTreeEditor = createContentEntryTreeEditor(project);
-    final JComponent treeEditorComponent = myRootTreeEditor.createComponent();
-    splitter.setSecondComponent(treeEditorComponent);
+    splitter.setFirstComponent(myRootTreeEditor.createComponent());
+    splitter.setSecondComponent(entriesPanel);
+    JPanel contentPanel = new JPanel(new GridBagLayout());
+    contentPanel.setBorder(BorderFactory.createEtchedBorder());
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myRootTreeEditor.getEditingActionsGroup(), true);
+    contentPanel.add(new JLabel("Mark as:"),
+                     new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, new Insets(0, 5, 0, 5), 0, 0));
+    contentPanel.add(actionToolbar.getComponent(),
+                     new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                            new Insets(0, 0, 0, 0), 0, 0));
+    contentPanel.add(splitter,
+                     new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                            new Insets(0, 0, 0, 0), 0, 0));
+
+    mainPanel.add(contentPanel, BorderLayout.CENTER);
+
 
     final JPanel innerPanel = createBottomControl(module);
     if (innerPanel != null) {
@@ -197,7 +209,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected ContentEntryTreeEditor createContentEntryTreeEditor(Project project) {
-    return new ContentEntryTreeEditor(project, myCanMarkSources, myCanMarkTestSources);
+    return new ContentEntryTreeEditor(project, myEditHandlers);
   }
 
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
@@ -229,7 +241,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
-    return new ContentEntryEditor(contentEntryUrl, myCanMarkSources, myCanMarkTestSources) {
+    return new ContentEntryEditor(contentEntryUrl, myEditHandlers) {
       @Override
       protected ModifiableRootModel getModel() {
         return CommonContentEntriesEditor.this.getModel();

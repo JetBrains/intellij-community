@@ -15,6 +15,9 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
+import org.jetbrains.jps.model.module.JpsModule;
+
 /**
  * @author: db
  * Date: 22.09.11
@@ -50,7 +53,7 @@ public class CommonTest extends IncrementalTestCase {
 
   public void testDeleteClassAfterCompileErrors() throws Exception {
     setupInitialProject();
-  
+
     doTestBuild(2);
   }
 
@@ -91,18 +94,49 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testDeleteClass3() throws Exception {
-      doTest();
+    doTest();
   }
 
   public void testDeleteClass4() throws Exception {
-      doTest();
+    doTest();
+  }
+
+  public void testDeleteInnerClass() throws Exception {
+    doTest();
+  }
+
+  public void testDeleteInnerClass1() throws Exception {
+    doTest();
   }
 
   public void testAddClass() throws Exception {
-      doTest();
+    doTest();
   }
 
   public void testAddDuplicateClass() throws Exception {
-      doTest();
+    doTest();
   }
+
+  public void testAddClassHidingImportedClass() throws Exception {
+    doTest();
+  }
+
+  public void testAddClassHidingImportedClass2() throws Exception {
+    doTest();
+  }
+
+  public void testMoveClassToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+
+  public void testMoveClassFromJavaFileToDependentModule() throws Exception {
+    JpsModule moduleA = addModule("moduleA", "moduleA/src");
+    JpsModule moduleB = addModule("moduleB", "moduleB/src");
+    JpsModuleRootModificationUtil.addDependency(moduleB, moduleA);
+    doTestBuild(1).assertSuccessful();
+  }
+  
 }

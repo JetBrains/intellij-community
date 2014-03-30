@@ -12,12 +12,12 @@ class Test {
   }
 
   String foo1(String str) {
-    if (str == null);
+    if (str == null) return "null";
     return (str);
   }
 
   String foo2(String str) {
-    if (str == null);
+    if (str == null) return "null";
     return ((String)str);
   }
 

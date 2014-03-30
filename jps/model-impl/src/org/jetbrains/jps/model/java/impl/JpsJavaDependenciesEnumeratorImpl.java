@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java.impl;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -44,24 +45,28 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     myHandlers = handlers != null ? handlers : Collections.<JpsJavaDependenciesEnumerationHandler>emptyList();
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator productionOnly() {
     myProductionOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator compileOnly() {
     myCompileOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator runtimeOnly() {
     myRuntimeOnly = true;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesEnumerator exportedOnly() {
     if (myRecursively) {
@@ -73,20 +78,35 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     return this;
   }
 
+  @NotNull
   @Override
-  public JpsJavaDependenciesEnumerator includedIn(JpsJavaClasspathKind classpathKind) {
+  public JpsJavaDependenciesEnumerator recursivelyExportedOnly() {
+    return recursively().exportedOnly();
+  }
+
+  @NotNull
+  @Override
+  public JpsJavaDependenciesEnumerator includedIn(@NotNull JpsJavaClasspathKind classpathKind) {
     myClasspathKind = classpathKind;
     return this;
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesRootsEnumerator classes() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.COMPILED);
   }
 
+  @NotNull
   @Override
   public JpsJavaDependenciesRootsEnumerator sources() {
     return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.SOURCES);
+  }
+
+  @NotNull
+  @Override
+  public JpsJavaDependenciesRootsEnumerator annotations() {
+    return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsAnnotationRootType.INSTANCE);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,24 +29,33 @@ class AccessorBindingWrapper implements Binding {
     myBinding = binding;
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
-    return myBinding.serialize(myAccessor.read(o), context, filter);
+    Object value = myAccessor.read(o);
+    if (value == null) {
+      throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
+    }
+    return myBinding.serialize(value, context, filter);
   }
 
+  @Override
   @Nullable
   public Object deserialize(Object context, @NotNull Object... nodes) {
     myAccessor.write(context, myBinding.deserialize(myAccessor.read(context), nodes));
     return context;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return myBinding.isBoundTo(node);
   }
 
+  @Override
   public Class getBoundNodeType() {
     return myBinding.getBoundNodeType();
   }
 
+  @Override
   public void init() {
   }
 }

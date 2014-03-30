@@ -6,4 +6,4 @@ foo =
 def foo, bar
 foo =
 bar =
-  2
+    2

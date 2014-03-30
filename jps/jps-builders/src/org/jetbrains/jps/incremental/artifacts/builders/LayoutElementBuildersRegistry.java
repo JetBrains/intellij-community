@@ -16,7 +16,6 @@
 package org.jetbrains.jps.incremental.artifacts.builders;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +24,6 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
 import org.jetbrains.jps.incremental.artifacts.instructions.CopyToDirectoryInstructionCreator;
@@ -34,12 +31,15 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -305,11 +305,19 @@ public class LayoutElementBuildersRegistry {
       final JpsArtifact artifact = element.getArtifactReference().resolve();
       if (artifact == null) return;
 
+      Set<JpsArtifact> parentArtifacts = builderContext.getParentArtifacts();
+      List<JpsPackagingElement> customLayout = getCustomArtifactLayout(artifact, parentArtifacts);
+
       final String outputPath = artifact.getOutputPath();
-      if (StringUtil.isEmpty(outputPath)) {
+      if (StringUtil.isEmpty(outputPath) || customLayout != null) {
         try {
           if (builderContext.enterArtifact(artifact)) {
-            generateSubstitutionInstructions(element, instructionCreator, builderContext);
+            if (customLayout != null) {
+              LayoutElementBuildersRegistry.this.generateInstructions(customLayout, instructionCreator, builderContext);
+            }
+            else {
+              generateSubstitutionInstructions(element, instructionCreator, builderContext);
+            }
           }
         }
         finally {
@@ -327,6 +335,17 @@ public class LayoutElementBuildersRegistry {
       else {
         instructionCreator.addDirectoryCopyInstructions(outputDir);
       }
+    }
+
+    @Nullable
+    private List<JpsPackagingElement> getCustomArtifactLayout(@NotNull JpsArtifact artifact, @NotNull Set<JpsArtifact> parentArtifacts) {
+      for (ArtifactLayoutCustomizationService service : JpsServiceManager.getInstance().getExtensions(ArtifactLayoutCustomizationService.class)) {
+        List<JpsPackagingElement> elements = service.getCustomizedLayout(artifact, parentArtifacts);
+        if (elements != null) {
+          return elements;
+        }
+      }
+      return null;
     }
   }
 }

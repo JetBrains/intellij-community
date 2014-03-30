@@ -22,7 +22,8 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.IconSet;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -47,8 +48,7 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       final Project project = psiDirectory.getProject();
       boolean isJarRoot = vFile.getParent() == null && vFile.getFileSystem() instanceof JarFileSystem;
       boolean isContentRoot = ProjectRootsUtil.isModuleContentRoot(vFile, project);
-      boolean inTestSource = ProjectRootsUtil.isInTestSource(vFile, project);
-      boolean isSourceOrTestRoot = ProjectRootsUtil.isSourceOrTestRoot(vFile, project);
+      SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
       Icon symbolIcon;
       if (isJarRoot) {
         symbolIcon = PlatformIcons.JAR_ICON;
@@ -62,8 +62,8 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
           symbolIcon = PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
         }
       }
-      else if (isSourceOrTestRoot) {
-        symbolIcon = IconSet.getSourceRootIcon(inTestSource);
+      else if (sourceFolder != null) {
+        symbolIcon = SourceRootPresentation.getSourceRootIcon(sourceFolder);
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
         symbolIcon = PlatformIcons.PACKAGE_ICON;

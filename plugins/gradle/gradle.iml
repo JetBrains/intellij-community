@@ -6,9 +6,13 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/testData" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="external-system-api" exported="" />
+    <orderEntry type="module" module-name="external-system-impl" exported="" />
+    <orderEntry type="module" module-name="gradle-tooling-extension" exported="" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="compiler-openapi" />
@@ -18,26 +22,36 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="maven" />
     <orderEntry type="library" name="swingx" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.4.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.4.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.4.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.4.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-core-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.9.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-src.zip!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/core/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/native/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/wrapper/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/messaging/src/test/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/integTest/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/tooling-api/src/testFixtures/groovy" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-1.9-src.zip!/gradle-1.9/subprojects/base-services/src/test/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="Slf4j">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.2.jar!/" />
@@ -47,10 +61,10 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="GradleGuava">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/guava-11.0.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/guava-jdk5-14.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -67,6 +81,42 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="commons-io">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-io-1.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="GradleJnaPosix">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jna-posix-1.0.3.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-universal-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.3-rc-2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.3-rc-2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.3-rc-2.jar!/" recursive="false" />
+        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.3-rc-2.jar!/" recursive="false" />
+        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-osx-universal-0.3-rc-2.jar!/" recursive="false" />
+        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.3-rc-2.jar!/" recursive="false" />
+        <jarDirectory url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.3-rc-2.jar!/" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="junit" />
+    <orderEntry type="module" module-name="smRunner" />
   </component>
 </module>
 

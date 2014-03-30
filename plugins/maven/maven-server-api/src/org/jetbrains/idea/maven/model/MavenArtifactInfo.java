@@ -95,6 +95,7 @@ public class MavenArtifactInfo implements Serializable {
     MavenId.append(builder, myPackaging);
     if (!StringUtil.isEmptyOrSpaces(myClassifier)) MavenId.append(builder, myClassifier);
     MavenId.append(builder, myVersion);
+    MavenId.append(builder, myRepositoryId);
 
     return builder.toString();
   }

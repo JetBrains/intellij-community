@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import gnu.trove.THashMap;
@@ -48,7 +49,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static final int COPY_TO_FINAL = 2;
   private static final Key<Map<PsiVariable,Boolean>>[] VARS = new Key[] {Key.create("VARS_TO_MAKE_FINAL"), Key.create("VARS_TO_TRANSFORM"), Key.create("???")};
 
-  public VariableAccessFromInnerClassFix(PsiVariable variable, PsiClass aClass) {
+  public VariableAccessFromInnerClassFix(@NotNull PsiVariable variable, @NotNull PsiClass aClass) {
     myVariable = variable;
     myClass = aClass;
     myFixType = getQuickFixType(variable);
@@ -86,14 +87,12 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myClass != null
-           && myClass.isValid()
-           && myClass.getManager().isInProject(myClass)
-           && myVariable != null
-           && myVariable.isValid()
-           && myFixType != -1
-           && !getVariablesToFix().isEmpty()
-           && !inOwnInitializer (myVariable, myClass);
+    return myClass.isValid() &&
+           myClass.getManager().isInProject(myClass) &&
+           myVariable.isValid() &&
+           myFixType != -1 &&
+           !getVariablesToFix().isEmpty() &&
+           !inOwnInitializer(myVariable, myClass);
   }
 
   private static boolean inOwnInitializer(PsiVariable variable, PsiClass aClass) {
@@ -102,7 +101,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(myClass, myVariable)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myClass, myVariable)) return;
     try {
       switch (myFixType) {
         case MAKE_FINAL:
@@ -141,6 +140,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
       }
 
+      @NotNull
       @Override
       public Iterator<PsiVariable> iterator() {
         return finalVars.keySet().iterator();
@@ -205,9 +205,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
     PsiElement statement = getStatementToInsertBefore();
     if (statement == null) return;
-    statement.getParent().addBefore(copyDecl, statement);
     PsiExpression newExpression = factory.createExpressionFromText(newName, myVariable);
     replaceReferences(myClass, myVariable, newExpression);
+    if (RefactoringUtil.isLoopOrIf(statement.getParent())) {
+      RefactoringUtil.putStatementInLoopBody(copyDecl, statement.getParent(), statement);
+    } else {
+      statement.getParent().addBefore(copyDecl, statement);
+    }
   }
 
   private PsiElement getStatementToInsertBefore() {
@@ -218,7 +222,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiElement statement = myClass;
     nextInnerClass:
     do {
-      statement = PsiUtil.getEnclosingStatement(statement);
+      statement = RefactoringUtil.getParentStatement(statement, false);
 
       if (statement == null || statement.getParent() == null) {
         return null;
@@ -312,7 +316,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems);
+      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
+                                                                                                 variable.getContainingFile());
       if (highlightInfo != null) return false;
       highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
       if (highlightInfo != null) return false;

@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -35,12 +34,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
   private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
-  private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
@@ -77,11 +74,10 @@ public class ResolveCache {
   }
 
   private static <K,V> ConcurrentWeakHashMap<K, V> createWeakMap() {
-    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<ConcurrentWeakHashMap.Key<K,V>>canonicalStrategy());
+    return new ConcurrentWeakHashMap<K,V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
   }
 
   public void clearCache(boolean isPhysical) {
-    myClearCount.incrementAndGet();
     int startIndex = isPhysical ? 0 : 1;
     for (int i=startIndex;i<2;i++)for (int j=0;j<2;j++)for (int k=0;k<2;k++) myMaps[i*4+j*2+k].clear();
   }
@@ -96,7 +92,6 @@ public class ResolveCache {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    int clearCountOnStart = myClearCount.intValue();
     ConcurrentMap<TRef, Getter<TResult>> map = getMap(isPhysical, incompleteCode, isPoly);
     Getter<TResult> reference = map.get(ref);
     TResult result = reference == null ? null : reference.get();
@@ -114,7 +109,7 @@ public class ResolveCache {
     PsiElement element = result instanceof ResolveResult ? ((ResolveResult)result).getElement() : null;
     LOG.assertTrue(element == null || element.isValid(), result);
 
-    if (stamp.mayCacheNow() && clearCountOnStart == myClearCount.intValue()) {
+    if (stamp.mayCacheNow()) {
       cache(ref, map, result, isPoly);
     }
     return result;
@@ -137,24 +132,19 @@ public class ResolveCache {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
-  public <T extends PsiPolyVariantReference> boolean isCached(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
+  @Nullable
+  public <T extends PsiPolyVariantReference> ResolveResult[] getCachedResults(@NotNull T ref, boolean physical, boolean incompleteCode, boolean isPoly) {
     Map<T, Getter<ResolveResult[]>> map = getMap(physical, incompleteCode, isPoly);
     Getter<ResolveResult[]> reference = map.get(ref);
-    return reference != null && reference.get() != null;
-  }
-
-  public PsiElement resolveWithCaching(@NotNull PsiReference ref,
-                                       @NotNull Resolver resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
-    return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
+    return reference == null ? null : reference.get();
   }
 
   @Nullable
-  public <TRef extends PsiReference, TResult>TResult resolveWithCaching(@NotNull TRef ref,
-                                       @NotNull AbstractResolver<TRef, TResult> resolver,
-                                       boolean needToPreventRecursion,
-                                       boolean incompleteCode) {
+  public <TRef extends PsiReference, TResult>
+         TResult resolveWithCaching(@NotNull TRef ref,
+                                    @NotNull AbstractResolver<TRef, TResult> resolver,
+                                    boolean needToPreventRecursion,
+                                    boolean incompleteCode) {
     return resolve(ref, resolver, needToPreventRecursion, incompleteCode, false, ref.getElement().isPhysical());
   }
 
@@ -192,6 +182,6 @@ public class ResolveCache {
     else {
       cached = new SoftGetter<TResult>(result);
     }
-    ConcurrencyUtil.cacheOrGet(map, ref, cached);
+    map.put(ref, cached);
   }
 }

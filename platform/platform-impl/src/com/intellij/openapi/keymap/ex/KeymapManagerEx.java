@@ -37,6 +37,13 @@ public abstract class KeymapManagerEx extends KeymapManager {
 
   public abstract void setActiveKeymap(Keymap activeKeymap);
 
+  /**
+   * Instructs the manager that one action should use shortcut of another one (<code>'use-shortcut-of'</code> attribute at
+   * action's config located at plugin.xml).
+   * 
+   * @param sourceActionId  if of the action which shortcut should be used for the 'target action'
+   * @param targetActionId  id of the action which should use shortcut of the 'source action'
+   */
   public abstract void bindShortcuts(String sourceActionId, String targetActionId);
   public abstract Set<String> getBoundActions();
   public abstract String getActionBinding(String actionId);

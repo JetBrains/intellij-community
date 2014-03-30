@@ -40,6 +40,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     return SelectInManager.SCOPE;
   }
 
+  @Override
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
     if (!super.canSelect(fileSystemItem)) return false;
     if (!(fileSystemItem instanceof PsiFile)) return false;
@@ -54,18 +55,22 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     return false;
   }
 
+  @Override
   public String getMinorViewId() {
     return ScopeViewPane.ID;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.SCOPE_WEIGHT;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return false;
   }
 
+  @Override
   public boolean isSubIdSelectable(String subId, SelectInContext context) {
     if (context == null) return false;
     final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
@@ -74,7 +79,7 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
     final VirtualFile virtualFile = context.getVirtualFile();
     if (packageSet != null) {
       final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
-      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, holder), holder)) {
+      if (packageSet instanceof PackageSetBase ? ((PackageSetBase)packageSet).contains(virtualFile, myProject, holder) : packageSet.contains(PackageSetBase.getPsiFile(virtualFile, myProject), holder)) {
         return true;
       }
     }

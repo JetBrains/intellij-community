@@ -48,4 +48,23 @@ public class UnnecessaryExplicitNumericCast {
     void target(int c) {}
     void target(char c) {}
     void target2(int d) {}
+
+    void foo() {
+        float x = 2;
+        target((int) x);  // this line complains: 'x' unnecessarily cast to 'int'
+    }
+
+    void a(float angleFromTo) {
+      float f = (float) Math.cos(0.5) * 1.0f; // necessary
+      final long l = (long) i() * 9L;
+      float angle2 = angleFromTo + (float) (Math.PI / 2);
+    }
+
+    int i() {
+      return 10;
+    }
+
+    boolean redundantTypeCast(long l) {
+      return 0L == (long)l;
+    }
 }

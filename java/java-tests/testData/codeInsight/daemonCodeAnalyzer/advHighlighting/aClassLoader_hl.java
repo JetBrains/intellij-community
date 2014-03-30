@@ -134,7 +134,7 @@ import <error descr="Cannot resolve symbol 'sun'">sun</error>.security.action.Ge
  * @see     java.lang.ClassLoader#resolveClass(java.lang.Class)
  * @since   JDK1.0
  */
-public abstract class ClassLoader {
+abstract class ClassLoader {
 
     private static native void registerNatives();
     static {

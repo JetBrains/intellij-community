@@ -49,14 +49,14 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   }
 
   @Override
-  protected <T> Key<T> createKey(@NotNull T k, ReferenceQueue<? super T> q) {
+  protected <T> Key<T> createKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
     return new SoftKey<T>(k, q);
   }
 
   private static class SoftKey<T> extends SoftReference<T> implements Key<T> {
-    private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
+    private final int myHash;  /* Hash code of key, stored here since the key may be tossed by the GC */
 
-    private SoftKey(T k, ReferenceQueue<? super T> q) {
+    private SoftKey(@NotNull T k, @NotNull ReferenceQueue<? super T> q) {
       super(k, q);
       myHash = k.hashCode();
     }

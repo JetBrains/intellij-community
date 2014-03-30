@@ -39,6 +39,7 @@ public class HgCatCommand {
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setOptions(Collections.<String>emptyList());
     executor.setSilent(true);
+    executor.setOutputAlwaysSuppressed(true);
     executor.setCharset(charset);
     final HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "cat", arguments);
 

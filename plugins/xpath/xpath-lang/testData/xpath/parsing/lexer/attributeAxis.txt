@@ -1,0 +1,3 @@
+AXIS_NAME ('attribute')
+COLCOL ('::')
+STAR ('*')

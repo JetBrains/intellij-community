@@ -39,13 +39,15 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
 
   protected PopupUpdateProcessor(Project project) {
     myProject = project;
-    
+
   }
 
+  @Override
   public void beforeShown(final LightweightWindowEvent windowEvent) {
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
     if (activeLookup != null) {
       activeLookup.addLookupListener(new LookupAdapter() {
+        @Override
         public void currentItemChanged(LookupEvent event) {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
@@ -54,7 +56,7 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
               if (targetElement == null) {
                 targetElement = DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
               }
-              
+
               updatePopup(targetElement); //open next
             }
           } else {

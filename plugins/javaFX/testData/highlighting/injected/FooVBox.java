@@ -1,3 +1,5 @@
+package injected;
+
 import javafx.fxml.FXMLLoader;
 import javafx.scene.layout.VBox;
 

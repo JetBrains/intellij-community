@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiClass;
@@ -28,7 +29,6 @@ import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -109,18 +109,19 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     if (targetClass.isInterface()) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
-        final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", UsageViewUtil.getDescriptiveName(targetClass));
+        final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
+          .getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
       final String message = RefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
-                                                       UsageViewUtil.getDescriptiveName(targetClass));
+                                                       DescriptiveNameUtil.getDescriptiveName(targetClass));
 
       final int result = Messages.showYesNoDialog(project, message, myRefactoringName,
                                                   Messages.getQuestionIcon());
-      if (result != 0) return false;
+      if (result != Messages.YES) return false;
     }
 
     return true;

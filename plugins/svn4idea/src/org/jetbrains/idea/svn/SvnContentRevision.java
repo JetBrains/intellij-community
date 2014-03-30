@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,7 +114,8 @@ public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevi
     if (lock.exists()) {
       throw new VcsException("Can not access file base revision contents: administrative area is locked");
     }
-    return SvnUtil.getFileContents(myVcs, file.getPath(), false, myUseBaseRevision ? SVNRevision.BASE : myRevision, SVNRevision.UNDEFINED);
+    return SvnUtil.getFileContents(myVcs, SvnTarget.fromFile(file), myUseBaseRevision ? SVNRevision.BASE : myRevision,
+                                   SVNRevision.UNDEFINED);
   }
 
   @NotNull

@@ -37,7 +37,7 @@ public class LookupOffsets {
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private RangeMarker myLookupOriginalStartMarker;
+  private final RangeMarker myLookupOriginalStartMarker;
   private final Editor myEditor;
 
   public LookupOffsets(Editor editor) {
@@ -108,7 +108,12 @@ public class LookupOffsets {
   }
 
   int getLookupStart(String disposeTrace) {
-    LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
+    if (myLookupStartMarker == null) {
+      LOG.error("disposed: " + disposeTrace);
+    }
+    if (!myLookupStartMarker.isValid()) {
+      LOG.error("invalid marker: " + disposeTrace);
+    }
     return myLookupStartMarker.getStartOffset();
   }
 

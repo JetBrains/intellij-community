@@ -25,21 +25,23 @@ public abstract class EmptyStubElementType<T extends PsiElement> extends IStubEl
     return new EmptyStub(parentStub, this);
   }
 
+  @NotNull
   @Override
   public String getExternalId() {
     return getLanguage().getID() + toString();
   }
 
   @Override
-  public final void serialize(EmptyStub stub, StubOutputStream dataStream) throws IOException {
+  public final void serialize(@NotNull EmptyStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public final EmptyStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public final EmptyStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return createStub(parentStub);
   }
 
   @Override
-  public final void indexStub(EmptyStub stub, IndexSink sink) {
+  public final void indexStub(@NotNull EmptyStub stub, @NotNull IndexSink sink) {
   }
 }

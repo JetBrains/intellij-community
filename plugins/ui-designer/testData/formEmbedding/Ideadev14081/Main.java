@@ -50,10 +50,8 @@ public class Main {
     for(int i = 0; i < lafs.length; i++){
       viewMenu.add(new MySetLafAction(frame, lafs[i]));
     }
-
     frame.pack();
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    frame.setLocation((screenSize.width - frame.getWidth())/2, (screenSize.height - frame.getHeight())/2);
+    frame.setLocationRelativeTo(null);
     frame.setVisible(true);
   }
 

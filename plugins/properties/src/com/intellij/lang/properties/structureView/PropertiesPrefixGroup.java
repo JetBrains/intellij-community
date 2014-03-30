@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class PropertiesPrefixGroup implements Group {
     mySeparator = separator;
   }
 
+  @NotNull
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
@@ -62,6 +63,7 @@ public class PropertiesPrefixGroup implements Group {
     };
   }
 
+  @NotNull
   public Collection<TreeElement> getChildren() {
     Collection<TreeElement> result = new ArrayList<TreeElement>();
     List<String> prefixWords = StringUtil.split(myPrefix, mySeparator);

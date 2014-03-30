@@ -28,11 +28,11 @@ import java.util.Arrays;
 /**
  * @author peter
  */
-public final class MethodTextOccurrenceProcessor extends RequestResultProcessor {
+public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
   private final PsiMethod[] myMethods;
-  private final PsiClass myContainingClass;
-  private final boolean myStrictSignatureSearch;
+  protected final PsiClass myContainingClass;
+  protected final boolean myStrictSignatureSearch;
 
   public MethodTextOccurrenceProcessor(@NotNull final PsiClass aClass, final boolean strictSignatureSearch, final PsiMethod... methods) {
     super(strictSignatureSearch, Arrays.asList(methods));
@@ -42,7 +42,7 @@ public final class MethodTextOccurrenceProcessor extends RequestResultProcessor 
   }
 
   @Override
-  public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<PsiReference> consumer) {
+  public final boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<PsiReference> consumer) {
     for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myMethods[0], offsetInElement))) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && !processReference(consumer, ref)) {
         return false;
@@ -50,7 +50,6 @@ public final class MethodTextOccurrenceProcessor extends RequestResultProcessor 
     }
     return true;
   }
-
 
   private boolean processReference(Processor<PsiReference> consumer, PsiReference ref) {
     for (PsiMethod method : myMethods) {
@@ -64,30 +63,37 @@ public final class MethodTextOccurrenceProcessor extends RequestResultProcessor 
       if (ref.isReferenceTo(method)) {
         return consumer.process(ref);
       }
-      PsiElement refElement = ref.resolve();
 
-      if (refElement instanceof PsiMethod) {
-        PsiMethod refMethod = (PsiMethod)refElement;
-        PsiClass refMethodClass = refMethod.getContainingClass();
-        if (refMethodClass == null) continue;
+      if (!processInexactReference(ref, ref.resolve(), method, consumer)) {
+        return false;
+      }
+    }
 
-        if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(myContainingClass, refMethodClass, PsiSubstitutor.EMPTY);
-          if (substitutor != null) {
-            MethodSignature superSignature = method.getSignature(substitutor);
-            MethodSignature refSignature = refMethod.getSignature(PsiSubstitutor.EMPTY);
+    return true;
+  }
 
-            if (MethodSignatureUtil.isSubsignature(superSignature, refSignature)) {
-              if (!consumer.process(ref)) return false;
-            }
-          }
-        }
+  protected boolean processInexactReference(PsiReference ref, PsiElement refElement, PsiMethod method, Processor<PsiReference> consumer) {
+    if (refElement instanceof PsiMethod) {
+      PsiMethod refMethod = (PsiMethod)refElement;
+      PsiClass refMethodClass = refMethod.getContainingClass();
+      if (refMethodClass == null) return true;
 
-        if (!myStrictSignatureSearch) {
-          PsiManager manager = method.getManager();
-          if (manager.areElementsEquivalent(refMethodClass, myContainingClass)) {
+      if (!refMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(myContainingClass, refMethodClass, PsiSubstitutor.EMPTY);
+        if (substitutor != null) {
+          MethodSignature superSignature = method.getSignature(substitutor);
+          MethodSignature refSignature = refMethod.getSignature(PsiSubstitutor.EMPTY);
+
+          if (MethodSignatureUtil.isSubsignature(superSignature, refSignature)) {
             if (!consumer.process(ref)) return false;
           }
+        }
+      }
+
+      if (!myStrictSignatureSearch) {
+        PsiManager manager = method.getManager();
+        if (manager.areElementsEquivalent(refMethodClass, myContainingClass)) {
+          if (!consumer.process(ref)) return false;
         }
       }
     }

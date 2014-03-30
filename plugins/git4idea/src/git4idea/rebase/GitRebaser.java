@@ -28,8 +28,10 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
+import git4idea.update.GitUpdateResult;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
+import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Kirill Likhodedov
@@ -50,9 +53,9 @@ public class GitRebaser {
   private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
   @NotNull private final Git myGit;
-  private final @Nullable ProgressIndicator myProgressIndicator;
+  private @Nullable ProgressIndicator myProgressIndicator;
 
-  public GitRebaser(Project project, @NotNull Git git, ProgressIndicator progressIndicator) {
+  public GitRebaser(Project project, @NotNull Git git, @Nullable ProgressIndicator progressIndicator) {
     myProject = project;
     myGit = git;
     myProgressIndicator = progressIndicator;
@@ -60,9 +63,86 @@ public class GitRebaser {
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
   }
 
+  public void setProgressIndicator(@Nullable ProgressIndicator progressIndicator) {
+    myProgressIndicator = progressIndicator;
+  }
+
+  public GitUpdateResult rebase(@NotNull VirtualFile root,
+                                @NotNull List<String> parameters,
+                                @Nullable final Runnable onCancel,
+                                @Nullable GitLineHandlerListener lineListener) {
+    final GitLineHandler rebaseHandler = createHandler(root);
+    rebaseHandler.setStdoutSuppressed(false);
+    rebaseHandler.addParameters(parameters);
+    if (lineListener != null) {
+      rebaseHandler.addLineListener(lineListener);
+    }
+
+    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
+    rebaseHandler.addLineListener(rebaseConflictDetector);
+    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
+    rebaseHandler.addLineListener(untrackedFilesDetector);
+
+    String progressTitle = "Rebasing";
+    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, progressTitle);
+    rebaseTask.setProgressIndicator(myProgressIndicator);
+    rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+    final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
+    final AtomicBoolean failure = new AtomicBoolean();
+    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void onSuccess() {
+        updateResult.set(GitUpdateResult.SUCCESS);
+      }
+
+      @Override
+      protected void onCancel() {
+        if (onCancel != null) {
+          onCancel.run();
+        }
+        updateResult.set(GitUpdateResult.CANCEL);
+      }
+
+      @Override
+      protected void onFailure() {
+        failure.set(true);
+      }
+    });
+
+    if (failure.get()) {
+      updateResult.set(handleRebaseFailure(root, rebaseHandler, rebaseConflictDetector, untrackedFilesDetector));
+    }
+    return updateResult.get();
+  }
+
+  protected GitLineHandler createHandler(VirtualFile root) {
+    return new GitLineHandler(myProject, root, GitCommand.REBASE);
+  }
+
+  public GitUpdateResult handleRebaseFailure(VirtualFile root, GitLineHandler pullHandler,
+                                             GitRebaseProblemDetector rebaseConflictDetector,
+                                             GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
+    if (rebaseConflictDetector.isMergeConflict()) {
+      LOG.info("handleRebaseFailure merge conflict");
+      final boolean allMerged = new MyConflictResolver(myProject, myGit, root, this).merge();
+      return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
+    } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
+      LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
+                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
+      return GitUpdateResult.ERROR;
+    } else {
+      LOG.info("handleRebaseFailure error " + pullHandler.errors());
+      GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(pullHandler.errors()));
+      return GitUpdateResult.ERROR;
+    }
+  }
+
+
   public void abortRebase(@NotNull VirtualFile root) {
     LOG.info("abortRebase " + root);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    rh.setStdoutSuppressed(false);
     rh.addParameters("--abort");
     GitTask task = new GitTask(myProject, rh, "Aborting rebase");
     task.setProgressIndicator(myProgressIndicator);
@@ -89,14 +169,25 @@ public class GitRebaser {
   private boolean continueRebase(final @NotNull VirtualFile root, @NotNull String startOperation) {
     LOG.info("continueRebase " + root + " " + startOperation);
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    rh.setStdoutSuppressed(false);
     rh.addParameters(startOperation);
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
+
+    makeContinueRebaseInteractiveEditor(root, rh);
 
     final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     rebaseTask.setProgressIndicator(myProgressIndicator);
     return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
+  }
+
+  protected void makeContinueRebaseInteractiveEditor(VirtualFile root, GitLineHandler rh) {
+    GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
+    // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
+    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(rebaseEditorService, myProject, root, rh);
+    Integer rebaseEditorNo = editor.getHandlerNo();
+    rebaseEditorService.configureHandler(rh, rebaseEditorNo);
   }
 
   /**
@@ -127,6 +218,7 @@ public class GitRebaser {
     }
 
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
+    h.setStdoutSuppressed(false);
     Integer rebaseEditorNo = null;
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     try {
@@ -236,6 +328,96 @@ public class GitRebaser {
       setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.").
       setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> " +
                                                 "You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+  }
+
+  private static class MyConflictResolver extends GitConflictResolver {
+    private final GitRebaser myRebaser;
+    private final VirtualFile myRoot;
+
+    public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
+      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
+      myRebaser = rebaser;
+      myRoot = root;
+    }
+
+    private static Params makeParams() {
+      Params params = new Params();
+      params.setReverse(true);
+      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
+      params.setErrorNotificationTitle("Can't continue rebase");
+      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+      return params;
+    }
+
+    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
+
+    @Override protected boolean proceedAfterAllMerged() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
+  }
+
+  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler{
+    public TrivialEditor(@NotNull GitRebaseEditorService service,
+                         @NotNull Project project,
+                         @NotNull VirtualFile root,
+                         @NotNull GitHandler handler) {
+      super(service, project, root, handler);
+    }
+
+    @Override
+    public int editCommits(String path) {
+      return 0;
+    }
+  }
+
+  @NotNull
+  public GitUpdateResult handleRebaseFailure(@NotNull GitLineHandler handler, @NotNull VirtualFile root,
+                                             @NotNull GitRebaseProblemDetector rebaseConflictDetector,
+                                             @NotNull GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
+    if (rebaseConflictDetector.isMergeConflict()) {
+      LOG.info("handleRebaseFailure merge conflict");
+      final boolean allMerged = new GitRebaser.ConflictResolver(myProject, myGit, root, this).merge();
+      return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
+    } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
+      LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject,
+                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
+      return GitUpdateResult.ERROR;
+    } else {
+      LOG.info("handleRebaseFailure error " + handler.errors());
+      GitUIUtil.notifyImportantError(myProject, "Rebase error", GitUIUtil.stringifyErrors(handler.errors()));
+      return GitUpdateResult.ERROR;
+    }
+  }
+
+  public static class ConflictResolver extends GitConflictResolver {
+    @NotNull private final GitRebaser myRebaser;
+    @NotNull private final VirtualFile myRoot;
+
+    public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
+      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
+      myRebaser = rebaser;
+      myRoot = root;
+    }
+
+    private static Params makeParams() {
+      Params params = new Params();
+      params.setReverse(true);
+      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing rebase.");
+      params.setErrorNotificationTitle("Can't continue rebase");
+      params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
+      return params;
+    }
+
+    @Override protected boolean proceedIfNothingToMerge() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
+
+    @Override protected boolean proceedAfterAllMerged() throws VcsException {
+      return myRebaser.continueRebase(myRoot);
+    }
   }
 
   /**

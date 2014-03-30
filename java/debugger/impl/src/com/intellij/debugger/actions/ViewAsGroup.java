@@ -26,6 +26,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
   }
@@ -109,7 +111,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
         if (descriptor instanceof ValueDescriptorImpl) {
           anyValueDescriptor = true;
           ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-          if (valueDescriptor.isValueValid() && !nodeRenderer.isApplicable(valueDescriptor.getType())) {
+          if (!valueDescriptor.isValueValid() || !nodeRenderer.isApplicable(valueDescriptor.getType())) {
             allApp = false;
             break;
           }
@@ -139,7 +141,9 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    children.add(Separator.getInstance());
+    if (!children.isEmpty()) {
+      children.add(Separator.getInstance());
+    }
     children.addAll(renderers);
 
     return children.toArray(new AnAction[children.size()]);

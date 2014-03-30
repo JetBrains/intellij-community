@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>test.py</file>
+    <line>2</line>
+  <description>Local function 'bar' is not used</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>13</line>
+    <description>Local function 'bar1' is not used</description>
+  </problem>
+</problems>

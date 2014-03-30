@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,21 @@ import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.template.emmet.completion.XmlEmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
@@ -46,9 +43,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author Dmitry Avdeev
@@ -80,8 +78,9 @@ public class XmlCompletionContributor extends CompletionContributor {
   };
 
   public XmlCompletionContributor() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new XmlEmmetAbbreviationCompletionProvider());
     extend(CompletionType.BASIC,
-           PlatformPatterns.psiElement().inside(XmlPatterns.xmlAttributeValue()),
+           psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -156,34 +155,27 @@ public class XmlCompletionContributor extends CompletionContributor {
 
     if (reference != null && !namespace.isEmpty() && !namespacePrefix.isEmpty()) {
       // fallback to simple completion
-      final Set<LookupElement> set = new HashSet<LookupElement>();
-      new XmlCompletionData().completeReference(reference, set, element, parameters.getOriginalFile(), parameters.getOffset());
-      for (final LookupElement item : set) {
-        result.addElement(item);
-      }
+      result.runRemainingContributors(parameters, true);
     }
     else {
 
       final CompletionResultSet newResult = result.withPrefixMatcher(pos >= 0 ? prefix.substring(pos + 1) : prefix);
 
       final XmlFile file = (XmlFile)parameters.getOriginalFile();
-      final List<Pair<String,String>> names = XmlExtension.getExtension(file).getAvailableTagNames(file, tag);
-      for (Pair<String, String> pair : names) {
-        final String name = pair.getFirst();
-        final String ns = pair.getSecond();
-        final LookupElement item = createLookupElement(name, ns, ns, namespacePrefix.isEmpty() ? null : namespacePrefix);
+      final List<XmlExtension.TagInfo> names = XmlExtension.getExtension(file).getAvailableTagNames(file, tag);
+      for (XmlExtension.TagInfo info : names) {
+        final LookupElement item = createLookupElement(info, info.namespace, namespacePrefix.isEmpty() ? null : namespacePrefix);
         newResult.addElement(item);
       }
     }
   }
 
-  public static LookupElement createLookupElement(final String name,
-                                                  final String namespace,
+  public static LookupElement createLookupElement(XmlExtension.TagInfo tagInfo,
                                                   final String tailText, @Nullable String namespacePrefix) {
     LookupElementBuilder builder =
-      LookupElementBuilder.create(Pair.create(name, namespace), name).withInsertHandler(
-        new ExtendedTagInsertHandler(name, namespace, namespacePrefix));
-    if (!StringUtil.isEmpty(namespace)) {
+      LookupElementBuilder.create(tagInfo, tagInfo.name).withInsertHandler(
+        new ExtendedTagInsertHandler(tagInfo.name, tagInfo.namespace, namespacePrefix));
+    if (!StringUtil.isEmpty(tailText)) {
       builder = builder.withTypeText(tailText, true);
     }
     return builder;
@@ -205,10 +197,15 @@ public class XmlCompletionContributor extends CompletionContributor {
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
-    final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, XmlAttributeValue.class, true);
+    final PsiFile file = context.getFile();
+    final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlAttributeValue.class, true);
     if (attributeValue != null && offset == attributeValue.getTextRange().getStartOffset()) {
       context.setDummyIdentifier("");
     }
-  }
 
+    final PsiElement at = file.findElementAt(offset);
+    if (at != null && at.getNode().getElementType() == XmlTokenType.XML_NAME && at.getParent() instanceof XmlAttribute) {
+      context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, at.getTextRange().getEndOffset());
+    }
+  }
 }

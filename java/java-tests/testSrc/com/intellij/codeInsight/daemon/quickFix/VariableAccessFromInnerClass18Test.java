@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 
 /**
  * User: anna
  */
-public class VariableAccessFromInnerClass18Test extends LightQuickFixTestCase {
+public class VariableAccessFromInnerClass18Test extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();
   }
@@ -33,7 +33,7 @@ public class VariableAccessFromInnerClass18Test extends LightQuickFixTestCase {
   @Override
   protected void beforeActionStarted(String testName, String contents) {
     for (int i=0;i<10;i++) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      WriteCommandAction.runWriteCommandAction(null, new Runnable() {
         @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), "//");

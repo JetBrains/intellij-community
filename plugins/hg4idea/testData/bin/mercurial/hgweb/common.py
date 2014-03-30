@@ -9,6 +9,7 @@
 import errno, mimetypes, os
 
 HTTP_OK = 200
+HTTP_NOT_MODIFIED = 304
 HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
 HTTP_FORBIDDEN = 403
@@ -16,12 +17,15 @@ HTTP_NOT_FOUND = 404
 HTTP_METHOD_NOT_ALLOWED = 405
 HTTP_SERVER_ERROR = 500
 
-# Hooks for hgweb permission checks; extensions can add hooks here. Each hook
-# is invoked like this: hook(hgweb, request, operation), where operation is
-# either read, pull or push. Hooks should either raise an ErrorResponse
-# exception, or just return.
-# It is possible to do both authentication and authorization through this.
-permhooks = []
+
+def ismember(ui, username, userlist):
+    """Check if username is a member of userlist.
+
+    If userlist has a single '*' member, all users are considered members.
+    Can be overriden by extensions to provide more complex authorization
+    schemes.
+    """
+    return userlist == ['*'] or username in userlist
 
 def checkauthz(hgweb, req, op):
     '''Check permission for operation based on request data (including
@@ -31,12 +35,11 @@ def checkauthz(hgweb, req, op):
     user = req.env.get('REMOTE_USER')
 
     deny_read = hgweb.configlist('web', 'deny_read')
-    if deny_read and (not user or deny_read == ['*'] or user in deny_read):
+    if deny_read and (not user or ismember(hgweb.repo.ui, user, deny_read)):
         raise ErrorResponse(HTTP_UNAUTHORIZED, 'read not authorized')
 
     allow_read = hgweb.configlist('web', 'allow_read')
-    result = (not allow_read) or (allow_read == ['*'])
-    if not (result or user in allow_read):
+    if allow_read and (not ismember(hgweb.repo.ui, user, allow_read)):
         raise ErrorResponse(HTTP_UNAUTHORIZED, 'read not authorized')
 
     if op == 'pull' and not hgweb.allowpull:
@@ -53,30 +56,53 @@ def checkauthz(hgweb, req, op):
     # and replayed
     scheme = req.env.get('wsgi.url_scheme')
     if hgweb.configbool('web', 'push_ssl', True) and scheme != 'https':
-        raise ErrorResponse(HTTP_OK, 'ssl required')
+        raise ErrorResponse(HTTP_FORBIDDEN, 'ssl required')
 
     deny = hgweb.configlist('web', 'deny_push')
-    if deny and (not user or deny == ['*'] or user in deny):
+    if deny and (not user or ismember(hgweb.repo.ui, user, deny)):
         raise ErrorResponse(HTTP_UNAUTHORIZED, 'push not authorized')
 
     allow = hgweb.configlist('web', 'allow_push')
-    result = allow and (allow == ['*'] or user in allow)
-    if not result:
+    if not (allow and ismember(hgweb.repo.ui, user, allow)):
         raise ErrorResponse(HTTP_UNAUTHORIZED, 'push not authorized')
 
-# Add the default permhook, which provides simple authorization.
-permhooks.append(checkauthz)
+# Hooks for hgweb permission checks; extensions can add hooks here.
+# Each hook is invoked like this: hook(hgweb, request, operation),
+# where operation is either read, pull or push. Hooks should either
+# raise an ErrorResponse exception, or just return.
+#
+# It is possible to do both authentication and authorization through
+# this.
+permhooks = [checkauthz]
 
 
 class ErrorResponse(Exception):
     def __init__(self, code, message=None, headers=[]):
+        if message is None:
+            message = _statusmessage(code)
         Exception.__init__(self)
         self.code = code
+        self.message = message
         self.headers = headers
-        if message is not None:
-            self.message = message
-        else:
-            self.message = _statusmessage(code)
+    def __str__(self):
+        return self.message
+
+class continuereader(object):
+    def __init__(self, f, write):
+        self.f = f
+        self._write = write
+        self.continued = False
+
+    def read(self, amt=-1):
+        if not self.continued:
+            self.continued = True
+            self._write('HTTP/1.1 100 Continue\r\n\r\n')
+        return self.f.read(amt)
+
+    def __getattr__(self, attr):
+        if attr in ('close', 'readline', 'readlines', '__iter__'):
+            return getattr(self.f, attr)
+        raise AttributeError
 
 def _statusmessage(code):
     from BaseHTTPServer import BaseHTTPRequestHandler
@@ -86,12 +112,16 @@ def _statusmessage(code):
 def statusmessage(code, message=None):
     return '%d %s' % (code, message or _statusmessage(code))
 
-def get_mtime(spath):
+def get_stat(spath):
+    """stat changelog if it exists, spath otherwise"""
     cl_path = os.path.join(spath, "00changelog.i")
     if os.path.exists(cl_path):
-        return os.stat(cl_path).st_mtime
+        return os.stat(cl_path)
     else:
-        return os.stat(spath).st_mtime
+        return os.stat(spath)
+
+def get_mtime(spath):
+    return get_stat(spath).st_mtime
 
 def staticfile(directory, fname, req):
     """return a file inside directory with guessed Content-Type header
@@ -106,7 +136,7 @@ def staticfile(directory, fname, req):
     for part in parts:
         if (part in ('', os.curdir, os.pardir) or
             os.sep in part or os.altsep is not None and os.altsep in part):
-            return ""
+            return
     fpath = os.path.join(*parts)
     if isinstance(directory, str):
         directory = [directory]
@@ -117,8 +147,10 @@ def staticfile(directory, fname, req):
     try:
         os.stat(path)
         ct = mimetypes.guess_type(path)[0] or "text/plain"
-        req.respond(HTTP_OK, ct, length = os.path.getsize(path))
-        return open(path, 'rb').read()
+        fp = open(path, 'rb')
+        data = fp.read()
+        fp.close()
+        req.respond(HTTP_OK, ct, body=data)
     except TypeError:
         raise ErrorResponse(HTTP_SERVER_ERROR, 'illegal filename')
     except OSError, err:
@@ -152,3 +184,9 @@ def get_contact(config):
     return (config("web", "contact") or
             config("ui", "username") or
             os.environ.get("EMAIL") or "")
+
+def caching(web, req):
+    tag = str(web.mtime)
+    if req.env.get('HTTP_IF_NONE_MATCH') == tag:
+        raise ErrorResponse(HTTP_NOT_MODIFIED)
+    req.headers.append(('ETag', tag))

@@ -1,0 +1,13 @@
+PyFile:QualifiedTarget.py
+  PyAssignmentStatement
+    PyTargetExpression: b
+      PyReferenceExpression: a
+        PsiElement(Py:IDENTIFIER)('a')
+      PsiElement(Py:DOT)('.')
+      PsiElement(Py:IDENTIFIER)('b')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyNumericLiteralExpression
+      PsiElement(Py:INTEGER_LITERAL)('23')
+

@@ -73,16 +73,6 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     checkFile(file, manager, (GlobalInspectionContextImpl)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
-  //public HTMLComposerImpl getComposer() {
-  //  return new DescriptorComposer(this) {
-  //    protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
-  //      @NonNls String descriptionTemplate = description.getDescriptionTemplate();
-  //      descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
-  //      buf.append(descriptionTemplate);
-  //    }
-  //  };
-  //}
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
     if (element != null) {
@@ -143,7 +133,11 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
+  private void checkFile(final PsiFile file,
+                         final InspectionManager manager,
+                         GlobalInspectionContextImpl context,
+                         final RefManager refManager,
+                         final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     if (!context.isToCheckFile(file, this)) return;
     final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
@@ -161,8 +155,10 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
+      @Override
       public void run() {
         if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, false, new Processor<IProperty>() {
+          @Override
           public boolean process(final IProperty property) {
             if (original != null) {
               if (original.isCanceled()) return false;
@@ -338,6 +334,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.isEmpty()) return;
     Collections.sort(words, new Comparator<String>() {
+      @Override
       public int compare(final String o1, final String o2) {
         return o2.length() - o1.length();
       }
@@ -355,25 +352,30 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("duplicate.property.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.properties.files");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "DuplicatePropertyInspection";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel().myWholePanel;
   }
@@ -398,11 +400,13 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       myProjectScope.setSelected(!(CURRENT_FILE || MODULE_WITH_DEPENDENCIES));
 
       myFileScope.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           CURRENT_FILE = myFileScope.isSelected();
         }
       });
       myModuleScope.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           MODULE_WITH_DEPENDENCIES = myModuleScope.isSelected();
           if (MODULE_WITH_DEPENDENCIES) {
@@ -411,6 +415,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         }
       });
       myProjectScope.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myProjectScope.isSelected()) {
             CURRENT_FILE = false;
@@ -424,16 +429,19 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       myDuplicateBoth.setSelected(CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES);
 
       myDuplicateKeys.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           CHECK_DUPLICATE_KEYS = myDuplicateKeys.isSelected();
         }
       });
       myDuplicateValues.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           CHECK_DUPLICATE_VALUES = myDuplicateValues.isSelected();
         }
       });
       myDuplicateBoth.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = myDuplicateBoth.isSelected();
         }

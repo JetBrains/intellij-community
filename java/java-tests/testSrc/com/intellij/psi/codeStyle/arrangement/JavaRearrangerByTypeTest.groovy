@@ -326,4 +326,66 @@ class Test {
 }'''
     )
   }
+  
+  void "test anonymous class and siblings"() {
+    doTest(
+      initial: '''\
+class Test {
+  void test() {
+    new MyClass(new Object() {
+      @Override
+      public String toString() {
+        return null;
+      }
+    }) {
+      @Override
+      public int hashCode() {
+        return 1;
+      }
+      private int field;
+    }
+  };
+}''',
+      rules: [rule(FIELD), rule(METHOD)],
+      expected: '''\
+class Test {
+  void test() {
+    new MyClass(new Object() {
+      @Override
+      public String toString() {
+        return null;
+      }
+    }) {
+      private int field;
+      @Override
+      public int hashCode() {
+        return 1;
+      }
+    }
+  };
+}'''
+    )
+  }
+
+  void "test multiple elements at the same line"() {
+    doTest(
+      initial: '''\
+class Test {
+  int i;int getI() {
+    return i;
+  }int j;int getJ() {
+    return j;
+  }
+}''',
+      rules: [rule(FIELD), rule(METHOD)],
+      expected: '''\
+class Test {
+  int i;int j;int getI() {
+    return i;
+  }int getJ() {
+    return j;
+  }
+}'''
+    )
+  }
 }

@@ -26,11 +26,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -113,35 +115,44 @@ class ReloadClassesWorker {
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
-      int processedClassesCount = 0;
-      for (final String qualifiedName : modifiedClasses.keySet()) {
-        processedClassesCount++;
+      int processedEntriesCount = 0;
+      for (final Map.Entry<String, HotSwapFile> entry : modifiedClasses.entrySet()) {
+        if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
+          // once at least one class has been actually reloaded, do not interrupt the whole process
+          break;
+        }
+        processedEntriesCount++;
+        final String qualifiedName = entry.getKey();
         if (qualifiedName != null) {
           myProgress.setText(qualifiedName);
-          myProgress.setFraction(processedClassesCount / (double)modifiedClasses.size());
+          myProgress.setFraction(processedEntriesCount / (double)modifiedClasses.size());
         }
-        final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
-        final byte[] content;
         try {
-          content = FileUtil.loadFileBytes(fileDescr.file);
+          redefineProcessor.processClass(qualifiedName, entry.getValue().file);
         }
         catch (IOException e) {
           reportProblem(qualifiedName, e);
-          continue;
         }
-        redefineProcessor.processClass(qualifiedName, content);
       }
+
+      if (redefineProcessor.getProcessedClassesCount() == 0 && myProgress.isCancelled()) {
+        // once at least one class has been actually reloaded, do not interrupt the whole process
+        return;
+      }
+
       redefineProcessor.processPending();
       myProgress.setFraction(1);
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
-        myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION,
-                              DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount()));
+        myProgress.addMessage(
+          myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+        );
       }
       else {
-        final String message = DebuggerBundle.message("status.classes.not.all.versions.reloaded", partiallyRedefinedClassesCount,
-                                                      redefineProcessor.getProcessedClassesCount());
+        final String message = DebuggerBundle.message(
+          "status.classes.not.all.versions.reloaded", partiallyRedefinedClassesCount, redefineProcessor.getProcessedClassesCount()
+        );
         myProgress.addMessage(myDebuggerSession, MessageCategory.WARNING, message);
       }
 
@@ -153,50 +164,41 @@ class ReloadClassesWorker {
       processException(e);
     }
 
+    final Semaphore waitSemaphore = new Semaphore();
+    waitSemaphore.down();
     //noinspection SSBasedInspection
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-        breakpointManager.reloadBreakpoints();
-        debugProcess.getRequestsManager().clearWarnings();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("requests updated");
-          LOG.debug("time stamp set");
-        }
-        myDebuggerSession.refresh(false);
-
-        /*
-        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-          protected void action() throws Exception {
-            try {
-              breakpointManager.enableBreakpoints(debugProcess);
+        try {
+          if (!project.isDisposed()) {
+            final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
+            breakpointManager.reloadBreakpoints();
+            debugProcess.getRequestsManager().clearWarnings();
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("requests updated");
+              LOG.debug("time stamp set");
             }
-            catch (Exception e) {
-              processException(e);
-            }
-            //try {
-            //  virtualMachineProxy.resume();
-            //}
-            //catch (Exception e) {
-            //  processException(e);
-            //}
+            myDebuggerSession.refresh(false);
           }
-
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
-        });
-        */
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        finally {
+          waitSemaphore.up();
+        }
       }
     });
-    try {
-      breakpointManager.enableBreakpoints(debugProcess);
-    }
-    catch (Exception e) {
-      processException(e);
+
+    waitSemaphore.waitFor();
+
+    if (!project.isDisposed()) {
+      try {
+        breakpointManager.enableBreakpoints(debugProcess);
+      }
+      catch (Exception e) {
+        processException(e);
+      }
     }
   }
 
@@ -233,10 +235,13 @@ class ReloadClassesWorker {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(String qualifiedName, byte[] content) throws Throwable {
+    public void processClass(String qualifiedName, File file) throws Throwable {
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
-      if (vmClasses.isEmpty()) return;
+      if (vmClasses.isEmpty()) {
+        return;
+      }
 
+      final byte[] content = FileUtil.loadFileBytes(file);
       if (vmClasses.size() == 1) {
         myRedefineMap.put(vmClasses.get(0), content);
         if (myRedefineMap.size() >= CLASSES_CHUNK_SIZE) {

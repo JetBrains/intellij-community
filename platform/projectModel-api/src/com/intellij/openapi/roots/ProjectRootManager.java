@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Allows to query and modify the list of root directories belonging to a project.
@@ -37,7 +39,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @param project the project for which the instance is requested.
    * @return the instance.
    */
-  public static ProjectRootManager getInstance(Project project) {
+  public static ProjectRootManager getInstance(@NotNull Project project) {
     final ProjectRootManager service = ServiceManager.getService(project, ProjectRootManager.class);
     if (service != null) return service;
     return project.getComponent(ProjectRootManager.class);
@@ -95,7 +97,17 @@ public abstract class ProjectRootManager implements ModificationTracker {
    *
    * @return the list of content source roots.
    */
+  @NotNull
   public abstract VirtualFile[] getContentSourceRoots();
+
+  /**
+   * Returns the list of source roots from all modules which types belong to the specified set
+   *
+   * @param rootTypes types of source roots
+   * @return list of source roots
+   */
+  @NotNull
+  public abstract List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns the instance of the JDK selected for the project.
@@ -106,23 +118,12 @@ public abstract class ProjectRootManager implements ModificationTracker {
   @Nullable
   public abstract Sdk getProjectSdk();
 
-  @Deprecated
-  @Nullable
-  public Sdk getProjectJdk() {
-    return getProjectSdk();
-  }
-
   /**
    * Returns the name of the SDK selected for the project.
    *
    * @return the SDK name.
    */
   public abstract String getProjectSdkName();
-
-  @Deprecated
-  public String getProjectJdkName() {
-    return getProjectSdkName();
-  }
 
   /**
    * Sets the SDK to be used for the project.
@@ -132,20 +133,10 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public abstract void setProjectSdk(@Nullable Sdk sdk);
 
 
-  @Deprecated
-  public void setProjectJdk(@Nullable Sdk jdk) {
-    setProjectSdk(jdk);
-  }
-
   /**
    * Sets the name of the JDK to be used for the project.
    *
    * @param name the name of the JDK.
    */
   public abstract void setProjectSdkName(String name);
-
-  @Deprecated
-  public void setProjectJdkName(String name) {
-    setProjectSdkName(name);
-  }
 }

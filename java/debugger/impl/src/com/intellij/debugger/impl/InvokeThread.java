@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.concurrent.*;
 
 /**
@@ -34,11 +33,13 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
     private volatile Future<?> myRequestFuture;
+    private volatile boolean myStopRequested = false;
 
     WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
     }
 
+    @Override
     public void run() {
       synchronized (this) {
         while (myRequestFuture == null) {
@@ -59,14 +60,17 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
     }
 
-    public void interrupt() {
-      assert myRequestFuture != null;
-      myRequestFuture.cancel( true );  
+    public void requestStop() {
+      final Future<?> future = myRequestFuture;
+      assert future != null;
+      myStopRequested = true;
+      future.cancel(true);
     }
 
-    public boolean isInterrupted() {
-      assert myRequestFuture != null;
-      return myRequestFuture.isCancelled() || myRequestFuture.isDone();
+    public boolean isStopRequested() {
+      final Future<?> future = myRequestFuture;
+      assert future != null;
+      return myStopRequested || future.isCancelled() || future.isDone();
     }
 
     public void join() throws InterruptedException, ExecutionException {
@@ -123,51 +127,58 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
-  private void run(@NotNull WorkerThreadRequest threadRequest) {
-    while(true) {
-      try {
-        if(threadRequest.isInterrupted()) {
+  private void run(final @NotNull WorkerThreadRequest threadRequest) {
+    try {
+      while(true) {
+        try {
+          if(threadRequest.isStopRequested()) {
+            break;
+          }
+
+          final WorkerThreadRequest currentRequest = getCurrentRequest();
+          if(currentRequest != threadRequest) {
+            LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
+            if (currentRequest != null && !currentRequest.isDone()) {
+              continue; // ensure events are processed by one thread at a time
+            }
+          }
+
+          processEvent(myEvents.get());
+        }
+        catch (VMDisconnectedException ignored) {
           break;
         }
-
-        final WorkerThreadRequest currentRequest = getCurrentRequest();
-        if(currentRequest != threadRequest) {
-          LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
-          if (currentRequest != null && !currentRequest.isDone()) {
-            continue; // ensure events are processed by one thread at a time
-          }
+        catch (EventQueueClosedException ignored) {
+          break;
         }
-
-        processEvent(myEvents.get());
+        catch (RuntimeException e) {
+          if(e.getCause() instanceof InterruptedException) {
+            break;
+          }
+          LOG.error(e);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
-      catch (VMDisconnectedException e) {
-        break;
-      }
-      catch (EventQueueClosedException e) {
-        final List<E> unprocessed = myEvents.clearQueue();
-        for (E event : unprocessed) {
+    }
+    finally {
+      // ensure that all scheduled events are processed
+      if (threadRequest == getCurrentRequest()) {
+        for (E event : myEvents.clearQueue()) {
           try {
             processEvent(event);
           }
           catch (Throwable ignored) {
           }
         }
-        break;
       }
-      catch (RuntimeException e) {
-        if(e.getCause() instanceof InterruptedException) {
-          break;
-        }
-        LOG.error(e);
-      }
-      catch (Throwable e) {
-        LOG.error(e);
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Request " + toString() + " exited");
       }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Request " + this.toString() + " exited");
-    }
   }
 
   protected static InvokeThread currentThread() {
@@ -189,15 +200,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return myEvents.pushBack(r, r.getPriority().ordinal());
   }
 
-  protected void switchToRequest(WorkerThreadRequest newWorkerThread) {
-    final WorkerThreadRequest request = getCurrentThreadRequest();
-    LOG.assertTrue(request != null);
-    myCurrentRequest = newWorkerThread;
+  protected void switchToRequest(WorkerThreadRequest newRequest) {
+    final WorkerThreadRequest currentThreadRequest = getCurrentThreadRequest();
+    LOG.assertTrue(currentThreadRequest != null);
+    myCurrentRequest = newRequest;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Closing " + request + " new request = " + newWorkerThread);
+      LOG.debug("Closing " + currentThreadRequest + " new request = " + newRequest);
     }
 
-    request.interrupt();
+    currentThreadRequest.requestStop();
   }
 
   public WorkerThreadRequest getCurrentRequest() {

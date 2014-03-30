@@ -1,0 +1,19 @@
+print "abc $this.prop test"
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Compound Gstring
+        PsiElement(Gstring begin)('"')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('abc ')
+        GString injection
+          PsiElement($)('$')
+          Reference expression
+            PsiElement(this)('this')
+        GrStringContentImpl(GString content element)
+          PsiElement(Gstring content)('.prop test')
+        PsiElement(Gstring end)('"')

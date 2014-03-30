@@ -16,15 +16,15 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 
-class MacroParser {
-  private MacroParser() {
-  }
+@VisibleForTesting
+public class MacroParser {
 
   //-----------------------------------------------------------------------------------
   public static Expression parse(String expression) {

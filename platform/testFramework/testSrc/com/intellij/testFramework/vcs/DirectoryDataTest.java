@@ -31,8 +31,8 @@ public class DirectoryDataTest extends FileBasedTest {
   @Test
   public void testQuadro() throws Exception {
     final DirectoryData data = new DirectoryData(myProject.getBaseDir(), 2, 2, ".txt");
+    data.clear();
     try {
-      data.clear();
       data.create();
 
       final String[] dirs = {"DL0N0", "DL0N1"};
@@ -51,7 +51,8 @@ public class DirectoryDataTest extends FileBasedTest {
         Assert.assertTrue(vFile.exists());
         Assert.assertTrue(! vFile.isDirectory());
       }
-    } finally {
+    }
+    finally {
       data.clear();
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -80,7 +81,7 @@ public class EclipseImlTest extends IdeaTestCase {
     }
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityAppDir);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
+    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
       @Override
       public Module compute() {
         return ModuleManager.getInstance(project)

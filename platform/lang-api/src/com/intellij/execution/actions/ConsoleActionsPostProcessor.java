@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 4/25/11 1:16 PM
  */
-public interface ConsoleActionsPostProcessor {
+public abstract class ConsoleActionsPostProcessor {
 
-  ExtensionPointName<ConsoleActionsPostProcessor> EP_NAME = ExtensionPointName.create("com.intellij.consoleActionsPostProcessor");
+  public static final ExtensionPointName<ConsoleActionsPostProcessor> EP_NAME = ExtensionPointName.create("com.intellij.consoleActionsPostProcessor");
   
   /**
    * Allows to adjust actions to use within the given console instance.
@@ -40,5 +40,12 @@ public interface ConsoleActionsPostProcessor {
    * @return            actions to use within the given console instance (given actions may be returned by default)
    */
   @NotNull
-  AnAction[] postProcess(@NotNull ConsoleView console, @NotNull AnAction[] actions);
+  public AnAction[] postProcess(@NotNull ConsoleView console, @NotNull AnAction[] actions) {
+    return actions;
+  }
+
+  @NotNull
+  public AnAction[] postProcessPopupActions(@NotNull ConsoleView console, @NotNull AnAction[] actions) {
+    return actions;
+  }
 }

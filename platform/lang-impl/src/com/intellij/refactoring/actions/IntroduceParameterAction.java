@@ -19,7 +19,7 @@
  * User: dsl
  * Date: 06.05.2002
  * Time: 14:03:43
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.refactoring.actions;
@@ -32,10 +32,12 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceParameterAction extends BasePlatformRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }

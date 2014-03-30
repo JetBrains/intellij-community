@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
 
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     LOG.assertTrue (!getClass ().equals (myInAction));
     try {
@@ -67,10 +68,11 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract void gotoActionPerformed(AnActionEvent e);
 
+  @Override
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
     presentation.setVisible(hasContributors(dataContext));
   }
@@ -85,9 +87,9 @@ public abstract class GotoActionBase extends AnAction {
 
   @Nullable
   public static PsiElement getPsiContext(final AnActionEvent e) {
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) return file;
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     return getPsiContext(project);
   }
 
@@ -115,7 +117,7 @@ public abstract class GotoActionBase extends AnAction {
       return Pair.create(predefined, 0);
     }
     if (useEditorSelection) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         final String selectedText = editor.getSelectionModel().getSelectedText();
         if (selectedText != null && !selectedText.contains("\n")) {
@@ -148,7 +150,14 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
-    showNavigationPopup(e, model, callback, null, true);
+    showNavigationPopup(e, model, callback, true);
+  }
+
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         final boolean allowMultipleSelection) {
+    showNavigationPopup(e, model, callback, null, true, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -156,18 +165,33 @@ public abstract class GotoActionBase extends AnAction {
                                          final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, true);
+  }
+
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection) {
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,
                         ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first,
-                                                      mayRequestOpenInCurrentWindow, start.second));
+                                                      mayRequestOpenInCurrentWindow, start.second), allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
                                          final ChooseByNamePopup popup) {
-   
+    showNavigationPopup(callback, findUsagesTitle, popup, true);
+  }
+
+  protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         final ChooseByNamePopup popup,
+                                         final boolean allowMultipleSelection) {
 
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
@@ -194,7 +218,7 @@ public abstract class GotoActionBase extends AnAction {
       public void elementChosen(Object element) {
         callback.elementChosen(popup, element);
       }
-    }, ModalityState.current(), true);
+    }, ModalityState.current(), allowMultipleSelection);
   }
 
 }

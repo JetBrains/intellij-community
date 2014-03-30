@@ -20,7 +20,7 @@ import java.util.ArrayList;
 * To change this template use File | Settings | File Templates.
 */
 public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
-  private Getter<JTextComponent> myTextField;
+  private final Getter<JTextComponent> myTextField;
 
   public JTextComponent getTextField() {
     return myTextField.get();
@@ -42,16 +42,11 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
     shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), null));
 
     registerCustomShortcutSet(new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()])), getTextField());
-    if (!editorSearchComponent.getFindModel().isMultiline()) {
-      getTextField().registerKeyboardAction(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent actionEvent) {
-          if (getTextField().getText().isEmpty()) {
-            getEditorSearchComponent().showHistory(false, getTextField());
-          }
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), JComponent.WHEN_FOCUSED);
-    }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setVisible(getEditorSearchComponent().getFindModel().isMultiline());
   }
 
   @Override

@@ -28,6 +28,7 @@ public class ShowUiDebuggerAction extends AnAction {
     e.getPresentation().setText("UI Debugger");
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     if (myDebugger == null) {
       myDebugger = new UiDebugger() {

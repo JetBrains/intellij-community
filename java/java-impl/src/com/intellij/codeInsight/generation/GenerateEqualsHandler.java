@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -67,7 +66,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
 
       if (Messages.showYesNoDialog(project, text,
                                    CodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
-                                   Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                   Messages.getQuestionIcon()) == Messages.YES) {
         if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
             @Override
             public Boolean compute() {

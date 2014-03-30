@@ -28,6 +28,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
@@ -99,7 +101,7 @@ public class HgVFSListener extends VcsVFSListener {
           pi.setText(repo.getPresentableUrl());
           try {
             untrackedFiles
-              .addAll(new HgStatusCommand.Builder(false).includeUnknown(true).build(myProject)
+              .addAll(new HgStatusCommand.Builder(false).unknown(true).build(myProject)
                         .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
           }
           catch (final VcsException ex) {
@@ -148,9 +150,15 @@ public class HgVFSListener extends VcsVFSListener {
         LOG.assertTrue(myProject != null, "Project is null");
         Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
         final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
-        HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).includeUnknown(true).includeIgnored(true).build(myProject);
-        for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
-          Set<HgChange> changes = statusCommand.execute(repo);
+        HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
+        for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sortedSourceFilesByRepos.entrySet()) {
+          Set<HgChange> changes =
+            statusCommand.execute(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
+              @Override
+              public FilePath fun(VirtualFile virtualFile) {
+                return new FilePathImpl(virtualFile);
+              }
+            }));
           for (HgChange change : changes) {
             unversionedAndIgnoredFiles.add(change.afterFile().toFilePath().getVirtualFile());
           }

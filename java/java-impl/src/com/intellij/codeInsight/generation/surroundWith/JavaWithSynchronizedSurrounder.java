@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -57,7 +57,7 @@ class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    synchronizedStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(synchronizedStatement);
+    synchronizedStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(synchronizedStatement);
     PsiExpression lockExpression = synchronizedStatement.getLockExpression();
     if (lockExpression == null) {
       return null;

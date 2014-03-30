@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -5,6 +20,7 @@ import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -21,9 +37,9 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.asm4.ClassReader;
-import org.jetbrains.asm4.util.Textifier;
-import org.jetbrains.asm4.util.TraceClassVisitor;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.util.Textifier;
+import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,16 +47,18 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * User: anna
- * Date: 5/7/12
+ * @author anna
+ * @since 5/7/12
  */
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
+  private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
+
   private static final Logger LOG = Logger.getInstance("#" + ByteCodeViewerManager.class.getName());
 
   public static final String TOOLWINDOW_ID = "Byte Code Viewer";
   private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
   private static final String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
-  
+
   public static ByteCodeViewerManager getInstance(Project project) {
     return ServiceManager.getService(project, ByteCodeViewerManager.class);
   }
@@ -102,9 +120,18 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     if (!StringUtil.isEmpty(byteCode)) {
       component.setText(byteCode, element);
     } else {
-      PsiClass containingClass = getContainingClass(element);
-      PsiFile containingFile = element.getContainingFile();
-      component.setText("No bytecode found for " + SymbolPresentationUtil.getSymbolPresentableText(containingClass != null ? containingClass : containingFile));
+      PsiElement presentableElement = getContainingClass(element);
+      if (presentableElement == null) {
+        presentableElement = element.getContainingFile();
+        if (presentableElement == null && element instanceof PsiNamedElement) {
+          presentableElement = element;
+        }
+        if (presentableElement == null) {
+          component.setText("No bytecode found");
+          return;
+        }
+      }
+      component.setText("No bytecode found for " + SymbolPresentationUtil.getSymbolPresentableText(presentableElement));
     }
     content.setDisplayName(getTitle(element));
   }
@@ -117,7 +144,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     }
   }
 
-  
+
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
     final Content content = myToolWindow.getContentManager().getSelectedContent();
@@ -217,14 +244,27 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   @Nullable
   private static String getClassVMName(PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) {
-      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) + 
+      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
              JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
     }
     return ClassUtil.getJVMClassName(containingClass);
   }
 
-  private static PsiClass getContainingClass(PsiElement psiElement) {
+  public static PsiClass getContainingClass(PsiElement psiElement) {
+    for (ClassSearcher searcher : CLASS_SEARCHER_EP.getExtensions()) {
+      PsiClass aClass = searcher.findClass(psiElement);
+      if (aClass != null) {
+        return aClass;
+      }
+    }
+    return findClass(psiElement);
+  }
+
+  public static PsiClass findClass(@NotNull PsiElement psiElement) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, false);
+    while (containingClass instanceof PsiTypeParameter) {
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+    }
     if (containingClass == null) return null;
 
     return containingClass;

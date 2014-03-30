@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -25,7 +24,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -48,12 +46,10 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.util.List;
 
-public class TextPainter implements Printable {
+class TextPainter extends BasePainter {
   private final DocumentEx myDocument;
-
   private int myOffset = 0;
   private int myLineNumber = 1;
-
   private float myLineHeight = -1;
   private float myDescent = -1;
   private double myCharWidth = -1;
@@ -71,7 +67,7 @@ public class TextPainter implements Printable {
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
-  private ProgressIndicator myProgress;
+
   @NonNls private static final String DEFAULT_MEASURE_HEIGHT_TEXT = "A";
   @NonNls private static final String DEFAULT_MEASURE_WIDTH_TEXT = "w";
   @NonNls private static final String HEADER_TOKEN_PAGE = "PAGE";
@@ -80,8 +76,9 @@ public class TextPainter implements Printable {
   public TextPainter(DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fileName,
-                     @NotNull final PsiFile psiFile,
-                     final FileType fileType, final Editor editor) {
+                     @NotNull PsiFile psiFile,
+                     FileType fileType,
+                     Editor editor) {
     this(editorDocument, highlighter, fileName, psiFile.getProject(), fileType,
          FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument, editor));
   }
@@ -89,8 +86,9 @@ public class TextPainter implements Printable {
   public TextPainter(DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fileName,
-                     final Project project,
-                     final FileType fileType, final List<LineMarkerInfo> separators) {
+                     Project project,
+                     FileType fileType,
+                     List<LineMarkerInfo> separators) {
     myCodeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
@@ -101,17 +99,12 @@ public class TextPainter implements Printable {
     myItalicFont = new Font(fontName, Font.ITALIC, fontSize);
     myBoldItalicFont = new Font(fontName, Font.BOLD | Font.ITALIC, fontSize);
     myHighlighter = highlighter;
-    myHeaderFont = new Font(myPrintSettings.FOOTER_HEADER_FONT_NAME, Font.PLAIN,
-                            myPrintSettings.FOOTER_HEADER_FONT_SIZE);
+    myHeaderFont = new Font(myPrintSettings.FOOTER_HEADER_FONT_NAME, Font.PLAIN, myPrintSettings.FOOTER_HEADER_FONT_SIZE);
     myFileName = fileName;
     mySegmentEnd = myDocument.getTextLength();
     myFileType = fileType;
     myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[separators.size()]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
-  }
-
-  public void setProgress(ProgressIndicator progress) {
-    myProgress = progress;
   }
 
   public void setSegment(int segmentStart, int segmentEnd, int firstLineNumber) {
@@ -153,6 +146,7 @@ public class TextPainter implements Printable {
 
   boolean isPrintingPass = true;
 
+  @Override
   public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) throws PrinterException {
     if (myOffset >= mySegmentEnd || myProgress.isCanceled()) {
       return Printable.NO_SUCH_PAGE;
@@ -165,6 +159,7 @@ public class TextPainter implements Printable {
     myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myFileName, (pageIndex + 1)));
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         myPageIndex = pageIndex;
         Graphics2D g2D = (Graphics2D) g;

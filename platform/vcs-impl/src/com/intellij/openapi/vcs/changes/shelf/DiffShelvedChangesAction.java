@@ -50,7 +50,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   public static void showShelvedChangesDiff(final DataContext dc) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 

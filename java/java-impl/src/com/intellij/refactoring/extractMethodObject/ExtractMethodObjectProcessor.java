@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +36,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -252,10 +252,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         myInnerClass.add(outputField);
         field = outputField;
       } else {
-        field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
+        field = PropertyUtil.findPropertyField(myInnerClass, name, false);
       }
       LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
-      myInnerClass.add(PropertyUtil.generateGetterPrototype(field));
+      myInnerClass.add(GenerateMembersUtil.generateGetterPrototype(field));
     }
 
     PsiParameter[] params = getMethod().getParameterList().getParameters();
@@ -468,12 +468,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiTypeParameter[] methodTypeParameters = getMethod().getTypeParameters();
     if (methodTypeParameters.length > 0) {
       List<String> typeSignature = new ArrayList<String>();
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getMethod().getProject()).getResolveHelper();
+      final PsiSubstitutor substitutor = methodCallExpression.resolveMethodGenerics().getSubstitutor();
       for (final PsiTypeParameter typeParameter : methodTypeParameters) {
-        final PsiType type = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, getMethod().getParameterList().getParameters(),
-                                                                           methodCallExpression.getArgumentList().getExpressions(),
-                                                                           PsiSubstitutor.EMPTY, methodCallExpression,
-                                                                           DefaultParameterTypeInferencePolicy.INSTANCE);
+        final PsiType type = substitutor.substitute(typeParameter);
         if (type == null || PsiType.NULL.equals(type)) {
           return "";
         }
@@ -762,7 +759,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(myProject, myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(
+            myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
               variable.getType().getCanonicalText() + " " + name + " = " + object + "." + getterName + "();",

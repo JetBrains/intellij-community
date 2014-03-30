@@ -16,38 +16,34 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.popup.util.DetailView;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.List;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
   private JPanel myMasterBreakpointComboBoxPanel;
   private JPanel myAfterBreakpointHitPanel;
   private JRadioButton myLeaveEnabledRadioButton;
+  @SuppressWarnings("UnusedDeclaration")
   private JPanel myContentPane;
   private JPanel myMainPanel;
 
   private BreakpointChooser myMasterBreakpointChooser;
   private XDependentBreakpointManager myDependentBreakpointManager;
 
-  private java.util.List<BreakpointItem> getBreakpointItemsExceptMy() {
-    java.util.List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+  private List<BreakpointItem> getBreakpointItemsExceptMy() {
+    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
     for (BreakpointItem item : items) {
       if (item.getBreakpoint() == myBreakpoint) {
@@ -96,7 +92,6 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
       myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
     }
     updateAfterBreakpointHitPanel();
-
   }
 
   @Override

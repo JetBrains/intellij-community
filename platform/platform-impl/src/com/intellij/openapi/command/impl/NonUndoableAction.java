@@ -28,6 +28,9 @@ class NonUndoableAction implements UndoableAction {
   protected NonUndoableAction(DocumentReference ref, boolean isGlobal) {
     myGlobal = isGlobal;
     myRefs = new DocumentReference[]{ref};
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("global=" + isGlobal + "; doc=" + ref, new Throwable());
+    }
   }
 
   public final void undo() {

@@ -1,8 +1,6 @@
-interface FooIntf {}
-class FooClass {}
+interface XFooIntf {}
+class XFooClass {}
+class XFoo {}
 
-class Goo implements Foo<caret> {
-    int boo() {}
-    int doo() {}
-    int foo() {}
+class Goo implements XFo<caret> {
 }

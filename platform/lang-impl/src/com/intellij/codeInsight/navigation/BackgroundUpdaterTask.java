@@ -95,6 +95,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element)));
         }

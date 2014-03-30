@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -47,8 +47,8 @@ public class InlineUtil {
     throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
 
-    PsiClass thisClass = RefactoringUtil.getThisClass(initializer);
-    PsiClass refParent = RefactoringUtil.getThisClass(ref);
+    PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
+    PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
     boolean insertCastWhenUnchecked = ref.getParent() instanceof PsiForeachStatement;
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
@@ -57,8 +57,8 @@ public class InlineUtil {
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && (varType instanceof PsiPrimitiveType || exprType instanceof PsiPrimitiveType)
-                             || !TypeConversionUtil.isAssignable(varType, exprType) 
-                             || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType))) {
+                             || !TypeConversionUtil.isAssignable(varType, exprType)
+                             || insertCastWhenUnchecked && JavaGenericsUtil.isRawToGeneric(varType, exprType))) {
       boolean matchedTypes = false;
       //try explicit type arguments
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
@@ -86,7 +86,7 @@ public class InlineUtil {
                   if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
                     methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
                   } else {
-                    methodExpression.setQualifierExpression(createThisExpression(manager, containingClass, refParent));
+                    methodExpression.setQualifierExpression(createThisExpression(manager, thisClass, refParent));
                   }
                 }
               }
@@ -107,6 +107,7 @@ public class InlineUtil {
           builder.append(exprType.getCanonicalText());
           builder.append("[]{");
           builder.append(StringUtil.join(Arrays.asList(arguments), new Function<PsiExpression, String>() {
+            @Override
             public String fun(final PsiExpression expr) {
               return expr.getText();
             }
@@ -174,14 +175,14 @@ public class InlineUtil {
     if (Comparing.equal(thisClass, refParent))
 
     {
-      thisAccessExpr = RefactoringUtil.createThisExpression(manager, null);
+      thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, null);
     }
 
     else
 
     {
       if (!(thisClass instanceof PsiAnonymousClass)) {
-        thisAccessExpr = RefactoringUtil.createThisExpression(manager, thisClass);
+        thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, thisClass);
       }
     }
     return thisAccessExpr;
@@ -216,6 +217,9 @@ public class InlineUtil {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
         while (lastInitializerSibling != null) {
           final PsiElement nextSibling = lastInitializerSibling.getNextSibling();
+          if (nextSibling == null) {
+            break;
+          }
           if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
           lastInitializerSibling = nextSibling;
         }
@@ -225,7 +229,12 @@ public class InlineUtil {
         if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
           lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
-        argumentList.addRange(initializers[0], lastInitializerSibling);
+        PsiElement firstElement = initializers[0];
+        final PsiElement leadingComment = PsiTreeUtil.skipSiblingsBackward(firstElement, PsiWhiteSpace.class);
+        if (leadingComment instanceof PsiComment) {
+          firstElement = leadingComment;
+        }
+        argumentList.addRange(firstElement, lastInitializerSibling);
       }
       args[args.length - 1].delete();
     }
@@ -286,8 +295,10 @@ public class InlineUtil {
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
     final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
+          @Override
           public boolean process(final PsiReference psiReference) {
             ProgressManager.checkCanceled();
             if (getTailCallType(psiReference) == TailCallType.None) {

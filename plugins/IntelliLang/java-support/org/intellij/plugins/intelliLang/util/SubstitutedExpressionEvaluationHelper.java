@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -77,11 +78,11 @@ public class SubstitutedExpressionEvaluationHelper {
               resolvedType = psiVariable.getType();
               final Collection<PsiExpression> values;
               if (dfaOption == Configuration.DfaOption.ASSIGNMENTS) {
-                values = DfaUtil.getVariableAssignmentsInFile(psiVariable, true, o);
+                values = DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o);
               }
               else if (dfaOption == Configuration.DfaOption.DFA) {
                 final Collection<PsiExpression> realValues = DfaUtil.getCachedVariableValues(psiVariable, o);
-                values = realValues == null? DfaUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
+                values = realValues == null? DfaPsiUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
               }
               else {
                 values = Collections.<PsiExpression>emptyList();

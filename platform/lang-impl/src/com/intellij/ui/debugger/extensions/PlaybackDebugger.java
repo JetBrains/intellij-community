@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myVfsListener = new VirtualFileAdapter() {
       @Override
-      public void contentsChanged(VirtualFileEvent event) {
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
         final VirtualFile file = pathToFile();
         if (file != null && file.equals(event.getFile())) {
           loadFrom(event.getFile());
@@ -175,6 +175,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       e.getPresentation().setEnabled(myChanged);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       if (pathToFile() == null) {
         VirtualFile selectedFile = FileChooser.chooseFile(FILE_DESCRIPTOR, myComponent, getEventProject(e), null);
@@ -188,6 +189,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         }
       }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           save();
         }
@@ -242,6 +244,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private void fillDocument(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myCodeEditor.setText(text == null ? "" : text);
       }
@@ -298,6 +301,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       e.getPresentation().setEnabled(myRunner != null);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
@@ -316,6 +320,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       super("Activate Frame And Run", "", AllIcons.Nodes.Deploy);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       activateAndRun();
     }
@@ -337,6 +342,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       e.getPresentation().setEnabled(myRunner == null);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       runOnFrame();
     }
@@ -359,6 +365,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         startWhenFrameActive();
       }
@@ -400,10 +407,11 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       @Override
       public void run() {
         new WaitFor() {
+          @Override
           protected boolean condition() {
             return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame || myRunner == null;
           }
-        };                                            
+        };
 
         if (myRunner == null) {
           message(null, "Script stopped", -1, Type.message, true);
@@ -426,6 +434,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         final PlaybackRunner runner = myRunner;
 
         myRunner.run().doWhenProcessed(new Runnable() {
+          @Override
           public void run() {
             if (runner == myRunner) {
               SwingUtilities.invokeLater(new Runnable() {
@@ -441,13 +450,14 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }.start();
   }
 
+  @Override
   public void message(@Nullable final PlaybackContext context, final String text, final Type type) {
     message(context, text, context != null ? context.getCurrentLine() : -1, type, false);
   }
 
   private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
     final int depth = context != null ? context.getCurrentStageDepth() : 0;
-    
+
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -471,6 +481,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     });
   }
 
+  @Override
   public JComponent getComponent() {
     if (myComponent == null) {
       initUi();
@@ -479,6 +490,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     return myComponent;
   }
 
+  @Override
   public String getName() {
     return "Playback";
   }
@@ -497,12 +509,14 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     private static final String ATTR_CURRENT_SCRIPT = "currentScript";
     public String currentScript = "";
 
+    @Override
     public Element getState() {
       final Element element = new Element("playback");
       element.setAttribute(ATTR_CURRENT_SCRIPT, currentScript);
       return element;
     }
 
+    @Override
     public void loadState(Element state) {
       final String path = state.getAttributeValue(ATTR_CURRENT_SCRIPT);
       if (path != null) {
@@ -511,6 +525,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
+  @Override
   public void disposeUiResources() {
     myComponent = null;
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
@@ -539,6 +554,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private void scrollToLast() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myLog.getDocument().getLength() == 0) return;
 

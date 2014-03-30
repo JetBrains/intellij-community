@@ -50,7 +50,7 @@ message Message {
         required string type_id = 1;
         optional bool all_targets = 2;
         repeated string target_id = 3;
-        optional bool force_build = 4;
+        required bool force_build = 4;
       }
 
       enum Type {

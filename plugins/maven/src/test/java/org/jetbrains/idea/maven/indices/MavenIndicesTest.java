@@ -81,7 +81,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testCreatingAndUpdatingLocalWhenNoDirectory() throws Exception {
@@ -97,7 +97,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
   }
 
@@ -108,7 +108,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
   }
 
@@ -119,8 +119,8 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     
-    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
-    assertUnorderedElementsAreEqual(i2.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
+    assertUnorderedElementsAreEqual(i2.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testAddingWithoutUpdate() throws Exception {
@@ -132,7 +132,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
 
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
 
     myRepositoryHelper.delete("local1");
     myRepositoryHelper.copy("local2", "local1");
@@ -240,7 +240,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(i1.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
     assertUnorderedElementsAreEqual(i2.getGroupIds(), "jmock");
 
     shutdownIndices();
@@ -253,7 +253,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertUnorderedElementsAreEqual(myIndices.getIndices().get(1).getGroupIds(), "jmock");
 
     myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-    assertUnorderedElementsAreEqual(myIndices.getIndices().get(0).getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(myIndices.getIndices().get(0).getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testDoNotLoadSameIndexTwice() throws Exception {
@@ -318,7 +318,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertTrue(index.getGroupIds().isEmpty());
 
     myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-    assertUnorderedElementsAreEqual(index.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(index.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testRepairingIndicesOnReadWhileAddingArtifact() throws Exception {
@@ -337,7 +337,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertTrue(index.getGroupIds().isEmpty());
 
     myIndices.updateOrRepair(myIndices.getIndices().get(0), false, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-    assertUnorderedElementsAreEqual(index.getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(index.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testCorrectlyClosingIndicesOnRemoteFacadeShutdown() throws Exception {
@@ -366,7 +366,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
-  private void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {
+  private static void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {
     File cachesDir = index.getCurrentDataDir();
     File file = new File(cachesDir, fileName);
     assertTrue(file.exists());
@@ -390,7 +390,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "jmock");
+    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "jmock", "asm", "commons-io", "org.ow2.asm");
 
     assertUnorderedElementsAreEqual(i.getArtifactIds("junit"), "junit");
     assertUnorderedElementsAreEqual(i.getArtifactIds("jmock"), "jmock");
@@ -414,7 +414,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     shutdownIndices();
     initIndices();
 
-    assertUnorderedElementsAreEqual(myIndices.getIndices().get(0).getGroupIds(), "junit");
+    assertUnorderedElementsAreEqual(myIndices.getIndices().get(0).getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
   }
 
   public void testHasArtifactInfo() throws Exception {
@@ -452,7 +452,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
   }
 
-  private void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
+  private static void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
     List<String> actualArtifacts = new ArrayList<String>();
     for (MavenArtifactInfo each : i.search(query, 100)) {
       actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());

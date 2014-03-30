@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     myModule = module;
     myModel = new FrameworkSupportModelImpl(module.getProject(), baseDirectoryForLibraries, librariesContainer);
     myConfigurable = provider.createConfigurable(myModel);
-    myComponent = new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), myDisposable, myConfigurable, null);
+    myComponent = new FrameworkSupportOptionsComponent(myModel, myModel.getLibrariesContainer(), myDisposable, provider, myConfigurable);
     Disposer.register(myDisposable, myConfigurable);
     init();
   }
@@ -109,7 +109,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         int answer = Messages.showYesNoDialog(getRootPane(),
                                               ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
                                               CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-        if (answer != 0) {
+        if (answer != Messages.YES) {
           return;
         }
       }
@@ -158,7 +158,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     if (!existingEntries.isEmpty()) {
       String message;
       if (existingEntries.size() > 1) {
-        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace they?";
+        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace them?";
       }
       else {
         final String name = existingEntries.get(0).getPresentableName();
@@ -166,12 +166,12 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
       final int result = Messages.showYesNoCancelDialog(rootModel.getProject(), message, "Library Already Exists",
                                                         "&Replace", "&Add", "&Cancel", null);
-      if (result == 0) {
+      if (result == Messages.YES) {
         for (OrderEntry entry : existingEntries) {
           rootModel.removeOrderEntry(entry);
         }
       }
-      else if (result != 1) {
+      else if (result != Messages.NO) {
         return false;
       }
     }

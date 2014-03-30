@@ -33,6 +33,7 @@ public class InspectionPackageNode extends InspectionTreeNode {
     return (String) getUserObject();
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return PlatformIcons.PACKAGE_ICON;
   }

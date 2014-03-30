@@ -72,19 +72,17 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
       return getTypeByTree();
     }
 
-    PsiClassType type = null;
-    if (myCachedBaseType != null) type = myCachedBaseType.get();
+    PsiClassType type = SoftReference.dereference(myCachedBaseType);
     if (type != null) return type;
 
     if (!isInQualifiedNew()) {
-      final PsiJavaCodeReferenceElement ref;
       final String refText = stub.getBaseClassReferenceText();
       assert refText != null : stub;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
 
       final PsiElement context = calcBasesResolveContext(PsiNameHelper.getShortClassName(refText), getExtendsList());
       try {
-        ref = factory.createReferenceFromText(refText, context);
+        final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(refText, context);
         ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
         type = factory.createType(ref);
       }

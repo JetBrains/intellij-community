@@ -12,11 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -27,23 +29,25 @@ public class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
   public interface ContentProcessor {
-    byte[] processContent(byte[] content, String fileName) throws IOException;
+    /** Return null to skip the file */
+    @Nullable
+    byte[] processContent(byte[] content, File file) throws IOException;
   }
 
   public static void unzipWithProgressSynchronously(
     @Nullable Project project,
     @NotNull String progressTitle,
     @NotNull final File zipArchive,
-    @NotNull final File extractToDir) throws GeneratorException
+    @NotNull final File extractToDir,
+    final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
-    Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
+    final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project, progressTitle, "Unpacking ...",
       new Callable<Boolean>() {
         @Override
         public Boolean call() throws IOException {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          ZipInputStream stream = new ZipInputStream(new FileInputStream(zipArchive));
-          unzip(progress, extractToDir, stream, null, null);
+          unzip(progress, extractToDir, zipArchive, null, null, unwrapSingleTopLevelFolder);
           return true;
         }
       },
@@ -65,31 +69,81 @@ public class ZipUtil {
     }
   }
 
-  public static void unzip(@Nullable ProgressIndicator progress,
-                           File extractToDir,
-                           ZipInputStream stream,
-                           @Nullable NullableFunction<String, String> pathConvertor,
-                           @Nullable ContentProcessor contentProcessor) throws IOException {
+  private static File getUnzipToDir(@Nullable ProgressIndicator progress,
+                                    @NotNull File targetDir,
+                                    boolean unwrapSingleTopLevelFolder) throws IOException {
     if (progress != null) {
       progress.setText("Extracting...");
     }
+    if (unwrapSingleTopLevelFolder) {
+      return FileUtil.createTempDirectory("unzip-dir-", null);
+    }
+    return targetDir;
+  }
+
+  // This method will throw IOException, if a zipArchive file isn't a valid zip archive.
+  public static void unzip(@Nullable ProgressIndicator progress,
+                           @NotNull File targetDir,
+                           @NotNull File zipArchive,
+                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable ContentProcessor contentProcessor,
+                           boolean unwrapSingleTopLevelFolder) throws IOException {
+    File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
+    ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ);
     try {
-      ZipEntry entry;
-      while ((entry = stream.getNextEntry()) != null) {
-        unzipEntryToDir(progress, entry, extractToDir, stream, pathConvertor, contentProcessor);
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        InputStream entryContentStream = zipFile.getInputStream(entry);
+        unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
+        entryContentStream.close();
       }
-    } finally {
-      stream.close();
+    }
+    finally {
+      zipFile.close();
+    }
+    doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
+  }
+
+  public static void unzip(@Nullable ProgressIndicator progress,
+                           @NotNull File targetDir,
+                           @NotNull ZipInputStream stream,
+                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable ContentProcessor contentProcessor,
+                           boolean unwrapSingleTopLevelFolder) throws IOException {
+    File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
+    ZipEntry entry;
+    while ((entry = stream.getNextEntry()) != null) {
+      unzipEntryToDir(progress, entry, stream, unzipToDir,  pathConvertor, contentProcessor);
+    }
+    doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
+  }
+
+  private static void doUnwrapSingleTopLevelFolder(boolean unwrapSingleTopLevelFolder,
+                                                   @NotNull File unzipToDir,
+                                                   @NotNull File targetDir) throws IOException {
+    if (unwrapSingleTopLevelFolder) {
+      File[] topLevelFiles = unzipToDir.listFiles();
+      File dirToMove;
+      if (topLevelFiles != null && topLevelFiles.length == 1 && topLevelFiles[0].isDirectory()) {
+        dirToMove = topLevelFiles[0];
+      }
+      else {
+        dirToMove = unzipToDir;
+      }
+      if (!FileUtil.moveDirWithContent(dirToMove, targetDir)) {
+        FileUtil.copyDirContent(dirToMove, targetDir);
+      }
+      FileUtil.delete(unzipToDir);
     }
   }
 
   private static void unzipEntryToDir(@Nullable ProgressIndicator progress,
                                       @NotNull final ZipEntry zipEntry,
+                                      @NotNull final InputStream entryContentStream,
                                       @NotNull final File extractToDir,
-                                      ZipInputStream stream,
                                       @Nullable NullableFunction<String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
-
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
     if (pathConvertor != null) {
       relativeExtractPath = pathConvertor.fun(relativeExtractPath);
@@ -109,28 +163,33 @@ public class ZipUtil {
     if (progress != null) {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
-    FileOutputStream fileOutputStream = new FileOutputStream(child);
-    try {
-      if (contentProcessor == null) {
-        FileUtil.copy(stream, fileOutputStream);
+    if (contentProcessor == null) {
+      FileOutputStream fileOutputStream = new FileOutputStream(child);
+      try {
+        FileUtil.copy(entryContentStream, fileOutputStream);
       }
-      else {
-        byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child.getName());
-        fileOutputStream.write(content);
+      finally {
+        fileOutputStream.close();
       }
-    } finally {
-      fileOutputStream.close();
+    }
+    else {
+      byte[] content = contentProcessor.processContent(FileUtil.loadBytes(entryContentStream), child);
+      if (content != null) {
+        FileOutputStream fileOutputStream = new FileOutputStream(child);
+        try {
+          fileOutputStream.write(content);
+        }
+        finally {
+          fileOutputStream.close();
+        }
+      }
     }
     LOG.info("Extract: " + relativeExtractPath);
   }
 
-  private static String createRelativeExtractPath(ZipEntry zipEntry) {
-    String name = zipEntry.getName();
-    int ind = name.indexOf('/');
-    if (ind >= 0) {
-      name = name.substring(ind + 1);
-    }
+  @NotNull
+  private static String createRelativeExtractPath(@NotNull ZipEntry zipEntry) {
+    String name = StringUtil.trimStart(zipEntry.getName(), "/");
     return StringUtil.trimEnd(name, "/");
   }
-
 }

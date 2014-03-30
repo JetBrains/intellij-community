@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +53,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityRawGenerics() { doTest(); }
   public void testDefaultMethod() { doTest(); }
   public void testLambdaOnVarargsPlace() { doTest(); }
-  public void testLambdaRawOrNot() { doTest(); }
+  public void testLambdaRawOrNot() { doTest(); }  //todo incorrect testdata
   public void testReturnTypeCompatibility1() { doTest(); }
   public void testNoInferenceResult() { doTest(); }
   public void testInferenceFromArgs() { doTest(); }
@@ -75,6 +77,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIntersectionTypeInCast() { doTest(); }
   public void testAmbiguitySpecificReturn() { doTest(true); }
   public void testFunctionalInterfaceAnnotation() { doTest(); }
+  public void testFunctionalInterfaceAnnotation2() { doTest(); }
   public void testAmbiguityReturnValueResolution() { doTest(); }
   public void testAmbiguityReturnValueResolution1() { doTest(); }
   public void testAmbiguityReturnValueResolution2() { doTest(true); }
@@ -86,12 +89,27 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testVoidCompatibility() { doTest(); }
   public void testConditionalInferenceFromOppositePart() { doTest(); }
   public void testDeclaredTypeParameterBoundsAndUnboundedWildcard() { doTest(); }
+  public void testConflictResolution() { doTest(); }
+  public void testIDEA108195() { doTest(); }
+  public void testDiamondInference() { doTest();}
+  public void testFunctionalInterfaceCheck() { doTest();}
+  public void testUnderscores() { doTest(true);}
+  public void testReturnTypeAmbiguity() { doTest();}
+  public void testWildcardsAndFormalLambdaParams() {doTest();}
+  public void testFinalInitializer() {doTest();}
+  public void testBreakContinueInside() {doTest();}
+  public void testSameLambdaParamNames() {doTest();}
 
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

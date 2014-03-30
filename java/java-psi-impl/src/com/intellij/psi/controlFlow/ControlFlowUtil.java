@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -351,7 +351,7 @@ public class ControlFlowUtil {
   private static boolean isElementOfClass(PsiElement element, Class[] classesFilter) {
     if (classesFilter == null) return true;
     for (Class aClassesFilter : classesFilter) {
-      if (ReflectionCache.isAssignable(aClassesFilter, element.getClass())) {
+      if (ReflectionUtil.isAssignable(aClassesFilter, element.getClass())) {
         return true;
       }
     }
@@ -369,7 +369,8 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
@@ -405,6 +406,14 @@ public class ControlFlowUtil {
       if (parent instanceof PsiClass) {
         final PsiClass clss = (PsiClass)parent;
         if (PsiTreeUtil.isAncestor(targetClassMember, clss, false)) return false;
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+        while (containingClass != null) {
+          if (containingClass.isInheritor(clss, true) &&
+              PsiTreeUtil.isAncestor(targetClassMember, containingClass, false)) {
+            return false;
+          }
+          containingClass = containingClass.getContainingClass();
+        }
       }
     }
 
@@ -667,7 +676,7 @@ public class ControlFlowUtil {
   }
 
   public static Object[] getAllWorldProblemsAtOnce(final ControlFlow flow) {
-    InstructionClientVisitor[] visitors = new InstructionClientVisitor[]{
+    InstructionClientVisitor[] visitors = {
       new ReturnPresentClientVisitor(flow),
       new UnreachableStatementClientVisitor(flow),
       new ReadBeforeWriteClientVisitor(flow, true),
@@ -890,7 +899,8 @@ public class ControlFlowUtil {
 
       @Override
       public Boolean getResult() {
-        return !maybeUnassigned[0];
+        final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+        return !maybeUnassigned[variableDeclarationOffset > -1 ? variableDeclarationOffset : 0];
       }
     }
     if (flow.getSize() == 0) return false;
@@ -1240,7 +1250,7 @@ public class ControlFlowUtil {
     // map of variable->PsiReferenceExpressions for all read before written variables for this point and below in control flow
     private final CopyOnWriteList[] readVariables;
     private final ControlFlow myFlow;
-    private boolean localVariablesOnly;
+    private final boolean localVariablesOnly;
 
     public ReadBeforeWriteClientVisitor(ControlFlow flow, boolean localVariablesOnly) {
       myFlow = flow;

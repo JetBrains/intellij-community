@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -50,6 +51,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,6 +65,7 @@ import java.util.List;
 
 public class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
+  private final Runnable myNodeChanged;
 
   private final JTextField myKeyField;
   private final JTextField myDescription;
@@ -78,19 +81,20 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
-  private final Map<TemplateContextType, Boolean> myContext;
+  private final TemplateContext myContext;
   private JBPopup myContextPopup;
   private Dimension myLastSize;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
                                     Map<TemplateOptionalProcessor, Boolean> options,
-                                    Map<TemplateContextType, Boolean> context, final Runnable nodeChanged, boolean allowNoContext) {
+                                    TemplateContext context, final Runnable nodeChanged, boolean allowNoContext) {
     super(new BorderLayout());
     myOptions = options;
     myContext = context;
 
     myTemplate = template;
+    myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
     myKeyField=new JTextField();
@@ -104,14 +108,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(myKeyField.getText().trim());
-        nodeChanged.run();
+        myNodeChanged.run();
       }
     });
     myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText().trim());
-        nodeChanged.run();
+        myNodeChanged.run();
       }
     });
 
@@ -128,9 +132,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return myTemplate;
   }
 
-  public void dispose() {
+  void dispose() {
     final Project project = myTemplateEditor.getProject();
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTemplateEditor.getDocument());
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
@@ -170,6 +174,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
           myTemplate.setString(myTemplateEditor.getDocument().getText());
           applyVariables(updateVariablesByTemplateText());
+          myNodeChanged.run();
         }
       }
     );
@@ -232,7 +237,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new JComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -288,8 +293,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
   private List<TemplateContextType> getApplicableContexts() {
     ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
-    for (TemplateContextType type : myContext.keySet()) {
-      if (myContext.get(type).booleanValue()) {
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+      if (myContext.isExplicitlyEnabled(type)) {
         result.add(type);
       }
     }
@@ -309,6 +314,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     final Runnable updateLabel = new Runnable() {
       @Override
       public void run() {
+        myExpandByCombo.setEnabled(isExpandableFromEditor());
+        updateHighlighter();
+
         StringBuilder sb = new StringBuilder();
         String oldPrefix = "";
         for (TemplateContextType type : getApplicableContexts()) {
@@ -340,10 +348,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     new ClickListener() {
       @Override
-      public boolean onClick(MouseEvent e, int clickCount) {
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (disposeContextPopup()) return false;
 
-        final JPanel content = createPopupContextPanel(updateLabel);
+        final JPanel content = createPopupContextPanel(updateLabel, myContext);
         Dimension prefSize = content.getPreferredSize();
         if (myLastSize != null && (myLastSize.width > prefSize.width || myLastSize.height > prefSize.height)) {
           content.setPreferredSize(new Dimension(Math.max(prefSize.width, myLastSize.width), Math.max(prefSize.height, myLastSize.height)));
@@ -374,16 +382,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return false;
   }
 
-  private JPanel createPopupContextPanel(final Runnable onChange) {
+  static JPanel createPopupContextPanel(final Runnable onChange, final TemplateContext context) {
     JPanel panel = new JPanel(new BorderLayout());
 
-    MultiMap<TemplateContextType, TemplateContextType> hierarchy = new MultiMap<TemplateContextType, TemplateContextType>() {
-      @Override
-      protected Map<TemplateContextType, Collection<TemplateContextType>> createMap() {
-        return new LinkedHashMap<TemplateContextType, Collection<TemplateContextType>>();
-      }
-    };
-    for (TemplateContextType type : myContext.keySet()) {
+    MultiMap<TemplateContextType, TemplateContextType> hierarchy = MultiMap.createLinked();
+    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       hierarchy.putValue(type.getBaseContextType(), type);
     }
 
@@ -401,17 +404,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          myContext.put(type, node.isChecked());
+          context.setEnabled(type, node.isChecked());
         }
-        myExpandByCombo.setEnabled(isExpandableFromEditor());
-        updateHighlighter();
         onChange.run();
 
       }
     };
 
     for (TemplateContextType type : hierarchy.get(null)) {
-      addContextNode(hierarchy, root, type);
+      addContextNode(hierarchy, root, type, context);
     }
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
@@ -434,23 +435,23 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
-  private void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
-                              CheckedTreeNode parent,
-                              TemplateContextType type) {
+  private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
+                                     CheckedTreeNode parent,
+                                     TemplateContextType type, TemplateContext context) {
     final Collection<TemplateContextType> children = hierarchy.get(type);
     final String name = UIUtil.removeMnemonic(type.getPresentableName());
     final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
     if (children.isEmpty()) {
-      node.setChecked(myContext.get(type));
+      node.setChecked(context.isExplicitlyEnabled(type));
     }
     else {
       for (TemplateContextType child : children) {
-        addContextNode(hierarchy, node, child);
+        addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
-      other.setChecked(myContext.get(type));
+      other.setChecked(context.isExplicitlyEnabled(type));
       node.add(other);
     }
   }
@@ -479,7 +480,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void validateEditVariablesButton() {
-    myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence()).isEmpty());
+    myEditVariablesButton.setEnabled(!parseVariables().isEmpty());
   }
 
   void resetUi() {
@@ -550,20 +551,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     });
     
-
-    ArrayList<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
-
-    Map<String,String> newVariableNames = new HashMap<String, String>();
-    for (Object parsedVariable : parsedVariables) {
-      Variable newVariable = (Variable)parsedVariable;
-      String name = newVariable.getName();
-      newVariableNames.put(name, name);
-    }
+    Map<String,Variable> newVariableNames = parseVariables();
 
     int oldVariableNumber = 0;
-    for(int i = 0; i < parsedVariables.size(); i++){
-      Variable variable = parsedVariables.get(i);
-      if(oldVariableNames.contains(variable.getName())) {
+    for (Map.Entry<String, Variable> entry : newVariableNames.entrySet()) {
+      if(oldVariableNames.contains(entry.getKey())) {
         Variable oldVariable = null;
         for(;oldVariableNumber<oldVariables.size(); oldVariableNumber++) {
           oldVariable = oldVariables.get(oldVariableNumber);
@@ -574,12 +566,12 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
         oldVariableNumber++;
         if(oldVariable != null) {
-          parsedVariables.set(i, oldVariable);
+          entry.setValue(oldVariable);
         }
       }
     }
 
-    return parsedVariables;
+    return new ArrayList<Variable>(newVariableNames.values());
   }
 
   private List<Variable> getCurrentVariables() {
@@ -621,10 +613,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
     }, modalityState);
   }
 
-  private static ArrayList<Variable> parseVariables(CharSequence text) {
-    ArrayList<Variable> variables = new ArrayList<Variable>();
-    TemplateImplUtil.parseVariables(text, variables, TemplateImpl.INTERNAL_VARS_SET);
-    return variables;
+  private Map<String, Variable> parseVariables() {
+    Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
+    map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
+    return map;
   }
 
 }

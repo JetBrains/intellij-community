@@ -16,6 +16,7 @@
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +38,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +64,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
-      invoke(project, PlatformDataKeys.EDITOR.getData(dataContext), (PsiAnonymousClass)elements[0]);
+      invoke(project, CommonDataKeys.EDITOR.getData(dataContext), (PsiAnonymousClass)elements[0]);
     }
   }
 
@@ -102,7 +104,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       return;
     }
     PsiElement targetContainer = findTargetContainer(myAnonClass);
-    if (JspPsiUtil.isInJspFile(targetContainer) && targetContainer instanceof PsiFile) {
+    if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
       showErrorMessage(editor, message);
       return;
@@ -208,7 +210,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       if (element instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)element;
         if (newExpression.getAnonymousClass() != null) {
-          return newExpression.getAnonymousClass();          
+          return newExpression.getAnonymousClass();
         }
       }
       element = element.getParent();

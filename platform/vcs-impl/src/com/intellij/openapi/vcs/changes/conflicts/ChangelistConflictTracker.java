@@ -40,6 +40,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -152,7 +153,11 @@ public class ChangelistConflictTracker {
   }
 
   private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null || Comparing.equal(myChangeListManager.getChangeList(file), defaultList) || ChangesUtil.isInternalOperation(file)) {
+    if (file == null) {
+      return;
+    }
+    LocalChangeList changeList = myChangeListManager.getChangeList(file);
+    if (changeList == null || Comparing.equal(changeList, defaultList) || ChangesUtil.isInternalOperation(file)) {
       return;
     }
 
@@ -167,8 +172,6 @@ public class ChangelistConflictTracker {
         newConflict = true;
       }
     }
-    conflict.timestamp = System.currentTimeMillis();
-    conflict.changelistId = defaultList.getId();
 
     if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
       myFileStatusManager.fileStatusChanged(file);
@@ -217,11 +220,6 @@ public class ChangelistConflictTracker {
     for (Map.Entry<String,Conflict> entry : myConflicts.entrySet()) {
       Element fileElement = new Element("file");
       fileElement.setAttribute("path", entry.getKey());
-      String id = entry.getValue().changelistId;
-      if (id != null) {
-        fileElement.setAttribute("changelist", id);
-      }
-      fileElement.setAttribute("time", Long.toString(entry.getValue().timestamp));
       fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
       to.addContent(fileElement);
     }
@@ -234,18 +232,16 @@ public class ChangelistConflictTracker {
     for (Object file : files) {
       Element element = (Element)file;
       String path = element.getAttributeValue("path");
-      if (path != null) {
-        Conflict conflict = new Conflict();
-        conflict.changelistId = element.getAttributeValue("changelist");
-        try {
-          conflict.timestamp = Long.parseLong(element.getAttributeValue("time"));
-        }
-        catch (NumberFormatException e) {
-          // do nothing
-        }
-        conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
-        myConflicts.put(path, conflict);
+      if (path == null) {
+        continue;
       }
+      VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+      if (vf == null || myChangeListManager.getChangeList(vf) == null) {
+        continue;
+      }
+      Conflict conflict = new Conflict();
+      conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
+      myConflicts.put(path, conflict);
     }
     XmlSerializer.deserializeInto(myOptions, from);
   }
@@ -273,8 +269,6 @@ public class ChangelistConflictTracker {
   }
 
   public static class Conflict {
-    long timestamp;
-    String changelistId;
     boolean ignored;
   }
 

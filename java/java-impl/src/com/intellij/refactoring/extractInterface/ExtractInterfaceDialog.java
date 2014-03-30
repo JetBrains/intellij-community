@@ -17,6 +17,7 @@ package com.intellij.refactoring.extractInterface;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -37,6 +38,9 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
   public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
+    for (MemberInfo memberInfo : myMemberInfos) {
+      memberInfo.setToAbstract(true);
+    }
     init();
   }
 
@@ -85,7 +89,7 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
-                                                                               myMemberInfos, null);
+                                                                               myMemberInfos, RefactoringBundle.message("make.abstract"));
     memberSelectionPanel.getTable()
       .setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
         public Boolean isFixedAbstract(MemberInfo member) {

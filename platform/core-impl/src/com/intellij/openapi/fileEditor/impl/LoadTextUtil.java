@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -43,7 +40,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
-  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
   private LoadTextUtil() {
@@ -98,7 +94,17 @@ public final class LoadTextUtil {
       detectedLineSeparator = "\n";
     }
 
-    CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
+    CharSequence result;
+    if (buffer.length() == dst) {
+      result = buffer;
+    }
+    else {
+      // in Mac JDK CharBuffer.subSequence() signature differs from Oracle's
+      // more than that, the signature has changed between jd6 and jdk7,
+      // so use more generic CharSequence.subSequence() just in case
+      @SuppressWarnings("UnnecessaryLocalVariable") CharSequence seq = buffer;
+      result = seq.subSequence(0, dst);
+    }
     return Pair.create(result, detectedLineSeparator);
   }
 
@@ -196,17 +202,30 @@ public final class LoadTextUtil {
     return Pair.create(charset, ArrayUtil.EMPTY_BYTE_ARRAY);
   }
 
+  public static void changeLineSeparators(@Nullable Project project,
+                                          @NotNull VirtualFile file,
+                                          @NotNull String newSeparator,
+                                          @NotNull Object requestor) throws IOException
+  {
+    CharSequence currentText = getTextByBinaryPresentation(file.contentsToByteArray(), file, true, false);
+    String currentSeparator = detectLineSeparator(file, false);
+    if (newSeparator.equals(currentSeparator)) {
+      return;
+    }
+    String newText = StringUtil.convertLineSeparators(currentText.toString(), newSeparator);
+
+    file.setDetectedLineSeparator(newSeparator);
+    write(project, file, requestor, newText, -1);
+  }
+
   /**
    * Overwrites file with text and sets modification stamp and time stamp to the specified values.
    * <p/>
    * Normally you should not use this method.
    *
-   * @param project
-   * @param virtualFile
    * @param requestor            any object to control who called this method. Note that
    *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
-   * @param text
    * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
    * @throws java.io.IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
@@ -267,18 +286,23 @@ public final class LoadTextUtil {
 
   @NotNull
   public static Pair<Charset, byte[]> chooseMostlyHarmlessCharset(Charset existing, Charset specified, @NotNull String text) {
-    if (existing == null) return Pair.create(specified, toBytes(text, specified));
-    if (specified == null || specified.equals(existing)) return Pair.create(specified, toBytes(text, existing));
+    try {
+      if (existing == null) return Pair.create(specified, toBytes(text, specified));
+      if (specified == null || specified.equals(existing)) return Pair.create(specified, toBytes(text, existing));
 
-    byte[] out = isSupported(specified, text);
-    if (out != null) return Pair.create(specified, out); //if explicitly specified encoding is safe, return it
-    out = isSupported(existing, text);
-    if (out != null) return Pair.create(existing, out);   //otherwise stick to the old encoding if it's ok
-    return Pair.create(specified, toBytes(text, specified)); //if both are bad there is no difference
+      byte[] out = isSupported(specified, text);
+      if (out != null) return Pair.create(specified, out); //if explicitly specified encoding is safe, return it
+      out = isSupported(existing, text);
+      if (out != null) return Pair.create(existing, out);   //otherwise stick to the old encoding if it's ok
+      return Pair.create(specified, toBytes(text, specified)); //if both are bad there is no difference
+    }
+    catch (RuntimeException e) {
+      return Pair.create(Charset.defaultCharset(), toBytes(text, null)); //if both are bad and there is no hope, use the default charset
+    }
   }
 
   @NotNull
-  private static byte[] toBytes(@NotNull String text, @Nullable Charset charset) {
+  private static byte[] toBytes(@NotNull String text, @Nullable Charset charset) throws RuntimeException {
     //noinspection SSBasedInspection
     return charset == null ? text.getBytes() : text.getBytes(charset);
   }
@@ -305,28 +329,28 @@ public final class LoadTextUtil {
     return charset;
   }
 
+  /**
+   * @deprecated use {@link #charsetFromContentOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, CharSequence)}
+   */
   @Nullable("returns null if cannot determine from content")
   public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
-    }
-    return null;
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
+  }
+
+  @Nullable("returns null if cannot determine from content")
+  public static Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
+    return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
   @NotNull
   public static CharSequence loadText(@NotNull VirtualFile file) {
     if (file instanceof LightVirtualFile) {
-      CharSequence content = ((LightVirtualFile)file).getContent();
-      if (StringUtil.indexOf(content, '\r') == -1) return content;
-
-      CharBuffer buffer = CharBuffer.allocate(content.length());
-      buffer.append(content);
-      buffer.rewind();
-      return convertLineSeparators(buffer).first;
+      return ((LightVirtualFile)file).getContent();
     }
 
-    assert !file.isDirectory() : "'"+file.getPresentableUrl() + "' is directory";
+    if (file.isDirectory()) {
+      throw new AssertionError("'" + file.getPresentableUrl() + "' is directory");
+    }
     final FileType fileType = file.getFileType();
 
     if (fileType.isBinary()) {
@@ -366,7 +390,7 @@ public final class LoadTextUtil {
 
     Pair<CharSequence, String> result = convertBytes(bytes, charset, offset);
     if (saveDetectedSeparators) {
-      virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
+      virtualFile.setDetectedLineSeparator(result.getSecond());
     }
     return result.getFirst();
   }
@@ -394,7 +418,7 @@ public final class LoadTextUtil {
   }
 
   static String getDetectedLineSeparator(@NotNull VirtualFile file) {
-    return file.getUserData(DETECTED_LINE_SEPARATOR_KEY);
+    return file.getDetectedLineSeparator();
   }
 
   @NotNull
@@ -418,7 +442,14 @@ public final class LoadTextUtil {
     if (charset == null) {
       charset = Charset.forName("ISO-8859-1");
     }
-    CharBuffer charBuffer = charset.decode(byteBuffer);
+    CharBuffer charBuffer;
+    try {
+      charBuffer = charset.decode(byteBuffer);
+    }
+    catch (Exception e) {
+      // esoteric charsets can throw any kind of exception
+      charBuffer = CharBuffer.wrap(ArrayUtil.EMPTY_CHAR_ARRAY);
+    }
     return convertLineSeparators(charBuffer);
   }
 

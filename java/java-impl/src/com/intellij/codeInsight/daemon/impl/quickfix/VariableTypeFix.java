@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -24,6 +24,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -31,6 +32,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +56,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
+                                  UsageViewUtil.getType(getStartElement()),
                                   myName,
                                   getReturnType().getCanonicalText());
   }
@@ -86,7 +90,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       myVariable.normalizeDeclaration();
       final PsiTypeElement typeElement = myVariable.getTypeElement();
@@ -108,7 +112,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
         if (psiMethod == null) return true;
         final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
-        if (!CodeInsightUtilBase.prepareFileForWrite(psiMethod.getContainingFile())) return true;
+        if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return true;
         final ArrayList<ParameterInfoImpl> infos = new ArrayList<ParameterInfoImpl>();
         int i = 0;
         for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {

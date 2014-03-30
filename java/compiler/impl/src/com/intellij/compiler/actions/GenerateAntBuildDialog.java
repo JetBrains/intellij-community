@@ -32,8 +32,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

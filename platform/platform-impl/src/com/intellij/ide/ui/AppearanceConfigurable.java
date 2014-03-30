@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
@@ -62,7 +63,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(false));
     myComponent.myFontCombo.setModel(aModel);
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
+    myComponent.myPresentationModeFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myFontSizeCombo.setEditable(true);
+    myComponent.myPresentationModeFontSize.setEditable(true);
 
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
@@ -116,21 +119,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
-    String temp = (String)myComponent.myFontSizeCombo.getEditor().getItem();
-    int _fontSize = -1;
-    if (temp != null && temp.trim().length() > 0) {
-      try {
-        _fontSize = Integer.parseInt(temp);
-      }
-      catch (NumberFormatException ignore) {
-      }
-      if (_fontSize <= 0) {
-        _fontSize = settings.FONT_SIZE;
-      }
-    }
-    else {
-      _fontSize = settings.FONT_SIZE;
-    }
+    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
+    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
     boolean shouldUpdateUI = false;
     String _fontFace = (String)myComponent.myFontCombo.getSelectedItem();
     LafManager lafManager = LafManager.getInstance();
@@ -139,6 +129,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.FONT_FACE = _fontFace;
       shouldUpdateUI = true;
     }
+
+    if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
+      settings.PRESENTATION_MODE_FONT_SIZE = _presentationFontSize;
+      shouldUpdateUI = true;
+    }
+
     settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
     boolean update = settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
     settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
@@ -164,6 +160,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     update |= settings.USE_SMALL_LABELS_ON_TABS != myComponent.myUseSmallLabelsOnTabs.isSelected();
     settings.USE_SMALL_LABELS_ON_TABS = myComponent.myUseSmallLabelsOnTabs.isSelected();
+
+    update |= settings.WIDESCREEN_SUPPORT != myComponent.myWidescreenLayoutCheckBox.isSelected();
+    settings.WIDESCREEN_SUPPORT = myComponent.myWidescreenLayoutCheckBox.isSelected();
+
+    update |= settings.LEFT_HORIZONTAL_SPLIT != myComponent.myLeftLayoutCheckBox.isSelected();
+    settings.LEFT_HORIZONTAL_SPLIT = myComponent.myLeftLayoutCheckBox.isSelected();
+
+    update |= settings.RIGHT_HORIZONTAL_SPLIT != myComponent.myRightLayoutCheckBox.isSelected();
+    settings.RIGHT_HORIZONTAL_SPLIT = myComponent.myRightLayoutCheckBox.isSelected();
+
+    update |= settings.SHOW_EDITOR_TOOLTIP != myComponent.myEditorTooltipCheckBox.isSelected();
+    settings.SHOW_EDITOR_TOOLTIP = myComponent.myEditorTooltipCheckBox.isSelected();
 
     update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
@@ -221,6 +229,27 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       settings.fireUISettingsChanged();
     }
     myComponent.updateCombo();
+
+    EditorUtil.reinitSettings();
+  }
+
+  private static int getIntValue(JComboBox combo, int defaultValue) {
+    String temp = (String)combo.getEditor().getItem();
+    int value = -1;
+    if (temp != null && temp.trim().length() > 0) {
+      try {
+        value = Integer.parseInt(temp);
+      }
+      catch (NumberFormatException ignore) {
+      }
+      if (value <= 0) {
+        value = defaultValue;
+      }
+    }
+    else {
+      value = defaultValue;
+    }
+    return value;
   }
 
   public void reset() {
@@ -229,6 +258,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
+    myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_TOOL_WINDOW_NUMBERS);
     myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
@@ -244,6 +274,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
     myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
     myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
+    myComponent.myWidescreenLayoutCheckBox.setSelected(settings.WIDESCREEN_SUPPORT);
+    myComponent.myLeftLayoutCheckBox.setSelected(settings.LEFT_HORIZONTAL_SPLIT);
+    myComponent.myRightLayoutCheckBox.setSelected(settings.RIGHT_HORIZONTAL_SPLIT);
+    myComponent.myEditorTooltipCheckBox.setSelected(settings.SHOW_EDITOR_TOOLTIP);
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -285,8 +319,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
 
     isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
+    isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.WIDESCREEN_SUPPORT;
+    isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.LEFT_HORIZONTAL_SPLIT;
+    isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.RIGHT_HORIZONTAL_SPLIT;
+    isModified |= myComponent.myEditorTooltipCheckBox.isSelected() != settings.SHOW_EDITOR_TOOLTIP;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
+
+    isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
@@ -347,7 +387,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myHideNavigationPopupsCheckBox;
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
+    private JBCheckBox myWidescreenLayoutCheckBox;
+    private JCheckBox myLeftLayoutCheckBox;
+    private JCheckBox myRightLayoutCheckBox;
     private JSlider myInitialTooltipDelaySlider;
+    private ComboBox myPresentationModeFontSize;
+    private JCheckBox myEditorTooltipCheckBox;
+    private JCheckBox myAllowStatusBar;
+    private JCheckBox myAllowLineNumbers;
+    private JCheckBox myAllowAnnotations;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
@@ -368,6 +416,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     private void createUIComponents() {
       myFontSizeCombo = new ComboBox();
+      myPresentationModeFontSize = new ComboBox();
     }
   }
 

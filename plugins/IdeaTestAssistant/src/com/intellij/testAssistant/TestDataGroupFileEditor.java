@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,12 +50,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements FileE
 
   @NotNull
   public JComponent getComponent() {
-    JComponent result;
-    if (myComponent == null) {
-      myComponent = new WeakReference<JComponent>(result = createComponent());
-      return result;
-    }
-    result = myComponent.get();
+    JComponent result = SoftReference.dereference(myComponent);
     if (result == null) {
       myComponent = new WeakReference<JComponent>(result = createComponent());
     }

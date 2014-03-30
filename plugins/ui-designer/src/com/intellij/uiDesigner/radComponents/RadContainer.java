@@ -680,7 +680,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   public RadAbstractGridLayoutManager getGridLayoutManager() {
     if (!(myLayoutManager instanceof RadAbstractGridLayoutManager)) {
-      throw new RuntimeException("Not a grid container");
+      throw new RuntimeException("Not a grid container: " + myLayoutManager);
     }
     return (RadAbstractGridLayoutManager)myLayoutManager;
   }

@@ -19,10 +19,12 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleFieldCache;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -139,14 +141,23 @@ public abstract class XsltContextProviderBase extends ContextProvider {
         names.dependencies.add(rootDescriptor.getDescriptorFile());
 
         //noinspection unchecked
-        final Set<XmlElementDescriptor> history = new THashSet<XmlElementDescriptor>();
+        final Set<XmlElementDescriptor> history = new THashSet<XmlElementDescriptor>(150);
 
         final XmlElementDescriptor[] e = rootDescriptor.getRootElementsDescriptors(document);
-        for (XmlElementDescriptor descriptor : e) {
-          processElementDescriptors(descriptor, tag, names, history, 0);
+        try {
+          for (XmlElementDescriptor descriptor : e) {
+            processElementDescriptors(descriptor, tag, names, history, 0);
+          }
+        } catch (StopProcessingException e1) {
+          Logger.getInstance(XsltContextProviderBase.class).error("Maximum recursion depth reached. Missing equals()/hashCode() implementation?", StringUtil
+            .join(history, new Function<XmlElementDescriptor, String>() {
+              @Override
+              public String fun(XmlElementDescriptor descriptor) {
+                return descriptor.getClass().getName() + "[" + descriptor.getQualifiedName() + "]";
+              }
+            }, ", "));
         }
       }
-
       names.validateNames = names.elementNames.size() > noSchemaNamespaces;
 
 //            final QName any = QNameUtil.createAnyLocalName("");
@@ -161,8 +172,19 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     return IGNORED_URIS.contains(namespace) || prefix.length() == 0 || "xmlns".equals(prefix);
   }
 
-  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history, int depth) {
+  private static class StopProcessingException extends Exception {
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
+  private static void processElementDescriptors(XmlElementDescriptor descriptor, XmlTag tag, ElementNames names, Set<XmlElementDescriptor> history, int depth)
+    throws StopProcessingException {
     if (!history.add(descriptor) || ++depth == 200) {
+      if (depth == 200) {
+        throw new StopProcessingException();
+      }
       return;
     }
     final String namespace = descriptor instanceof XmlElementDescriptorImpl

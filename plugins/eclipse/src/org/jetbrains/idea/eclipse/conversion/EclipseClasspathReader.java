@@ -125,6 +125,10 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   @Override
   protected String expandEclipsePath2Url(ModifiableRootModel rootModel, String path) {
+    final VirtualFile contentRoot = myContentEntry.getFile();
+    if (contentRoot != null) {
+      return EPathUtil.expandEclipsePath2Url(path, rootModel, myCurrentRoots, contentRoot);
+    }
     return EPathUtil.expandEclipsePath2Url(path, rootModel, myCurrentRoots);
   }
 

@@ -36,3 +36,11 @@ public class StaticVariableInitializationInspection
         }
     }
 }
+class FinalField {
+  public static final Object o;
+
+  static {
+    System.out.println("o = " + o);
+    o = null;
+  }
+}

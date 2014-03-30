@@ -18,6 +18,9 @@ package com.intellij.facet.impl.ui.libraries;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryDependencyScopeSuggester;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -26,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +44,8 @@ import java.util.Map;
 */
 public class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
+  @NotNull private final NotNullComputable<String> myPathProvider;
   private FrameworkLibraryVersionFilter myVersionFilter;
-  private String myBaseDirectoryPath;
   private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
   private NewLibraryEditor myNewLibraryEditor;
@@ -50,15 +54,16 @@ public class LibraryCompositionSettings implements Disposable {
   private LibraryDownloadSettings myDownloadSettings;
   private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
     ContainerUtil.newIdentityTroveMap();
+  private FrameworkLibraryProvider myLibraryProvider;
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
-                                    final @NotNull String baseDirectoryPath,
+                                    final @NotNull NotNullComputable<String> pathProvider,
                                     @NotNull FrameworkLibraryVersionFilter versionFilter,
                                     final List<? extends FrameworkLibraryVersion> allVersions) {
     myLibraryDescription = libraryDescription;
+    myPathProvider = pathProvider;
     myVersionFilter = versionFilter;
     myNewLibraryLevel = libraryDescription.getDefaultLevel();
-    myBaseDirectoryPath = baseDirectoryPath;
     myAllVersions = allVersions;
     final List<? extends FrameworkLibraryVersion> versions = getCompatibleVersions();
     if (!versions.isEmpty()) {
@@ -68,7 +73,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   private LibraryDownloadSettings createDownloadSettings(final FrameworkLibraryVersion version) {
     return new LibraryDownloadSettings(version, myLibraryDescription.getDownloadableLibraryType(),
-                                                     myNewLibraryLevel, getDefaultDownloadPath(myBaseDirectoryPath));
+                                                     myNewLibraryLevel, getDefaultDownloadPath(getBaseDirectoryPath()));
   }
 
   public void setVersionFilter(@NotNull FrameworkLibraryVersionFilter versionFilter) {
@@ -95,7 +100,7 @@ public class LibraryCompositionSettings implements Disposable {
   }
 
   private static String getDefaultDownloadPath(@NotNull String baseDirectoryPath) {
-    return baseDirectoryPath + "/lib";
+    return baseDirectoryPath.isEmpty() ? "lib" : baseDirectoryPath + "/lib";
   }
 
   public void setDownloadSettings(LibraryDownloadSettings downloadSettings) {
@@ -124,17 +129,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   @NotNull
   public String getBaseDirectoryPath() {
-    return myBaseDirectoryPath;
-  }
-
-  public void changeBaseDirectoryPath(@NotNull String baseDirectoryPath) {
-    if (!myBaseDirectoryPath.equals(baseDirectoryPath)) {
-      if (myDownloadSettings != null &&
-          myDownloadSettings.getDirectoryForDownloadedLibrariesPath().equals(getDefaultDownloadPath(myBaseDirectoryPath))) {
-        myDownloadSettings.setDirectoryForDownloadedLibrariesPath(getDefaultDownloadPath(baseDirectoryPath));
-      }
-      myBaseDirectoryPath = baseDirectoryPath;
-    }
+    return myPathProvider.compute();
   }
 
   public void setDownloadLibraries(final boolean downloadLibraries) {
@@ -151,7 +146,7 @@ public class LibraryCompositionSettings implements Disposable {
 
   public boolean downloadFiles(final @NotNull JComponent parent) {
     if (myDownloadLibraries && myDownloadSettings != null) {
-      final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent);
+      final NewLibraryEditor libraryEditor = myDownloadSettings.download(parent, getBaseDirectoryPath());
       if (libraryEditor != null) {
         myNewLibraryEditor = libraryEditor;
       }
@@ -179,23 +174,38 @@ public class LibraryCompositionSettings implements Disposable {
   @Nullable
   public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
-    Library library = createLibrary(rootModel, librariesContainer);
+    Library newLibrary = createLibrary(rootModel, librariesContainer);
 
-    if (library != null) {
-      addedLibraries.add(library);
+    if (newLibrary != null) {
+      addedLibraries.add(newLibrary);
+      DependencyScope scope = LibraryDependencyScopeSuggester.getDefaultScope(newLibrary);
       if (getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
-        rootModel.addLibraryEntry(library);
+        rootModel.addLibraryEntry(newLibrary).setScope(scope);
+      }
+      else {
+        LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(newLibrary);
+        assert orderEntry != null;
+        orderEntry.setScope(scope);
       }
     }
     if (mySelectedLibrary != null) {
       addedLibraries.add(mySelectedLibrary);
-      rootModel.addLibraryEntry(mySelectedLibrary);
+      rootModel.addLibraryEntry(mySelectedLibrary).setScope(LibraryDependencyScopeSuggester.getDefaultScope(mySelectedLibrary));
     }
-    return library;
+    if (myLibraryProvider != null) {
+      Library library = myLibraryProvider.createLibrary(myLibraryDescription.getSuitableLibraryKinds());
+      addedLibraries.add(library);
+      rootModel.addLibraryEntry(library).setScope(LibraryDependencyScopeSuggester.getDefaultScope(library));
+    }
+    return newLibrary;
   }
 
   public void setNewLibraryEditor(@Nullable NewLibraryEditor libraryEditor) {
     myNewLibraryEditor = libraryEditor;
+  }
+
+  public void setLibraryProvider(FrameworkLibraryProvider libraryProvider) {
+    myLibraryProvider = libraryProvider;
   }
 
   @Override

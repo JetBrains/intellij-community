@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,49 +34,48 @@ import java.util.List;
 public class PsiFieldMember extends PsiElementClassMember<PsiField> implements PropertyClassMember {
   private static final int FIELD_OPTIONS = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER;
 
-  public PsiFieldMember(final PsiField field) {
+  public PsiFieldMember(@NotNull PsiField field) {
     super(field, PsiFormatUtil.formatVariable(field, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
-  public PsiFieldMember(PsiField psiMember, PsiSubstitutor substitutor) {
+  public PsiFieldMember(@NotNull PsiField psiMember, PsiSubstitutor substitutor) {
     super(psiMember, substitutor, PsiFormatUtil.formatVariable(psiMember, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
   @Nullable
   @Override
   public GenerationInfo generateGetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateGetters();
+    final GenerationInfo[] infos = generateGetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
   @Nullable
   @Override
-  public GenerationInfo[] generateGetters() throws IncorrectOperationException {
-    final PsiField field = getElement();
-    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
+  public GenerationInfo[] generateGetters(PsiClass aClass) throws IncorrectOperationException {
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(getElement(), true));
   }
 
   @Nullable
   @Override
   public GenerationInfo generateSetter() throws IncorrectOperationException {
-    final GenerationInfo[] infos = generateSetters();
+    final GenerationInfo[] infos = generateSetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
 
   @Override
   @Nullable
-  public GenerationInfo[] generateSetters() {
+  public GenerationInfo[] generateSetters(PsiClass aClass) {
     final PsiField field = getElement();
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;
     }
-    return createGenerateInfos(field, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
   }
 
-  private static GenerationInfo[] createGenerateInfos(PsiField field, PsiMethod[] prototypes) {
+  private static GenerationInfo[] createGenerateInfos(PsiClass aClass, PsiMethod[] prototypes) {
     final List<GenerationInfo> methods = new ArrayList<GenerationInfo>();
     for (PsiMethod prototype : prototypes) {
-      final PsiMethod method = createMethodIfNotExists(field, prototype);
+      final PsiMethod method = createMethodIfNotExists(aClass, prototype);
       if (method != null) {
         methods.add(new PsiGenerationInfo(method));
       }
@@ -85,20 +84,8 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   }
 
   @Nullable
-  private static PsiMethod createMethodIfNotExists(final PsiField field, final PsiMethod template) {
-    final PsiClass aClass = field.getContainingClass();
+  private static PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
     PsiMethod existing = aClass.findMethodBySignature(template, false);
-    if (existing == null) {
-      if (template != null) {
-        String modifier = PsiUtil.getMaximumModifierForMember(aClass);
-        if (modifier != null) {
-          PsiUtil.setModifierProperty(template, modifier, true);
-        }
-      }
-      return template;
-    }
-    else {
-      return null;
-    }
+    return existing == null ? template : null;
   }
 }

@@ -1,0 +1,22 @@
+0(1) element: null
+1(2) element: PyExpressionStatement
+2(3) element: PyListCompExpression
+3(4) element: PyCallExpression: params.items
+4(5,21) READ ACCESS: params
+5(6) element: PyTupleExpression
+6(7) WRITE ACCESS: k
+7(8) WRITE ACCESS: v
+8(9) element: PyReferenceExpression: k
+9(5,10,21) READ ACCESS: k
+10(11) element: PyReferenceExpression: v. Condition: k:true
+11(5,12,21) READ ACCESS: v
+12(13) element: PyTupleExpression
+13(14) WRITE ACCESS: x
+14(15) WRITE ACCESS: y
+15(16) element: PyBinaryExpression
+16(17) READ ACCESS: x
+17(5,12,18,21) READ ACCESS: y
+18(19) element: PyParenthesizedExpression. Condition: x > y:true
+19(20) READ ACCESS: x
+20(5,12,21) READ ACCESS: y
+21() element: null

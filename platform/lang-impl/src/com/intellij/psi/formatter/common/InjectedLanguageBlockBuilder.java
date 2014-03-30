@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,11 +107,12 @@ public abstract class InjectedLanguageBlockBuilder {
           }
       }
     };
-    InjectedLanguageUtil.enumerate(injectionHost.getPsi(), injectedPsiVisitor);
+    final PsiElement injectionHostPsi = injectionHost.getPsi();
+    InjectedLanguageUtil.enumerate(injectionHostPsi, injectionHostPsi.getContainingFile(), false, injectedPsiVisitor);
 
     if  (injectedFile[0] != null) {
       final Language childLanguage = injectedFile[0].getLanguage();
-      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, injectionHost.getPsi());
+      final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(childLanguage, injectionHostPsi);
 
       if (builder != null) {
         final int startOffset = injectedRangeInsideHost.get().getStartOffset();
@@ -157,7 +158,7 @@ public abstract class InjectedLanguageBlockBuilder {
     final FormattingModel childModel = builder.createModel(childPsi, getSettings());
     Block original = childModel.getRootBlock();
 
-    if ((original.isLeaf() && injectedNode.getText().trim().length() > 0) || original.getSubBlocks().size() != 0) {
+    if ((original.isLeaf() && !injectedNode.getText().trim().isEmpty()) || !original.getSubBlocks().isEmpty()) {
       result.add(createInjectedBlock(injectedNode, original, indent, offset, range, childLanguage));
     }
   }

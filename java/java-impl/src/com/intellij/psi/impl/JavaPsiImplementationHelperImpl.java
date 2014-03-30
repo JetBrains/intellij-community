@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,12 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -75,12 +77,12 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     PsiClass original = JavaPsiFacade.getInstance(project).findClass(fqn, new GlobalSearchScope(project) {
       @Override
-      public int compare(VirtualFile file1, VirtualFile file2) {
+      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         return 0;
       }
 
       @Override
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         // order for file and vFile has non empty intersection.
         List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
         //noinspection ForLoopReplaceableByForEach
@@ -105,6 +107,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return original != null ? original : psiClass;
   }
 
+  @NotNull
   @Override
   public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
     String packageName = clsFile.getPackageName();
@@ -115,19 +118,22 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     final VirtualFile vFile = clsFile.getContainingFile().getVirtualFile();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-    for (OrderEntry orderEntry : orderEntries) {
-      VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
-      for (VirtualFile file : files) {
-        VirtualFile source = file.findFileByRelativePath(relativeFilePath);
-        if (source != null) {
-          PsiFile psiSource = clsFile.getManager().findFile(source);
-          if (psiSource instanceof PsiClassOwner) {
-            return psiSource;
-          }
+    final Set<VirtualFile> sourceRoots = ContainerUtil.newLinkedHashSet();
+    for (OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(vFile)) {
+      if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+        Collections.addAll(sourceRoots, orderEntry.getFiles(OrderRootType.SOURCES));
+      }
+    }
+    for (VirtualFile root : sourceRoots) {
+      VirtualFile source = root.findFileByRelativePath(relativeFilePath);
+      if (source != null) {
+        PsiFile psiSource = clsFile.getManager().findFile(source);
+        if (psiSource instanceof PsiClassOwner) {
+          return psiSource;
         }
       }
     }
+
     return clsFile;
   }
 
@@ -253,12 +259,13 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Override
-  public void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection catchSection) {
+  public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
     final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
     final Properties props = new Properties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
+    props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, exceptionType.getCanonicalText());
     if (context != null && context.isPhysical()) {
       final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
       if (directory != null) {

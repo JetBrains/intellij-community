@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.ant;
 
+import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
@@ -31,6 +33,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -88,6 +91,13 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
                            PathManagerEx.findFileUnderCommunityHome("lib/dev/easymock.jar"));
   }
 
+  @Override
+  protected Map<String, String> getPathVariables() {
+    Map<String, String> pathVariables = super.getPathVariables();
+    pathVariables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PlatformTestUtil.getCommunityPath());
+    return pathVariables;
+  }
+
   public void testLoadAntConfiguration() {
     loadProject(PROJECT_PATH);
     loadGlobalSettings(OPTIONS_PATH);
@@ -98,6 +108,9 @@ public class JpsAntSerializationTest extends JpsSerializationTestCase {
     assertContainsElements(toFiles(options.getAdditionalClasspath()),
                            new File(getAbsolutePath("lib/jdom.jar")),
                            new File(getAbsolutePath("ant-lib/a.jar")));
+    BuildFileProperty property = assertOneElement(options.getProperties());
+    assertEquals("my.property", property.getPropertyName());
+    assertEquals("its value", property.getPropertyValue());
 
     String emptyFileUrl = getUrl("empty.xml");
     JpsAntBuildFileOptions options2 = JpsAntExtensionService.getOptions(myProject, emptyFileUrl);

@@ -35,7 +35,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -61,11 +60,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
         super.remove(index);
         if (template instanceof LocalArchivedTemplate) {
           URL path = ((LocalArchivedTemplate)template).getArchivePath();
-          try {
-            new File(path.toURI()).delete();
-          }
-          catch (URISyntaxException ignore) {
-          }
+          new File(path.getPath()).delete();
         }
       }
     };

@@ -34,10 +34,12 @@ import java.util.Map;
  * @author yole
  */
 public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandler {
+  @Override
   public boolean handlesTemplate(final FileTemplate template) {
     return true;
   }
 
+  @Override
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, String fileName, final FileTemplate template,
                                        final String templateText,
                                        final Map<String, Object> props) throws IncorrectOperationException {
@@ -68,6 +70,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     return fileName;
   }
 
+  @Override
   public boolean canCreate(final PsiDirectory[] dirs) {
     return true;
   }

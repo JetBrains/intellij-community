@@ -16,13 +16,12 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.history.browser.GitCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * Provides details for a commit usually not available from the {@link GitCommit} object.
+ * Provides details for a commit usually not available from the {@link git4idea.history.browser.GitHeavyCommit} object.
  *
  * @author Kirill Likhodedov
  */

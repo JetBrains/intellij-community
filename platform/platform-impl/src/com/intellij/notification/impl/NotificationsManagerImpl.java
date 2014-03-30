@@ -56,7 +56,6 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager {
-
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
   }
@@ -64,6 +63,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull final Notification notification) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         EventLog.expireNotification(notification);
       }
@@ -156,7 +156,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
             balloon.addListener(new JBPopupAdapter() {
               @Override
               public void onClosed(LightweightWindowEvent event) {
-                notification.expire();
+                if (!event.isOk()) {
+                  notification.expire();
+                }
               }
             });
           }
@@ -219,6 +221,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
             if (!sticky) {
               ((BalloonImpl)balloon).startFadeoutTimer(15000);
+              ((BalloonImpl)balloon).setHideOnClickOutside(true);
             }
             else //noinspection ConstantConditions
               if (noProjects) {
@@ -330,7 +333,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   }
 
-  private static class MyNotificationListener implements Notifications {
+  private static class MyNotificationListener extends NotificationsAdapter {
     private final Project myProject;
 
     public MyNotificationListener(@Nullable Project project) {
@@ -340,16 +343,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     @Override
     public void notify(@NotNull Notification notification) {
       doNotify(notification, null, myProject);
-    }
-
-    @Override
-    public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-    }
-
-    @Override
-    public void register(@NotNull String groupDisplayName,
-                         @NotNull NotificationDisplayType defaultDisplayType,
-                         boolean shouldLog) {
     }
   }
 

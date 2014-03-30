@@ -16,8 +16,10 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.options.ConfigurationException;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
@@ -68,5 +70,14 @@ public abstract class WizardInputField<T extends JComponent> {
 
   public void addToSettings(SettingsStep settingsStep) {
     settingsStep.addSettingsField(getLabel(), getComponent());
+  }
+
+  public boolean acceptFile(File file) {
+    return true;
+  }
+
+  @TestOnly
+  public void setValue(String value) {
+    throw new UnsupportedOperationException();
   }
 }

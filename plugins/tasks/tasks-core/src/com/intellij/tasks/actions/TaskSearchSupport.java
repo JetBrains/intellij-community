@@ -63,12 +63,12 @@ public class TaskSearchSupport {
 
   public static List<Task> getRepositoriesTasks(final TaskManager myManager,
                                                 String pattern,
-                                                int max,
-                                                long since,
+                                                int offset,
+                                                int limit,
                                                 boolean forceRequest,
                                                 final boolean withClosed,
                                                 @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = myManager.getIssues(pattern, max, since, forceRequest, withClosed, cancelled);
+    List<Task> tasks = myManager.getIssues(pattern, offset, limit, forceRequest, withClosed, cancelled);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }
@@ -77,12 +77,7 @@ public class TaskSearchSupport {
                                     String pattern,
                                     boolean cached,
                                     boolean autopopup) {
-    final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(getTasks(pattern, cached, autopopup, myManager), new NullableFunction<Task, Task>() {
-      public Task fun(Task task) {
-        return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
-      }
-    });
+    return filterTasks(pattern, getTasks(pattern, cached, autopopup, myManager));
   }
 
 

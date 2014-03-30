@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
@@ -76,12 +78,12 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, @NotNull String... annotationNames) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, @NotNull String... annotationNames) {
     return findAnnotation(listOwner, false, annotationNames);
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(PsiModifierListOwner listOwner, final boolean skipExternal, @NotNull String... annotationNames) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiModifierListOwner listOwner, final boolean skipExternal, @NotNull String... annotationNames) {
     if (annotationNames.length == 0) return null;
     Set<String> set = annotationNames.length == 1 ? Collections.singleton(annotationNames[0]) : new HashSet<String>(Arrays.asList(annotationNames));
     return findAnnotation(listOwner, set, skipExternal);
@@ -431,5 +433,26 @@ public class AnnotationUtil {
 
   public static boolean isInsideAnnotation(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
+  }
+
+  @Nullable
+  public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
+    PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof String ? (String)constValue : null;
+  }
+  @Nullable
+  public static Boolean getBooleanAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
+    PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof Boolean ? (Boolean)constValue : null;
+  }
+
+  @Nullable
+  public static <T extends Annotation> T findAnnotationInHierarchy(@NotNull PsiModifierListOwner listOwner, @NotNull Class<T> annotationClass) {
+    PsiAnnotation annotation = findAnnotationInHierarchy(listOwner, Collections.singleton(annotationClass.getName()));
+    if (annotation == null) return null;
+    return (T)Proxy.newProxyInstance(
+      annotationClass.getClassLoader(), new Class<?>[]{annotationClass}, new AnnotationInvocationHandler(annotationClass, annotation));
   }
 }

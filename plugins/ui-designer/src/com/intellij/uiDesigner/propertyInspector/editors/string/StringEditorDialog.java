@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesReferenceManager;
-import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
@@ -155,10 +155,10 @@ public final class StringEditorDialog extends DialogWrapper{
                                                UIDesignerBundle.message("edit.text.make.unique"),
                                                CommonBundle.getCancelButtonText(),
                                              Messages.getWarningIcon());
-          if (rc == 2) {
+          if (rc == Messages.CANCEL) {
             return null;
           }
-          if (rc == 1) {
+          if (rc == Messages.NO) {
             newKeyName = promptNewKeyName(module.getProject(), propFile, descriptor.getKey());
             if (newKeyName == null) return null;
           }
@@ -375,7 +375,7 @@ public final class StringEditorDialog extends DialogWrapper{
           public void actionPerformed(final ActionEvent e) {
             Project project = myEditor.getProject();
             final String bundleNameText = myTfBundleName.getText().replace('/', '.');
-            PropertiesFile file = PropertiesUtil.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
+            PropertiesFile file = PropertiesUtilBase.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,

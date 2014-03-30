@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class AddTypeArgumentsTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class AddTypeArgumentsTest extends LightQuickFixTestCase {
 
   public void test() throws Exception { doAllTests(); }
 
@@ -9,4 +11,8 @@ public class AddTypeArgumentsTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addTypeArguments";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }

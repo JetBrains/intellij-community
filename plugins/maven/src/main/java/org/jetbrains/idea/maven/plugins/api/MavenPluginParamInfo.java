@@ -10,17 +10,16 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Sergey Evdokimov
@@ -51,18 +50,21 @@ public class MavenPluginParamInfo {
           Map pluginsMap = res;
 
           for (int i = paramPath.length - 1; i >= 0; i--) {
-            pluginsMap = getOrCreate(pluginsMap, paramPath[i]);
+            pluginsMap = MavenUtil.getOrCreate(pluginsMap, paramPath[i]);
           }
 
           ParamInfo paramInfo = new ParamInfo(pluginDescriptor.getPluginDescriptor().getPluginClassLoader(), param);
 
-          Map<String, ParamInfo> goalsMap = getOrCreate(pluginsMap, pluginId);
+          Map<String, ParamInfo> goalsMap = MavenUtil.getOrCreate(pluginsMap, pluginId);
 
-          ParamInfo oldValue = goalsMap.put(param.goal, paramInfo);
+          String goal = pluginDescriptor.goal;
+          assert goal == null || !goal.isEmpty();
+
+          ParamInfo oldValue = goalsMap.put(goal, paramInfo);
           if (oldValue != null) {
             LOG.error("Duplicated maven plugin parameter descriptor: "
                       + pluginId.first + ':' + pluginId.second + " -> "
-                      + (param.goal != null ? "[" + param.goal + ']' : "") + param.name);
+                      + (goal != null ? "[" + goal + ']' : "") + param.name);
           }
         }
       }
@@ -71,17 +73,6 @@ public class MavenPluginParamInfo {
     }
 
     return res;
-  }
-
-  @NotNull
-  private static <K, V extends Map> V getOrCreate(Map map, K key) {
-    Map res = (Map)map.get(key);
-    if (res == null) {
-      res = new HashMap();
-      map.put(key, res);
-    }
-
-    return (V)res;
   }
 
   public static boolean isSimpleText(@NotNull XmlText paramValue) {
@@ -98,20 +89,24 @@ public class MavenPluginParamInfo {
     return true;
   }
 
-  public static void processParamInfo(@NotNull XmlText paramValue, @NotNull PairProcessor<ParamInfo, MavenDomConfiguration> processor) {
-    XmlTag paramTag = paramValue.getParentTag();
-    if (paramTag == null) return;
+  public static ParamInfoList getParamInfoList(@NotNull XmlText paramValue) {
+    XmlTag tag = paramValue.getParentTag();
+    if (tag == null) return ParamInfoList.EMPTY;
 
+    return getParamInfoList(tag);
+  }
+
+  public static ParamInfoList getParamInfoList(@NotNull XmlTag paramTag) {
     XmlTag configurationTag = paramTag;
     DomElement domElement;
 
     Map m = getMap().get(paramTag.getName());
 
     while (true) {
-      if (m == null) return;
+      if (m == null) return ParamInfoList.EMPTY;
 
       configurationTag = configurationTag.getParentTag();
-      if (configurationTag == null) return;
+      if (configurationTag == null) return ParamInfoList.EMPTY;
 
       String tagName = configurationTag.getName();
       if ("configuration".equals(tagName)) {
@@ -120,7 +115,7 @@ public class MavenPluginParamInfo {
           break;
         }
 
-        if (domElement != null) return;
+        if (domElement != null) return ParamInfoList.EMPTY;
       }
 
       m = (Map)m.get(tagName);
@@ -131,7 +126,7 @@ public class MavenPluginParamInfo {
     MavenDomConfiguration domCfg = (MavenDomConfiguration)domElement;
 
     MavenDomPlugin domPlugin = domCfg.getParentOfType(MavenDomPlugin.class, true);
-    if (domPlugin == null) return;
+    if (domPlugin == null) return ParamInfoList.EMPTY;
 
     String pluginGroupId = domPlugin.getGroupId().getStringValue();
     String pluginArtifactId = domPlugin.getArtifactId().getStringValue();
@@ -148,22 +143,62 @@ public class MavenPluginParamInfo {
       goalsMap = pluginsMap.get(Pair.create(pluginGroupId, pluginArtifactId));
     }
 
-    if (goalsMap == null) return;
+    if (goalsMap == null) return ParamInfoList.EMPTY;
 
     DomElement parent = domCfg.getParent();
     if (parent instanceof MavenDomPluginExecution) {
+      SmartList<ParamInfo> infos = null;
+
       MavenDomGoals goals = ((MavenDomPluginExecution)parent).getGoals();
       for (MavenDomGoal goal : goals.getGoals()) {
         ParamInfo info = goalsMap.get(goal.getStringValue());
         if (info != null) {
-          if (!processor.process(info, domCfg)) return;
+          if (infos == null) {
+            infos = new SmartList<ParamInfo>();
+          }
+
+          infos.add(info);
         }
+      }
+
+      if (infos != null) {
+        ParamInfo defaultInfo = goalsMap.get(null);
+        if (defaultInfo != null) {
+          infos.add(defaultInfo);
+        }
+
+        return new ParamInfoList(domCfg, infos);
       }
     }
 
     ParamInfo defaultInfo = goalsMap.get(null);
     if (defaultInfo != null) {
-      if (!processor.process(defaultInfo, domCfg)) return;
+      return new ParamInfoList(domCfg, Collections.singletonList(defaultInfo));
+    }
+
+    return ParamInfoList.EMPTY;
+  }
+
+  public static class ParamInfoList implements Iterable<ParamInfo> {
+
+    private static final ParamInfoList EMPTY = new ParamInfoList(null, Collections.<ParamInfo>emptyList());
+
+    private final MavenDomConfiguration domCfg;
+
+    private final List<ParamInfo> paramInfos;
+
+    ParamInfoList(MavenDomConfiguration domCfg, @NotNull List<ParamInfo> paramInfos) {
+      this.domCfg = domCfg;
+      this.paramInfos = paramInfos;
+    }
+
+    public MavenDomConfiguration getDomCfg() {
+      return domCfg;
+    }
+
+    @Override
+    public Iterator<ParamInfo> iterator() {
+      return paramInfos.iterator();
     }
   }
 
@@ -214,6 +249,10 @@ public class MavenPluginParamInfo {
     public MavenParamLanguageProvider getLanguageProvider() {
       ensureLanguageInit();
       return myLanguageProvider;
+    }
+
+    public MavenPluginDescriptor.Param getParam() {
+      return myParam;
     }
 
     public String getLanguageInjectionPrefix() {

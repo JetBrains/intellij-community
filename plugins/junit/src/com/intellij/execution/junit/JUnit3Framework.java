@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ public class JUnit3Framework extends JavaTestFramework {
     return "JUnit3";
   }
 
+  @Override
+  public char getMnemonic() {
+    return '3';
+  }
+
   @NotNull
   @Override
   public Icon getIcon() {
@@ -63,6 +68,8 @@ public class JUnit3Framework extends JavaTestFramework {
   @Override
   @Nullable
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+
     for (PsiMethod each : clazz.getMethods()) {
       if (each.getName().equals("setUp")) return each;
     }
@@ -72,6 +79,8 @@ public class JUnit3Framework extends JavaTestFramework {
   @Override
   @Nullable
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+
     for (PsiMethod each : clazz.getMethods()) {
       if (each.getName().equals("tearDown")) return each;
     }

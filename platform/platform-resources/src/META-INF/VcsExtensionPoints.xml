@@ -2,6 +2,8 @@
   <extensionPoints>
     <extensionPoint name="checkoutProvider"
                     interface="com.intellij.openapi.vcs.CheckoutProvider"/>
+    <extensionPoint name="vcsRootChecker"
+                    interface="com.intellij.openapi.vcs.VcsRootChecker"/>
     <extensionPoint name="checkoutListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"/>
     <extensionPoint name="vcsAwareCheckoutListener"
@@ -24,7 +26,10 @@
 
     <extensionPoint name="changesViewContent"
                     beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
-                    area="IDEA_PROJECT"/>
+                    area="IDEA_PROJECT">
+      <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
+      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+    </extensionPoint>
 
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
@@ -51,6 +56,8 @@
     <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
     <extensionPoint name="vcschangedetails" interface="com.intellij.openapi.vcs.changes.VcsChangeDetailsProvider" area="IDEA_PROJECT"/>
 
-
+    <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
+    
+    <extensionPoint name="vcs.rootFinder" interface="com.intellij.openapi.vcs.VcsRootFinder" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>

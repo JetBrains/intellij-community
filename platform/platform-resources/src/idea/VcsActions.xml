@@ -102,8 +102,7 @@
       <separator/>
       <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
               icon="AllIcons.Actions.Cancel"/>
-      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
-              icon="AllIcons.General.Add">
+      <action id="ChangesView.AddUnversioned" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction">
         <keyboard-shortcut first-keystroke="control alt A" keymap="$default"/>
       </action>
       <action id="ChangesView.Ignore" class="com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction"/>
@@ -121,6 +120,15 @@
       <reference ref="ChangesView.Refresh"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+    </group>
+
+    <!-- There are alternative action presentations for the UnversionedViewDialog. Icon is the difference.  -->
+    <group id="Unversioned.Files.Dialog">
+      <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+      <reference ref="ChangesView.Move"/>
+      <action id="ChangesView.DeleteUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"/>
+      <reference ref="ChangesView.Ignore"/>
     </group>
 
     <group id="ShelvedChangesPopupMenu">
@@ -221,16 +229,21 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="ChangesView.Rollback"/>
       <separator/>
-      <add-to-group group-id="MainToolBar" relative-to-action="ShowSettings" anchor="before"/>
+      <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
+    </group>
+
+    <group id="VcsNavBarToobarActions">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="ChangesView.Rollback"/>
+      <separator/>
+      <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
-    </action>
-
-    <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction">
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"

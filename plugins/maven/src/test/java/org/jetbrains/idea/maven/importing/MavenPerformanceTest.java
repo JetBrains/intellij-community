@@ -23,8 +23,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 // do not run on build server
 @Bombed(year = 3000, month = Calendar.FEBRUARY, day = 1)
@@ -88,7 +88,7 @@ public abstract class MavenPerformanceTest extends MavenImportingTestCase {
     });
   }
 
-  private void measure(long expected, Runnable r) {
+  private static void measure(long expected, Runnable r) {
     //ProfilingUtil.startCPUProfiling();
     long before = System.currentTimeMillis();
     r.run();

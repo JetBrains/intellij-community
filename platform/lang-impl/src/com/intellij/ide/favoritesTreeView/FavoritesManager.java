@@ -88,12 +88,14 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   public void renameList(final Project project, @NotNull String listName) {
     final String newName = Messages
-      .showInputDialog(project, IdeBundle.message("prompt.input.favorites.list.new.name"), IdeBundle.message("title.rename.favorites.list"),
+      .showInputDialog(project, IdeBundle.message("prompt.input.favorites.list.new.name", listName), IdeBundle.message("title.rename.favorites.list"),
                        Messages.getInformationIcon(), listName, new InputValidator() {
+        @Override
         public boolean checkInput(String inputString) {
           return inputString != null && inputString.trim().length() > 0;
         }
 
+        @Override
         public boolean canClose(String inputString) {
           inputString = inputString.trim();
           if (myName2FavoritesRoots.keySet().contains(inputString) || myProviders.keySet().contains(inputString)) {
@@ -368,15 +370,19 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return false;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void projectOpened() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+        @Override
         public void run() {
           final FavoritesListProvider[] providers = Extensions.getExtensions(EP_NAME, myProject);
           for (FavoritesListProvider provider : providers) {
@@ -394,9 +400,11 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "FavoritesManager";
@@ -407,6 +415,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return myProviders.get(name);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myName2FavoritesRoots.clear();
     for (Object list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
@@ -482,6 +491,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (final String name : myName2FavoritesRoots.keySet()) {
       Element list = new Element(ELEMENT_FAVORITES_LIST);
@@ -542,6 +552,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final Set<Boolean> find = new HashSet<Boolean>();
     final ContentIterator contentIterator = new ContentIterator() {
+      @Override
       public boolean processFile(VirtualFile fileOrDir) {
         if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
           find.add(Boolean.TRUE);
@@ -639,6 +650,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   private class MyRootsChangeAdapter extends PsiTreeChangeAdapter {
+    @Override
     public void beforeChildMovement(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement oldParent = event.getOldParent();
       final PsiElement newParent = event.getNewParent();
@@ -681,6 +693,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
     }
 
+    @Override
     public void beforePropertyChange(@NotNull final PsiTreeChangeEvent event) {
       if (event.getPropertyName().equals(PsiTreeChangeEvent.PROP_FILE_NAME) ||
           event.getPropertyName().equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {

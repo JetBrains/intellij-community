@@ -21,10 +21,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
@@ -33,10 +35,11 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.util.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.util.GitFileUtils;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,59 +47,63 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Merge-changes provider for Git, used by IDEA internal 3-way merge tool
  */
 public class GitMergeProvider implements MergeProvider2 {
-  /**
-   * the logger
-   */
-  private static final Logger log = Logger.getInstance(GitMergeProvider.class.getName());
-  /**
-   * The project instance
-   */
-  private final Project myProject;
-  /**
-   * If true the merge provider has a reverse meaning
-   */
-  private final boolean myReverse;
-  /**
-   * The revision that designates common parent for the files during the merge
-   */
-  private static final int ORIGINAL_REVISION_NUM = 1;
-  /**
-   * The revision that designates the file on the local branch
-   */
-  private static final int YOURS_REVISION_NUM = 2;
-  /**
-   * The revision that designates the remote file being merged
-   */
-  private static final int THEIRS_REVISION_NUM = 3;
+  private static final int ORIGINAL_REVISION_NUM = 1; // common parent
+  private static final int YOURS_REVISION_NUM = 2; // file content on the local branch: "Yours"
+  private static final int THEIRS_REVISION_NUM = 3; // remote file content: "Theirs"
 
+  private static final Logger LOG = Logger.getInstance(GitMergeProvider.class);
+
+  @NotNull private final Project myProject;
   /**
-   * A merge provider
-   *
-   * @param project a project for the provider
+   * If true the merge provider has a reverse meaning, i. e. yours and theirs are swapped.
+   * It should be used when conflict is resolved after rebase or unstash.
    */
-  public GitMergeProvider(Project project) {
-    this(project, false);
+  @NotNull private final Set<VirtualFile> myReverseRoots;
+
+  private enum ReverseRequest {
+    REVERSE,
+    FORWARD,
+    DETECT
   }
 
-  /**
-   * A merge provider
-   *
-   * @param project a project for the provider
-   * @param reverse if true, yours and theirs take a reverse meaning
-   */
-  public GitMergeProvider(Project project, boolean reverse) {
+  private GitMergeProvider(@NotNull Project project, @NotNull Set<VirtualFile> reverseRoots) {
     myProject = project;
-    myReverse = reverse;
+    myReverseRoots = reverseRoots;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  public GitMergeProvider(@NotNull Project project, boolean reverse) {
+    this(project, findReverseRoots(project, reverse ? ReverseRequest.REVERSE : ReverseRequest.FORWARD));
+  }
+
+  @NotNull
+  public static MergeProvider detect(@NotNull Project project) {
+    return new GitMergeProvider(project, findReverseRoots(project, ReverseRequest.DETECT));
+  }
+
+  @NotNull
+  private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
+    Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
+    for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
+      boolean reverse;
+      if (reverseOrDetect == ReverseRequest.DETECT) {
+        reverse = repository.getState().equals(GitRepository.State.REBASING);
+      }
+      else {
+        reverse = reverseOrDetect == ReverseRequest.REVERSE;
+      }
+      if (reverse) {
+        reverseMap.add(repository.getRoot());
+      }
+    }
+    return reverseMap;
+  }
+
   @NotNull
   public MergeData loadRevisions(final VirtualFile file) throws VcsException {
     final MergeData mergeData = new MergeData();
@@ -108,8 +115,8 @@ public class GitMergeProvider implements MergeProvider2 {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
         GitFileRevision original = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
-        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision()));
-        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision()));
+        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
+        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
           try {
             mergeData.ORIGINAL = original.getContent();
@@ -134,7 +141,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Nullable
   private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
-    if (myReverse) {
+    if (myReverseRoots.contains(root)) {
       return resolveHead(root);
     }
     else {
@@ -142,12 +149,12 @@ public class GitMergeProvider implements MergeProvider2 {
         return GitRevisionNumber.resolve(myProject, root, "MERGE_HEAD");
       }
       catch (VcsException e) {
-        log.info("Couldn't resolved the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+        LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
         try {
           return GitRevisionNumber.resolve(myProject, root, "CHERRY_PICK_HEAD");
         }
         catch (VcsException e1) {
-          log.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
+          LOG.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
           // for now, we don't know: maybe it is a conflicted file from rebase => then resolve the head.
           return resolveHead(root);
         }
@@ -161,12 +168,12 @@ public class GitMergeProvider implements MergeProvider2 {
       return GitRevisionNumber.resolve(myProject, root, "HEAD");
     }
     catch (VcsException e) {
-      log.error("Couldn't resolve the HEAD in " + root, e);
+      LOG.error("Couldn't resolve the HEAD in " + root, e);
       return null;
     }
   }
 
-  private byte[] loadRevisionCatchingErrors(final GitFileRevision revision) throws VcsException, IOException {
+  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException, IOException {
     try {
       return revision.getContent();
     } catch (VcsException e) {
@@ -183,36 +190,32 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   /**
-   * @return number for "yours" revision  (taking {@code revsere} flag in account)
+   * @return number for "yours" revision  (taking {@code reverse} flag in account)
+   * @param root
    */
-  private int yoursRevision() {
-    return myReverse ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
+  private int yoursRevision(@NotNull VirtualFile root) {
+    return myReverseRoots.contains(root) ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
   }
 
   /**
-   * @return number for "theirs" revision (taking {@code revsere} flag in account)
+   * @return number for "theirs" revision (taking {@code reverse} flag in account)
+   * @param root
    */
-  private int theirsRevision() {
-    return myReverse ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
+  private int theirsRevision(@NotNull VirtualFile root) {
+    return myReverseRoots.contains(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void conflictResolvedForFile(VirtualFile file) {
     if (file == null) return;
     try {
       GitFileUtils.addFiles(myProject, GitUtil.getGitRoot(file), file);
     }
     catch (VcsException e) {
-      log.error("Confirming conflict resolution failed", e);
+      LOG.error("Confirming conflict resolution failed", e);
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public boolean isBinary(VirtualFile file) {
+  public boolean isBinary(@NotNull VirtualFile file) {
     return file.getFileType().isBinary();
   }
 
@@ -221,65 +224,28 @@ public class GitMergeProvider implements MergeProvider2 {
     return new MyMergeSession(files);
   }
 
-
   /**
    * The conflict descriptor
    */
   private static class Conflict {
-    /**
-     * the file in the conflict
-     */
     VirtualFile myFile;
-    /**
-     * the root for the file
-     */
     VirtualFile myRoot;
-    /**
-     * the status of theirs revision
-     */
     Status myStatusTheirs;
-    /**
-     * the status
-     */
     Status myStatusYours;
 
-    /**
-     * @return true if the merge operation can be applied
-     */
-    boolean isMergeable() {
-      return true;
-    }
-
-    /**
-     * The conflict status
-     */
     enum Status {
-      /**
-       * the file was modified on the branch
-       */
-      MODIFIED,
-      /**
-       * the file was deleted on the branch
-       */
-      DELETED,
+      MODIFIED, // modified on the branch
+      DELETED // deleted on the branch
     }
   }
 
 
   /**
-   * The merge session, it queries conflict information .
+   * The merge session, it queries conflict information.
    */
   private class MyMergeSession implements MergeSession {
-    /**
-     * the map with conflicts
-     */
     Map<VirtualFile, Conflict> myConflicts = new HashMap<VirtualFile, Conflict>();
 
-    /**
-     * A constructor from list of the files
-     *
-     * @param filesToMerge the files to process using merge dialog.
-     */
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
@@ -309,10 +275,10 @@ public class GitMergeProvider implements MergeProvider2 {
               c.myRoot = root;
               cs.put(file, c);
             }
-            if (source == theirsRevision()) {
+            if (source == theirsRevision(root)) {
               c.myStatusTheirs = Conflict.Status.MODIFIED;
             }
-            else if (source == yoursRevision()) {
+            else if (source == yoursRevision(root)) {
               c.myStatusYours = Conflict.Status.MODIFIED;
             }
             else if (source != ORIGINAL_REVISION_NUM) {
@@ -322,7 +288,7 @@ public class GitMergeProvider implements MergeProvider2 {
           for (VirtualFile f : files) {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
-            log.assertTrue(c != null, String.format("The conflict not found for the file: %s(%s)%nFull ls-files output: %n%s",
+            LOG.assertTrue(c != null, String.format("The conflict not found for the file: %s(%s)%nFull ls-files output: %n%s",
                                                     f.getPath(), path, output));
             c.myFile = f;
             if (c.myStatusTheirs == null) {
@@ -379,12 +345,12 @@ public class GitMergeProvider implements MergeProvider2 {
         }
       }
       catch (VcsException e) {
-        log.error("Unexpected exception during the git operation (" + file.getPath() + ")", e);
+        LOG.error("Unexpected exception during the git operation (" + file.getPath() + ")", e);
       }
     }
 
     /**
-     * The status column, the column shows either "yours" or "theirs" status
+     * The column shows either "yours" or "theirs" status
      */
     class StatusColumn extends ColumnInfo<VirtualFile, String> {
       /**
@@ -392,19 +358,11 @@ public class GitMergeProvider implements MergeProvider2 {
        */
       private final boolean myIsTheirs;
 
-      /**
-       * The constructor
-       *
-       * @param isTheirs if true columns represents status in 'theirs' revision, if false in 'ours'
-       */
       public StatusColumn(boolean isTheirs) {
         super(isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status"));
         myIsTheirs = isTheirs;
       }
 
-      /**
-       * {@inheritDoc}
-       */
       public String valueOf(VirtualFile file) {
         Conflict c = myConflicts.get(file);
         assert c != null : "No conflict for the file " + file;

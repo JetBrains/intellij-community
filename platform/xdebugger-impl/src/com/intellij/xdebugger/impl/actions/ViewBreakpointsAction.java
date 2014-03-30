@@ -25,9 +25,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 
 public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
   private Object myInitialBreakpoint;
@@ -43,27 +42,23 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     if (myInitialBreakpoint == null) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (editor != null) {
         myInitialBreakpoint = XBreakpointUtil.findSelectedBreakpoint(project, editor).second;
       }
     }
 
-    final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-      getInstance(project).createPopup(myInitialBreakpoint);
-    if (popup != null) {
-      popup.showCenteredInCurrentWindow(project);
-    }
+    BreakpointsDialogFactory.getInstance(project).showDialog(myInitialBreakpoint);
     myInitialBreakpoint = null;
   }
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

@@ -5,6 +5,6 @@ class A {
     }
 
     private void f(Object p0) {
-        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection></selection>
     }
 }

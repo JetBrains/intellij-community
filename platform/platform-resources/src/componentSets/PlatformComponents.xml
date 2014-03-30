@@ -15,10 +15,6 @@
       <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
       <implementation-class>com.intellij.openapi.components.impl.stores.PlatformProjectStoreClassProvider</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.RecentProjectsManagerBase</interface-class>
-      <implementation-class>com.intellij.ide.RecentDirectoryProjectsManager</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
@@ -53,7 +49,7 @@
 
     <component>
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
+      <headless-implementation-class/>
     </component>
 
   </project-components>

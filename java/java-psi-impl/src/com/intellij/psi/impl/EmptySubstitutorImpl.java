@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,26 +38,29 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
   }
 
   @Override
-  public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
+  public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
+  @NotNull
   @Override
-  public PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping){
+  public PsiSubstitutor put(@NotNull PsiTypeParameter classParameter, PsiType mapping){
     if (mapping != null && !mapping.isValid()) {
       LOG.error("Invalid type in substitutor: " + mapping);
     }
     return new PsiSubstitutorImpl(classParameter, mapping);
   }
 
+  @NotNull
   @Override
-  public PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings){
+  public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings){
     if(!parentClass.hasTypeParameters()) return this;
     return new PsiSubstitutorImpl(parentClass, mappings);
   }
 
+  @NotNull
   @Override
-  public PsiSubstitutor putAll(PsiSubstitutor another) {
+  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
     return another;
   }
 

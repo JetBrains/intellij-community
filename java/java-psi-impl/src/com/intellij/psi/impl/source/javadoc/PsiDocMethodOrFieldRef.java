@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -31,10 +32,8 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +105,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           types.add(PsiType.NULL);
         }
       }
-      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(new PsiType[types.size()]),
+      methodSignature = MethodSignatureUtil.createMethodSignature(name, types.toArray(PsiType.createArray(types.size())),
                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY,
                                                                   name.equals(scope.getName()));
     }
@@ -177,7 +176,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
         if (typeStrings != null) {
           for (String type : typeStrings) {
-            if (type.length() > 0) {
+            if (!type.isEmpty()) {
               types.add(type);
             }
           }
@@ -190,7 +189,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   @Nullable
   private PsiClass getScope(){
-    if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+    if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
@@ -226,7 +225,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     @Override
-    public void processVariants(PsiScopeProcessor processor) {
+    public void processVariants(@NotNull PsiScopeProcessor processor) {
       for (final PsiElement element : getVariants()) {
         if (!processor.execute(element, ResolveState.initial())) {
           return;
@@ -313,7 +312,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
 
       final PsiElement child = getFirstChild();
-      if (containingClass != null && child != null && child.getNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
+      if (containingClass != null && child != null && child.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) child.getFirstChild();
         assert referenceElement != null;
         referenceElement.bindToElement(containingClass);
@@ -344,11 +343,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (hasSignature) {
           newText.append('(');
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          for (int i = 0; i < parameters.length; i++) {
-            PsiParameter parameter = parameters[i];
-            if (i > 0) newText.append(",");
-            newText.append(parameter.getType().getCanonicalText());
-          }
+          newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
+            @Override
+            public String fun(PsiParameter parameter) {
+              return TypeConversionUtil.erasure(parameter.getType()).getCanonicalText();
+            }
+          }, ","));
           newText.append(')');
         }
         newText.append("*/");

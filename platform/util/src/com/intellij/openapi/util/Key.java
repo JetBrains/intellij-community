@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ConcurrentWeakValueIntObjectHashMap;
+import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ public class Key<T> {
     allKeys.put(myIndex, this);
   }
 
+  // made final because many classes depend on one-to-one key index <-> key instance relationship. See e.g. UserDataHolderBase
   public final int hashCode() {
     return myIndex;
   }
@@ -58,12 +60,10 @@ public class Key<T> {
     return new Key<T>(name);
   }
 
-  @Nullable
   public T get(@Nullable UserDataHolder holder) {
     return holder == null ? null : holder.getUserData(this);
   }
 
-  @Nullable
   public T get(@Nullable Map<Key, ?> holder) {
     //noinspection unchecked
     return holder == null ? null : (T)holder.get(this);
@@ -101,5 +101,19 @@ public class Key<T> {
   public static <T> Key<T> getKeyByIndex(int index) {
     //noinspection unchecked
     return (Key<T>)allKeys.get(index);
+  }
+
+  /**
+   * @deprecated access to Key via its name is a kind of hack, use Key instance directly instead
+   */
+  @Nullable
+  public static Key<?> findKeyByName(String name) {
+    for (StripedLockIntObjectConcurrentHashMap.IntEntry<Key> key : allKeys.entries()) {
+      if (name.equals(key.getValue().myName)) {
+        //noinspection unchecked
+        return key.getValue();
+      }
+    }
+    return null;
   }
 }

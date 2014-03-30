@@ -16,14 +16,15 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.Set;
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
 
+  @NotNull
   private final PsiElement[] myScope;
   private final boolean myIgnoreInjectedPsi;
 
@@ -67,10 +69,12 @@ public class LocalSearchScope extends SearchScope {
       LOG.assertTrue(element != null, "null element");
       LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
-        List<PsiFile> files = ((PsiFile)element).getViewProvider().getAllFiles();
-        ContainerUtil.addAll(localScope, files);
+        for (PsiFile file : ((PsiFile)element).getViewProvider().getAllFiles()) {
+          if (file == null) throw new IllegalArgumentException("file "+element+" returned null in its getAllFiles()");
+          localScope.add(file);
+        }
       }
-      else {
+      else if (element instanceof StubBasedPsiElement || element.getTextRange() != null){
         localScope.add(element);
       }
     }
@@ -86,6 +90,7 @@ public class LocalSearchScope extends SearchScope {
     return myDisplayName == null ? super.getDisplayName() : myDisplayName;
   }
 
+  @NotNull
   public PsiElement[] getScope() {
     return myScope;
   }
@@ -144,7 +149,23 @@ public class LocalSearchScope extends SearchScope {
     if (scope2 instanceof LocalSearchScope) {
       return intersectWith((LocalSearchScope)scope2);
     }
+    LocalSearchScope nonPhysicalScope = tryIntersectNonPhysicalWith((GlobalSearchScope)scope2);
+    if (nonPhysicalScope != null) return nonPhysicalScope;
     return ((GlobalSearchScope)scope2).intersectWith(this);
+  }
+
+  @Nullable
+  private LocalSearchScope tryIntersectNonPhysicalWith(@NotNull GlobalSearchScope scope) {
+    Project project = scope.getProject();
+    for (PsiElement element : myScope) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null) continue;
+      if (containingFile.getViewProvider().isPhysical()) return null;
+      if (project != null && project != containingFile.getProject()) {
+        return EMPTY;
+      }
+    }
+    return this;
   }
 
   @Nullable

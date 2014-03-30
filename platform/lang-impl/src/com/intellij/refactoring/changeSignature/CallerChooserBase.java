@@ -45,6 +45,7 @@ import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -67,7 +68,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private TreeSelectionListener myTreeSelectionListener;
   private Editor myCallerEditor;
   private Editor myCalleeEditor;
-  private boolean myInitDone;
+  private final boolean myInitDone;
   private final String myFileName;
 
   protected abstract MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback);
@@ -90,6 +91,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myTree;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     Splitter splitter = new Splitter(false, (float)0.6);
     JPanel result = new JPanel(new BorderLayout());
@@ -101,12 +103,14 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       myRoot = (MethodNodeBase)root.getFirstChild();
     }
     myTreeSelectionListener = new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath path = e.getPath();
         if (path != null) {
           final MethodNodeBase<M> node = (MethodNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
+            @Override
             public void run() {
               updateEditorTexts(node);
             }
@@ -141,6 +145,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     final Document calleeDocument = myCalleeEditor.getDocument();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         callerDocument.setText(callerText);
         calleeDocument.setText(calleeText);
@@ -171,6 +176,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     });
   }
 
+  @Override
   public void dispose() {
     if (myTree != null) {
       myTree.removeTreeSelectionListener(myTreeSelectionListener);
@@ -224,6 +230,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   private Tree createTree() {
     final Runnable cancelCallback = new Runnable() {
+      @Override
       public void run() {
         if (myInitDone) {
           close(CANCEL_EXIT_CODE);
@@ -237,6 +244,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     myRoot = createTreeNode(myMethod, new HashSet<M>(), cancelCallback);
     root.add(myRoot);
     final CheckboxTree.CheckboxTreeCellRenderer cellRenderer = new CheckboxTree.CheckboxTreeCellRenderer(true, false) {
+      @Override
       public void customizeRenderer(JTree tree,
                                     Object value,
                                     boolean selected,
@@ -249,7 +257,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         }
       }
     };
-    Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, false, true, false));
+    Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, true, true, false));
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 
@@ -280,6 +288,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     }
   }
 
+  @Override
   protected void doOKAction() {
     final Set<M> selectedMethods = new HashSet<M>();
     getSelectedMethods(selectedMethods);
@@ -292,4 +301,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return myTree;
   }
 
+  @Nullable
+  @Override
+  protected String getDimensionServiceKey() {
+    return "caller.chooser.dialog";
+  }
 }

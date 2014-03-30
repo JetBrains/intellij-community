@@ -1,0 +1,18 @@
+PyFile:IncompleteDict.py
+  PyAssignmentStatement
+    PyTargetExpression: some_dict
+      PsiElement(Py:IDENTIFIER)('some_dict')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyDictLiteralExpression
+      PsiElement(Py:LBRACE)('{')
+      PsiWhiteSpace(' ')
+      PyKeyValueExpression
+        PyStringLiteralExpression: key
+          PsiElement(Py:SINGLE_QUOTED_STRING)(''key'')
+        PsiElement(Py:COLON)(':')
+        PsiErrorElement:expression expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:RBRACE)('}')

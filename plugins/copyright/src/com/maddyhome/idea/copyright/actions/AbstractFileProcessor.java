@@ -16,7 +16,7 @@
 
 package com.maddyhome.idea.copyright.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,10 +117,11 @@ public abstract class AbstractFileProcessor {
   }
 
   private void process(final PsiFile file) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
     final Runnable[] resultRunnable = new Runnable[1];
 
     execute(new Runnable() {
+      @Override
       public void run() {
         try {
           resultRunnable[0] = preprocessFile(file);
@@ -130,6 +131,7 @@ public abstract class AbstractFileProcessor {
         }
       }
     }, new Runnable() {
+      @Override
       public void run() {
         if (resultRunnable[0] != null) {
           resultRunnable[0].run();
@@ -182,6 +184,7 @@ public abstract class AbstractFileProcessor {
     }
 
     return new Runnable() {
+      @Override
       public void run() {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         String msg = null;
@@ -219,10 +222,12 @@ public abstract class AbstractFileProcessor {
   private void process(final PsiFile[] files) {
     final Runnable[] resultRunnable = new Runnable[1];
     execute(new Runnable() {
+      @Override
       public void run() {
         resultRunnable[0] = prepareFiles(new ArrayList<PsiFile>(Arrays.asList(files)));
       }
     }, new Runnable() {
+      @Override
       public void run() {
         if (resultRunnable[0] != null) {
           resultRunnable[0].run();
@@ -234,6 +239,7 @@ public abstract class AbstractFileProcessor {
   private void process(final PsiDirectory dir, final boolean subdirs) {
     final List<PsiFile> pfiles = new ArrayList<PsiFile>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         findFiles(pfiles, dir, subdirs);
       }
@@ -244,6 +250,7 @@ public abstract class AbstractFileProcessor {
   private void process(final Project project) {
     final List<PsiFile> pfiles = new ArrayList<PsiFile>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         findFiles(project, pfiles);
       }
@@ -254,6 +261,7 @@ public abstract class AbstractFileProcessor {
   private void process(final Module module) {
     final List<PsiFile> pfiles = new ArrayList<PsiFile>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         findFiles(module, pfiles);
       }
@@ -276,6 +284,7 @@ public abstract class AbstractFileProcessor {
 
     for (VirtualFile root : roots) {
       idx.iterateContentUnderDirectory(root, new ContentIterator() {
+        @Override
         public boolean processFile(final VirtualFile dir) {
           if (dir.isDirectory()) {
             final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
@@ -299,10 +308,12 @@ public abstract class AbstractFileProcessor {
       if (!files.isEmpty()) {
         final Runnable[] resultRunnable = new Runnable[1];
         execute(new Runnable() {
+          @Override
           public void run() {
             resultRunnable[0] = prepareFiles(files);
           }
         }, new Runnable() {
+          @Override
           public void run() {
             if (resultRunnable[0] != null) {
               resultRunnable[0].run();
@@ -335,11 +346,13 @@ public abstract class AbstractFileProcessor {
 
   private void execute(final Runnable readAction, final Runnable writeAction) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         readAction.run();
       }
     }, title, true, myProject);
     new WriteCommandAction(myProject, title) {
+      @Override
       protected void run(Result result) throws Throwable {
         writeAction.run();
       }

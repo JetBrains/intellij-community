@@ -21,12 +21,19 @@ import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Block;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 import java.util.List;
 
 public class MethodCallExpressionBlock extends AbstractJavaBlock{
-  public MethodCallExpressionBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, final CodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+  public MethodCallExpressionBlock(ASTNode node,
+                                   Wrap wrap,
+                                   Alignment alignment,
+                                   Indent indent,
+                                   CodeStyleSettings settings,
+                                   JavaCodeStyleSettings javaSettings)
+  {
+    super(node, wrap, alignment, indent, settings, javaSettings);
   }
 
   @Override

@@ -15,13 +15,11 @@
  */
 package com.intellij.util;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author max
  */
 public interface PairFunction<Arg1, Arg2, ResultType> {
-  @Nullable
+
   ResultType fun(Arg1 t, Arg2 v);
 
 }

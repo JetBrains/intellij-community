@@ -137,7 +137,8 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     //setDiffPolicy(diffPolicy);
     diffPolicy.setRanges(ranges);
 
-    return addMarkup(new TextCompareProcessor(myComparisonPolicy, diffPolicy).process(myAppender1.getText(), myAppender2.getText()));
+    return addMarkup(
+      new TextCompareProcessor(myComparisonPolicy, diffPolicy, myHighlightMode).process(myAppender1.getText(), myAppender2.getText()));
   }
 
   private BeforeAfter<Integer> lineStarts(int i) {

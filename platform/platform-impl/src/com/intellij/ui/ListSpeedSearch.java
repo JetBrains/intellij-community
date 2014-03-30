@@ -16,19 +16,30 @@
 package com.intellij.ui;
 
 import com.intellij.util.Function;
+import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
 
 public class ListSpeedSearch extends SpeedSearchBase<JList> {
-  private Function<Object, String> myElementTextDelegate;
+  private final Convertor<Object, String> myToStringConvertor;
 
   public ListSpeedSearch(JList list) {
     super(list);
+    myToStringConvertor = null;
   }
 
-  public ListSpeedSearch(final JList component, final Function<Object, String> elementTextDelegate) {
+  public ListSpeedSearch(final JList component, final Convertor<Object, String> convertor) {
     super(component);
-    myElementTextDelegate = elementTextDelegate;
+    myToStringConvertor = convertor;
+  }
+
+  public ListSpeedSearch(final JList component, final Function<Object, String> convertor) {
+    this(component, new Convertor<Object, String>() {
+      @Override
+      public String convert(Object o) {
+        return convertor.fun(o);
+      }
+    });
   }
 
   protected void selectElement(Object element, String selectedText) {
@@ -58,8 +69,8 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
   }
 
   protected String getElementText(Object element) {
-    if (myElementTextDelegate != null) {
-      return myElementTextDelegate.fun(element);
+    if (myToStringConvertor != null) {
+      return myToStringConvertor.convert(element);
     }
     return element == null ? null : element.toString();
   }

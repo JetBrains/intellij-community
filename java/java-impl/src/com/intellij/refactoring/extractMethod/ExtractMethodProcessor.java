@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -39,7 +40,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,10 +66,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
-import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
-import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.MatchProvider;
-import com.intellij.refactoring.util.duplicates.VariableReturnValue;
+import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -104,7 +101,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected String myMethodName; // name for extracted method
   protected PsiType myReturnType; // return type for extracted method
   protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
-  private ParameterTablePanel.VariableData[] myVariableDatum; // parameter data for extracted method
+  private VariableData[] myVariableDatum; // parameter data for extracted method
   protected PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
   protected boolean myStatic; // whether to declare extracted method static
 
@@ -203,7 +200,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public boolean prepare() throws PrepareFailedException {
     return prepare(null);
   }
-  
+
   /**
    * Invoked in atomic action
    */
@@ -332,7 +329,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean isNotNull(PsiVariable outputVariable) {
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false);
     final PsiCodeBlock block = myElementFactory.createCodeBlock();
     for (PsiElement element : myElements) {
       block.add(element);
@@ -340,18 +336,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + outputVariable.getName() + " == null);", null);
     block.add(statementFromText);
 
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(block);
     final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
     if (rc == RunnerResult.OK) {
-      if (dfaRunner.problemsDetected(visitor)) {
-        final Pair<Set<Instruction>,Set<Instruction>>
-          conditionalExpressions = dfaRunner.getConstConditionalExpressions();
-        final Set<Instruction> falseSet = conditionalExpressions.getSecond();
-        for (Instruction instruction : falseSet) {
-          if (instruction instanceof BranchingInstruction) {
-            if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
-              return true;
-            }
+      final Set<Instruction> falseSet = dfaRunner.getConstConditionalExpressions().getSecond();
+      for (Instruction instruction : falseSet) {
+        if (instruction instanceof BranchingInstruction) {
+          if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
+            return true;
           }
         }
       }
@@ -446,7 +439,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean shouldBeStatic() {
     for(PsiElement element: myElements) {
       final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class);
-      if (statement != null && RefactoringUtil.isSuperOrThisCall(statement, true, true)) {
+      if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
         return true;
       }
     }
@@ -518,7 +511,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
       if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
-        final String text = prevSibling.getText().trim().replaceAll(" ", "").substring(2);
+        final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
         if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text) && text.length() < 20) {
           return text;
         }
@@ -546,12 +539,12 @@ public class ExtractMethodProcessor implements MatchProvider {
   public void testPrepare() {
     myInputVariables.setFoldingAvailable(myInputVariables.isFoldingSelectedByDefault());
     myMethodName = myInitialMethodName;
-    myVariableDatum = new ParameterTablePanel.VariableData[myInputVariables.getInputVariables().size()];
+    myVariableDatum = new VariableData[myInputVariables.getInputVariables().size()];
     for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
     }
   }
-  
+
   @TestOnly
   public void doNotPassParameter(int i) {
     myVariableDatum[i].passAsParameter = false;
@@ -805,7 +798,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     adjustFinalParameters(newMethod);
     int i = 0;
-    for (ParameterTablePanel.VariableData data : myVariableDatum) {
+    for (VariableData data : myVariableDatum) {
       if (!data.passAsParameter) continue;
       final PsiVariable variable = data.variable;
       final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i++];
@@ -824,10 +817,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
-      ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
+      ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-        methodExpression.setQualifierExpression(RefactoringUtil.createThisExpression(myManager, myTargetClass));
+        methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
       }
     }
 
@@ -926,20 +919,20 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   public PsiElement processMatch(Match match) throws IncorrectOperationException {
-    match.changeSignature(myExtractedMethod);
+    MatchUtil.changeSignature(match, myExtractedMethod);
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
     final PsiMethodCallExpression methodCallExpression = generateMethodCall(match.getInstanceExpression(), false);
 
-    ArrayList<ParameterTablePanel.VariableData> datas = new ArrayList<ParameterTablePanel.VariableData>();
-    for (final ParameterTablePanel.VariableData variableData : myVariableDatum) {
+    ArrayList<VariableData> datas = new ArrayList<VariableData>();
+    for (final VariableData variableData : myVariableDatum) {
       if (variableData.passAsParameter) {
         datas.add(variableData);
       }
     }
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-    for (ParameterTablePanel.VariableData data : datas) {
+    for (VariableData data : datas) {
       final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
       if (parameterValue != null) {
         for (PsiElement val : parameterValue) {
@@ -983,7 +976,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
-    for (ParameterTablePanel.VariableData data : myVariableDatum) {
+    for (VariableData data : myVariableDatum) {
       PsiVariable variable = data.variable;
       if (!data.name.equals(variable.getName())) {
         for (PsiElement element : myElements) {
@@ -1000,7 +993,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
-      newMethod = myElementFactory.createConstructor();      
+      newMethod = myElementFactory.createConstructor();
     }
     else {
       newMethod = myElementFactory.createMethod(myMethodName, myReturnType);
@@ -1015,7 +1008,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
-    for (ParameterTablePanel.VariableData data : myVariableDatum) {
+    for (VariableData data : myVariableDatum) {
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.type);
         if (isFinal) {
@@ -1053,7 +1046,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         final PsiClass nullableAnnotationClass =
           JavaPsiFacade.getInstance(myProject).findClass(manager.getDefaultNullable(), GlobalSearchScope.allScope(myProject));
         if (nullableAnnotationClass != null) {
-          new AddNullableAnnotationFix(newMethod).invoke(myProject, myEditor, myTargetClass.getContainingFile());
+          new AddNullableAnnotationFix(newMethod).invoke(myProject, myTargetClass.getContainingFile(), newMethod, newMethod);
         }
       }
     }
@@ -1104,7 +1097,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     buffer.append("(");
     if (generateArgs) {
       int count = 0;
-      for (ParameterTablePanel.VariableData data : myVariableDatum) {
+      for (VariableData data : myVariableDatum) {
         if (data.passAsParameter) {
           if (count > 0) {
             buffer.append(",");
@@ -1241,8 +1234,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public boolean isDeclaredInside(PsiVariable variable) {
     if (variable instanceof ImplicitVariable) return false;
-    int startOffset = myElements[0].getTextRange().getStartOffset();
-    int endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
+    int startOffset;
+    int endOffset;
+    if (myExpression != null) {
+      final TextRange range = myExpression.getTextRange();
+      startOffset = range.getStartOffset();
+      endOffset = range.getEndOffset();
+    } else {
+      startOffset = myElements[0].getTextRange().getStartOffset();
+      endOffset = myElements[myElements.length - 1].getTextRange().getEndOffset();
+    }
     PsiIdentifier nameIdentifier = variable.getNameIdentifier();
     if (nameIdentifier == null) return false;
     final TextRange range = nameIdentifier.getTextRange();
@@ -1252,7 +1253,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String getNewVariableName(PsiVariable variable) {
-    for (ParameterTablePanel.VariableData data : myVariableDatum) {
+    for (VariableData data : myVariableDatum) {
       if (data.variable.equals(variable)) {
         return data.name;
       }
@@ -1373,7 +1374,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   @Nullable
   public String getConfirmDuplicatePrompt(Match match) {
     final boolean needToBeStatic = RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass());
-    final String changedSignature = match.getChangedSignature(myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
+    final String changedSignature = MatchUtil
+      .getChangedSignature(match, myExtractedMethod, needToBeStatic, VisibilityUtil.getVisibilityStringToDisplay(myExtractedMethod));
     if (changedSignature != null) {
       return RefactoringBundle.message("replace.this.code.fragment.and.change.signature", changedSignature);
     }

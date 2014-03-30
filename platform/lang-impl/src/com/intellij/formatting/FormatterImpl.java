@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -50,9 +51,9 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory
 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
-  
+
   private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<FormattingProgressTask>();
-  
+
   private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
@@ -76,20 +77,24 @@ public class FormatterImpl extends FormatterEx
     FormattingModelProvider.setFactory(this);
   }
 
+  @Override
   public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine, @NotNull Alignment.Anchor anchor) {
     return new AlignmentImpl(applyToNonFirstBlocksOnLine, anchor);
   }
 
+  @Override
   public Alignment createChildAlignment(final Alignment base) {
     AlignmentImpl result = new AlignmentImpl();
     result.setParent(base);
     return result;
   }
 
+  @Override
   public Indent getNormalIndent(boolean relative) {
     return relative ? myNormalIndentRelativeToDirectParent : myNormalIndentNotRelativeToDirectParent;
   }
 
+  @Override
   public Indent getNoneIndent() {
     return NONE_INDENT;
   }
@@ -102,6 +107,7 @@ public class FormatterImpl extends FormatterEx
     myProgressTask.set(progressIndicator);
   }
 
+  @Override
   public void format(final FormattingModel model, final CodeStyleSettings settings,
                      final CommonCodeStyleSettings.IndentOptions indentOptions,
                      final CommonCodeStyleSettings.IndentOptions javaIndentOptions,
@@ -123,16 +129,19 @@ public class FormatterImpl extends FormatterEx
     execute(task);
   }
 
+  @Override
   public Wrap createWrap(WrapType type, boolean wrapFirstElement) {
     return new WrapImpl(type, wrapFirstElement);
   }
 
+  @Override
   public Wrap createChildWrap(final Wrap parentWrap, final WrapType wrapType, final boolean wrapFirstElement) {
     final WrapImpl result = new WrapImpl(wrapType, wrapFirstElement);
     result.registerParent((WrapImpl)parentWrap);
     return result;
   }
 
+  @Override
   @NotNull
   public Spacing createSpacing(int minOffset,
                                int maxOffset,
@@ -142,11 +151,12 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false, 0);
   }
 
+  @Override
   @NotNull
   public Spacing getReadOnlySpacing() {
     return myReadOnlySpacing;
   }
-  
+
   @NotNull
   @Override
   public Spacing createDependentLFSpacing(int minSpaces,
@@ -164,7 +174,8 @@ public class FormatterImpl extends FormatterEx
     FormattingProgressCallback result = myProgressTask.get();
     return result == null ? FormattingProgressCallback.EMPTY : result;
   }
-  
+
+  @Override
   public void format(final FormattingModel model,
                      final CodeStyleSettings settings,
                      final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -215,7 +226,7 @@ public class FormatterImpl extends FormatterEx
    *   </li>
    * </ul>
    * </pre>
-   * 
+   *
    * @param task    task to execute
    */
   private void execute(@NotNull SequentialTask task) {
@@ -248,6 +259,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
                                         final Block block,
                                         final CodeStyleSettings settings,
@@ -276,6 +288,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public void adjustLineIndentsForRange(final FormattingModel model,
                                         final CodeStyleSettings settings,
                                         final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -304,6 +317,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public void formatAroundRange(final FormattingModel model,
                                 final CodeStyleSettings settings,
                                 final TextRange textRange,
@@ -341,6 +355,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public int adjustLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -364,7 +379,8 @@ public class FormatterImpl extends FormatterEx
       }
 
       WhiteSpace whiteSpace = blockAfterOffset != null ? blockAfterOffset.getWhiteSpace() : processor.getLastWhiteSpace();
-      return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace);
+      return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace,
+                              blockAfterOffset != null ? blockAfterOffset.getNode() : null);
     }
     finally {
       enableFormatting();
@@ -375,7 +391,7 @@ public class FormatterImpl extends FormatterEx
    * Delegates to
    * {@link #buildProcessorAndWrapBlocks(FormattingDocumentModel, Block, CodeStyleSettings, CommonCodeStyleSettings.IndentOptions, FormatTextRanges, int)}
    * with '-1' as an interested offset.
-   * 
+   *
    * @param docModel
    * @param rootBlock
    * @param settings
@@ -394,8 +410,8 @@ public class FormatterImpl extends FormatterEx
 
   /**
    * Builds {@link FormatProcessor} instance and asks it to wrap all {@link Block code blocks}
-   * {@link FormattingModel#getRootBlock() derived from the given model}. 
-   * 
+   * {@link FormattingModel#getRootBlock() derived from the given model}.
+   *
    * @param docModel            target model
    * @param rootBlock           root block to process
    * @param settings            code style settings to use
@@ -418,14 +434,15 @@ public class FormatterImpl extends FormatterEx
     while (!processor.iteration()) ;
     return processor;
   }
-  
+
   private static int adjustLineIndent(
     final int offset,
     final FormattingDocumentModel documentModel,
     final FormatProcessor processor,
     final CommonCodeStyleSettings.IndentOptions indentOptions,
     final FormattingModel model,
-    final WhiteSpace whiteSpace)
+    final WhiteSpace whiteSpace,
+    ASTNode nodeAfter)
   {
     boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && offset < whiteSpace.getEndOffset();
 
@@ -436,7 +453,12 @@ public class FormatterImpl extends FormatterEx
     final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent).toString();
     if (!whiteSpace.equalsToString(newWS)) {
       try {
-        model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+        if (model instanceof FormattingModelEx) {
+          ((FormattingModelEx) model).replaceWhiteSpace(whiteSpace.getTextRange(), nodeAfter, newWS);
+        }
+        else {
+          model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
+        }
       }
       finally {
         model.commitChanges();
@@ -459,6 +481,7 @@ public class FormatterImpl extends FormatterEx
            documentModel.getTextLength() != offset;
   }
 
+  @Override
   public String getLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -530,6 +553,7 @@ public class FormatterImpl extends FormatterEx
     return lineStartOffset;
   }
 
+  @Override
   public void adjustTextRange(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -604,6 +628,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public void adjustTextRange(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CommonCodeStyleSettings.IndentOptions indentOptions,
@@ -634,12 +659,13 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
                           IndentInfoStorage storage,
                           final CodeStyleSettings settings,
                           final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final Block block = model.getRootBlock();
-    
+
     final FormatProcessor processor = buildProcessorAndWrapBlocks(
       model.getDocumentModel(), block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
     );
@@ -654,12 +680,14 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
                                                          @NotNull final Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
   }
 
+  @Override
   public Indent getSpaceIndent(final int spaces, final boolean relative) {
     return getIndent(Indent.Type.SPACES, spaces, relative, false);
   }
@@ -674,15 +702,18 @@ public class FormatterImpl extends FormatterEx
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
 
+  @Override
   public Indent getAbsoluteLabelIndent() {
     return myAbsoluteLabelIndent;
   }
 
+  @Override
   @NotNull
   public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
     return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false, 0);
   }
 
+  @Override
   @NotNull
   public Spacing createKeepingFirstColumnSpacing(final int minSpace,
                                                  final int maxSpace,
@@ -691,10 +722,11 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true, 0);
   }
 
+  @Override
   @NotNull
   public Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
                                final int prefLineFeeds) {
-    return getSpacingImpl(minSpaces, maxSpaces, -1, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
+    return getSpacingImpl(minSpaces, maxSpaces, minLineFeeds, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
   }
 
   private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
@@ -722,34 +754,42 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "FormatterEx";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public Indent getAbsoluteNoneIndent() {
     return myAbsoluteNoneIndent;
   }
 
+  @Override
   public Indent getLabelIndent() {
     return myLabelIndent;
   }
 
+  @Override
   public Indent getContinuationIndent(boolean relative) {
     return relative ? myContinuationIndentRelativeToDirectParent : myContinuationIndentNotRelativeToDirectParent;
   }
 
   //is default
+  @Override
   public Indent getContinuationWithoutFirstIndent(boolean relative) {
     return relative ? myContinuationWithoutFirstIndentRelativeToDirectParent : myContinuationWithoutFirstIndentNotRelativeToDirectParent;
   }
 
+  @Override
   public boolean isDisabled() {
     return myIsDisabledCount.get() > 0;
   }
@@ -775,11 +815,11 @@ public class FormatterImpl extends FormatterEx
       enableFormatting();
     }
   }
-  
+
   private abstract static class MyFormattingTask implements SequentialTask {
     private FormatProcessor myProcessor;
     private boolean         myDone;
-    
+
     @Override
     public void prepare() {
       myProcessor = buildProcessor();

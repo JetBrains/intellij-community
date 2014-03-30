@@ -170,7 +170,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
         int sum = 0;
         for (DomElement element : myDomElements) {
           final DomElementsProblemsHolder holder = myAnnotationsManager.getCachedProblemHolder(element);
-          sum += (SeverityRegistrar.getInstance(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
+          sum += (SeverityRegistrar.getSeverityRegistrar(getProject()).compare(minSeverity, HighlightSeverity.WARNING) >= 0 ? holder
             .getProblems(element, true, true) : holder.getProblems(element, true, minSeverity)).size();
         }
         status.errorCount[i] = sum;

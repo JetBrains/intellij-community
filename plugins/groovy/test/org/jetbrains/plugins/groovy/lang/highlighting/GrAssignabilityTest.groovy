@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
@@ -231,9 +232,9 @@ class A {
 def foo = new A().&foo
 
 int i = foo()
-int i2 = <warning descr="Cannot assign 'Date' to 'int'">foo(2)</warning>
+int <warning descr="Cannot assign 'Date' to 'int'">i2</warning> = foo(2)
 Date d = foo(2)
-Date d2 = <warning descr="Cannot assign 'Integer' to 'Date'">foo()</warning>
+Date <warning descr="Cannot assign 'Integer' to 'Date'">d2</warning> = foo()
 ''')
   }
 
@@ -247,7 +248,7 @@ class Bar {
 def cl = new Bar<error descr="'(' expected">.</error>&foo
 cl = cl.curry(1)
 String s = cl("2")
-int s2 = <warning descr="Cannot assign 'String' to 'int'">cl("2")</warning>
+int <warning descr="Cannot assign 'String' to 'int'">s2</warning> = cl("2")
 int i = cl(3)
 String i2 = cl(3)
 ''')
@@ -259,7 +260,7 @@ def foo() {
   throw new RuntimeException()
 }
 def bar () {
-  throw <warning descr="Cannot assign 'Object' to 'Throwable'">new Object()</warning>
+  <warning descr="Cannot assign 'Object' to 'Throwable'">throw</warning> new Object()
 }
 
 def test() {
@@ -305,12 +306,12 @@ import groovy.transform.CompileStatic
 class A {
 
   def foo(String s) {
-    int x = <warning descr="Cannot assign 'Date' to 'int'">new Date()</warning>
+    int <warning descr="Cannot assign 'Date' to 'int'">x</warning> = new Date()
   }
 
   @CompileStatic
   def bar() {
-    int x = <error descr="Cannot assign 'Date' to 'int'">new Date()</error>
+    int <error descr="Cannot assign 'Date' to 'int'">x</error> = new Date()
   }
 }
 ''')
@@ -367,7 +368,7 @@ def foo(Function<String, String> function) {
 foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
 foo({println  it.substring(1)} as Function)
 foo({println  it.substring(1)} as Function<String, String>)
-foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({println  it})</warning>
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println  it})</warning>
 
 ''')
   }
@@ -395,7 +396,7 @@ private int getObjects() {
         //...
     }
 
-    return <warning descr="Cannot assign 'String' to 'int'">''</warning>;
+    <warning descr="Cannot assign 'String' to 'int'">return</warning> '';
 }
 ''')
   }
@@ -445,17 +446,17 @@ String[] foox() {
 }
 
 int[] bar() {
-  return <warning descr="Cannot assign 'String' to 'int[]'">'ab'</warning>
+  <warning descr="Cannot assign 'String' to 'int[]'">return</warning> 'ab'
 }
 ''')
   }
 
   void testAssignNullToPrimitiveTypesAndWrappers() {
     testHighlighting('''\
-int x = <warning descr="Cannot assign 'null' to 'int'">null</warning>
-double y = <warning descr="Cannot assign 'null' to 'double'">null</warning>
+int <warning descr="Cannot assign 'null' to 'int'">x</warning> = null
+double <warning descr="Cannot assign 'null' to 'double'">y</warning> = null
 Integer z = null
-boolean a = <warning descr="Cannot assign 'null' to 'boolean'">null</warning>
+boolean <warning descr="Cannot assign 'null' to 'boolean'">a</warning> = null
 Boolean b = null
 ''')
   }
@@ -506,10 +507,312 @@ Money d = [amount: 100, currency:'USA']
   void testBooleanIsAssignableToAny() {
     testHighlighting('''\
       boolean b1 = new Object()
-      boolean b2 = <warning descr="Cannot assign 'null' to 'boolean'">null</warning>
+      boolean <warning descr="Cannot assign 'null' to 'boolean'">b2</warning> = null
       Boolean b3 = new Object()
       Boolean b4 = null
 ''')
   }
 
+  void testArrayAccess() {
+    testHighlighting('''\
+int [] i = [1, 2]
+
+print i[1]
+print i<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i[1..2]
+print i['a']
+print i<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess2() {
+    testHighlighting('''\
+int[] i() { [1, 2] }
+
+print i()[1]
+print i()<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i()[1..2]
+print i()['a']
+print i()<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess3() {
+    testHighlighting('''\
+class X {
+  def getAt(int x) {''}
+}
+
+X i() { new X() }
+
+print i()[1]
+print i()<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print i()['a']
+print i()<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess4() {
+    testHighlighting('''\
+class X {
+  def getAt(int x) {''}
+}
+
+X i = new X()
+
+print i[1]
+print i<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print i['a']
+print i<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess5() {
+    testHighlighting('''\
+print a<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+''')
+  }
+
+  void testArrayAccess6() {
+    testHighlighting('''\
+int[] i = [1, 2]
+
+i[1] = 2
+i<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.String)">[1]</warning> = 'a'
+i['a'] = 'b'
+i<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess7() {
+    testHighlighting('''\
+int[] i() { [1, 2] }
+
+i()[1] = 2
+i()<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i()<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.String)">[1]</warning> = 'a'
+i()['a'] = 'b'
+i()<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess8() {
+    testHighlighting('''\
+class X {
+  def putAt(int x, int y) {''}
+}
+
+X i() { new X() }
+
+i()[1] = 2
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.String)'">[1]</warning> = 'a'
+i()['a'] = 'b'
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess9() {
+    testHighlighting('''\
+class X {
+  def putAt(int x, int y) {''}
+}
+
+X i = new X()
+
+i[1] = 2
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.String)'">[1]</warning> = 'a'
+i['a'] = 'b'
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess10() {
+    testHighlighting('''\
+a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 3]</warning> = 2
+''')
+  }
+
+  public void testVarWithInitializer() {
+    testHighlighting('''\
+Object o = new Date()
+foo(o)
+bar<warning descr="'bar' in '_' cannot be applied to '(java.util.Date)'">(o)</warning>
+
+def foo(Date d) {}
+def bar(String s) {}
+''')
+  }
+
+  void testClassTypesWithMadGenerics() {
+    testHighlighting('''\
+//no warnings are expected!
+
+class CollectionTypeTest {
+    void implicitType() {
+        def classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long'] // warning here
+        assert classNames([Double, Long] + classes) == ['Double', 'Long', 'String', 'Integer']
+    }
+
+    void explicitInitType() {
+        Collection<Class> classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long']
+        assert classNames([Double, Long] + classes) == ['Double', 'Long', 'String', 'Integer'] // warning here
+    }
+
+    void explicitSumType() {
+        Collection<Class> classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long']
+
+        Collection<Class> var = [Double, Long] + classes
+        assert classNames(var) == ['Double', 'Long', 'String', 'Integer']
+    }
+
+    private static Collection<String> classNames(Collection<Class> classes) {
+       return classes.collect { it.simpleName }
+    }
+}
+''')
+  }
+
+  void testParameterInitializerWithGenericType() {
+    testHighlighting('''\
+class PsiElement {}
+class Foo extends PsiElement implements I {}
+
+interface I {}
+
+def <T extends PsiElement> T foo1(Class<T> <warning descr="Cannot assign 'Class<String>' to 'Class<? extends PsiElement>'">x</warning> = String ) {}
+def <T extends PsiElement> T foo2(Class<T> x = PsiElement ) {}
+def <T> T foo3(Class<T> x = PsiElement ) {}
+def <T extends PsiElement & I> T foo4(Class<T> <warning descr="Cannot assign 'Class<PsiElement>' to 'Class<? extends PsiElement & I>'">x</warning> = PsiElement ) {}
+def <T extends PsiElement & I> T foo5(Class<T> x = Foo ) {}
+''')
+  }
+
+  void testFixVariableType() {
+    testHighlighting('''\
+int <warning>x<caret>x</warning> = 'abc'
+''')
+
+
+    final IntentionAction intention = myFixture.findSingleIntention('Change variable')
+    myFixture.launchAction(intention)
+    myFixture.checkResult('''\
+String xx = 'abc'
+''')
+
+  }
+
+  void testFixVariableType2() {
+    testHighlighting('''\
+int xx = 5
+
+<warning>x<caret>x</warning> = 'abc'
+''')
+
+    final IntentionAction intention = myFixture.findSingleIntention('Change variable')
+    myFixture.launchAction(intention)
+    myFixture.checkResult('''\
+String xx = 5
+
+xx = 'abc'
+''')
+
+  }
+
+
+  void testInnerClassConstructor0() {
+    testHighlighting('''\
+class A {
+  class Inner {
+    def Inner() {}
+  }
+
+  def foo() {
+    new Inner() //correct
+  }
+
+  static def bar() {
+    new <error>Inner</error>() //semi-correct
+    new Inner(new A()) //correct
+  }
+}
+
+new A.Inner() //semi-correct
+new A.Inner(new A()) //correct
+''')
+  }
+
+  void testInnerClassConstructor1() {
+    testHighlighting('''\
+class A {
+  class Inner {
+    def Inner(A a) {}
+  }
+
+  def foo() {
+    new Inner(new A()) //correct
+    new Inner<warning>()</warning>
+    new Inner<warning>(new A(), new A())</warning>
+  }
+
+  static def bar() {
+    new Inner(new A(), new A()) //correct
+    new Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
+  }
+}
+
+new A.Inner<warning>()</warning> //incorrect
+new A.Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
+new A.Inner(new A(), new A()) //correct
+''')
+  }
+
+  void testClosureIsNotAssignableToSAMInGroovy2_1() {
+    testHighlighting('''\
+interface X {
+  def foo()
+}
+
+X <warning>x</warning> = {print 2}
+''')
+  }
+
+  void testVoidMethodAssignability() {
+    testHighlighting('''\
+void foo() {}
+
+def <warning>foo</warning> = foo()
+
+def bar() {
+  foo() //no warning
+}
+
+def zoo() {
+  <warning>return</warning> foo()
+}
+''')
+  }
+
+  void testBinaryOperatorApplicability() {
+    testHighlighting('''\
+void bug(Collection<String> foo, Collection<String> bar) {
+    foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
+    foo << "a"
+}''')
+  }
+
+  void testPlusIsApplicable() {
+    testHighlighting('''\
+print 1 + 2
+
+print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.StringGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
+''')
+  }
 }

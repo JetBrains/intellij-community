@@ -54,7 +54,7 @@ public abstract class MoveScopeAction extends AnAction {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     if (nodes.length > 0) {
       final InspectionConfigTreeNode treeNode = nodes[0];
-      if (treeNode.getScope() != null && !treeNode.isByDefault()) {
+      if (treeNode.getScope(getEventProject(e)) != null && !treeNode.isByDefault()) {
         final TreeNode parent = treeNode.getParent();
         final int index = parent.getIndex(treeNode);
         presentation.setEnabled(isEnabledFor(index, (InspectionConfigTreeNode)parent));
@@ -62,13 +62,14 @@ public abstract class MoveScopeAction extends AnAction {
     }
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     final InspectionConfigTreeNode node = nodes[0];
     final Descriptor descriptor = node.getDescriptor();
     final TreeNode parent = node.getParent();
     final int index = parent.getIndex(node);
-    getSelectedProfile().moveScope(descriptor.getKey().toString(), index, myDir);
+    getSelectedProfile().moveScope(descriptor.getKey().toString(), index, myDir, e.getProject());
     node.removeFromParent();
     ((InspectionConfigTreeNode)parent).insert(node, index + myDir);
     ((DefaultTreeModel)myTree.getModel()).reload(parent);

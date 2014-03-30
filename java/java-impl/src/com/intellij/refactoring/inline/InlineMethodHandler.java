@@ -127,7 +127,14 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       final VirtualFile vFile = method.getContainingFile().getVirtualFile();
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFile);
     }
-    PsiJavaCodeReferenceElement refElement = reference != null ? (PsiJavaCodeReferenceElement)reference.getElement() : null;
+
+    PsiJavaCodeReferenceElement refElement = null;
+    if (reference != null) {
+      final PsiElement referenceElement = reference.getElement();
+      if (referenceElement instanceof PsiJavaCodeReferenceElement) {
+        refElement = (PsiJavaCodeReferenceElement)referenceElement;
+      }
+    }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
     dialog.show();
   }

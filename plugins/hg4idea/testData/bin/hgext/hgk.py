@@ -17,9 +17,9 @@ which provides hooks for hgk to get information. hgk can be found in
 the contrib directory, and the extension is shipped in the hgext
 repository, and needs to be enabled.
 
-The hg view command will launch the hgk Tcl script. For this command
+The :hg:`view` command will launch the hgk Tcl script. For this command
 to work, hgk must be in your search path. Alternately, you can specify
-the path to hgk in your .hgrc file::
+the path to hgk in your configuration file::
 
   [hgk]
   path=/location/of/hgk
@@ -35,9 +35,11 @@ vdiff on hovered and selected revisions.
 '''
 
 import os
-from mercurial import commands, util, patch, revlog, cmdutil
+from mercurial import commands, util, patch, revlog, scmutil
 from mercurial.node import nullid, nullrev, short
 from mercurial.i18n import _
+
+testedwith = 'internal'
 
 def difftree(ui, repo, node1=None, node2=None, *files, **opts):
     """diff trees from two commits"""
@@ -45,7 +47,7 @@ def difftree(ui, repo, node1=None, node2=None, *files, **opts):
         assert node2 is not None
         mmap = repo[node1].manifest()
         mmap2 = repo[node2].manifest()
-        m = cmdutil.match(repo, files)
+        m = scmutil.match(repo[node1], files)
         modified, added, removed  = repo.status(node1, node2, m)[:3]
         empty = short(nullid)
 
@@ -81,7 +83,7 @@ def difftree(ui, repo, node1=None, node2=None, *files, **opts):
         if opts['patch']:
             if opts['pretty']:
                 catcommit(ui, repo, node2, "")
-            m = cmdutil.match(repo, files)
+            m = scmutil.match(repo[node1], files)
             chunks = patch.diff(repo, node1, node2, match=m,
                                 opts=patch.diffopts(ui, {'git': True}))
             for chunk in chunks:
@@ -95,9 +97,10 @@ def catcommit(ui, repo, n, prefix, ctx=None):
     nlprefix = '\n' + prefix
     if ctx is None:
         ctx = repo[n]
-    ui.write("tree %s\n" % short(ctx.changeset()[0])) # use ctx.node() instead ??
+    # use ctx.node() instead ??
+    ui.write(("tree %s\n" % short(ctx.changeset()[0])))
     for p in ctx.parents():
-        ui.write("parent %s\n" % p)
+        ui.write(("parent %s\n" % p))
 
     date = ctx.date()
     description = ctx.description().replace("\0", "")
@@ -105,15 +108,18 @@ def catcommit(ui, repo, n, prefix, ctx=None):
     if lines and lines[-1].startswith('committer:'):
         committer = lines[-1].split(': ')[1].rstrip()
     else:
-        committer = ctx.user()
+        committer = ""
 
-    ui.write("author %s %s %s\n" % (ctx.user(), int(date[0]), date[1]))
-    ui.write("committer %s %s %s\n" % (committer, int(date[0]), date[1]))
-    ui.write("revision %d\n" % ctx.rev())
-    ui.write("branch %s\n\n" % ctx.branch())
+    ui.write(("author %s %s %s\n" % (ctx.user(), int(date[0]), date[1])))
+    if committer != '':
+        ui.write(("committer %s %s %s\n" % (committer, int(date[0]), date[1])))
+    ui.write(("revision %d\n" % ctx.rev()))
+    ui.write(("branch %s\n" % ctx.branch()))
+    ui.write(("phase %s\n\n" % ctx.phasestr()))
 
     if prefix != "":
-        ui.write("%s%s\n" % (prefix, description.replace('\n', nlprefix).strip()))
+        ui.write("%s%s\n" % (prefix,
+                             description.replace('\n', nlprefix).strip()))
     else:
         ui.write(description + "\n")
     if prefix:
@@ -181,14 +187,14 @@ def revtree(ui, args, repo, full="tree", maxnr=0, parents=False):
                 if i + x >= count:
                     l[chunk - x:] = [0] * (chunk - x)
                     break
-                if full != None:
+                if full is not None:
                     l[x] = repo[i + x]
                     l[x].changeset() # force reading
                 else:
                     l[x] = 1
             for x in xrange(chunk - 1, -1, -1):
                 if l[x] != 0:
-                    yield (i + x, full != None and l[x] or None)
+                    yield (i + x, full is not None and l[x] or None)
             if i == 0:
                 break
 
@@ -298,7 +304,7 @@ def revlist(ui, repo, *revs, **opts):
 def config(ui, repo, **opts):
     """print extension options"""
     def writeopt(name, value):
-        ui.write('k=%s\nv=%s\n' % (name, value))
+        ui.write(('k=%s\nv=%s\n' % (name, value)))
 
     writeopt('vdiff', ui.config('hgk', 'vdiff', ''))
 
@@ -314,7 +320,8 @@ def view(ui, repo, *etc, **opts):
 cmdtable = {
     "^view":
         (view,
-         [('l', 'limit', '', _('limit number of changes displayed'))],
+         [('l', 'limit', '',
+           _('limit number of changes displayed'), _('NUM'))],
          _('hg view [-l LIMIT] [REVRANGE]')),
     "debug-diff-tree":
         (difftree,
@@ -345,3 +352,5 @@ cmdtable = {
           ('n', 'max-count', 0, _('max-count'))],
          _('hg debug-rev-list [OPTION]... REV...')),
 }
+
+commands.inferrepo += " debug-diff-tree debug-cat-file"

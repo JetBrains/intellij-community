@@ -26,14 +26,17 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   @Override
   protected ListTableModel createListModel() {
     final ColumnInfo name = new ElementsColumnInfoBase<EnvironmentVariable>("Name") {
+      @Override
       public String valueOf(EnvironmentVariable environmentVariable) {
         return environmentVariable.getName();
       }
 
+      @Override
       public boolean isCellEditable(EnvironmentVariable environmentVariable) {
         return environmentVariable.getNameIsWriteable();
       }
 
+      @Override
       public void setValue(EnvironmentVariable environmentVariable, String s) {
         if (s.equals(valueOf(environmentVariable))) {
           return;
@@ -49,14 +52,17 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     };
 
     final ColumnInfo value = new ElementsColumnInfoBase<EnvironmentVariable>("Value") {
+      @Override
       public String valueOf(EnvironmentVariable environmentVariable) {
         return environmentVariable.getValue();
       }
 
+      @Override
       public boolean isCellEditable(EnvironmentVariable environmentVariable) {
         return !environmentVariable.getIsPredefined();
       }
 
+      @Override
       public void setValue(EnvironmentVariable environmentVariable, String s) {
         if (s.equals(valueOf(environmentVariable))) {
           return;

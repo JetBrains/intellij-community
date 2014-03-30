@@ -36,7 +36,7 @@ public class AppletConfigurationType implements ConfigurationType {
   AppletConfigurationType() {
     myFactory = new ConfigurationFactoryEx(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
-        return new AppletConfiguration("", project, this);
+        return new AppletConfiguration(project, this);
       }
 
       @Override

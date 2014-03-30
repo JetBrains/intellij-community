@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,30 +45,40 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
     this(Arrays.asList(collection));
   }
 
+  @Override
   public int size() {
     return myCollection.size();
   }
 
+  @Override
   public boolean isEmpty() {
     return myCollection.isEmpty();
   }
 
+  @Override
   public boolean contains(Object o) {
     return myCollection.contains(o);
   }
 
+  @NotNull
+  @Override
   public Iterator<T> iterator() {
     return myCollection.iterator();
   }
 
+  @NotNull
+  @Override
   public Object[] toArray() {
     return myCollection.toArray();
   }
 
-  public <T> T[] toArray(T[] a) {
+  @NotNull
+  @Override
+  public <T> T[] toArray(@NotNull T[] a) {
     return myCollection.toArray(a);
   }
 
+  @Override
   public boolean add(T o) {
     Collection<T> toRemove = new ArrayList<T>();
     for (T existing : myCollection) {
@@ -84,15 +94,18 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
     return true;
   }
 
+  @Override
   public boolean remove(Object o) {
     return myCollection.remove(o);
   }
 
-  public boolean containsAll(Collection<?> c) {
+  @Override
+  public boolean containsAll(@NotNull Collection<?> c) {
     return myCollection.containsAll(c);
   }
 
-  public boolean addAll(Collection<? extends T> c) {
+  @Override
+  public boolean addAll(@NotNull Collection<? extends T> c) {
     boolean changed = false;
     for (T t : c) {
       changed |= add(t);
@@ -100,14 +113,17 @@ public abstract class DistinctRootsCollection<T> implements Collection<T> {
     return changed;
   }
 
-  public boolean removeAll(Collection<?> c) {
+  @Override
+  public boolean removeAll(@NotNull Collection<?> c) {
     return myCollection.removeAll(c);
   }
 
-  public boolean retainAll(Collection<?> c) {
+  @Override
+  public boolean retainAll(@NotNull Collection<?> c) {
     return myCollection.retainAll(c);
   }
 
+  @Override
   public void clear() {
     myCollection.clear();
   }

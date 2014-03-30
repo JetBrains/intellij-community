@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class XDebuggerActionBase extends AnAction implements AnAction.TransparentUpdate {
-  private boolean myHideDisabledInPopup;
+  private final boolean myHideDisabledInPopup;
 
   protected XDebuggerActionBase() {
     this(false);
@@ -35,12 +34,12 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
     myHideDisabledInPopup = hideDisabledInPopup;
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     boolean hidden = isHidden(event);
     if (hidden) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
@@ -55,9 +54,9 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   protected boolean isEnabled(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
+      DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
       for (DebuggerSupport support : debuggerSupports) {
         if (isEnabled(project, e, support)) {
           return true;
@@ -74,17 +73,18 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
     return getHandler(support).isEnabled(project, event);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     performWithHandler(e);
   }
 
   protected boolean performWithHandler(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return true;
     }
 
-    DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
+    DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport support : debuggerSupports) {
       if (isEnabled(project, e, support)) {
         perform(project, e, support);
@@ -99,9 +99,9 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   protected boolean isHidden(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getProject();
     if (project != null) {
-      for (DebuggerSupport support : XDebuggerSupport.getDebuggerSupports()) {
+      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
         if (!getHandler(support).isHidden(project, event)) {
           return false;
         }

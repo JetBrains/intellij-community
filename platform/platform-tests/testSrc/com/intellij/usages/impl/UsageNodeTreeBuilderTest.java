@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ import javax.swing.*;
  */
 public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   public void testNoGroupingRules() throws Exception {
-    GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, new UsageGroupingRule[] {});
+    GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, UsageGroupingRule.EMPTY_ARRAY);
 
     assertNotNull(groupNode);
     
     assertNull(groupNode.getParent());
 
-    assertEquals("[2, 3, 0]", groupNode.toString());
+    assertEquals("[0, 2, 3]", groupNode.toString());
   }
 
   public void testOneGroupingRuleOnly() throws Exception {
@@ -49,7 +49,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
   public void testNotGroupedItemsComeToEnd() throws Exception {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 0, 1 , 1, 1003, 1002, 1001}, new UsageGroupingRule[] {new OddEvenGroupingRule()});
-    assertEquals("[Even[0, 0], Odd[1, 1, 1], 1003, 1002, 1001]", groupNode.toString());
+    assertEquals("[Even[0, 0], Odd[1, 1, 1], 1001, 1002, 1003]", groupNode.toString());
   }
 
   public void test2Groupings() throws Exception {
@@ -73,7 +73,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
 
-    assertEquals("[Even[1[0, 2], 2[12, 14], 3[102]], Odd[1[1, 3], 2[13, 15], 3[101, 103, 105]], 5[10003, 10001, 10002]]", groupNode.toString());
+    assertEquals("[Even[1[0, 2], 2[12, 14], 3[102]], Odd[1[1, 3], 2[13, 15], 3[101, 103, 105]], 5[10001, 10002, 10003]]", groupNode.toString());
   }
 
   private static Usage createUsage(int index) {
@@ -86,7 +86,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       usages[i] = createUsage(indices[i]);
     }
 
-    UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(new UsageViewPresentation(), new UsageTarget[0]);
+    UsageViewTreeModelBuilder model = new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY);
     GroupNode rootNode = new GroupNode(null, 0, model);
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(UsageTarget.EMPTY_ARRAY, rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
@@ -142,7 +142,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
 
     @Override
-    public int compareTo(UsageGroup o) {
+    public int compareTo(@NotNull UsageGroup o) {
       if (!(o instanceof LogUsageGroup)) return 1;
       return myPower - ((LogUsageGroup)o).myPower;
     }
@@ -197,7 +197,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       }
 
       @Override
-      public int compareTo(UsageGroup o) { return o == ODD ? -1 : 0; }
+      public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
       public String toString() { return getText(null); }
     };
 
@@ -233,7 +233,8 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       }
 
       @Override
-      public int compareTo(UsageGroup o) { return o == EVEN ? 1 : 0; }
+      public int compareTo(@NotNull UsageGroup o) { return o == EVEN ? 1 : 0; }
+      @Override
       public String toString() { return getText(null); }
     };
 

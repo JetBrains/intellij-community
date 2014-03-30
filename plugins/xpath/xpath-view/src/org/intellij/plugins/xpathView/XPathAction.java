@@ -58,13 +58,13 @@ public abstract class XPathAction extends AnAction {
     }
 
     protected boolean isEnabled(AnActionEvent event, boolean checkAvailable) {
-        final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             return false;
         }
 
-        Editor editor = PlatformDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();

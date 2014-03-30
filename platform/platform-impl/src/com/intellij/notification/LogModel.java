@@ -40,6 +40,7 @@ public class LogModel implements Disposable {
 
   private final List<Notification> myNotifications = new ArrayList<Notification>();
   private final Map<Notification, Long> myStamps = Collections.synchronizedMap(new WeakHashMap<Notification, Long>());
+  private final Map<Notification, String> myStatuses = Collections.synchronizedMap(new WeakHashMap<Notification, String>());
   private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
@@ -58,6 +59,7 @@ public class LogModel implements Disposable {
       }
     }
     myStamps.put(notification, stamp);
+    myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
     setStatusMessage(notification, stamp);
     fireModelChanged();
   }
@@ -81,12 +83,12 @@ public class LogModel implements Disposable {
       if (myStatusMessage != null && myStatusMessage.first == statusMessage) return;
       if (myStatusMessage == null && statusMessage == null) return;
 
-      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage, EventLog.formatForLog(statusMessage, "").status, stamp);
+      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage, myStatuses.get(statusMessage), stamp);
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
 
-  @Nullable 
+  @Nullable
   Trinity<Notification, String, Long> getStatusMessage() {
     synchronized (myNotifications) {
       return myStatusMessage;
@@ -140,8 +142,9 @@ public class LogModel implements Disposable {
       }
     });
     if (message == null) {
-      setStatusMessage(message, 0);
-    } else {
+      setStatusMessage(null, 0);
+    }
+    else {
       Long notificationTime = getNotificationTime(message);
       assert notificationTime != null;
       setStatusMessage(message, notificationTime);

@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -59,7 +58,6 @@ import java.util.List;
 public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
   // true is default
   private static final String USE_ANNOTATION_CACHE = "vcs.use.annotation.cache";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
   @NonNls protected static final String ourIntegerPattern = "\\d+";
 
@@ -377,7 +375,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * from revision numbers.
    *
    * @param revisionNumberString the string to be parsed
-   * @param path                 the path for which revsion number is queried
+   * @param path                 the path for which revision number is queried
    * @return the parsed revision number
    */
   @Nullable
@@ -428,11 +426,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   public UnnamedConfigurable getRootConfigurable(VcsDirectoryMapping mapping) {
-    return null;
-  }
-
-  @Nullable
-  public VcsRootChecker getRootChecker() {
     return null;
   }
 
@@ -596,8 +589,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
         }
       }
     };
-    final boolean succeded = VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents");
-    return succeded ? list[0] : null;
+    return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
   }
 
   @Nullable

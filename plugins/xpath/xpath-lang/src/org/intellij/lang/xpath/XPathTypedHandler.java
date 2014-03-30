@@ -34,6 +34,9 @@ public class XPathTypedHandler extends TypedHandlerDelegate {
 
       AutoPopupController.getInstance(editor.getProject()).autoPopupMemberLookup(editor, null);
       return Result.CONTINUE;
+    } else if (charTyped == '.') {
+      if (!(file instanceof XPathFile)) return Result.CONTINUE;
+      return Result.STOP;
     } else {
       return super.checkAutoPopup(charTyped, project, editor, file);
     }

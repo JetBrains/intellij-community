@@ -29,6 +29,10 @@ Groovy script
         Type extends bounds list
           <empty list>
       PsiElement(>)('>')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     PsiWhiteSpace(' ')
     Type definition body
       PsiElement({)('{')

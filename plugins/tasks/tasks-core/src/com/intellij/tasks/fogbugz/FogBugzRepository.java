@@ -17,10 +17,7 @@ package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepositoryType;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.NotNullFunction;
@@ -210,6 +207,12 @@ public class FogBugzRepository extends BaseRepositoryImpl {
       @Override
       public String getIssueUrl() {
         return getUrl() + "/default.asp?" + getId();
+      }
+
+      @Nullable
+      @Override
+      public TaskRepository getRepository() {
+        return FogBugzRepository.this;
       }
     };
   }

@@ -32,18 +32,23 @@ import org.jetbrains.annotations.Nullable;
 
 public class LanguageTextField extends EditorTextField {
   private final Language myLanguage;
+  // Could be null to allow usage in UI designer, as EditorTextField permits
   private final Project myProject;
 
-  public LanguageTextField(Language language, @NotNull Project project, @NotNull String value) {
+  public LanguageTextField() {
+    this(null, null, "");
+  }
+
+  public LanguageTextField(Language language, @Nullable Project project, @NotNull String value) {
     this(language, project, value, true);
   }
 
-  public LanguageTextField(Language language, @NotNull Project project, @NotNull String value, boolean oneLineMode) {
+  public LanguageTextField(Language language, @Nullable Project project, @NotNull String value, boolean oneLineMode) {
     this(language, project, value, new SimpleDocumentCreator(), oneLineMode);
   }
 
   public LanguageTextField(@Nullable Language language,
-                           @NotNull Project project,
+                           @Nullable Project project,
                            @NotNull String value,
                            @NotNull DocumentCreator documentCreator)
   {
@@ -51,7 +56,7 @@ public class LanguageTextField extends EditorTextField {
   }
 
   public LanguageTextField(@Nullable Language language,
-                           @NotNull Project project,
+                           @Nullable Project project,
                            @NotNull String value,
                            @NotNull DocumentCreator documentCreator,
                            boolean oneLineMode) {
@@ -97,6 +102,7 @@ public class LanguageTextField extends EditorTextField {
     }
   }
 
+  @Override
   protected EditorEx createEditor() {
     final EditorEx ex = super.createEditor();
 

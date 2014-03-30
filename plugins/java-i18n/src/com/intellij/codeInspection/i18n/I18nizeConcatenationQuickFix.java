@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiConcatenationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +38,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
   @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
+  @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
@@ -45,6 +46,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     throw new IncorrectOperationException(message);
   }
 
+  @Override
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     PsiLiteralExpression literalExpression = getContainingLiteral(concatenation);
@@ -52,11 +54,13 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     return createDialog(project, psiFile, literalExpression);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return CodeInsightBundle.message("quickfix.i18n.concatentation");
   }
 
+  @Override
   protected PsiElement doReplacementInJava(@NotNull final PsiFile psiFile,
                                            @NotNull final Editor editor,
                                            @Nullable PsiLiteralExpression literalExpression,
@@ -78,32 +82,37 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
     return result.toString();
   }
 
+  @Override
   protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final PsiLiteralExpression literalExpression) {
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
     StringBuilder formatString = new StringBuilder();
     final List<PsiExpression> args = new ArrayList<PsiExpression>();
     try {
-      ConcatenationToMessageFormatAction.buildMessageFormatString(concatenation, formatString, args);
+      PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
 
     return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString.toString(), null, true, true) {
+      @Override
       @Nullable
       protected String getTemplateName() {
         return myResourceBundleManager.getConcatenationTemplateName();
       }
 
+      @Override
       protected String generateText(final I18nizedTextGenerator textGenerator, final String propertyKey, final PropertiesFile propertiesFile,
                                     final PsiLiteralExpression literalExpression) {
         return textGenerator.getI18nizedConcatenationText(propertyKey, composeParametersText(args), propertiesFile, literalExpression);
       }
 
+      @Override
       public PsiExpression[] getParameters() {
         return args.toArray(new PsiExpression[args.size()]);
       }
 
+      @Override
       protected void addAdditionalAttributes(final Map<String, String> attributes) {
         attributes.put(PARAMETERS_OPTION_KEY, composeParametersText(args));
       }

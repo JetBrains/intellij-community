@@ -1,0 +1,21 @@
+<component name="libraryTable">
+  <library name="jsch-agent-proxy">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.usocket-nc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.usocket-jna.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.sshagent.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.pageant.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jsch.agentproxy.connector-factory.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-pageant/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-sshagent/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-usocket-nc/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-usocket-jna/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/jsch-agent-proxy.zip!/jsch-agent-proxy-0.0.6/jsch-agent-proxy-connector-factory/src/main/java" />
+    </SOURCES>
+  </library>
+</component>

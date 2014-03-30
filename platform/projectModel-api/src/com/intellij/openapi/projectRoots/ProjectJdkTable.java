@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EventListener;
@@ -88,9 +89,9 @@ public abstract class ProjectJdkTable {
 
   public abstract SdkTypeId getDefaultSdkType();
 
-  public abstract SdkTypeId getSdkTypeByName(String name);
+  public abstract SdkTypeId getSdkTypeByName(@NotNull String name);
 
   public abstract Sdk createSdk(final String name, final SdkTypeId sdkType);
 
-  public static Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
+  public static final Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
 }

@@ -42,9 +42,5 @@ public abstract class LibraryTablesRegistrar {
 
   public abstract void registerLibraryTable(@NotNull LibraryTable libraryTable);
 
-  @Deprecated
-  @NotNull
-  public abstract LibraryTable registerLibraryTable(@NonNls String customLevel);
-
   public abstract List<LibraryTable> getCustomLibraryTables();
 }

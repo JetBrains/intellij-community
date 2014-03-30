@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class DuplicateMap {
   };
   private final Map<SliceUsage, SliceNode> myDuplicates = new THashMap<SliceUsage, SliceNode>(USAGE_INFO_EQUALITY);
 
-  public SliceNode putNodeCheckDupe(final SliceNode node) {
+  public SliceNode putNodeCheckDupe(@NotNull final SliceNode node) {
     return ApplicationManager.getApplication().runReadAction(new Computable<SliceNode>() {
       @Override
       public SliceNode compute() {

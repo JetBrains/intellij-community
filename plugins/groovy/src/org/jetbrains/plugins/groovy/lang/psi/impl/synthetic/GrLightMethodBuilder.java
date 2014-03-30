@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -56,6 +57,9 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class GrLightMethodBuilder  extends LightElement implements GrMethod, OriginInfoAwareElement {
+
+  public static final Key<String> KIND_KEY = Key.create("GrLightMethodBuilder.Key");
+
   protected String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
@@ -157,7 +161,7 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
   @NotNull
   @Override
   public GrReflectedMethod[] getReflectedMethods() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrReflectedMethod[]>() {
       @Override
       public Result<GrReflectedMethod[]> compute() {
         return Result.create(GrReflectedMethodImpl.createReflectedMethods(GrLightMethodBuilder.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
@@ -366,16 +370,23 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
   public void acceptChildren(GroovyElementVisitor visitor) {
   }
 
+  public static Object getMethodKind(@Nullable PsiElement method) {
+    if (method == null) return null;
+
+    if (method instanceof GrLightMethodBuilder) {
+      return ((GrLightMethodBuilder)method).getMethodKind();
+    }
+
+    return method.getUserData(KIND_KEY);
+  }
+
   public static boolean checkKind(@Nullable PsiElement method, @NotNull Object kind) {
-    return method instanceof GrLightMethodBuilder && kind.equals(((GrLightMethodBuilder)method).myMethodKind);
+    return kind.equals(getMethodKind(method));
   }
 
   public static boolean checkKind(@Nullable PsiElement method, @NotNull Object kind1, @NotNull Object kind2) {
-    if (method instanceof GrLightMethodBuilder) {
-      Object kind = ((GrLightMethodBuilder)method).getMethodKind();
-      return kind1.equals(kind) || kind2.equals(kind);
-    }
-    return false;
+    Object kind = getMethodKind(method);
+    return kind1.equals(kind) || kind2.equals(kind);
   }
 
   @Override
@@ -434,11 +445,6 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
     return getContainingFile();
   }
 
-  @Override
-  public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
-  }
-
   protected void copyData(GrLightMethodBuilder dst) {
     dst.setMethodKind(myMethodKind);
     dst.setData(myData);
@@ -449,7 +455,7 @@ public class GrLightMethodBuilder  extends LightElement implements GrMethod, Ori
     dst.setBaseIcon(myBaseIcon);
     dst.setReturnType(myReturnType);
     dst.setContainingClass(myContainingClass);
-    
+
     dst.getModifierList().copyModifiers(this);
 
     dst.getParameterList().clear();

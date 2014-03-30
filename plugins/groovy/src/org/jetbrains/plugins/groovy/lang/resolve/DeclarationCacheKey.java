@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ class DeclarationCacheKey {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
         result.add(collectScopeDeclarations(scope, lastParent));
-        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
+        if (nonCode && scope instanceof GrClosableBlock) return false; //closures tree walk up themselves if non code declarataions are acepted
         return true;
       }
     });
@@ -139,8 +139,7 @@ class DeclarationCacheKey {
   }
 
   private List<DeclarationHolder> getAllDeclarations(PsiElement place) {
-    ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache =
-      CachedValuesManager.getManager(place.getProject()).getCachedValue(place, VALUE_PROVIDER);
+    ConcurrentMap<DeclarationCacheKey, List<DeclarationHolder>> cache = CachedValuesManager.getCachedValue(place, VALUE_PROVIDER);
     List<DeclarationHolder> declarations = cache.get(this);
     if (declarations == null) {
       declarations = collectDeclarations(place);
@@ -202,7 +201,7 @@ class DeclarationCacheKey {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       declarations.add(Pair.create(element, state));
       return true;
     }

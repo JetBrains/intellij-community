@@ -16,23 +16,21 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
+import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
  * @author max
@@ -40,21 +38,33 @@ import javax.swing.*;
 public class ProblemDescriptionNode extends InspectionTreeNode {
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
-  protected final DescriptorProviderInspection myTool;
+  protected final InspectionToolWrapper myToolWrapper;
+  @NotNull
+  protected final InspectionToolPresentation myPresentation;
 
-  public ProblemDescriptionNode(final Object userObject, final DescriptorProviderInspection tool) {
-    super(userObject);
-    myTool = tool;
-    myDescriptor = null;
+  public ProblemDescriptionNode(@NotNull Object userObject,
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    this(userObject, null, null, toolWrapper, presentation);
   }
 
-  public ProblemDescriptionNode(RefEntity element,
+  public ProblemDescriptionNode(@NotNull RefEntity element,
+                                @NotNull CommonProblemDescriptor descriptor,
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    this(descriptor, element, descriptor, toolWrapper, presentation);
+  }
+
+  private ProblemDescriptionNode(@NotNull Object userObject,
+                                RefEntity element,
                                 CommonProblemDescriptor descriptor,
-                                DescriptorProviderInspection descriptorProviderInspection) {
-    super(descriptor);
+                                @NotNull InspectionToolWrapper toolWrapper,
+                                @NotNull InspectionToolPresentation presentation) {
+    super(userObject);
     myElement = element;
     myDescriptor = descriptor;
-    myTool = descriptorProviderInspection;
+    myToolWrapper = toolWrapper;
+    myPresentation = presentation;
   }
 
   @Nullable
@@ -67,19 +77,22 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return myDescriptor;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
-    if (myDescriptor instanceof ProblemDescriptorImpl) {
-      ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
+    if (myDescriptor instanceof ProblemDescriptorBase) {
+      ProblemHighlightType problemHighlightType = ((ProblemDescriptorBase)myDescriptor).getHighlightType();
       if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.General.Error;
       if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.General.Warning;
     }
     return AllIcons.General.Information;
   }
 
+  @Override
   public int getProblemCount() {
     return 1;
   }
 
+  @Override
   public boolean isValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
@@ -91,21 +104,32 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
 
+  @Override
   public boolean isResolved() {
-    return myElement instanceof RefElement && myTool.isProblemResolved(myElement, getDescriptor());
+    return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
   }
 
+  @Override
   public void ignoreElement() {
-    myTool.ignoreCurrentElementProblem(getElement(), getDescriptor());
+    InspectionToolPresentation presentation = getPresentation();
+    presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
   }
 
+  @Override
   public void amnesty() {
-    myTool.amnesty(getElement());
+    InspectionToolPresentation presentation = getPresentation();
+    presentation.amnesty(getElement());
   }
 
+  @NotNull
+  private InspectionToolPresentation getPresentation() {
+    return myPresentation;
+  }
+
+  @Override
   public FileStatus getNodeStatus() {
     if (myElement instanceof RefElement){
-      return myTool.getProblemStatus(myDescriptor);
+      return getPresentation().getProblemStatus(myDescriptor);
     }
     return FileStatus.NOT_CHANGED;
   }
@@ -115,62 +139,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return renderDescriptionMessage(descriptor, element, true)/*.replaceAll("<[^>]*>", "")*/;
-  }
-
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
-    return renderDescriptionMessage(descriptor, element, false);
-  }
-
-  @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element, boolean appendLineNumber) {
-    String message = descriptor.getDescriptionTemplate();
-
-    // no message. Should not be the case if inspection correctly implemented.
-    // noinspection ConstantConditions
-    if (message == null) return "";
-
-    if (appendLineNumber && descriptor instanceof ProblemDescriptor && !message.contains("#ref") && message.contains("#loc")) {
-      final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
-      if (lineNumber >= 0) {
-        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
-      }
-    }
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
-    message = StringUtil.replace(message, "#loc ", "");
-    message = StringUtil.replace(message, " #loc", "");
-    message = StringUtil.replace(message, "#loc", "");
-    if (message.contains("#ref")) {
-      String ref = extractHighlightedText(descriptor, element);
-      message = StringUtil.replace(message, "#ref", ref);
-    }
-
-    final int endIndex = message.indexOf("#end");
-    if (endIndex > 0) {
-      message = message.substring(0, endIndex);
-    }
-
-    message = StringUtil.unescapeXml(message).trim();
-    return message;
-  }
-
-  public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, PsiElement psiElement) {
-    if (psiElement == null || !psiElement.isValid()) return "";
-    String ref = psiElement.getText();
-    if (descriptor instanceof ProblemDescriptorImpl) {
-      TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
-      final TextRange elementRange = psiElement.getTextRange();
-      if (textRange != null && elementRange != null) {
-        textRange = textRange.shiftRight(-elementRange.getStartOffset());
-        if (textRange.getStartOffset() >= 0 && textRange.getEndOffset() <= elementRange.getLength()) {
-          ref = textRange.substring(ref);
-        }
-      }
-    }
-    ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
-    ref = StringUtil.first(ref, 100, true);
-    return ref;
+    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
+                                                                                  APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
   }
 }

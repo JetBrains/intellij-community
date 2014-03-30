@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,22 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.TextTransferable;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.datatransfer.Transferable;
 import java.util.List;
 
 /**
@@ -43,17 +49,43 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        final int width = new JCheckBox().getPreferredSize().width;
-        column.setWidth(width);
-        column.setPreferredWidth(width);
-        column.setMaxWidth(width);
-        column.setMinWidth(width);
+        TableUtil.setupCheckboxColumn(column);
       }
     }
 
     setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     setShowGrid(false);
     setStriped(true);
+    this.setTableHeader(null);
+    setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final IdeaPluginDescriptor[] selectedValues = getSelectedObjects();
+        if (selectedValues == null) return null;
+        final String text = StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor descriptor) {
+            return descriptor.getName();
+          }
+        }, ", ");
+        final String htmlText = "<body>\n<ul>\n" + StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
+          @Override
+          public String fun(IdeaPluginDescriptor descriptor) {
+            return descriptor.getName();
+          }
+        }, "</li>\n<li>") + "</ul>\n</body>\n";
+        return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
+    if (model.getColumnCount() > 1) {
+      setColumnWidth(1, new JCheckBox().getPreferredSize().width + 4);
+    }
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {

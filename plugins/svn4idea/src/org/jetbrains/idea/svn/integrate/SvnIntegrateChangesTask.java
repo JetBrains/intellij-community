@@ -147,6 +147,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       myMerger.mergeNext();
     } catch (SVNException e) {
       createMessage(true, false, e.getMessage());
+    } catch (VcsException e) {
+      createMessage(true, false, e.getMessage());
     }
   }
 
@@ -215,7 +217,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private void finishActions(final boolean wasCanceled) {
     if (! wasCanceled) {
-      if ((! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
+      if (! ApplicationManager.getApplication().isUnitTestMode() &&
+          (! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
           ((! myAccomulatedFiles.isEmpty()) || (myMergeTarget != null))) {
         if (myInfo.isUnderProjectRoot()) {
           showLocalCommit();
@@ -328,7 +331,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     final SvnChangeProvider provider = new SvnChangeProvider(myVcs);
-    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myProject, myAccomulatedFiles, myMergeTarget == null ? null : myMergeTarget.getVirtualFile());
+    final GatheringChangelistBuilder clb = new GatheringChangelistBuilder(myVcs, myAccomulatedFiles);
     try {
       provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator(), null);
     } catch (VcsException e) {

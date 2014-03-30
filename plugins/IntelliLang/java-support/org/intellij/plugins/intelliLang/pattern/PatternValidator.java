@@ -33,6 +33,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -69,20 +70,24 @@ public class PatternValidator extends LocalInspectionTool {
     myConfiguration = Configuration.getInstance();
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PATTERN_VALIDATION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Validate Annotated Patterns";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel jPanel = new JPanel(new BorderLayout());
@@ -91,6 +96,7 @@ public class PatternValidator extends LocalInspectionTool {
         "If checked, the inspection will flag expressions with unknown values " + "and offer to add a substitution (@Subst) annotation");
     jCheckBox.setSelected(CHECK_NON_CONSTANT_VALUES);
     jCheckBox.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         CHECK_NON_CONSTANT_VALUES = jCheckBox.isSelected();
       }
@@ -99,16 +105,19 @@ public class PatternValidator extends LocalInspectionTool {
     return jPanel;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "PatternValidation";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
+      @Override
       public final void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
       }
@@ -203,6 +212,7 @@ public class PatternValidator extends LocalInspectionTool {
     CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
     if (p == null) {
       final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
+        @Override
         public Result<Pattern> compute() {
           final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
           Pattern p = null;
@@ -285,21 +295,25 @@ public class PatternValidator extends LocalInspectionTool {
       myExpr = expr;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Introduce Variable";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
       final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-      dataContextContainer.doWhenDone(new AsyncResult.Handler<DataContext>() {
-        public void run(DataContext dataContext) {
+      dataContextContainer.doWhenDone(new Consumer<DataContext>() {
+        @Override
+        public void consume(DataContext dataContext) {
           handler.invoke(project, new PsiElement[]{myExpr}, dataContext);
         }
       });

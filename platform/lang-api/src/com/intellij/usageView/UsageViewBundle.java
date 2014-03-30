@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.usageView;
 
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -28,8 +29,12 @@ import java.util.ResourceBundle;
  * @author yole
  */
 public class UsageViewBundle {
-  private static Reference<ResourceBundle> ourBundle;
 
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return CommonBundle.message(getBundle(), key, params);
+  }
+
+  private static Reference<ResourceBundle> ourBundle;
   @NonNls private static final String BUNDLE = "messages.UsageView";
 
   private UsageViewBundle() {
@@ -50,13 +55,8 @@ public class UsageViewBundle {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
   }
 
-  public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+  public static ResourceBundle getBundle() {
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);

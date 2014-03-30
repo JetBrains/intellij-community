@@ -16,12 +16,14 @@
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Bitness;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
@@ -43,20 +45,41 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
 
   @Nullable
   public String detectJdkVersion(String homePath, final ActionRunner actionRunner) {
+    JdkVersionInfo info = detectJdkVersionInfo(homePath, actionRunner);
+    if (info != null) {
+      return info.getVersion();
+    }
+    return null;
+  }
+
+  @Override
+  public JdkVersionInfo detectJdkVersionInfo(String homePath) {
+    return detectJdkVersionInfo(homePath, ACTION_RUNNER);
+  }
+
+  @Override
+  public JdkVersionInfo detectJdkVersionInfo(String homePath, ActionRunner actionRunner) {
     String[] command = {homePath + File.separator + "bin" + File.separator + "java", "-version"};
-    return readVersionFromProcessOutput(homePath, command, "version", actionRunner);
+    return readVersionInfoFromProcessOutput(homePath, command, null, actionRunner);
   }
 
   public String readVersionFromProcessOutput(String homePath, String[] command, String versionLineMarker,
-                                                    ActionRunner actionRunner) {
+                                             ActionRunner actionRunner) {
+    JdkVersionInfo info = readVersionInfoFromProcessOutput(homePath, command, versionLineMarker, actionRunner);
+    if (info != null) {
+      return info.getVersion();
+    }
+    return null;
+  }
+
+  private static JdkVersionInfo readVersionInfoFromProcessOutput(String homePath, String[] command, String versionLineMarker, ActionRunner actionRunner) {
     if (homePath == null || !new File(homePath).exists()) {
       return null;
     }
-    final String[] versionString = new String[1];
     try {
       //noinspection HardCodedStringLiteral
       Process process = Runtime.getRuntime().exec(command);
-      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString, versionLineMarker);
+      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionLineMarker);
       final Future<?> parsingThreadFuture = actionRunner.run(parsingThread);
       ReadStreamThread readThread = new ReadStreamThread(process.getInputStream());
       actionRunner.run(readThread);
@@ -78,11 +101,15 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           LOG.info(e);
         }
       }
+      String version = parsingThread.getVersion();
+      if (version != null) {
+        return new JdkVersionInfo(version, parsingThread.getBitness());
+      }
     }
     catch (IOException ex) {
       LOG.info(ex);
     }
-    return versionString[0];
+    return null;
   }
 
   public static class ReadStreamThread implements Runnable {
@@ -109,13 +136,24 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     private Reader myReader;
     private final InputStream myStream;
     private boolean mySkipLF = false;
-    private final String[] myVersionString;
     private final String myVersionLineMarker;
 
-    protected VersionParsingThread(InputStream input, String[] versionString, String versionLineMarker) {
+    private final AtomicReference<String> myVersionString = new AtomicReference<String>();
+    private final AtomicReference<Bitness> myBitness = new AtomicReference<Bitness>(Bitness.x32);
+    private static final String VERSION_LINE_MARKER = "version";
+    private static final String BITNESS_64_MARKER = "64-Bit";
+
+    protected VersionParsingThread(InputStream input, String versionLineMarker) {
       myStream = input;
-      myVersionString = versionString;
-      myVersionLineMarker = versionLineMarker;
+      myVersionLineMarker = versionLineMarker != null ? versionLineMarker : VERSION_LINE_MARKER;
+    }
+
+    Bitness getBitness() {
+      return myBitness.get();
+    }
+
+    String getVersion() {
+      return myVersionString.get();
     }
 
     public void run() {
@@ -125,7 +163,10 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           String line = readLine();
           if (line == null) return;
           if (line.contains(myVersionLineMarker)) {
-            myVersionString[0] = line;
+            myVersionString.set(line);
+          }
+          if (line.contains(BITNESS_64_MARKER)) {
+            myBitness.set(Bitness.x64);
           }
         }
       }

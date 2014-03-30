@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
                                               final InspectionProjectProfileManager profileManager) {
     super(project);
     // can run in the same time with LIP, but should start after it, since I believe whole-file inspections would run longer
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, -1);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.LOCAL_INSPECTIONS}, true, Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     myProfileManager = profileManager;
   }
 
@@ -76,7 +76,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       }
 
       @Override
-      public void profileActivated(Profile oldProfile, Profile profile) {
+      public void profileActivated(@NotNull Profile oldProfile, Profile profile) {
         myFileTools.clear();
       }
     };
@@ -99,7 +99,8 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       return null;
     }
 
-    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true) {
+    return new LocalInspectionsPass(file, editor.getDocument(), 0, file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+                                    new DefaultHighlightInfoProcessor()) {
       @NotNull
       @Override
       List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
@@ -122,7 +123,9 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
                               boolean onTheFly,
                               @NotNull ProgressIndicator indicator,
                               @NotNull InspectionManagerEx iManager,
-                              boolean inVisibleRange, boolean checkDumbAwareness, List<LocalInspectionToolWrapper> wrappers) {
+                              boolean inVisibleRange,
+                              boolean checkDumbAwareness,
+                              @NotNull List<LocalInspectionToolWrapper> wrappers) {
         // already inspected in LIP
       }
     };

@@ -79,7 +79,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          return myEnabled && !isUrlInserted();
+          return myEnabled;
         }
       });
       toolbarDecorator.addExtraAction(specifyUrlButton);

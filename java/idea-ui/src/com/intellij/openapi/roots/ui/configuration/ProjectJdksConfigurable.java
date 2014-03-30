@@ -172,7 +172,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
       }
     });
     actions.add(new MyActionGroupWrapper(group));
-    actions.add(new MyDeleteAction(forAll(Conditions.alwaysTrue())));
+    actions.add(new MyDeleteAction(Conditions.<Object[]>alwaysTrue()));
     return actions;
   }
 

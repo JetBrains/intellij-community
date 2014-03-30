@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class CreateConstructorParameterFromFieldTest extends LightQuickFixTestCase {
+public class CreateConstructorParameterFromFieldTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

@@ -90,7 +90,7 @@ public class ReplacePromptDialog extends DialogWrapper {
     }
     JLabel label = new JLabel(getMessage());
     label.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 10));
-    label.setForeground(JBColor.foreground);
+    label.setForeground(JBColor.foreground());
     panel.add(label, BorderLayout.CENTER);
     return panel;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,20 +66,22 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (fileNames == null || fileNames.isEmpty()) {
       return;
     }
-    navigate(method, point, fileNames);
+    navigate(point, fileNames, method.getProject());
   }
   
-  public static void navigate(@NotNull PsiMethod method, @NotNull final RelativePoint point, @NotNull List<String> testDataFiles) {
+  public static void navigate(@NotNull final RelativePoint point,
+                              @NotNull List<String> testDataFiles, 
+                              final Project project) {
     if (testDataFiles.size() == 1) {
-      openFileByIndex(method.getProject(), testDataFiles, 0);
+      openFileByIndex(project, testDataFiles, 0);
     }
     else if (testDataFiles.size() > 1) {
       TestDataGroupVirtualFile groupFile = getTestDataGroup(testDataFiles);
       if (groupFile != null) {
-        new OpenFileDescriptor(method.getProject(), groupFile).navigate(true);
+        new OpenFileDescriptor(project, groupFile).navigate(true);
       }
       else {
-        showNavigationPopup(method.getProject(), testDataFiles, point);
+        showNavigationPopup(project, testDataFiles, point);
       }
     }
   }
@@ -108,7 +110,11 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     List<String> listPaths = new ArrayList<String>(fileNames);
     final String CREATE_MISSING_OPTION = "Create Missing Files";
     if (fileNames.size() == 2) {
-      listPaths.add(CREATE_MISSING_OPTION);
+      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
+      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(1));
+      if (file1 == null || file2 == null) {
+        listPaths.add(CREATE_MISSING_OPTION);
+      }
     }
     final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
     list.setCellRenderer(new ColoredListCellRenderer() {
@@ -160,7 +166,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     else {
       int rc = Messages.showYesNoDialog(project, "The referenced testdata file " + path + " does not exist. Would you like to create it?",
                                         "Create Testdata File", Messages.getQuestionIcon());
-      if (rc == 0) {
+      if (rc == Messages.YES) {
         VirtualFile vFile = createFileByName(project, path);
         new OpenFileDescriptor(project, vFile).navigate(true);
       }

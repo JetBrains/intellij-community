@@ -21,6 +21,14 @@ public class BooleanMethodInvertedTest extends IGInspectionTestCase {
     doTest();
   }
 
+  public void testAlwaysInvertedDelegation() throws Exception {
+    doTest();
+  }
+
+  public void testAlwaysInvertedOneUsage() throws Exception {
+    doTest();
+  }
+
   public void testAlwaysInvertedByRange() throws Exception {
     doTest(true);
   }

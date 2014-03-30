@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,16 +72,19 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
     });
   }
 
+  @Override
   public Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
+  @Override
   public EditorNotificationPanel createNotificationPanel(final VirtualFile file, FileEditor fileEditor) {
     if (file.getFileType() != JavaClassFileType.INSTANCE) return null;
     final List<LibraryOrderEntry> libraries = findOrderEntriesContainingFile(file);
@@ -129,6 +132,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
 
     Collections.sort(actions, new Comparator<AttachSourcesProvider.AttachSourcesAction>() {
+      @Override
       public int compare(AttachSourcesProvider.AttachSourcesAction o1, AttachSourcesProvider.AttachSourcesAction o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -138,6 +142,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
     for (final AttachSourcesProvider.AttachSourcesAction each : actions) {
       panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(each.getName()), new Runnable() {
+        @Override
         public void run() {
           if (!Comparing.equal(libraries, findOrderEntriesContainingFile(file))) {
             Messages.showErrorDialog(myProject, "Cannot find library for " + StringUtil.getShortName(fqn), "Error");
@@ -147,8 +152,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           panel.setText(each.getBusyText());
 
           Runnable onFinish = new Runnable() {
+            @Override
             public void run() {
               SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   panel.setText(ProjectBundle.message("library.sources.not.found"));
                 }
@@ -178,6 +185,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   private static void appendSources(final Library library, final VirtualFile[] files) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         Library.ModifiableModel model = library.getModifiableModel();
         for (VirtualFile virtualFile : files) {
@@ -207,10 +215,12 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       myClassFile = classFile;
     }
 
+    @Override
     public String getName() {
       return ProjectBundle.message("module.libraries.attach.sources.immediately.button");
     }
 
+    @Override
     public String getBusyText() {
       return ProjectBundle.message("library.attach.sources.action.busy.text");
     }
@@ -229,6 +239,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       }
       if (modelsToCommit.isEmpty()) return new ActionCallback.Rejected();
       new WriteAction() {
+        @Override
         protected void run(final Result result) {
           for (Library.ModifiableModel model : modelsToCommit) {
             model.commit();
@@ -259,14 +270,17 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
       myParentComponent = parentComponent;
     }
 
+    @Override
     public String getName() {
       return ProjectBundle.message("module.libraries.attach.sources.button");
     }
 
+    @Override
     public String getBusyText() {
       return ProjectBundle.message("library.attach.sources.action.busy.text");
     }
 
+    @Override
     public ActionCallback perform(final List<LibraryOrderEntry> libraries) {
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
       descriptor.setTitle(ProjectBundle.message("library.attach.sources.action"));

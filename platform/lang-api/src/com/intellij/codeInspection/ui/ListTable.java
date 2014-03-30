@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.ui.table.JBTable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -47,11 +48,13 @@ public class ListTable extends JBTable {
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
+    @Override
     public ListWrappingTableModel getModel() {
         return (ListWrappingTableModel) super.getModel();
     }
 
-    public void setModel(TableModel dataModel) {
+    @Override
+    public void setModel(@NotNull TableModel dataModel) {
         if (!(dataModel instanceof ListWrappingTableModel)) {
             throw new IllegalArgumentException(
                     "dataModel should be of type ListWrappingTableModel");
@@ -59,6 +62,7 @@ public class ListTable extends JBTable {
         super.setModel(dataModel);
     }
 
+    @Override
     public Component prepareRenderer(TableCellRenderer renderer, int row,
                                      int column) {
         final Component component =

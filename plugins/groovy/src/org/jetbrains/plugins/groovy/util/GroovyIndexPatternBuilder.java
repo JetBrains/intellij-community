@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.IndexPatternBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -30,14 +31,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * Date: 16.07.2008
  */
 public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
-    public Lexer getIndexingLexer(PsiFile file) {
+    public Lexer getIndexingLexer(@NotNull PsiFile file) {
         if (file instanceof GroovyFile) {
             return new GroovyLexer();
         }
         return null;
     }
 
-    public TokenSet getCommentTokenSet(PsiFile file) {
+    public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
       return TokenSets.ALL_COMMENT_TOKENS;
     }
 

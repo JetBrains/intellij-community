@@ -25,13 +25,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.List;
 
@@ -71,6 +71,7 @@ class FilterDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void doOKAction() {
 
     // Validate filter name
@@ -107,19 +108,23 @@ class FilterDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("reference.idesettings.todo.editfilter");
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     JLabel nameLabel = new JLabel(IdeBundle.message("label.todo.filter.name"));
@@ -138,13 +143,7 @@ class FilterDialog extends DialogWrapper {
                       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     // Column "Available"
-
-    int width = new JCheckBox().getPreferredSize().width;
-    TableColumn availableColumn = myTable.getColumnModel().getColumn(0);
-    availableColumn.setPreferredWidth(width);
-    availableColumn.setMaxWidth(width);
-    availableColumn.setMinWidth(width);
-
+    TableUtil.setupCheckboxColumn(myTable, 0);
     //
 
     panel.add(patternsPanel,
@@ -157,22 +156,27 @@ class FilterDialog extends DialogWrapper {
     private final String[] ourColumnNames = new String[]{" ", IdeBundle.message("column.todo.filter.pattern"), };
     private final Class[] ourColumnClasses = new Class[]{Boolean.class, String.class};
 
+    @Override
     public String getColumnName(int column) {
       return ourColumnNames[column];
     }
 
+    @Override
     public Class getColumnClass(int column) {
       return ourColumnClasses[column];
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myPatterns.size();
     }
 
+    @Override
     public Object getValueAt(int row, int column) {
       TodoPattern pattern = myPatterns.get(row);
       switch (column) {
@@ -187,6 +191,7 @@ class FilterDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object value, int row, int column) {
       switch (column) {
         case 0:
@@ -203,6 +208,7 @@ class FilterDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public boolean isCellEditable(int row, int column) {
       return column == 0;
     }

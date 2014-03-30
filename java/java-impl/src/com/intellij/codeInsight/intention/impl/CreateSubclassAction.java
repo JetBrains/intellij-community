@@ -245,13 +245,13 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
-        final TemplateBuilderImpl templateBuilder = editor != null && !ApplicationManager.getApplication().isUnitTestMode() 
+        final TemplateBuilderImpl templateBuilder = editor != null
                    ? (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(targetClass) : null;
-        
+
         if (includeClassName && templateBuilder != null) {
           templateBuilder.replaceElement(targetClass.getNameIdentifier(), targetClass.getName());
         }
-        
+
         if (oldTypeParameterList != null) {
           for (PsiTypeParameter parameter : oldTypeParameterList.getTypeParameters()) {
             final PsiElement param = ref.getParameterList().add(elementFactory.createTypeElement(elementFactory.createType(parameter)));
@@ -273,11 +273,14 @@ public class CreateSubclassAction extends BaseIntentionAction {
 
           final TextRange textRange = targetClass.getTextRange();
           final RangeMarker startClassOffset = editor.getDocument().createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+          startClassOffset.setGreedyToLeft(true);
+          startClassOffset.setGreedyToRight(true);
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
               try {
+                LOG.assertTrue(startClassOffset.isValid(), startClassOffset);
                 final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
                 final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
                 LOG.assertTrue(aTargetClass != null, psiElement);
@@ -315,13 +318,15 @@ public class CreateSubclassAction extends BaseIntentionAction {
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
       final List<PsiMethodMember> baseConstructors = new ArrayList<PsiMethodMember>();
       for (PsiMethod baseConstr : constructors) {
-        if (PsiUtil.isAccessible(baseConstr, targetClass, targetClass)) {
+        if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
           baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
         }
       }
+      final int offset = editor.getCaretModel().getOffset();
       CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
                                                                    substitutor,
                                                                    baseConstructors, constructors, targetClass);
+      editor.getCaretModel().moveToOffset(offset);
     }
 
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass);

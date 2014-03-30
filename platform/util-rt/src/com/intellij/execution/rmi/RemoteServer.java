@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.rmi;
 
+import com.intellij.execution.rmi.ssl.SslSocketFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Context;
@@ -28,16 +29,23 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.Security;
 import java.util.Hashtable;
 import java.util.Random;
 
 public class RemoteServer {
+  static {
+    // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
+    System.setProperty("apple.awt.UIElement", "true");
+  }
+
   private static Remote ourRemote;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote) throws Exception {
     setupRMI();
     banJNDI();
+    setupSSL();
 
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
@@ -96,6 +104,12 @@ public class RemoteServer {
     }
   }
 
+  public static void setupSSL() {
+    if (System.getProperty(SslSocketFactory.SSL_CA_CERT_PATH) != null) {
+      Security.setProperty("ssl.SocketFactory.provider", "com.intellij.execution.rmi.ssl.SslSocketFactory");
+    }
+  }
+
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
     @Override
@@ -106,7 +120,10 @@ public class RemoteServer {
     @Nullable
     @Override
     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-      return null;
+      if (Object.class.equals(method.getDeclaringClass())) {
+        return method.invoke(this, args);
+      }
+      throw new NamingException("JNDI service is disabled");
     }
   }
 }

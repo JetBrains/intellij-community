@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -33,10 +34,10 @@ import java.util.List;
 
 public class ParameterInfoImpl implements JavaParameterInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
+
   public int oldParameterIndex;
-  boolean useAnySingleVariable;
+  private boolean useAnySingleVariable;
   private String name = "";
-  public static final ParameterInfoImpl[] EMPTY_ARRAY = new ParameterInfoImpl[0];
 
   private CanonicalTypes.Type myType;
   String defaultValue = "";
@@ -156,7 +157,9 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
-    return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+    final PsiExpression expression =
+      JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
   }
 
   public boolean isUseAnySingleVariable() {

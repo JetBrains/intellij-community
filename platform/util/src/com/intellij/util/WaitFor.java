@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,10 @@ public abstract class WaitFor {
   /** Non-blocking call */
   public WaitFor(final int timeoutMsecs, final Runnable toRunOnTrue) {
     new Thread(WAIT_FOR_THREAD_NAME) {
+      @Override
       public void run() {
         myConditionRealized = new WaitFor(timeoutMsecs) {
+          @Override
           protected boolean condition() {
             return WaitFor.this.condition();
           }

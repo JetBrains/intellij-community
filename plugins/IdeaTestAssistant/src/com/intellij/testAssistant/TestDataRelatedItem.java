@@ -53,6 +53,7 @@ public class TestDataRelatedItem extends GotoRelatedItem{
 
   @Override
   public void navigate() {
-    TestDataNavigationHandler.navigate(myMethod, JBPopupFactory.getInstance().guessBestPopupLocation(myEditor), myTestDataFiles);
+    TestDataNavigationHandler.navigate(JBPopupFactory.getInstance().guessBestPopupLocation(myEditor), myTestDataFiles,
+                                       myMethod.getProject());
   }
 }

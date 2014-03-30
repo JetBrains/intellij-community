@@ -35,10 +35,10 @@ public class DevelopPluginsAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
     try {
       if (new File(PLUGIN_URL).isFile()) {
-        BrowserUtil.launchBrowser(PLUGIN_URL);
+        BrowserUtil.browse(PLUGIN_URL);
       }
       else {
-        BrowserUtil.launchBrowser(PLUGIN_WEBSITE);
+        BrowserUtil.browse(PLUGIN_WEBSITE);
       }
     }
     catch(IllegalStateException ex) {

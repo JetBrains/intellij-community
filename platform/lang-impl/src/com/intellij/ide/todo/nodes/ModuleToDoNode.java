@@ -50,6 +50,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
@@ -79,6 +80,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     return myBuilder.getTodoTreeStructure();
   }
 
+  @Override
   public void update(PresentationData presentation) {
     String newName = getValue().getName();
     int nameEndOffset = newName.length();
@@ -101,14 +103,17 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     presentation.setPresentableText(newName);
   }
 
+  @Override
   public String getTestPresentation() {
     return "Module";
   }
 
+  @Override
   public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 
+  @Override
   public int getFileCount(Module module) {
     Iterator<PsiFile> iterator = myBuilder.getFiles(module);
     int count = 0;
@@ -121,12 +126,14 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     return count;
   }
 
+  @Override
   public int getTodoItemCount(final Module val) {
     Iterator<PsiFile> iterator = myBuilder.getFiles(val);
     int count = 0;
     while (iterator.hasNext()) {
       final PsiFile psiFile = iterator.next();
       count += ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+        @Override
         public Integer compute() {
           return getTreeStructure().getTodoItemCount(psiFile);
         }

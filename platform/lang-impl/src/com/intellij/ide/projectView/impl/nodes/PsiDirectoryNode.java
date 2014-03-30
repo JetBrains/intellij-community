@@ -32,11 +32,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableWithText;
@@ -59,9 +62,9 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   public PsiDirectoryNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
-  
+
   protected boolean shouldShowModuleName() {
-    return !PlatformUtils.isAppCode();
+    return !PlatformUtils.isCidr();
   }
 
   @Override
@@ -97,12 +100,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           final String location = FileUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl());
           data.addText(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
-        else if (ProjectRootsUtil.isSourceOrTestRoot(directoryFile, project)) {
-          if (ProjectRootsUtil.isInTestSource(directoryFile, project)) {
-            data.addText(" (test source root)", SimpleTextAttributes.GRAY_ATTRIBUTES);
-          }
-          else {
-            data.addText(" (source root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+        else {
+          SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(directoryFile, project);
+          if (sourceRoot != null) {
+            String rootTypeName = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType()).getRootTypeName();
+            data.addText(" (" + rootTypeName.toLowerCase() + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
           }
         }
 
@@ -208,7 +210,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
     return file != null && ((ProjectRootsUtil.isModuleContentRoot(file, project) && service.canOpenModuleSettings()) ||
-                            (ProjectRootsUtil.isSourceOrTestRoot(file, project)  && service.canOpenContentEntriesSettings()) ||
+                            (ProjectRootsUtil.isModuleSourceRoot(file, project)  && service.canOpenContentEntriesSettings()) ||
                             (ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings()));
   }
 
@@ -244,9 +246,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     VirtualFile file = getVirtualFile();
     Project project = getProject();
 
-    if (file != null) {
-      if (ProjectRootsUtil.isModuleContentRoot(file, project) ||
-          ProjectRootsUtil.isSourceOrTestRoot(file, project)) {
+    if (file != null && project != null) {
+      if (ProjectRootsUtil.isModuleContentRoot(file, project) || ProjectRootsUtil.isModuleSourceRoot(file, project)) {
         return "Open Module Settings";
       }
       if (ProjectRootsUtil.isLibraryRoot(file, project)) {
@@ -290,7 +291,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       icon = LayeredIcon.create(icon, PlatformIcons.LOCKED_ICON);
     }
 
-    if (file.isSymLink()) {
+    if (file.is(VFileProperty.SYMLINK)) {
       icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
     }
 

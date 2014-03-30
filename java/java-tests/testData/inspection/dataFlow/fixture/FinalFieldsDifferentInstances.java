@@ -1,4 +1,4 @@
-public class BrokenAlignment {
+class BrokenAlignment {
 
   private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
     if (request.myToWatchRecursively) {

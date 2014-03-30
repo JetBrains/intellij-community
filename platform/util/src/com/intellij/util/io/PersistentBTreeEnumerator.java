@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private boolean myExternalKeysNoMapping;
 
   private static final int DIRTY_MAGIC = 0xbabe1977;
-  private static final int VERSION = 6 + IntToIntBtree.version();
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
-  @NotNull private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  private static final int VERSION = 7 + IntToIntBtree.version();
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd + VERSION + PAGE_SIZE;
+  @NotNull private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -79,7 +79,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             initialSize,
             lockContext,
             VALUE_PAGE_SIZE,
-            true
+            true,
+            IOUtil.ourByteBuffersUseNativeByteOrder
           ),
           dataDescriptor,
           initialSize,
@@ -179,9 +180,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return pageStart;
   }
 
+  @Override
   public boolean processAllDataObject(@NotNull final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
     if(myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
+        @Override
         public boolean process(final int record) throws IOException {
           if (filter == null || filter.accept(record)) {
             Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
@@ -199,6 +202,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     try {
       lockStorage();
       return btree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+        @Override
         public boolean process(int key, int value) throws IOException {
           p.setCurrentKey(key);
 
@@ -226,13 +230,18 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
   }
 
+  protected int addrToIndex(int addr) {
+    assert myExternalKeysNoMapping;
+    return addr + KEY_SHIFT;
+  }
+
   @Override
   protected int indexToAddr(int idx) {
     if (myExternalKeysNoMapping) {
       IntToIntBtree.myAssert(idx > 0);
       return idx - KEY_SHIFT;
     }
-    
+
     int anInt = myStorage.getInt(idx);
     if (IntToIntBtree.doSanityCheck) {
       IntToIntBtree.myAssert(anInt >= 0 || myDataDescriptor instanceof InlineKeyDescriptor);
@@ -242,7 +251,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int setupValueId(int hashCode, int dataOff) {
-    if (myExternalKeysNoMapping) return dataOff + KEY_SHIFT;
+    if (myExternalKeysNoMapping) return addrToIndex(dataOff);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = getRecordHandler();
     final byte[] buf = recordHandler.getRecordBuffer(this);
 
@@ -270,6 +279,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private final int[] myResultBuf = new int[1];
 
+  @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();

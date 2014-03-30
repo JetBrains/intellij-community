@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -63,18 +61,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     super(project, factory, name);
   }
 
+  @NotNull
+  @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new PluginRunConfigurationEditor(this);
   }
 
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
-  }
-
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     if (getModule() == null){
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
@@ -87,7 +80,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
     final Sdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
     if (ideaJdk == null) {
-      throw new ExecutionException(DevKitBundle.message("jdk.type.incorrect.common"));
+      throw new ExecutionException(DevKitBundle.message("sdk.type.incorrect.common"));
     }
     String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
 
@@ -107,6 +100,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     IdeaLicenseHelper.copyIDEALicense(sandboxHome, ideaJdk);
 
     final JavaCommandLineState state = new JavaCommandLineState(env) {
+      @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
 
         final JavaParameters params = new JavaParameters();
@@ -151,10 +145,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             String prefix = null;
 
             if (buildNumber.startsWith("IC")) {
-              prefix = PlatformUtils.COMMUNITY_PREFIX;
+              prefix = PlatformUtils.IDEA_CE_PREFIX;
             }
             else if (buildNumber.startsWith("PY")) {
               prefix = PlatformUtils.PYCHARM_PREFIX;
+            }
+            else if (buildNumber.startsWith("PC")) {
+              prefix = PlatformUtils.PYCHARM_CE_PREFIX;
             }
             else if (buildNumber.startsWith("RM")) {
               prefix = PlatformUtils.RUBY_PREFIX;
@@ -168,7 +165,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
             else if (buildNumber.startsWith("OC")) {
               prefix = buildNumber.contains("121") ? "CIDR" : PlatformUtils.APPCODE_PREFIX;
             }
-            if (prefix != null) vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+            else if (buildNumber.startsWith("CP")) {
+              prefix = PlatformUtils.CPP_PREFIX;
+            }
+
+            if (prefix != null) {
+              vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
+            }
           }
         }
 
@@ -193,7 +196,6 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       }
     };
 
-    state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
   }
 
@@ -223,11 +225,13 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     }
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (getModule() == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     String moduleName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         return getModule().getName();
       }
@@ -236,22 +240,24 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final Sdk jdk = rootManager.getSdk();
-    if (jdk == null) {
-      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
+    final Sdk sdk = rootManager.getSdk();
+    if (sdk == null) {
+      throw new RuntimeConfigurationException(DevKitBundle.message("sdk.no.specified", moduleName));
     }
-    if (IdeaJdk.findIdeaJdk(jdk) == null) {
-      throw new RuntimeConfigurationException(DevKitBundle.message("jdk.type.incorrect", moduleName));
+    if (IdeaJdk.findIdeaJdk(sdk) == null) {
+      throw new RuntimeConfigurationException(DevKitBundle.message("sdk.type.incorrect", moduleName));
     }
   }
 
 
+  @Override
   @NotNull
   public Module[] getModules() {
     final Module module = getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     Element module = element.getChild(MODULE);
     if (module != null) {
@@ -267,9 +273,11 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     super.readExternal(element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
     moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
       public String compute() {
         final Module module = getModule();
         return module != null ? module.getName()

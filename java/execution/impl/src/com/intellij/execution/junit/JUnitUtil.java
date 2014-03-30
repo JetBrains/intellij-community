@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -45,13 +46,17 @@ public class JUnitUtil {
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
+  @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
   @NonNls public static final String SUITE_METHOD_NAME = "suite";
   public static final String BEFORE_ANNOTATION_NAME = "org.junit.Before";
   public static final String AFTER_ANNOTATION_NAME = "org.junit.After";
-  private static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
+  public static final String PARAMETRIZED_PARAMETERS_ANNOTATION_NAME = "org.junit.runners.Parameterized.Parameters";
   private static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   private static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
-  private static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
+  private static final Collection<String> CONFIGURATIONS_ANNOTATION_NAME = Collections.unmodifiableList(
+    Arrays.asList(DATA_POINT, AFTER_ANNOTATION_NAME, BEFORE_ANNOTATION_NAME, AFTER_CLASS_ANNOTATION_NAME, BEFORE_CLASS_ANNOTATION_NAME));
+  
+  public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -77,6 +82,7 @@ public class JUnitUtil {
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+    if (AnnotationUtil.isAnnotated(psiMethod, CONFIGURATIONS_ANNOTATION_NAME, false)) return false;
     if (AnnotationUtil.isAnnotated(aClass, RUN_WITH, true)) return true;
     if (psiMethod.getParameterList().getParametersCount() > 0) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC) && SUITE_METHOD_NAME.equals(psiMethod.getName())) return false;
@@ -97,6 +103,7 @@ public class JUnitUtil {
   }
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
+    if (psiClass.getQualifiedName() == null) return false;
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
@@ -157,6 +164,7 @@ public class JUnitUtil {
   @Nullable
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
+    if (ancestorOrSelf == null) return null;
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
     Module module = JavaExecutionUtil.findModule(aClass);
     if (module == null) return null;

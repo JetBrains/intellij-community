@@ -78,13 +78,7 @@ class Test {
 
   private void method1() {}
 }''',
-      rules: [rule(INTERFACE),
-              rule(CLASS),
-              rule(FIELD, STATIC),
-              rule(FIELD, PUBLIC),
-              rule(FIELD),
-              rule(METHOD, PUBLIC),
-              rule(METHOD)]
+      rules: classic
     )
   }
 
@@ -131,4 +125,76 @@ class Test {
 }'''
     doTest(initial: text, expected: text, rules: [rule(CLASS)] )
   }
+
+  void "test statements on the same line"() {
+    def before = '''\
+
+
+
+public enum Sender {a, b; private String value;
+}
+'''
+    doTest(initial: before, expected: before)
+  }
+
+
+
+  void "test keep blank lines between fields"() {
+    def text = '''\
+public class Test {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AddCurrentUser.class);
+
+
+  private GlobalQueryService globalQueryService;
+  private EventCoordinationService eventCoordinationService;
+}
+'''
+    doTest(
+      initial: text,
+      expected: text,
+      rules: classic
+    )
+  }
+
+  void "test keep blank lines between fields more fair test"() {
+    doTest(
+      initial: '''\
+public class Test {
+    private static final int t = 12;
+
+
+    public int q = 2;
+    private int e = 3;
+    public int t11 = 23;
+
+    private void test() {
+    }
+
+    public void main() {
+    }
+
+}
+''',
+      expected: '''\
+public class Test {
+    private static final int t = 12;
+
+
+    public int q = 2;
+    public int t11 = 23;
+    private int e = 3;
+
+    public void main() {
+    }
+
+    private void test() {
+    }
+
+}
+''',
+      rules: classic
+    )
+  }
+
+
 }

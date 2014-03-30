@@ -18,12 +18,13 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.util.ExportToFileUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
-public class ExportToTextFileAction extends AnAction {
+public class ExportToTextFileAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
     if (project == null || exporterToTextFile == null) return;
     if (!exporterToTextFile.canExport()) return;
@@ -51,6 +52,7 @@ public class ExportToTextFileAction extends AnAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
-    presentation.setEnabled(PlatformDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
+    presentation.setEnabled(
+      CommonDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
   }
 }

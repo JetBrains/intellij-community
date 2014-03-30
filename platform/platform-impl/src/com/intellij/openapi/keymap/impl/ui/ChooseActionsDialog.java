@@ -39,6 +39,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -87,6 +88,12 @@ public class ChooseActionsDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     return createToolbarPanel();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myFilterComponent.getTextEditor();
   }
 
   @Override
@@ -174,7 +181,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           AllIcons.Ant.ShortcutFilter) {
+                           AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null) {

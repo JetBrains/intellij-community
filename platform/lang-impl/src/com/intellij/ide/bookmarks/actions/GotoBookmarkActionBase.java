@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -52,13 +53,14 @@ abstract class GotoBookmarkActionBase extends EditorAction {
 
         LogicalPosition pos = new LogicalPosition(line, 0);
         editor.getSelectionModel().removeSelection();
+        editor.getCaretModel().removeSecondaryCarets();
         editor.getCaretModel().moveToLogicalPosition(pos);
         editor.getScrollingModel().scrollTo(new LogicalPosition(line, 0), ScrollType.CENTER);
       }
 
       @Nullable
       private Bookmark getBookmarkToGo(DataContext dataContext, Editor editor) {
-        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
         if (project == null) return null;
         BookmarkManager manager = BookmarkManager.getInstance(project);
         return next ? manager.getNextBookmark(editor, true) : manager.getPreviousBookmark(editor, true);

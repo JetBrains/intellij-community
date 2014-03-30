@@ -29,14 +29,17 @@ public class AliasingPsiTarget extends DelegatePsiTarget implements PomRenameabl
     super(element);
   }
 
+  @Override
   public boolean isWritable() {
     return getNavigationElement().isWritable();
   }
 
+  @Override
   public AliasingPsiTarget setName(@NotNull String newName) {
     return setAliasName(newName);
   }
 
+   @Override
    @NotNull
   public String getName() {
     return StringUtil.notNullize(getNameAlias(((PsiNamedElement)getNavigationElement()).getName()));

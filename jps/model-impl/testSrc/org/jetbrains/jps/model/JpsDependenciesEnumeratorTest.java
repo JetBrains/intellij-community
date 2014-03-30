@@ -31,33 +31,35 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.jetbrains.jps.model.java.JpsJavaExtensionService.dependencies;
+
 
 /**
  * @author nik
  */
 public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
-  private JpsTypedLibrary<JpsSdk<JpsDummyElement>> myJdk;
   private JpsModule myModule;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     File home = PathManagerEx.findFileUnderCommunityHome("java/mockJDK-1.7");
-    myJdk = myModel.getGlobal().addSdk("mockJDK-1.7", home.getAbsolutePath(), "1.7", JpsJavaSdkType.INSTANCE);
-    myJdk.addRoot(getRtJar(), JpsOrderRootType.COMPILED);
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk =
+      myModel.getGlobal().addSdk("mockJDK-1.7", home.getAbsolutePath(), "1.7", JpsJavaSdkType.INSTANCE);
+    jdk.addRoot(getRtJar(), JpsOrderRootType.COMPILED);
     myModule = addModule();
-    myModule.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.getProperties().createReference());
+    myModule.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.getProperties().createReference());
     myModule.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
   }
 
   public void testLibrary() throws Exception {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
-    assertClassRoots(orderEntries(myModule), getRtJar(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().productionOnly().runtimeOnly(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutLibraries(), getRtJar());
-    assertSourceRoots(orderEntries(myModule), getJDomSources());
+    assertClassRoots(dependencies(myModule), getRtJar(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().runtimeOnly(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutLibraries(), getRtJar());
+    assertSourceRoots(dependencies(myModule), getJDomSources());
   }
 
   private String getJDomSources() {
@@ -72,11 +74,11 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return getJarUrlFromLibDir("asm.jar");
   }
 
-  private String getJarUrlFromLibDir(final String relativePath) {
+  private static String getJarUrlFromLibDir(final String relativePath) {
     return JpsPathUtil.getLibraryRootUrl(PathManager.findFileInLibDirectory(relativePath));
   }
 
-  private String getRtJar() {
+  private static String getRtJar() {
     return JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("java/mockJDK-1.7/jre/lib/rt.jar"));
   }
 
@@ -99,13 +101,13 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk(), testOutput, output);
-    assertClassRoots(orderEntries(myModule).withoutSdk().productionOnly(), output);
-    assertSourceRoots(orderEntries(myModule), srcRoot, testRoot);
-    assertSourceRoots(orderEntries(myModule).productionOnly(), srcRoot);
+    assertClassRoots(dependencies(myModule).withoutSdk(), testOutput, output);
+    assertClassRoots(dependencies(myModule).withoutSdk().productionOnly(), output);
+    assertSourceRoots(dependencies(myModule), srcRoot, testRoot);
+    assertSourceRoots(dependencies(myModule).productionOnly(), srcRoot);
 
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().classes().withoutSelfModuleOutput(), output);
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput());
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().classes().withoutSelfModuleOutput(), output);
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().productionOnly().classes().withoutSelfModuleOutput());
   }
 
   public void testLibraryScope() throws Exception {
@@ -113,9 +115,9 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     getJavaService().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.RUNTIME);
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), JpsJavaDependencyScope.RUNTIME, false);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly());
-    assertClassRoots(orderEntries(myModule).withoutSdk().compileOnly());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly());
+    assertClassRoots(dependencies(myModule).withoutSdk().compileOnly());
   }
 
   public void testModuleDependency() throws Exception {
@@ -132,27 +134,27 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk(), testOutput, output, depTestOutput, depOutput);
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), testOutput, output, depTestOutput, depOutput, getJDomJar());
-    assertSourceRoots(orderEntries(myModule), srcRoot, testRoot, depSrcRoot, depTestRoot);
-    assertSourceRoots(orderEntries(myModule).recursively(), srcRoot, testRoot, depSrcRoot, depTestRoot, getJDomSources());
+    assertClassRoots(dependencies(myModule).withoutSdk(), testOutput, output, depTestOutput, depOutput);
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), testOutput, output, depTestOutput, depOutput, getJDomJar());
+    assertSourceRoots(dependencies(myModule), srcRoot, testRoot, depSrcRoot, depTestRoot);
+    assertSourceRoots(dependencies(myModule).recursively(), srcRoot, testRoot, depSrcRoot, depTestRoot, getJDomSources());
 
-    assertClassRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomJar());
-    assertSourceRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomSources());
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively().classes(), getJDomJar());
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().withoutModuleSourceEntries().recursively().sources(), getJDomSources());
+    assertClassRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomJar());
+    assertSourceRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively(), getJDomSources());
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().classes(), getJDomJar());
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().withoutModuleSourceEntries().recursively().sources(), getJDomSources());
 
-    assertEnumeratorRoots(orderEntries(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+    assertEnumeratorRoots(dependencies(myModule).withoutSdk().recursively().classes().withoutSelfModuleOutput(),
                           output, depTestOutput, depOutput, getJDomJar());
-    assertEnumeratorRoots(orderEntries(myModule).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
+    assertEnumeratorRoots(dependencies(myModule).productionOnly().withoutSdk().recursively().classes().withoutSelfModuleOutput(),
                           depOutput, getJDomJar());
 
-    assertClassRoots(orderEntries(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively(), getJDomJar());
     assertEnumeratorRoots(
-      orderEntries(myModule).productionOnly().withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively().classes(),
+      dependencies(myModule).productionOnly().withoutSdk().withoutDepModules().withoutModuleSourceEntries().recursively().classes(),
       getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries());
-    assertEnumeratorRoots(orderEntries(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes());
+    assertClassRoots(dependencies(myModule).withoutSdk().withoutDepModules().withoutModuleSourceEntries());
+    assertEnumeratorRoots(dependencies(myModule).productionOnly().withoutModuleSourceEntries().withoutSdk().withoutDepModules().classes());
   }
 
   public void testModuleJpsJavaDependencyScope() throws Exception {
@@ -160,13 +162,13 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     JpsModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), JpsJavaDependencyScope.COMPILE, true);
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.TEST, true);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk());
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().productionOnly().recursively());
+    assertClassRoots(dependencies(myModule).withoutSdk());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().recursively());
 
-    assertClassRoots(orderEntries(myProject).withoutSdk(), getJDomJar());
-    assertClassRoots(orderEntries(myProject).withoutSdk().productionOnly(), getJDomJar());
+    assertClassRoots(dependencies(myProject).withoutSdk(), getJDomJar());
+    assertClassRoots(dependencies(myProject).withoutSdk().productionOnly(), getJDomJar());
   }
 
   public void testNotExportedLibrary() throws Exception {
@@ -175,14 +177,26 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     JpsModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), JpsJavaDependencyScope.COMPILE, false);
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.COMPILE, false);
 
-    assertClassRoots(orderEntries(myModule).withoutSdk(), getAsmJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().recursively().exportedOnly(), getAsmJar());
-    assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getAsmJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getAsmJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively());
+  }
+
+  public void testAnnotations() {
+    JpsLibrary library = addLibrary();
+    String libraryUrl = "temp:///library";
+    library.addRoot(libraryUrl, JpsAnnotationRootType.INSTANCE);
+    JpsModuleRootModificationUtil.addDependency(myModule, library);
+    assertEnumeratorRoots(dependencies(myModule).annotations(), libraryUrl);
+
+    String moduleUrl = "temp://module";
+    JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(myModule).getAnnotationRoots().addUrl(moduleUrl);
+    assertEnumeratorRoots(dependencies(myModule).annotations(), moduleUrl, libraryUrl);
   }
 
   public void testJdkIsNotExported() throws Exception {
-    assertClassRoots(orderEntries(myModule).exportedOnly());
+    assertClassRoots(dependencies(myModule).exportedOnly());
   }
 
   public void testProject() throws Exception {
@@ -193,8 +207,8 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(orderEntries(myProject).withoutSdk(), testOutput, output, getJDomJar());
-    assertSourceRoots(orderEntries(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
+    assertClassRoots(dependencies(myProject).withoutSdk(), testOutput, output, getJDomJar());
+    assertSourceRoots(dependencies(myProject).withoutSdk(), srcRoot, testRoot, getJDomSources());
   }
 
   public void testModules() throws Exception {
@@ -229,7 +243,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     }
   }
 
-  private String addSourceRoot(JpsModule module, boolean tests) {
+  private static String addSourceRoot(JpsModule module, boolean tests) {
     try {
       File file = FileUtil.createTempDirectory(module.getName(), tests ? "testSrc" : "src");
       return module.addSourceRoot(JpsPathUtil.getLibraryRootUrl(file), tests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE).getUrl();
@@ -237,14 +251,6 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private JpsJavaDependenciesEnumerator orderEntries(JpsProject project) {
-    return JpsJavaExtensionService.dependencies(project);
-  }
-
-  private static JpsJavaDependenciesEnumerator orderEntries(JpsModule module) {
-    return JpsJavaExtensionService.dependencies(module);
   }
 
   private static void assertClassRoots(final JpsJavaDependenciesEnumerator enumerator, String... urls) {

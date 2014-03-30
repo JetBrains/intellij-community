@@ -52,6 +52,11 @@ public class ArrangementGroupingRule {
   }
 
   @Override
+  public ArrangementGroupingRule clone() {
+    return new ArrangementGroupingRule(myGroupingType, myOrderType);
+  }
+
+  @Override
   public int hashCode() {
     int result = myGroupingType.hashCode();
     result = 31 * result + myOrderType.hashCode();

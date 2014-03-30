@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,15 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
@@ -38,6 +41,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -70,12 +74,12 @@ class OverridingMethodsDialog extends DialogWrapper {
     for (int i = 0; i < myMethodText.length; i++) {
       myMethodText[i] = PsiFormatUtil.formatMethod(
               ((SafeDeleteOverridingMethodUsageInfo) myOverridingMethods.get(i)).getOverridingMethod(),
-              PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS
-                                    | PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS | PsiFormatUtil.SHOW_TYPE,
-              PsiFormatUtil.SHOW_TYPE
+              PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS
+                                    | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_TYPE,
+              PsiFormatUtilBase.SHOW_TYPE
       );
     }
-    myUsagePreviewPanel = new UsagePreviewPanel(project);
+    myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
     setTitle(RefactoringBundle.message("unused.overriding.methods.title"));
     init();
   }
@@ -130,11 +134,9 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     TableColumnModel columnModel = myTable.getColumnModel();
 //    columnModel.getColumn(DISPLAY_NAME_COLUMN).setCellRenderer(new MemberSelectionTable.MyTableRenderer());
-    final int checkBoxWidth = new JCheckBox().getPreferredSize().width;
-    columnModel.getColumn(CHECK_COLUMN).setCellRenderer(new BooleanTableCellRenderer());
-    columnModel.getColumn(CHECK_COLUMN).setMaxWidth(checkBoxWidth);
-    columnModel.getColumn(CHECK_COLUMN).setMinWidth(checkBoxWidth);
-
+    TableColumn checkboxColumn = columnModel.getColumn(CHECK_COLUMN);
+    TableUtil.setupCheckboxColumn(checkboxColumn);
+    checkboxColumn.setCellRenderer(new BooleanTableCellRenderer());
 
     // make SPACE check/uncheck selected rows
     @NonNls InputMap inputMap = myTable.getInputMap();

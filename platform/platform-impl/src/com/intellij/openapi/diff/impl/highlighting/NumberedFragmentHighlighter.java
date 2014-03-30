@@ -1,5 +1,6 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
+import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.impl.FragmentNumberGutterIconRenderer;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
@@ -52,7 +53,7 @@ public class NumberedFragmentHighlighter extends FragmentHighlighterImpl {
 
     private void resetFont(RangeHighlighter[] allHighlighters) {
       for (RangeHighlighter highlighter : allHighlighters) {
-        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        GutterMark renderer = highlighter.getGutterIconRenderer();
         if (renderer instanceof FragmentNumberGutterIconRenderer) {
           ((FragmentNumberGutterIconRenderer)renderer).resetFont(myAppender1.getEditor());
         }

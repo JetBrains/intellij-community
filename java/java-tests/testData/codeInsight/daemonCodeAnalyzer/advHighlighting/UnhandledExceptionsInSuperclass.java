@@ -1,7 +1,7 @@
 // unhandled exceptions from superclases/etc
 import java.io.*;
 import java.net.*;
-public class a  {
+class a  {
  a(int i) {}
 }
 

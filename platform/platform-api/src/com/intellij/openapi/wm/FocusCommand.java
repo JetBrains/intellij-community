@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,6 +39,16 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
   private ActionCallback myCallback;
   private boolean myInvalidatesPendingFurtherRequestors = true;
   private Expirable myExpirable;
+
+  public boolean isForced() {
+    return myForced;
+  }
+
+  public void setForced(boolean forced) {
+    myForced = forced;
+  }
+
+  private boolean myForced;
 
   protected FocusCommand() {
     saveAllocation();
@@ -146,10 +159,34 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
       myToFocus = toFocus;
     }
 
+    @NotNull
     public final ActionCallback run() {
       if (myToFocus != null) {
-        if (!myToFocus.requestFocusInWindow()) {
-          myToFocus.requestFocus();
+        if (Registry.is("actionSystem.doNotStealFocus")) {
+          Window topWindow = SwingUtilities.windowForComponent(myToFocus);
+          UIUtil.setAutoRequestFocus(topWindow, topWindow.isActive());
+          while (topWindow.getOwner() != null) {
+            topWindow = SwingUtilities.windowForComponent(topWindow);
+            UIUtil.setAutoRequestFocus(topWindow, topWindow.isActive());
+          }
+
+          if (topWindow.isActive()) {
+            if (!myToFocus.requestFocusInWindow()) {
+              myToFocus.requestFocus();
+            }
+          } else {
+            myToFocus.requestFocusInWindow();
+          }
+
+        } else {
+          // This change seems reasonable to me. But as far as some implementations
+          // can ignore the "forced" parameter we can get bad focus behaviour.
+          // So let's start from mac.
+          if (!(myToFocus.requestFocusInWindow())) {
+            if (!SystemInfo.isMac || isForced() ) {
+              myToFocus.requestFocus();
+            }
+          }
         }
       }
       clear();

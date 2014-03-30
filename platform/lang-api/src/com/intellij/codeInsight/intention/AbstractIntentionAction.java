@@ -26,15 +26,18 @@ import com.intellij.psi.PsiFile;
  */
 public abstract class AbstractIntentionAction implements IntentionAction {
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

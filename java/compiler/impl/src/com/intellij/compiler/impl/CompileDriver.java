@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,17 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.compiler.make.CacheUtils;
 import com.intellij.compiler.make.ChangedConstantsDependencyProcessor;
 import com.intellij.compiler.make.DependencyCache;
+import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.compiler.server.DefaultMessageHandler;
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -48,6 +53,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +61,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -64,6 +73,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -99,9 +109,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -128,6 +139,7 @@ public class CompileDriver {
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty("generate.classpath.index"));
   private static final String PROP_PERFORM_INITIAL_REFRESH = "compiler.perform.outputs.refresh.on.start";
   private static final Key<Boolean> REFRESH_DONE_KEY = Key.create("_compiler.initial.refresh.done_");
+  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
 
   private static final FileProcessingCompilerAdapterFactory FILE_PROCESSING_COMPILER_ADAPTER_FACTORY = new FileProcessingCompilerAdapterFactory() {
     public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -221,7 +233,7 @@ public class CompileDriver {
       scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
     }
 
-    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false);
+    final CompilerTask task = new CompilerTask(myProject, "Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
     final DependencyCache cache = useOutOfProcessBuild()? null : createDependencyCache();
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, cache, true, false);
 
@@ -268,7 +280,9 @@ public class CompileDriver {
           }
           finally {
             result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-            CompilerCacheManager.getInstance(myProject).flushCaches();
+            if (!myProject.isDisposed()) {
+              CompilerCacheManager.getInstance(myProject).flushCaches();
+            }
           }
         }
       };
@@ -435,6 +449,15 @@ public class CompileDriver {
     return scope;
   }
 
+  public static void setCompilationStartedAutomatically(CompileScope scope) {
+    //todo[nik] pass this option as a parameter to compile/make methods instead
+    scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, Boolean.TRUE);
+  }
+
+  private static boolean isCompilationStartedAutomatically(CompileScope scope) {
+    return Boolean.TRUE.equals(scope.getUserData(COMPILATION_STARTED_AUTOMATICALLY));
+  }
+
   private void attachAnnotationProcessorsOutputDirectories(CompileContextEx context) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
@@ -466,14 +489,18 @@ public class CompileDriver {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    final boolean forceBuild = !compileContext.isMake();
+    List<TargetTypeBuildScope> explicitScopes = CompileScopeUtil.getBaseScopeForExternalBuild(scope);
+    if (explicitScopes != null) {
+      scopes.addAll(explicitScopes);
+    }
+    else if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
+    }
+    else {
+      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+    }
     if (paths.isEmpty()) {
-      boolean forceBuild = !compileContext.isMake();
-      if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-        CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
-      }
-      else {
-        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
-      }
       for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
         scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
       }
@@ -629,13 +656,14 @@ public class CompileDriver {
 
     final String contentName =
       forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
-    final CompilerTask compileTask = new CompilerTask(myProject, contentName, ApplicationManager.getApplication().isUnitTestMode(), true, true);
+    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
 
     StatusBar.Info.set("", myProject, "Compiler");
     if (useExtProcessBuild) {
       // ensure the project model seen by build process is up-to-date
       myProject.save();
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!isUnitTestMode) {
         ApplicationManager.getApplication().saveSettings();
       }
     }
@@ -673,7 +701,14 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-
+            if (isRebuild) {
+              CompilerUtil.runInContext(compileContext, "Clearing build system data...", new ThrowableRunnable<Throwable>() {
+                @Override
+                public void run() throws Throwable {
+                  CompilerCacheManager.getInstance(myProject).clearCaches(compileContext);
+                }
+              });
+            }
             final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -732,6 +767,12 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
+            else {
+              if (!isUnitTestMode) {
+                notifyDeprecatedImplementation();
+              }
+            }
+            
             TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
             doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
           }
@@ -749,7 +790,7 @@ public class CompileDriver {
               myProject, "You are about to rebuild the whole project.\nRun 'Make Project' instead?", "Confirm Project Rebuild",
               "Make", "Rebuild", Messages.getQuestionIcon()
           );
-          if (rv == 0 /*yes, please, do run make*/) {
+          if (rv == Messages.OK /*yes, please, do run make*/) {
             startup(scope, false, false, callback, null, checkCachesVersion);
             return;
           }
@@ -757,6 +798,30 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  private static final Key<Boolean> OLD_IMPLEMENTATION_WARNING_SHOWN = Key.create("_old_make_implementation_warning_shown_"); 
+  private void notifyDeprecatedImplementation() {
+    if (OLD_IMPLEMENTATION_WARNING_SHOWN.get(myProject, Boolean.FALSE).booleanValue()) {
+      return;
+    }
+    OLD_IMPLEMENTATION_WARNING_SHOWN.set(myProject, Boolean.TRUE);
+    final NotificationListener hyperlinkHandler = new NotificationListener.Adapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+        notification.expire();
+        if (!myProject.isDisposed()) {
+          ShowSettingsUtil.getInstance().editConfigurable(myProject, new CompilerConfigurable(myProject));
+        }
+      }
+    };
+    final Notification notification = new Notification(
+      "Compile", "Deprecated make implementation",
+      "Old implementation of \"Make\" feature is enabled for this project.<br>It has been deprecated and will be removed soon.<br>Please enable newer 'external build' feature in <a href=\"#\">Settings | Compiler</a>.",
+      NotificationType.WARNING, 
+      hyperlinkHandler
+    );
+    Notifications.Bus.notify(notification, myProject);
   }
 
   @Nullable @TestOnly
@@ -840,20 +905,38 @@ public class CompileDriver {
                                           final ExitStatus _status,
                                           final boolean refreshOutputRoots) {
     final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
-    if (refreshOutputRoots) {
+    if (refreshOutputRoots && !myProject.isDisposed()) {
       // refresh on output roots is required in order for the order enumerator to see all roots via VFS
       final Set<File> outputs = new HashSet<File>();
-      for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+      final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
+      for (final String path : CompilerPathsEx.getOutputPaths(affectedModules)) {
         outputs.add(new File(path));
       }
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
       if (!outputs.isEmpty()) {
         final ProgressIndicator indicator = compileContext.getProgressIndicator();
         indicator.setText("Synchronizing output directories...");
-        LocalFileSystem.getInstance().refreshIoFiles(outputs, false, false, null);
+        CompilerUtil.refreshOutputDirectories(outputs, _status == ExitStatus.CANCELLED);
         indicator.setText("");
       }
+      if (compileContext.isAnnotationProcessorsEnabled() && !myProject.isDisposed()) {
+        final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
+        for (Module module : affectedModules) {
+          if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+            if (path != null) {
+              genSourceRoots.add(new File(path));
+            }
+          }
+        }
+        if (!genSourceRoots.isEmpty()) {
+          // refresh generates source roots asynchronously; needed for error highlighting update
+          lfs.refreshIoFiles(genSourceRoots, true, true, null);
+        }
+      }
     }
-    SwingUtilities.invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {                                                                 
       public void run() {
         int errorCount = 0;
         int warningCount = 0;
@@ -922,7 +1005,7 @@ public class CompileDriver {
       else {
         message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
-      message = message + " in " + Utils.formatDuration(duration);
+      message = message + " in " + StringUtil.formatDuration(duration);
     }
     return message;
   }
@@ -1930,8 +2013,7 @@ public class CompileDriver {
     finally {
       CompilerUtil.refreshIOFiles(filesToRefresh);
       if (!generatedFiles.isEmpty()) {
-        DumbService.getInstance(myProject).waitForSmartMode();
-        List<VirtualFile> vFiles = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
+        List<VirtualFile> vFiles = DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<List<VirtualFile>>() {
           public List<VirtualFile> compute() {
             final ArrayList<VirtualFile> vFiles = new ArrayList<VirtualFile>(generatedFiles.size());
             for (File generatedFile : generatedFiles) {
@@ -2133,8 +2215,7 @@ public class CompileDriver {
     final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
     final Set<String> allUrls = new HashSet<String>();
     final IOException[] ex = {null};
-    DumbService.getInstance(myProject).waitForSmartMode();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
       public void run() {
         try {
           for (FileProcessingCompiler.ProcessingItem item : items) {
@@ -2261,7 +2342,7 @@ public class CompileDriver {
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
-    final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true);
+    final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -2284,6 +2365,9 @@ public class CompileDriver {
   }
 
   private boolean executeCompileTasks(final CompileContext context, final boolean beforeTasks) {
+    if (myProject.isDisposed()) {
+      return false;
+    }
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     final ProgressIndicator progressIndicator = context.getProgressIndicator();
     progressIndicator.pushState();
@@ -2328,8 +2412,8 @@ public class CompileDriver {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
         }
-        final boolean hasSources = hasSources(module, false);
-        final boolean hasTestSources = hasSources(module, true);
+        final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
+        final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
         if (!hasSources && !hasTestSources) {
           // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
           // todo still there may be problems with this approach if some generated files are attributed by this module
@@ -2560,27 +2644,8 @@ public class CompileDriver {
     }
   }
 
-  private static boolean hasSources(Module module, boolean checkTestSources) {
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (final ContentEntry contentEntry : contentEntries) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (final SourceFolder sourceFolder : sourceFolders) {
-        if (sourceFolder.getFile() == null) {
-          continue; // skip invalid source folders
-        }
-        if (checkTestSources) {
-          if (sourceFolder.isTestSource()) {
-            return true;
-          }
-        }
-        else {
-          if (!sourceFolder.isTestSource()) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  private static boolean hasSources(Module module, final JavaSourceRootType rootType) {
+    return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
   private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String editorNameToSelect) {

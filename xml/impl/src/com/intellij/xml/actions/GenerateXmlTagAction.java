@@ -16,6 +16,7 @@
 package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer;
@@ -79,6 +80,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         throw new CommonRefactoringUtil.RefactoringErrorHintException("Caret should be positioned inside a tag");
       }
       XmlElementDescriptor currentTagDescriptor = contextTag.getDescriptor();
+      assert currentTagDescriptor != null;
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, new Comparator<XmlElementDescriptor>() {
         @Override
@@ -103,13 +105,15 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
                 int offset = editor.getCaretModel().getOffset();
                 Document document = editor.getDocument();
                 document.insertString(offset, newTag.getText());
-                PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+                PsiDocumentManager.getInstance(project).commitDocument(document);
                 newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
               }
               else {
                 newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
               }
-              generateTag(newTag);
+              if (newTag != null) {
+                generateTag(newTag, editor);
+              }
             }
           }.execute();
         }
@@ -168,18 +172,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return previousPositionIsPossible ? null : anchor;
   }
 
-  public static void generateTag(XmlTag newTag) {
+  public static void generateTag(@NotNull XmlTag newTag, Editor editor) {
     generateRaw(newTag);
-    final XmlTag restored = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newTag);
+    final XmlTag restored = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newTag);
     if (restored == null) {
       LOG.error("Could not restore tag: " + newTag.getText());
     }
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(restored);
     replaceElements(restored, builder);
-    builder.run();
+    builder.run(editor, false);
   }
 
-  private static void generateRaw(final XmlTag newTag) {
+  private static void generateRaw(final @NotNull XmlTag newTag) {
     XmlElementDescriptor selected = newTag.getDescriptor();
     if (selected == null) return;
     switch (selected.getContentType()) {

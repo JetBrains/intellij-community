@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -54,18 +53,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.*;
 
@@ -85,24 +86,6 @@ public abstract class GroovyRefactoringUtil {
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
   @Nullable
-  public static PsiElement getEnclosingContainer(PsiElement place) {
-    PsiElement parent = place.getParent();
-    while (true) {
-      if (parent == null) {
-        return null;
-      }
-      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection)) {
-        return parent;
-      }
-      if (parent instanceof GrLoopStatement) {
-        return parent;
-      }
-
-      parent = parent.getParent();
-    }
-  }
-
-  @Nullable
   public static <T extends PsiElement> T findElementInRange(final PsiFile file,
                                                             int startOffset,
                                                             int endOffset,
@@ -111,11 +94,11 @@ public abstract class GroovyRefactoringUtil {
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     if (element1 == null || element2 == null) return null;
 
-    if (TokenSets.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(element1)) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     }
-    if (TokenSets.WHITE_SPACES_SET.contains(element2.getNode().getElementType())) {
+    if (PsiImplUtil.isWhiteSpaceOrNls(element2)) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     }
@@ -123,11 +106,28 @@ public abstract class GroovyRefactoringUtil {
     if (element2 == null || element1 == null) return null;
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
     assert commonParent != null;
-    final T element = ReflectionCache.isAssignable(klass, commonParent.getClass()) ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
-    if (element == null || element.getTextRange().getStartOffset() != startOffset) {
+    final T element = ReflectionUtil.isAssignable(klass, commonParent.getClass()) ? (T) commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
+    if (element == null) {
       return null;
     }
+
+    if (!checkRanges(element, startOffset, endOffset)) {
+      return null;
+    }
+
     return element;
+  }
+
+  private static boolean checkRanges(@NotNull PsiElement element, int startOffset, int endOffset) {
+    if (element instanceof GrLiteral && StringPartInfo.isWholeLiteralContentSelected((GrLiteral)element, startOffset, endOffset)) {
+      return true;
+    }
+
+    if (element.getTextRange().getStartOffset() == startOffset) {
+      return true;
+    }
+
+    return false;
   }
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
@@ -402,6 +402,9 @@ public abstract class GroovyRefactoringUtil {
     if (parent instanceof GrCall) {
       return (GrCall)parent;
     }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      return (GrCall)parent.getParent();
+    }
     else {
       return null;
     }
@@ -447,7 +450,7 @@ public abstract class GroovyRefactoringUtil {
       com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
     }*/
     final GrStatement statement = ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
-    GrReferenceAdjuster.shortenReferences(statement);
+    JavaCodeStyleManager.getInstance(statement.getProject()).shortenClassReferences(statement);
 
     return id;
   }
@@ -788,5 +791,21 @@ public abstract class GroovyRefactoringUtil {
         }
       }
     });
+  }
+
+  public static boolean isSpreadAssignment(GrExpression lValue) {
+    if (lValue instanceof GrReferenceExpression) {
+      GrReferenceExpression expression = (GrReferenceExpression)lValue;
+      final PsiElement dot = expression.getDotToken();
+      //noinspection ConstantConditions
+      if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
+        return true;
+      }
+      else {
+        final GrExpression qualifier = expression.getQualifierExpression();
+        if (qualifier != null) return isSpreadAssignment(qualifier);
+      }
+    }
+    return false;
   }
 }

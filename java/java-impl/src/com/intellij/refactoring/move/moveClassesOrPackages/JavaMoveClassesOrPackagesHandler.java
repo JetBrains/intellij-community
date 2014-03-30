@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -44,6 +43,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -81,18 +81,18 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length == 0) return true;
       for (PsiClass aClass : classes) {
-        if (aClass instanceof JspClass) return true;
+        if (aClass instanceof PsiSyntheticClass) return true;
       }
       parentFile = (PsiFile)element;
     }
     else {
-      if (element instanceof JspClass) return true;
+      if (element instanceof PsiSyntheticClass) return true;
       if (!(element instanceof PsiClass)) return true;
       if (element instanceof PsiAnonymousClass) return true;
       if (((PsiClass)element).getContainingClass() != null) return true;
       parentFile = element.getContainingFile();
     }
-    return parentFile instanceof PsiJavaFile && ProjectRootsUtil.isOutsideSourceRoot(parentFile);
+    return parentFile instanceof PsiJavaFile && JavaProjectRootsUtil.isOutsideJavaSourceRoot(parentFile);
   }
 
   @Override
@@ -139,12 +139,19 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (targetContainer instanceof PsiDirectory) {
       if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
         if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
-          new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
+          createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
           return;
         }
       }
     }
-    MoveClassesOrPackagesImpl.doMove(project, adjustedElements, targetContainer, callback);
+    doMoveWithMoveClassesDialog(project, adjustedElements, targetContainer, callback);
+  }
+
+  protected void doMoveWithMoveClassesDialog(final Project project,
+                                             PsiElement[] adjustedElements,
+                                             PsiElement initialTargetElement,
+                                             final MoveCallback moveCallback) {
+    MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, moveCallback);
   }
 
   private static void moveDirectoriesLibrariesSafe(Project project,
@@ -161,17 +168,24 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                       RefactoringBundle.message("move.current.directory"),
                       RefactoringBundle.message("move.directories"),
                       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (ret == 0) {
+      if (ret == Messages.YES) {
         moveAsDirectory(project, targetContainer, callback, directories);
       }
-      else if (ret == 1) {
+      else if (ret == Messages.NO) {
         moveAsDirectory(project, targetContainer, callback, projectDirectories);
       }
     }
     else if (Messages.showOkCancelDialog(project, prompt + "?", RefactoringBundle.message("warning.title"),
-                                 Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
+                                 Messages.getWarningIcon()) == Messages.OK) {
       moveAsDirectory(project, targetContainer, callback, directories);
     }
+  }
+
+  @NotNull
+  protected DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory,
+                                                                       PsiElement[] elementsToMove,
+                                                                       final MoveCallback moveCallback) {
+    return new MoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback);
   }
 
   private static void moveAsDirectory(Project project,
@@ -301,7 +315,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {
      if (elements.length == 0) return false;
      final Project project = elements[0].getProject();
-     if (ProjectRootManager.getInstance(project).getContentSourceRoots().length == 1) {
+     if (JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project).size() == 1) {
        return false;
      }
      for (PsiElement element : elements) {
@@ -446,7 +460,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (adjustedElements == null) {
         return true;
       }
-      MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, null);
+      doMoveWithMoveClassesDialog(project, adjustedElements, initialTargetElement, null);
       return true;
     }
     return false;

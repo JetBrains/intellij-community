@@ -38,6 +38,8 @@ import com.intellij.psi.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
   private PsiClass myPsiClass;
 
@@ -62,7 +64,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass);
     configuration.setModule(myPsiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(myPsiClass) : null);
-    configuration.setName(configuration.getGeneratedName());
+    configuration.setGeneratedName();
     return settings;
   }
 
@@ -106,7 +108,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
   @Override
   protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull RunnerAndConfigurationSettings[] existingConfigurations,
+                                                                 @NotNull List<RunnerAndConfigurationSettings> existingConfigurations,
                                                                  ConfigurationContext context) {
     final PsiClass aClass = getAppletClass(location.getPsiElement(), PsiManager.getInstance(location.getProject()));
     if (aClass != null) {

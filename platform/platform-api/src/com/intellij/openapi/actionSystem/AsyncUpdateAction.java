@@ -17,7 +17,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +34,18 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final ExecutorService ourUpdaterService = ConcurrencyUtil.newSingleThreadExecutor("Action Updater");
 
   // Async update
+  @Override
   public final void update(AnActionEvent e) {
     final T data = prepareDataFromContext(e);
     final Presentation originalPresentation = e.getPresentation();
     if (!forceSyncUpdate(e) && isDumbAware()) {
-      final Presentation realPresentation = (Presentation)originalPresentation.clone();
+      final Presentation realPresentation = originalPresentation.clone();
       ourUpdaterService.submit(new Runnable() {
+        @Override
         public void run() {
           performUpdate(realPresentation, data);
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               if (originalPresentation.isVisible() != realPresentation.isVisible()) {
                 LOG.error("Async update is not supported for actions that change their visibility." +
@@ -65,6 +67,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   }
 
   // Sync update
+  @Override
   public final void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     performUpdate(e.getPresentation(), prepareDataFromContext(e));
   }
@@ -78,7 +81,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
 
   /**
    * Perform real presentation tweaking here. Be aware of the fact this method may be called in thread other than Swing UI thread thus
-   * probable restrictions like necessity to call ApplcationManager.getApplication().runReadAction() apply.
+   * probable restrictions like necessity to call ApplicationManager.getApplication().runReadAction() apply.
    * @param presentation Presentation object to be tweaked.
    * @param data necessary data calculated by {@link #prepareDataFromContext(AnActionEvent)}.
    */

@@ -16,13 +16,11 @@
 package org.jetbrains.plugins.groovy.unwrap;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Set;
 
@@ -37,7 +35,7 @@ public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
 
   private static boolean isElseKeyword(PsiElement e) {
     PsiElement p = e.getParent();
-    return p instanceof GrIfStatement && PsiUtil.isLeafElementOfType(e, GroovyTokenTypes.kELSE);
+    return p instanceof GrIfStatement && PsiImplUtil.isLeafElementOfType(e, GroovyTokenTypes.kELSE);
   }
 
   private static boolean isValidConstruct(PsiElement e) {

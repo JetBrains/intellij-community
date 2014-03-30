@@ -19,10 +19,31 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 
+/**
+ * The result of executing a process.
+ *
+ * @see DefaultExecutionResult
+ */
 public interface ExecutionResult {
+  /**
+   * Returns the component displaying the result of executing the process. This could be a console, a test results view or another similar
+   * component.
+   *
+   * @return the component displaying the result of executing the process
+   */
   ExecutionConsole getExecutionConsole();
 
+  /**
+   * Returns the actions to display in the toolbar of the Run/Debug console tab.
+   *
+   * @return the list of toolbar actions to display.
+   */
   AnAction[] getActions();
 
+  /**
+   * Returns the ProcessHandler attached to the running process.
+   *
+   * @return the ProcessHandler instance.
+   */
   ProcessHandler getProcessHandler();
 }

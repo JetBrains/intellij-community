@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class SliceRootNode extends SliceNode {
   private final SliceUsage myRootUsage;
 
   public SliceRootNode(@NotNull Project project, @NotNull DuplicateMap targetEqualUsages, final SliceUsage rootUsage) {
-    super(project, new SliceUsage(rootUsage.getElement().getContainingFile(), rootUsage.params), targetEqualUsages);
+    super(project, SliceUsage.createRootUsage(rootUsage.getElement().getContainingFile(), rootUsage.params), targetEqualUsages);
     myRootUsage = rootUsage;
   }
 
@@ -42,6 +42,7 @@ public class SliceRootNode extends SliceNode {
     myCachedChildren = Collections.singletonList(node);
   }
 
+  @NotNull
   @Override
   SliceRootNode copy() {
     SliceUsage newUsage = getValue().copy();
@@ -60,8 +61,9 @@ public class SliceRootNode extends SliceNode {
     return myCachedChildren;
   }
 
+  @NotNull
   @Override
-  public List<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
+  public List<? extends AbstractTreeNode> getChildrenUnderProgress(@NotNull ProgressIndicator progress) {
     return (List<? extends AbstractTreeNode>)getChildren();
   }
 
@@ -80,8 +82,8 @@ public class SliceRootNode extends SliceNode {
 
 
   @Override
-  public void customizeCellRenderer(SliceUsageCellRenderer renderer,
-                                    JTree tree,
+  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+                                    @NotNull JTree tree,
                                     Object value,
                                     boolean selected,
                                     boolean expanded,

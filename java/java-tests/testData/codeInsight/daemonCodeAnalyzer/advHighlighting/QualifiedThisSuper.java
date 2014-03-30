@@ -15,3 +15,10 @@ class R {
         System.out.println(<error descr="'Z' is not an enclosing class">Z.super</error>.toString());
     }
 }
+
+class W {
+    static String some = "";
+    static void m() {
+        synchronized (<error descr="Class name expected here">some</error>.this) { }
+    }
+}

@@ -8,11 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class GroovyImporterTest extends MavenImportingTestCase {
   @Override
@@ -67,9 +66,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(getModule("project"));
     assertTrue("unexpected groovy libs configuration: " + libraries.length, libraries.length > 0);
     Library library = libraries[0];
-    assertUnorderedElementsAreEqual(
-      library.getUrls(OrderRootType.CLASSES),
-      "jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/");
+    assertUnorderedPathsAreEqual(
+      Arrays.asList(library.getUrls(OrderRootType.CLASSES)),
+      Arrays.asList("jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"));
   }
 
   public void testAddingGroovySpecificSources() throws Exception {
@@ -94,12 +93,105 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "src/main/groovy");
+    assertResources("project", "src/main/resources");
     assertTestSources("project",
                       "src/test/java",
-                      "src/test/resources",
                       "src/test/groovy");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  public void testAddingGroovySpecificSources2() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.gmaven</groupId>" +
+                  "      <artifactId>groovy-maven-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/groovy");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/groovy");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  public void testGroovyEclipsePlugin() throws Exception {
+    createStdProjectFolders();
+    createProjectSubDirs("src/main/groovy",
+                         "src/test/groovy");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+                  "<dependencies>\n" +
+                  "  <dependency>\n" +
+                  "    <groupId>org.codehaus.groovy</groupId>\n" +
+                  "    <artifactId>groovy-all</artifactId>\n" +
+                  "    <version>2.1.0</version>\n" +
+                  "  </dependency>\n" +
+                  "</dependencies>" +
+                  "" +
+                  "<build>\n" +
+                  "  <pluginManagement>\n" +
+                  "    <plugins>\n" +
+                  "      <plugin>\n" +
+                  "        <artifactId>maven-compiler-plugin</artifactId>\n" +
+                  "        <configuration>\n" +
+                  "          <compilerId>groovy-eclipse-compiler</compilerId>\n" +
+                  "          <source>1.7</source>\n" +
+                  "          <target>1.7</target>\n" +
+                  "          <showWarnings>false</showWarnings>\n" +
+                  "        </configuration>\n" +
+                  "        <dependencies>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "            <version>2.8.0-01</version>\n" +
+                  "          </dependency>\n" +
+                  "          <dependency>\n" +
+                  "            <groupId>org.codehaus.groovy</groupId>\n" +
+                  "            <artifactId>groovy-eclipse-batch</artifactId>\n" +
+                  "            <version>2.1.3-01</version>\n" +
+                  "          </dependency>\n" +
+                  "        </dependencies>\n" +
+                  "      </plugin>\n" +
+                  "      <plugin>\n" +
+                  "        <groupId>org.codehaus.groovy</groupId>\n" +
+                  "        <artifactId>groovy-eclipse-compiler</artifactId>\n" +
+                  "        <version>2.8.0-01</version>\n" +
+                  "        <extensions>true</extensions>\n" +
+                  "      </plugin>\n" +
+                  "    </plugins>\n" +
+                  "  </pluginManagement>\n" +
+                  "</build>\n");
+
+    assertModules("project");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/groovy");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project",
+                      "src/test/java",
+                      "src/test/groovy");
+    assertTestResources("project", "src/test/resources");
   }
 
   public void testAddingCustomGroovySpecificSources() throws Exception {
@@ -162,14 +254,14 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "src/foo1",
                   "src/foo2");
+    assertResources("project", "src/main/resources");
     assertTestSources("project",
                       "src/test/java",
-                      "src/test/resources",
                       "src/test-foo1",
                       "src/test-foo2");
+    assertTestResources("project", "src/test/resources");
   }
 
   public void testAddingCustomGroovySpecificSourcesByRelativePath() throws Exception {
@@ -256,11 +348,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/groovy-stubs");
@@ -309,11 +400,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/foo",
@@ -457,11 +547,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/groovy-stubs");

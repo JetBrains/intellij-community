@@ -24,6 +24,7 @@ import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
@@ -134,6 +135,20 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       if (ctx instanceof PsiReferenceList || ctx instanceof PsiNewExpression || ctx instanceof PsiTypeElement) {
         return new PsiClassReferenceType((PsiJavaCodeReferenceElement)parent, null);
       }
+    }
+
+    PsiTypeElement typeElement = null;
+    PsiElement anchor = null;
+    if (parent instanceof PsiMethod) {
+      typeElement = ((PsiMethod)parent).getReturnTypeElement();
+      anchor = ((PsiMethod)parent).getParameterList();
+    }
+    else if (parent instanceof PsiField || parent instanceof PsiParameter || parent instanceof PsiLocalVariable) {
+      typeElement = ((PsiVariable)parent).getTypeElement();
+      anchor = ((PsiVariable)parent).getNameIdentifier();
+    }
+    if (typeElement != null && anchor != null) {
+      return JavaSharedImplUtil.getType(typeElement, anchor, this);
     }
 
     return null;

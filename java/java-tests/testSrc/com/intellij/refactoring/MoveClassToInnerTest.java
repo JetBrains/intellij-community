@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -28,6 +27,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
@@ -47,6 +47,10 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testInnerImport() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
+  }
+
+  public void testInnerInsideMoved() throws Exception {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 
@@ -98,7 +102,7 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses a package-local class <b><code>pack1.Class2</code></b>.");
+    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses package-local class <b><code>pack1.Class2</code></b>");
   }
 
   public void testMoveIntoPackageLocalClass() throws Exception {
@@ -129,7 +133,7 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
     String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 
   private VirtualFile prepareTest() throws Exception {

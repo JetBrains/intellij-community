@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.util.Map;
 
 /**
  * @author spleaner
+ * @@see http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html
  */
 public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;
@@ -90,6 +91,15 @@ public class Foundation {
     return myFoundationLibrary.class_respondsToSelector(cls, selectorName);
   }
 
+  /**
+   *
+   * @param cls The class to which to add a method.
+   * @param selectorName A selector that specifies the name of the method being added.
+   * @param impl A function which is the implementation of the new method. The function must take at least two arguments—self and _cmd.
+   * @param types An array of characters that describe the types of the arguments to the method.
+   *              See <a href="https://developer.apple.com/library/IOs/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100"></a>
+   * @return true if the method was added successfully, otherwise false (for example, the class already contains a method implementation with that name).
+   */
   public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
@@ -144,11 +154,11 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  public static ID nsString(String s) {
+  public static ID nsString(@NotNull String s) {
     // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
     // Turns out about 10% quicker for long strings.
     try {
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return invoke("NSString", "string");
       }
 
@@ -213,7 +223,7 @@ public class Foundation {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
 
-  private static Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
+  private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
 
@@ -248,17 +258,18 @@ public class Foundation {
       registerObjcClassPair(runnableClass);
 
       final Callback callback = new Callback() {
+        @SuppressWarnings("UnusedDeclaration")
         public void callback(ID self, String selector, ID keyObject) {
           final String key = toStringViaUTF8(keyObject);
-
 
           RunnableInfo info;
           synchronized (RUNNABLE_LOCK) {
             info = ourMainThreadRunnables.remove(key);
           }
 
-          if (info == null) return;
-
+          if (info == null) {
+            return;
+          }
 
           ID pool = null;
           try {
@@ -283,7 +294,7 @@ public class Foundation {
   }
 
   public static class NSDictionary {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSDictionary(ID delegate) {
       myDelegate = delegate;
@@ -303,7 +314,7 @@ public class Foundation {
   }
 
   public static class NSArray {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSArray(ID delegate) {
       myDelegate = delegate;
@@ -319,7 +330,7 @@ public class Foundation {
   }
 
   public static class NSAutoreleasePool {
-    private ID myDelegate;
+    private final ID myDelegate;
 
     public NSAutoreleasePool() {
       myDelegate = invoke(invoke("NSAutoreleasePool", "alloc"), "init");
@@ -335,8 +346,8 @@ public class Foundation {
     public NSSize size;
 
     public NSRect(double x, double y, double w, double h) {
-      this.origin = new NSPoint(x, y);
-      this.size = new NSSize(w, h);
+      origin = new NSPoint(x, y);
+      size = new NSSize(w, h);
     }
   }
 
@@ -382,6 +393,7 @@ public class Foundation {
       value = d;
     }
 
+    @Override
     public Object fromNative(Object o, FromNativeContext fromNativeContext) {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -392,6 +404,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Object toNative() {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -402,6 +415,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Class<?> nativeType() {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -410,6 +424,41 @@ public class Foundation {
           return Double.class;
       }
       throw new IllegalStateException();
+    }
+  }
+
+  public static ID fillArray(final Object[] a) {
+    final ID result = invoke("NSMutableArray", "array");
+    for (Object s : a) {
+      invoke(result, "addObject:", convertType(s));
+    }
+
+    return result;
+  }
+
+  public static ID createDict(@NotNull final String[] keys, @NotNull final Object[] values) {
+    final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
+    final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
+    return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
+  }
+
+  private static Object[] convertTypes(@NotNull Object[] v) {
+    final Object[] result = new Object[v.length];
+    for (int i = 0; i < v.length; i++) {
+      result[i] = convertType(v[i]);
+    }
+    return result;
+  }
+
+  private static Object convertType(@NotNull Object o) {
+    if (o instanceof Pointer || o instanceof ID) {
+      return o;
+    }
+    else if (o instanceof String) {
+      return nsString((String)o);
+    }
+    else {
+      throw new IllegalArgumentException("Unsupported type! " + o.getClass());
     }
   }
 }

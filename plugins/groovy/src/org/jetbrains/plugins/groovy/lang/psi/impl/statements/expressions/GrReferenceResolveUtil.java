@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,21 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -43,12 +43,11 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
+import static com.intellij.psi.PsiModifier.STATIC;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSPREAD_DOT;
 
 /**
@@ -62,18 +61,11 @@ public class GrReferenceResolveUtil {
   static boolean resolveImpl(ResolverProcessor processor, GrReferenceExpression place) {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
-      if (processor instanceof MethodResolverProcessor || processor instanceof CompletionProcessor) {
-        processStaticImports(place.getContainingFile(), processor, ResolveState.initial(), place);
-        if (processor instanceof MethodResolverProcessor && ((MethodResolverProcessor)processor).hasApplicableCandidates()) {
-          return false;
-        }
-      }
-
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
       if (!processor.hasCandidates()) {
-        qualifier = PsiImplUtil.getRuntimeQualifier(place);
-        if (qualifier != null) {
-          if (!processQualifier(processor, qualifier, place)) return false;
+        GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(place);
+        if (runtimeQualifier != null) {
+          if (!processQualifier(processor, runtimeQualifier, place)) return false;
         }
       }
     }
@@ -89,25 +81,13 @@ public class GrReferenceResolveUtil {
         }
       }
       else {
-        if (GrUnresolvedAccessInspection.isClassReference(place)) return true;
+        if (isClassReference(place)) return true;
         if (!processQualifier(processor, qualifier, place)) return false;
       }
 
       if (qualifier instanceof GrReferenceExpression &&
           ("class".equals(((GrReferenceExpression)qualifier).getReferenceName()) || PsiUtil.isThisReference(qualifier))) {
         if (!processIfJavaLangClass(processor, qualifier.getType(), qualifier, place)) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean processStaticImports(PsiFile file, ResolverProcessor processor, ResolveState state, PsiElement place) {
-    if (file instanceof GroovyFile) {
-      GrImportStatement[] imports = ((GroovyFile)file).getImportStatements();
-      for (GrImportStatement anImport : imports) {
-        if (anImport.isStatic()) {
-          if (!anImport.processDeclarations(processor, state, null, place)) return false;
-        }
       }
     }
     return true;
@@ -139,8 +119,8 @@ public class GrReferenceResolveUtil {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;
         if (!(resolved instanceof PsiPackage)) {
-          qualifierType = TypesUtil.getJavaLangObject(place);
-          if (!processQualifierType(processor, qualifierType, state, place)) return false;
+          PsiType objectQualifier = TypesUtil.getJavaLangObject(place);
+          if (!processQualifierType(processor, objectQualifier, state, place)) return false;
         }
       }
     }
@@ -190,7 +170,13 @@ public class GrReferenceResolveUtil {
       return true;
     }
 
-    if (qualifierType instanceof PsiClassType) {
+    /*if (qualifierType instanceof GrAnonymousClassType) {
+      final GrAnonymousClassDefinition anonymous = ((GrAnonymousClassType)qualifierType).getAnonymous();
+      if (!anonymous.processDeclarations(processor, state, null, place)) {
+        return false;
+      }
+    }
+    else */if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
       if (qualifierClass != null) {
@@ -200,17 +186,16 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass =
-        GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
-      if (!arrayClass.processDeclarations(processor, state, null, place)) return false;
+      final GroovyPsiManager gmanager = GroovyPsiManager.getInstance(place.getProject());
+      final GrTypeDefinition arrayClass = gmanager.getArrayClass(((PsiArrayType)qualifierType).getComponentType());
+      if (arrayClass != null && !arrayClass.processDeclarations(processor, state, null, place)) return false;
     }
 
     if (!(place.getParent() instanceof GrMethodCall) && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
       final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qualifierType, place);
       if (componentType != null) {
         final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-        processQualifierType(processor, componentType, state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState)),
-                             place);
+        processQualifierType(processor, componentType, state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState)), place);
       }
     }
 
@@ -220,7 +205,7 @@ public class GrReferenceResolveUtil {
   }
 
   @Nullable
-  public static PsiType getQualifierType(GrReferenceExpression ref) {
+  public static PsiType getQualifierType(@NotNull GrReferenceExpression ref) {
     final GrExpression rtQualifier = PsiImplUtil.getRuntimeQualifier(ref);
     if (rtQualifier != null) {
       return rtQualifier.getType();
@@ -238,7 +223,7 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (member instanceof GrMethod) {
-      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!member.hasModifierProperty(STATIC)) {
         containingClass = member.getContainingClass();
       }
     }
@@ -314,5 +299,24 @@ public class GrReferenceResolveUtil {
     PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
     results.add(new GroovyResolveResultImpl(superClass, null, null, superClassSubstitutor, true, true));
     return true;
+  }
+
+  public static boolean isClassReference(GrReferenceExpression ref) {
+    GrExpression qualifier = ref.getQualifier();
+    return "class".equals(ref.getReferenceName()) &&
+           qualifier instanceof GrReferenceExpression &&
+           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
+           !PsiUtil.isThisReference(qualifier);
+  }
+
+  public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
+    return isInStaticContext(referenceExpression) &&
+           !(referenceExpression.getParent() instanceof GrMethodCall) &&
+           referenceExpression.getQualifier() == null;
+  }
+
+  public static boolean isInStaticContext(PsiElement place) {
+    GrMember context = PsiTreeUtil.getParentOfType(place, GrMember.class, true, GrClosableBlock.class);
+    return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
   }
 }

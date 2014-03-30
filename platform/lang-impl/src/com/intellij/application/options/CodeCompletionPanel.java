@@ -19,10 +19,15 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBCheckBox;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -33,11 +38,8 @@ import java.awt.event.ActionListener;
 public class CodeCompletionPanel {
   JPanel myPanel;
   private JCheckBox myCbAutocompletion;
-  private JTextField myAutocompletionDelayField;
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
-  private JCheckBox myCbAutocompleteCommonPrefix;
-  private JCheckBox myCbShowStaticAfterInstance;
 
   private JCheckBox myCbOnCodeCompletion;
   private JCheckBox myCbOnSmartTypeCompletion;
@@ -47,27 +49,32 @@ public class CodeCompletionPanel {
   private JCheckBox myCbShowFullParameterSignatures;
 
   private JComboBox myCaseSensitiveCombo;
-  private JComboBox myFocusLookup;
   private JCheckBox myCbSorting;
   private JBCheckBox myCbSelectByChars;
   private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.case.sensitive.all");
   private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.case.sensitive.none");
   private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.case.sensitive.first.letter");
   private static final String[] CASE_VARIANTS = {CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER};
-  private static final String[] FOCUS_VARIANTS = {"Never", "'Smart'", "Always"};
 
   public CodeCompletionPanel(){
-   myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(CASE_VARIANTS));
-   myFocusLookup.setModel(new DefaultComboBoxModel(FOCUS_VARIANTS));
+    //noinspection unchecked
+    myCaseSensitiveCombo.setModel(new DefaultComboBoxModel(CASE_VARIANTS));
 
+    ActionManager actionManager = ActionManager.getInstance();
+    String basicShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION));
+    String smartShortcut = KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION));
+    if (StringUtil.isNotEmpty(basicShortcut)) {
+      myCbOnCodeCompletion.setText(myCbOnCodeCompletion.getText() + " ( " + basicShortcut + " )");
+    }
+    if (StringUtil.isNotEmpty(smartShortcut)) {
+      myCbOnSmartTypeCompletion.setText(myCbOnSmartTypeCompletion.getText() + " ( " + smartShortcut + " )");
+    }
 
-   myCbAutocompletion.addActionListener(
+    myCbAutocompletion.addActionListener(
      new ActionListener() {
        @Override
        public void actionPerformed(ActionEvent event) {
          boolean selected = myCbAutocompletion.isSelected();
-         myAutocompletionDelayField.setEnabled(selected);
-         myFocusLookup.setEnabled(selected);
          myCbSelectByChars.setEnabled(selected);
        }
      }
@@ -91,9 +98,7 @@ public class CodeCompletionPanel {
      }
    );
 
-    hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
-    myCbAutocompleteCommonPrefix.setVisible(false);
 
     reset();
   }
@@ -121,17 +126,12 @@ public class CodeCompletionPanel {
     }
     myCaseSensitiveCombo.setSelectedItem(value);
 
-    myFocusLookup.setSelectedIndex(Math.min(Math.max(codeInsightSettings.AUTOPOPUP_FOCUS_POLICY - 1, 0), FOCUS_VARIANTS.length - 1));
     myCbSelectByChars.setSelected(codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS);
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    myCbAutocompleteCommonPrefix.setSelected(codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
-    myCbShowStaticAfterInstance.setSelected(codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
-    myAutocompletionDelayField.setEnabled(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
-    myAutocompletionDelayField.setText(String.valueOf(codeInsightSettings.AUTO_LOOKUP_DELAY));
 
     myCbAutopopupJavaDoc.setSelected(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
     myAutopopupJavaDocField.setEnabled(codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
@@ -144,6 +144,8 @@ public class CodeCompletionPanel {
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
     myCbSorting.setSelected(UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY);
+    
+    myCbAutocompletion.setText("Autopopup code completion" + (PowerSaveMode.isEnabled() ? " (not available in Power Save mode)" : ""));
   }
 
   public void apply() {
@@ -151,27 +153,22 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
     codeInsightSettings.COMPLETION_CASE_SENSITIVE = getCaseSensitiveValue();
-    //noinspection MagicConstant
-    codeInsightSettings.AUTOPOPUP_FOCUS_POLICY = getFocusLookupValue();
 
     codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = myCbSelectByChars.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
-    codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX = myCbAutocompleteCommonPrefix.isSelected();
-    codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE = myCbShowStaticAfterInstance.isSelected();
     codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = myCbShowFullParameterSignatures.isSelected();
 
     codeInsightSettings.AUTO_POPUP_PARAMETER_INFO = myCbParameterInfoPopup.isSelected();
     codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP = myCbAutocompletion.isSelected();
     codeInsightSettings.AUTO_POPUP_JAVADOC_INFO = myCbAutopopupJavaDoc.isSelected();
 
-    codeInsightSettings.AUTO_LOOKUP_DELAY = getIntegerValue(myAutocompletionDelayField.getText(), 0);
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText(), 0);
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText(), 0);
     
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = myCbSorting.isSelected();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
@@ -183,20 +180,15 @@ public class CodeCompletionPanel {
 
     //noinspection ConstantConditions
     isModified |= getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE;
-    //noinspection MagicConstant
-    isModified |= getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY;
 
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbSelectByChars, codeInsightSettings.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    isModified |= isModified(myCbAutocompleteCommonPrefix, codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
-    isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
     isModified |= isModified(myCbParameterInfoPopup, codeInsightSettings.AUTO_POPUP_PARAMETER_INFO);
     isModified |= isModified(myCbAutocompletion, codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
 
     isModified |= isModified(myCbAutopopupJavaDoc, codeInsightSettings.AUTO_POPUP_JAVADOC_INFO);
-    isModified |= isModified(myAutocompletionDelayField, codeInsightSettings.AUTO_LOOKUP_DELAY, 0);
     isModified |= isModified(myParameterInfoDelayField, codeInsightSettings.PARAMETER_INFO_DELAY, 0);
     isModified |= isModified(myAutopopupJavaDocField, codeInsightSettings.JAVADOC_INFO_DELAY, 0);
     isModified |= isModified(myCbSorting, UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY);
@@ -239,7 +231,4 @@ public class CodeCompletionPanel {
     }
   }
 
-  private int getFocusLookupValue() {
-    return myFocusLookup.getSelectedIndex() + 1;
-  }
 }

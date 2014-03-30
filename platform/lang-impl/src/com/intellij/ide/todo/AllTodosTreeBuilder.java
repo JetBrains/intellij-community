@@ -30,6 +30,7 @@ public class AllTodosTreeBuilder extends TodoTreeBuilder{
     super(tree,treeModel,project);
   }
 
+  @Override
   @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new AllTodosTreeStructure(myProject);

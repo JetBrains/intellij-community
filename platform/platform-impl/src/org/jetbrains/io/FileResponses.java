@@ -15,104 +15,101 @@
  */
 package org.jetbrains.io;
 
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.jboss.netty.handler.ssl.SslHandler;
-import org.jboss.netty.handler.stream.ChunkedFile;
+import com.intellij.openapi.util.text.StringUtil;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.stream.ChunkedFile;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.ParseException;
 import java.util.Date;
 
-import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.*;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.isKeepAlive;
-import static org.jboss.netty.handler.codec.http.HttpHeaders.setContentLength;
-import static org.jboss.netty.handler.codec.http.HttpResponseStatus.NOT_MODIFIED;
-import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jetbrains.io.Responses.*;
 
 public class FileResponses {
   private static final MimetypesFileTypeMap FILE_MIMETYPE_MAP = new MimetypesFileTypeMap();
 
-  public static HttpResponse createResponse(String path) {
-    HttpResponse response = create(FILE_MIMETYPE_MAP.getContentType(path));
-    response.setHeader(CACHE_CONTROL, "max-age=0");
-    return response;
+  public static String getContentType(String path) {
+    return FILE_MIMETYPE_MAP.getContentType(path);
   }
 
-  private static boolean checkCache(HttpRequest request, ChannelHandlerContext context, long lastModified) {
-    String ifModifiedSince = request.getHeader(IF_MODIFIED_SINCE);
-    if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
+  private static boolean checkCache(HttpRequest request, Channel channel, long lastModified) {
+    String ifModifiedSince = request.headers().get(HttpHeaders.Names.IF_MODIFIED_SINCE);
+    if (!StringUtil.isEmpty(ifModifiedSince)) {
       try {
-        if (Responses.DATE_FORMAT.parse(ifModifiedSince).getTime() >= lastModified) {
-          HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
-          response.setHeader("Access-Control-Allow-Origin", "*");
-          response.setHeader("Access-Control-Allow-Credentials", true);
-          addDate(response);
-          addServer(response);
-          send(response, request, context);
+        if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
+          send(response(HttpResponseStatus.NOT_MODIFIED), channel, request);
           return true;
         }
       }
       catch (ParseException ignored) {
       }
+      catch (NumberFormatException ignored) {
+      }
     }
     return false;
   }
 
-  public static void sendFile(HttpRequest request, ChannelHandlerContext context, File file) throws IOException {
-    if (checkCache(request, context, file.lastModified())) {
+  public static void sendFile(HttpRequest request, Channel channel, File file) throws IOException {
+    if (checkCache(request, channel, file.lastModified())) {
       return;
     }
 
+    HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+    response.headers().add(CONTENT_TYPE, getContentType(file.getPath()));
+    addCommonHeaders(response);
+    response.headers().set(HttpHeaders.Names.CACHE_CONTROL, "private, must-revalidate");
+    response.headers().set(HttpHeaders.Names.LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
+
+    boolean keepAlive = addKeepAliveIfNeed(response, request);
+
     boolean fileWillBeClosed = false;
-    RandomAccessFile raf = new RandomAccessFile(file, "r");
+    RandomAccessFile raf;
+    try {
+      raf = new RandomAccessFile(file, "r");
+    }
+    catch (FileNotFoundException ignored) {
+      send(response(HttpResponseStatus.NOT_FOUND), channel, request);
+      return;
+    }
+
     try {
       long fileLength = raf.length();
-      HttpResponse response = createResponse(file.getPath());
-      setContentLength(response, fileLength);
-      addDate(response);
-      response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.format(new Date(file.lastModified())));
-      if (isKeepAlive(request)) {
-        response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+      if (request.getMethod() != HttpMethod.HEAD) {
+        HttpHeaders.setContentLength(response, fileLength);
       }
 
-      Channel channel = context.getChannel();
       channel.write(response);
-
-      ChannelFuture future;
-      if (channel.getPipeline().get(SslHandler.class) == null) {
-        // No encryption - use zero-copy.
-        final FileRegion region = new DefaultFileRegion(raf.getChannel(), 0, fileLength);
-        future = channel.write(region);
-        future.addListener(new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) {
-            region.releaseExternalResources();
-          }
-        });
+      if (request.getMethod() != HttpMethod.HEAD) {
+        if (channel.pipeline().get(SslHandler.class) == null) {
+          // no encryption - use zero-copy
+          channel.write(new DefaultFileRegion(raf.getChannel(), 0, fileLength));
+        }
+        else {
+          // cannot use zero-copy with HTTPS
+          channel.write(new ChunkedFile(raf));
+        }
       }
-      else {
-        // Cannot use zero-copy with HTTPS.
-        future = channel.write(new ChunkedFile(raf, 0, fileLength, 8192));
-      }
-
-      if (!isKeepAlive(request)) {
-        future.addListener(ChannelFutureListener.CLOSE);
-      }
-
       fileWillBeClosed = true;
     }
     finally {
       if (!fileWillBeClosed) {
         raf.close();
       }
+    }
+
+    ChannelFuture future = channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+    if (!keepAlive) {
+      future.addListener(ChannelFutureListener.CLOSE);
     }
   }
 }

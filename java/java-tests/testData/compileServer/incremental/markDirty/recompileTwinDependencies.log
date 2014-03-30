@@ -1,0 +1,10 @@
+Cleaning output files:
+out/production/RecompileTwinDependencies/package1/A.class
+End of files
+Cleaning output files:
+out/production/RecompileTwinDependencies/package1/C.class
+End of files
+Compiling files:
+src/package2/A.java
+src/package2/C.java
+End of files

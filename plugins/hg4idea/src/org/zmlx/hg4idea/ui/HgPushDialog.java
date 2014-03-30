@@ -12,8 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,10 +22,9 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgPusher;
 import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgTagBranch;
+import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -37,7 +35,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.List;
 
 public class HgPushDialog extends DialogWrapper {
 
@@ -51,9 +48,12 @@ public class HgPushDialog extends DialogWrapper {
   private JCheckBox branchCheckBox;
   private JComboBox branchComboBox;
   private EditorComboBox myRepositoryURL;
+  private JCheckBox newBranchCheckBox;
+  private JComboBox myBookmarkComboBox;
+  private JCheckBox myBookmarkCheckBox;
   private String myCurrentRepositoryUrl;
 
-  public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches) {
+  public HgPushDialog(Project project, Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
     super(project, false);
     myProject = project;
 
@@ -67,21 +67,29 @@ public class HgPushDialog extends DialogWrapper {
     final UpdatingListener updatingListener = new UpdatingListener();
     revisionCbx.addChangeListener(updatingListener);
     branchCheckBox.addChangeListener(updatingListener);
+    myBookmarkCheckBox.addChangeListener(updatingListener);
     revisionTxt.getDocument().addDocumentListener(updatingListener);
 
     setTitle(HgVcsMessages.message("hg4idea.push.dialog.title"));
     setOKButtonText("Push");
     init();
 
+    setRoots(repos, selectedRepo);
+  }
+
+  private void setRoots(@NotNull Collection<HgRepository> repos,
+                        @Nullable HgRepository selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
-    updateBranchComboBox(branches);
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
+    HgRepository repo = hgRepositorySelectorComponent.getRepository();
+    updateComboBoxes(repo);
     updateRepository();
   }
 
   public void createUIComponents() {
     myRepositoryURL = new EditorComboBox("");
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
-    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getRepositoryUrls(), String.class));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
     myRepositoryURL.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
@@ -91,10 +99,19 @@ public class HgPushDialog extends DialogWrapper {
     });
   }
 
-  public VirtualFile getRepository() {
+  private void addPathsFromHgrc(VirtualFile repo) {
+    Collection<String> paths = HgUtil.getRepositoryPaths(myProject, repo);
+    for (String path : paths) {
+      myRepositoryURL.prependItem(path);
+    }
+  }
+
+  @NotNull
+  public HgRepository getRepository() {
     return hgRepositorySelectorComponent.getRepository();
   }
 
+  @NotNull
   public String getTarget() {
     return myCurrentRepositoryUrl;
   }
@@ -105,12 +122,21 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   @Nullable
-  public HgTagBranch getBranch() {
-    return branchCheckBox.isSelected() ? (HgTagBranch) branchComboBox.getSelectedItem() : null;
+  public String getBranch() {
+    return branchCheckBox.isSelected() ? (String)branchComboBox.getSelectedItem() : null;
+  }
+
+  @Nullable
+  public String getBookmarkName() {
+    return myBookmarkCheckBox.isSelected() ? (String)myBookmarkComboBox.getSelectedItem() : null;
   }
 
   public boolean isForce() {
     return forceCheckBox.isSelected();
+  }
+
+  public boolean isNewBranch() {
+    return newBranchCheckBox.isSelected();
   }
 
   protected JComponent createCenterPanel() {
@@ -123,41 +149,36 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public void updateRepository() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-        final String defaultPath = HgPusher.getDefaultPushPath(myProject, repo);
-        final List<HgTagBranch> branches = HgPusher.getBranches(myProject, repo);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (defaultPath != null) {
-              updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
-              myCurrentRepositoryUrl = defaultPath;
-            }
-            updateBranchComboBox(branches);
-          }
-        }, ModalityState.stateForComponent(getRootPane()));
-      }
-    });
+    HgRepository repo = hgRepositorySelectorComponent.getRepository();
+    String defaultPath = HgUtil.getRepositoryDefaultPushPath(repo);
+    addPathsFromHgrc(repo.getRoot());
+    if (defaultPath != null) {
+      updateRepositoryUrlText(HgUtil.removePasswordIfNeeded(defaultPath));
+      myCurrentRepositoryUrl = defaultPath;
+    }
+    updateComboBoxes(repo);
+  }
+
+  private void updateComboBoxes(HgRepository repo) {
+    final Collection<String> branches = repo.getOpenedBranches();
+    final Collection<String> bookmarkNames = HgUtil.getNamesWithoutHashes(repo.getBookmarks());
+    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+    branchComboBox.setSelectedItem(repo.getCurrentBranch());
+    myBookmarkComboBox.setModel(new DefaultComboBoxModel(bookmarkNames.toArray()));
   }
 
   private void updateRepositoryUrlText(String defaultPath) {
     if (defaultPath != null) {
-      myRepositoryURL.setText(defaultPath);
+      myRepositoryURL.setSelectedItem(defaultPath);
       update();
     }
-  }
-
-  private void updateBranchComboBox(@NotNull List<HgTagBranch> branches) {
-    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
   }
 
   private void update() {
     setOKActionEnabled(validateOptions());
     revisionTxt.setEnabled(revisionCbx.isSelected());
     branchComboBox.setEnabled(branchCheckBox.isSelected());
+    myBookmarkComboBox.setEnabled(myBookmarkCheckBox.isSelected());
   }
 
   private boolean validateOptions() {
@@ -172,8 +193,8 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   public void rememberSettings() {
-    final HgRememberedInputs rememberedInputs = HgRememberedInputs.getInstance(myProject);
-    rememberedInputs.addRepositoryUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
+    final DvcsRememberedInputs rememberedInputs = HgRememberedInputs.getInstance();
+    rememberedInputs.addUrl(HgUtil.removePasswordIfNeeded(myRepositoryURL.getText()));
   }
 
   /**
@@ -197,5 +218,4 @@ public class HgPushDialog extends DialogWrapper {
       update();
     }
   }
-
 }

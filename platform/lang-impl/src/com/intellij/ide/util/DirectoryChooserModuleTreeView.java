@@ -71,6 +71,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(final TreePath o) {
         final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
         if (userObject instanceof Module) {
@@ -84,6 +85,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     }, true);
   }
 
+  @Override
   public void clearItems() {
     myRootNode.removeAllChildren();
     myItems.clear();
@@ -94,26 +96,32 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(myRootNode);
   }
 
+  @Override
   public JComponent getComponent() {
     return myTree;
   }
 
+  @Override
   public void onSelectionChange(final Runnable runnable) {
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
     });
   }
 
+  @Override
   public DirectoryChooser.ItemWrapper getItemByIndex(int i) {
     return myItems.get(i);
   }
 
+  @Override
   public void clearSelection() {
     myTree.clearSelection();
   }
 
+  @Override
   public void selectItemByIndex(int selectionIndex) {
     if (selectionIndex < 0) {
       myTree.clearSelection();
@@ -137,6 +145,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     return treePath;
   }
 
+  @Override
   public void addItem(DirectoryChooser.ItemWrapper itemWrapper) {
     myItems.add(itemWrapper);
     final PsiDirectory directory = itemWrapper.getDirectory();
@@ -152,11 +161,13 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
                                                                                        myRootNode,
                                                                                        myModuleGroupNodes,
                                                                                        new Consumer<ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode>>() {
+                                                                                         @Override
                                                                                          public void consume(final ModuleGroupUtil.ParentChildRelation<DefaultMutableTreeNode> parentChildRelation) {
                                                                                            insertNode(parentChildRelation.getChild(), parentChildRelation.getParent());
                                                                                          }
                                                                                        },
                                                                                        new Function<ModuleGroup, DefaultMutableTreeNode>() {
+                                                                                         @Override
                                                                                          public DefaultMutableTreeNode fun(final ModuleGroup moduleGroup) {
                                                                                            return new DefaultMutableTreeNode(moduleGroup, true);
                                                                                          }
@@ -175,6 +186,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     final Enumeration enumeration = rootNode.children();
     ArrayList children = Collections.list(enumeration);
     final int index = Collections.binarySearch(children, nodeToInsert, new Comparator<DefaultMutableTreeNode>() {
+      @Override
       public int compare(DefaultMutableTreeNode node1, DefaultMutableTreeNode node2) {
         final Object o1 = node1.getUserObject();
         final Object o2 = node2.getUserObject();
@@ -202,6 +214,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(rootNode);
   }
 
+  @Override
   public void listFilled() {
     if (myModuleNodes.size() == 1) {
       final Iterator<DefaultMutableTreeNode> iterator = myItemNodes.values().iterator();
@@ -212,10 +225,12 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     }
   }
 
+  @Override
   public int getItemsSize() {
     return myItems.size();
   }
 
+  @Override
   @Nullable
   public DirectoryChooser.ItemWrapper getSelectedItem() {
     final TreePath selectionPath = myTree.getSelectionPath();
@@ -226,6 +241,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
 
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(JTree tree, Object nodeValue, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       final Object value = ((DefaultMutableTreeNode)nodeValue).getUserObject();
       if (value instanceof DirectoryChooser.ItemWrapper) {

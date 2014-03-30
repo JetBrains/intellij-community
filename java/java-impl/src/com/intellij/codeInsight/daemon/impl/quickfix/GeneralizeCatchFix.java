@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +32,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   private PsiTryStatement myTryStatement;
   private PsiParameter myCatchParameter;
 
-  public GeneralizeCatchFix(PsiElement element, PsiClassType unhandledException) {
+  public GeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType unhandledException) {
     myElement = element;
     myUnhandledException = unhandledException;
   }
@@ -41,8 +41,8 @@ public class GeneralizeCatchFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
-                                  HighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
-                                  HighlightUtil.formatType(myUnhandledException));
+                                  JavaHighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
+                                  JavaHighlightUtil.formatType(myUnhandledException));
   }
 
   @Override
@@ -53,9 +53,7 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(myElement != null
-          && myElement.isValid()
-          && myUnhandledException != null
+    if (!(myElement.isValid()
           && myUnhandledException.isValid()
           && myElement.getManager().isInProject(myElement))) return false;
     // find enclosing try
@@ -83,7 +81,7 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myElement.getContainingFile())) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
     PsiTypeElement type = factory.createTypeElement(myUnhandledException);
     myCatchParameter.getTypeElement().replace(type);

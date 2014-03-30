@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -57,15 +56,12 @@ public class FindUsagesTest extends PsiTestCase{
 
   public void testOverloadConstructors() throws Exception {
     PsiClass aClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
-    PsiMethod constructor;
-//    constructor = myJavaFacade.getElementFactory().createConstructor();
-//    constructor = aClass.findMethodBySignature(constructor, false);
-    constructor = aClass.findMethodsByName("B", false)[0];
+    PsiMethod constructor = aClass.findMethodsByName("B", false)[0];
     PsiMethodCallExpression superCall = (PsiMethodCallExpression) constructor.getBody().getStatements()[0].getFirstChild();
     PsiReferenceExpression superExpr = superCall.getMethodExpression();
-    String[] fileNames = new String[]{"B.java", "A.java", "A.java", "B.java"};
-    int[] starts = new int[]{};
-    int[] ends = new int[]{};
+    String[] fileNames = {"B.java", "A.java", "A.java", "B.java"};
+    int[] starts = {};
+    int[] ends = {};
     final ArrayList<PsiFile> filesList = new ArrayList<PsiFile>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();

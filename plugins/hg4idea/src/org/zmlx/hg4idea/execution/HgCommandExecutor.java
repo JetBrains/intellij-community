@@ -13,6 +13,8 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -60,23 +62,34 @@ public final class HgCommandExecutor {
   private final HgVcs myVcs;
   private final String myDestination;
 
-  private Charset myCharset = HgEncodingUtil.getDefaultCharset();
+  @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
+
+  private boolean myOutputAlwaysSuppressed = false;    //for command with enormous output, like log or cat
   private List<String> myOptions = DEFAULT_OPTIONS;
+  @Nullable private ModalityState myState;
 
   public HgCommandExecutor(Project project) {
     this(project, null);
   }
 
   public HgCommandExecutor(Project project, @Nullable String destination) {
+    this(project, destination, null);
+  }
+
+  public HgCommandExecutor(Project project, @Nullable String destination, @Nullable ModalityState state) {
     myProject = project;
     myVcs = HgVcs.getInstance(project);
     myDestination = destination;
+    myState = state;
+    myCharset = HgEncodingUtil.getDefaultCharset(myProject);
   }
 
-  public void setCharset(Charset charset) {
-    myCharset = charset;
+  public void setCharset(@Nullable Charset charset) {
+    if (charset != null) {
+      myCharset = charset;
+    }
   }
 
   public void setSilent(boolean isSilent) {
@@ -89,6 +102,10 @@ public final class HgCommandExecutor {
 
   public void setShowOutput(boolean showOutput) {
     myShowOutput = showOutput;
+  }
+
+  public void setOutputAlwaysSuppressed(boolean outputAlwaysSuppressed) {
+    myOutputAlwaysSuppressed = outputAlwaysSuppressed;
   }
 
   public void execute(@Nullable final VirtualFile repo, @NotNull final String operation, @Nullable final List<String> arguments,
@@ -114,6 +131,10 @@ public final class HgCommandExecutor {
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, @NotNull final String operation,
                                                 @Nullable final List<String> arguments, @Nullable HgPromptHandler handler) {
     HgCommandResult result = executeInCurrentThread(repo, operation, arguments, handler, false);
+    if (HgErrorUtil.isUnknownEncodingError(result)) {
+      setCharset(Charset.forName("utf8"));
+      result = executeInCurrentThread(repo, operation, arguments, handler, false);
+    }
     if (HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
@@ -137,6 +158,8 @@ public final class HgCommandExecutor {
       return null;
     }
 
+    logCommand(operation, arguments);
+
     final List<String> cmdLine = new LinkedList<String>();
     cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
     if (repo != null) {
@@ -145,7 +168,7 @@ public final class HgCommandExecutor {
     }
 
     WarningReceiver warningReceiver = new WarningReceiver();
-    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization);
+    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myState);
 
     SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
     SocketServer warningServer = new SocketServer(warningReceiver);
@@ -180,11 +203,19 @@ public final class HgCommandExecutor {
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
     }
-    ShellCommand shellCommand = new ShellCommand(myVcs.getGlobalSettings().isRunViaBash());
+    if (HgVcs.HGENCODING == null) {
+      cmdLine.add("--encoding");
+      cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
+    }
+
     HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
-      result = shellCommand.execute(cmdLine, workingDir, myCharset);
+      ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
+      long startTime = System.currentTimeMillis();
+      LOG.debug(String.format("hg %s started", operation));
+      result = shellCommand.execute(myShowOutput);
+      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
@@ -205,13 +236,13 @@ public final class HgCommandExecutor {
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
-
-    log(operation, arguments, result);
+    logResult(result);
     return result;
   }
 
   // logging to the Version Control console (without extensions and configs)
-  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void logCommand(@NotNull String operation, @Nullable List<String> arguments) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -220,10 +251,14 @@ public final class HgCommandExecutor {
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
-
+    String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    //remove password from path before log
+    final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
+    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command
+    if (isUnitTestMode) {
+      System.out.print(cmdString + "\n");
+    }
     if (!myIsSilent) {
       LOG.info(cmdString);
       myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
@@ -231,20 +266,33 @@ public final class HgCommandExecutor {
     else {
       LOG.debug(cmdString);
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void logResult(@NotNull HgCommandResult result) {
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     // log output if needed
     if (!result.getRawOutput().isEmpty()) {
-      if (!myIsSilent && myShowOutput) {
-        LOG.info(result.getRawOutput());
-        myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+      if (unitTestMode) {
+        System.out.print(result.getRawOutput() + "\n");
       }
-      else {
-        LOG.debug(result.getRawOutput());
+      else if (!myOutputAlwaysSuppressed) {
+        if (!myIsSilent && myShowOutput) {
+          LOG.info(result.getRawOutput());
+          myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+        }
+        else {
+          LOG.debug(result.getRawOutput());
+        }
       }
     }
 
     // log error
     if (!result.getRawError().isEmpty()) {
+      if (unitTestMode) {
+        System.out.print(result.getRawError() + "\n");
+      }
       if (!myIsSilent) {
         LOG.info(result.getRawError());
         myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
@@ -359,10 +407,12 @@ public final class HgCommandExecutor {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private boolean myForceAuthorization;
+    @Nullable private ModalityState myState;
 
-    private PassReceiver(Project project, boolean forceAuthorization) {
+    private PassReceiver(Project project, boolean forceAuthorization, @Nullable ModalityState state) {
       myProject = project;
       myForceAuthorization = forceAuthorization;
+      myState = state;
     }
 
     @Override
@@ -377,7 +427,7 @@ public final class HgCommandExecutor {
       String proposedLogin = new String(readDataBlock(dataInputStream));
 
       HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
-      boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path);
+      boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
       if (ok) {
         myAuthenticator = authenticator;
         sendDataBlock(out, authenticator.getUserName().getBytes());

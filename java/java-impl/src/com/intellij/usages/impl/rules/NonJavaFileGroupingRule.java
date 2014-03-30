@@ -18,7 +18,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.ServerPageFile;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +28,12 @@ public class NonJavaFileGroupingRule extends FileGroupingRule {
     super(project);
   }
 
+  @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     final FileUsageGroup usageGroup = (FileUsageGroup)super.groupUsage(usage);
     if (usageGroup != null) {
       final PsiFile psiFile = usageGroup.getPsiFile();
-      if (psiFile instanceof PsiJavaFile && !(psiFile instanceof JspFile)) {
+      if (psiFile instanceof PsiJavaFile && !(psiFile instanceof ServerPageFile)) {
         return null;
       }
     }

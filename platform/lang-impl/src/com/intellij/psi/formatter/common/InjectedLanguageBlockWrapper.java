@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,11 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
    * @param range range of code inside injected document which is really placed in the main document
    * @param indent
    */
-  public InjectedLanguageBlockWrapper(final @NotNull Block original, final int offset, @Nullable TextRange range, @Nullable Indent indent) {
+  public InjectedLanguageBlockWrapper(@NotNull final Block original, final int offset, @Nullable TextRange range, @Nullable Indent indent) {
     this(original, offset, range, indent, null);
   }
 
-  public InjectedLanguageBlockWrapper(final @NotNull Block original,
+  public InjectedLanguageBlockWrapper(@NotNull final Block original,
                                       final int offset,
                                       @Nullable TextRange range,
                                       @Nullable Indent indent,
@@ -102,7 +102,7 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
 
   private List<Block> buildBlocks() {
     final List<Block> list = myOriginal.getSubBlocks();
-    if (list.size() == 0) return AbstractBlock.EMPTY;
+    if (list.isEmpty()) return AbstractBlock.EMPTY;
     if (myOffset == 0 && myRange == null) return list;
 
     final ArrayList<Block> result = new ArrayList<Block>(list.size());
@@ -117,7 +117,7 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
     return result;
   }
 
-  private void collectBlocksIntersectingRange(final List<Block> list, final List<Block> result, final @NotNull TextRange range) {
+  private void collectBlocksIntersectingRange(final List<Block> list, final List<Block> result, @NotNull final TextRange range) {
     for (Block block : list) {
       final TextRange textRange = block.getTextRange();
       if (range.contains(textRange)) {

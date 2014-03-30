@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,12 +27,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jetbrains.annotations.NotNull;
@@ -54,19 +49,14 @@ public class GroovyDslScript {
   @Nullable private final VirtualFile file;
   private final GroovyDslExecutor executor;
   private final String myPath;
-  private final CachedValue<FactorTree> myMaps;
+  private final FactorTree myFactorTree;
 
   public GroovyDslScript(final Project project, @Nullable VirtualFile file, @NotNull GroovyDslExecutor executor, String path) {
     this.project = project;
     this.file = file;
     this.executor = executor;
     myPath = path;
-    myMaps = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<FactorTree>() {
-      @Override
-      public Result<FactorTree> compute() {
-        return Result.create(new FactorTree(), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
-      }
-    }, false);
+    myFactorTree = new FactorTree(project, executor);
   }
 
 
@@ -76,20 +66,22 @@ public class GroovyDslScript {
                                  final PsiFile placeFile,
                                  final String qname,
                                  ResolveState state) {
-    final FactorTree cache = myMaps.getValue();
-    CustomMembersHolder holder = cache.retrieve(place, placeFile, qname);
+    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, qname);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
     try {
       if (holder == null) {
         holder = addGdslMembers(descriptor, qname, psiType);
-        cache.cache(descriptor, holder);
+        myFactorTree.cache(descriptor, holder);
       }
 
       return holder.processMembers(descriptor, processor, state);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error("Error while processing dsl script '" + myPath + "'", e);
-      return false;
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      handleDslError(e);
+      return true;
     }
   }
 
@@ -140,12 +132,15 @@ public class GroovyDslScript {
     return false;
   }
 
-  private boolean handleDslError(Throwable e) {
+  public boolean handleDslError(Throwable e) {
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
     if (file != null) {
       GroovyDslFileIndex.invokeDslErrorPopup(e, project, file);
+    } else {
+      LOG.info("Error when executing internal GDSL " + myPath, e);
+      GroovyDslFileIndex.stopGdsl();
     }
     return false;
   }
@@ -153,5 +148,10 @@ public class GroovyDslScript {
   @Override
   public String toString() {
     return "GroovyDslScript: " + myPath;
+  }
+
+  @Nullable
+  public MultiMap getStaticInfo() {
+    return executor.getStaticInfo();
   }
 }

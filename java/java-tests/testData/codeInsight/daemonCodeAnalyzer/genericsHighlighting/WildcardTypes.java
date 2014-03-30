@@ -130,7 +130,7 @@ class BoundedWildcard {
 //end of IDEADEV-5816
 
 interface I33 {}
-public class Q<T extends I33> {
+class Q<T extends I33> {
     T t;
     <V extends I33> List<V> foo(Q<V> v) {
       v.hashCode();
@@ -242,5 +242,15 @@ class IDEA89640 {
     Y<? extends X> b = null;
     boolean flag = a  != b; 
     System.out.println(flag);
+  }
+}
+
+interface Parametrized<<warning descr="Type parameter 'T' is never used">T</warning> extends Number> {
+  class Bug1<T extends java.io.Serializable> {
+    void bug1(Parametrized<? super T> <warning descr="Parameter 'param' is never used">param</warning>) {}
+  }
+
+  class Bug2<T extends String> {
+    void bug1(Parametrized<<error descr="Type parameter '? super T' is not within its bound; should extend 'java.lang.Number'">? super T</error>> <warning descr="Parameter 'param' is never used">param</warning>) {}
   }
 }

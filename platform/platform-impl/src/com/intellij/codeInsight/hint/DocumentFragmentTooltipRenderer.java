@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,18 +65,19 @@ public class DocumentFragmentTooltipRenderer implements TooltipRenderer {
     p.x -= 3;
     p.y += editor.getLineHeight();
 
-    Point screen = new Point(p);
-    SwingUtilities.convertPointToScreen(screen, layeredPane);
-    int maxLineCount = (Toolkit.getDefaultToolkit().getScreenSize().height - screen.y) / editor.getLineHeight();
+    Point screenPoint = new Point(p);
+    SwingUtilities.convertPointToScreen(screenPoint, layeredPane);
+    int maxLineCount = (ScreenUtil.getScreenRectangle(screenPoint).height - screenPoint.y) / editor.getLineHeight();
 
     if (endLine - startLine > maxLineCount) {
       endOffset = doc.getLineEndOffset(Math.max(0, Math.min(startLine + maxLineCount, doc.getLineCount() - 1)));
     }
+    if (endOffset < startOffset) return null;
 
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.setFoldingEnabled(false);
     TextRange textRange = new TextRange(startOffset, endOffset);
-    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.x, p.y, false, false, true);
+    hint = EditorFragmentComponent.showEditorFragmentHintAt(editor, textRange, p.y, false, false, true);
     foldingModel.setFoldingEnabled(true);
     return hint;
   }

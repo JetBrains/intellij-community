@@ -27,9 +27,11 @@ import javax.swing.*;
  * @author yole
  */
 public class PsiActionSupportFactoryImpl extends PsiActionSupportFactory {
+  @Override
   public CopyPasteSupport createPsiBasedCopyPasteSupport(final Project project, final JComponent keyReceiver,
                                                          final PsiElementSelector dataSelector) {
     return new CopyPasteDelegator(project, keyReceiver) {
+      @Override
       @NotNull
       protected PsiElement[] getSelectedElements() {
         PsiElement[] elements = dataSelector.getSelectedElements();
@@ -38,6 +40,7 @@ public class PsiActionSupportFactoryImpl extends PsiActionSupportFactory {
     };
   }
 
+  @Override
   public DeleteProvider createPsiBasedDeleteProvider() {
     return new DeleteHandler.DefaultDeleteProvider();
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.actions;
 
+import com.intellij.ide.actions.CopyElementAction;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
+  @Override
   protected void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
                              @NotNull final DataContext dataContext) {
@@ -58,7 +60,8 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
           destinationGroup.add(child);
         }
         else {
-          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext)) {
+          if (child instanceof BaseRefactoringAction && ((BaseRefactoringAction)child).hasAvailableHandler(dataContext) ||
+              child instanceof CopyElementAction) {
             final Presentation presentation = new Presentation();
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, actionManager, 0);
             child.update(event);
@@ -74,7 +77,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       popup.showInBestPositionFor(editor);
     } else {
@@ -82,6 +85,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
   }
 
+  @Override
   protected boolean isEnabled() {
     return true;
   }
@@ -89,9 +93,10 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setVisible(e.getPlace() == ActionPlaces.MAIN_MENU);
+    e.getPresentation().setVisible(e.getPlace() == ActionPlaces.MAIN_MENU || e.getPlace() == ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION);
   }
 
+  @Override
   protected String getPopupTitle(AnActionEvent e) {
     return "Refactor This";
   }

@@ -17,13 +17,11 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,20 +47,27 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
     myToolId = key.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return NAME;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return NAME;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
+    InspectionToolWrapper toolWrapper = inspectionProfile.getInspectionTool(myToolId, project);
+    return toolWrapper == null || toolWrapper.getDefaultLevel() != HighlightDisplayLevel.NON_SWITCHABLE_ERROR;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
@@ -77,10 +82,12 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return AllIcons.Actions.Cancel;
   }

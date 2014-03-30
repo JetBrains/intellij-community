@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -28,16 +29,20 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -48,6 +53,9 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,9 +70,17 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -72,6 +88,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.zip.CRC32;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
@@ -123,12 +140,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (p.isDisposed()) return;
-            r.run();
-          }
-        }, state);
+      ApplicationManager.getApplication().invokeLater(DisposeAwareRunnable.create(r, p), state);
     }
   }
 
@@ -145,12 +157,7 @@ public class MavenUtil {
         r.run();
       }
       else {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            public void run() {
-              if (p.isDisposed()) return;
-              r.run();
-            }
-          }, state);
+        ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
       }
     }
   }
@@ -168,12 +175,7 @@ public class MavenUtil {
       r.run();
     }
     else {
-      DumbService.getInstance(project).runWhenSmart(new Runnable() {
-        public void run() {
-          if (project.isDisposed()) return;
-          r.run();
-        }
-      });
+      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project));
     }
   }
 
@@ -186,7 +188,7 @@ public class MavenUtil {
     }
 
     if (!project.isInitialized()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(r);
+      StartupManager.getInstance(project).registerPostStartupActivity(DisposeAwareRunnable.create(r, project));
       return;
     }
 
@@ -360,6 +362,11 @@ public class MavenUtil {
     }
     else {
       VfsUtil.saveText(file, template.getTemplateText());
+
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile != null) {
+        new ReformatCodeProcessor(project, psiFile, null, false).run();
+      }
     }
   }
 
@@ -705,6 +712,7 @@ public class MavenUtil {
     }
     if (result == null) {
       result = doResolveSuperPomFile(MavenServerManager.getMavenLibDirectory());
+      assert result != null : "Super pom not found in: " + MavenServerManager.getMavenLibDirectory();
     }
     return result;
   }
@@ -760,5 +768,175 @@ public class MavenUtil {
 
   public interface MavenTaskHandler {
     void waitFor();
+  }
+
+  public static int crcWithoutSpaces(@NotNull InputStream in) throws IOException {
+    try {
+      final CRC32 crc = new CRC32();
+
+      SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+
+      parser.parse(in, new DefaultHandler(){
+
+        boolean textContentOccur = false;
+        int spacesCrc;
+
+        private void putString(@Nullable String string) {
+          if (string == null) return;
+
+          for (int i = 0, end = string.length(); i < end; i++) {
+            crc.update(string.charAt(i));
+          }
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+          textContentOccur = false;
+
+          crc.update(1);
+          putString(qName);
+
+          for (int i = 0; i < attributes.getLength(); i++) {
+            putString(attributes.getQName(i));
+            putString(attributes.getValue(i));
+          }
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+          textContentOccur = false;
+
+          crc.update(2);
+          putString(qName);
+        }
+
+        private void processTextOrSpaces(char[] ch, int start, int length) {
+          for (int i = start, end = start + length; i < end; i++) {
+            char a = ch[i];
+
+            if (Character.isWhitespace(a)) {
+              if (textContentOccur) {
+                spacesCrc = spacesCrc * 31 + a;
+              }
+            }
+            else {
+              if (textContentOccur && spacesCrc != 0) {
+                crc.update(spacesCrc);
+                crc.update(spacesCrc >> 8);
+              }
+
+              crc.update(a);
+
+              textContentOccur = true;
+              spacesCrc = 0;
+            }
+          }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+          processTextOrSpaces(ch, start, length);
+        }
+
+        @Override
+        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+          processTextOrSpaces(ch, start, length);
+        }
+
+        @Override
+        public void processingInstruction(String target, String data) throws SAXException {
+          putString(target);
+          putString(data);
+        }
+
+        @Override
+        public void skippedEntity(String name) throws SAXException {
+          putString(name);
+        }
+
+        @Override
+        public void error(SAXParseException e) throws SAXException {
+          crc.update(100);
+        }
+      });
+
+      return (int)crc.getValue();
+    }
+    catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+    }
+    catch (SAXException e) {
+      return -1;
+    }
+  }
+
+  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
+    InputStream inputStream = xmlFile.getInputStream();
+    try {
+      return crcWithoutSpaces(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
+  }
+
+  public static String getSdkPath(@Nullable Sdk sdk) {
+    if (sdk == null) return null;
+
+    VirtualFile homeDirectory = sdk.getHomeDirectory();
+    if (homeDirectory == null) return null;
+
+    if (!"jre".equals(homeDirectory.getName())) {
+      VirtualFile jreDir = homeDirectory.findChild("jre");
+      if (jreDir != null) {
+        homeDirectory = jreDir;
+      }
+    }
+
+    return homeDirectory.getPath();
+  }
+
+  @Nullable
+  public static String getModuleJreHome(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    return getSdkPath(getModuleJdk(mavenProjectsManager, mavenProject));
+  }
+
+  @Nullable
+  public static String getModuleJavaVersion(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    Sdk sdk = getModuleJdk(mavenProjectsManager, mavenProject);
+    if (sdk == null) return null;
+
+    return sdk.getVersionString();
+  }
+
+  @Nullable
+  public static Sdk getModuleJdk(@NotNull MavenProjectsManager mavenProjectsManager, @NotNull MavenProject mavenProject) {
+    Module module = mavenProjectsManager.findModule(mavenProject);
+    if (module == null) return null;
+
+    return ModuleRootManager.getInstance(module).getSdk();
+  }
+
+  @NotNull
+  public static <K, V extends Map> V getOrCreate(Map map, K key) {
+    Map res = (Map)map.get(key);
+    if (res == null) {
+      res = new HashMap();
+      map.put(key, res);
+    }
+
+    return (V)res;
+  }
+
+  public static String getArtifactName(String packaging, Module module, boolean exploded) {
+    return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
+  }
+
+  public static String getEjbClientArtifactName(Module module) {
+    return module.getName() + ":ejb-client";
+  }
+
+  public static String getIdeaVersionToPassToMavenProcess() {
+    return ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,87 +15,54 @@
  */
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.codeStyle.DefaultCodeStyleFacade;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.mock.MockCommandProcessor;
-import com.intellij.mock.MockEditorFactory;
+import com.intellij.AppTopics;
 import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
-import com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.impl.DefaultProjectLocator;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.MockSchemesManagerFactory;
-import com.intellij.testFramework.PlatformLiteFixture;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
-import org.easymock.classextension.EasyMock;
+import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
 
-public class FileDocumentManagerImplTest extends PlatformLiteFixture {
-  private MyMockFileDocumentManager myDocumentManager;
+public class FileDocumentManagerImplTest extends PlatformLangTestCase {
+  private FileDocumentManagerImpl myDocumentManager;
 
+  public Boolean myReloadFromDisk;
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    initApplication();
-    registerExtension(FileTypeFactory.FILE_TYPE_FACTORY_EP, new InternalFileTypeFactory());
-    registerExtensionPoint(FileDocumentSynchronizationVetoer.EP_NAME, FileDocumentSynchronizationVetoer.class);
-    getApplication().registerService(CommandProcessor.class, new MyMockCommandProcessor());
-    getApplication().registerService(CodeStyleFacade.class, new DefaultCodeStyleFacade());
-    getApplication().registerService(ProjectLocator.class, new DefaultProjectLocator());
-
-    MockEditorFactory editorFactory = new MockEditorFactory();
-    getApplication().registerService(EditorFactory.class, editorFactory);
-    final LanguageFileType[] fileType = {null};
-    getApplication().addComponent(FileTypeManager.class, new FileTypeManagerImpl(null, new MockSchemesManagerFactory()){
-      @NotNull
+    myReloadFromDisk = Boolean.TRUE;
+    FileDocumentManagerImpl impl = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
+    impl.setAskReloadFromDisk(getTestRootDisposable(), new PairProcessor<VirtualFile, Document>() {
       @Override
-      public FileType getFileTypeByFileName(@NotNull String fileName) {
-        return fileType[0];
-      }
-
-      @NotNull
-      @Override
-      public FileType getFileTypeByFile(@NotNull VirtualFile file) {
-        return fileType[0];
-      }
-
-      @NotNull
-      @Override
-      public FileType getFileTypeByExtension(@NotNull String extension) {
-        return fileType[0];
+      public boolean process(VirtualFile file, Document document) {
+        if (myReloadFromDisk == null) {
+          fail();
+          return false;
+        }
+        return myReloadFromDisk.booleanValue();
       }
     });
-
-    fileType[0] = StdFileTypes.JAVA;
-
-    getApplication().getComponent(FileTypeManager.class);
-
-    final VirtualFileManager virtualFileManager = EasyMock.createMock(VirtualFileManager.class);
-    final ProjectManager projectManager = EasyMock.createMock(ProjectManager.class);
-    myDocumentManager = new MyMockFileDocumentManager(virtualFileManager, projectManager);
-    getApplication().registerService(FileDocumentManager.class, myDocumentManager);
-    getApplication().registerService(DataManager.class, new DataManagerImpl());
+    myDocumentManager = impl;
   }
 
   public void testGetCachedDocument_Cached() throws Exception {
@@ -104,14 +71,14 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetCachedDocument_NotCached() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
 
     assertSame(myDocumentManager.getCachedDocument(file), document);
   }
 
   public void testGetDocument_CreateNew() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(document);
     assertEquals("test", document.getText());
@@ -120,7 +87,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetDocument_CreateNew_ReadOnly() throws Exception {
-    final MockVirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     file.setWritable(false);
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(document);
@@ -130,7 +97,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetDocument_ReturnCachedValueTwice() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final Document document = myDocumentManager.getDocument(file);
     assertNotNull(document);
     assertEquals("test", document.getText());
@@ -140,7 +107,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetDocument_CreatesNewAfterGCed() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
     int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
@@ -159,7 +126,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetUnsavedDocuments_CreatedDocument() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     myDocumentManager.getDocument(file);
 
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
@@ -167,22 +134,34 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetUnsavedDocuments_ModifiedDocument() throws Exception {
-    final VirtualFile file = newTextFile();
-    Document document = myDocumentManager.getDocument(file);
+    final VirtualFile file = createFile();
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx");
+      }
+    });
+
 
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(1, unsavedDocuments.length);
-    assertSame(document,  unsavedDocuments[0]);
-    assertTrue(Arrays.equals("test".getBytes(), file.contentsToByteArray()));
+    assertSame(document, unsavedDocuments[0]);
+    assertTrue(Arrays.equals("test".getBytes("UTF-8"), file.contentsToByteArray()));
   }
 
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
-    final VirtualFile file = newTextFile();
-    Document document = myDocumentManager.getDocument(file);
+    final VirtualFile file = createFile();
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx");
+      }
+    });
+
 
     myDocumentManager.saveAllDocuments();
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
@@ -190,49 +169,72 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testGetUnsavedDocuments_afterSaveDocuments() throws Exception {
-    final VirtualFile file = newTextFile();
-    Document document = myDocumentManager.getDocument(file);
+    final VirtualFile file = createFile();
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx");
+      }
+    });
+
 
     myDocumentManager.saveDocument(document);
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
     assertEquals(0, unsavedDocuments.length);
   }
 
-  private static MockVirtualFile newTextFile() {
-    return new MockVirtualFile("test.txt", "test");
-  }
-
   public void testGetUnsavedDocuments_afterSaveDocumentWithProblems() throws Exception {
-    final VirtualFile file = new MockVirtualFile("test.txt", "test") {
-      @Override
-      @NotNull
-      public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-        throw new IOException("");
+    try {
+      final VirtualFile file = new MockVirtualFile("test.txt", "test") {
+        @Override
+        @NotNull
+        public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+          throw new IOException("");
+        }
+      };
+
+      final Document document = myDocumentManager.getDocument(file);
+      assertNotNull(file.toString(), document);
+      WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+        @Override
+        public void run() {
+          document.insertString(0, "xxx");
+        }
+      });
+
+
+      try {
+        myDocumentManager.saveDocument(document);
+        fail("must throw IOException");
       }
-    };
+      catch (RuntimeException e) {
+        assertTrue(e.getCause() instanceof IOException);
+      }
 
-    Document document = myDocumentManager.getDocument(file);
-    assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
-
-    myDocumentManager.saveDocument(document);
-
-    assertNotNull(myDocumentManager.myExceptionOnSave);
-
-    final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
-    assertEquals(1, unsavedDocuments.length);
-    assertSame(document,  unsavedDocuments[0]);
-    assertTrue(Arrays.equals("test".getBytes(), file.contentsToByteArray()));
+      final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
+      assertEquals(1, unsavedDocuments.length);
+      assertSame(document, unsavedDocuments[0]);
+      assertTrue(Arrays.equals("test".getBytes("UTF-8"), file.contentsToByteArray()));
+    }
+    finally {
+      myDocumentManager.dropAllUnsavedDocuments();
+    }
   }
 
   public void testUnsavedDocument_DoNotGC() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
-    assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
     int idCode = System.identityHashCode(document);
+    assertNotNull(file.toString(), document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        myDocumentManager.getDocument(file).insertString(0, "xxx");
+      }
+    });
+
     //noinspection UnusedAssignment
     document = null;
 
@@ -244,10 +246,16 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testUnsavedDocument_GcAfterSave() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        myDocumentManager.getDocument(file).insertString(0, "xxx");
+      }
+    });
+
     int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
     document = null;
@@ -262,7 +270,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testSaveDocument_DocumentWasNotChanged() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final long stamp = file.getModificationStamp();
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
@@ -271,32 +279,44 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testSaveDocument_DocumentWasChanged() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final long stamp = file.getModificationStamp();
-    Document document = myDocumentManager.getDocument(file);
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx ");
+      }
+    });
+
 
     myDocumentManager.saveDocument(document);
     assertTrue(stamp != file.getModificationStamp());
     assertEquals(document.getModificationStamp(), file.getModificationStamp());
-    assertTrue(Arrays.equals("xxxtest".getBytes(), file.contentsToByteArray()));
+    assertTrue(Arrays.equals("xxx test".getBytes("UTF-8"), file.contentsToByteArray()));
   }
 
   public void testSaveAllDocuments_DocumentWasChanged() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     final long stamp = file.getModificationStamp();
-    Document document = myDocumentManager.getDocument(file);
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx ");
+      }
+    });
+
 
     myDocumentManager.saveAllDocuments();
     assertTrue(stamp != file.getModificationStamp());
-    assertTrue(Arrays.equals("xxxtest".getBytes(), file.contentsToByteArray()));
+    assertTrue(Arrays.equals("xxx test".getBytes("UTF-8"), file.contentsToByteArray()));
   }
 
   public void testGetFile() throws Exception {
-    final VirtualFile file = newTextFile();
+    final VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
     assertSame(file, myDocumentManager.getFile(document));
@@ -311,35 +331,51 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
 
   public void testRememberSeparators() throws Exception {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
-    Document document = myDocumentManager.getDocument(file);
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx ");
+      }
+    });
+
     myDocumentManager.saveAllDocuments();
-    assertTrue(Arrays.equals("xxxtest\rtest".getBytes(), file.contentsToByteArray()));
+    assertTrue(Arrays.equals("xxx test\rtest".getBytes("UTF-8"), file.contentsToByteArray()));
   }
 
   public void testContentChanged_noDocument() throws Exception {
-    final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
-    file.setListener(myDocumentManager);
-    file.setContent(null, "xxx", true);
+    final VirtualFile file = createFile();
+    setContent(file, "xxx");
     assertNull(myDocumentManager.getCachedDocument(file));
   }
 
+  VirtualFile createFile(String name, String content) throws IOException {
+    File file = createTempFile(name, content);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    assertNotNull(virtualFile);
+    return virtualFile;
+  }
+  VirtualFile createFile() throws IOException {
+    return createFile("test.txt", "test");
+  }
+  void setContent(VirtualFile file, String content) throws IOException {
+    file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET));
+  }
+
   public void testContentChanged_documentPresent() throws Exception {
-    final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
-    file.setListener(myDocumentManager);
+    VirtualFile file = createFile();
     Document document = myDocumentManager.getDocument(file);
-    file.setContent(null, "xxx", true);
+    setContent(file, "xxx");
     assertNotNull(file.toString(), document);
     assertEquals("xxx", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
   }
 
   public void testContentChanged_ignoreEventsFromSelf() throws Exception {
-    final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
-    file.setListener(myDocumentManager);
+    final VirtualFile file = createFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
-    file.setContent(myDocumentManager, "xxx", true);
+    file.setBinaryContent("xxx".getBytes(CharsetToolkit.UTF8_CHARSET), -1,-1,myDocumentManager);
     assertNotNull(file.toString(), document);
     assertEquals("test\ntest", document.getText());
   }
@@ -362,9 +398,15 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
         };
       }
     };
-    Document document = myDocumentManager.getDocument(file);
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "xxx");
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "xxx");
+      }
+    });
+
     final long stamp = document.getModificationStamp();
 
     myDocumentManager.saveAllDocuments();
@@ -372,59 +414,63 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   }
 
   public void testContentChanged_reloadChangedDocument() throws Exception {
-    final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
-    file.setListener(myDocumentManager);
-    Document document = myDocumentManager.getDocument(file);
+    final VirtualFile file = createFile();
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "zzz");
-
-    myDocumentManager.myReloadFromDisk = Boolean.TRUE;
-    try {
-      file.setContent(null, "xxx", true);
-
-      assertEquals("xxx", document.getText());
-      assertEquals(file.getModificationStamp(), document.getModificationStamp());
-      assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
-    }
-    finally {
-      myDocumentManager.myReloadFromDisk = null;
-    }
-  }
-
-  public void testContentChanged_dontreloadChangedDocument() throws Exception {
-    final MockVirtualFile file = newTextFile();
-    file.setListener(myDocumentManager);
-    Document document = myDocumentManager.getDocument(file);
-    assertNotNull(file.toString(), document);
-    document.insertString(0, "zzz");
-
-    myDocumentManager.myReloadFromDisk = Boolean.FALSE;
-    try {
-      long oldDocumentStamp = document.getModificationStamp();
-
-      file.setContent(null, "xxx", true);
-
-      assertEquals("zzztest", document.getText());
-      assertEquals(oldDocumentStamp, document.getModificationStamp());
-    }
-    finally {
-      myDocumentManager.myReloadFromDisk = null;
-    }
-  }
-
-  public void testSaveDocument_dontSaveIfModStampEqualsToFile() throws Exception {
-    final VirtualFile file = new MockVirtualFile("test.txt", "test") {
-      @NotNull
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
       @Override
-      public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-        fail();
-        throw new IOException();
+      public void run() {
+        document.insertString(0, "zzz");
       }
-    };
-    DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
+    });
+
+
+    myReloadFromDisk = Boolean.TRUE;
+    setContent(file, "xxx");
+
+    assertEquals("xxx", document.getText());
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+    assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
+  }
+
+  public void testContentChanged_DoNotReloadChangedDocument() throws Exception {
+    final VirtualFile file = createFile();
+    final Document document = myDocumentManager.getDocument(file);
     assertNotNull(file.toString(), document);
-    document.insertString(0, "zzz");
-    document.setModificationStamp(file.getModificationStamp());
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "old ");
+      }
+    });
+
+    myReloadFromDisk = Boolean.FALSE;
+    long oldDocumentStamp = document.getModificationStamp();
+
+    file.setBinaryContent("xxx".getBytes(CharsetToolkit.UTF8_CHARSET));
+
+    assertEquals("old test", document.getText());
+    assertEquals(oldDocumentStamp, document.getModificationStamp());
+  }
+
+  public void testSaveDocument_DoNotSaveIfModStampEqualsToFile() throws Exception {
+    final VirtualFile file = createFile();
+    final DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "zzz");
+        document.setModificationStamp(file.getModificationStamp());
+      }
+    });
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void beforeDocumentSaving(@NotNull Document documentToSave) {
+        assertNotSame(document, documentToSave);
+      }
+    });
 
     myDocumentManager.saveDocument(document);
   }
@@ -446,23 +492,19 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     document.insertString(0, "zzz");
     file.setContent(null, "xxx", false);
 
-    myDocumentManager.myReloadFromDisk = Boolean.TRUE;
-    try {
-      myDocumentManager.saveAllDocuments();
-      long fileStamp = file.getModificationStamp();
+    myReloadFromDisk = Boolean.TRUE;
+    myDocumentManager.saveAllDocuments();
+    long fileStamp = file.getModificationStamp();
 
-      assertEquals("xxx", document.getText());
-      assertEquals(file.getModificationStamp(), document.getModificationStamp());
-      assertEquals(file.getModificationStamp(), fileStamp);
-      assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
-    }
-    finally {
-      myDocumentManager.myReloadFromDisk = null;
-    }
+    assertEquals("xxx", document.getText());
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+    assertEquals(file.getModificationStamp(), fileStamp);
+    assertEquals(0, myDocumentManager.getUnsavedDocuments().length);
   }
 
   public void testContentChanged_doNotReloadChangedDocumentOnSave() throws Exception {
-    final MockVirtualFile file = new MockVirtualFile("test.txt", "test") {
+    final MockVirtualFile file =
+    new MockVirtualFile("test.txt", "test") {
       @Override
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
@@ -471,156 +513,150 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
       }
     };
 
-    myDocumentManager.myReloadFromDisk = Boolean.FALSE;
+    myReloadFromDisk = Boolean.FALSE;
+    final Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.insertString(0, "old ");
+      }
+    });
+
+    long documentStamp = document.getModificationStamp();
+
+    file.setContent(null, "xxx", false);
+
+    myDocumentManager.saveAllDocuments();
+
+    assertEquals("old test", document.getText());
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+    assertTrue(Arrays.equals("old test".getBytes("UTF-8"), file.contentsToByteArray()));
+    assertEquals(documentStamp, document.getModificationStamp());
+  }
+
+  public void testReplaceDocumentTextWithTheSameText() throws Exception {
+    final VirtualFile file = createFile();
+    final DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
+
+    final String newText = "test text";
+    assertNotNull(file.toString(), document);
+    WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
+      @Override
+      public void run() {
+        document.replaceString(0, document.getTextLength(), newText);
+        assertTrue(myDocumentManager.isDocumentUnsaved(document));
+        myDocumentManager.saveDocument(document);
+
+        getProject().getMessageBus().connect(getTestRootDisposable())
+          .subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+            @Override
+            public void beforeDocumentSaving(@NotNull Document documentToSave) {
+              assertNotSame(document, documentToSave);
+            }
+          });
+
+        final long modificationStamp = document.getModificationStamp();
+
+        document.replaceString(0, document.getTextLength(), newText);
+        if (myDocumentManager.isDocumentUnsaved(document)) {
+          assertTrue(document.getModificationStamp() > modificationStamp);
+        }
+        else {
+          assertEquals(modificationStamp, document.getModificationStamp());
+        }
+      }
+    });
+  }
+
+  public void testExternalReplaceWithTheSameText() throws Exception {
+    final VirtualFile file = createFile();
+    long modificationStamp = file.getModificationStamp();
+
+    DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
+    FileUtil.writeToFile(new File(file.getPath()), "xxx");
+    file.refresh(false, false);
+    assertNotNull(file.toString(), document);
+
+    assertNotSame(file.getModificationStamp(), modificationStamp);
+    assertEquals(file.getModificationStamp(), document.getModificationStamp());
+  }
+
+
+  public void testFileTypeModificationDocumentPreservation() throws Exception {
+    File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    assertNotNull(ioFile.getPath(), file);
+
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document original = documentManager.getDocument(file);
+    assertNotNull(file.getPath(), original);
+
+    renameFile(file, "test.wtf");
+    Document afterRename = documentManager.getDocument(file);
+    assertTrue(afterRename + " != " + original, afterRename == original);
+  }
+
+  public void testFileTypeChangeDocumentDetach() throws Exception {
+    File ioFile = IoTestUtil.createTestFile("test.html", "<html>some text</html>");
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    assertNotNull(ioFile.getPath(), file);
+
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document original = documentManager.getDocument(file);
+    assertNotNull(file.getPath(), original);
+
+    renameFile(file, "test.png");
+    Document afterRename = documentManager.getDocument(file);
+    assertNull(afterRename + " != null", afterRename);
+  }
+
+  private static void renameFile(VirtualFile file, String newName) throws IOException {
+    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(null);
     try {
-      Document document = myDocumentManager.getDocument(file);
-      assertNotNull(file.toString(), document);
-      document.insertString(0, "zzz");
-      long documentStamp = document.getModificationStamp();
-
-      file.setContent(null, "xxx", false);
-
-      myDocumentManager.saveAllDocuments();
-
-      assertEquals("zzztest", document.getText());
-      assertEquals(file.getModificationStamp(), document.getModificationStamp());
-      assertTrue(Arrays.equals("zzztest".getBytes(), file.contentsToByteArray()));
-      assertEquals(documentStamp, document.getModificationStamp());
+      file.rename(null, newName);
     }
     finally {
-      myDocumentManager.myReloadFromDisk = null;
+      token.finish();
     }
   }
 
-  public void testReplaceDocumentTestWithTheSameTest() throws Exception {
-    final boolean[] canCallSave = {true};
-    final VirtualFile file = new MockVirtualFile("test.txt", "test") {
-      @NotNull
+  public void testNoPSIModificationsDuringSave() throws IOException {
+    File ioFile = IoTestUtil.createTestFile("test.txt", "<html>some text</html>");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+    assertNotNull(ioFile.getPath(), virtualFile);
+
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    Document original = documentManager.getDocument(virtualFile);
+    assertNotNull(virtualFile.getPath(), original);
+
+    final PsiFile file = getPsiFile(original);
+    FileDocumentManagerListener saveListener = new FileDocumentManagerAdapter() {
       @Override
-      public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-        if (!canCallSave[0]) fail();
-        return super.getOutputStream(requestor, newModificationStamp, newTimeStamp);
+      public void beforeDocumentSaving(@NotNull Document document) {
+        WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
+          @Override
+          public void run() {
+            try {
+              file.getFirstChild().delete();
+              fail("Must not modify PSI inside save listener");
+            }
+            catch (IncorrectOperationException e) {
+              assertEquals("Must not modify PSI inside save listener", e.getMessage());
+            }
+          }
+        });
       }
     };
-    DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
-
-    String newText = "test text";
-    assertNotNull(file.toString(), document);
-    document.replaceString(0, document.getTextLength(), newText);
-    assertTrue(myDocumentManager.isDocumentUnsaved(document));
-    myDocumentManager.saveDocument(document);
-
-    canCallSave[0] = false;
-
-    final long modificationStamp = document.getModificationStamp();
-
-    document.replaceString(0, document.getTextLength(), newText);
-
-    if (myDocumentManager.isDocumentUnsaved(document)) {
-      assertTrue(document.getModificationStamp() > modificationStamp);
-    }
-    else {
-      assertEquals(modificationStamp, document.getModificationStamp());
-    }
-  }
-
-
-  public void testExternalReplaceWithTheSameText() throws Exception{
-    final long[] modificationStamp = new long[1];
-
-    modificationStamp[0] = 1;
-
-    final VirtualFile file = new MockVirtualFile("test.txt", "test") {
-      @NotNull
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, saveListener);
+    final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
       @Override
-      public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-        fail();
-        throw new IOException();
+      public void run() {
+        document.insertString(1,"y");
       }
+    });
 
-      @Override
-      public long getModificationStamp() {
-        return modificationStamp[0];
-      }
-
-      @Override
-      public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-        myDocumentManager.contentsChanged(new VirtualFileEvent(null, this, null, 1, 2));
-
-      }
-    };
-    DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
-
-
-    modificationStamp[0] = 2;
-
-    file.refresh(false, false);
-
-    assertNotNull(file.toString(), document);
-    assertEquals(2, document.getModificationStamp());
-  }
-
-  private static class MyMockFileDocumentManager extends FileDocumentManagerImpl {
-    private static final FileDocumentManagerListener[] LISTENERS = new FileDocumentManagerListener[0];
-
-    private Collection<IOException> myExceptionOnSave = null;
-    private Boolean myReloadFromDisk = null;
-
-    public MyMockFileDocumentManager(VirtualFileManager virtualFileManager, ProjectManager projectManager) {
-      super(virtualFileManager, projectManager);
-    }
-
-    @Override
-    protected void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
-      myExceptionOnSave = failures.values();
-    }
-
-    @Override
-    protected boolean askReloadFromDisk(VirtualFile file, Document document) {
-      if (myReloadFromDisk == null) {
-        fail();
-        return false;
-      }
-      else {
-        return myReloadFromDisk.booleanValue();
-      }
-    }
-
-    @NotNull
-    @Override
-    protected FileDocumentManagerListener[] getListeners() {
-      return LISTENERS;
-    }
-  }
-
-  private static class MyMockCommandProcessor extends MockCommandProcessor {
-    @Override
-    public void executeCommand(Project project, @NotNull Runnable runnable, String name, Object groupId) {
-      runnable.run();
-    }
-
-    @Override
-    public void executeCommand(Project project,
-                               @NotNull Runnable runnable,
-                               String name,
-                               Object groupId,
-                               @NotNull UndoConfirmationPolicy confirmationPolicy,
-                               Document document) {
-      runnable.run();
-    }
-
-    @Override
-    public void executeCommand(Project project,
-                               @NotNull Runnable runnable,
-                               String name,
-                               Object groupId,
-                               @NotNull UndoConfirmationPolicy confirmationPolicy) {
-      runnable.run();
-    }
-
-    @Override
-    public void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
-      runnable.run();
-    }
+    FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,15 +47,13 @@ import java.util.List;
  * @author Max Medvedev
  */
 public abstract class ClosureCompleter {
-  private static ExtensionPointName<ClosureCompleter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureCompleter");
+  private static final ExtensionPointName<ClosureCompleter> EP_NAME = ExtensionPointName.create("org.intellij.groovy.closureCompleter");
 
   @Nullable
   protected abstract List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
                                                                   PsiMethod method,
                                                                   PsiSubstitutor substitutor,
-                                                                  Document document,
-                                                                  int offset,
-                                                                  PsiElement parent);
+                                                                  PsiElement place);
 
   public static boolean runClosureCompletion(InsertionContext context,
                                              PsiMethod method,
@@ -64,7 +62,7 @@ public abstract class ClosureCompleter {
                                              int offset,
                                              PsiElement parent) {
     for (ClosureCompleter completer : EP_NAME.getExtensions()) {
-      final List<ClosureParameterInfo> parameterInfos = completer.getParameterInfos(context, method, substitutor, document, offset, parent);
+      final List<ClosureParameterInfo> parameterInfos = completer.getParameterInfos(context, method, substitutor, parent);
       if (parameterInfos != null) {
         runClosureTemplate(context, document, offset, substitutor, method, parameterInfos);
         return true;
@@ -149,7 +147,7 @@ public abstract class ClosureCompleter {
       builder.replaceElement(nameIdentifier, new ParameterNameExpression(nameIdentifier.getText()));
     }
 
-    final GrClosableBlock afterPostprocess = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(templateClosure);
+    final GrClosableBlock afterPostprocess = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(templateClosure);
     final Template template = builder.buildTemplate();
     TextRange range = afterPostprocess.getTextRange();
     document.deleteString(range.getStartOffset(), range.getEndOffset());

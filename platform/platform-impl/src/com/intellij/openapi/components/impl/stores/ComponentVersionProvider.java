@@ -17,15 +17,18 @@ package com.intellij.openapi.components.impl.stores;
 
 
 public interface ComponentVersionProvider {
-  ComponentVersionProvider EMPTY = new ComponentVersionProvider(){
+  ComponentVersionProvider EMPTY = new ComponentVersionProvider() {
+    @Override
     public long getVersion(String name) {
       return 0;
     }
 
+    @Override
     public void changeVersion(String name, long version) {
     }
   };
 
   long getVersion(String name);
+
   void changeVersion(String name, long version);
 }

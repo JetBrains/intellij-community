@@ -48,7 +48,9 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element);
+  @NotNull public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
+    return createSmartPsiElementPointer(element);
+  }
 
   /**
    * This method is cheaper than dereferencing both pointers and comparing the result.
@@ -58,4 +60,5 @@ public abstract class SmartPointerManager {
    * @return true if both pointers point to the same PSI element.
    */
   public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
+  public abstract boolean removePointer(@NotNull SmartPsiElementPointer pointer);
 }

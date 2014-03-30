@@ -22,9 +22,11 @@ import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,8 +137,20 @@ public class GotoClassModel2 extends FilteringGotoByModel<Language> {
     return "procedures.navigating.goto.class";
   }
 
+  @NotNull
+  @Override
+  public String removeModelSpecificMarkup(@NotNull String pattern) {
+    if (pattern.startsWith("@")) return pattern.substring(1);
+    return pattern;
+  }
+
   @Override
   public boolean willOpenEditor() {
     return true;
+  }
+
+  @Override
+  public boolean sameNamesForProjectAndLibraries() {
+    return !FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   }
 }

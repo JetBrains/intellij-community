@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,25 +21,30 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
-
+  private final Map<IElementType, Wrap> myReservedWrap = ContainerUtil.newHashMap();
   private int myStartOffset = -1;
-  private final Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
 
-  public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignment, final Indent indent, CommonCodeStyleSettings settings) {
-    super(node, wrap, alignment, indent,settings);
+  public SimpleJavaBlock(ASTNode node,
+                         Wrap wrap,
+                         AlignmentStrategy alignment,
+                         Indent indent,
+                         CommonCodeStyleSettings settings,
+                         JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, alignment, indent, settings, javaSettings);
   }
 
   @Override
@@ -51,7 +56,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     Indent indent = null;
     while (child != null) {
       if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
         indent = Indent.getNoneIndent();
       }
       else if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
@@ -75,9 +80,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }
-        if (indent != null
-            && !(myNode.getPsi() instanceof PsiFile) && child != null && child.getElementType() != JavaElementType.MODIFIER_LIST)
-        {
+        if (indent != null &&
+            !(myNode.getPsi() instanceof PsiFile) &&
+            child != null && child.getElementType() != JavaElementType.MODIFIER_LIST) {
           indent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
         }
       }
@@ -93,10 +98,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   @Override
   @NotNull
   public TextRange getTextRange() {
-    if (myStartOffset != -1) {
-      return new TextRange(myStartOffset, myStartOffset + myNode.getTextLength());
-    }
-    return super.getTextRange();
+    return myStartOffset == -1 ? super.getTextRange() : new TextRange(myStartOffset, myStartOffset + myNode.getTextLength());
   }
 
   @Override
@@ -105,8 +107,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     if (myNode.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
       final Alignment usedAlignment = getUsedAlignment(newChildIndex);
       if (usedAlignment != null) {
-        return new ChildAttributes(null, usedAlignment);        
-      } else {
+        return new ChildAttributes(null, usedAlignment);
+      }
+      else {
         return super.getChildAttributes(newChildIndex);
       }
     }

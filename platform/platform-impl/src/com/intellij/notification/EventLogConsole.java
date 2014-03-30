@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +33,8 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -79,16 +80,18 @@ class EventLogConsole {
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
     final Editor editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
-    Disposer.register(myProjectModel, new Disposable() {
+    myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(editor);
+      public void projectClosed(Project project) {
+        if (project == myProjectModel.getProject()) {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
       }
     });
 
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
-    final ClearLog clearLog = new ClearLog();
+    final ClearLogAction clearLog = new ClearLogAction(this);
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(), editor.getContentComponent());
 
     editor.addEditorMouseListener(new EditorPopupHandler() {
@@ -102,7 +105,7 @@ class EventLogConsole {
     return editor;
   }
 
-  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLog action) {
+  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLogAction action) {
     AnAction[] children = ((ActionGroup)actionManager.getAction(IdeActions.GROUP_CONSOLE_EDITOR_POPUP)).getChildren(null);
     DefaultActionGroup group = new DefaultActionGroup(children);
     group.addSeparator();
@@ -179,7 +182,7 @@ class EventLogConsole {
       lineColors.add(lineHighlighter);
     }
 
-    myProjectModel.removeHandlers.put(notification, new Runnable() {
+    final Runnable removeHandler = new Runnable() {
       @Override
       public void run() {
         for (RangeHighlighter color : lineColors) {
@@ -199,7 +202,13 @@ class EventLogConsole {
           }
         }
       }
-    });
+    };
+    if (!notification.isExpired()) {
+      myProjectModel.removeHandlers.put(notification, removeHandler);
+    }
+    else {
+      removeHandler.run();
+    }
   }
 
   public Editor getConsoleEditor() {
@@ -223,25 +232,28 @@ class EventLogConsole {
     document.insertString(document.getTextLength(), s);
   }
 
-  private class ClearLog extends DumbAwareAction {
-    public ClearLog() {
-      super("Clear All");
+  public static class ClearLogAction extends DumbAwareAction {
+    private EventLogConsole myConsole;
+
+    public ClearLogAction(EventLogConsole console) {
+      super("Clear All", "Clear the contents of the Event Log", AllIcons.Actions.GC);
+      myConsole = console;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      final boolean enabled = e.getData(PlatformDataKeys.EDITOR) != null;
-      e.getPresentation().setEnabled(enabled);
-      e.getPresentation().setVisible(enabled);
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      for (Notification notification : myProjectModel.getNotifications()) {
+      LogModel model = myConsole.myProjectModel;
+      for (Notification notification : model.getNotifications()) {
         notification.expire();
-        myProjectModel.removeNotification(notification);
+        model.removeNotification(notification);
       }
-      myProjectModel.setStatusMessage(null, 0);
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      model.setStatusMessage(null, 0);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
       }

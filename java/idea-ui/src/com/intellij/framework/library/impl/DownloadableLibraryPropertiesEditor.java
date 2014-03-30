@@ -75,7 +75,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
                                                                                         pathForDownloaded);
             final LibraryDownloadSettings settings = DownloadingOptionsDialog.showDialog(getMainPanel(), initialSettings, versions, false);
             if (settings != null) {
-              final NewLibraryEditor editor = settings.download(getMainPanel());
+              final NewLibraryEditor editor = settings.download(getMainPanel(), null);
               if (editor != null) {
                 final LibraryEditorBase target = (LibraryEditorBase)myEditorComponent.getLibraryEditor();
                 target.removeAllRoots();

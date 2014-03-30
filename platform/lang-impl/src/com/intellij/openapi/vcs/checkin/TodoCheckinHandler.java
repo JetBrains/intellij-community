@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -154,7 +153,7 @@ public class TodoCheckinHandler extends CheckinHandler {
                               " can't be performed while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates the indices in background.\n" +
                               "You can commit the changes without running checks, or you can wait until indices are built.",
                               todoName + " is not possible right now",
-                              "&Wait", "&Commit", null) == DialogWrapper.OK_EXIT_CODE) {
+                              "&Wait", "&Commit", null) == Messages.OK) {
         return ReturnResult.CANCEL;
       }
       return ReturnResult.COMMIT;
@@ -184,24 +183,24 @@ public class TodoCheckinHandler extends CheckinHandler {
     final String text = createMessage(worker);
     final String[] buttons;
     final boolean thereAreTodoFound = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0;
+    int commitOption;
     if (thereAreTodoFound) {
       buttons = new String[]{VcsBundle.message("todo.in.new.review.button"), commitButtonText, CommonBundle.getCancelButtonText()};
+      commitOption = 1;
     }
     else {
       buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
+      commitOption = 0;
     }
-
-    final int answer = Messages.showOkCancelDialog(myCheckinProjectPanel.getComponent(), text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
-    if (thereAreTodoFound && answer == 0) {
+    final int answer = Messages.showDialog(myProject, text, "TODO", null, buttons, 0, 1, UIUtil.getWarningIcon());
+    if (thereAreTodoFound && answer == Messages.OK) {
       showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (thereAreTodoFound && ((answer == 2 || answer == -1)) || (! thereAreTodoFound) && answer == 1) {
-      return ReturnResult.CANCEL;
-    }
-    else {
+    if (answer == commitOption) {
       return ReturnResult.COMMIT;
     }
+    return ReturnResult.CANCEL;
   }
 
   private void showTodo(final TodoCheckinHandlerWorker worker) {

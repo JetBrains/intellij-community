@@ -27,6 +27,6 @@ public class EmmetConfigurableProvider extends ConfigurableProvider {
   @Nullable
   @Override
   public Configurable createConfigurable() {
-    return new EmmetConfigurable();
+    return new EmmetCompositeConfigurable();
   }
 }

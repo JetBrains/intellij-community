@@ -31,14 +31,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -92,7 +91,7 @@ class GrChangeSignatureConflictSearcher {
           PsiClass accessObjectClass = null;
           GrExpression qualifier = ((GrReferenceExpression)element).getQualifierExpression();
           if (qualifier != null) {
-            accessObjectClass = getAccessObjectClass(qualifier);
+            accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
 
           PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
@@ -111,23 +110,6 @@ class GrChangeSignatureConflictSearcher {
       }
     }
   }
-
-  @Nullable
-  private static PsiClass getAccessObjectClass(GrExpression expression) {
-    if (expression instanceof GrConstructorInvocation) return null;
-    PsiType type = expression.getType();
-    if (type instanceof PsiClassType) {
-      return ((PsiClassType)type).resolveGenerics().getElement();
-    }
-    if (type == null && expression instanceof PsiReferenceExpression) {
-      JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
-      if (resolveResult.getElement() instanceof PsiClass) {
-        return (PsiClass)resolveResult.getElement();
-      }
-    }
-    return null;
-  }
-
 
   private void addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
     try {

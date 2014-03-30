@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.impl.VcsGlobalMessageManager;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
-import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -100,6 +100,13 @@ public class GitPushDialog extends DialogWrapper {
       }
     }
     return repositories;
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
+    final JComponent banner = VcsGlobalMessageManager.getInstance(myProject).getMessageBanner();
+    return banner != null ? banner : super.createNorthPanel();
   }
 
   @Override
@@ -211,7 +218,7 @@ public class GitPushDialog extends DialogWrapper {
   private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
     StringBuilder logMessage = new StringBuilder();
     for (GitCommit commit : commitsToPush.getAllCommits()) {
-      logMessage.append(commit.getShortHash());
+      logMessage.append(GitUtil.getShortHash(commit.getHash().toString()));
     }
     return logMessage.toString();
   }

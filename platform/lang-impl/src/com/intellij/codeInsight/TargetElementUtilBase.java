@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -116,9 +118,6 @@ public class TargetElementUtilBase {
 
   /**
    * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   * @param document
-   * @param offset
-   * @return
    */
   public static int adjustOffset(Document document, final int offset) {
     return adjustOffset(null, document, offset);
@@ -221,9 +220,11 @@ public class TargetElementUtilBase {
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
-      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
-      if (psi != null && psi.isValid()) {
-        return psi;
+      if (item != null && item.isValid()) {
+        final PsiElement psi = CompletionUtil.getTargetElement(item);
+        if (psi != null && psi.isValid()) {
+          return psi;
+        }
       }
     }
     return null;
@@ -356,5 +357,9 @@ public class TargetElementUtilBase {
 
   public boolean acceptImplementationForReference(PsiReference reference, PsiElement element) {
     return true;
+  }
+  
+  public SearchScope getSearchScope(Editor editor, PsiElement element) {
+    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
   }
 }

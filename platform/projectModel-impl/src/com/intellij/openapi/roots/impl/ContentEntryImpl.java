@@ -19,7 +19,10 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ContentFolder;
+import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -29,10 +32,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.util.*;
@@ -87,8 +96,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public VirtualFile getFile() {
     //assert !isDisposed();
-    final VirtualFile file = myRoot.getFile();
-    return file == null || !file.isDirectory() ? null : file;
+    return myRoot.getFile();
   }
 
   @Override
@@ -97,9 +105,28 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return myRoot.getUrl();
   }
 
+  @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
     return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+  }
+
+  @NotNull
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull JpsModuleSourceRootType<?> rootType) {
+    return getSourceFolders(Collections.singleton(rootType));
+  }
+
+  @NotNull
+  @Override
+  public List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    SmartList<SourceFolder> folders = new SmartList<SourceFolder>();
+    for (SourceFolder folder : mySourceFolders) {
+      if (rootTypes.contains(folder.getRootType())) {
+        folders.add(folder);
+      }
+    }
+    return folders;
   }
 
   @Override
@@ -117,62 +144,95 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     //assert !isDisposed();
-    final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
-    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
-      final VirtualFilePointer[] files = excludePolicy.getExcludeRootsForModule(getRootModel());
-      for (VirtualFilePointer file : files) {
-        addExcludeForOutputPath(file, result);
-      }
-    }
-    return result.toArray(new ExcludeFolder[result.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
   }
 
-  private void addExcludeForOutputPath(@Nullable final VirtualFilePointer outputPath, @NotNull ArrayList<ExcludeFolder> result) {
-    if (outputPath == null) return;
-    final VirtualFile outputPathFile = outputPath.getFile();
-    final VirtualFile file = myRoot.getFile();
-    if (outputPathFile != null && file != null /* TODO: ??? && VfsUtil.isAncestor(file, outputPathFile, false) */) {
-      result.add(new ExcludedOutputFolderImpl(this, outputPath));
+  @NotNull
+  @Override
+  public List<String> getExcludeFolderUrls() {
+    List<String> excluded = new ArrayList<String>();
+    for (ExcludeFolder folder : myExcludeFolders) {
+      excluded.add(folder.getUrl());
     }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(getRootModel())) {
+        excluded.add(pointer.getUrl());
+      }
+    }
+    return excluded;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getExcludeFolderFiles() {
     assert !isDisposed();
-    final ExcludeFolder[] excludeFolders = getExcludeFolders();
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile file = excludeFolder.getFile();
-      if (file != null) {
-        result.add(file);
+    for (ExcludeFolder excludeFolder : getExcludeFolders()) {
+      ContainerUtil.addIfNotNull(result, excludeFolder.getFile());
+    }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, getRootModel().getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(getRootModel())) {
+        ContainerUtil.addIfNotNull(result, pointer.getFile());
       }
     }
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
-    assertCanAddFolder(file);
-    return addSourceFolder(new SourceFolderImpl(file, isTestSource, this));
+    return addSourceFolder(file, isTestSource, SourceFolderImpl.DEFAULT_PACKAGE_PREFIX);
   }
 
+  @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
-    assertCanAddFolder(file);
-    return addSourceFolder(new SourceFolderImpl(file, isTestSource, packagePrefix, this));
+    JavaSourceRootType type = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    return addSourceFolder(file, type);
   }
 
   @Override
-  public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
-    assertFolderUnderMe(url);
-    return addSourceFolder(new SourceFolderImpl(url, isTestSource, this));
+  @NotNull
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type,
+                                                             @NotNull P properties) {
+    assertCanAddFolder(file);
+    return addSourceFolder(new SourceFolderImpl(file, JpsElementFactory.getInstance().createModuleSourceRoot(file.getUrl(), type, properties), this));
   }
 
-  private SourceFolder addSourceFolder(SourceFolderImpl f) {
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type) {
+    return addSourceFolder(file, type, type.createDefaultProperties());
+  }
+
+  @NotNull
+  @Override
+  public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
+    return addSourceFolder(url, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                             @NotNull JpsModuleSourceRootType<P> type,
+                                                             @NotNull P properties) {
+    assertFolderUnderMe(url);
+    JpsModuleSourceRoot sourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(url, type, properties);
+    return addSourceFolder(new SourceFolderImpl(sourceRoot, this));
+  }
+
+  @NotNull
+  private SourceFolder addSourceFolder(@NotNull SourceFolderImpl f) {
     mySourceFolders.add(f);
     Disposer.register(this, f); //rewire source folder dispose parent from rootmodel to this content root
     return f;
@@ -229,6 +289,18 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     assertCanRemoveFrom(excludeFolder, myExcludeFolders);
     myExcludeFolders.remove(excludeFolder);
     Disposer.dispose((Disposable)excludeFolder);
+  }
+
+  @Override
+  public boolean removeExcludeFolder(@NotNull String url) {
+    for (ExcludeFolder folder : myExcludeFolders) {
+      if (folder.getUrl().equals(url)) {
+        myExcludeFolders.remove(folder);
+        Disposer.dispose((Disposable)folder);
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -293,9 +365,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     element.setAttribute(URL_ATTRIBUTE, myRoot.getUrl());
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof SourceFolderImpl) {
-        final Element subElement = new Element(SourceFolderImpl.ELEMENT_NAME);
-        ((SourceFolderImpl)sourceFolder).writeExternal(subElement);
-        element.addContent(subElement);
+        JpsModuleRootModelSerializer.saveSourceRoot(element, sourceFolder.getUrl(), sourceFolder.getJpsElement().asTyped());
       }
     }
 

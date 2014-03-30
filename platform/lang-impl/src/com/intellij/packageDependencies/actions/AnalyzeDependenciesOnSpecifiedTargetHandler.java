@@ -75,8 +75,9 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
       public void analyze() {
         super.analyze();
         final Map<PsiFile,Set<PsiFile>> dependencies = getDependencies();
-        for (PsiFile file : dependencies.keySet()) {
-          final Set<PsiFile> files = dependencies.get(file);
+        for (Iterator<PsiFile> leftTreeIterator = dependencies.keySet().iterator(); leftTreeIterator.hasNext(); ) {
+          final PsiFile leftTreeFile = leftTreeIterator.next();
+          final Set<PsiFile> files = dependencies.get(leftTreeFile);
           final Iterator<PsiFile> iterator = files.iterator();
           while (iterator.hasNext()) {
             PsiFile next = iterator.next();
@@ -84,6 +85,9 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
             if (virtualFile == null || !myTargetScope.contains(virtualFile)) {
               iterator.remove();
             }
+          }
+          if (files.isEmpty()) {
+            leftTreeIterator.remove();
           }
         }
       }

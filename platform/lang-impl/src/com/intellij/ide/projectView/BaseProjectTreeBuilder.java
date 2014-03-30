@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,26 +70,15 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)element;
       final Object value = node.getValue();
-      VirtualFile vFile = null;
-      if (value instanceof PsiFileSystemItem) {
-        vFile = ((PsiFileSystemItem)value).getVirtualFile();
-      }
-      else if (value instanceof PsiElement) {
-        PsiFile psiFile = ((PsiElement)value).getContainingFile();
-        if (psiFile != null) {
-          vFile = psiFile.getVirtualFile();
-        }
-      }
-      final ActionCallback cb = new ActionCallback();
-
-      final VirtualFile finalVFile = vFile;
+      final ActionCallback callback = new ActionCallback();
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
       final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(new Progressive() {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
-          _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor, false);
-          cb.doWhenDone(new Runnable() {
+          _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
+          callback.doWhenDone(new Runnable() {
             @Override
             public void run() {
               result.setDone(target.get());
@@ -231,9 +222,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
-        .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        .doWhenDone(new Consumer<AbstractTreeNode>() {
           @Override
-          public void run(AbstractTreeNode node) {
+          public void consume(AbstractTreeNode node) {
             if (virtualSelectTarget == null) {
               select(node, onDone);
             }
@@ -364,47 +355,62 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void expandChild(@NotNull final List<AbstractTreeNode> kids,
-                           final int i,
+                           int i,
                            @NotNull final Condition<AbstractTreeNode> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
                            @NotNull final AsyncResult<AbstractTreeNode> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
-    if (i >= kids.size()) {
-      async.setRejected();
-      return;
-    }
+    while (i < kids.size()) {
+      final AbstractTreeNode eachKid = kids.get(i);
+      final boolean[] nodeWasCollapsed = {true};
+      final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
+      if (nodeForElement != null) {
+        nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
+      }
 
-    final AbstractTreeNode eachKid = kids.get(i);
-    final boolean[] nodeWasCollapsed = {true};
-    final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
-    if (nodeForElement != null) {
-      nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
-    }
-
-    if (nonStopCondition.value(eachKid)) {
-      expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
-        @Override
-        public void run(AbstractTreeNode abstractTreeNode) {
-          indicator.checkCanceled();
-
-          async.setDone(abstractTreeNode);
-        }
-      }).doWhenRejected(new Runnable() {
-        @Override
-        public void run() {
-          indicator.checkCanceled();
-
-          if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
-            collapseChildren(eachKid, null);
+      if (nonStopCondition.value(eachKid)) {
+        final AsyncResult<AbstractTreeNode> result = expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget);
+        result.doWhenDone(new Consumer<AbstractTreeNode>() {
+          @Override
+          public void consume(AbstractTreeNode abstractTreeNode) {
+            indicator.checkCanceled();
+            async.setDone(abstractTreeNode);
           }
-          expandChild(kids, i + 1, nonStopCondition, file, element, async, indicator, virtualSelectTarget);
+        });
+
+        if (!result.isProcessed()) {
+          final int next = i + 1;
+          result.doWhenRejected(new Runnable() {
+            @Override
+            public void run() {
+              indicator.checkCanceled();
+
+              if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
+                collapseChildren(eachKid, null);
+              }
+              expandChild(kids, next, nonStopCondition, file, element, async, indicator, virtualSelectTarget);
+            }
+          });
+          return;
+        } else {
+          if (result.isRejected()) {
+            indicator.checkCanceled();
+            if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
+              collapseChildren(eachKid, null);
+            }
+            i++;
+          } else {
+            return;
+          }
         }
-      });
-    } else {
-      async.setRejected();
+      } else {
+        //filter tells us to stop here (for instance, in case of module nodes)
+        break;
+      }
     }
+    async.setRejected();
   }
 
   @Override

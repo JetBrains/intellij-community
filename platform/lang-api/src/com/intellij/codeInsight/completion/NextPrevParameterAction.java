@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class NextPrevParameterAction extends CodeInsightAction {
-  private boolean myNext;
+  private final boolean myNext;
 
   protected NextPrevParameterAction(boolean next) {
     myNext = next;

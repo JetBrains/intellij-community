@@ -68,29 +68,12 @@ static void callback(ConstFSEventStreamRef streamRef,
 }
 
 static void * EventProcessingThread(void *data) {
-    CFStringRef path = CFSTR("/");
-    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
-    void *callbackInfo = NULL;
-    CFAbsoluteTime latency = 0.3;  // Latency in seconds
-
-    FSEventStreamRef stream = FSEventStreamCreate(
-        NULL,
-        &callback,
-        callbackInfo,
-        pathsToWatch,
-        kFSEventStreamEventIdSinceNow,
-        latency,
-        kFSEventStreamCreateFlagNoDefer
-    );
-
+    FSEventStreamRef stream = (FSEventStreamRef) data;
     FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     FSEventStreamStart(stream);
-
     CFRunLoopRun();
     return NULL;
 }
-
-#define FS_FLAGS (MNT_LOCAL|MNT_JOURNALED)
 
 static void PrintMountedFileSystems(CFArrayRef roots) {
     int fsCount = getfsstat(NULL, 0, MNT_WAIT);
@@ -103,7 +86,7 @@ static void PrintMountedFileSystems(CFArrayRef roots) {
     CFMutableArrayRef mounts = CFArrayCreateMutable(NULL, 0, NULL);
 
     for (int i = 0; i < fsCount; i++) {
-        if ((fs[i].f_flags & FS_FLAGS) != FS_FLAGS) {
+        if ((fs[i].f_flags & MNT_LOCAL) != MNT_LOCAL) {
             char *mount = fs[i].f_mntonname;
             int mountLen = strlen(mount);
 
@@ -169,11 +152,27 @@ int main(const int argc, const char* argv[]) {
         return 1;
     }
 
-    pthread_t threadId;
-    if (pthread_create(&threadId, NULL, EventProcessingThread, NULL) != 0) {
-        // Give up if cannot create a thread.
+    CFStringRef path = CFSTR("/");
+    CFArrayRef pathsToWatch = CFArrayCreate(NULL, (const void **)&path, 1, NULL);
+    CFAbsoluteTime latency = 0.3;  // Latency in seconds
+    FSEventStreamRef stream = FSEventStreamCreate(
+        NULL,
+        &callback,
+        NULL,
+        pathsToWatch,
+        kFSEventStreamEventIdSinceNow,
+        latency,
+        kFSEventStreamCreateFlagNoDefer
+    );
+    if (stream == NULL) {
         printf("GIVEUP\n");
         return 2;
+    }
+
+    pthread_t threadId;
+    if (pthread_create(&threadId, NULL, EventProcessingThread, stream) != 0) {
+        printf("GIVEUP\n");
+        return 3;
     }
 
     while (TRUE) {

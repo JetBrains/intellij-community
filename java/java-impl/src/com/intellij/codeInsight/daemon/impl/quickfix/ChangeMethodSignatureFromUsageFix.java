@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -34,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -71,11 +69,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   ParameterInfoImpl[] myNewParametersInfo;
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
-  ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
-                                    @NotNull PsiExpression[] expressions,
-                                    @NotNull PsiSubstitutor substitutor,
-                                    @NotNull PsiElement context,
-                                    boolean changeAllUsages, int minUsagesNumberToShowDialog) {
+  public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
+                                           @NotNull PsiExpression[] expressions,
+                                           @NotNull PsiSubstitutor substitutor,
+                                           @NotNull PsiElement context,
+                                           boolean changeAllUsages, int minUsagesNumberToShowDialog) {
     myTargetMethod = targetMethod;
     myExpressions = expressions;
     mySubstitutor = substitutor;
@@ -90,7 +88,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     final String shortText = getShortText();
     if (shortText != null) return shortText;
     return QuickFixBundle.message("change.method.signature.from.usage.text",
-                                  HighlightUtil.formatMethod(myTargetMethod),
+                                  JavaHighlightUtil.formatMethod(myTargetMethod),
                                   myTargetMethod.getName(),
                                   formatTypesList(myNewParametersInfo, myContext));
   }
@@ -170,7 +168,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
@@ -191,7 +189,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                       final ParameterInfoImpl[] newParametersInfo,
                                                       final boolean changeAllUsages,
                                                       final boolean allowDelegation) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return null;
+    if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
     if (handler == null) return null;//on failure or cancel (e.g. cancel of super methods dialog)
@@ -454,32 +452,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         }
       }
       suffix++;
-    }
-  }
-
-  public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
-                                        @NotNull PsiExpressionList list,
-                                        @Nullable HighlightInfo highlightInfo,
-                                        TextRange fixRange) {
-    if (candidates.length == 0) return;
-    PsiExpression[] expressions = list.getExpressions();
-    for (JavaResolveResult candidate : candidates) {
-      registerIntention(expressions, highlightInfo, fixRange, candidate, list);
-    }
-  }
-
-  private static void registerIntention(@NotNull PsiExpression[] expressions,
-                                        @Nullable HighlightInfo highlightInfo,
-                                        TextRange fixRange,
-                                        @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context) {
-    if (!candidate.isStaticsScopeCorrect()) return;
-    PsiMethod method = (PsiMethod)candidate.getElement();
-    PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method != null && context.getManager().isInProject(method)) {
-      ChangeMethodSignatureFromUsageFix fix = new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context, false, 2);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, fix);
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageReverseOrderFix(method, expressions, substitutor, context, false, 2));
     }
   }
 

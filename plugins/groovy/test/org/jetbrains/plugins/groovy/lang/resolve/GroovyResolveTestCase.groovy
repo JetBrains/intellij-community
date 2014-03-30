@@ -1,17 +1,17 @@
 /*
- *  Copyright 2000-2007 JetBrains s.r.o.
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve;
@@ -20,8 +20,10 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -74,7 +76,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     return ref;
   }
 
-  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', String text, Class<T> refType = PsiReference) {
+  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', @Language("Groovy") String text, Class<T> refType = PsiReference) {
     myFixture.configureByText fileName, text
     final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assertInstanceOf(ref, refType)
@@ -82,7 +84,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   }
 
   @Nullable
-  protected <T extends PsiElement> T resolve(String fileName, Class<T> type = null) {
+  protected <T extends PsiElement> T resolve(String fileName = getTestName(false) + ".groovy", Class<T> type = null) {
     PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
     assertNotNull(ref)
     final resolved = ref.resolve()
@@ -91,11 +93,11 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   }
 
   @Nullable
-  protected <T extends PsiElement> T resolveByText(String text, Class<T> type = null) {
+  protected <T extends PsiElement> T resolveByText(@Language("Groovy") String text, Class<T> type = null) {
     final ref = configureByText(text)
     assertNotNull(ref)
     final resolved = ref.resolve()
-    assertInstanceOf(resolved, type)
+    if (type != null) assertInstanceOf(resolved, type)
     return resolved
   }
 
@@ -106,4 +108,23 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
     return ((GrReferenceExpression)ref).advancedResolve();
   }
 
+  protected PsiClass addBaseScript() {
+    myFixture.addClass("package groovy.transform; public @interface BaseScript {}")
+  }
+
+  protected PsiClass addImmutable() {
+    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+  }
+
+  protected PsiClass addTupleConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+  }
+
+  protected PsiClass addCanonical() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+  }
+
+  protected PsiClass addInheritConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+  }
 }

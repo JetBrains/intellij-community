@@ -76,6 +76,22 @@ public class DownloadUtil {
    * @param indicator   progress indicator
    * @param url         url to download
    * @param outputFile  output file
+   */
+  public static void downloadAtomically(@Nullable ProgressIndicator indicator,
+                                        @NotNull String url,
+                                        @NotNull File outputFile) throws IOException
+  {
+    File tempFile = FileUtil.createTempFile("for-actual-downloading-", null);
+    downloadAtomically(indicator, url, outputFile, tempFile, null);
+  }
+
+  /**
+   * Downloads content of {@code url} to {@code outputFile} atomically.
+   * {@code outputFile} won't be modified in case of any I/O download errors.
+   *
+   * @param indicator   progress indicator
+   * @param url         url to download
+   * @param outputFile  output file
    * @param tempFile    temporary file to download to. This file is deleted on method exit.
    */
   public static void downloadAtomically(@Nullable ProgressIndicator indicator,

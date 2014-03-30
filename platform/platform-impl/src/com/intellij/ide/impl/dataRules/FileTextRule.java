@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -29,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class FileTextRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final VirtualFile virtualFile = (VirtualFile)dataProvider.getData(PlatformDataKeys.VIRTUAL_FILE.getName());
+    final VirtualFile virtualFile = (VirtualFile)dataProvider.getData(CommonDataKeys.VIRTUAL_FILE.getName());
     if (virtualFile == null) {
       return null;
     }
@@ -39,7 +40,7 @@ public class FileTextRule implements GetDataRule {
       return null;
     }
 
-    final Project project = (Project)dataProvider.getData(PlatformDataKeys.PROJECT.getName());
+    final Project project = (Project)dataProvider.getData(CommonDataKeys.PROJECT.getName());
     if (project == null) {
       return null;
     }

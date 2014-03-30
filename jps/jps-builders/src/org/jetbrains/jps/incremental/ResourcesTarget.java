@@ -16,7 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootIndex;
@@ -24,6 +24,7 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
 import org.jetbrains.jps.builders.TargetOutputIndex;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
+import org.jetbrains.jps.builders.java.FilteredResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -31,11 +32,12 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -65,12 +67,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    Collection<File> result = new SmartList<File>();
-    final File outputDir = getOutputDir();
-    if (outputDir != null) {
-      result.add(outputDir);
-    }
-    return result;
+    return ContainerUtil.createMaybeSingletonList(getOutputDir());
   }
 
   @Override
@@ -95,19 +92,32 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 
-    roots_loop:
-    for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
-      for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
-        if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
-          continue roots_loop;
-        }
+    for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
+      if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
+        final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
+        final File rootFile = sourceRoot.getFile();
+        roots.add(new FilteredResourceRootDescriptor(rootFile, this, packagePrefix, computeRootExcludes(rootFile, index)));
       }
-      final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
-      final File rootFile = sourceRoot.getFile();
-      roots.add(new ResourceRootDescriptor(rootFile, this, false, packagePrefix, computeRootExcludes(rootFile, index)));
     }
 
+    JavaResourceRootType resourceType = isTests() ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
+    for (JpsModuleSourceRoot root : myModule.getSourceRoots(resourceType)) {
+      if (!isExcludedFromCompilation(excludedRootProviders, root)) {
+        File rootFile = root.getFile();
+        roots.add(new ResourceRootDescriptor(rootFile, this, "", computeRootExcludes(rootFile, index)));
+      }
+    }
+    
     return roots;
+  }
+
+  private boolean isExcludedFromCompilation(Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders, JpsModuleSourceRoot sourceRoot) {
+    for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
+      if (provider.isExcludedFromCompilation(myModule, sourceRoot)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

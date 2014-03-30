@@ -92,7 +92,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       }
       else if (type == JavaElementType.PARAMETER_LIST) {
         final List<LighterASTNode> params = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER);
-        if (params.size() > 0) {
+        if (!params.isEmpty()) {
           final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
           if (pType != null) {
             isVarArgs = (LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null);
@@ -117,7 +117,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   }
 
   @Override
-  public void serialize(final PsiMethodStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiMethodStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText(false));
     dataStream.writeByte(((PsiMethodStubImpl)stub).getFlags());
@@ -126,8 +126,9 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     }
   }
 
+  @NotNull
   @Override
-  public PsiMethodStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiMethodStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     final TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
@@ -136,7 +137,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   }
 
   @Override
-  public void indexStub(final PsiMethodStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiMethodStub stub, @NotNull final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.METHODS, name);

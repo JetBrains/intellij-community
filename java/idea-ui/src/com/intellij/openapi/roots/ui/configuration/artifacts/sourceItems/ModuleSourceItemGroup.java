@@ -104,6 +104,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     }
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }

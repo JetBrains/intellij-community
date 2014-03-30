@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -29,19 +30,21 @@ public class QuerySearchRequest {
   public final SearchRequestCollector collector;
   public final Processor<PsiReference> processor;
 
-  public QuerySearchRequest(Query<PsiReference> query,
-                            final SearchRequestCollector collector,
-                            boolean inReadAction, final PairProcessor<PsiReference, SearchRequestCollector> processor) {
+  public QuerySearchRequest(@NotNull Query<PsiReference> query,
+                            @NotNull final SearchRequestCollector collector,
+                            boolean inReadAction,
+                            @NotNull final PairProcessor<PsiReference, SearchRequestCollector> processor) {
     this.query = query;
     this.collector = collector;
     if (inReadAction) {
       this.processor = new ReadActionProcessor<PsiReference>() {
         @Override
         public boolean processInReadAction(PsiReference psiReference) {
-              return processor.process(psiReference, collector);
+          return processor.process(psiReference, collector);
         }
       };
-    } else {
+    }
+    else {
       this.processor = new Processor<PsiReference>() {
         @Override
         public boolean process(PsiReference psiReference) {
@@ -49,10 +52,14 @@ public class QuerySearchRequest {
         }
       };
     }
-
   }
 
   public void runQuery() {
     query.forEach(processor);
+  }
+
+  @Override
+  public String toString() {
+    return query + " -> " + collector;
   }
 }

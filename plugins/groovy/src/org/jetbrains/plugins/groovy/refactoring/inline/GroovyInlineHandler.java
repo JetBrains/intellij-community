@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -61,7 +62,7 @@ public class GroovyInlineHandler implements InlineHandler {
   }
 
   private static String getFullName(PsiElement psi) {
-    final String name = UsageViewUtil.getDescriptiveName(psi);
+    final String name = DescriptiveNameUtil.getDescriptiveName(psi);
     return (UsageViewUtil.getType(psi) + " " + name).trim();
   }
 

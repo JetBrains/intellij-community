@@ -34,14 +34,16 @@ public class AssignmentEvaluator implements Evaluator{
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object right = myRightEvaluator.evaluate(context);
+    myLeftEvaluator.evaluate(context);
+    final Modifier modifier = myLeftEvaluator.getModifier();
+
+    final Object right = myRightEvaluator.evaluate(context);
     if(right != null && !(right instanceof Value)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.not.rvalue"));
     }
 
-    myLeftEvaluator.evaluate(context);
-    Modifier modifier = myLeftEvaluator.getModifier();
     assign(modifier, right, context);
+    
     return right;
   }
 

@@ -15,7 +15,7 @@ class Test {
 
 class A {
     public A(Exception e) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <selection></selection>
     }
 }
 class Ex1 extends Exception {}

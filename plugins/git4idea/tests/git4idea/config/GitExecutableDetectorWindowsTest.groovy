@@ -89,7 +89,7 @@ class GitExecutableDetectorWindowsTest {
   }
 
   @Test
-  void "1_8_0 Prefer cmd/git_cmd over cmd/git_exe and bin/git_exe"() {
+  void "1_8_0 Prefer cmd_git_cmd over cmd_git_exe and bin_git_exe"() {
     fs "C:/Program Files (x86)/Git_1.8/bin/git.exe",
        "C:/Program Files (x86)/Git_1.8/cmd/git.cmd",
        "C:/Program Files (x86)/Git_1.8/cmd/git.exe"
@@ -126,7 +126,7 @@ class GitExecutableDetectorWindowsTest {
   }
 
   @Test
-  void "Program not found, try git.exe"() {
+  void "Program not found try git_exe"() {
     CAN_RUN = [ "git.exe" ]
     assertExecutable "git.exe"
   }
@@ -207,7 +207,7 @@ class GitExecutableDetectorWindowsTest {
     file.createNewFile()
   }
 
-  private String convertPath(String path) {
+  private String convertPath(@NotNull String path) {
     path = FileUtil.toSystemDependentName(replaceDiskColon(path))
     return testRoot.getPath() + File.separator + path
   }

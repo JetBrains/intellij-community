@@ -29,16 +29,14 @@ import com.intellij.rt.ant.execution.AntMain2;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ant.model.JpsAntBuildFileOptions;
 import org.jetbrains.jps.ant.model.JpsAntExtensionService;
 import org.jetbrains.jps.ant.model.JpsAntInstallation;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.JpsAntInstallationImpl;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
-import org.jetbrains.jps.incremental.BuildTask;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ExternalProcessUtil;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -49,11 +47,13 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,9 +74,16 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     return Collections.emptyList();
   }
 
+  @Nullable
   private static JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    return buildPhase == ArtifactBuildPhase.PRE_PROCESSING ? JpsAntExtensionService.getPreprocessingExtension(artifact)
-                                                           : JpsAntExtensionService.getPostprocessingExtension(artifact);
+    switch (buildPhase) {
+      case PRE_PROCESSING:
+        return JpsAntExtensionService.getPreprocessingExtension(artifact);
+      case POST_PROCESSING:
+        return JpsAntExtensionService.getPostprocessingExtension(artifact);
+      default:
+        return null;
+    }
   }
 
   private static class AntArtifactBuildTask extends BuildTask {
@@ -98,20 +105,20 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         jdkLibrary = project.getModel().getGlobal().getLibraryCollection().findLibrary(jdkName, JpsJavaSdkType.INSTANCE);
         if (jdkLibrary == null) {
           reportError(context, "JDK '" + jdkName + "' not found");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       else {
         JpsSdkReference<JpsDummyElement> reference = project.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
         if (reference == null) {
           reportError(context, "project JDK is not specified");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
 
         jdkLibrary = reference.resolve();
         if (jdkLibrary == null) {
           reportError(context, "JDK '" + reference.getSdkName() + "' not found");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       JpsSdk<?> jdk = jdkLibrary.getProperties();
@@ -120,7 +127,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
                                                                                                  myExtension.getFileUrl());
       if (antInstallation == null) {
         reportError(context, "Ant installation is not configured");
-        throw new ProjectBuildException();
+        throw new StopBuildException();
       }
 
       List<String> classpath = new ArrayList<String>();
@@ -153,9 +160,10 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         }
       }
 
-
-      for (BuildFileProperty property : myExtension.getAntProperties()) {
-        programParams.add("-D" + property.getPropertyName() + "=" + property.getPropertyValue());
+      for (List<BuildFileProperty> properties : Arrays.asList(myExtension.getAntProperties(), options.getProperties())) {
+        for (BuildFileProperty property : properties) {
+          programParams.add("-D" + property.getPropertyName() + "=" + property.getPropertyValue());
+        }
       }
       programParams.add("-buildfile");
       final String buildFilePath = JpsPathUtil.urlToPath(myExtension.getFileUrl());
@@ -165,7 +173,12 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         programParams.add(targetName);
       }
 
-      List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
+      Iterable<AntBuildTaskListener> listeners = JpsServiceManager.getInstance().getExtensions(AntBuildTaskListener.class);
+      for (AntBuildTaskListener listener : listeners) {
+        listener.beforeAntBuildTaskStarted(myExtension, vmParams, programParams);
+      }
+
+      List <String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
                                                                           Collections.<String>emptyList(), classpath, vmParams, programParams, false);
       try {
         Process process = new ProcessBuilder(commandLine).directory(new File(buildFilePath).getParentFile()).start();
@@ -199,7 +212,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         handler.startNotify();
         handler.waitFor();
         if (hasErrors.get()) {
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       catch (IOException e) {

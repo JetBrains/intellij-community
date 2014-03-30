@@ -20,10 +20,8 @@ import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 
 import static org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo.ParamInfo;
 
@@ -50,27 +48,12 @@ public class MavenPluginParamReferenceContributor extends PsiReferenceContributo
 
       if (!MavenPluginParamInfo.isSimpleText(xmlText)) return PsiReference.EMPTY_ARRAY;
 
-      class MyProcessor implements PairProcessor<ParamInfo, MavenDomConfiguration> {
-        PsiReference[] result;
-
-        @Override
-        public boolean process(ParamInfo info, MavenDomConfiguration domCfg) {
-          MavenParamReferenceProvider providerInstance = info.getProviderInstance();
-          if (providerInstance != null) {
-            result = providerInstance.getReferencesByElement(xmlText, domCfg, context);
-            return false;
-          }
-
-          return true;
+      MavenPluginParamInfo.ParamInfoList paramInfos = MavenPluginParamInfo.getParamInfoList(xmlText);
+      for (ParamInfo info : paramInfos) {
+        MavenParamReferenceProvider providerInstance = info.getProviderInstance();
+        if (providerInstance != null) {
+          return providerInstance.getReferencesByElement(xmlText, paramInfos.getDomCfg(), context);
         }
-      }
-
-      MyProcessor processor = new MyProcessor();
-
-      MavenPluginParamInfo.processParamInfo(xmlText, processor);
-
-      if (processor.result != null) {
-        return processor.result;
       }
 
       return PsiReference.EMPTY_ARRAY;

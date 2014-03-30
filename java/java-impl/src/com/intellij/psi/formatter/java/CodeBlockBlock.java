@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
@@ -36,18 +37,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeBlockBlock extends AbstractJavaBlock {
-  private final static int BEFORE_FIRST = 0;
-  private final static int BEFORE_LBRACE = 1;
-  private final static int INSIDE_BODY = 2;
+  private static final int BEFORE_FIRST = 0;
+  private static final int BEFORE_LBRACE = 1;
+  private static final int INSIDE_BODY = 2;
 
   private final int myChildrenIndent;
 
-  public CodeBlockBlock(final ASTNode node,
-                        final Wrap wrap,
-                        final Alignment alignment,
-                        final Indent indent,
-                        final CommonCodeStyleSettings settings) {
-    super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings);
+  public CodeBlockBlock(ASTNode node,
+                        Wrap wrap,
+                        Alignment alignment,
+                        Indent indent,
+                        CommonCodeStyleSettings settings,
+                        JavaCodeStyleSettings javaSettings) {
+    super(node, wrap, getAlignmentStrategy(alignment, node, settings), indent, settings, javaSettings);
     if (isSwitchCodeBlock() && !settings.INDENT_CASE_FROM_SWITCH) {
       myChildrenIndent = 0;
     }
@@ -59,7 +61,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   /**
    * There is a possible case that 'implements' section is incomplete (e.g. ends with comma). We may want to align lbrace
    * to the comma then.
-   * 
+   *
    * @param alignment     block alignment
    * @param baseNode      base AST node
    * @return              alignment strategy to use for the given node
@@ -86,7 +88,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
     return AlignmentStrategy.wrap(alignment);
   }
-  
+
   private boolean isSwitchCodeBlock() {
     return myNode.getTreeParent().getElementType() == JavaElementType.SWITCH_STATEMENT;
   }
@@ -108,7 +110,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
     int state = BEFORE_FIRST;
 
-    if (myNode.getPsi() instanceof JspClass) {
+    if (myNode.getPsi() instanceof PsiSyntheticClass) {
       state = INSIDE_BODY;
     }
 
@@ -157,7 +159,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
     return StringUtil.countNewLines(whiteSpaceCandidate.getChars()) > 0 ? myAlignment : defaultAlignment;
   }
-  
+
   @Nullable
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
                                                ASTNode child,
@@ -200,7 +202,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   private SyntheticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
                                                     final Wrap childWrap) {
-    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap) {
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, childAlignment, getSettings(), myJavaSettings, indent, childWrap) {
       @Override
       @NotNull
       public ChildAttributes getChildAttributes(final int newChildIndex) {

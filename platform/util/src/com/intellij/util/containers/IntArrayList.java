@@ -86,6 +86,16 @@ public class IntArrayList implements Cloneable {
     return -1;
   }
 
+  public int indexOf(int elem, int startIndex, int endIndex) {
+    if (startIndex < 0 || endIndex < startIndex || endIndex >= mySize) {
+      throw new IndexOutOfBoundsException("startIndex: "+startIndex+"; endIndex: "+endIndex+"; mySize: "+mySize);
+    }
+    for(int i = startIndex; i < endIndex; i++){
+      if (elem == myData[i]) return i;
+    }
+    return -1;
+  }
+
   public int lastIndexOf(int elem) {
     for(int i = mySize - 1; i >= 0; i--){
       if (elem == myData[i]) return i;
@@ -185,10 +195,17 @@ public class IntArrayList implements Cloneable {
     mySize = 0;
   }
 
-  protected void removeRange(int fromIndex, int toIndex) {
+  public void removeRange(int fromIndex, int toIndex) {
     int numMoved = mySize - toIndex;
     System.arraycopy(myData, toIndex, myData, fromIndex, numMoved);
     mySize -= toIndex - fromIndex;
+  }
+
+  public void copyRange(int fromIndex, int length, int toIndex) {
+    if (length < 0 || fromIndex < 0 || fromIndex + length > mySize || toIndex < 0 || toIndex + length > mySize) {
+      throw new IndexOutOfBoundsException("fromIndex: "+fromIndex+"; length: "+length+"; toIndex: "+toIndex+"; mySize: "+mySize);
+    }
+    System.arraycopy(myData, fromIndex, myData, toIndex, length);
   }
 
   private void checkRange(int index) {

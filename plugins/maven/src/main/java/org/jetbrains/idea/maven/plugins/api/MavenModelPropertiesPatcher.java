@@ -1,48 +1,20 @@
 package org.jetbrains.idea.maven.plugins.api;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SingletonInstancesCache;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Sergey Evdokimov
  */
 public class MavenModelPropertiesPatcher {
-
-  private static volatile Map<String, Map<String, String[]>> ourMap;
-
-  private static Map<String, Map<String, String[]>> getMap() {
-    Map<String, Map<String, String[]>> res = ourMap;
-
-    if (res == null) {
-      res = new HashMap<String, Map<String, String[]>>();
-
-      for (MavenPluginDescriptor pluginDescriptor : MavenPluginDescriptor.EP_NAME.getExtensions()) {
-        if (pluginDescriptor.properties != null && pluginDescriptor.properties.length > 0) {
-          Pair<String, String> pluginId = MavenPluginDescriptor.parsePluginId(pluginDescriptor.mavenId);
-
-          String[] properties = new String[pluginDescriptor.properties.length];
-          for (int i = 0; i < pluginDescriptor.properties.length; i++) {
-            properties[i] = pluginDescriptor.properties[i].name;
-          }
-
-          Map<String, String[]> groupMap = res.get(pluginId.second);// pluginId.second is artifactId
-          if (groupMap == null) {
-            groupMap = new HashMap<String, String[]>();
-            res.put(pluginId.second, groupMap);
-          }
-
-          groupMap.put(pluginId.first, properties); // pluginId.first is groupId
-        }
-      }
-
-      ourMap = res;
-    }
-
-    return res;
-  }
 
   /*
    * Add properties those should be added by plugins.
@@ -50,20 +22,41 @@ public class MavenModelPropertiesPatcher {
   public static void patch(Properties modelProperties, @Nullable Collection<MavenPlugin> plugins) {
     if (plugins == null) return;
 
-    Map<String, Map<String, String[]>> map = getMap();
+    Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> map = MavenPluginDescriptor.getDescriptorsMap();
 
     for (MavenPlugin plugin : plugins) {
-      Map<String, String[]> groupMap = map.get(plugin.getArtifactId());
+      Map<String, Map<String, List<MavenPluginDescriptor>>> groupMap = map.get(plugin.getArtifactId());
       if (groupMap != null) {
-        String[] properties = groupMap.get(plugin.getGroupId());
+        Map<String, List<MavenPluginDescriptor>> goalsMap = groupMap.get(plugin.getGroupId());
+        if (goalsMap != null) {
+          patch(modelProperties, goalsMap.get(null), null, plugin.getConfigurationElement(), plugin);
 
-        if (properties != null) {
-          for (String property : properties) {
-            if (!modelProperties.containsKey(property)) {
-              modelProperties.setProperty(property, "");
+          for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+            for (String goal : execution.getGoals()) {
+              patch(modelProperties, goalsMap.get(goal), goal, execution.getConfigurationElement(), plugin);
             }
           }
         }
+      }
+    }
+  }
+
+  private static void patch(Properties modelProperties, @Nullable List<MavenPluginDescriptor> descriptors, @Nullable String goal, Element cfgElement, MavenPlugin plugin) {
+    if (descriptors == null) return;
+
+    for (MavenPluginDescriptor descriptor : descriptors) {
+      if (descriptor.properties != null) {
+        for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+          if (!property.insideConfigurationOnly && StringUtil.isNotEmpty(property.name)) {
+            modelProperties.setProperty(property.name, StringUtil.notNullize(property.value));
+          }
+        }
+      }
+
+      if (descriptor.propertyGenerator != null) {
+        MavenPropertiesGenerator generator = SingletonInstancesCache
+          .getInstance(descriptor.propertyGenerator, descriptor.getLoaderForClass());
+        generator.generate(modelProperties, goal, plugin, cfgElement);
       }
     }
   }

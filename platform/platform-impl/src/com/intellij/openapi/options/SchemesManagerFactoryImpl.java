@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.ServiceBean;
 import com.intellij.openapi.components.SettingsSavingComponent;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +46,8 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
     String baseDirPath = ((ApplicationImpl)application).getStateStore().getStateStorageManager().expandMacros(fileSpec);
 
     if (baseDirPath != null) {
-
-      StreamProvider[] providers =
-        ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders(roamingType);
-      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, providers, new File(baseDirPath));
+      StreamProvider provider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
+      SchemesManagerImpl<T, E> manager = new SchemesManagerImpl<T, E>(fileSpec, processor, roamingType, provider, new File(baseDirPath));
       myRegisteredManagers.add(manager);
       return manager;
     }
@@ -67,7 +66,7 @@ public class SchemesManagerFactoryImpl extends SchemesManagerFactory implements 
         }
 
         @Override
-        public void exportScheme(final E scheme, final String name, final String description) {
+        public void exportScheme(@NotNull final E scheme, final String name, final String description) {
         }
 
         @Override

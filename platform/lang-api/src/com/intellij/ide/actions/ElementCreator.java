@@ -29,7 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +64,7 @@ public abstract class ElementCreator {
 
     final String commandName = getActionName(inputString);
     new WriteCommandAction(myProject, commandName) {
+      @Override
       protected void run(Result result) throws Throwable {
         LocalHistoryAction action = LocalHistoryAction.NULL;
         try {
@@ -104,6 +105,6 @@ public abstract class ElementCreator {
     for (final SmartPsiElementPointer pointer : myCreatedElements[0]) {
       ContainerUtil.addIfNotNull(pointer.getElement(), result);
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 }

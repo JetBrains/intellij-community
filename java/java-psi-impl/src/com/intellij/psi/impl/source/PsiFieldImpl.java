@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -123,40 +124,16 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  public PsiType getTypeNoResolve() {
-    final PsiFieldStub stub = getStub();
-    if (stub != null) {
-      String typeText = TypeInfo.createTypeText(stub.getType(false));
-      try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new SoftReference<PsiType>(type);
-        return type;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    PsiTypeElement typeElement = getTypeElement();
-    PsiIdentifier nameIdentifier = getNameIdentifier();
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
-  }
-
-  @Override
   @NotNull
-  public PsiType getType(){
+  public PsiType getType() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {
-      SoftReference<PsiType> cachedType = myCachedType;
-      if (cachedType != null) {
-        PsiType type = cachedType.get();
-        if (type != null) return type;
-      }
+      PsiType type = SoftReference.dereference(myCachedType);
+      if (type != null) return type;
 
       String typeText = TypeInfo.createTypeText(stub.getType(true));
       try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new SoftReference<PsiType>(type);
         return type;
       }
@@ -167,7 +144,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
 
     myCachedType = null;
-    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier(), this);
+    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
   @Override
@@ -255,8 +232,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean hasInitializer() {
-    if (getStub() != null) {
-      return getInitializerText() != null;
+    PsiFieldStub stub = getStub();
+    if (stub != null) {
+      return stub.getInitializerText() != null;
     }
 
     return getInitializer() != null;
@@ -300,7 +278,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       }
       else{
         String initializerText = stub.getInitializerText();
-        if (initializerText == null) return null;
+        if (StringUtil.isEmpty(initializerText)) return null;
 
         if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText)) return null;
         if (PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
@@ -341,16 +319,6 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
     return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
-  }
-
-  @Nullable
-  private String getInitializerText() {
-    final PsiFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.getInitializerText();
-    }
-
-    throw new RuntimeException("Shall not be called when in stubless mode");
   }
 
   @Override

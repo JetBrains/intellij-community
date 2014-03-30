@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -54,18 +54,24 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static final ExtensionPointName<Condition<PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
   public static DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
+    if (element == null) {
+      element = BaseRefactoringAction.getElementAtCaret(editor, file);
+    }
+
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       final String newName = DEFAULT_NAME.getData(dataContext);
       LOG.assertTrue(newName != null);
@@ -81,11 +87,13 @@ public class PsiElementRenameHandler implements RenameHandler {
       return;
     }
 
-    if (nameSuggestionContext != null && !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
+    if (nameSuggestionContext != null &&
+        nameSuggestionContext.isPhysical() &&
+        !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
       final String message = "Selected element is used from non-project files. These usages won't be renamed. Proceed anyway?";
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
       if (Messages.showYesNoDialog(project, message,
-                                   RefactoringBundle.getCannotRefactorMessage(null), Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+                                   RefactoringBundle.getCannotRefactorMessage(null), Messages.getWarningIcon()) != Messages.YES) {
         return;
       }
     }
@@ -142,13 +150,13 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
     rename(element, project, nameSuggestionContext, editor, null);
   }
-  
+
   private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-    element = processor.substituteElementToRename(element, editor);
-    if (element == null || !canRename(project, editor, element)) return;
+    PsiElement substituted = processor.substituteElementToRename(element, editor);
+    if (substituted == null || !canRename(project, editor, substituted)) return;
 
-    final RenameDialog dialog = processor.createRenameDialog(project, element, nameSuggestionContext, editor);
+    RenameDialog dialog = processor.createRenameDialog(project, substituted, nameSuggestionContext, editor);
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();
@@ -173,6 +181,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
+  @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     return !isVetoed(getElement(dataContext));
   }
@@ -195,6 +204,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return elementArray[0];
   }
 
+  @Override
   public boolean isRenaming(DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }

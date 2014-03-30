@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,12 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#PROJECT} instead
    */
-  String PROJECT = PlatformDataKeys.PROJECT.getName();
+  String PROJECT = CommonDataKeys.PROJECT.getName();
 
   /**
    * Returns {@link com.intellij.openapi.module.Module}
    *
-   * @depreacated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys#MODULE} instead
    */
   @NonNls String MODULE = "module";
 
@@ -44,21 +44,21 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE} instead
    */
-  String VIRTUAL_FILE = PlatformDataKeys.VIRTUAL_FILE.getName();
+  String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
    * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
    */
-  String VIRTUAL_FILE_ARRAY = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName();
+  String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.openapi.editor.Editor}
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
    */
-  String EDITOR = PlatformDataKeys.EDITOR.getName();
+  String EDITOR = CommonDataKeys.EDITOR.getName();
 
   /**
    * Returns {@link com.intellij.openapi.fileEditor.FileEditor}
@@ -128,14 +128,14 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE} instead
    */
-  String NAVIGATABLE = PlatformDataKeys.NAVIGATABLE.getName();
+  String NAVIGATABLE = CommonDataKeys.NAVIGATABLE.getName();
 
   /**
    * Returns an array of {@link com.intellij.pom.Navigatable}
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE_ARRAY} instead
    */
-  String NAVIGATABLE_ARRAY = PlatformDataKeys.NAVIGATABLE_ARRAY.getName();
+  String NAVIGATABLE_ARRAY = CommonDataKeys.NAVIGATABLE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.ide.ExporterToTextFile}
@@ -154,7 +154,7 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.psi.PsiFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys.PSI_FILE} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE} instead
    */
   @NonNls String PSI_FILE = "psi.File";
 
@@ -166,7 +166,7 @@ public interface DataConstants {
   @NonNls String LANGUAGE = "Language";
 
   /**
-   * Returns java.awt.Component currently in focus, DataContext should be retreived for
+   * Returns java.awt.Component currently in focus, DataContext should be retrieved for
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#CONTEXT_COMPONENT} instead
    */
@@ -232,11 +232,11 @@ public interface DataConstants {
   String DELETE_ELEMENT_PROVIDER = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName();
 
   /**
-   * Returns com.intellij.openapi.editor.Editor even if foces currently is in find bar
+   * Returns com.intellij.openapi.editor.Editor even if focuses currently is in find bar
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#EDITOR} instead
    */
-  String EDITOR_EVEN_IF_INACTIVE = PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName();
+  String EDITOR_EVEN_IF_INACTIVE = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName();
 
   /**
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#SELECTED_ITEM} instead

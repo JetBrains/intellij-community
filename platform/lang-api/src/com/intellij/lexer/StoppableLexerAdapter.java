@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class StoppableLexerAdapter extends DelegateLexer {
 
@@ -36,6 +37,7 @@ public class StoppableLexerAdapter extends DelegateLexer {
     myStopped = myCondition.stopsAt(original.getTokenType(), original.getTokenStart(), original.getTokenEnd());
   }
 
+  @Override
   public void advance() {
     if (myStopped) return;
     super.advance();
@@ -50,19 +52,24 @@ public class StoppableLexerAdapter extends DelegateLexer {
     return delegate instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)delegate).getPrevTokenEnd() : ((FilterLexer)delegate).getPrevTokenEnd();
   }
 
+  @Override
   public int getTokenEnd() {
     return myStopped ? super.getTokenStart() : super.getTokenEnd();
   }
 
+  @Override
   public IElementType getTokenType() {
     return myStopped ? null : super.getTokenType();
   }
 
+  @NotNull
+  @Override
   public LexerPosition getCurrentPosition() {
     return getDelegate().getCurrentPosition();
   }
 
-  public void restore(LexerPosition position) {
+  @Override
+  public void restore(@NotNull LexerPosition position) {
     getDelegate().restore(position);
   }
 

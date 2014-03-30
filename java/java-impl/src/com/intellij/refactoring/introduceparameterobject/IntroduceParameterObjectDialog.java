@@ -32,6 +32,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComb
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RecentsManager;
@@ -39,6 +40,7 @@ import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -53,7 +55,7 @@ import java.util.List;
 public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
   private final PsiMethod sourceMethod;
-  private final ParameterTablePanel.VariableData[] parameterInfo;
+  private final VariableData[] parameterInfo;
   private JTextField sourceMethodTextField;
 
   private JRadioButton useExistingClassButton;
@@ -94,9 +96,9 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
     final PsiParameterList parameterList = sourceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
-    parameterInfo = new ParameterTablePanel.VariableData[parameters.length];
+    parameterInfo = new VariableData[parameters.length];
     for (int i = 0; i < parameterInfo.length; i++) {
-      parameterInfo[i] = new ParameterTablePanel.VariableData(parameters[i]);
+      parameterInfo[i] = new VariableData(parameters[i]);
       parameterInfo[i].name = parameters[i].getName();
       parameterInfo[i].passAsParameter = true;
     }
@@ -164,8 +166,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       packageName = getPackageName();
       className = getClassName();
     }
-    List<ParameterTablePanel.VariableData> parameters = new ArrayList<ParameterTablePanel.VariableData>();
-    for (ParameterTablePanel.VariableData data : parameterInfo) {
+    List<VariableData> parameters = new ArrayList<VariableData>();
+    for (VariableData data : parameterInfo) {
       if (data.passAsParameter) {
         parameters.add(data);
       }
@@ -175,7 +177,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     final MoveDestination moveDestination = ((DestinationFolderComboBox)myDestinationCb)
       .selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), packageName), false);
     invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, moveDestination, sourceMethod,
-                                                            parameters.toArray(new ParameterTablePanel.VariableData[parameters.size()]),
+                                                            parameters.toArray(new VariableData[parameters.size()]),
                                                             keepMethod, useExistingClass,
                                                             createInnerClass, newVisibility, myGenerateAccessorsCheckBox.isSelected()));
   }
@@ -238,7 +240,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   @NotNull
   public List<PsiParameter> getParametersToExtract() {
     final List<PsiParameter> out = new ArrayList<PsiParameter>();
-    for (ParameterTablePanel.VariableData info : parameterInfo) {
+    for (VariableData info : parameterInfo) {
       if (info.passAsParameter) {
         out.add((PsiParameter)info.variable);
       }
@@ -257,7 +259,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         IntroduceParameterObjectDialog.this.doCancelAction();
       }
     };
-    myParamsPanel.add(paramsPanel, BorderLayout.CENTER);
+    myParamsPanel.add(paramsPanel, BorderLayout.NORTH);
     return myWholePanel;
   }
 
@@ -337,7 +339,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         if (containingFile != null) {
           final VirtualFile virtualFile = containingFile.getVirtualFile();
           if (virtualFile != null) {
-            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex().isInSourceContent(virtualFile);
+            existingNotALibraryClass = ProjectRootManager.getInstance(myProject).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES);
           }
         }
       }

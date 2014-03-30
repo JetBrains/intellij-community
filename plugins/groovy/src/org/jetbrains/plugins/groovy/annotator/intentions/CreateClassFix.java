@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -62,7 +62,9 @@ public abstract class CreateClassFix {
   public static IntentionAction createClassFromNewAction(final GrNewExpression expression) {
     return new CreateClassActionBase(CreateClassKind.CLASS, expression.getReferenceElement()) {
 
-      public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      @Override
+      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+        final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
         final PsiManager manager = myRefElement.getManager();
@@ -84,7 +86,8 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 
-        final GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, GroovyTemplates.GROOVY_CLASS);
+        final GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, GroovyTemplates.GROOVY_CLASS,
+                                                               true);
         if (targetClass == null) return;
 
         PsiType[] argTypes = getArgTypes(myRefElement);
@@ -144,7 +147,9 @@ public abstract class CreateClassFix {
 
   public static IntentionAction createClassFixAction(final GrReferenceElement refElement, CreateClassKind type) {
     return new CreateClassActionBase(type, refElement) {
-      public void invoke(@NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      @Override
+      protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+        final PsiFile file = element.getContainingFile();
         if (!(file instanceof GroovyFileBase)) return;
         GroovyFileBase groovyFile = (GroovyFileBase)file;
 
@@ -184,7 +189,7 @@ public abstract class CreateClassFix {
 
         AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(CreateClassFix.class);
         try {
-          CodeInsightUtilBase.preparePsiElementForWrite(resolved);
+          FileModificationService.getInstance().preparePsiElementForWrite(resolved);
 
           PsiClass added = (PsiClass)resolved.add(template);
           PsiModifierList modifierList = added.getModifierList();
@@ -245,7 +250,7 @@ public abstract class CreateClassFix {
         if (targetDirectory == null) return;
 
         String templateName = getTemplateName(getType());
-        final PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
+        final PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName, true);
         if (targetClass == null) return;
 
         bindRef(targetClass, myRefElement);
@@ -283,7 +288,7 @@ public abstract class CreateClassFix {
       @Override
       public void run() {
         final PsiElement newRef = ref.bindToElement(targetClass);
-        GrReferenceAdjuster.shortenReferences(newRef);
+        JavaCodeStyleManager.getInstance(targetClass.getProject()).shortenClassReferences(newRef);
       }
     });
   }

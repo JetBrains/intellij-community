@@ -1,6 +1,6 @@
 
 package com.siyeh.igtest.style.unnecessary_semicolon;;
-;
+import java.util.List;;
 public class UnnecessarySemicolonInspection
 {
     int i;

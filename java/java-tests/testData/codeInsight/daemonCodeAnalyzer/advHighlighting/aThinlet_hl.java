@@ -20,7 +20,7 @@
 //package thinlet; //java
 //midp package thinlet.midp;
 
-import java.<error descr="Cannot resolve symbol 'applet'">applet</error>.*; //java
+import java.applet.*; //java
 import java.awt.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'datatransfer'">datatransfer</error>.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'image'">image</error>.*; //java
@@ -35,7 +35,7 @@ import java.util.*;
 /**
  *
  */
-public class Thinlet extends Container //java
+class Thinlet extends Container //java
 	implements Runnable, Serializable { //java
 //midp public class Thinlet extends Canvas implements CommandListener {
 

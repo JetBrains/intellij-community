@@ -1,4 +1,4 @@
-public class DataFlowBug {
+class DataFlowBug {
 
   public int add2(Object left, Object right) {
     if (left != null && !(left instanceof String)) {

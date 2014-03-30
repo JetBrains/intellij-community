@@ -26,7 +26,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.StubBase;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -180,11 +183,32 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findSibling(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
+      child = child.getTreeNext();
+    }
+  }
+
+  @Nullable
   public static ASTNode findSiblingBackward(ASTNode start, IElementType elementType) {
     ASTNode child = start;
     while (true) {
       if (child == null) return null;
       if (child.getElementType() == elementType) return child;
+      child = child.getTreePrev();
+    }
+  }
+
+
+  @Nullable
+  public static ASTNode findSiblingBackward(ASTNode start, TokenSet types) {
+    ASTNode child = start;
+    while (true) {
+      if (child == null) return null;
+      if (types.contains(child.getElementType())) return child;
       child = child.getTreePrev();
     }
   }
@@ -400,7 +424,7 @@ public class TreeUtil {
       @Override
       protected void visitNode(TreeElement node) {
         CompositeElement parent = node.getTreeParent();
-        if (parent != null && skipNode(builder, parent, node)) {
+        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
           return;
         }
 
@@ -418,18 +442,5 @@ public class TreeUtil {
         super.visitNode(node);
       }
     });
-  }
-
-  @SuppressWarnings("deprecation")
-  public static boolean skipNode(@NotNull StubBuilder builder, @NotNull ASTNode parent, @NotNull ASTNode node) {
-    if (builder instanceof DefaultStubBuilder) {
-      return ((DefaultStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
-    }
-    else if (builder instanceof LightStubBuilder) {
-      return ((LightStubBuilder)builder).skipChildProcessingWhenBuildingStubs(parent, node);
-    }
-    else {
-      return builder.skipChildProcessingWhenBuildingStubs(parent, node.getElementType());
-    }
   }
 }

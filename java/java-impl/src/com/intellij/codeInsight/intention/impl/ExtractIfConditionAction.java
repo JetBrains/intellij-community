@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
     if (operand == null) {
       return false;
     }
-    setText(CodeInsightBundle.message("intention.extract.if.condition.text", operand.getText()));
+    setText(CodeInsightBundle.message("intention.extract.if.condition.text", PsiExpressionTrimRenderer.render(operand)));
     return true;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
  * User: anna
  * Date: Apr 5, 2005
  */
-public class AddAllOpenFilesToFavorites extends AnAction {
+public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   private final String myFavoritesName;
 
   public AddAllOpenFilesToFavorites(String chosenList) {
@@ -39,6 +40,7 @@ public class AddAllOpenFilesToFavorites extends AnAction {
     myFavoritesName = chosenList;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
@@ -68,6 +70,7 @@ public class AddAllOpenFilesToFavorites extends AnAction {
     return result;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {

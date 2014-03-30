@@ -57,6 +57,9 @@ public abstract class MoveHandlerDelegate {
     return sourceElements;
   }
 
+  /**
+   * @return true if the delegate is able to move an element
+   */
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
                            @Nullable final PsiReference reference, final Editor editor) {
     return false;

@@ -41,7 +41,7 @@ public class HgAnnotation extends FileAnnotation {
 
   private static final Logger LOG = Logger.getInstance(HgAnnotation.class.getName());
 
-  enum FIELD {
+  public enum FIELD {
     USER, REVISION, DATE, LINE, CONTENT
   }
 

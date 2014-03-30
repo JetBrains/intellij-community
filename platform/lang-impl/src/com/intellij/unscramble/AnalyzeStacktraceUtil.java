@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package com.intellij.unscramble;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.*;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -46,13 +48,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 /**
  * @author yole
  */
 public class AnalyzeStacktraceUtil {
-  public static ExtensionPointName<Filter> EP_NAME = ExtensionPointName.create("com.intellij.analyzeStacktraceFilter");
+  public static final ExtensionPointName<Filter> EP_NAME = ExtensionPointName.create("com.intellij.analyzeStacktraceFilter");
 
   private AnalyzeStacktraceUtil() {
   }
@@ -65,16 +66,7 @@ public class AnalyzeStacktraceUtil {
 
   @Nullable
   public static String getTextInClipboard() {
-    final CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
-    if (copyPasteManager.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
-      final Transferable contents = copyPasteManager.getContents();
-      if (contents != null) {
-        try {
-          return (String)contents.getTransferData(DataFlavor.stringFlavor);
-        } catch (Exception ignore) { }
-      }
-    }
-    return null;
+    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   public interface ConsoleFactory {
@@ -91,9 +83,7 @@ public class AnalyzeStacktraceUtil {
                                                 String text,
                                                 @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    for(Filter filter: Extensions.getExtensions(EP_NAME, project)) {
-      builder.addFilter(filter);
-    }
+    builder.filters(Extensions.getExtensions(EP_NAME, project));
     final ConsoleView consoleView = builder.getConsole();
 
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -102,6 +92,7 @@ public class AnalyzeStacktraceUtil {
                                   : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
       new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle, icon) {
+      @Override
       public boolean isContentReuseProhibited() {
         return true;
       }
@@ -115,7 +106,9 @@ public class AnalyzeStacktraceUtil {
     toolbarActions.add(new CloseAction(executor, descriptor, project));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
     consoleView.allowHeavyFilters();
-    printStacktrace(consoleView, text);
+    if (consoleFactory == null) {
+      printStacktrace(consoleView, text);
+    }
     return descriptor;
   }
 
@@ -132,7 +125,7 @@ public class AnalyzeStacktraceUtil {
   public static StacktraceEditorPanel createEditorPanel(Project project, @NotNull Disposable parentDisposable) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument("");
-    Editor editor = editorFactory.createEditor(document);
+    Editor editor = editorFactory.createEditor(document, project);
     EditorSettings settings = editor.getSettings();
     settings.setFoldingOutlineShown(false);
     settings.setLineMarkerAreaShown(false);
@@ -157,8 +150,9 @@ public class AnalyzeStacktraceUtil {
       add(myEditor.getComponent());
     }
 
+    @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }
       return null;
@@ -170,8 +164,10 @@ public class AnalyzeStacktraceUtil {
 
     public final void setText(@NotNull final String text) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               final Document document = myEditor.getDocument();
               document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
@@ -190,6 +186,7 @@ public class AnalyzeStacktraceUtil {
 
     }
 
+    @Override
     public void dispose() {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }

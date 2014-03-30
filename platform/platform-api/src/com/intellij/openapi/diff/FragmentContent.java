@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -39,19 +39,16 @@ public class FragmentContent extends DiffContent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.FragmentContent");
   private final DiffContent myOriginal;
   private final FileType myType;
-  private final MyDocumentsSynchonizer mySynchonizer;
+  private final MyDocumentsSynchronizer mySynchonizer;
   public static final Key<Document> ORIGINAL_DOCUMENT = new Key<Document>("ORIGINAL_DOCUMENT");
 
-  public FragmentContent(DiffContent original, TextRange range, Project project, VirtualFile file) {
+  public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, VirtualFile file) {
     this(original, range, project, file != null ? DiffContentUtil.getContentType(file) : null);
   }
 
-  public FragmentContent(DiffContent original, TextRange range, Project project, FileType type) {
-    this(original.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true), original, type, project);
-  }
-
-  private FragmentContent(RangeMarker rangeMarker, DiffContent original, FileType fileType, Project project) {
-    mySynchonizer = new MyDocumentsSynchonizer(project, rangeMarker);
+  public FragmentContent(@NotNull DiffContent original, @NotNull TextRange range, Project project, FileType fileType) {
+    RangeMarker rangeMarker = original.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
+    mySynchonizer = new MyDocumentsSynchronizer(project, rangeMarker);
     myOriginal = original;
     myType = fileType;
   }
@@ -60,32 +57,41 @@ public class FragmentContent extends DiffContent {
     this(original, range, project, (FileType)null);
   }
 
-  private String subText(Document document, int startOffset, int length) {
+  private static String subText(Document document, int startOffset, int length) {
     return document.getCharsSequence().subSequence(startOffset, startOffset + length).toString();
   }
 
 
+  @Override
   public void onAssigned(boolean isAssigned) {
     myOriginal.onAssigned(isAssigned);
     mySynchonizer.listenDocuments(isAssigned);
     super.onAssigned(isAssigned);
   }
 
+  @Override
+  @NotNull
   public Document getDocument() {
     return mySynchonizer.getCopy();
   }
 
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return myOriginal.getOpenFileDescriptor(offset + mySynchonizer.getStartOffset());
   }
 
-  public VirtualFile getFile() { return null; }
+  @Override
+  public VirtualFile getFile() {
+    return null;
+  }
 
+  @Override
   @Nullable
   public FileType getContentType() {
     return myType != null ? myType : myOriginal.getContentType();
   }
 
+  @Override
   public byte[] getBytes() throws IOException {
     return getDocument().getText().getBytes();
   }
@@ -97,52 +103,60 @@ public class FragmentContent extends DiffContent {
     return new FragmentContent(new DocumentContent(project, document), TextRange.create(rangeMarker), project, type);
   }
 
-  private class MyDocumentsSynchonizer extends DocumentsSynchonizer {
+  private class MyDocumentsSynchronizer extends DocumentsSynchronizer {
     private final RangeMarker myRangeMarker;
 
-    public MyDocumentsSynchonizer(Project project, RangeMarker originalRange) {
+    public MyDocumentsSynchronizer(Project project, @NotNull RangeMarker originalRange) {
       super(project);
       myRangeMarker = originalRange;
     }
 
-    public int getStartOffset() { return myRangeMarker.getStartOffset(); }
+    public int getStartOffset() {
+      return myRangeMarker.getStartOffset();
+    }
 
-    protected void onOriginalChanged(DocumentEvent event, Document copy) {
+    @Override
+    protected void onOriginalChanged(@NotNull DocumentEvent event, @NotNull Document copy) {
       if (!myRangeMarker.isValid()) {
         fireContentInvalid();
         return;
       }
-      replaceString(copy, 0, copy.getTextLength(),
-                    subText(event.getDocument(), myRangeMarker.getStartOffset(), getLength()));
+      replaceString(copy, 0, copy.getTextLength(), subText(event.getDocument(), myRangeMarker.getStartOffset(), getLength()));
     }
 
-    protected void beforeListenersAttached(Document original, Document copy) {
-      boolean writable = copy.isWritable();
-      Document copyEx = copy;
-      if (!writable) copyEx.setReadOnly(false);
-      replaceString(copy, 0, copy.getTextLength(),
-                    subText(original, myRangeMarker.getStartOffset(), getLength()));
-      copyEx.setReadOnly(!writable);
+    @Override
+    protected void beforeListenersAttached(@NotNull Document original, @NotNull Document copy) {
+      boolean readOnly = !copy.isWritable();
+      if (readOnly) {
+        copy.setReadOnly(false);
+      }
+      replaceString(copy, 0, copy.getTextLength(), subText(original, myRangeMarker.getStartOffset(), getLength()));
+      copy.setReadOnly(readOnly);
     }
 
     private int getLength() {
       return myRangeMarker.getEndOffset() - myRangeMarker.getStartOffset();
     }
 
+    @Override
     protected Document createOriginal() {
       return myRangeMarker.getDocument();
     }
 
+    @NotNull
+    @Override
     protected Document createCopy() {
       final Document originalDocument = myRangeMarker.getDocument();
-      String textInRange = originalDocument.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
+      String textInRange =
+        originalDocument.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset()).toString();
       final Document result = EditorFactory.getInstance().createDocument(textInRange);
       result.setReadOnly(!originalDocument.isWritable());
       result.putUserData(ORIGINAL_DOCUMENT, originalDocument);
       return result;
     }
 
-    protected void onCopyChanged(DocumentEvent event, Document original) {
+    @Override
+    protected void onCopyChanged(@NotNull DocumentEvent event, @NotNull Document original) {
       final int originalOffset = event.getOffset() + myRangeMarker.getStartOffset();
       LOG.assertTrue(originalOffset >= 0);
       if (!original.isWritable()) return;

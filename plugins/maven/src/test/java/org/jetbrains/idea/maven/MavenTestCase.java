@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,10 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -481,7 +483,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
         }
         else {
           file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());
@@ -496,6 +498,10 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
     assertEquals(new HashSet<T>(expected), new HashSet<T>(actual));
+  }
+  protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
+    assertEquals(new SetWithToString<String>(new THashSet<String>(expected, FileUtil.PATH_HASHING_STRATEGY)),
+                 new SetWithToString<String>(new THashSet<String>(actual, FileUtil.PATH_HASHING_STRATEGY)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
@@ -552,4 +558,45 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private static String getTestMavenHome() {
     return System.getProperty("idea.maven.test.home");
   }
+
+  private static class SetWithToString<T> extends AbstractSet<T> {
+
+    private final Set<T> myDelegate;
+
+    public SetWithToString(@NotNull Set<T> delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public int size() {
+      return myDelegate.size();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+      return myDelegate.contains(o);
+    }
+
+    @NotNull
+    @Override
+    public Iterator<T> iterator() {
+      return myDelegate.iterator();
+    }
+
+    @Override
+    public boolean containsAll(Collection<?> c) {
+      return myDelegate.containsAll(c);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return myDelegate.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return myDelegate.hashCode();
+    }
+  }
+
 }

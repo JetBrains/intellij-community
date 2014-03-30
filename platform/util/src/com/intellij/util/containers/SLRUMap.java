@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class SLRUMap<K,V> {
     myProtectedQueueSize = protectedQueueSize * FACTOR;
     myProbationalQueueSize = probationalQueueSize * FACTOR;
 
-    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
+    myProtectedQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProtectedQueueSize) {
@@ -60,7 +60,8 @@ public class SLRUMap<K,V> {
       }
     };
 
-    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy) {
+    myProbationalQueue = new LinkedHashMap<K,V>(10, 0.6f, hashingStrategy, true) {
+      @Override
       protected boolean removeEldestEntry(final Map.Entry<K, V> eldest, K key, V value) {
         if (size() > myProbationalQueueSize) {
           onDropFromCache(key, value);
@@ -82,12 +83,16 @@ public class SLRUMap<K,V> {
     value = myProbationalQueue.remove(key);
     if (value != null) {
       probationalHits++;
-      myProtectedQueue.put(getStableKey(key), value);
+      putToProtectedQueue(key, value);
       return value;
     }
 
     misses++;
     return null;
+  }
+
+  protected void putToProtectedQueue(K key, V value) {
+    myProtectedQueue.put(getStableKey(key), value);
   }
 
   public void put(K key, @NotNull V value) {

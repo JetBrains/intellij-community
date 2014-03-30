@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 6:00 PM
- */
 public abstract class CheckinHandlersManager {
   public static CheckinHandlersManager getInstance() {
     return ServiceManager.getService(CheckinHandlersManager.class);
@@ -37,22 +32,19 @@ public abstract class CheckinHandlersManager {
    * Returns the list of all registered factories which provide callbacks to run before and after
    * VCS checkin operations.
    *
-   * @return the list of registered factories.
-   * @param allActiveVcss
+   * @return the list of registered factories
    */
-  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss);
+  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss);
 
+  @SuppressWarnings("UnusedDeclaration")
+  /** @deprecated use EP {@link #getRegisteredCheckinHandlerFactories(AbstractVcs[])} (to remove in IDEA 14) */
   public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
-  /**
-   * Registers a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to register.
-   */
+
+  @SuppressWarnings("UnusedDeclaration")
+  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
   public abstract void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
-  /**
-   * Unregisters a factory which provides callbacks to run before and after VCS checkin operations.
-   *
-   * @param factory the factory to unregister.
-   */
-  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler);
+
+  @SuppressWarnings("UnusedDeclaration")
+  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
+  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 }

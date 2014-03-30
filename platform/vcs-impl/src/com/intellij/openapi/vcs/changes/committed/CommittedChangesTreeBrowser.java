@@ -1,4 +1,3 @@
-
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -270,8 +269,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     return result;
   }
 
-  // changes are assumed to be sorted ascending
-  public static List<Change> zipChanges(final List<Change> changes) {
+  /**
+   * Zips changes by removing duplicates (changes in the same file) and compounding the diff.
+   * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
+   */
+  @NotNull
+  public static List<Change> zipChanges(@NotNull List<Change> changes) {
     final List<Change> result = new ArrayList<Change>();
     for (Change change : changes) {
       addOrReplaceChange(result, change);
@@ -345,7 +348,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(leadGroup);
     toolbarGroup.addSeparator();
     toolbarGroup.add(new SelectFilteringAction(project, this));
-    toolbarGroup.add(new SelectGroupingAction(this));
+    toolbarGroup.add(new SelectGroupingAction(project, this));
     final ExpandAllAction expandAllAction = new ExpandAllAction(myChangesTree);
     final CollapseAllAction collapseAllAction = new CollapseAllAction(myChangesTree);
     expandAllAction.registerCustomShortcutSet(
@@ -385,10 +388,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
-    else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
+    else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, result);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);
@@ -498,8 +501,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
       } else {
         final String name = key.getName();
-        if (VcsDataKeys.SELECTED_CHANGES.is(name) || VcsDataKeys.CHANGES.is(name)
-          || VcsDataKeys.CHANGE_LEAD_SELECTION.is(name) || CommittedChangesBrowserUseCase.DATA_KEY.is(name)) {
+        if (VcsDataKeys.SELECTED_CHANGES.is(name) || VcsDataKeys.CHANGE_LEAD_SELECTION.is(name) ||
+            CommittedChangesBrowserUseCase.DATA_KEY.is(name)) {
           final Object data = myDetailsView.getData(name);
           if (data != null) {
             sink.put(key, data);

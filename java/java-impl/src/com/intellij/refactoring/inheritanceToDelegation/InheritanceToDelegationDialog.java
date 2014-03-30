@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,12 +283,12 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   }
 
   private class MyMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
-    final HashMap<PsiClass,InterfaceMemberDependencyGraph> myGraphs;
+    final HashMap<PsiClass,InterfaceMemberDependencyGraph<PsiMember, MemberInfo>> myGraphs;
 
     public MyMemberInfoModel() {
-      myGraphs = new HashMap<PsiClass, InterfaceMemberDependencyGraph>();
+      myGraphs = new HashMap<PsiClass, InterfaceMemberDependencyGraph<PsiMember, MemberInfo>>();
       for (PsiClass superClass : mySuperClasses) {
-        myGraphs.put(superClass, new InterfaceMemberDependencyGraph(superClass));
+        myGraphs.put(superClass, new InterfaceMemberDependencyGraph<PsiMember, MemberInfo>(superClass));
       }
     }
 
@@ -333,7 +333,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
       }
     }
 
-    private InterfaceMemberDependencyGraph getGraph() {
+    private InterfaceMemberDependencyGraph<PsiMember, MemberInfo> getGraph() {
       return myGraphs.get(getSelectedTargetClass());
     }
   }

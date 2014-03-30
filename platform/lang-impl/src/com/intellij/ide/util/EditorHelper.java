@@ -17,8 +17,10 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -27,8 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditorHelper {
-  @Nullable
+
   public static Editor openInEditor(@NotNull PsiElement element) {
+    FileEditor editor = openInEditor(element, true);
+    return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
+  }
+
+  @Nullable
+  public static FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText) {
     PsiFile file;
     int offset;
     if (element instanceof PsiFile){
@@ -44,6 +52,12 @@ public class EditorHelper {
     if (virtualFile == null) return null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(element.getProject(), virtualFile, offset);
     Project project = element.getProject();
-    return FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
+    if (offset == -1 && !switchToText) {
+      FileEditorManager.getInstance(project).openEditor(descriptor, false);
+    }
+    else {
+      FileEditorManager.getInstance(project).openTextEditor(descriptor, false);
+    }
+    return FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
   }
 }

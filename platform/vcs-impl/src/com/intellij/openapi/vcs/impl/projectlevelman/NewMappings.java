@@ -83,7 +83,9 @@ public class NewMappings {
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, new DumbAwareRunnable() {
       public void run() {
-        activateActiveVcses();
+        if (!myProject.isDisposed()) {
+          activateActiveVcses();
+        }
       }
     });
   }
@@ -148,7 +150,7 @@ public class NewMappings {
     mappingsChanged();
   }
 
-  private void keepActiveVcs(final Runnable runnable) {
+  private void keepActiveVcs(@NotNull Runnable runnable) {
     final MyVcsActivator activator;
     synchronized (myLock) {
       if (! myActivated) {
@@ -182,9 +184,15 @@ public class NewMappings {
   }
 
   public void mappingsChanged() {
-    myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
-    myFileStatusManager.fileStatusesChanged();
-    myFileWatchRequestsManager.ping();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (myProject.isDisposed()) return;
+        myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+        myFileStatusManager.fileStatusesChanged();
+        myFileWatchRequestsManager.ping();
+      }
+    });
   }
 
   @Modification
@@ -227,15 +235,14 @@ public class NewMappings {
   public VcsDirectoryMapping getMappingFor(final VirtualFile file, final Object matchContext) {
     // performance: calculate file path just once, rather than once per mapping
     String path = file.getPath();
-    final String systemIndependPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
-
+    final String systemIndependentPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
     final VcsDirectoryMapping[] mappings;
     synchronized (myLock) {
       mappings = mySortedMappings;
     }
     for (int i = mappings.length - 1; i >= 0; -- i) {
       final VcsDirectoryMapping mapping = mappings[i];
-      if (fileMatchesMapping(file, matchContext, systemIndependPath, mapping)) {
+      if (fileMatchesMapping(file, matchContext, systemIndependentPath, mapping)) {
         return mapping;
       }
     }
@@ -251,11 +258,11 @@ public class NewMappings {
     return mapping.getVcs();
   }
 
-  private boolean fileMatchesMapping(final VirtualFile file, final Object matchContext, final String systemIndependPath, final VcsDirectoryMapping mapping) {
+  private boolean fileMatchesMapping(final VirtualFile file, final Object matchContext, final String systemIndependentPath, final VcsDirectoryMapping mapping) {
     if (mapping.getDirectory().length() == 0) {
       return myDefaultVcsRootPolicy.matchesDefaultMapping(file, matchContext);
     }
-    return FileUtil.startsWith(systemIndependPath, mapping.systemIndependentPath()) &&
+    return FileUtil.startsWith(systemIndependentPath, mapping.systemIndependentPath()) &&
            ! myExcludedFileIndex.isExcludedFile(file);
   }
 
@@ -286,7 +293,7 @@ public class NewMappings {
 
   @Modification
   public void disposeMe() {
-    LOG.debug("dipose me");
+    LOG.debug("dispose me");
     clearImpl();
   }
 
@@ -530,7 +537,7 @@ public class NewMappings {
     }
 
     @Nullable
-    private Set<String> notInBottom(final Set<String> top, final Set<String> bottom) {
+    private static Set<String> notInBottom(final Set<String> top, final Set<String> bottom) {
       Set<String> notInBottom = null;
       for (String topItem : top) {
         // omit empty vcs: not a vcs
@@ -558,7 +565,7 @@ public class NewMappings {
     synchronized (myLock) {
       keepActiveVcs(new Runnable() {
         public void run() {
-          final List<VcsDirectoryMapping> removed = myVcsToPaths.remove(name);
+          myVcsToPaths.remove(name);
           sortedMappingsByMap();
         }
       });

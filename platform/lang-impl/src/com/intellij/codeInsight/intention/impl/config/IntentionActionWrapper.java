@@ -34,7 +34,7 @@ public class IntentionActionWrapper implements IntentionAction {
   private final IntentionActionBean myExtension;
   private String myFullFamilyName;
 
-  public IntentionActionWrapper(final IntentionActionBean extension, String[] categories) {
+  public IntentionActionWrapper(@NotNull IntentionActionBean extension, String[] categories) {
     myExtension = extension;
     myCategories = categories;
   }

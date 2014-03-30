@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,69 +45,8 @@ import java.nio.charset.Charset;
  * @see VirtualFileManager
  */
 public abstract class VirtualFile extends UserDataHolderBase implements ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   public static final Key<Object> REQUESTOR_MARKER = Key.create("REQUESTOR_MARKER");
-  private static final Key<byte[]> BOM_KEY = Key.create("BOM");
-  private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
-
-  protected VirtualFile() {
-  }
-
-  /**
-   * Gets the name of this file.
-   *
-   * @return file name
-   */
-  @NotNull
-  @NonNls
-  public abstract String getName();
-
-  /**
-   * Gets the {@link VirtualFileSystem} this file belongs to.
-   *
-   * @return the {@link VirtualFileSystem}
-   */
-  @NotNull
-  public abstract VirtualFileSystem getFileSystem();
-
-  /**
-   * Gets the path of this file. Path is a string which uniquely identifies file within given
-   * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>{@link com.intellij.openapi.vfs.LocalFileSystem}</code> it is an absolute file path with file separator characters
-   * (File.separatorChar) replaced to the forward slash ('/').
-   *
-   * @return the path
-   */
-  public abstract String getPath();
-
-  /**
-   * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
-   * It has the following format: <code>&lt;protocol&gt;://&lt;path&gt;</code>.
-   * <p/>
-   * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
-   *
-   * @return the URL consisting of protocol and path
-   * @see VirtualFileManager#findFileByUrl
-   * @see VirtualFile#getPath
-   * @see VirtualFileSystem#getProtocol
-   */
-  @NotNull
-  public String getUrl() {
-    return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
-  }
-
-  /**
-   * Fetches "presentable URL" of this file. "Presentable URL" is a string to be used for displaying this
-   * file in the UI.
-   *
-   * @return the presentable URL.
-   * @see VirtualFileSystem#extractPresentableUrl
-   */
-  public final String getPresentableUrl() {
-    if (!isValid()) return null;
-    return getFileSystem().extractPresentableUrl(getPath());
-  }
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the name of a
@@ -135,6 +74,87 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFilePropertyEvent#getPropertyName
    */
   @NonNls public static final String PROP_WRITABLE = "writable";
+
+  /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a
+   * {@link VirtualFile} changes.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  @NonNls public static final String PROP_HIDDEN = VFileProperty.HIDDEN.getName();
+
+  /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a
+   * {@link VirtualFile} changes.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  @NonNls public static final String PROP_SYMLINK_TARGET = "symlink";
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
+  private static final Key<byte[]> BOM_KEY = Key.create("BOM");
+  private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
+
+  protected VirtualFile() { }
+
+  /**
+   * Gets the name of this file.
+   *
+   * @return file name
+   */
+  @NotNull
+  @NonNls
+  public abstract String getName();
+
+  /**
+   * Gets the {@link VirtualFileSystem} this file belongs to.
+   *
+   * @return the {@link VirtualFileSystem}
+   */
+  @NotNull
+  public abstract VirtualFileSystem getFileSystem();
+
+  /**
+   * Gets the path of this file. Path is a string which uniquely identifies file within given
+   * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
+   * For <code>{@link com.intellij.openapi.vfs.LocalFileSystem}</code> it is an absolute file path with file separator characters
+   * (File.separatorChar) replaced to the forward slash ('/').
+   *
+   * @return the path
+   */
+  @SuppressWarnings("JavadocReference")
+  @NotNull
+  public abstract String getPath();
+
+  /**
+   * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
+   * It has the following format: <code>&lt;protocol&gt;://&lt;path&gt;</code>.
+   * <p/>
+   * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
+   *
+   * @return the URL consisting of protocol and path
+   * @see VirtualFileManager#findFileByUrl
+   * @see VirtualFile#getPath
+   * @see VirtualFileSystem#getProtocol
+   */
+  @NotNull
+  public String getUrl() {
+    return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
+  }
+
+  /**
+   * Fetches "presentable URL" of this file. "Presentable URL" is a string to be used for displaying this
+   * file in the UI.
+   *
+   * @return the presentable URL.
+   * @see VirtualFileSystem#extractPresentableUrl
+   */
+  @NotNull
+  public final String getPresentableUrl() {
+    return getFileSystem().extractPresentableUrl(getPath());
+  }
 
   /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'
@@ -196,6 +216,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract boolean isWritable();
 
+  public void setWritable(boolean writable) throws IOException {
+    throw new IOException("Not supported");
+  }
+
   /**
    * Checks whether this file is a directory.
    *
@@ -203,23 +227,25 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract boolean isDirectory();
 
-  /**
-   * Checks whether this file is a symbolic link.
-   *
-   * @return <code>true</code> if this file is a symbolic link, <code>false</code> otherwise
-   * @since 11.0
-   */
+  /** @deprecated use {@link #is(VFileProperty)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public boolean isSymLink() {
-    return false;
+    return is(VFileProperty.SYMLINK);
+  }
+
+  /** @deprecated use {@link #is(VFileProperty)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean isSpecialFile() {
+    return is(VFileProperty.SPECIAL);
   }
 
   /**
-   * Checks whether this file is a special (e.g. FIFO or device) file.
+   * Checks whether this file has a specific property.
    *
-   * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
-   * @since 11.0
+   * @return <code>true</code> if the file has a specific property, <code>false</code> otherwise
+   * @since 13.0
    */
-  public boolean isSpecialFile() {
+  public boolean is(@NotNull VFileProperty property) {
     return false;
   }
 
@@ -310,6 +336,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *         When IDEA has no idea what the file type is (i.e. file type is not registered via {@link FileTypeRegistry}),
    *         it returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}
    */
+  @SuppressWarnings("JavadocReference")
   @NotNull
   public FileType getFileType() {
     return FileTypeRegistry.getInstance().getFileTypeByFile(this);
@@ -335,7 +362,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       child = this;
     }
     else if (name.equals("..")) {
-      if (isSymLink()) {
+      if (is(VFileProperty.SYMLINK)) {
         final VirtualFile canonicalFile = getCanonicalFile();
         child = canonicalFile != null ? canonicalFile.getParent() : null;
       }
@@ -352,9 +379,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     if (index < relPath.length()) {
       return child.findFileByRelativePath(relPath.substring(index + 1));
     }
-    else {
-      return child;
-    }
+    return child;
   }
 
   /**
@@ -477,7 +502,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
   public Charset getCharset() {
-    Charset charset = getUserData(CHARSET_KEY);
+    Charset charset = getStoredCharset();
     if (charset == null) {
       charset = EncodingRegistry.getInstance().getDefaultCharset();
       setCharset(charset);
@@ -485,13 +510,22 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return charset;
   }
 
+  @Nullable
+  protected Charset getStoredCharset() {
+    return getUserData(CHARSET_KEY);
+  }
+
+  protected void storeCharset(Charset charset) {
+    putUserData(CHARSET_KEY, charset);
+  }
+
   public void setCharset(final Charset charset) {
     setCharset(charset, null);
   }
 
   public void setCharset(final Charset charset, @Nullable Runnable whenChanged) {
-    final Charset old = getUserData(CHARSET_KEY);
-    putUserData(CHARSET_KEY, charset);
+    final Charset old = getStoredCharset();
+    storeCharset(charset);
     if (Comparing.equal(charset, old)) return;
     byte[] bom = charset == null ? null : CharsetToolkit.getMandatoryBom(charset);
     byte[] existingBOM = getBOM();
@@ -507,7 +541,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public boolean isCharsetSet() {
-    return getUserData(CHARSET_KEY) != null;
+    return getStoredCharset() != null;
   }
 
   public final void setBinaryContent(@NotNull byte[] content) throws IOException {
@@ -622,11 +656,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * If this file is a directory the set of its children is refreshed. If recursive value is <code>true</code> all
    * children are refreshed recursively.
    * <p/>
-   * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
+   * NOT be in a read action, otherwise a deadlock may occur.
    *
-   * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
-   *                     otherwise will be performed immediately
+   * @param asynchronous if <code>true</code>, the method will return immediately and the refresh will be processed
+   *                     in the background. If <code>false</code>, the method will return only after the refresh
+   *                     is done and the VFS change events caused by the refresh have been fired and processed
+   *                     in the event dispatch thread. Instead of synchronous refreshes, it's recommended to use
+   *                     asynchronous refreshes with a <code>postRunnable</code> whenever possible.
    * @param recursive    whether to refresh all the files in this directory recursively
    */
   public void refresh(boolean asynchronous, boolean recursive) {
@@ -649,7 +686,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @param name
    * @return whether file name equals to this name
    *         result depends on the filesystem specifics
    */
@@ -691,5 +727,24 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   public static boolean isValidName(@NotNull String name) {
     return name.indexOf('\\') < 0 && name.indexOf('/') < 0;
+  }
+
+  private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");
+
+  /**
+   * @return Line separator for this file.
+   * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
+   * @see com.intellij.util.LineSeparator
+   */
+  public String getDetectedLineSeparator() {
+    return getUserData(DETECTED_LINE_SEPARATOR_KEY);
+  }
+  public void setDetectedLineSeparator(@Nullable String separator) {
+    putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
+  }
+
+  @NotNull
+  public CharSequence getNameSequence() {
+    return getName();
   }
 }

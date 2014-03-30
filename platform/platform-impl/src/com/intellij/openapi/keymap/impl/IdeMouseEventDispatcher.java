@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -56,6 +57,7 @@ public final class IdeMouseEventDispatcher {
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
   private int myLastHorScrolledComponentHash = 0;
+  private MouseEvent myPreviousMouseEvent;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -77,21 +79,16 @@ public final class IdeMouseEventDispatcher {
 
     // here we try to find "local" shortcuts
     if (component instanceof JComponent) {
-      @SuppressWarnings("unchecked")
-      final ArrayList<AnAction> listOfActions = (ArrayList<AnAction>)((JComponent)component).getClientProperty(AnAction.ourClientProperty);
-      if (listOfActions != null) {
-        for (AnAction action : listOfActions) {
-          final Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-          for (Shortcut shortcut : shortcuts) {
-            if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
-              myActions.add(action);
-            }
+      for (AnAction action : ActionUtil.getActions((JComponent)component)) {
+        for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+          if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
+            myActions.add(action);
           }
         }
-        // once we've found a proper local shortcut(s), we exit
-        if (! myActions.isEmpty()) {
-          return;
-        }
+      }
+      // once we've found a proper local shortcut(s), we exit
+      if (!myActions.isEmpty()) {
+        return;
       }
     }
 
@@ -125,7 +122,9 @@ public final class IdeMouseEventDispatcher {
    *         to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e) {
-    boolean ignore = false;
+    MouseEvent previousEvent = myPreviousMouseEvent;
+    myPreviousMouseEvent = e;
+
     Component c = e.getComponent();
 
     //frame activation by mouse click
@@ -144,6 +143,7 @@ public final class IdeMouseEventDispatcher {
       resetPopupTrigger(e);
     }
 
+    boolean ignore = false;
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
           e.getID() == MOUSE_CLICKED)) {
@@ -158,6 +158,10 @@ public final class IdeMouseEventDispatcher {
         || e.getClickCount() < 1
         || e.getButton() == MouseEvent.NOBUTTON) { // See #16995. It did happen
       ignore = true;
+    }
+
+    if (e.getID() == MOUSE_RELEASED && previousEvent != null && previousEvent.getID() == MOUSE_DRAGGED) {
+      ignore = true; // we don't want to process action bindings on mouse release at the end of drag operation
     }
 
    final JRootPane root = findRoot(e);

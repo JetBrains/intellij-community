@@ -52,6 +52,7 @@ public class LogFilesManager implements Disposable {
     Disposer.register(parentDisposable, this);
 
     myUpdateRequest = new Runnable() {
+      @Override
       public void run() {
         if (project.isDisposed() || myDisposed) return;
         myUpdateAlarm.cancelAllRequests();
@@ -64,10 +65,12 @@ public class LogFilesManager implements Disposable {
           obsoleteFiles.removeAll(newFiles);
 
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               if (project.isDisposed() || myDisposed) return;
 
               addConfigurationConsoles(logFile, new Condition<String>() {
+                @Override
                 public boolean value(final String file) {
                   return !oldFiles.contains(file);
                 }
@@ -97,6 +100,7 @@ public class LogFilesManager implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     if (myUpdateAlarm != null) {

@@ -15,9 +15,8 @@
  */
 package com.intellij.platform.templates;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.impl.UrlUtil;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -41,28 +41,28 @@ import java.util.*;
  */
 public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
-  private static final String ZIP = ".zip";
+  static final String ZIP = ".zip";
 
   private final ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>> myGroups = new ClearableLazyValue<MultiMap<String, Pair<URL, ClassLoader>>>() {
     @NotNull
     @Override
     protected MultiMap<String, Pair<URL, ClassLoader>> compute() {
       MultiMap<String, Pair<URL, ClassLoader>> map = new MultiMap<String, Pair<URL, ClassLoader>>();
-      IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       Map<URL, ClassLoader> urls = new HashMap<URL, ClassLoader>();
-      for (IdeaPluginDescriptor plugin : plugins) {
-        try {
-          ClassLoader loader = plugin.getPluginClassLoader();
-          Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
-          ArrayList<URL> list = Collections.list(resources);
-          for (URL url : list) {
-            urls.put(url, loader);
-          }
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      //for (IdeaPluginDescriptor plugin : plugins) {
+      //  if (!plugin.isEnabled()) continue;
+      //  try {
+      //    ClassLoader loader = plugin.getPluginClassLoader();
+      //    Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
+      //    ArrayList<URL> list = Collections.list(resources);
+      //    for (URL url : list) {
+      //      urls.put(url, loader);
+      //    }
+      //  }
+      //  catch (IOException e) {
+      //    LOG.error(e);
+      //  }
+      //}
 
       URL configURL = getCustomTemplatesURL();
       if (configURL != null) {
@@ -82,7 +82,8 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
             if (index != -1) {
               child = child.substring(0, index);
             }
-            map.putValue(child.replace('_', ' '), Pair.create(new URL(url.getKey().toExternalForm() + "/" + child), url.getValue()));
+            String name = child.replace('_', ' ');
+            map.putValue(name, Pair.create(new URL(url.getKey().toExternalForm() + "/" + child), url.getValue()));
           }
         }
         catch (IOException e) {
@@ -131,8 +132,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
         for (String child : children) {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.first.toExternalForm() + "/" + child);
-            String name = child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
-            templates.add(new LocalArchivedTemplate(name, templateUrl, url.second));
+            templates.add(new LocalArchivedTemplate(templateUrl, url.second));
           }
         }
       }
@@ -146,6 +146,11 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   @Override
   public int getGroupWeight(String group) {
     return CUSTOM_GROUP.equals(group) ? -2 : 0;
+  }
+
+  @Override
+  public Icon getGroupIcon(String group) {
+    return CUSTOM_GROUP.equals(group) ? AllIcons.Modules.Types.UserDefined : super.getGroupIcon(group);
   }
 
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);

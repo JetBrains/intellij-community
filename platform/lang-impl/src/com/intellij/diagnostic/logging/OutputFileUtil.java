@@ -111,6 +111,7 @@ public class OutputFileUtil {
             if (file != null) {
               file.refresh(false, false);
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
                 }

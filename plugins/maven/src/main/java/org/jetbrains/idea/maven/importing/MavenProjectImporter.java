@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -239,7 +240,7 @@ public class MavenProjectImporter {
       }
     });
 
-    if (result[0] == 0) {
+    if (result[0] == Messages.OK) {
       for (Pair<MavenProject, Module> each : incompatibleNotMavenized) {
         myFileToModuleMapping.remove(each.first.getFile());
         myModuleModel.disposeModule(each.second);
@@ -304,10 +305,12 @@ public class MavenProjectImporter {
       }
     });
 
-    if (result[0] == 1) return false;// NO
+    if (result[0] == Messages.NO) return false;// NO
 
     for (Module each : obsoleteModules) {
-      myModuleModel.disposeModule(each);
+      if (!each.isDisposed()) {
+        myModuleModel.disposeModule(each);
+      }
     }
 
     return true;
@@ -332,11 +335,20 @@ public class MavenProjectImporter {
   }
 
   private static String formatModules(final Collection<Module> modules) {
-    return StringUtil.join(modules, new Function<Module, String>() {
-        public String fun(final Module m) {
-          return "'" + m.getName() + "'";
-        }
-      }, "\n");
+    StringBuilder res = new StringBuilder();
+
+    int i = 0;
+    for (Module module : modules) {
+      res.append('\'').append(module.getName()).append("'\n");
+
+      if (++i > 20) break;
+    }
+
+    if (i > 20) {
+      res.append("\n ... and other ").append(modules.size() - 20).append(" modules");
+    }
+
+    return res.toString();
   }
 
   private static void doRefreshFiles(Set<File> files) {
@@ -541,30 +553,29 @@ public class MavenProjectImporter {
   }
 
   private boolean removeUnusedProjectLibraries() {
-    Set<Library> allLibraries = new THashSet<Library>();
-    Collections.addAll(allLibraries, myModelsProvider.getAllLibraries());
+    Set<Library> unusedLibraries = new HashSet<Library>();
+    Collections.addAll(unusedLibraries, myModelsProvider.getAllLibraries());
 
-    Set<Library> usedLibraries = new THashSet<Library>();
     for (ModuleRootModel eachModel : collectModuleModels()) {
       for (OrderEntry eachEntry : eachModel.getOrderEntries()) {
         if (eachEntry instanceof LibraryOrderEntry) {
-          Library lib = ((LibraryOrderEntry)eachEntry).getLibrary();
-          if (MavenRootModelAdapter.isMavenLibrary(lib)) usedLibraries.add(lib);
+          unusedLibraries.remove(((LibraryOrderEntry)eachEntry).getLibrary());
         }
       }
     }
 
-    Set<Library> unusedLibraries = new THashSet<Library>(allLibraries);
-    unusedLibraries.removeAll(usedLibraries);
-
     boolean removed = false;
     for (Library each : unusedLibraries) {
-      if (MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
+      if (!isDisposed(each) && MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
         myModelsProvider.removeLibrary(each);
         removed = true;
       }
     }
     return removed;
+  }
+
+  private static boolean isDisposed(Library library) {
+    return library instanceof LibraryImpl && ((LibraryImpl)library).isDisposed();
   }
 
   private Collection<ModuleRootModel> collectModuleModels() {

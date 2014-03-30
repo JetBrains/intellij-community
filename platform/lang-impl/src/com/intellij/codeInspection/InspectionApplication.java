@@ -17,10 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.XSLTReportConverter;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -44,7 +41,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +72,7 @@ public class InspectionApplication {
   public String myOutputFormat = null;
 
   public boolean myErrorCodeRequired = true;
-  
+
   @NonNls public static final String DESCRIPTIONS = ".descriptions";
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
@@ -87,7 +83,7 @@ public class InspectionApplication {
       logError("Project to inspect is not defined");
       printHelp();
     }
-    
+
     if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
       logError("Profile to inspect with is not defined");
       printHelp();
@@ -95,6 +91,7 @@ public class InspectionApplication {
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -146,6 +143,7 @@ public class InspectionApplication {
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run(){
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         }
@@ -214,12 +212,13 @@ public class InspectionApplication {
 
       final List<File> inspectionsResults = new ArrayList<File>();
       ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
         public void run() {
-          if (!InspectionManagerEx.canRunInspections(myProject, false)) {
+          if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, im, inspectionsResults);
+          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
@@ -228,6 +227,7 @@ public class InspectionApplication {
         private String lastPrefix = "";
         private int myLastPercent = -1;
 
+        @Override
         public void setText(String text) {
           if (myVerboseLevel == 0) return;
 
@@ -246,17 +246,11 @@ public class InspectionApplication {
 
           if (myVerboseLevel == 3) {
             if (!isIndeterminate() && getFraction() > 0) {
-              final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-              try {
-                final int percent = (int)(getFraction() * 100);
-                if (myLastPercent == percent) return;
-                myLastPercent = percent;
-                buf.append(InspectionsBundle.message("inspection.display.name")).append(" ").append(percent).append("%");
-                logMessageLn(2, buf.toString());
-              }
-              finally {
-                StringBuilderSpinAllocator.dispose(buf);
-              }
+              final int percent = (int)(getFraction() * 100);
+              if (myLastPercent == percent) return;
+              myLastPercent = percent;
+              String msg = InspectionsBundle.message("inspection.display.name") + " " + percent + "%";
+              logMessageLn(2, msg);
             }
             return;
           }
@@ -363,7 +357,7 @@ public class InspectionApplication {
         }
       }
     }
-    
+
     return inspectionProfile;
   }
 
@@ -380,20 +374,24 @@ public class InspectionApplication {
 
   private ConversionListener createConversionListener() {
     return new ConversionListener() {
+      @Override
       public void conversionNeeded() {
         logMessageLn(1, InspectionsBundle.message("inspection.application.project.has.older.format.and.will.be.converted"));
       }
 
+      @Override
       public void successfullyConverted(final File backupDir) {
         logMessageLn(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
                                                   backupDir.getAbsolutePath()));
       }
 
+      @Override
       public void error(final String message) {
         logError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
       }
 
+      @Override
       public void cannotWriteToFiles(final List<File> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (File file : readonlyFiles) {
@@ -437,16 +435,16 @@ public class InspectionApplication {
   }
 
   private static void describeInspections(@NonNls String myOutputPath, final String name) throws IOException {
-    final InspectionProfileEntry[] profileEntries = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
-    final Map<String, Set<InspectionProfileEntry>> map = new HashMap<String, Set<InspectionProfileEntry>>();
-    for (InspectionProfileEntry entry : profileEntries) {
-      final String groupName = entry.getGroupDisplayName();
-      Set<InspectionProfileEntry> groupInspections = map.get(groupName);
+    final InspectionToolWrapper[] toolWrappers = InspectionProfileImpl.getDefaultProfile().getInspectionTools(null);
+    final Map<String, Set<InspectionToolWrapper>> map = new HashMap<String, Set<InspectionToolWrapper>>();
+    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      final String groupName = toolWrapper.getGroupDisplayName();
+      Set<InspectionToolWrapper> groupInspections = map.get(groupName);
       if (groupInspections == null) {
-        groupInspections = new HashSet<InspectionProfileEntry>();
+        groupInspections = new HashSet<InspectionToolWrapper>();
         map.put(groupName, groupInspections);
       }
-      groupInspections.add(entry);
+      groupInspections.add(toolWrapper);
     }
 
     FileWriter fw = new FileWriter(myOutputPath);
@@ -459,17 +457,17 @@ public class InspectionApplication {
       for (String groupName : map.keySet()) {
         xmlWriter.startNode("group");
         xmlWriter.addAttribute("name", groupName);
-        final Set<InspectionProfileEntry> entries = map.get(groupName);
-        for (InspectionProfileEntry entry : entries) {
+        final Set<InspectionToolWrapper> entries = map.get(groupName);
+        for (InspectionToolWrapper toolWrapper : entries) {
           xmlWriter.startNode("inspection");
-          xmlWriter.addAttribute("shortName", entry.getShortName());
-          xmlWriter.addAttribute("displayName", entry.getDisplayName());
-          final String description = entry.loadDescription();
+          xmlWriter.addAttribute("shortName", toolWrapper.getShortName());
+          xmlWriter.addAttribute("displayName", toolWrapper.getDisplayName());
+          final String description = toolWrapper.loadDescription();
           if (description != null) {
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(entry.getShortName() + " descriptionUrl==" + entry.getDescriptionUrl());
+            LOG.error(toolWrapper.getShortName() + " descriptionUrl==" + toolWrapper);
           }
           xmlWriter.endNode();
         }

@@ -43,6 +43,7 @@ public interface PsiReferenceProcessor{
       return myCollection.toArray(array);
     }
 
+    @Override
     public boolean execute(PsiReference element) {
       myCollection.add(element);
       return true;
@@ -60,6 +61,7 @@ public interface PsiReferenceProcessor{
       return myFoundElement;
     }
 
+    @Override
     public boolean execute(PsiReference element) {
       myFoundElement = element;
       return false;

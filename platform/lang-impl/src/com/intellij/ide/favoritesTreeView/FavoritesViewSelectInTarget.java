@@ -88,6 +88,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
 
       if (panel != null) {
         final Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             panel.selectElement(toSelect, virtualFile, requestFocus);
             result.setDone();
@@ -106,6 +107,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
     return result;
   }
 
+  @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
     return findSuitableFavoritesList(file.getVirtualFile(), myProject, null) != null;
   }
@@ -114,14 +116,17 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
     return FavoritesManager.getInstance(project).getFavoriteListName(currentSubId, file);
   }
 
+  @Override
   public String getMinorViewId() {
     return FavoritesProjectViewPane.ID;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.FAVORITES_WEIGHT;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return false;
   }

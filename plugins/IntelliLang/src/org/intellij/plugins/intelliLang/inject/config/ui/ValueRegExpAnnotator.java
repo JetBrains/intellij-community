@@ -26,6 +26,7 @@ import org.intellij.lang.regexp.psi.RegExpBranch;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.intellij.lang.regexp.psi.RegExpRecursiveElementVisitor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Annotator that is used to validate the "Value-Pattern" textfield: The regex entered there should contain exactly
@@ -42,7 +43,7 @@ public class ValueRegExpAnnotator implements Annotator {
   public ValueRegExpAnnotator() {
   }
 
-  public void annotate(PsiElement psiElement, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     if (psiElement instanceof RegExpFile && psiElement.getCopyableUserData(KEY) == Boolean.TRUE) {
       final PsiElement pattern = psiElement.getFirstChild();
       if (!(pattern instanceof RegExpPattern)) {

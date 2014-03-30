@@ -29,7 +29,7 @@ public class IDEA100452 {
 
   static class MatchOp<H> {
     public MatchOp(int i, MatchKind matchKind, Supplier<BooleanTerminalSink<H>> s) {
-      //To change body of created methods use File | Settings | File Templates.
+      
     }
 
     static enum MatchKind {}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -72,12 +73,12 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     return ((GrReferenceExpressionImpl)invoked).getCallVariants(upToArgument);
   }
 
-  @Nullable
+  @NotNull
   public GrExpression getInvokedExpression() {
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) return (GrExpression)cur;
     }
-    return null;
+    throw new IncorrectOperationException("invoked expression must not be null");
   }
 
   public PsiMethod resolveMethod() {

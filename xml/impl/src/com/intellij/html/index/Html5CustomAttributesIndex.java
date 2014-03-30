@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lexer.HtmlHighlightingLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlHighlightingLexer;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
@@ -52,7 +50,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
       CharSequence input = inputData.getContentAsText();
       Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
-        final Lexer lexer = (language == HTMLLanguage.INSTANCE ? new HtmlHighlightingLexer() : new XHtmlHighlightingLexer());
+        final Lexer lexer = (language == HTMLLanguage.INSTANCE ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS")) : new XHtmlHighlightingLexer());
         lexer.start(input);
         Map<String, Void> result = new HashMap<String, Void>();
         IElementType tokenType = lexer.getTokenType();
@@ -76,18 +74,6 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      if (file.getFileSystem() != LocalFileSystem.getInstance() && !(file.getFileSystem() instanceof TempFileSystem)) {
-        return false;
-      }
-
-      final FileType fileType = file.getFileType();
-      return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
-    }
-  };
-
   @NotNull
   @Override
   public ID<String, Void> getName() {
@@ -100,14 +86,21 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     return myIndexer;
   }
 
+  @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return new EnumeratorStringDescriptor();
   }
 
+  @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return myInputFilter;
+    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.HTML, StdFileTypes.XHTML) {
+      @Override
+      public boolean acceptInput(@NotNull final VirtualFile file) {
+        return file.isInLocalFileSystem();
+      }
+    };
   }
 
   @Override

@@ -12,6 +12,6 @@ enum Planet {
 
   double surfaceGravity() {
 //      introduce a constant from the below numeric literal
-    return <selection>CONST</selection> * mass / (radius * radius);
+    return CONST<caret> * mass / (radius * radius);
   }
 }

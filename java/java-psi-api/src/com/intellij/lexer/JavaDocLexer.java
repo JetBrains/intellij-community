@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.lexer;
 
-/**
- * @author yole
- */
+/** @deprecated use com.intellij.lang.java.JavaDocLexer (to remove in IDEA 14) */
+@SuppressWarnings("UnusedDeclaration")
 public class JavaDocLexer extends DocCommentLexer {
   public JavaDocLexer(final boolean isJdk15Enabled) {
     super(JavaDocTokenTypes.INSTANCE, isJdk15Enabled);

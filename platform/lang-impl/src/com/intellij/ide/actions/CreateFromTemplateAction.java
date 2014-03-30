@@ -44,7 +44,8 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   public CreateFromTemplateAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
-  
+
+  @Override
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
@@ -53,7 +54,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
       return;
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
@@ -65,11 +66,13 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final T createdElement =
       builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
 
+        @Override
         public T createFile(@NotNull String name, @NotNull String templateName) {
           selectedTemplateName.set(templateName);
           return CreateFromTemplateAction.this.createFile(name, templateName, dir);
         }
 
+        @Override
         @NotNull
         public String getActionName(@NotNull String name, @NotNull String templateName) {
           return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
@@ -100,6 +103,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return null;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
@@ -111,7 +115,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   protected boolean isAvailable(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     return project != null && view != null && view.getDirectories().length != 0;
   }

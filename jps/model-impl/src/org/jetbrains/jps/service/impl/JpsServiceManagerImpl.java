@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
@@ -24,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author nik
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentHashMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>();
-  private final ConcurrentHashMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>();
+  private final ConcurrentHashMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>(16, 0.75f, 1);
+  private final ConcurrentHashMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>(16, 0.75f, 1);
 
   @Override
   public <T> T getService(Class<T> serviceClass) {
@@ -36,14 +37,16 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
       if (!iterator.hasNext()) {
         throw new ServiceConfigurationError("Implementation for " + serviceClass + " not found");
       }
-      service = iterator.next();
+      final T loadedService = iterator.next();
       if (iterator.hasNext()) {
         throw new ServiceConfigurationError(
-          "More than one implementation for " + serviceClass + " found: " + service.getClass() + " and " + iterator.next().getClass());
+          "More than one implementation for " + serviceClass + " found: " + loadedService.getClass() + " and " + iterator.next().getClass());
       }
-      myServices.putIfAbsent(serviceClass, service);
       //noinspection unchecked
-      service = (T)myServices.get(serviceClass);
+      service = (T)myServices.putIfAbsent(serviceClass, loadedService);
+      if (service == null) {
+        service = loadedService;
+      }
     }
     return service;
   }
@@ -52,13 +55,11 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
-      List<T> extensions = new ArrayList<T>();
-      for (T t : loader) {
-        extensions.add(t);
+      final List<T> extensions = new ArrayList<T>(JpsPluginManager.getInstance().loadExtensions(extensionClass));
+      cached = myExtensions.putIfAbsent(extensionClass, extensions);
+      if (cached == null) {
+        cached = extensions;
       }
-      myExtensions.putIfAbsent(extensionClass, extensions);
-      cached = myExtensions.get(extensionClass);
     }
     //noinspection unchecked
     return (List<T>)cached;

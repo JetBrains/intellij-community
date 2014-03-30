@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -29,7 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
-import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ import java.util.LinkedHashSet;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#" + PullAsAbstractUpFix.class.getName());
-  private String myName;
+  private final String myName;
 
   public PullAsAbstractUpFix(PsiMethod psiMethod, final String name) {
     super(psiMethod);
@@ -73,7 +73,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiMethod method = (PsiMethod)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return;
 
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass != null);
@@ -91,7 +91,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
 
-      if (classesToPullUp.size() == 0) {
+      if (classesToPullUp.isEmpty()) {
         //check visibility
         new ExtractInterfaceHandler().invoke(project, new PsiElement[]{containingClass}, null);
       }
@@ -123,11 +123,11 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   private static void pullUp(PsiMethod method, PsiClass containingClass, PsiClass baseClass) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(baseClass.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(baseClass.getContainingFile())) return;
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    new PullUpHelper(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+    new PullUpProcessor(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
   }
 
   @Override
@@ -135,7 +135,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return false;
   }
 
-  public static void registerQuickFix(HighlightInfo highlightInfo, PsiMethod methodWithOverrides) {
+  public static void registerQuickFix(@NotNull PsiMethod methodWithOverrides, @NotNull QuickFixActionRegistrar registrar) {
     PsiClass containingClass = methodWithOverrides.getContainingClass();
     if (containingClass == null) return;
     final PsiManager manager = containingClass.getManager();
@@ -154,7 +154,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       final LinkedHashSet<PsiClass> classesToPullUp = new LinkedHashSet<PsiClass>();
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getExtendsListTypes());
       collectClassesToPullUp(manager, classesToPullUp, containingClass.getImplementsListTypes());
-      if (classesToPullUp.size() == 0) {
+      if (classesToPullUp.isEmpty()) {
         name = "Extract method \'" + methodWithOverrides.getName() + "\' to new interface";
         canBePulledUp = false;
       } else if (classesToPullUp.size() == 1) {
@@ -164,14 +164,14 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
            name+= " and make it abstract";
         }
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractInterfaceHandler(), "Extract interface"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractSuperclassHandler(), "Extract superclass"));
+      registrar.register(new RunRefactoringAction(new ExtractInterfaceHandler(), "Extract interface"));
+      registrar.register(new RunRefactoringAction(new ExtractSuperclassHandler(), "Extract superclass"));
     }
 
 
     if (canBePulledUp) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new JavaPullUpHandler(), "Pull members up"));
+      registrar.register(new RunRefactoringAction(new JavaPullUpHandler(), "Pull members up"));
     }
-    QuickFixAction.registerQuickFixAction(highlightInfo, new PullAsAbstractUpFix(methodWithOverrides, name));
+    registrar.register(new PullAsAbstractUpFix(methodWithOverrides, name));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,39 +19,38 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.parser.JavadocParser;
-import com.intellij.lexer.JavaLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl;
-import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
-import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
-import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
-import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
+import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.ConstructorAccessor;
 
 import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
-    private final Constructor<? extends ASTNode> myConstructor;
+    private final ConstructorAccessor myConstructor;
 
     private JavaDocCompositeElementType(@NonNls final String debugName, final Class<? extends ASTNode> nodeClass) {
       super(debugName);
-      myConstructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      Constructor<? extends ASTNode> constructor = ReflectionUtil.getDefaultConstructor(nodeClass);
+      myConstructor = ReflectionUtil.getConstructorAccessor(constructor);
     }
 
     @NotNull
     @Override
     public ASTNode createCompositeNode() {
-      return ReflectionUtil.createInstance(myConstructor);
+      return ReflectionUtil.createInstanceViaConstructorAccessor(myConstructor);
     }
   }
 
@@ -123,7 +122,7 @@ public interface JavaDocElementType {
 
     @Override
     public boolean isParsable(final CharSequence buffer, Language fileLanguage, final Project project) {
-      final JavaLexer lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+      Lexer lexer = JavaParserDefinition.createLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       lexer.start(buffer);
       if (lexer.getTokenType() == DOC_COMMENT) {
         lexer.advance();

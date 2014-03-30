@@ -31,7 +31,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   private final PsiElement myContext;
   private final GlobalSearchScope myResolveScope;
   private final PsiClass myRefClass;
-  private PsiSubstitutor mySubstitutor;
+  private final PsiSubstitutor mySubstitutor;
 
   private LightReferenceParameterList myParameterList;
 
@@ -119,7 +119,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   @Override
-  public void processVariants(PsiScopeProcessor processor){
+  public void processVariants(@NotNull PsiScopeProcessor processor){
     throw new RuntimeException("Variants are not available for light references");
   }
 

@@ -73,10 +73,13 @@ public class GppTypeConverter extends GrTypeConverter {
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
       if (expectedComponent != null && isMethodCallConversion(context)) {
-        PsiType tupleComponent = tupleType.getParameters()[0];
-        if (tupleComponent != null &&
-            TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
-          return true;
+        PsiType[] parameters = tupleType.getParameters();
+        if (parameters.length == 1) {
+          PsiType tupleComponent = parameters[0];
+          if (tupleComponent != null &&
+              TypesUtil.isAssignable(expectedComponent, tupleComponent, context) && hasDefaultConstructor(lType)) {
+            return true;
+          }
         }
       }
 
@@ -88,10 +91,10 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType lKeyType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
       final PsiType lValueType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
       final PsiType[] parameters = ((GrMapType)rType).getParameters();
-      if (lKeyType != null && lValueType != null &&
+      if (parameters.length == 2 && lKeyType != null && lValueType != null &&
           parameters[0] != null && parameters[1] != null &&
-          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) || !TypesUtil
-            .isAssignable(lValueType, parameters[1], context))) {
+          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) ||
+           !TypesUtil.isAssignable(lValueType, parameters[1], context))) {
         return null;
       }
 

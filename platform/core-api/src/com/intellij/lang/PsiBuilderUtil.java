@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,37 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class PsiBuilderUtil {
   private PsiBuilderUtil() { }
-
-  /**
-   * @deprecated use {@linkplain PsiBuilder#lookAhead(int)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  public static IElementType nextTokenType(final PsiBuilder builder) {
-    return builder.lookAhead(1);
-  }
-
-  /**
-   * @deprecated use {@linkplain PsiBuilder#lookAhead(int)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean lookAhead(final PsiBuilder builder, final IElementType... tokenTypes) {
-    if (tokenTypes.length == 0) return true;
-
-    if (!tokenTypes[0].equals(builder.getTokenType())) return false;
-
-    if (tokenTypes.length == 1) return true;
-
-    final PsiBuilder.Marker rb = builder.mark();
-    builder.advanceLexer();
-    int i = 1;
-    while (!builder.eof() && i < tokenTypes.length && tokenTypes[i].equals(builder.getTokenType())) {
-      builder.advanceLexer();
-      i++;
-    }
-    rb.rollbackTo();
-    return i == tokenTypes.length;
-  }
 
   /**
    * Advances lexer by given number of tokens (but not beyond the end of token stream).
@@ -104,6 +73,17 @@ public class PsiBuilderUtil {
   public static void drop(final PsiBuilder.Marker... markers) {
     for (PsiBuilder.Marker marker : markers) {
       if (marker != null) marker.drop();
+    }
+  }
+
+  /**
+   * Rolls the lexer back to position before given marker - if not null.
+   *
+   * @param marker marker to roll back to.
+   */
+  public static void rollbackTo(@Nullable PsiBuilder.Marker marker) {
+    if (marker != null) {
+      marker.rollbackTo();
     }
   }
 }

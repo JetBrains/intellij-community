@@ -9,7 +9,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class FixAllQuickfixTest extends LightQuickFixTestCase {
+public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

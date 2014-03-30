@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -39,7 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -92,6 +93,25 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
   static final PsiElementPattern.Capture<PsiElement> IN_TYPE_ARGS =
     psiElement().inside(psiElement(PsiReferenceParameterList.class));
+  static final PsiElementPattern.Capture<PsiElement> LAMBDA = psiElement().with(new PatternCondition<PsiElement>("LAMBDA_CONTEXT") {
+    @Override
+    public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+      final PsiElement rulezzRef = element.getParent();
+      return rulezzRef != null &&
+             rulezzRef instanceof PsiReferenceExpression &&
+             ((PsiReferenceExpression)rulezzRef).getQualifier() == null &&
+             LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+    }});
+
+  static final PsiElementPattern.Capture<PsiElement> METHOD_REFERENCE = psiElement().with(new PatternCondition<PsiElement>("METHOD_REFERENCE_CONTEXT") {
+    @Override
+    public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+      final PsiElement rulezzRef = element.getParent();
+      return rulezzRef != null &&
+             rulezzRef instanceof PsiMethodReferenceExpression &&
+             ((PsiReferenceExpression)rulezzRef).getQualifier() != element &&
+             LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+    }});
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -282,10 +302,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     });
 
     final Key<PsiTryStatement> tryKey = Key.create("try");
-    extend(CompletionType.SMART, psiElement().afterLeaf(
-      psiElement().withText("("))
-      .withSuperParent(3, psiElement(PsiCatchSection.class).withParent(
-        psiElement(PsiTryStatement.class).save(tryKey))), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, psiElement().insideStarting(
+      psiElement(PsiTypeElement.class).withParent(
+        psiElement(PsiCatchSection.class).withParent(
+          psiElement(PsiTryStatement.class).save(tryKey)))), new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiCodeBlock tryBlock = context.get(tryKey).getTryBlock();
@@ -313,6 +333,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.SMART, LAMBDA, new LambdaCompletionProvider());
+    extend(CompletionType.SMART, METHOD_REFERENCE, new MethodReferenceCompletionProvider());
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,
@@ -378,11 +401,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
-      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, classType, TailType.SEMICOLON));
+      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
       final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
       if (method != null) {
         for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
-          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, 0, type, TailType.SEMICOLON));
+          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
         }
       }
       return result.toArray(new ExpectedTypeInfo[result.size()]);
@@ -415,13 +438,13 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
         @Override
         public boolean isClassAcceptable(Class hintClass) {
-          if (ReflectionCache.isAssignable(PsiClass.class, hintClass)) {
+          if (ReflectionUtil.isAssignable(PsiClass.class, hintClass)) {
             return acceptClasses;
           }
 
-          if (ReflectionCache.isAssignable(PsiVariable.class, hintClass) ||
-              ReflectionCache.isAssignable(PsiMethod.class, hintClass) ||
-              ReflectionCache.isAssignable(CandidateInfo.class, hintClass)) {
+          if (ReflectionUtil.isAssignable(PsiVariable.class, hintClass) ||
+              ReflectionUtil.isAssignable(PsiMethod.class, hintClass) ||
+              ReflectionUtil.isAssignable(CandidateInfo.class, hintClass)) {
             return acceptMembers;
           }
           return false;
@@ -474,10 +497,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         return;
       }
       if (parent instanceof PsiParenthesizedExpression) {
-        context.setDummyIdentifier("xxx)yyy "); // to handle type cast
+        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + ")" + CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + " "); // to handle type cast
         return;
       }
     }
-    context.setDummyIdentifier("xxx");
+    context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
 }

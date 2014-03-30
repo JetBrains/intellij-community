@@ -1,6 +1,6 @@
 public interface IDEA99969 {
   default IntStream distinct(Stream s) {
-    return s.map(i -> (int) i);
+    return s.map(i -> <error descr="Inconvertible types; cannot cast '<lambda parameter>' to 'int'">(int) i</error>);
   }
 }
 interface Stream<T> {

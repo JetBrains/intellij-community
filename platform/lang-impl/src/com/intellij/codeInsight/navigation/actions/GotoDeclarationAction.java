@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -155,7 +154,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements) + ";" + reference);
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
       }
@@ -201,8 +200,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (file == null) {
       return null;
     }
-    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
 
+    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
@@ -217,7 +216,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         }
       }
       catch (AbstractMethodError e) {
-        LOG.error(handler.toString(), e);
+        LOG.error(new ExtensionException(handler.getClass()));
       }
     }
 

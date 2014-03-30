@@ -20,7 +20,9 @@ public class PatchFileCreator {
                             List<String> criticalFiles,
                             List<String> optionalFiles,
                             UpdaterUI ui) throws IOException, OperationCancelledException {
+
     Patch patchInfo = new Patch(olderDir, newerDir, ignoredFiles, criticalFiles, optionalFiles, ui);
+    Runner.logger.info("Creating the patch file '" + patchFile + "'...");
     ui.startProcess("Creating the patch file '" + patchFile + "'...");
     ui.checkCancelled();
 
@@ -34,6 +36,8 @@ public class PatchFileCreator {
 
       List<PatchAction> actions = patchInfo.getActions();
       for (PatchAction each : actions) {
+
+        Runner.logger.info("Packing " + each.getPath());
         ui.setStatus("Packing " + each.getPath());
         ui.checkCancelled();
         each.buildPatchFile(olderDir, newerDir, out);

@@ -198,6 +198,11 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
+  @Nullable
+  public String evaluateEffectivePom(@NotNull File file, @NotNull List<String> activeProfiles) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   public MavenArtifact resolve(@NotNull final MavenArtifactInfo info,
                                @NotNull final List<MavenRemoteRepository> remoteRepositories)
@@ -581,7 +586,8 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
   public void customize(@Nullable MavenWorkspaceMap workspaceMap,
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
-                        @NotNull MavenServerProgressIndicator indicator) {
+                        @NotNull MavenServerProgressIndicator indicator,
+                        boolean alwaysUpdateSnapshots) {
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();

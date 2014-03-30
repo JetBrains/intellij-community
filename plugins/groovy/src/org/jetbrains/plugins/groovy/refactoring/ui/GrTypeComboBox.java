@@ -46,8 +46,8 @@ public class GrTypeComboBox extends ComboBox {
   private static final Logger LOG = Logger.getInstance(GrTypeComboBox.class);
 
 
-  public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type) {
-    return new GrTypeComboBox(type, null, true, null, false);
+  public static GrTypeComboBox createTypeComboBoxWithDefType(@Nullable PsiType type, @NotNull PsiElement context) {
+    return new GrTypeComboBox(type, null, true, context, false);
   }
 
   public static GrTypeComboBox createTypeComboBoxFromExpression(@NotNull GrExpression expression) {
@@ -85,13 +85,12 @@ public class GrTypeComboBox extends ComboBox {
                          @Nullable PsiElement context,
                          boolean selectDef) {
     LOG.assertTrue(min == null || context != null);
+    LOG.assertTrue(type == null || context != null);
 
     if (type instanceof PsiDisjunctionType) type = ((PsiDisjunctionType)type).getLeastUpperBound();
 
-
     Map<String, PsiType> types = Collections.emptyMap();
     if (type != null) {
-      assert context != null;
       types = getCompatibleTypeNames(type, min, context);
     }
 
@@ -100,6 +99,9 @@ public class GrTypeComboBox extends ComboBox {
     }
 
     if (type != null && type.equalsToText(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL)) {
+      //suggest double as the second item after original BigDecimal
+      addItem(new PsiTypeItem(type));
+      types.remove(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL);
       addItem(new PsiTypeItem(PsiType.DOUBLE));
     }
 
@@ -112,10 +114,10 @@ public class GrTypeComboBox extends ComboBox {
     }
   }
 
-  public void addClosureTypesFrom(PsiType type, PsiElement context) {
+  public void addClosureTypesFrom(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiType cl;
-    if (type == null) {
+    if (type == null || type == PsiType.NULL) {
       cl = factory.createTypeFromText(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, context);
     }
     else {

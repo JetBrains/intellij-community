@@ -15,9 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Checks VCS roots, revealing invalid roots (registered in the settings, but not related to real VCS roots on disk)
@@ -25,18 +26,31 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-public interface VcsRootChecker {
+public abstract class VcsRootChecker {
+
+  @NonNls public static final ExtensionPointName<VcsRootChecker> EXTENSION_POINT_NAME =
+    new ExtensionPointName<VcsRootChecker>("com.intellij.vcsRootChecker");
 
   /**
-   * @return Paths to VCS roots which are not registered in the Settings | Version Control.
+   * @param path path to check if it is vcs root directory
+   * @return true if it is vcs root
    */
-  @NotNull
-  Collection<String> getUnregisteredRoots();
+  public boolean isRoot(@NotNull String path) {
+    return false;
+  }
 
   /**
+   * @return - return vcs for current checker
+   */
+  public abstract VcsKey getSupportedVcs();
+
+  /**
+   * Check if the "dot" directory changed during scan
    *
-   * @param directory root to be checked.
-   * @return true if the given directory is not a VCS root.
+   * @param path - path to check
+   * @return true if it is a DOT_DIR
    */
-  boolean isInvalidMapping(@NotNull VcsDirectoryMapping mapping);
+  public boolean isVcsDir(@Nullable String path) {
+    return false;
+  }
 }

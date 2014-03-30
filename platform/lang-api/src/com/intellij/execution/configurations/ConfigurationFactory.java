@@ -25,6 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * Factory for run configuration instances.
+ *
+ * @see com.intellij.execution.configurations.ConfigurationType#getConfigurationFactories()
  * @author dyoma
  */
 public abstract class ConfigurationFactory {
@@ -36,18 +39,46 @@ public abstract class ConfigurationFactory {
     myType = type;
   }
 
+  /**
+   * Creates a new run configuration with the specified name by cloning the specified template.
+   *
+   * @param name the name for the new run configuration.
+   * @param template the template from which the run configuration is copied
+   * @return the new run configuration.
+   */
   public RunConfiguration createConfiguration(String name, RunConfiguration template) {
     RunConfiguration newConfiguration = template.clone();
     newConfiguration.setName(name);
     return newConfiguration;
   }
 
+  /**
+   * Override this method and return {@code false} to hide the configuration from 'New' popup in 'Edit Configurations' dialog. It will be
+   * still possible to create this configuration by clicking on '42 more items' in the 'New' popup.
+   *
+   * @return {@code true} if it makes sense to create configurations of this type in {@code project}
+   */
+  public boolean isApplicable(@NotNull Project project) {
+    return true;
+  }
+
+  /**
+   * Creates a new template run configuration within the context of the specified project.
+   *
+   * @param project the project in which the run configuration will be used
+   * @return the run configuration instance.
+   */
   public abstract RunConfiguration createTemplateConfiguration(Project project);
 
   public RunConfiguration createTemplateConfiguration(Project project, RunManager runManager) {
     return createTemplateConfiguration(project);
   }
 
+  /**
+   * Returns the name of the run configuration variant created by this factory.
+   *
+   * @return the name of the run configuration variant created by this factory
+   */
   public String getName() {
     return myType.getDisplayName();
   }

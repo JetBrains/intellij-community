@@ -66,8 +66,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  <wrong_ref>Unknown symbol</wrong_ref>\n" +
     "  <server_error>Problem from server</server_error>\n" +
     "  <server_duplicate>Duplicate from server</server_duplicate>\n" +
-    getCustomSeveritiesDemoText() +
-    "\n";
+    getCustomSeveritiesDemoText();
 
   private static final AttributesDescriptor[] ATT_DESCRIPTORS = {
     new AttributesDescriptor(OptionsBundle.message("options.general.attribute.descriptor.default.text"), HighlighterColors.TEXT),
@@ -212,7 +211,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
          final String tag = getHighlightDescTagName(highlightInfoType);
          buff.append("  <").append(tag).append(">");
          buff.append(tag.toLowerCase());
-         buff.append("</").append(tag).append(">");
+         buff.append("</").append(tag).append(">").append("\n");
        }
      }
 

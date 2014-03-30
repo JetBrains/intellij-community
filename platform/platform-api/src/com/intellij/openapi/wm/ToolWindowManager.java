@@ -29,7 +29,7 @@ public abstract class ToolWindowManager {
 
   public abstract boolean canShowNotification(@NotNull String toolWindowId);
 
-  public static ToolWindowManager getInstance(Project project){
+  public static ToolWindowManager getInstance(@NotNull Project project){
     return project.getComponent(ToolWindowManager.class);
   }
 
@@ -124,7 +124,6 @@ public abstract class ToolWindowManager {
 
   /**
    * Utility method for quick access to the focus manager
-   * @return
    */
   public abstract IdeFocusManager getFocusManager();
 
@@ -138,5 +137,4 @@ public abstract class ToolWindowManager {
 
   @Nullable
   public abstract Balloon getToolWindowBalloon(String id);
-
 }

@@ -50,21 +50,26 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     myProject = project;
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return COMPONENT_NAME;
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     if (myProject.isDefault() || ApplicationManager.getApplication().isUnitTestMode()) return;
     final IProjectStore stateStore = ((ProjectEx)myProject).getStateStore();
@@ -84,6 +89,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     }
   }
 
+  @Override
   public ProjectFileVersionState getState() {
     if (myState != null && !myState.getPerformedConversionIds().isEmpty()) {
       return myState;
@@ -91,6 +97,7 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     return null;
   }
 
+  @Override
   public void loadState(final ProjectFileVersionState state) {
     XmlSerializerUtil.copyBean(state, myState);
   }

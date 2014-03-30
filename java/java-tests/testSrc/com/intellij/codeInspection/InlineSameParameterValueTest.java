@@ -5,13 +5,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class InlineSameParameterValueTest extends LightQuickFixTestCase {
+public class InlineSameParameterValueTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected String getTestDataPath() {

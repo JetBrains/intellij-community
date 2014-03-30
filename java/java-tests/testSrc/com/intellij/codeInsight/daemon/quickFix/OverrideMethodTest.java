@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -16,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-public class OverrideMethodTest extends LightQuickFix15TestCase {
+import com.intellij.pom.java.LanguageLevel;
+
+public class OverrideMethodTest extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception {
     doAllTests();
@@ -27,5 +28,9 @@ public class OverrideMethodTest extends LightQuickFix15TestCase {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/overrideMethod";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_5;
+  }
 }
 

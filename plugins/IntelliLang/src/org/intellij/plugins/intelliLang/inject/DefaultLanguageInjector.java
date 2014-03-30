@@ -16,11 +16,8 @@
 
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
@@ -28,7 +25,6 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,29 +43,18 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
     return Collections.singletonList(PsiLanguageInjectionHost.class);
   }
 
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
+  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
+    if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return;
+    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
+
     for (LanguageInjectionSupport support : mySupports) {
+      if (!support.isApplicableTo(host)) continue;
       if (!support.useDefaultInjector(host)) continue;
+
       for (BaseInjection injection : myInjectionConfiguration.getInjections(support.getId())) {
-        if (injection.acceptsPsiElement(host)) {
-          final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
-          if (language == null) continue;
-
-          final InjectedLanguage injectedLanguage =
-            InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
-
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list =
-            new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
-          for (TextRange range : injection.getInjectedArea(host)) {
-            list.add(Trinity.create((PsiLanguageInjectionHost)host, injectedLanguage, range));
-          }
-          //if (host.getChildren().length > 0) {
-          //  host.putUserData(LanguageInjectionSupport.HAS_UNPARSABLE_FRAGMENTS, Boolean.TRUE);
-          //}
-          InjectorUtils.registerInjection(language, list, host.getContainingFile(), registrar);
-          InjectorUtils.registerSupport(support, true, registrar);
-          break;
-        }
+        if (!injection.acceptsPsiElement(host)) continue;
+        if (!InjectorUtils.registerInjectionSimple(host, injection, support, registrar)) continue;
+        return;
       }
     }
   }

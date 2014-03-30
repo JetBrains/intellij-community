@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.repo.RepoStateException;
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
@@ -31,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,7 +44,8 @@ import java.util.regex.Pattern;
 /**
  * Reads information about the Git repository from Git service files located in the {@code .git} folder.
  * NB: works with {@link java.io.File}, i.e. reads from disk. Consider using caching.
- * Throws a {@link GitRepoStateException} in the case of incorrect Git file format.
+ * Throws a {@link RepoStateException} in the case of incorrect Git file format.
+ *
  * @author Kirill Likhodedov
  */
 class GitRepositoryReader {
@@ -55,42 +59,47 @@ class GitRepositoryReader {
 
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
-  private static final int    IO_RETRIES        = 3; // number of retries before fail if an IOException happens during file read.
 
-  private final File          myGitDir;         // .git/
-  private final File          myHeadFile;       // .git/HEAD
-  private final File          myRefsHeadsDir;   // .git/refs/heads/
-  private final File          myRefsRemotesDir; // .git/refs/remotes/
-  private final File          myPackedRefsFile; // .git/packed-refs
+  @NotNull private final File          myGitDir;         // .git/
+  @NotNull private final File          myHeadFile;       // .git/HEAD
+  @NotNull private final File          myRefsHeadsDir;   // .git/refs/heads/
+  @NotNull private final File          myRefsRemotesDir; // .git/refs/remotes/
+  @NotNull private final File          myPackedRefsFile; // .git/packed-refs
 
   GitRepositoryReader(@NotNull File gitDir) {
     myGitDir = gitDir;
-    assertFileExists(myGitDir, ".git directory not found in " + gitDir);
+    RepositoryUtil.assertFileExists(myGitDir, ".git directory not found in " + gitDir);
     myHeadFile = new File(myGitDir, "HEAD");
-    assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
+    RepositoryUtil.assertFileExists(myHeadFile, ".git/HEAD file not found in " + gitDir);
     myRefsHeadsDir = new File(new File(myGitDir, "refs"), "heads");
     myRefsRemotesDir = new File(new File(myGitDir, "refs"), "remotes");
     myPackedRefsFile = new File(myGitDir, "packed-refs");
   }
 
-  @NotNull
+  @Nullable
   private static Hash createHash(@Nullable String hash) {
-    return hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash);
+    try {
+      return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
+    }
+    catch (Throwable t) {
+      LOG.info(t);
+      return null;
+    }
   }
 
   @NotNull
-  GitRepository.State readState() {
+  public Repository.State readState() {
     if (isMergeInProgress()) {
-      return GitRepository.State.MERGING;
+      return Repository.State.MERGING;
     }
     if (isRebaseInProgress()) {
-      return GitRepository.State.REBASING;
+      return Repository.State.REBASING;
     }
     Head head = readHead();
     if (!head.isBranch) {
-      return GitRepository.State.DETACHED;
+      return Repository.State.DETACHED;
     }
-    return GitRepository.State.NORMAL;
+    return Repository.State.NORMAL;
   }
 
   /**
@@ -130,7 +139,11 @@ class GitRepositoryReader {
     if (head.isBranch) {
       String branchName = head.ref;
       String hash = readCurrentRevision();  // TODO we know the branch name, so no need to read head twice
-      return new GitLocalBranch(branchName, createHash(hash));
+      Hash h = createHash(hash);
+      if (h == null) {
+        return null;
+      }
+      return new GitLocalBranch(branchName, h);
     }
     if (isRebaseInProgress()) {
       GitLocalBranch branch = readRebaseBranch("rebase-apply");
@@ -152,22 +165,26 @@ class GitRepositoryReader {
     if (!rebaseDir.exists()) {
       return null;
     }
-    final File headName = new File(rebaseDir, "head-name");
+    File headName = new File(rebaseDir, "head-name");
     if (!headName.exists()) {
       return null;
     }
-    String branchName = tryLoadFile(headName).trim();
+    String branchName = RepositoryUtil.tryLoadFile(headName);
     File branchFile = findBranchFile(branchName);
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
     }
-    Hash hash = Hash.create(readBranchFile(branchFile));
+    Hash hash = createHash(readBranchFile(branchFile));
+    if (hash == null) {
+      return null;
+    }
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
     return new GitLocalBranch(branchName, hash);
   }
 
+  @NotNull
   private File findBranchFile(@NotNull String branchName) {
     return new File(myGitDir.getPath() + File.separator + branchName);
   }
@@ -218,7 +235,7 @@ class GitRepositoryReader {
   }
 
   private void readPackedRefsFile(@NotNull final PackedRefsLineResultHandler handler) {
-    tryOrThrow(new Callable<String>() {
+    RepositoryUtil.tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
         BufferedReader reader = null;
@@ -289,17 +306,20 @@ class GitRepositoryReader {
       String branchName = entry.getKey();
       File branchFile = entry.getValue();
       String hash = loadHashFromBranchFile(branchFile);
-      branches.add(new GitLocalBranch(branchName, createHash(hash)));
+      Hash h = createHash(hash);
+      if (h != null) {
+        branches.add(new GitLocalBranch(branchName, h));
+      }
     }
     return branches;
   }
-  
+
   @Nullable
   private static String loadHashFromBranchFile(@NotNull File branchFile) {
     try {
-      return tryLoadFile(branchFile).trim();
+      return RepositoryUtil.tryLoadFile(branchFile);
     }
-    catch (GitRepoStateException e) {  // notify about error but don't break the process
+    catch (RepoStateException e) {  // notify about error but don't break the process
       LOG.error("Couldn't read " + branchFile, e);
     }
     return null;
@@ -309,6 +329,7 @@ class GitRepositoryReader {
    * @return list of branches from refs/remotes.
    * @param remotes
    */
+  @NotNull
   private Set<GitRemoteBranch> readUnpackedRemoteBranches(@NotNull final Collection<GitRemote> remotes) {
     final Set<GitRemoteBranch> branches = new HashSet<GitRemoteBranch>();
     if (!myRefsRemotesDir.exists()) {
@@ -317,14 +338,17 @@ class GitRepositoryReader {
     FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        if (!file.isDirectory()) {
+        if (!file.isDirectory() && !file.getName().equalsIgnoreCase(GitRepositoryFiles.HEAD)) {
           final String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
             String hash = loadHashFromBranchFile(file);
-            GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, createHash(hash), remotes);
-            if (remoteBranch != null) {
-              branches.add(remoteBranch);
+            Hash h = createHash(hash);
+            if (h != null) {
+              GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, h, remotes);
+              if (remoteBranch != null) {
+                branches.add(remoteBranch);
+              }
             }
           }
         }
@@ -347,16 +371,20 @@ class GitRepositoryReader {
     }
 
     readPackedRefsFile(new PackedRefsLineResultHandler() {
-      @Override public void handleResult(@Nullable String hash, @Nullable String branchName) {
-        if (hash == null || branchName == null) {
+      @Override public void handleResult(@Nullable String hashString, @Nullable String branchName) {
+        if (hashString == null || branchName == null) {
           return;
         }
-        hash = shortBuffer(hash);
+        hashString = shortBuffer(hashString);
+        Hash hash = createHash(hashString);
+        if (hash == null) {
+          return;
+        }
         if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
+          localBranches.add(new GitLocalBranch(branchName, hash));
         }
         else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.create(hash), remotes);
+          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, hash, remotes);
           if (remoteBranch != null) {
             remoteBranches.add(remoteBranch);
           }
@@ -366,22 +394,14 @@ class GitRepositoryReader {
     return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
-    
-  private static String readBranchFile(File branchFile) {
-    String rev = tryLoadFile(branchFile);
-    return rev.trim();
+  @NotNull
+  private static String readBranchFile(@NotNull File branchFile) {
+    return RepositoryUtil.tryLoadFile(branchFile);
   }
 
-  private static void assertFileExists(File file, String message) {
-    if (!file.exists()) {
-      throw new GitRepoStateException(message);
-    }
-  }
-
+  @NotNull
   private Head readHead() {
-    String headContent = tryLoadFile(myHeadFile);
-    headContent = headContent.trim(); // remove possible leading and trailing spaces to clearly match regexps
-
+    String headContent = RepositoryUtil.tryLoadFile(myHeadFile);
     Matcher matcher = BRANCH_PATTERN.matcher(headContent);
     if (matcher.matches()) {
       return new Head(true, matcher.group(1));
@@ -395,44 +415,7 @@ class GitRepositoryReader {
       LOG.info(".git/HEAD has not standard format: [" + headContent + "]. We've parsed branch [" + matcher.group(1) + "]");
       return new Head(true, matcher.group(1));
     }
-    throw new GitRepoStateException("Invalid format of the .git/HEAD file: \n" + headContent);
-  }
-
-  /**
-   * Loads the file content.
-   * Tries 3 times, then a {@link GitRepoStateException} is thrown.
-   * @param file      File to read.
-   * @return file content.
-   */
-  @NotNull
-  private static String tryLoadFile(final File file) {
-    return tryOrThrow(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        return FileUtil.loadFile(file);
-      }
-    }, file);
-  }
-
-  /**
-   * Tries to execute the given action.
-   * If an IOException happens, tries again up to 3 times, and then throws a {@link GitRepoStateException}.
-   * If an other exception happens, rethrows it as a {@link GitRepoStateException}.
-   * In the case of success returns the result of the task execution.
-   */
-  private static String tryOrThrow(Callable<String> actionToTry, File fileToLoad) {
-    IOException cause = null;
-    for (int i = 0; i < IO_RETRIES; i++) {
-      try {
-        return actionToTry.call();
-      } catch (IOException e) {
-        LOG.info("IOException while loading " + fileToLoad, e);
-        cause = e;
-      } catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
-        throw new GitRepoStateException("Couldn't load file " + fileToLoad, e);
-      }
-    }
-    throw new GitRepoStateException("Couldn't load file " + fileToLoad, cause);
+    throw new RepoStateException("Invalid format of the .git/HEAD file: \n" + headContent);
   }
 
   /**
@@ -441,7 +424,7 @@ class GitRepositoryReader {
    * Comments, tags and incorrectly formatted lines are ignored, and (null, null) is passed to the handler then.
    * Using a special handler may seem to be an overhead, but it is to avoid code duplication in two methods that parse packed-refs.
    */
-  private static void parsePackedRefsLine(String line, PackedRefsLineResultHandler resultHandler) {
+  private static void parsePackedRefsLine(@NotNull String line, @NotNull PackedRefsLineResultHandler resultHandler) {
     try {
       line = line.trim();
       char firstChar = line.isEmpty() ? 0 : line.charAt(0);
@@ -511,14 +494,14 @@ class GitRepositoryReader {
    * Container to hold two information items: current .git/HEAD value and is Git on branch.
    */
   private static class Head {
-    private final String ref;
+    @NotNull private final String ref;
     private final boolean isBranch;
 
-    Head(boolean branch, String ref) {
+    Head(boolean branch, @NotNull String ref) {
       isBranch = branch;
       this.ref = ref;
     }
   }
-  
+
 
 }

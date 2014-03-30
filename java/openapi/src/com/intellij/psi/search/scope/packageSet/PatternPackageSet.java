@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     myModulePatternText = modulePattern;
     Pattern mmgp = null;
     Pattern mmp = null;
-    if (modulePattern == null || modulePattern.length() == 0) {
+    if (modulePattern == null || modulePattern.isEmpty()) {
       mmp = null;
     }
     else {
@@ -72,10 +72,14 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-    Project project = holder.getProject();
+  public boolean contains(VirtualFile file, @NotNull NamedScopesHolder holder) {
+    return contains(file, holder.getProject(), holder);
+  }
+
+  @Override
+  public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return matchesScope(file, holder.getProject(), fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
+    return matchesScope(file, project, fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
   }
 
   private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {

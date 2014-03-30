@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -63,11 +64,21 @@ public class LibraryScopeCache {
   }
 
   public GlobalSearchScope getScopeForSdk(final JdkOrderEntry jdkOrderEntry) {
-    final String jdk = jdkOrderEntry.getJdkName();
-    if (jdk == null) return GlobalSearchScope.allScope(myProject);
-    GlobalSearchScope scope = mySdkScopes.get(jdk);
+    final String jdkName = jdkOrderEntry.getJdkName();
+    if (jdkName == null) return GlobalSearchScope.allScope(myProject);
+    GlobalSearchScope scope = mySdkScopes.get(jdkName);
     if (scope == null) {
-      return ConcurrencyUtil.cacheOrGet(mySdkScopes, jdk, new JdkScope(myProject, jdkOrderEntry));
+      for (SdkResolveScopeProvider provider : SdkResolveScopeProvider.EP_NAME.getExtensions()) {
+        scope = provider.getScope(myProject, jdkOrderEntry);
+
+        if (scope != null) {
+          break;
+        }
+      }
+      if (scope == null) {
+        scope = new JdkScope(myProject, jdkOrderEntry);
+      }
+      return ConcurrencyUtil.cacheOrGet(mySdkScopes, jdkName, scope);
     }
     return scope;
   }
@@ -80,11 +91,11 @@ public class LibraryScopeCache {
       myOriginal = original;
     }
 
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myOriginal.contains(file);
     }
 
-    public int compare(VirtualFile file1, VirtualFile file2) {
+    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return myOriginal.compare(file1, file2);
     }
 

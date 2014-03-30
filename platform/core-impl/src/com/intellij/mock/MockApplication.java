@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
@@ -36,6 +36,11 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public boolean isInternal() {
+    return false;
+  }
+
+  @Override
+  public boolean isEAP() {
     return false;
   }
 
@@ -86,15 +91,16 @@ public class MockApplication extends MockComponentManager implements Application
     return true;
   }
 
+  @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    new Thread(action).start();
-    return null; // ?
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
   }
 
+  @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return null;
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
   }
 
   @Override
@@ -141,11 +147,13 @@ public class MockApplication extends MockComponentManager implements Application
     return computation.compute();
   }
 
+  @NotNull
   @Override
   public AccessToken acquireReadActionLock() {
     return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 
+  @NotNull
   @Override
   public AccessToken acquireWriteActionLock(@Nullable Class marker) {
     return AccessToken.EMPTY_ACCESS_TOKEN;
@@ -186,6 +194,11 @@ public class MockApplication extends MockComponentManager implements Application
         @Override
         public boolean dominates(@NotNull ModalityState anotherState) {
           return false;
+        }
+
+        @Override
+        public String toString() {
+          return "NONE";
         }
       };
     }
@@ -251,5 +264,13 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void saveSettings() {
+  }
+
+  private static class ExecutorServiceHolder {
+    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
+
+    private static ThreadPoolExecutor createServiceImpl() {
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("MockApplication pooled thread"));
+    }
   }
 }

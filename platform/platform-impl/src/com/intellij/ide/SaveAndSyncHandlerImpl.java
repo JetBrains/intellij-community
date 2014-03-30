@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,8 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   private final AtomicInteger myBlockSaveOnFrameDeactivationCount = new AtomicInteger();
   private final AtomicInteger myBlockSyncOnFrameActivationCount = new AtomicInteger();
   private final Alarm myRefreshDelayAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+  private long myRefreshSessionId = 0;
 
   public static SaveAndSyncHandlerImpl getInstance(){
     return (SaveAndSyncHandlerImpl) ApplicationManager.getApplication().getComponent(SaveAndSyncHandler.class);
@@ -168,7 +171,6 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
         if (canSyncOrSave()) {
           refreshOpenFiles();
         }
-
         maybeRefresh(ModalityState.NON_MODAL);
       }
     }, 300, ModalityState.NON_MODAL);
@@ -176,9 +178,17 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {
-    if (myBlockSyncOnFrameActivationCount.get() == 0) {
+    if (myBlockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       LOG.debug("VFS refresh started");
-      RefreshQueue.getInstance().refresh(true, true, null, modalityState, ManagingFS.getInstance().getLocalRoots());
+
+      RefreshQueue queue = RefreshQueue.getInstance();
+      queue.cancelSession(myRefreshSessionId);
+
+      RefreshSession session = queue.createSession(true, true, null, modalityState);
+      session.addAllFiles(ManagingFS.getInstance().getLocalRoots());
+      myRefreshSessionId = session.getId();
+      session.launch();
+
       LOG.debug("VFS refresh finished");
     }
   }

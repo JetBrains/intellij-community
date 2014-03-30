@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
   ArrayFactory<PsiElement> ARRAY_FACTORY = new ArrayFactory<PsiElement>() {
+    @NotNull
     @Override
     public PsiElement[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiElement[count];
@@ -110,7 +111,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the next sibling, or null if the node is the last in the list of siblings.
    */
-  @Nullable
   PsiElement getNextSibling();
 
   /**
@@ -118,7 +118,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the previous sibling, or null if the node is the first in the list of siblings.
    */
-  @Nullable
   PsiElement getPrevSibling();
 
   /**
@@ -446,7 +445,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * for processing to the specified scope processor.
    *
    * @param processor  the processor receiving the declarations.
-   * @param state
    * @param lastParent the child of this element has been processed during the previous
    *                   step of the tree up walk (declarations under this element do not need
    *                   to be processed again)

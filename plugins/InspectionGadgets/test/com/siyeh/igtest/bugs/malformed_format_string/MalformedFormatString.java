@@ -27,4 +27,24 @@ public class MalformedFormatString {
     public void outOfMemory() {
         String.format("%2147483640$s", "s");
     }
+
+    public void optionalSettings() {
+        SomeOtherLogger logger = new SomeOtherLogger();
+        logger.d("%s %s", 1); // this is invalid according to the inspector (correct)
+    }
+
+    public class SomeOtherLogger {
+        public void d(String message, Object...args) {
+            // Do some logging.
+        }
+    }
+
+    void shouldWarn() {
+        String.format("%1$c %1$d", 10L);
+    }
+
+    void shouldNotWarn() {
+        String.format("%c", 0x10300);
+        String charAsInt = String.format("%1$d %1$c", 10);  // int followed by char should be ok too.
+    }
 }

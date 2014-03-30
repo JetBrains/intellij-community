@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.actions;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Max Medvedev
  */
-public class GroovyTemplates {
-  public static final String GROOVY_CLASS = "GroovyClass.groovy";
-  public static final String GROOVY_INTERFACE = "GroovyInterface.groovy";
-  public static final String GROOVY_ENUM = "GroovyEnum.groovy";
-  public static final String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
-  public static final String GROOVY_SCRIPT = "GroovyScript.groovy";
-  public static final String GROOVY_DSL_SCRIPT = "GroovyDslScript.gdsl";
-  public static final String GANT_SCRIPT = "GantScript.gant";
-  public static final String GROOVY_SERVER_PAGE = "GroovyServerPage.gsp";
+public interface GroovyTemplates {
+  @NonNls String GROOVY_CLASS = "GroovyClass.groovy";
+  @NonNls String GROOVY_INTERFACE = "GroovyInterface.groovy";
+  @NonNls String GROOVY_ENUM = "GroovyEnum.groovy";
+  @NonNls String GROOVY_ANNOTATION = "GroovyAnnotation.groovy";
+  @NonNls String GROOVY_SCRIPT = "GroovyScript.groovy";
+  @NonNls String GROOVY_DSL_SCRIPT = "GroovyDslScript.gdsl";
+  @NonNls String GANT_SCRIPT = "GantScript.gant";
+  @NonNls String GROOVY_SERVER_PAGE = "GroovyServerPage.gsp";
+  @NonNls String GROOVY_FROM_USAGE_METHOD_BODY = "Groovy New Method Body.groovy";
+  @NonNls String GROOVY_JUNIT_TEST_METHOD_GROOVY = "Groovy JUnit Test Method.groovy";
+  @NonNls String GROOVY_JUNIT_SET_UP_METHOD_GROOVY = "Groovy JUnit SetUp Method.groovy";
+  @NonNls String GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY = "Groovy JUnit TearDown Method.groovy";
 }

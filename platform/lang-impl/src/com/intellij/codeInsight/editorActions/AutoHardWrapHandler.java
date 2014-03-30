@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -93,8 +94,10 @@ public class AutoHardWrapHandler {
       change.charTyped(editor, modificationStampBeforeTyping);
     }
 
-    // Return eagerly if we don't need to auto-wrap line on right margin exceeding.
-    if (project == null || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
+    // Return eagerly if we don't need to auto-wrap line, e.g. because of right margin exceeding.
+    if (/*editor.isOneLineMode()
+        || */project == null
+        || !editor.getSettings().isWrapWhenTypingReachesRightMargin(project)
         || (TemplateManager.getInstance(project) != null && TemplateManager.getInstance(project).getActiveTemplate(editor) != null))
     {
       return;
@@ -106,10 +109,16 @@ public class AutoHardWrapHandler {
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
 
+    final CharSequence endOfString = document.getCharsSequence().subSequence(caretOffset, endOffset);
+    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(String.valueOf(endOfString));
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
+    if (margin <= 0) {
+      return;
+    }
+
     VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
-    if (margin > visEndLinePosition.column) {
+    if (margin >= visEndLinePosition.column) {
       if (change != null) {
         change.modificationStamp = document.getModificationStamp();
       }
@@ -139,8 +148,10 @@ public class AutoHardWrapHandler {
       myAutoWrapChanges.put(document, change);
     }
     else {
-      if (!change.isEmpty()) {
-        document.replaceString(change.change.getStart(), change.change.getEnd(), change.change.getText());
+      final int start = change.change.getStart();
+      final int end = change.change.getEnd();
+      if (!change.isEmpty() && start < end) {
+        document.replaceString(start, end, change.change.getText());
       }
       change.reset();
     }
@@ -175,11 +186,14 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= event.getOldLength()) {
-          // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
+        if (autoFormatted(event)) {
           return;
         }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
+      }
+
+      private boolean autoFormatted(DocumentEvent event) {
+        return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
 
       @Override

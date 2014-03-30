@@ -32,8 +32,8 @@ public class InvalidFacetEditor extends FacetEditorTab {
   private MultiLineLabel myDescriptionLabel;
   private JCheckBox myIgnoreCheckBox;
   private JLabel myIconLabel;
-  private InvalidFacetManager myInvalidFacetManager;
-  private InvalidFacet myFacet;
+  private final InvalidFacetManager myInvalidFacetManager;
+  private final InvalidFacet myFacet;
 
   public InvalidFacetEditor(FacetEditorContext context, String errorMessage) {
     myErrorMessage = errorMessage;

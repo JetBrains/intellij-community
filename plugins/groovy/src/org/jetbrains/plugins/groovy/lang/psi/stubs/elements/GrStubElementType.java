@@ -34,9 +34,10 @@ public abstract class GrStubElementType<S extends StubElement, T extends GroovyP
     super(debugName, GroovyFileType.GROOVY_LANGUAGE);
   }
 
-  public void indexStub(final S stub, final IndexSink sink) {
+  public void indexStub(@NotNull final S stub, @NotNull final IndexSink sink) {
   }
 
+  @NotNull
   public String getExternalId() {
     return "gr." + super.toString();
   }

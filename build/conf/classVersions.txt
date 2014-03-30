@@ -1,0 +1,39 @@
+; see https://github.com/jonnyzzz/ClassesVersionChecker
+; this is comment line
+;
+; each line represent a patching rule
+;
+;  - => path
+;     this is exclude rule. It excludes all paths that starts with given prefix
+;  xx => path
+;     this is the rule to enforce check of java classes of version xx, where xx could
+;     be one of the following: 1.2, 1.3, 1.4, 1.5, 1.6, 1.7
+;  check static => path
+;     this is the rule to check static class usages in classes under given path
+;  - check static => path
+;     exclude following paths from the check
+;  allow static class NAME
+;     allow use of given class (by starts-with) from static context
+;
+;  see example below
+;
+;  all paths are relative to scan folder
+;
+;  exclude rules are checked first
+;  longest rule wins
+;
+;  have fun
+;
+
+
+1.6 =>
+
+1.3 => lib/idea_rt.jar
+
+1.7 => lib/fxHelpBrowser.jar
+1.7 => lib/optimizedFileManager.jar
+
+1.5 => plugins/Groovy/lib/groovy_rt.jar
+1.5 => lib/annotations.jar
+
+1.3 => plugins/junit/lib/junit-rt.jar

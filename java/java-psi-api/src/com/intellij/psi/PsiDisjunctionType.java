@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,24 +33,23 @@ import java.util.List;
  * Composite type resulting from Project Coin's multi-catch statements, i.e. <code>FileNotFoundException | EOFException</code>.
  * In most cases should be threatened via its least upper bound (<code>IOException</code> in the example above).
  */
-public class PsiDisjunctionType extends PsiType {
+public class PsiDisjunctionType extends PsiType.Stub {
   private final PsiManager myManager;
   private final List<PsiType> myTypes;
   private final CachedValue<PsiType> myLubCache;
 
-  public PsiDisjunctionType(@NotNull final List<PsiType> types, @NotNull final PsiManager psiManager) {
+  public PsiDisjunctionType(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
     super(PsiAnnotation.EMPTY_ARRAY);
 
     myManager = psiManager;
     myTypes = Collections.unmodifiableList(types);
 
-    final CachedValuesManager cacheManager = CachedValuesManager.getManager(psiManager.getProject());
-    myLubCache = cacheManager.createCachedValue(new CachedValueProvider<PsiType>() {
+    myLubCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
       @Override
       public Result<PsiType> compute() {
         PsiType lub = myTypes.get(0);
         for (int i = 1; i < myTypes.size(); i++) {
-          lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), psiManager);
+          lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), myManager);
           if (lub == null) {
             lub = PsiType.getJavaLangObject(myManager, GlobalSearchScope.allScope(myManager.getProject()));
             break;
@@ -59,6 +58,12 @@ public class PsiDisjunctionType extends PsiType {
         return Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
+  }
+
+  @NotNull
+  public static PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
+    assert !types.isEmpty();
+    return types.size() == 1 ? types.get(0) : new PsiDisjunctionType(types, psiManager);
   }
 
   @NotNull
@@ -76,24 +81,36 @@ public class PsiDisjunctionType extends PsiType {
     return new PsiDisjunctionType(types, myManager);
   }
 
+  @NotNull
   @Override
   public String getPresentableText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getPresentableText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getPresentableText();
+      }
     }, " | ");
   }
 
+  @NotNull
   @Override
-  public String getCanonicalText() {
+  public String getCanonicalText(final boolean annotated) {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getCanonicalText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getCanonicalText(annotated);
+      }
     }, " | ");
   }
 
+  @NotNull
   @Override
   public String getInternalCanonicalText() {
     return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override public String fun(PsiType psiType) { return psiType.getInternalCanonicalText(); }
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getInternalCanonicalText();
+      }
     }, " | ");
   }
 
@@ -106,7 +123,7 @@ public class PsiDisjunctionType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NonNls final String text) {
+  public boolean equalsToText(@NotNull @NonNls final String text) {
     return Comparing.equal(text, getCanonicalText());
   }
 

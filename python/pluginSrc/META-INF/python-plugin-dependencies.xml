@@ -1,0 +1,10 @@
+<idea-plugin>
+  <!-- This version of python-plugin-dependencies.xml is used when running IntelliJ IDEA with
+       Python plugin from sources. In this configuration, all auxiliary modules (python-javascript-debugger,
+       python-localization etc.) are loaded as separate plugins, so they mustnt' be loaded again as
+       parts of the Python plugin.
+
+       The version of python-plugin-dependencies.xml used in production builds can be found under the
+       'build' directory.
+  -->
+</idea-plugin>

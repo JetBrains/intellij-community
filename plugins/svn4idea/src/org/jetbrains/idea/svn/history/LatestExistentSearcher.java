@@ -25,9 +25,7 @@ import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.io.File;
 import java.util.Map;
 
 public class LatestExistentSearcher {
@@ -136,18 +134,12 @@ public class LatestExistentSearcher {
       if (vf == null) {
         return true;
       }
-      final SVNWCClient client = myVcs.createWCClient();
-      try {
-        final SVNInfo info = client.doInfo(new File(vf.getPath()), SVNRevision.UNDEFINED);
-        if ((info == null) || (info.getRevision() == null)) {
-          return false;
-        }
-        myStartNumber = info.getRevision().getNumber();
-        myStartExistsKnown = true;
-      }
-      catch (SVNException e) {
+      final SVNInfo info = myVcs.getInfo(vf);
+      if ((info == null) || (info.getRevision() == null)) {
         return false;
       }
+      myStartNumber = info.getRevision().getNumber();
+      myStartExistsKnown = true;
     }
     return true;
   }

@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -59,7 +60,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     if (renderer.isShowFlatten() && file.isValid()) {
       final VirtualFile parentFile = file.getParent();
       assert parentFile != null;
-      renderer.append(" (" + parentFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderer.append(" (" + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);

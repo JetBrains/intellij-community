@@ -15,12 +15,17 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.ComboBox;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
 import java.util.Date;
@@ -46,13 +51,13 @@ public class CalendarView extends JPanel {
     31
   };
 
-  private final JComboBox myDays = new JComboBox();
-  private final JComboBox myMonths = new JComboBox();
-  private final JSpinner myYears = new JSpinner(new IntegerSpinnerModel(0, -1));
+  private final JComboBox myDays = new ComboBox();
+  private final JComboBox myMonths = new ComboBox();
+  private final JSpinner myYears = new JSpinner(new SpinnerNumberModel(2013, 0, Integer.MAX_VALUE, 1));
 
-  private final JSpinner myHours = new JSpinner(new IntegerSpinnerModel(0, 24));
-  private final JSpinner myMinutes = new JSpinner(new IntegerSpinnerModel(0, 60));
-  private final JSpinner mySeconds = new JSpinner(new IntegerSpinnerModel(0, 60));
+  private final JSpinner myHours = new JSpinner(new SpinnerNumberModel(24, 0, 24, 1));
+  private final JSpinner myMinutes = new JSpinner(new SpinnerNumberModel(60, 0, 60, 1));
+  private final JSpinner mySeconds = new JSpinner(new SpinnerNumberModel(60, 0, 60, 1));
   private final Calendar myCalendar = Calendar.getInstance();
 
   public CalendarView() {
@@ -60,7 +65,9 @@ public class CalendarView extends JPanel {
 
     fillMonths();
 
-
+    JSpinner.NumberEditor editor = new JSpinner.NumberEditor(myYears, "####");
+    editor.getTextField().setColumns(4);
+    myYears.setEditor(editor);
     myYears.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         refresh();
@@ -153,15 +160,29 @@ public class CalendarView extends JPanel {
   }
 
   public Date getDate() {
-    JSpinner spinner = myYears;
-    myCalendar.set(getIntValue(spinner), myMonths.getSelectedIndex(), myDays.getSelectedIndex() + 1,
+    //noinspection MagicConstant
+    myCalendar.set(getIntValue(myYears), myMonths.getSelectedIndex(), myDays.getSelectedIndex() + 1,
         getIntValue(myHours), getIntValue(myMinutes), getIntValue(mySeconds));
 
     return myCalendar.getTime();
   }
 
-  private int getIntValue(JSpinner spinner) {
-    return ((IntegerSpinnerModel) spinner.getModel()).getIntValue();
+  private static int getIntValue(JSpinner spinner) {
+    return ((Number)spinner.getModel().getValue()).intValue();
+  }
+
+  public void registerEnterHandler(final Runnable runnable) {
+    new AnAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        runnable.run();
+      }
+    }.registerCustomShortcutSet(KeyEvent.VK_ENTER, 0, this);
   }
 }
 

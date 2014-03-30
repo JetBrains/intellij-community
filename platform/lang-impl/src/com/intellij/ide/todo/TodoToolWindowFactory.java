@@ -25,6 +25,7 @@ import com.intellij.openapi.components.ServiceManager;
  * @author yole
  */
 public class TodoToolWindowFactory implements ToolWindowFactory {
+  @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     TodoView todoView = ServiceManager.getService(project, TodoView.class);
     todoView.initToolWindow(toolWindow);

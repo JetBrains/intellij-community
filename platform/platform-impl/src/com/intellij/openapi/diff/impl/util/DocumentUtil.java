@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DocumentUtil {
 
-  public static String getText(RangeMarker range) {
+  @NotNull
+  public static String getText(@NotNull RangeMarker range) {
     return range.getDocument().getText().substring(range.getStartOffset(), range.getEndOffset());
   }
 
@@ -29,14 +30,14 @@ public class DocumentUtil {
     return rangeMarker.getStartOffset() == rangeMarker.getEndOffset();
   }
 
-  public static int getStartLine(RangeMarker range) {
+  public static int getStartLine(@NotNull RangeMarker range) {
     final Document doc = range.getDocument();
     if (doc.getTextLength() == 0) return 0;
 
     return doc.getLineNumber(range.getStartOffset());
   }
 
-  public static int getEndLine(RangeMarker range) {
+  public static int getEndLine(@NotNull RangeMarker range) {
     Document document = range.getDocument();
     int endOffset = range.getEndOffset();
 
@@ -47,11 +48,11 @@ public class DocumentUtil {
     return endLine;
   }
 
-  private static boolean lastLineIsNotEmpty(Document document, int line) {
+  private static boolean lastLineIsNotEmpty(@NotNull Document document, int line) {
     return document.getTextLength() != document.getLineStartOffset(line);
   }
 
-  public static int getLength(RangeMarker rangeMarker) {
+  public static int getLength(@NotNull RangeMarker rangeMarker) {
     return rangeMarker.getEndOffset() - rangeMarker.getStartOffset();
   }
 }

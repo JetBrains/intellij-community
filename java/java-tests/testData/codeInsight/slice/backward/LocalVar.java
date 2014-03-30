@@ -1,5 +1,5 @@
 class S {
- String x(String g) {
+ String x(String <flown11>g) {
   String d = (String)(<flown1>g);
   return <caret>d;
  }

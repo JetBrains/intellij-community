@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -36,7 +35,7 @@ public class GenerateCopyrightAction extends AnAction
     {
         Presentation presentation = event.getPresentation();
         DataContext context = event.getDataContext();
-        Project project = PlatformDataKeys.PROJECT.getData(context);
+        Project project = CommonDataKeys.PROJECT.getData(context);
         if (project == null)
         {
             presentation.setEnabled(false);
@@ -51,9 +50,9 @@ public class GenerateCopyrightAction extends AnAction
 
     @Nullable
     private static PsiFile getFile(DataContext context, Project project) {
-      PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+      PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
       if (file == null) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(context);
+        Editor editor = CommonDataKeys.EDITOR.getData(context);
         if (editor != null) {
           file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
@@ -64,7 +63,7 @@ public class GenerateCopyrightAction extends AnAction
     public void actionPerformed(AnActionEvent event)
     {
         DataContext context = event.getDataContext();
-        Project project = PlatformDataKeys.PROJECT.getData(context);
+        Project project = CommonDataKeys.PROJECT.getData(context);
         assert project != null;
         Module module = LangDataKeys.MODULE.getData(context);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -73,7 +72,7 @@ public class GenerateCopyrightAction extends AnAction
         PsiFile file = getFile(context, project);
         assert file != null;
         if (CopyrightManager.getInstance(project).getCopyrightOptions(file) == null) {
-          if (Messages.showOkCancelDialog(project, "No copyright configured for current file. Would you like to edit copyright settings?", "No Copyright Available", Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE) {
+          if (Messages.showOkCancelDialog(project, "No copyright configured for current file. Would you like to edit copyright settings?", "No Copyright Available", Messages.getQuestionIcon()) == Messages.OK) {
             ShowSettingsUtil.getInstance().showSettingsDialog(project, new CopyrightProjectConfigurable(project).getDisplayName());
           } else {
             return;

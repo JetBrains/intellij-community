@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.google.common.util.concurrent.SettableFuture;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -33,16 +34,18 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public void addConsumer(Executor executor, final ResultConsumer<V> consumer) {
+  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<V> consumer) {
     myFuture.addListener(new Runnable() {
       @Override
       public void run() {
         try {
           final V result = myFuture.get();
           consumer.onSuccess(result);
-        } catch (ExecutionException e) {
+        }
+        catch (ExecutionException e) {
           consumer.onFailure(e.getCause());
-        } catch (Throwable throwable) {
+        }
+        catch (Throwable throwable) {
           consumer.onFailure(throwable);
         }
       }
@@ -70,17 +73,21 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public V get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return myFuture.get(timeout, unit);
   }
 
   @Override
   public void set(V value) {
-    myFuture.set(value);
+    if (!myFuture.set(value)) {
+      throw new Error("already set");
+    }
   }
 
   @Override
-  public void setException(Throwable t) {
-    myFuture.setException(t);
+  public void setException(@NotNull Throwable t) {
+    if (!myFuture.setException(t)) {
+      throw new Error("already excepted");
+    }
   }
 }

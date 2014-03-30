@@ -15,7 +15,9 @@
  */
 package com.intellij.framework.addSupport;
 
+import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.framework.FrameworkTypeEx;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
@@ -23,10 +25,15 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author nik
  */
-public abstract class FrameworkSupportInModuleProvider {
+public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGroup {
+
   @NotNull
   public abstract FrameworkTypeEx getFrameworkType();
 
@@ -45,5 +52,66 @@ public abstract class FrameworkSupportInModuleProvider {
 
   public boolean canAddSupport(@NotNull Module module, @NotNull FacetsProvider facetsProvider) {
     return !isSupportAlreadyAdded(module, facetsProvider);
+  }
+
+  public String getPresentableName() {
+    return getFrameworkType().getPresentableName();
+  }
+
+  public FrameworkRole[] getRoles() {
+    return getFrameworkType().getRoles();
+  }
+
+  public String getVersionLabel() {
+    return "Version:";
+  }
+
+  public List<FrameworkDependency> getDependenciesFrameworkIds() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return getFrameworkType().getId();
+  }
+
+  @Override
+  public Icon getIcon() {
+    return getFrameworkType().getIcon();
+  }
+
+  @Override
+  public String toString() {
+    return getPresentableName();
+  }
+
+  public static class FrameworkDependency {
+    private final String myFrameworkId;
+    private final boolean myOptional;
+
+    private FrameworkDependency(String frameworkId, boolean optional) {
+      myFrameworkId = frameworkId;
+      myOptional = optional;
+    }
+
+    public static FrameworkDependency optional(String frameworkId) {
+      return new FrameworkDependency(frameworkId, true);
+    }
+
+    public static FrameworkDependency required(String frameworkId) {
+      return new FrameworkDependency(frameworkId, false);
+    }
+
+    public String getFrameworkId() {
+      return myFrameworkId;
+    }
+
+    /**
+     * True if dependency is not required.
+     */
+    public boolean isOptional() {
+      return myOptional;
+    }
   }
 }

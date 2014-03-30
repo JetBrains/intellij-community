@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,12 +37,13 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -128,7 +131,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
       //newArg can be replaced by OldReferenceResolver
       if (newArg.isValid()) {
-        GrReferenceAdjuster.shortenReferences(newArg);
+        JavaCodeStyleManager.getInstance(newArg.getProject()).shortenClassReferences(newArg);
         CodeStyleManager.getInstance(data.getProject()).reformat(newArg);
       }
     }
@@ -231,7 +234,6 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(data.getParameterName(), method.getBlock());
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
-    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     data.getParametersToRemove().forEachDescending(new TIntProcedure() {
@@ -251,17 +253,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       }
     });
 
-    final PsiType forcedType = data.getForcedType();
-    final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : forcedType.getCanonicalText();
-
-    GrParameter parameter = factory.createParameter(data.getParameterName(), typeText, method);
-    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, data.isDeclareFinal());
-    final PsiParameter anchorParameter = getAnchorParameter(method);
-    final GrParameterList parameterList = method.getParameterList();
-    parameter = (GrParameter)parameterList.addAfter(parameter, anchorParameter);
-    GrReferenceAdjuster.shortenReferences(parameter);
-    final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
-    javaDocHelper.addParameterAfter(data.getParameterName(), tagForAnchorParameter);
+    addParameter(method, javaDocHelper, data.getForcedType(), data.getParameterName(), data.isDeclareFinal(), data.getProject());
 
     fieldConflictsResolver.fix();
 
@@ -269,13 +261,39 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
   }
 
+  @NotNull
+  public static GrParameter addParameter(@NotNull GrParametersOwner parametersOwner,
+                                         @Nullable MethodJavaDocHelper javaDocHelper,
+                                         @NotNull PsiType forcedType,
+                                         @NotNull String parameterName,
+                                         boolean isFinal,
+                                         @NotNull Project project) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+
+    final String typeText = forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL ? null : forcedType.getCanonicalText();
+
+    GrParameter parameter = factory.createParameter(parameterName, typeText, parametersOwner);
+    parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);
+    final PsiParameter anchorParameter = getAnchorParameter(parametersOwner);
+    final GrParameterList parameterList = parametersOwner.getParameterList();
+    parameter = (GrParameter)parameterList.addAfter(parameter, anchorParameter);
+
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(parameter);
+    if (javaDocHelper != null) {
+      final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
+      javaDocHelper.addParameterAfter(parameterName, tagForAnchorParameter);
+    }
+
+    return parameter;
+  }
+
   @Nullable
-  private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
-    PsiParameterList parameterList = methodToReplaceIn.getParameterList();
+  private static PsiParameter getAnchorParameter(GrParametersOwner parametersOwner) {
+    PsiParameterList parameterList = parametersOwner.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();
     final int length = parameters.length;
-    if (!methodToReplaceIn.isVarArgs()) {
+    if (!parametersOwner.isVarArgs()) {
       anchorParameter = length > 0 ? parameters[length - 1] : null;
     }
     else {

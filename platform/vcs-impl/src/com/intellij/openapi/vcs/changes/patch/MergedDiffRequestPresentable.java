@@ -44,8 +44,9 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   public MyResult step(DiffChainContext context) {
-    if (myFile.getFileType().isBinary()) {
-      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, new FilePathImpl(myFile), context);
+    FilePathImpl filePath = new FilePathImpl(myFile);
+    if (filePath.getFileType().isBinary()) {
+      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, filePath, context);
       if (! nowItIsText) {
         final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
         return new MyResult(request, DiffPresentationReturnValue.removeFromList);

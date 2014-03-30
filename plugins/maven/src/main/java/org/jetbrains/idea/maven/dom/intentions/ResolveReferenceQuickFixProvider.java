@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ResolveReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
 
-  public void registerFixes(PsiJavaCodeReferenceElement ref, QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new AddMavenDependencyQuickFix(ref));
   }
 

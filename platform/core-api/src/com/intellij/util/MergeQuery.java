@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class MergeQuery<T> implements Query<T>{
   private final Query<? extends T> myQuery1;
   private final Query<? extends T> myQuery2;
 
-  public MergeQuery(final Query<? extends T> query1, final Query<? extends T> query2) {
+  public MergeQuery(@NotNull Query<? extends T> query1, @NotNull Query<? extends T> query2) {
     myQuery1 = query1;
     myQuery2 = query2;
   }
@@ -79,16 +79,12 @@ public class MergeQuery<T> implements Query<T>{
   }
 
 
-  private <V extends T> boolean processSubQuery(final Processor<T> consumer, Query<V> query1) {
-    return query1.forEach(new Processor<V>() {
-      @Override
-      public boolean process(final V t) {
-        return consumer.process(t);
-      }
-    });
+  private <V extends T> boolean processSubQuery(@NotNull final Processor<T> consumer, @NotNull Query<V> query1) {
+    // Query.forEach(Processor<T> consumer) should be actually Query.forEach(Processor<? super T> consumer) but it is too late now
+    return query1.forEach((Processor<V>)consumer);
   }
 
-  private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(final Processor<T> consumer, Query<V> query1) {
+  private <V extends T> AsyncFuture<Boolean> processSubQueryAsync(@NotNull final Processor<T> consumer, @NotNull Query<V> query1) {
     return query1.forEachAsync(new Processor<V>() {
       @Override
       public boolean process(final V t) {

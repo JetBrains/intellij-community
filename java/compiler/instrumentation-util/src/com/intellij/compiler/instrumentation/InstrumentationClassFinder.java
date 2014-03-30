@@ -101,7 +101,7 @@ public class InstrumentationClassFinder {
       return aClass;
     }
 
-    final InputStream is = aClass == null? getClassBytesAsStream(internalName) : null;
+    final InputStream is = aClass == null? getClassBytesStream(internalName) : null;
 
     if (is == null) {
       if (aClass == null) {
@@ -132,6 +132,23 @@ public class InstrumentationClassFinder {
 
   public InputStream getClassBytesAsStream(String className) throws IOException {
     final String internalName = className.replace('.', '/'); // normalize
+    final PseudoClass aClass = myLoaded.get(internalName);
+    if (aClass == PseudoClass.NULL_OBJ) {
+      return null;
+    }
+    InputStream bytes = null;
+    try {
+      bytes = getClassBytesStream(internalName);
+    }
+    finally {
+      if (aClass == null && bytes == null) {
+        myLoaded.put(internalName, PseudoClass.NULL_OBJ);
+      }
+    }
+    return bytes;
+  }
+
+  private InputStream getClassBytesStream(String internalName) throws IOException {
     InputStream is = null;
     // first look into platformCp
     final String resourceName = internalName + CLASS_RESOURCE_EXTENSION;

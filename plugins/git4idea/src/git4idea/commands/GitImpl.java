@@ -23,9 +23,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
+import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitCommit;
 import git4idea.push.GitPushSpec;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -62,6 +62,7 @@ public class GitImpl implements Git {
       h.addLineListener(listener);
     }
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     return run(h);
   }
 
@@ -132,7 +133,8 @@ public class GitImpl implements Git {
   public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
                                 @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
-    handler.setRemoteProtocol(url);
+    handler.setStdoutSuppressed(false);
+    handler.setUrl(url);
     handler.addParameters("--progress");
     handler.addParameters(url);
     handler.addParameters(clonedDirectoryName);
@@ -231,6 +233,7 @@ public class GitImpl implements Git {
                                           @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     if (force) {
       h.addParameters("--force");
     }
@@ -255,6 +258,7 @@ public class GitImpl implements Git {
                                                    @Nullable GitLineHandlerListener listener) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT.readLockingCommand());
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     h.addParameters("-b");
     h.addParameters(branchName);
     if (listener != null) {
@@ -290,6 +294,7 @@ public class GitImpl implements Git {
                                               @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
     for (GitLineHandlerListener listener : listeners) {
@@ -318,6 +323,7 @@ public class GitImpl implements Git {
   @NotNull
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setStdoutSuppressed(false);
     h.addParameters(branchName);
     return run(h);
   }
@@ -357,16 +363,27 @@ public class GitImpl implements Git {
   @Override
   @NotNull
   public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
-                               @NotNull GitLineHandlerListener... listeners) {
+                               boolean updateTracking, @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
-    h.setRemoteProtocol(url);
+    h.setUrl(url);
     h.setSilent(false);
+    h.setStdoutSuppressed(false);
     addListeners(h, listeners);
     h.addProgressParameter();
     h.addParameters(remote);
     h.addParameters(spec);
+    if (updateTracking) {
+      h.addParameters("--set-upstream");
+    }
     return run(h);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String url, @NotNull String spec,
+                               @NotNull GitLineHandlerListener... listeners) {
+    return push(repository, remote, url, spec, false, listeners);
   }
 
   @Override
@@ -399,6 +416,7 @@ public class GitImpl implements Git {
     handler.addParameters(hash);
     addListeners(handler, listeners);
     handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
     return run(handler);
   }
 
@@ -408,6 +426,22 @@ public class GitImpl implements Git {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
     h.addParameters("--unmerged");
     h.setSilent(true);
+    return run(h);
+  }
+
+  /**
+   * Fetch remote branch
+   * {@code git fetch <remote> <params>}
+   */
+  @Override
+  @NotNull
+  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
+    final GitLineHandlerPasswordRequestAware h =
+      new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+    h.setUrl(url);
+    h.addParameters(remote);
+    h.addParameters(params);
+    h.addProgressParameter();
     return run(h);
   }
 

@@ -59,9 +59,28 @@ public class JavaDocInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testEnumConstructor() throws Exception {
+    final JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
+    localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
+    doTest("javaDocInspection/" + getTestName(true), localInspection);
+  }
+
   public void testIgnoreDuplicateThrows() throws Exception {
     final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
     inspection.IGNORE_DUPLICATED_THROWS = true;
+    doTest("javaDocInspection/" + getTestName(true), inspection);
+  }
+
+  public void testIgnoreAccessors() throws Exception {
+    final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.setIgnoreSimpleAccessors(true);
+    doTest("javaDocInspection/" + getTestName(true), inspection);
+  }
+
+  public void testPackageInfo() throws Exception {
+    final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.IGNORE_DEPRECATED = true;
+    inspection.setPackageOption("public", "@author");
     doTest("javaDocInspection/" + getTestName(true), inspection);
   }
 }

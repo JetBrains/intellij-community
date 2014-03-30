@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -40,9 +41,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.LOG;
-import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
  * @author Max Medvedev
@@ -59,7 +60,9 @@ public class GrVariableInliner implements InlineHandler.Inliner {
       initializer = variable.getInitializerGroovy();
       LOG.assertTrue(initializer != null);
     }
-    myTempExpr = (GrExpression)skipParentheses(initializer, false);
+
+    myTempExpr = GrIntroduceHandlerBase.insertExplicitCastIfNeeded(variable, initializer);
+
   }
 
   @Nullable
@@ -112,6 +115,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
 
     GrExpression newExpr = exprToBeReplaced.replaceWithExpression((GrExpression)initializer.copy(), true);
     final Project project = usage.getProject();
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
     WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));

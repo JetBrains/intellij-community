@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -57,10 +56,6 @@ public class ScriptGenerator {
    */
   private final Class myMainClass;
   /**
-   * The temporary directory to use or null, if system directory should be used
-   */
-  @Nullable private final File myTempDir;
-  /**
    * The class paths for the script
    */
   private final ArrayList<String> myPaths = new ArrayList<String>();
@@ -74,23 +69,11 @@ public class ScriptGenerator {
    *
    * @param prefix    the script prefix
    * @param mainClass the script main class
-   * @param tempDir   the temporary directory to use. if null, system default is used.
-   */
-  public ScriptGenerator(final String prefix, final Class mainClass, File tempDir) {
-    myPrefix = prefix;
-    myMainClass = mainClass;
-    myTempDir = tempDir;
-    addClasses(myMainClass);
-  }
-
-  /**
-   * A constructor
-   *
-   * @param prefix    the script prefix
-   * @param mainClass the script main class
    */
   public ScriptGenerator(final String prefix, final Class mainClass) {
-    this(prefix, mainClass, null);
+    myPrefix = prefix;
+    myMainClass = mainClass;
+    addClasses(myMainClass);
   }
 
   /**
@@ -149,8 +132,7 @@ public class ScriptGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public File generate() throws IOException {
-    File scriptPath = myTempDir != null ? FileUtil.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
-                                        : FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
+    File scriptPath = FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
     scriptPath.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
     try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,14 +40,13 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.update.ComparableObject;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
@@ -194,26 +193,46 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     ):baseIcon;
   }
 
-  private static class ElementIconRequest extends ComparableObject.Impl {
-    public ElementIconRequest(PsiElement element, int flags) {
-      super(new Object[] {createPointer(element), flags});
-    }
+  private static class ElementIconRequest {
+    private final SmartPsiElementPointer<?> myPointer;
+    @Iconable.IconFlags private final int myFlags;
 
-    private static Object createPointer(PsiElement element) {
-      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    public ElementIconRequest(PsiElement element, @Iconable.IconFlags int flags) {
+      myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+      myFlags = flags;
     }
 
     @Nullable
     public PsiElement getElement() {
-      SmartPsiElementPointer pointer = (SmartPsiElementPointer)getEqualityObjects()[0];
-      if (pointer.getProject().isDisposed()) return null;
-
-      return pointer.getElement();
+      if (myPointer.getProject().isDisposed()) return null;
+      PsiElement element = myPointer.getElement();
+      SmartPointerManager.getInstance(myPointer.getProject()).removePointer(myPointer);
+      return element;
     }
 
     @Iconable.IconFlags
     public int getFlags() {
-      return (Integer)getEqualityObjects()[1];
+      return myFlags;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ElementIconRequest)) return false;
+
+      ElementIconRequest request = (ElementIconRequest)o;
+
+      if (myFlags != request.myFlags) return false;
+      if (!myPointer.equals(request.myPointer)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myPointer.hashCode();
+      result = 31 * result + myFlags;
+      return result;
     }
   }
 
@@ -294,7 +313,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   }
 
-  private static final List<IconLayer> ourIconLayers = new ArrayList<IconLayer>();
+  private static final List<IconLayer> ourIconLayers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void registerIconLayer(int flagMask, Icon icon) {
     for(IconLayer iconLayer: ourIconLayers) {

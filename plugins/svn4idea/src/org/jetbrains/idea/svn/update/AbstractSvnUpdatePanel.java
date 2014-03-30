@@ -23,11 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +85,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   public void reset(final SvnConfiguration configuration) {
-    getDepthBox().setSelectedItem(configuration.UPDATE_DEPTH);
+    getDepthBox().setSelectedItem(configuration.getUpdateDepth());
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       myRootToPanel.get(filePath).reset(configuration);
@@ -97,7 +94,7 @@ public abstract class AbstractSvnUpdatePanel {
   }
 
   public void apply(final SvnConfiguration configuration) throws ConfigurationException {
-    configuration.UPDATE_DEPTH = getDepthBox().getDepth();
+    configuration.setUpdateDepth(getDepthBox().getDepth());
 
     for (FilePath filePath : myRootToPanel.keySet()) {
       final SvnPanel svnPanel = myRootToPanel.get(filePath);
@@ -109,17 +106,8 @@ public abstract class AbstractSvnUpdatePanel {
 
   @Nullable
   private SVNURL getUrlFor(@NotNull final FilePath root) {
-    try {
-      SVNWCClient wcClient = myVCS.createWCClient();
-      final SVNInfo info = wcClient.doInfo(root.getIOFile(), SVNRevision.UNDEFINED);
-      if (info != null) {
-        return info.getURL();
-      }
-      return null;
-    }
-    catch (SVNException e) {
-      return null;
-    }
+    final SVNInfo info = myVCS.getInfo(root.getIOFile());
+    return info != null ? info.getURL() : null;
   }
 
   protected abstract JComponent getPanel();

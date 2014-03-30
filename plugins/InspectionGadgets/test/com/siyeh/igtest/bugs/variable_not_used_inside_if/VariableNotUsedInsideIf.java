@@ -27,13 +27,43 @@ public class VariableNotUsedInsideIf {
   }
 
   void bat(String s) {
-    if (s == null) {
+    if (s != null) {
       System.out.println();
     }
-    if (s != null) {
+    if (s == null) {
 
     } else {
       
     }
+  }
+
+  void money(String s) {
+    if (((s) != (null))) {
+      System.out.println();
+    }
+  }
+
+  void x(Integer x){
+    if (x != null) {
+      System.out.println();
+    }
+  }
+
+  int x(Integer x, int y){
+    if (x != null) return y;//oops, wrong one
+    return y;
+  }
+
+  int conditional(Integer x) {
+    return x == null ? 1 : someValue();
+  }
+
+  private int someValue() {
+    return 0;
+  }
+
+  void perenthesis(String[] args)
+  {
+    String message = (args == null) ? "not null" : "null";
   }
 }

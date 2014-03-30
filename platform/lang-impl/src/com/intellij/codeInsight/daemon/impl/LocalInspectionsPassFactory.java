@@ -60,13 +60,15 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
       return new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, editor.getDocument());
     }
     TextRange visibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(editor);
-    return new MyLocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange);
+    return new MyLocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, new DefaultHighlightInfoProcessor());
   }
 
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file, @NotNull Document document) {
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     final TextRange textRange = file.getTextRange();
-    return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE);
+    return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, highlightInfoProcessor);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {
@@ -74,8 +76,12 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   }
 
   private static class MyLocalInspectionsPass extends LocalInspectionsPass {
-    public MyLocalInspectionsPass(PsiFile file, Document document, @NotNull TextRange textRange, TextRange visibleRange) {
-      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true);
+    public MyLocalInspectionsPass(PsiFile file,
+                                  Document document,
+                                  @NotNull TextRange textRange,
+                                  TextRange visibleRange,
+                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+      super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor);
     }
 
     @NotNull

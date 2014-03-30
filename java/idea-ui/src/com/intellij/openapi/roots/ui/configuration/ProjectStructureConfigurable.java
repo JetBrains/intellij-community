@@ -60,6 +60,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
+
 public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, Place.Navigator {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
@@ -220,13 +222,40 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       addFacetsConfig();
       addArtifactsConfig();
     }
+
+    ProjectStructureConfigurableContributor[] adders = ProjectStructureConfigurableContributor.EP_NAME.getExtensions();
+    for (ProjectStructureConfigurableContributor adder : adders) {
+      for (Configurable configurable : adder.getExtraProjectConfigurables(myProject, myContext)) {
+        addConfigurable(configurable, true);
+      }
+    }
+
     mySidePanel.addSeparator("Platform Settings");
     addJdkListConfig();
     addGlobalLibrariesConfig();
+
+    for (ProjectStructureConfigurableContributor adder : adders) {
+      for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
+        addConfigurable(configurable, true);
+      }
+    }
   }
 
   private void addArtifactsConfig() {
-    addConfigurable(myArtifactsStructureConfigurable);
+    addConfigurable(myArtifactsStructureConfigurable, ConfigurableId.ARTIFACTS);
+  }
+
+  private void addConfigurable(final Configurable configurable, final ConfigurableId configurableId) {
+    addConfigurable(configurable, isAvailable(configurableId));
+  }
+
+  private boolean isAvailable(ConfigurableId id) {
+    for (ProjectStructureConfigurableFilter filter : ProjectStructureConfigurableFilter.EP_NAME.getExtensions()) {
+      if (!filter.isAvailable(id, myProject)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public ArtifactsStructureConfigurable getArtifactsStructureConfigurable() {
@@ -235,7 +264,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   private void addFacetsConfig() {
     if (myFacetStructureConfigurable.isVisible()) {
-      addConfigurable(myFacetStructureConfigurable);
+      addConfigurable(myFacetStructureConfigurable, ConfigurableId.FACETS);
     }
   }
 
@@ -244,25 +273,25 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       myJdkListConfig = JdkListConfigurable.getInstance(myProject);
       myJdkListConfig.init(myContext);
     }
-    addConfigurable(myJdkListConfig);
+    addConfigurable(myJdkListConfig, ConfigurableId.JDK_LIST);
   }
 
   private void addProjectConfig() {
     myProjectConfig = new ProjectConfigurable(myProject, myContext, myModuleConfigurator, myProjectJdksModel);
-    addConfigurable(myProjectConfig);
+    addConfigurable(myProjectConfig, ConfigurableId.PROJECT);
   }
 
   private void addProjectLibrariesConfig() {
-    addConfigurable(myProjectLibrariesConfig);
+    addConfigurable(myProjectLibrariesConfig, ConfigurableId.PROJECT_LIBRARIES);
   }
 
   private void addGlobalLibrariesConfig() {
-    addConfigurable(myGlobalLibrariesConfig);
+    addConfigurable(myGlobalLibrariesConfig, ConfigurableId.GLOBAL_LIBRARIES);
   }
 
   private void addModulesConfig() {
     myModulesConfig = ModuleStructureConfigurable.getInstance(myProject);
-    addConfigurable(myModulesConfig);
+    addConfigurable(myModulesConfig, ConfigurableId.MODULES);
   }
 
   @Override
@@ -579,10 +608,12 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return myProjectConfig;
   }
 
-  private void addConfigurable(Configurable configurable) {
+  private void addConfigurable(Configurable configurable, boolean addToSidePanel) {
     myName2Config.add(configurable);
 
-    mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
+    if (addToSidePanel) {
+      mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
+    }
   }
 
   private static Place createPlaceFor(final Configurable configurable) {
