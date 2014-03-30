@@ -249,13 +249,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testFindChildWithTrailingSpace() throws IOException {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
+    File tempDir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -267,13 +261,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testDirAttributeRefreshes() throws IOException {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
+    File tempDir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -371,13 +359,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
   }
 
   public void testFindChildByNamePerformance() throws IOException {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
+    File tempDir = createTempDirectory();
     final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -414,49 +396,34 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   }
 
-  public void testFindRootWithDenormalizedPath() {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        new File(res, "x.jar").createNewFile();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
-    VirtualFile jar = vDir.findChild("x.jar");
+  public void testFindRootWithDenormalizedPath() throws IOException {
+    File tempJar = IoTestUtil.createTestJar();
+    VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
-    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", JarFileSystem.getInstance());
-    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//"+ jar.getName()+"!/", JarFileSystem.getInstance());
+    JarFileSystem fs = JarFileSystem.getInstance();
+    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", fs);
+    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//"+ jar.getName()+"!/", fs);
     assertNotNull(root1);
     assertSame(root1, root2);
   }
 
-  public void testFindRootPerformance() {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        new File(res, "x.jar").createNewFile();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
-    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
-    final VirtualFile jar = vDir.findChild("x.jar");
+  public void testFindRootPerformance() throws IOException {
+    File tempJar = IoTestUtil.createTestJar();
+    final VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);
 
-    final NewVirtualFile root = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", JarFileSystem.getInstance());
+    final JarFileSystem fs = JarFileSystem.getInstance();
+    final NewVirtualFile root = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", fs);
     PlatformTestUtil.startPerformanceTest("find root is slow", 500, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         final String path = jar.getPath() + "!/";
-        final JarFileSystem fileSystem = JarFileSystem.getInstance();
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(500, null), null, false, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
             for (int i = 0; i < 1000; i++) {
-              NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fileSystem);
+              NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
               assertNotNull(rootJar);
               assertSame(root, rootJar);
             }
@@ -467,18 +434,13 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }).assertTiming();
   }
 
-  public void testNotCanonicallyNamedChild() {
-    File tempDir = new WriteAction<File>() {
-      @Override
-      protected void run(Result<File> result) throws Throwable {
-        File res = createTempDirectory();
-        new File(res, "libFiles").createNewFile();
-        new File(res, "CssInvalidElement").createNewFile();
-        new File(res, "extFiles").createNewFile();
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
-    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+  public void testNotCanonicallyNamedChild() throws IOException {
+    File tempDir = createTempDirectory();
+    assertTrue(new File(tempDir, "libFiles").createNewFile());
+    assertTrue(new File(tempDir, "CssInvalidElement").createNewFile());
+    assertTrue(new File(tempDir, "extFiles").createNewFile());
+
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
 

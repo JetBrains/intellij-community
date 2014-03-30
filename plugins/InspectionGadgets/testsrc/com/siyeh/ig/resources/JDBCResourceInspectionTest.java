@@ -54,7 +54,16 @@ public class JDBCResourceInspectionTest extends LightInspectionTestCase {
     doTest("import java.sql.*;" +
            "class X {" +
            "  void m(Driver driver) throws SQLException {" +
-           "    /*'Connection' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/driver.connect(\"jdbc\", null)/**/;" +
+           "    driver./*'Connection' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/connect/**/(\"jdbc\", null);" +
+           "  }" +
+           "}");
+  }
+
+  public void testPreparedStatement() {
+    doTest("import java.sql.*;" +
+           "class X {" +
+           "  void m(PreparedStatement s) throws SQLException {" +
+           "    ResultSet r = s./*'ResultSet' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/executeQuery/**/();" +
            "  }" +
            "}");
   }

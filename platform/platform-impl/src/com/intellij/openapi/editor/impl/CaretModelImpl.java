@@ -430,11 +430,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       myPerformCaretMergingAfterCurrentOperation = true;
       try {
         runnable.run();
+        mergeOverlappingCaretsAndSelections();
       }
       finally {
         myPerformCaretMergingAfterCurrentOperation = false;
       }
-      mergeOverlappingCaretsAndSelections();
     }
   }
 

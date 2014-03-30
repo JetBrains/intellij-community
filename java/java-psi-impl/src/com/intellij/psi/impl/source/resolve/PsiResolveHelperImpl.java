@@ -127,11 +127,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
   }
 
-  @Override
   @NotNull
-  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr, boolean dummyImplicitConstructor) {
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression expr,
+                                                       boolean dummyImplicitConstructor,
+                                                       final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile);
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile) {
+      @Override
+      protected boolean acceptVarargs() {
+        return checkVarargs;
+      }
+    };
     try {
       PsiScopesUtil.setupAndRunProcessor(processor, expr, dummyImplicitConstructor);
     }
@@ -139,6 +146,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return CandidateInfo.EMPTY_ARRAY;
     }
     return processor.getCandidates();
+  }
+
+  @NotNull
+  @Override
+  public CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor) {
+    return getReferencedMethodCandidates(call, dummyImplicitConstructor, false);
   }
 
   @Override

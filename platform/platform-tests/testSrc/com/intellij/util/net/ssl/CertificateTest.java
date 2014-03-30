@@ -90,14 +90,14 @@ public class CertificateTest extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CertificatesManager certificatesManager = CertificatesManager.getInstance();
+    CertificateManager certificateManager = CertificateManager.getInstance();
     myClient = HttpClientBuilder.create()
-      .setSslcontext(certificatesManager.getSslContext())
+      .setSslcontext(certificateManager.getSslContext())
       .setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
       .build();
 
     // add CA certificate
-    myTrustManager = certificatesManager.getCustomTrustManager();
+    myTrustManager = certificateManager.getCustomTrustManager();
     assertTrue(myTrustManager.addCertificate(getTestDataPath() + "certificates/ca.crt"));
     assertTrue(myTrustManager.containsCertificate(AUTHORITY_CN));
   }

@@ -202,6 +202,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     ourToolbars.add(this);
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
+    
+    // should update action right on the showing, otherwise toolbar may not be displayed at all,
+    // since by default all updates are postponed until frame gets focused.  
+    updateActionsImmediately();
   }
 
   private boolean doMacEnhancementsForMainToolbar() {

@@ -1,11 +1,12 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
-import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -14,24 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.*;
 
-/**
- * @author Nadya Zabrodina
- */
 public class VcsTestUtil {
 
-  // TODO: option - create via IDEA or via java.io. In latter case no need in Project parameter.
-  public static VirtualFile createFile(@NotNull Project project,
-                                       @NotNull final VirtualFile parent,
-                                       @NotNull final String name,
+  public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
                                        @Nullable final String content) {
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
     new WriteCommandAction.Simple(project) {
@@ -53,7 +47,6 @@ public class VcsTestUtil {
   }
 
   /**
-   * TODO: option - create via IDEA or via java.io. In latter case no need in Project parameter.
    * Creates directory inside a write action and returns the resulting reference to it.
    * If the directory already exists, does nothing.
    *
@@ -81,24 +74,106 @@ public class VcsTestUtil {
     return result.get();
   }
 
-  /**
-   * Testng compares by iterating over 2 collections, but it won't work for sets which may have different order.
-   */
-  public static <T> void assertEqualCollections(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+  public static void renameFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newName) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.rename(this, newName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute().throwException();
+  }
+
+  public static void deleteFileInCommand(@NotNull Project project, @NotNull final VirtualFile file) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.delete(this);
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }.execute();
+  }
+
+  public static void editFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newContent) {
+    assertTrue(file.isValid());
+    file.getTimeStamp();
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
+          file.setBinaryContent(newContent.getBytes(), -1, newTs);
+          final File file1 = new File(file.getPath());
+          FileUtil.writeToFile(file1, newContent.getBytes());
+          file.refresh(false, false);
+          assertTrue(file1 + " / " + newTs, file1.setLastModified(newTs));
+        }
+        catch(IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }.execute();
+  }
+
+  public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
+                                              @NotNull final VirtualFile newParent, @NotNull final String newName) {
+    return new WriteCommandAction<VirtualFile>(project) {
+      @Override
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+        try {
+          result.setResult(file.copy(this, newParent, newName));
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void moveFileInCommand(@NotNull  Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+    new WriteCommandAction.Simple(project) {
+      @Override
+      protected void run() throws Throwable {
+        try {
+          file.move(this, newParent);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.execute();
+  }
+
+  public static <T> void assertEqualCollections(@NotNull String message, @NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+    if (!StringUtil.isEmptyOrSpaces(message) && !message.endsWith(":") && !message.endsWith(": ")) {
+      message += ": ";
+    }
     if (actual.size() != expected.size()) {
-      fail("Collections don't have the same size. " + stringifyActualExpected(actual, expected));
+      fail(message + "Collections don't have the same size. " + stringifyActualExpected(actual, expected));
     }
     for (T act : actual) {
       if (!expected.contains(act)) {
-        fail("Unexpected object " + act + stringifyActualExpected(actual, expected));
+        fail(message + "Unexpected object " + act + stringifyActualExpected(actual, expected));
       }
     }
     // backwards is needed for collections which may contain duplicates, e.g. Lists.
     for (T exp : expected) {
       if (!actual.contains(exp)) {
-        fail("Object " + exp + " not found in actual collection." + stringifyActualExpected(actual, expected));
+        fail(message + "Object " + exp + " not found in actual collection." + stringifyActualExpected(actual, expected));
       }
     }
+  }
+
+  public static <T> void assertEqualCollections(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
+    assertEqualCollections("", actual, expected);
   }
 
   /**
@@ -145,52 +220,9 @@ public class VcsTestUtil {
     return false;
   }
 
-  public static Object[][] loadConfigData(@NotNull File dataFolder) throws IOException {
-    File[] tests = dataFolder.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return !name.startsWith(".");
-      }
-    });
-    Object[][] data = new Object[tests.length][];
-    for (int i = 0; i < tests.length; i++) {
-      File testDir = tests[i];
-      File descriptionFile = null;
-      File configFile = null;
-      File resultFile = null;
-      for (File file : testDir.listFiles()) {
-        if (file.getName().endsWith("_desc.txt")) {
-          descriptionFile = file;
-        }
-        else if (file.getName().endsWith("_config.txt")) {
-          configFile = file;
-        }
-        else if (file.getName().endsWith("_result.txt")) {
-          resultFile = file;
-        }
-      }
-      assertNotNull(String.format("description file not found in %s among %s", testDir, Arrays.toString(testDir.list())), descriptionFile);
-      assertNotNull(String.format("config file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), configFile);
-      assertNotNull(String.format("result file file not found in %s among %s", testDir, Arrays.toString(testDir.list())), resultFile);
-
-      String testName = FileUtil.loadFile(descriptionFile).split("\n")[0]; // description is in the first line of the desc-file
-      data[i] = new Object[]{
-        testName, configFile, resultFile
-      };
-    }
-    return data;
-  }
-
-  @NotNull
-  public static File getTestDataFolder() {
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    return new File(pluginRoot, "testData");
-  }
-
   public interface EqualityChecker<T, E> {
     boolean areEqual(T actual, E expected);
   }
-
 
   @NotNull
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return "Groovy script";
   }
 
+  @NotNull
   public GrTypeDefinition[] getTypeDefinitions() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
@@ -100,10 +101,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.TYPE_DEFINITION_TYPES, GrTypeDefinition.ARRAY_FACTORY);
   }
 
+  @NotNull
   public GrTopLevelDefinition[] getTopLevelDefinitions() {
     return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
+  @NotNull
   public GrMethod[] getCodeMethods() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
@@ -113,6 +116,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return calcTreeElement().getChildrenAsPsiElements(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
   }
 
+  @NotNull
   @Override
   public GrMethod[] getMethods() {
     if (myMethods == null) {
@@ -134,6 +138,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return myMethods;
   }
 
+  @NotNull
   public GrTopStatement[] getTopStatements() {
     return findChildrenByClass(GrTopStatement.class);
   }
@@ -142,7 +147,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return addImportForClass(aClass) != null;
   }
 
-  public void removeImport(GrImportStatement importStatement) throws IncorrectOperationException {
+  public void removeImport(@NotNull GrImportStatement importStatement) throws IncorrectOperationException {
     PsiElement before = importStatement;
     while (isWhiteSpaceOrNls(before.getPrevSibling())) {
       before = before.getPrevSibling();
@@ -317,7 +322,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
-  protected static int getPackageEntryIdx(PackageEntry[] entries, GrImportStatement statement) {
+  protected static int getPackageEntryIdx(@NotNull PackageEntry[] entries, @NotNull GrImportStatement statement) {
     final GrCodeReferenceElement reference = statement.getImportReference();
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());

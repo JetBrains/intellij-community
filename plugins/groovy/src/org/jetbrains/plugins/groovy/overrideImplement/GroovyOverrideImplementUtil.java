@@ -28,11 +28,12 @@ import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -149,9 +150,10 @@ public class GroovyOverrideImplementUtil {
 
     try {
       String bodyText = StringUtil.replace(template.getText(properties), ";", "");
-      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n " + bodyText + "\n");
+      GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile("\n " + bodyText + "\n", false, null);
 
-      resultMethod.setBlock(newBody);
+      GrOpenBlock block = resultMethod.getBlock();
+      block.getNode().addChildren(file.getFirstChild().getNode(), null, block.getRBrace().getNode());
     }
     catch (IOException e) {
       LOG.error(e);

@@ -17,8 +17,8 @@
 package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
@@ -38,8 +38,7 @@ public class GraphBuilderHashIndexTest extends AbstractTestWithTextFile {
   @Override
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    GraphFlags flags = new GraphFlags(commits.size());
-    PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits).first;
+    PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
 
     assertEquals(out, permanentGraphToHashIndex(graph));
   }

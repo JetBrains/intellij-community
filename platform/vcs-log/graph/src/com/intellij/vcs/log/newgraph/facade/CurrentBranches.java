@@ -20,7 +20,7 @@ import com.intellij.vcs.log.InvalidRequestException;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -5,16 +5,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.graph.*;
+import com.intellij.vcs.log.graph.GraphColorManagerImpl;
+import com.intellij.vcs.log.graph.GraphFacade;
 import com.intellij.vcs.log.newgraph.facade.GraphFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.List;
 
 public class DataPack implements VcsLogDataPack {
-
-  private static final boolean USE_NEW_FACADE = true;
 
   @NotNull private final RefsModel myRefsModel;
   @NotNull private final GraphFacade myGraphFacade;
@@ -30,17 +28,12 @@ public class DataPack implements VcsLogDataPack {
     indicator.setText("Building graph...");
     final RefsModel refsModel = new RefsModel(allRefs, indexGetter);
     GraphColorManagerImpl colorManager = new GraphColorManagerImpl(refsModel, hashGetter, getRefManagerMap(providers));
-    if (USE_NEW_FACADE) {
-      if (!commits.isEmpty()) {
-        return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager),
-                            providers);
-      }
-      else {
-        return new DataPack(refsModel, new EmptyGraphFacade(), providers);
-      }
-    } else {
-      GraphFacade graphFacade = new GraphFacadeBuilderImpl().build(commits, refsModel, colorManager);
-      return new DataPack(refsModel, graphFacade, providers);
+    if (!commits.isEmpty()) {
+      return new DataPack(refsModel, GraphFacadeImpl.newInstance(commits, getBranchCommitHashIndexes(allRefs, indexGetter), colorManager),
+                          providers);
+    }
+    else {
+      return new DataPack(refsModel, new EmptyGraphFacade(), providers);
     }
   }
 

@@ -80,8 +80,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiCallExpression) {
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
       if (argumentList != null) {
-        final JavaResolveResult resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
-        final PsiMethod method = (PsiMethod)resolveResult.getElement();
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)myExpression).getArgumentList());
+        final JavaResolveResult resolveResult = candidateProperties != null ? null : ((PsiCallExpression)myExpression).resolveMethodGenerics();
+        final PsiMethod method = candidateProperties != null ? candidateProperties.getMethod() : (PsiMethod)resolveResult.getElement();
         PsiType returnType = null;
         PsiTypeParameter[] typeParams = null;
         if (method != null && !method.isConstructor()) {
@@ -117,8 +118,15 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
               params[i] = typeParams[i];
             }
           }
-          final PsiSubstitutor siteSubstitutor = resolveResult instanceof MethodCandidateInfo && method != null && !method.isConstructor() 
-                                                 ? ((MethodCandidateInfo)resolveResult).getSiteSubstitutor() : PsiSubstitutor.EMPTY;
+          PsiSubstitutor siteSubstitutor = PsiSubstitutor.EMPTY;
+          if (method != null && !method.isConstructor()) {
+            if (resolveResult instanceof MethodCandidateInfo) {
+              siteSubstitutor = ((MethodCandidateInfo)resolveResult).getSiteSubstitutor();
+            }
+            else if (candidateProperties != null) {
+              siteSubstitutor = candidateProperties.getSubstitutor();
+            }
+          }
           for (PsiTypeParameter typeParameter : siteSubstitutor.getSubstitutionMap().keySet()) {
             substitutor = substitutor.put(typeParameter, substitutor.substitute(siteSubstitutor.substitute(typeParameter)));
           }
@@ -129,7 +137,8 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           if (method != null) {
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            callSession.initExpressionConstraints(parameters, args, myExpression, method, resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs());
+            callSession.initExpressionConstraints(parameters, args, myExpression, method, resolveResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)resolveResult).isVarargs() || 
+                                                                                          candidateProperties != null && candidateProperties.isVarargs());
           }
           final boolean accepted = callSession.repeatInferencePhases(true);
           if (!accepted) {

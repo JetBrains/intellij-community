@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,36 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class VMOptionsTest extends UsefulTestCase {
+import static org.junit.Assert.*;
+
+public class VMOptionsTest {
   private File myFile;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  @Before
+  public void setUp() throws IOException {
     myFile = FileUtil.createTempFile("vmoptions.", ".txt");
     writeFile("-Xmx512m\n" +
               "-XX:MaxPermSize=128m");
     VMOptions.setTestFile(myFile.getPath());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      VMOptions.clearTestFile();
-      //noinspection ResultOfMethodCallIgnored
-      myFile.delete();
-    }
-    finally {
-      super.tearDown();
-    }
+  @After
+  public void tearDown() {
+    VMOptions.clearTestFile();
+    FileUtil.delete(myFile);
   }
 
-  public void testRegExpr() throws Exception {
+  @Test
+  public void testRegExpr() {
     Pattern p = Pattern.compile("-Xmx(\\d*)([a-zA-Z]*)");
 
     Matcher m = p.matcher("-option -Xmx128mb -option");
@@ -67,7 +64,8 @@ public class VMOptionsTest extends UsefulTestCase {
     assertFalse(m.find());
   }
 
-  public void testMacOsRegExpr() throws Exception {
+  @Test
+  public void testMacOsRegExpr() {
     Pattern p = Pattern.compile("<key>" + VMOptions.MAC_ARCH_VM_OPTIONS + "</key>\\s*<string>(.*)</string>");
 
     Matcher m = p.matcher("<plist version=\"1.0\">\n" +
@@ -83,19 +81,22 @@ public class VMOptionsTest extends UsefulTestCase {
     assertEquals("-option -Xmx128mb -option", m.group(1));
   }
 
-  public void testReading() throws Exception {
+  @Test
+  public void testReading() {
     assertEquals(512, VMOptions.readXmx());
     assertEquals(128, VMOptions.readMaxPermGen());
   }
 
-  public void testReadingEmpty() throws Exception {
+  @Test
+  public void testReadingEmpty() {
     writeFile("");
 
     assertEquals(-1, VMOptions.readXmx());
     assertEquals(-1, VMOptions.readMaxPermGen());
   }
 
-  public void testReadingKilos() throws Exception {
+  @Test
+  public void testReadingKilos() {
     writeFile("-Xmx512000k\n" +
               "-XX:MaxPermSize=128000K  -XX:ReservedCodeCacheSize=256000K");
 
@@ -104,7 +105,8 @@ public class VMOptionsTest extends UsefulTestCase {
     assertEquals(256000 / 1024, VMOptions.readCodeCache());
   }
 
-  public void testReadingGigs() throws Exception {
+  @Test
+  public void testReadingGigs() {
     writeFile("-Xmx512g\n" +
               "-XX:MaxPermSize=128G");
 
@@ -112,7 +114,8 @@ public class VMOptionsTest extends UsefulTestCase {
     assertEquals(128 * 1024, VMOptions.readMaxPermGen());
   }
 
-  public void testReadingWithoutUnit() throws Exception {
+  @Test
+  public void testReadingWithoutUnit() {
     writeFile("-Xmx512\n" +
               "-XX:MaxPermSize=128");
 
@@ -120,7 +123,8 @@ public class VMOptionsTest extends UsefulTestCase {
     assertEquals(128, VMOptions.readMaxPermGen());
   }
 
-  public void testWriting() throws Exception {
+  @Test
+  public void testWriting() {
     VMOptions.writeXmx(1024);
     VMOptions.writeMaxPermGen(256);
 
@@ -129,7 +133,8 @@ public class VMOptionsTest extends UsefulTestCase {
                  readFile());
   }
 
-  public void testWritingPreservingLocation() throws Exception {
+  @Test
+  public void testWritingPreservingLocation() {
     writeFile("-someOption\n" +
               "-Xmx512m\n" +
               "-XX:MaxPermSize=128m\n" +
@@ -145,7 +150,8 @@ public class VMOptionsTest extends UsefulTestCase {
                  readFile());
   }
 
-  public void testWritingNew() throws Exception {
+  @Test
+  public void testWritingNew() {
     writeFile("-someOption");
 
     VMOptions.writeXmx(1024);
@@ -156,9 +162,10 @@ public class VMOptionsTest extends UsefulTestCase {
                  readFile());
   }
 
-  public void testWritingReadOnlyFile() throws Exception {
+  @Test
+  public void testWritingReadOnlyFile() {
     FileUtil.setReadOnlyAttribute(myFile.getPath(), true);
-    
+
     VMOptions.writeXmx(1024);
     VMOptions.writeMaxPermGen(256);
 
@@ -168,11 +175,22 @@ public class VMOptionsTest extends UsefulTestCase {
   }
 
 
-  private String readFile() throws IOException {
-    return FileUtil.loadFile(myFile);
+  private String readFile() {
+    try {
+      return FileUtil.loadFile(myFile);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private void writeFile(String content) throws IOException {
-    FileUtil.writeToFile(myFile, content.getBytes());
+  private void writeFile(String content) {
+    @SuppressWarnings("SSBasedInspection") byte[] bytes = content.getBytes();
+    try {
+      FileUtil.writeToFile(myFile, bytes);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

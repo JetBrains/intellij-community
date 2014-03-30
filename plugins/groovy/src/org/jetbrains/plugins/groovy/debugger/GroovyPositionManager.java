@@ -69,7 +69,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @NotNull
-  public List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException {
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     try {
       int line = position.getLine() + 1;
       List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
@@ -108,7 +108,7 @@ public class GroovyPositionManager implements PositionManager {
     }
   }
 
-  public ClassPrepareRequest createPrepareRequest(final ClassPrepareRequestor requestor, final SourcePosition position)
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
     String qName = getOuterClassName(position);
     if (qName != null) {
@@ -271,7 +271,7 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @NotNull
-  public List<ReferenceType> getAllClasses(final SourcePosition position) throws NoDataException {
+  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
     List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       public List<ReferenceType> compute() {
         GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);

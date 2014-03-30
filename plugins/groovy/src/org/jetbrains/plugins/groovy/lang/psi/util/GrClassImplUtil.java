@@ -61,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.*;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -365,18 +367,6 @@ public class GrClassImplUtil {
 
 
     return true;
-  }
-
-  public static boolean shouldProcessClasses(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
-  }
-
-  public static boolean shouldProcessMethods(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
-  }
-
-  public static boolean shouldProcessProperties(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
   }
 
   private static boolean processField(@NotNull GrTypeDefinition grType,

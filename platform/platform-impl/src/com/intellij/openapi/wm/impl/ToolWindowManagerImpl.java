@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.Patches;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
@@ -1171,8 +1172,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Create decorator
 
-    final ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
-    final InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
     toolWindow.addPropertyChangeListener(myToolWindowPropertyChangeListener);
@@ -1394,7 +1396,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
-      stripe.updateState();
+      stripe.updatePresentation();
       stripe.revalidate();
       stripe.repaint();
     }
@@ -1438,7 +1440,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       @Override
       public void dispose() {
         window.setPlaceholderMode(false);
-        stripe.updateState();
+        stripe.updatePresentation();
         stripe.revalidate();
         stripe.repaint();
         myWindow2Balloon.remove(toolWindowId);
@@ -2139,13 +2141,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class MyToolWindowPropertyChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(final PropertyChangeEvent e) {
-      final ToolWindowImpl toolWindow = (ToolWindowImpl)e.getSource();
+      ToolWindowImpl toolWindow = (ToolWindowImpl)e.getSource();
       if (ToolWindowEx.PROP_AVAILABLE.equals(e.getPropertyName())) {
         final WindowInfoImpl info = getInfo(toolWindow.getId());
         if (!toolWindow.isAvailable() && info.isVisible()) {
           hideToolWindow(toolWindow.getId(), false);
         }
       }
+      StripeButton button = myId2StripeButton.get(toolWindow.getId());
+      if (button != null) button.updatePresentation();
+      ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow);
     }
   }
 

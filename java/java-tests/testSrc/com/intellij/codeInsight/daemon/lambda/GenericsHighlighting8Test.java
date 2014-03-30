@@ -752,7 +752,13 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSuperWildcardWithBoundPromotion() { doTest();}
-  
+
+  public void testErasure() throws Exception { doTest(); }
+
+  public void testWildcardBoundsCombination() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

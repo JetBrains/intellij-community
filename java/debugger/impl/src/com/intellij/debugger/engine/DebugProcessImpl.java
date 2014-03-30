@@ -1774,6 +1774,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     });
 
+    // reload to make sure that source positions are initialized
+    DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().reloadBreakpoints();
 
     getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override

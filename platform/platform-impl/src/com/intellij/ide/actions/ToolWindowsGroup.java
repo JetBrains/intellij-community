@@ -15,145 +15,67 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
  */
-public final class ToolWindowsGroup extends ActionGroup {
-  private static final HashMap<String, MyDescriptor> ourId2Text;
-  static{
-    ourId2Text = new HashMap<String, MyDescriptor>();
-    ourId2Text.put(ToolWindowId.COMMANDER, new MyDescriptor(IdeBundle.message("action.toolwindow.commander"),
-                                                            AllIcons.Toolwindows.ToolWindowCommander));
-    ourId2Text.put(ToolWindowId.MESSAGES_WINDOW, new MyDescriptor(IdeBundle.message("action.toolwindow.messages"),
-                                                                  AllIcons.Toolwindows.ToolWindowMessages));
-    ourId2Text.put(ToolWindowId.PROJECT_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.project"),
-                                                               AllIcons.Toolwindows.ToolWindowProject));
-    ourId2Text.put(ToolWindowId.STRUCTURE_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.structure"),
-                                                                 AllIcons.Toolwindows.ToolWindowStructure));
-    ourId2Text.put(ToolWindowId.ANT_BUILD, new MyDescriptor(IdeBundle.message("action.toolwindow.ant.build"),
-                                                            AllIcons.Toolwindows.ToolWindowAnt));
-    ourId2Text.put(ToolWindowId.DEBUG, new MyDescriptor(IdeBundle.message("action.toolwindow.debug"), AllIcons.Toolwindows.ToolWindowDebugger));
-    ourId2Text.put(ToolWindowId.RUN, new MyDescriptor(IdeBundle.message("action.toolwindow.run"), AllIcons.Toolwindows.ToolWindowRun));
-    ourId2Text.put(ToolWindowId.FIND, new MyDescriptor(IdeBundle.message("action.toolwindow.find"), AllIcons.Toolwindows.ToolWindowFind));
-    ourId2Text.put(ToolWindowId.CVS, new MyDescriptor(IdeBundle.message("action.toolwindow.cvs"), AllIcons.Toolwindows.ToolWindowCvs));
-    ourId2Text.put(ToolWindowId.HIERARCHY, new MyDescriptor(IdeBundle.message("action.toolwindow.hierarchy"),
-                                                            AllIcons.Toolwindows.ToolWindowHierarchy));
-    ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.todo"), AllIcons.Toolwindows.ToolWindowTodo));
-    ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor(IdeBundle.message("action.toolwindow.inspection"),
-                                                             AllIcons.Toolwindows.ToolWindowInspection));
-    ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.favorites"),
-                                                                 AllIcons.Toolwindows.ToolWindowFavorites));
-  }
+public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
 
-  private final ArrayList<ActivateToolWindowAction> myChildren;
-  private final MyToolWindowManagerListener myToolWindowManagerListener;
+  private static final Comparator<ActivateToolWindowAction> COMPARATOR = new Comparator<ActivateToolWindowAction>() {
+    public int compare(ActivateToolWindowAction a1, ActivateToolWindowAction a2) {
+      int m1 = ActivateToolWindowAction.getMnemonicForToolWindow(a1.getToolWindowId());
+      int m2 = ActivateToolWindowAction.getMnemonicForToolWindow(a2.getToolWindowId());
 
-  public ToolWindowsGroup(ProjectManager projectManager){
-    myChildren = new ArrayList<ActivateToolWindowAction>();
-    myToolWindowManagerListener=new MyToolWindowManagerListener();
-    projectManager.addProjectManagerListener(new MyProjectManagerListener());
+      if (m1 != -1 && m2 == -1) {
+        return -1;
+      }
+      else if (m1 == -1 && m2 != -1) {
+        return 1;
+      }
+      else if (m1 != -1) {
+        return m1 - m2;
+      }
+      else {
+      // Both actions have no mnemonic, therefore they are sorted alphabetically
+        return a1.getToolWindowId().compareToIgnoreCase(a2.getToolWindowId());
+      }
+    }
+  };
+
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
   }
 
   @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e){
-    return myChildren.toArray(new AnAction[myChildren.size()]);
-  }
-
-  /**
-   * Registers action that activates tool window with specified <code>id</code>.
-   */
-  private void addActionForToolWindow(final String id){
-    // Check that tool window with the same ID isn't already registered
-    for (final ActivateToolWindowAction action : myChildren) {
-      if (action.getToolWindowId().equals(id)) {
-        return;
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    Project project = getEventProject(e);
+    if (project == null) return EMPTY_ARRAY;
+    ActionManager actionManager = ActionManager.getInstance();
+    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    List<ActivateToolWindowAction> result = ContainerUtil.newArrayList();
+    for (String id : manager.getToolWindowIds()) {
+      String actionId = ActivateToolWindowAction.getActionIdForToolWindow(id);
+      AnAction action = actionManager.getAction(actionId);
+      if (action instanceof ActivateToolWindowAction) {
+        result.add((ActivateToolWindowAction)action);
       }
     }
-    // Register an action for activating this tool window
-    final MyDescriptor descriptor = ourId2Text.get(id);
-
-    final String text = descriptor != null ? descriptor.myText : id;
-    final Icon icon = descriptor != null ? descriptor.myIcon : null;
-
-    ActivateToolWindowAction action = new ActivateToolWindowAction(id, text, icon);
-    ActionManager.getInstance().registerAction(ActivateToolWindowAction.getActionIdForToolWindow(id),action);
-    myChildren.add(action);
-    Collections.sort(myChildren,MyActionComparator.ourInstance);
-  }
-
-  private final class MyProjectManagerListener extends ProjectManagerAdapter{
-    public void projectClosed(Project project){
-      final ToolWindowManagerEx windowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
-      if (windowManagerEx == null) return;
-      windowManagerEx.removeToolWindowManagerListener(myToolWindowManagerListener);
-    }
-
-    public void projectOpened(Project project){
-      final ToolWindowManagerEx toolWindowManager=ToolWindowManagerEx.getInstanceEx(project);
-      if (toolWindowManager == null) return; //headless environment
-      final String[] ids=toolWindowManager.getToolWindowIds();
-      for (String id : ids) {
-        addActionForToolWindow(id);
-      }
-      toolWindowManager.addToolWindowManagerListener(myToolWindowManagerListener);
-    }
-  }
-
-  private static final class MyActionComparator implements Comparator<ActivateToolWindowAction> {
-    public static final MyActionComparator ourInstance=new MyActionComparator();
-
-    private MyActionComparator(){}
-
-    public int compare(ActivateToolWindowAction action1, ActivateToolWindowAction action2){
-      int mnemonic1=ActivateToolWindowAction.getMnemonicForToolWindow(action1.getToolWindowId());
-      int mnemonic2=ActivateToolWindowAction.getMnemonicForToolWindow(action2.getToolWindowId());
-
-      if(mnemonic1!=-1&&mnemonic2==-1){
-        return -1;
-      }else if(mnemonic1==-1&&mnemonic2!=-1){
-        return 1;
-      }else if(mnemonic1!=-1){
-        return mnemonic1-mnemonic2;
-      }else{ // Both actions have no mnemonic, therefore they are sorted alphabetically
-        return action1.getToolWindowId().compareToIgnoreCase(action2.getToolWindowId());
-      }
-    }
-  }
-
-  private final class MyToolWindowManagerListener extends ToolWindowManagerAdapter{
-    public void toolWindowRegistered(@NotNull String id){
-      addActionForToolWindow(id);
-    }
-  }
-
-  private static final class MyDescriptor{
-    public final String myText;
-    public final Icon myIcon;
-
-    public MyDescriptor(String text, Icon icon) {
-      myText = text;
-      myIcon = icon;
-    }
+    Collections.sort(result, COMPARATOR);
+    return result.toArray(new AnAction[result.size()]);
   }
 }

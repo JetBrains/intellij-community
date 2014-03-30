@@ -36,8 +36,8 @@ import java.awt.image.BufferedImage;
 public class SheetController {
 
   private static String fontName = "Lucida Grande";
-  private static Font regularFont = new Font(fontName, Font.PLAIN, 12);
-  private static Font boldFont = new Font(fontName, Font.BOLD, 14).deriveFont(Font.BOLD);
+  private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
+  private static Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
   private final DialogWrapper.DoNotAskOption myDoNotAskOption;
   private JCheckBox doNotAskCheckBox;
   private boolean myDoNotAskResult;
@@ -48,9 +48,18 @@ public class SheetController {
   private JButton myDefaultButton;
   private JButton myFocusedButton;
 
-  private static int RIGHT_OFFSET = 15;
+  public static int SHADOW_BORDER = 5;
 
-  public int SHADOW_BORDER = 10;
+  private static int RIGHT_OFFSET = 20 + SHADOW_BORDER;
+  private static int BOTTOM_SHEET_PADDING = 10;
+
+  private final static int TOP_SHEET_PADDING = 20;
+  private final static int GAP_BETWEEN_LINES = 10;
+
+  private final static int LEFT_SHEET_PADDING = 35;
+  private final static int LEFT_SHEET_OFFSET = 120;
+
+  private static int GAP_BETWEEN_BUTTONS = 5;
 
   // SHEET
   public int SHEET_WIDTH = 400;
@@ -108,6 +117,10 @@ public class SheetController {
       }
     }
 
+    if (myFocusedButton == null) {
+      myFocusedButton = myDefaultButton;
+    }
+
     if (myResult == null) {
       myResult = buttonTitles[0];
     }
@@ -128,7 +141,7 @@ public class SheetController {
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.95f);
+    renderer.setOpacity(.75f);
     renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
@@ -182,12 +195,9 @@ public class SheetController {
     return mySheetPanel;
   }
 
-  private final static int TOP_SHEET_PADDING = 15;
-  private final static int GAP_BETWEEN_LINES = 10;
-
-  private final static int LEFT_SHEET_PADDING = 35;
-  private final static int LEFT_SHEET_OFFSET = 120;
-
+  private static float getSheetAlpha() {
+    return ((UIUtil.isUnderDarcula())) ? .95f : .85f;
+  }
 
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
     JPanel sheetPanel = new JPanel() {
@@ -195,7 +205,7 @@ public class SheetController {
       protected void paintComponent(Graphics g2d) {
         final Graphics2D g = (Graphics2D) g2d.create();
         super.paintComponent(g);
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .95f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
         g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
@@ -208,6 +218,7 @@ public class SheetController {
           //todo make bottom corners
           g.fill(dialog);
         }
+        paintShadowFromParent(g);
       }
 
     };
@@ -285,15 +296,15 @@ public class SheetController {
     headerLabel.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING);
     messageTextPane.setLocation(LEFT_SHEET_OFFSET, TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_LINES);
 
-    SHEET_HEIGHT = TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_LINES + messageArea.height
-                   + GAP_BETWEEN_LINES;
-
+    SHEET_HEIGHT = TOP_SHEET_PADDING + headerLabel.getPreferredSize().height + GAP_BETWEEN_LINES + messageArea.height + GAP_BETWEEN_LINES;
 
     if (myDoNotAskOption != null) {
       layoutDoNotAskCheckbox(sheetPanel);
     }
 
     layoutWithAbsoluteLayout(buttons, sheetPanel);
+
+    SHEET_HEIGHT += BOTTOM_SHEET_PADDING;
 
     sheetPanel.setFocusCycleRoot(true);
 
@@ -320,32 +331,46 @@ public class SheetController {
     g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 
+
+  private static float getShadowAlpha() {
+    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+  }
+
+  private void paintShadowFromParent(Graphics2D g2d) {
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
+    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
+  }
+
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int buttonsWidth = RIGHT_OFFSET;
-
-
+    int widestButtonWidth = 0;
 
     for (JButton button : buttons) {
-      panel.add(button);
       button.repaint();
-      buttonsWidth += button.getPreferredSize().width + 10;
+      widestButtonWidth = Math.max(button.getPreferredSize().width, widestButtonWidth);
     }
+
+    for (JButton button : buttons) {
+      button.setSize(widestButtonWidth, button.getPreferredSize().height);
+      panel.add(button);
+    }
+
+    int buttonsWidth = (widestButtonWidth + GAP_BETWEEN_BUTTONS) * buttons.length + RIGHT_OFFSET;
 
     SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
 
     int buttonShift = 0;
 
     for (JButton button : buttons) {
-      Dimension size = button.getPreferredSize();
+      Dimension size = button.getSize();
       buttonShift += size.width;
       button.setBounds(SHEET_WIDTH - buttonShift,
                        SHEET_HEIGHT,
                        size.width, size.height);
-      buttonShift += 10;
+      buttonShift += GAP_BETWEEN_BUTTONS;
     }
 
-    SHEET_HEIGHT += buttons[0].getHeight() + GAP_BETWEEN_LINES;
+    SHEET_HEIGHT += buttons[0].getHeight();
   }
 
   private void layoutDoNotAskCheckbox(JPanel sheetPanel) {
@@ -359,11 +384,10 @@ public class SheetController {
     doNotAskCheckBox.repaint();
     doNotAskCheckBox.setSize(doNotAskCheckBox.getPreferredSize());
 
-
     doNotAskCheckBox.setLocation(LEFT_SHEET_OFFSET, SHEET_HEIGHT);
     sheetPanel.add(doNotAskCheckBox);
 
-    SHEET_HEIGHT += doNotAskCheckBox.getHeight() + GAP_BETWEEN_LINES;
+    SHEET_HEIGHT += doNotAskCheckBox.getHeight();
   }
 
   /**

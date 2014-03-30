@@ -134,13 +134,8 @@ public class BreakpointManager {
       @Override
       public void changeEvent(@NotNull DebuggerContextImpl newContext, int event) {
         if (event == DebuggerSession.EVENT_ATTACHED) {
-          // notify about possibly slow method breakpoints
-          for (XLineBreakpoint breakpoint : getXBreakpointManager().getBreakpoints(JavaMethodBreakpointType.class)) {
-            if (breakpoint.isEnabled()) {
-              XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(
-                myProject);
-              break;
-            }
+          for (XBreakpoint breakpoint : getXBreakpointManager().getAllBreakpoints()) {
+            if (checkAndNotifyPossiblySlowBreakpoint(breakpoint)) break;
           }
         }
         if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.EVENT_DETACHED) {
@@ -149,6 +144,15 @@ public class BreakpointManager {
         }
       }
     });
+  }
+
+  private boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
+    if (breakpoint.isEnabled() &&
+        (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
+      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
+      return true;
+    }
+    return false;
   }
 
   public void init() {
@@ -322,8 +326,6 @@ public class BreakpointManager {
     if (breakpoint == null) {
       return null;
     }
-
-    XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
 
     addBreakpoint(breakpoint);
     return breakpoint;
@@ -607,9 +609,7 @@ public class BreakpointManager {
     breakpoint.updateUI();
     RequestManagerImpl.createRequests(breakpoint);
     myDispatcher.getMulticaster().breakpointsChanged();
-    if (breakpoint instanceof MethodBreakpoint || breakpoint instanceof WildcardMethodBreakpoint) {
-      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
-    }
+    checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
   }
 
   private synchronized void onBreakpointAdded(XBreakpoint xBreakpoint) {

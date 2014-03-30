@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
@@ -88,7 +89,7 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
     }
     assertTrue(i < emptyActions.size());
     for (; i < emptyActions.size(); i++) {
-      if (emptyActions.get(i) instanceof EmptyIntentionAction) {
+      if (emptyActions.get(i) instanceof EditInspectionToolsSettingsAction) {
         return;
       }
     }

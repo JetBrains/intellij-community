@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
+import com.intellij.vcs.log.facade.utils.impl.IDIntToIntMap;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.gpaph.Edge;
@@ -22,7 +23,6 @@ import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.utils.impl.IDIntToInt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class PermanentAsMutableGraph extends MutableGraphWithHiddenNodes<Permane
   public PermanentAsMutableGraph(@NotNull PermanentGraph graph,
                                  @NotNull PermanentGraphLayout layout,
                                  @NotNull ThickHoverController thickHoverController) {
-    super(new IDIntToInt(graph.nodesCount()), new GraphWithElementsInfoImpl(graph), layout);
+    super(new IDIntToIntMap(graph.nodesCount()), new GraphWithElementsInfoImpl(graph), layout);
     myThickHoverController = thickHoverController;
   }
 

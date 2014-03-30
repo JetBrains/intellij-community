@@ -45,10 +45,6 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     myFilter = filter;
   }
 
-  protected void createOrWaitPrepare(DebugProcessImpl debugProcess, SourcePosition classPosition) {
-    super.createOrWaitPrepare(debugProcess, classPosition);
-  }
-
   protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
     try {
       final CompoundPositionManager positionManager = debugProcess.getPositionManager();

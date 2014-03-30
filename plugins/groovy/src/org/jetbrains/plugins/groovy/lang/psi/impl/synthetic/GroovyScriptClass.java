@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -180,25 +177,30 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   @Nullable
   private PsiClassType getSuperClassTypeFromBaseScriptAnnotatedVariable() {
-    return CachedValuesManager.getCachedValue(myFile, new CachedValueProvider<PsiClassType>() {
-      @Nullable
+    return RecursionManager.doPreventingRecursion(this, false, new Computable<PsiClassType>() {
       @Override
-      public Result<PsiClassType> compute() {
-        GrVariableDeclaration declaration = findDeclaration();
-        if (declaration != null) {
-          GrModifierList modifierList = declaration.getModifierList();
-          if (modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
-            GrTypeElement typeElement = declaration.getTypeElementGroovy();
-            if (typeElement != null) {
-              PsiType type = typeElement.getType();
-              if (type instanceof PsiClassType) {
-                return Result.create(((PsiClassType)type), myFile);
+      public PsiClassType compute() {
+        return CachedValuesManager.getCachedValue(myFile, new CachedValueProvider<PsiClassType>() {
+          @Nullable
+          @Override
+          public Result<PsiClassType> compute() {
+            GrVariableDeclaration declaration = findDeclaration();
+            if (declaration != null) {
+              GrModifierList modifierList = declaration.getModifierList();
+              if (modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
+                GrTypeElement typeElement = declaration.getTypeElementGroovy();
+                if (typeElement != null) {
+                  PsiType type = typeElement.getType();
+                  if (type instanceof PsiClassType) {
+                    return Result.create(((PsiClassType)type), myFile);
+                  }
+                }
               }
             }
-          }
-        }
 
-        return Result.create(null, myFile);
+            return Result.create(null, myFile);
+          }
+        });
       }
     });
   }

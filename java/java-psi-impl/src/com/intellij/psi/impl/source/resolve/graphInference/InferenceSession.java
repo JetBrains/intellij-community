@@ -366,7 +366,10 @@ public class InferenceSession {
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
       final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
-      myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutor.substitute(inferenceVariable.getParameter()), myContext)));
+      final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable.getParameter());
+      if (substitutedReturnType != null) {
+        myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
+      }
     } 
     else {
       if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(returnType)) {
@@ -707,7 +710,7 @@ public class InferenceSession {
         substitutor = substitutor.put(typeParameter, runtimeException);
       } 
       else {
-        substitutor = substitutor.put(typeParameter, getUpperBound(var, substitutor));
+        substitutor = substitutor.put(typeParameter, myErased ? null : getUpperBound(var, substitutor));
       }
     }
 

@@ -30,7 +30,7 @@ import com.intellij.vcs.log.newgraph.gpaph.actions.SelectAllRelativeCommitsInter
 import com.intellij.vcs.log.newgraph.gpaph.fragments.FragmentGenerator;
 import com.intellij.vcs.log.newgraph.gpaph.fragments.GraphFragment;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

@@ -14,6 +14,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.graph.ChangeCursorActionRequest;
+import com.intellij.vcs.log.graph.ClickGraphAction;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
@@ -212,7 +214,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
       jumpToRow(row);
     }
     else if (actionRequest instanceof ChangeCursorActionRequest) {
-      myMainFrame.setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
+      myMainFrame.getGraphTable().setCursor(((ChangeCursorActionRequest)actionRequest).getCursor());
     }
   }
 

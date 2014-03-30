@@ -28,9 +28,10 @@ import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
 import com.intellij.vcs.log.newgraph.gpaph.Node;
 import com.intellij.vcs.log.newgraph.gpaph.ThickHoverController;
 import com.intellij.vcs.log.newgraph.gpaph.actions.InternalGraphAction;
-import com.intellij.vcs.log.newgraph.utils.Flags;
-import com.intellij.vcs.log.newgraph.utils.IntToIntMap;
-import com.intellij.vcs.log.newgraph.utils.impl.TreeIntToIntMap;
+import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.vcs.log.facade.utils.IntToIntMap;
+import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutabl
 
       visibleNodes.set(i, isVisibleNode.value(i));
     }
-    TreeIntToIntMap visibleToReal = TreeIntToIntMap.newInstance(new BooleanFunction<Integer>() {
+    UpdatableIntToIntMap visibleToReal = ListIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
       public boolean fun(Integer integer) {
         return visibleNodes.get(integer);
@@ -73,16 +74,16 @@ public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutabl
   private final FilterThickHoverController myThickHoverController;
 
   @NotNull
-  private final TreeIntToIntMap myTreeVisibleToReal;
+  private final UpdatableIntToIntMap myUpdatableIntToIntMap;
 
 
   private FilterMutableGraph(@NotNull PermanentGraph permanentGraph,
                             @NotNull PermanentGraphLayout layout,
                             @NotNull Condition<Integer> isVisibleNode,
-                            @NotNull TreeIntToIntMap visibleToReal,
+                            @NotNull UpdatableIntToIntMap visibleToReal,
                             @NotNull Flags visibleNodes) {
     super(visibleToReal, new GraphWithElementsInfoImpl(permanentGraph, visibleNodes, visibleToReal), layout);
-    myTreeVisibleToReal = visibleToReal;
+    myUpdatableIntToIntMap = visibleToReal;
     myVisibleNodes = visibleNodes;
     myPermanentGraph = permanentGraph;
     this.isVisibleNode = isVisibleNode;
@@ -117,7 +118,7 @@ public class FilterMutableGraph extends MutableGraphWithHiddenNodes<FilterMutabl
     if (endIndex == myPermanentGraph.nodesCount())
       endIndex--;
 
-    myTreeVisibleToReal.update(startIndex, endIndex);
+    myUpdatableIntToIntMap.update(startIndex, endIndex);
   }
 
   @NotNull

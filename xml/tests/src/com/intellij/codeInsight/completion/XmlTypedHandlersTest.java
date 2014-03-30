@@ -32,6 +32,10 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     doTest("<foo bar<caret>><foo bar<caret>>", '=', "<foo bar=\"<caret>\"><foo bar=\"<caret>\">");
   }
 
+  public void testValueQuotesWithMultiCaretsMultiline() {
+    doTest("<foo bar<caret>\n<foo bar<caret>", '=', "<foo bar=\"<caret>\"\n<foo bar=\"<caret>\"");
+  }
+
   public void testValueQuotesWithMultiCaretsWithDifferentContexts() {
     doTest("<foo bar <caret>><foo bar<caret>>", '=', "<foo bar =<caret>><foo bar=\"<caret>\">");
   }

@@ -419,13 +419,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return;
       }
       String description = null;
-      final String text = reference.getElement().getText();
+      PsiElement element = reference.getElement();
+      final String text = element.getText();
       TextRange rangeInElement = reference.getRangeInElement();
       String refText = text;  // text of the part we're working with
       if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0) {
         refText = rangeInElement.substring(text);
       }
-      final PsiElement element = reference.getElement();
+
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       final String refName = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : refText;
       // Empty text, nothing to highlight
@@ -565,8 +566,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
       }
 
-      if (GenerateBinaryStubsFix.isApplicable(reference)) {
-        actions.add(new GenerateBinaryStubsFix(reference));
+      if (element != null) {
+        PyImportStatementBase importStatementBase = PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class);
+        if ((importStatementBase != null) && GenerateBinaryStubsFix.isApplicable(importStatementBase)) {
+          actions.addAll(GenerateBinaryStubsFix.generateFixes(importStatementBase));
+        }
       }
       if (canonicalQName != null) {
         actions.add(new AddIgnoredIdentifierQuickFix(canonicalQName, false));

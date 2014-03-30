@@ -280,7 +280,9 @@ public class CompileDriver {
           }
           finally {
             result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-            CompilerCacheManager.getInstance(myProject).flushCaches();
+            if (!myProject.isDisposed()) {
+              CompilerCacheManager.getInstance(myProject).flushCaches();
+            }
           }
         }
       };

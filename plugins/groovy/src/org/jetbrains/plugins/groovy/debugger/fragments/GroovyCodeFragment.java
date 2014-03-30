@@ -195,8 +195,8 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   protected boolean processImports(PsiScopeProcessor processor,
                                    @NotNull ResolveState state,
                                    PsiElement lastParent,
-                                   PsiElement place,
-                                   GrImportStatement[] importStatements,
+                                   @NotNull PsiElement place,
+                                   @NotNull GrImportStatement[] importStatements,
                                    boolean onDemand) {
     if (!super.processImports(processor, state, lastParent, place, importStatements, onDemand)) {
       return false;

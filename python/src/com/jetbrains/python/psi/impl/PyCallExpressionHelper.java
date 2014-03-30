@@ -22,6 +22,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.nameResolver.FQNamesProvider;
+import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -565,5 +567,17 @@ public class PyCallExpressionHelper {
       return PyUnionType.union(superTypes);
     }
     return null;
+  }
+
+  /**
+   * Checks if expression callee's name matches one of names, provided by appropriate {@link com.jetbrains.python.nameResolver.FQNamesProvider}
+   * @see com.jetbrains.python.nameResolver
+   * @param expression call expression
+   * @param namesProvider name provider to check name against
+   * @return true if matches
+   */
+  public static boolean isCallee(@NotNull final PyCallExpression expression, @NotNull final FQNamesProvider namesProvider) {
+    final PyExpression callee = expression.getCallee();
+    return (callee != null) && NameResolverTools.isName(callee, namesProvider);
   }
 }
