@@ -18,7 +18,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
     if (null != file && HighlightSeverity.ERROR.equals(highlightInfo.getSeverity())) {
-      final String description = StringUtil.notNullize(highlightInfo.description);
+      final String description = StringUtil.notNullize(highlightInfo.getDescription());
 
       if (StringUtil.startsWith(description, UNHANDLED_EXCEPTION_PREFIX_TEXT)) {
 
