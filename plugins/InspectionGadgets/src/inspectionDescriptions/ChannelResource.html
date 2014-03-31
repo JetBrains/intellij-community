@@ -1,8 +1,7 @@
 <html>
 <body>
-Reports any <b>Channel</b> which is not opened in
-front of a <b>try</b> block and closed in the corresponding
-<b>finally</b> block. Such resources may be inadvertently leaked
+Reports any <b>Channel</b> which is not safely closed in a <b>finally</b> block.
+Such resources may be inadvertently leaked
 if an exception is thrown before the resource is closed. Channel resources reported
 by this inspection include any instances created by calling
 <b>getChannel()</b> on a file or socket resource.

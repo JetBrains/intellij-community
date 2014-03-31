@@ -165,7 +165,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof Node) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        result.append(UsageViewBundle.message("node.invalid") + " ");
+        result.append(UsageViewBundle.message("node.invalid")).append(" ");
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
@@ -182,7 +182,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           final ItemPresentation presentation = usageTarget.getPresentation();
           LOG.assertTrue(presentation != null);
           if (showAsReadOnly) {
-            result.append(UsageViewBundle.message("node.readonly") + " ");
+            result.append(UsageViewBundle.message("node.readonly")).append(" ");
           }
           final String text = presentation.getPresentableText();
           result.append(text == null ? "" : text);
@@ -208,7 +208,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         UsageNode node = (UsageNode)treeNode;
 
         if (showAsReadOnly) {
-          result.append(UsageViewBundle.message("node.readonly") + " ");
+          result.append(UsageViewBundle.message("node.readonly")).append(" ");
         }
 
         if (node.isValid()) {

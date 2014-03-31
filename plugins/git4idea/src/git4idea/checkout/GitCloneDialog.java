@@ -20,6 +20,7 @@ import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandlerPasswordRequestAware;
 import git4idea.commands.GitTask;
@@ -35,7 +36,7 @@ import java.io.File;
 public class GitCloneDialog extends CloneDvcsDialog {
 
   public GitCloneDialog(@NotNull Project project) {
-    super(project, GitUtil.DOT_GIT);
+    super(project, GitVcs.NAME, GitUtil.DOT_GIT);
   }
 
   /*

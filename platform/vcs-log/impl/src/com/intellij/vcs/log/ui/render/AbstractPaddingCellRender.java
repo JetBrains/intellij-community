@@ -10,7 +10,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PaintInfo;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;

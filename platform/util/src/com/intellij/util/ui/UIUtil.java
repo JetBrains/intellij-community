@@ -72,6 +72,23 @@ import java.util.regex.Pattern;
 public class UIUtil {
 
   @NonNls public static final String BORDER_LINE = "<hr size=1 noshade>";
+  private static final StyleSheet DEFAULT_HTML_KIT_CSS;
+
+  static {
+    // save the default JRE CSS and ..
+    HTMLEditorKit kit = new HTMLEditorKit();
+    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
+    // .. erase global ref to this CSS so no one can alter it
+    kit.setStyleSheet(null);
+  }
+
+  public static int getMultiClickInterval() {
+    Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
+    if (property instanceof Integer) {
+      return (Integer)property;
+    }
+    return 500;
+  }
 
   private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
@@ -1898,17 +1915,20 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit() {
-    final HTMLEditorKit kit = new HTMLEditorKit();
-
     Font font = getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final StyleSheet styleSheet = kit.getStyleSheet();
-    styleSheet.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
-    kit.setStyleSheet(styleSheet);
+    final StyleSheet style = new StyleSheet();
+    style.addStyleSheet(DEFAULT_HTML_KIT_CSS);
+    style.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
 
-    return kit;
+    return new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return style;
+      }
+    };
   }
 
   public static void removeScrollBorder(final Component c) {

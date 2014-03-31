@@ -42,11 +42,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private final Map<String, DeploymentImpl> myLocalDeployments = new HashMap<String, DeploymentImpl>();
   private final Map<String, DeploymentLogManagerImpl> myLogManagers = new ConcurrentHashMap<String, DeploymentLogManagerImpl>();
 
-  public ServerConnectionImpl(RemoteServer<?> server, ServerConnector connector, ServerConnectionManagerImpl connectionManager) {
+  public ServerConnectionImpl(RemoteServer<?> server,
+                              ServerConnector connector,
+                              @Nullable ServerConnectionManagerImpl connectionManager,
+                              ServerConnectionEventDispatcher eventDispatcher) {
     myServer = server;
     myConnector = connector;
     myConnectionManager = connectionManager;
-    myEventDispatcher = myConnectionManager.getEventDispatcher();
+    myEventDispatcher = eventDispatcher;
   }
 
   @NotNull
@@ -85,7 +88,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   @Override
   public void disconnect() {
-    myConnectionManager.removeConnection(myServer);
+    if (myConnectionManager != null) {
+      myConnectionManager.removeConnection(myServer);
+    }
     doDisconnect();
   }
 

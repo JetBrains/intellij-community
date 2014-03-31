@@ -37,7 +37,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingBy
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -111,17 +110,6 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
       }
     }
     return null;
-  }
-
-  @Override
-  public AnAction[] getAddBreakpointActions(@NotNull Project project) {
-    List<AnAction> result = new ArrayList<AnAction>();
-    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
-      if (type.isAddBreakpointButtonVisible()) {
-        result.add(new AddXBreakpointAction(type));
-      }
-    }
-    return result.toArray(new AnAction[result.size()]);
   }
 
   public void onDialogClosed(final Project project) {

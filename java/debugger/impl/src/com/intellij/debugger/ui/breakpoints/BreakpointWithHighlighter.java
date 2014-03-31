@@ -26,6 +26,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -67,6 +68,8 @@ import javax.swing.*;
  * Time: 3:22:55 PM
  */
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
+
   @Nullable
   private SourcePosition mySourcePosition;
 
@@ -196,6 +199,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }).booleanValue();
   }
 
+  @Nullable
   public SourcePosition getSourcePosition() {
     return mySourcePosition;
   }
@@ -307,7 +311,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       return;
     }
 
-    createOrWaitPrepare(debugProcess, getSourcePosition());
+    SourcePosition position = getSourcePosition();
+    if (position != null) {
+      createOrWaitPrepare(debugProcess, position);
+    }
+    else {
+      LOG.error("Unable to create request for breakpoint with null position: " + getDisplayName() + " at " + myXBreakpoint.getSourcePosition());
+    }
     updateUI();
   }
 

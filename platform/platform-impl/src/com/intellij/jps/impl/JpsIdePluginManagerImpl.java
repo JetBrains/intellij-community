@@ -68,11 +68,15 @@ public class JpsIdePluginManagerImpl extends JpsPluginManager {
       loaders.add(getClass().getClassLoader());
     }
 
+    Set<String> loadedUrls = new HashSet<String>();
     for (ClassLoader loader : loaders) {
       try {
         Enumeration<URL> resources = loader.getResources(resourceName);
         while (resources.hasMoreElements()) {
-          loadImplementations(resources.nextElement(), loader, classes);
+          URL url = resources.nextElement();
+          if (loadedUrls.add(url.toExternalForm())) {
+            loadImplementations(url, loader, classes);
+          }
         }
       }
       catch (IOException e) {

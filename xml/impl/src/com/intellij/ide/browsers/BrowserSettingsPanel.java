@@ -153,7 +153,7 @@ final class BrowserSettingsPanel {
 
     //noinspection unchecked
     defaultBrowserComboBox.setModel(new EnumComboBoxModel<DefaultBrowser>(DefaultBrowser.class));
-    if (BrowserLauncherImpl.canStartDefaultBrowser()) {
+    if (BrowserLauncherAppless.canStartDefaultBrowser()) {
       defaultBrowserComboBox.addItemListener(new ItemListener() {
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -203,7 +203,7 @@ final class BrowserSettingsPanel {
     clearExtractedFiles.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        BrowserLauncherImpl.clearExtractedFiles();
+        BrowserLauncherAppless.clearExtractedFiles();
       }
     });
   }

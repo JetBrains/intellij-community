@@ -205,8 +205,6 @@ public class TipUIUtil {
   public static JEditorPane createTipBrowser() {
     JEditorPane browser = new JEditorPane();
     browser.setEditable(false);
-    HTMLEditorKit editorKit = new HTMLEditorKit();
-    browser.setEditorKit(editorKit);
     browser.setBackground(UIUtil.getTextFieldBackground());
     browser.addHyperlinkListener(
       new HyperlinkListener() {
@@ -217,16 +215,23 @@ public class TipUIUtil {
         }
       }
     );
+    HTMLEditorKit kit;
     try {
       // set default CSS for plugin tips
       URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      StyleSheet sheet = new StyleSheet();
-      sheet.loadRules(new InputStreamReader(resource.openStream()), resource);
-      editorKit.setStyleSheet(sheet);
+      final StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(resource.openStream()), resource);
+      kit = new HTMLEditorKit() {
+        @Override
+        public StyleSheet getStyleSheet() {
+          return styleSheet;
+        }
+      };
     }
     catch (IOException ignored) {
+      kit = new HTMLEditorKit();
     }
-
+    browser.setEditorKit(kit);
     return browser;
   }
 }

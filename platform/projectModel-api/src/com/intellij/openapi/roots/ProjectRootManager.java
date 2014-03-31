@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Allows to query and modify the list of root directories belonging to a project.
+ * Allows to query and modify the list of root files and directories belonging to a project.
  */
 public abstract class ProjectRootManager implements ModificationTracker {
   /**

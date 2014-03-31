@@ -614,11 +614,11 @@ public class FSRecords implements Forceable {
 
       final int free = DbConnection.getFreeRecord();
       if (free == 0) {
-        final int fileLength = (int)getRecords().length();
+        final int fileLength = length();
         LOG.assertTrue(fileLength % RECORD_SIZE == 0);
         int newRecord = fileLength / RECORD_SIZE;
         DbConnection.cleanRecord(newRecord);
-        assert fileLength + RECORD_SIZE == getRecords().length();
+        assert fileLength + RECORD_SIZE == length();
         return newRecord;
       }
       else {
@@ -632,6 +632,20 @@ public class FSRecords implements Forceable {
     finally {
       w.unlock();
     }
+  }
+
+  private static int length() {
+    return (int)getRecords().length();
+  }
+  public static int getMaxId() {
+    try {
+      r.lock();
+      return length()/RECORD_SIZE;
+    }
+    finally {
+      r.unlock();
+    }
+
   }
 
   static void deleteRecordRecursively(int id) {
@@ -1618,7 +1632,7 @@ public class FSRecords implements Forceable {
 
     try {
       r.lock();
-      final int fileLength = (int)getRecords().length();
+      final int fileLength = length();
       assert fileLength % RECORD_SIZE == 0;
       int recordCount = fileLength / RECORD_SIZE;
 

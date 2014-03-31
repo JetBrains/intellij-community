@@ -32,8 +32,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
@@ -144,15 +147,7 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
-    boolean found = false;
-    for (BreakpointItem breakpoint : breakpoints) {
-      if (breakpoint.getBreakpoint() == myInitialBreakpoint) {
-        myTreeController.selectBreakpointItem(breakpoint, null);
-        found = true;
-        break;
-      }
-    }
-
+    boolean found = selectBreakpoint(myInitialBreakpoint);
     if (!found && !breakpoints.isEmpty()) {
       myTreeController.selectFirstBreakpointItem();
     }
@@ -245,8 +240,10 @@ public class BreakpointsDialog extends DialogWrapper {
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree);
 
     final DefaultActionGroup breakpointTypes = new DefaultActionGroup();
-    for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      breakpointTypes.addAll(provider.getAddBreakpointActions(myProject));
+    for (XBreakpointType<?, ?> type : XBreakpointUtil.getBreakpointTypes()) {
+      if (type.isAddBreakpointButtonVisible()) {
+        breakpointTypes.addAll(new AddXBreakpointAction(type));
+      }
     }
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
@@ -391,5 +388,34 @@ public class BreakpointsDialog extends DialogWrapper {
     if (item instanceof BreakpointItem) {
       ((BreakpointItem)item).saveState();
     }
+  }
+
+  private class AddXBreakpointAction extends AnAction {
+    private final XBreakpointType<?, ?> myType;
+
+    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+      myType = type;
+      getTemplatePresentation().setIcon(type.getEnabledIcon());
+      getTemplatePresentation().setText(type.getTitle());
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      saveCurrentItem();
+      XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
+      if (breakpoint != null) {
+        selectBreakpoint(breakpoint);
+      }
+    }
+  }
+
+  private boolean selectBreakpoint(Object breakpoint) {
+    for (BreakpointItem item : myBreakpointItems) {
+      if (item.getBreakpoint() == breakpoint) {
+        myTreeController.selectBreakpointItem(item, null);
+        return true;
+      }
+    }
+    return false;
   }
 }

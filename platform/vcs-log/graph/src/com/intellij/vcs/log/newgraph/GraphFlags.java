@@ -16,7 +16,7 @@
 
 package com.intellij.vcs.log.newgraph;
 
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 
 public class GraphFlags {
   private final int myNodesCount;

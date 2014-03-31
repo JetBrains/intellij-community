@@ -2,6 +2,7 @@ package com.intellij.tasks.gitlab;
 
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.gitlab.model.GitlabIssue;
 import com.intellij.tasks.gitlab.model.GitlabProject;
@@ -90,5 +91,11 @@ public class GitlabTask extends Task {
   @Override
   public String getIssueUrl() {
     return myProject.getWebUrl() + "/issues/" + myIssue.getLocalId();
+  }
+
+  @Nullable
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

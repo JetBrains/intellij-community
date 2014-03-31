@@ -62,7 +62,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     myCheckHostname.setVisible(false);
     myCheckValidityPeriod.setVisible(false);
 
-    myTrustManager = CertificatesManager.getInstance().getCustomTrustManager();
+    myTrustManager = CertificateManager.getInstance().getCustomTrustManager();
     // show newly added certificates
     myTrustManager.addListener(this);
 
@@ -177,7 +177,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   @Override
   public boolean isModified() {
-    CertificatesManager.Config state = CertificatesManager.getInstance().getState();
+    CertificateManager.Config state = CertificateManager.getInstance().getState();
     return myCheckHostname.isSelected() != state.checkHostname ||
            myCheckValidityPeriod.isSelected() != state.checkValidity ||
            !myCertificates.equals(new HashSet<X509Certificate>(myTrustManager.getCertificates()));
@@ -204,7 +204,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
         throw new ConfigurationException("Cannot remove certificate for " + getCommonName(certificate), "Cannot Remove Certificate");
       }
     }
-    CertificatesManager.Config state = CertificatesManager.getInstance().getState();
+    CertificateManager.Config state = CertificateManager.getInstance().getState();
     state.checkHostname = myCheckHostname.isSelected();
     state.checkValidity = myCheckValidityPeriod.isSelected();
   }
@@ -229,7 +229,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
       myTreeBuilder.selectFirstCertificate();
     }
 
-    CertificatesManager.Config state = CertificatesManager.getInstance().getState();
+    CertificateManager.Config state = CertificateManager.getInstance().getState();
     myCheckHostname.setSelected(state.checkHostname);
     myCheckValidityPeriod.setSelected(state.checkValidity);
   }

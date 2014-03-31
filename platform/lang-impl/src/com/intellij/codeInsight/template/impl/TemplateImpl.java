@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public void addVariableSegment (String name) {
+  public void addVariableSegment (@NotNull String name) {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
@@ -135,7 +135,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public Variable addVariable(String name,
+  public Variable addVariable(@NotNull String name,
                               Expression expression,
                               Expression defaultValueExpression,
                               boolean isAlwaysStopAt,
@@ -336,7 +336,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public Variable addVariable(String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NotNull String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
@@ -421,7 +421,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   public boolean isSelectionTemplate() {
     parseSegments();
     for (Segment v : mySegments) {
-      if (v.name.equals(SELECTION)) return true;
+      if (SELECTION.equals(v.name)) return true;
     }
 
     return false;
@@ -473,10 +473,10 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   private static class Segment {
-    public String name;
-    public int offset;
+    public final String name;
+    public final int offset;
 
-    private Segment(String name, int offset) {
+    private Segment(@NotNull String name, int offset) {
       this.name = name;
       this.offset = offset;
     }

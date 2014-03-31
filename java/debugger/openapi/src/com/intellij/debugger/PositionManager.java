@@ -50,7 +50,7 @@ public interface PositionManager {
    * @see com.intellij.debugger.engine.jdi.VirtualMachineProxy#classesByName
    */
   @NotNull
-  List<ReferenceType> getAllClasses(SourcePosition classPosition) throws NoDataException;
+  List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException;
 
   /**
    * Returns the list of bytecode locations in a specific class corresponding to the specified position in the source code.
@@ -62,7 +62,7 @@ public interface PositionManager {
    * @see ReferenceType#locationsOfLine(int)
    */
   @NotNull
-  List<Location> locationsOfLine(ReferenceType type, SourcePosition position) throws NoDataException;
+  List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException;
 
   /**
    * Called to request the JVM to notify the debugger engine when a class corresponding to a breakpoint location is loaded.
@@ -75,5 +75,5 @@ public interface PositionManager {
    * @throws NoDataException if the position is not in the code managed by this {@code PositionManager}
    */
   @Nullable
-  ClassPrepareRequest createPrepareRequest(ClassPrepareRequestor requestor, SourcePosition position) throws NoDataException;
+  ClassPrepareRequest createPrepareRequest(@NotNull ClassPrepareRequestor requestor, @NotNull SourcePosition position) throws NoDataException;
 }

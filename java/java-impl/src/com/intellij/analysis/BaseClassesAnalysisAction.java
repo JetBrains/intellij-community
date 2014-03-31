@@ -48,8 +48,11 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
         indicator.setIndeterminate(true);
         indicator.setText(AnalysisScopeBundle.message("checking.class.files"));
 
-        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        final boolean upToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject));
+        if (project.isDisposed()) {
+          return;
+        }
+        final CompilerManager compilerManager = CompilerManager.getInstance(project);
+        final boolean upToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project));
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -92,6 +95,9 @@ public abstract class BaseClassesAnalysisAction extends BaseAnalysisAction {
   }
 
   private void compileAndAnalyze(final Project project, final AnalysisScope scope) {
+    if (project.isDisposed()) {
+      return;
+    }
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     compilerManager.make(compilerManager.createProjectCompileScope(project), new CompileStatusNotification() {
       @Override

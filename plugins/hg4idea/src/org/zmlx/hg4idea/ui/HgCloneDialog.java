@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRememberedInputs;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgIdentifyCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -36,7 +37,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 public class HgCloneDialog extends CloneDvcsDialog {
 
   public HgCloneDialog(@NotNull Project project) {
-    super(project, HgUtil.DOT_HG);
+    super(project, HgVcs.DISPLAY_NAME, HgUtil.DOT_HG);
   }
 
   @Override

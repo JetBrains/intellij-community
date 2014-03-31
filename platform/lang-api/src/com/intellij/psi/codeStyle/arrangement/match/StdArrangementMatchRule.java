@@ -15,9 +15,12 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -58,7 +61,27 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
       return tokens.containsAll(tokens1) ? 0 : 1;
     }
     else {
-      return tokens.containsAll(tokens1) ? -1 : 0;
+      if (tokens.containsAll(tokens1)) {
+        return -1;
+      }
+
+      final String entryType = getEntryType(tokens);
+      final String entryType1 = getEntryType(tokens1);
+      final int compare = StringUtil.compare(entryType, entryType1, false);
+      if (compare != 0 || tokens.size() == tokens1.size()) {
+        return compare;
+      }
+      return tokens.size() < tokens1.size() ? 1 : -1;
     }
+  }
+
+  @Nullable
+  private static String getEntryType(@NotNull Set<ArrangementSettingsToken> tokens) {
+    for (ArrangementSettingsToken token : tokens) {
+      if (StdArrangementTokenType.ENTRY_TYPE.is(token)) {
+        return token.getId();
+      }
+    }
+    return null;
   }
 }

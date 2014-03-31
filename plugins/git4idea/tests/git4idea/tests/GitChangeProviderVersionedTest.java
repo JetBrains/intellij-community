@@ -19,25 +19,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import org.testng.annotations.Test;
 
-import static com.intellij.openapi.vcs.FileStatus.ADDED;
-import static com.intellij.openapi.vcs.FileStatus.DELETED;
-import static com.intellij.openapi.vcs.FileStatus.MODIFIED;
+import static com.intellij.openapi.vcs.FileStatus.*;
+import static git4idea.test.GitExecutor.add;
 
-/**
- * @author Kirill Likhodedov
- * @deprecated Use {@link GitLightTest}
- */
-@Deprecated
 public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test
   public void testCreateFile() throws Exception {
     VirtualFile file = create(myRootDir, "new.txt");
+    add(file.getPath());
     assertChanges(file, ADDED);
   }
 
@@ -45,19 +40,20 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
   public void testCreateFileInDir() throws Exception {
     VirtualFile dir = createDir(myRootDir, "newdir");
     VirtualFile bfile = create(dir, "new.txt");
+    add(bfile.getPath());
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
   }
 
   @Test
   public void testEditFile() throws Exception {
-    edit(afile, "new content");
-    assertChanges(afile, MODIFIED);
+    edit(atxt, "new content");
+    assertChanges(atxt, MODIFIED);
   }
 
   @Test
   public void testDeleteFile() throws Exception {
-    delete(afile);
-    assertChanges(afile, DELETED);
+    delete(atxt);
+    assertChanges(atxt, DELETED);
   }
 
   @Test
@@ -68,14 +64,15 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            final VirtualFile dir = myRepo.getVFRootDir().findChild("dir");
+            final VirtualFile dir = myProjectRoot.findChild("dir");
             myDirtyScope.addDirtyDirRecursively(new FilePathImpl(dir));
-            FileUtil.delete(VfsUtil.virtualToIoFile(dir));
+            FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
           }
         });
       }
     });
-    assertChanges(new VirtualFile[] { myFiles.get("dir/c.txt"), myFiles.get("dir/subdir/d.txt") }, new FileStatus[] { DELETED, DELETED });
+    assertChanges(new VirtualFile[] { dir_ctxt, subdir_dtxt },
+                  new FileStatus[] { DELETED, DELETED });
   }
 
   @Test
@@ -86,7 +83,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
     // But the order is likely preserved if it meets the natural order of the items inserted into the dirty scope.
     // That's why the test moves from .../repo/dir/new.txt to .../repo/new.txt - to make the old path appear later than the new one.
     // This is not consistent though.
-    final VirtualFile dir= myRepo.getVFRootDir().findChild("dir");
+    final VirtualFile dir= myProjectRoot.findChild("dir");
     final VirtualFile file = create(dir, "new.txt");
     move(file, myRootDir);
     assertChanges(file, ADDED);
@@ -94,15 +91,13 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test
   public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
-    VirtualFile dfile = myFiles.get("dir/subdir/d.txt");
-    VirtualFile cfile = myFiles.get("dir/c.txt");
-
-    edit(afile, "new afile content");
-    edit(cfile, "new cfile content");
-    delete(dfile);
+    edit(atxt, "new afile content");
+    edit(dir_ctxt, "new cfile content");
+    delete(subdir_dtxt);
     VirtualFile newfile = create(myRootDir, "newfile.txt");
+    add();
 
-    assertChanges(new VirtualFile[] {afile, cfile, dfile, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
+    assertChanges(new VirtualFile[] {atxt, dir_ctxt, subdir_dtxt, newfile}, new FileStatus[] {MODIFIED, MODIFIED, DELETED, ADDED});
   }
 
 }

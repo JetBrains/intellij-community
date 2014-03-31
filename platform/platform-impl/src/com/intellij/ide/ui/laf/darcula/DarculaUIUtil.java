@@ -41,7 +41,7 @@ public class DarculaUIUtil {
   }
 
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
-    int correction = UIUtil.isUnderDarcula() ? 50 : 0;
+    int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
       ColorUtil.toAlpha(getGlow(), 180 - correction),
       ColorUtil.toAlpha(getGlow(), 120 - correction),

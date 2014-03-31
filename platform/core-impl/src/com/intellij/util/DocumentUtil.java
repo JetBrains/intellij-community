@@ -65,4 +65,21 @@ public final class DocumentUtil {
       }
     });
   }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
+    int startOffset = document.getLineStartOffset(line);
+    int endOffset = document.getLineEndOffset(line);
+    return getFirstNonSpaceCharOffset(document, startOffset, endOffset);
+  }
+
+  public static int getFirstNonSpaceCharOffset(@NotNull Document document, int startOffset, int endOffset) {
+    CharSequence text = document.getImmutableCharSequence();
+    for (int i = startOffset; i < endOffset; i++) {
+      char c = text.charAt(i);
+      if (c != ' ' && c != '\t') {
+        return i;
+      }
+    }
+    return startOffset;
+  }
 }

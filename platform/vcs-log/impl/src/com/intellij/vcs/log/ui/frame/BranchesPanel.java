@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 /**
  * Panel with branch labels, above the graph.

@@ -180,7 +180,10 @@ public class MethodCandidateInfo extends CandidateInfo{
 
         final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
-         if (!stackStamp.mayCacheNow() || !ourOverloadGuard.currentStack().isEmpty() || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+         if (!stackStamp.mayCacheNow() ||
+             !ourOverloadGuard.currentStack().isEmpty() ||
+             !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
+             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent())) {
           return inferredSubstitutor;
         }
 

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2014 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package git4idea;
 
 import com.intellij.dvcs.test.MockVcsHelper;
@@ -23,7 +38,7 @@ import cucumber.annotation.Order;
 import git4idea.commands.Git;
 import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
-import git4idea.remote.GitHttpAuthTestService;
+import git4idea.test.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitExecutor;
 import git4idea.test.GitTestUtil;
@@ -31,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -103,7 +119,7 @@ public class GitCucumberWorld {
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = myPlatformFacade.getSettings(myProject);
-    mySettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+    mySettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
 
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
@@ -140,8 +156,8 @@ public class GitCucumberWorld {
   @Order(2)
   public void setUpStandardMultipleRootsConfig() {
     cd(myProjectRoot);
-    String community = mkdir("community");
-    GitTestUtil.createRepository(myProject, community);
+    File community = mkdir("community");
+    GitTestUtil.createRepository(myProject, community.getPath());
   }
 
   @After("@remote")

@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -103,7 +104,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
   @Test
   public void testSimpleMergeAllFromB1ToTrunk() throws Exception {
-    editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
+    VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch", myBranchTree.myS1File.getPath());
 
     final WCInfo found = getWcInfo();
@@ -167,7 +168,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
@@ -246,7 +247,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
@@ -263,7 +264,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     myBranchTree = new SubTree(myBranchVf); //reload
 
     // one commit in b2 in s2 file
-    editFileInCommand(myProject, myBranchTree.myS2File, "completely changed");
+    VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS2File, "completely changed");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in b2", myBranchTree.myS2File.getPath());
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
@@ -338,7 +339,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final StringBuilder sb = new StringBuilder(FileUtil.loadFile(new File(myBranchTree.myS1File.getPath())));
     for (int i = 0; i < totalChanges; i++) {
       sb.append("\nedited in branch ").append(i);
-      editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
+      VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
       Thread.sleep(10);
     }
@@ -425,7 +426,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
   @Test
   public void testSimpleMergeFromTrunkToB1() throws Exception {
     // change in trunk
-    editFileInCommand(myProject, myTree.myS1File, "903403240328");
+    VcsTestUtil.editFileInCommand(myProject, myTree.myS1File, "903403240328");
     final File workingIoFile = new File(myWorkingCopyDir.getPath());
     runInAndVerifyIgnoreOutput(workingIoFile, "ci", "-m", "change in trunk", myTree.myS1File.getPath());
 

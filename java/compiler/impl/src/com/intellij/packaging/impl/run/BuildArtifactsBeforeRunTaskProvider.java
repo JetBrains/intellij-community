@@ -20,6 +20,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationSettingsEditorWrapper;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -196,7 +197,7 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
         final CompilerManager manager = CompilerManager.getInstance(myProject);
         finished.down();
         final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, artifacts);
-        ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.get(env));
+        ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
         manager.make(scope, compilerFilter, callback);
       }
     }, ModalityState.NON_MODAL);

@@ -133,12 +133,7 @@ public class SimpleEditorPreview implements PreviewPanel{
     if (highlighter != null) {
       HighlighterIterator itr = ((EditorEx)editor).getHighlighter().createIterator(offset);
       selectItem(itr, highlighter, select);
-      if (!select) {
-        ClickNavigator.setCursor(editor, Cursor.HAND_CURSOR);
-      }
-      else {
-        ClickNavigator.setCursor(editor, Cursor.TEXT_CURSOR);
-      }
+      ClickNavigator.setCursor(editor, select ? Cursor.TEXT_CURSOR : Cursor.HAND_CURSOR);
     }
   }
 
@@ -201,7 +196,7 @@ public class SimpleEditorPreview implements PreviewPanel{
       String type = ((EditorSchemeAttributeDescriptor)description).getType();
 
       List<HighlightData> highlights = startBlinkingHighlights(myEditor,
-                                                                         myHighlightData, type,
+                                                               myHighlightData, type,
                                                                myPage.getHighlighter(), true,
                                                                myBlinkingAlarm, BLINK_COUNT, myPage);
 
@@ -228,7 +223,7 @@ public class SimpleEditorPreview implements PreviewPanel{
   private static boolean isOffsetVisible(final Editor editor, final int startOffset) {
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     Point point = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
-    return point.y >= visibleArea.y && point.y < visibleArea.x + visibleArea.height;
+    return point.y >= visibleArea.y && point.y < (visibleArea.y + visibleArea.height);
   }
 
   private void stopBlinking() {

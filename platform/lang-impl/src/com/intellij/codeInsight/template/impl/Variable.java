@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
+import org.jetbrains.annotations.NotNull;
 
 public class Variable implements Cloneable {
   private final String myName;
@@ -29,7 +30,7 @@ public class Variable implements Cloneable {
   private Expression myDefaultValueExpression;
   private final boolean mySkipOnStart;
 
-  public Variable(String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt, boolean skipOnStart) {
+  public Variable(@NotNull String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;
     myExpression = expression;
     myDefaultValueExpression = defaultValueExpression;
@@ -82,6 +83,7 @@ public class Variable implements Cloneable {
     return myDefaultValueExpression;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }

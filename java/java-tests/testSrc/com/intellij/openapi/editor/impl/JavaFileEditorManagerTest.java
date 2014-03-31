@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.fileEditor.FileEditorManagerTestCase;
+import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.JDOMException;
 

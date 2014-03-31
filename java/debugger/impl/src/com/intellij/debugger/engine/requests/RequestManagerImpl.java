@@ -398,7 +398,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         Project project = myDebugProcess.getProject();
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
         for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
-          breakpoint.createRequest(myDebugProcess);
+          try {
+            breakpoint.createRequest(myDebugProcess);
+          } catch (Exception e) {
+            LOG.error(e);
+          }
         }
 
         //AccessToken token = ReadAction.start();

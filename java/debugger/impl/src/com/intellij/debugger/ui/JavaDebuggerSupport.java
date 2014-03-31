@@ -22,7 +22,6 @@ import com.intellij.debugger.settings.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -207,17 +206,6 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
   private static class JavaBreakpointPanelProvider extends BreakpointPanelProvider<Breakpoint> {
     //private final List<MyBreakpointManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-    @Override
-    public AnAction[] getAddBreakpointActions(@NotNull Project project) {
-      //List<AnAction> result = new ArrayList<AnAction>();
-      //BreakpointFactory[] breakpointFactories = BreakpointFactory.getBreakpointFactories();
-      //for (BreakpointFactory breakpointFactory : breakpointFactories) {
-      //  result.add(new AddJavaBreakpointAction(breakpointFactory));
-      //}
-      //return result.toArray(new AnAction[result.size()]);
-      return AnAction.EMPTY_ARRAY;
-    }
 
     @Override
     public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {

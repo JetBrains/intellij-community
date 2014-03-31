@@ -33,7 +33,7 @@
   <problem>
     <file>Test.java</file>
     <line>51</line>
-    <description>Condition &lt;code&gt;o&lt;/code&gt; at the left side of assignment expression is always &lt;code&gt;false&lt;/code&gt;. Can be simplified to normal assignment.</description>
+    <description>Condition &lt;code&gt;o&lt;/code&gt; at the left side of assignment expression is always &lt;code&gt;false&lt;/code&gt;. Can be simplified.</description>
   </problem>
 
 </problems>

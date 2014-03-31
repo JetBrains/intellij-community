@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BloomFilterBase;
 import com.intellij.util.SmartList;
@@ -127,6 +128,8 @@ public class ClasspathCache {
   }
 
   public boolean loaderHasName(String name, Loader loader) {
+    if (StringUtil.isEmpty(name)) return true;
+    
     String origName = name;
     name = transformName(name);
 
@@ -139,7 +142,7 @@ public class ClasspathCache {
       if (!result) ++hits;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(name, loader);
         if (result2 != result) {
           ++diffs3;
         }
@@ -159,7 +162,7 @@ public class ClasspathCache {
       if (!result) ++hits2;
 
       if (doDebug) {
-        boolean result2 = myDebugInfo.loaderHashName(name, loader);
+        boolean result2 = myDebugInfo.loaderHasName(name, loader);
         if (result2 != result) {
           ++diffs2;
         }
@@ -340,7 +343,7 @@ public class ClasspathCache {
       }
     }
 
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return myResourceIndex.contains(hashFromNameAndLoader(name, loader));
     }
   }
@@ -359,7 +362,7 @@ public class ClasspathCache {
     }
 
     @Override
-    protected boolean loaderHashName(String name, Loader loader) {
+    protected boolean loaderHasName(String name, Loader loader) {
       return false;
     }
   }

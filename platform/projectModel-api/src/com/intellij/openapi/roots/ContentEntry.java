@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Represents a module content root.
+ * Represents a module's content root.
  * You can get existing entries with {@link com.intellij.openapi.roots.ModuleRootModel#getContentEntries()} or
  * create a new one with {@link ModifiableRootModel#addContentEntry(com.intellij.openapi.vfs.VirtualFile)}.
  *
@@ -35,9 +35,9 @@ import java.util.Set;
  */
 public interface ContentEntry extends Synthetic {
   /**
-   * Returns the root directory for the content root, if it is valid.
+   * Returns the root file or directory for the content root, if it is valid.
    *
-   * @return the content root directory, or null if content entry is invalid.
+   * @return the content root file or directory, or null if content entry is invalid.
    */
   @Nullable
   VirtualFile getFile();
@@ -76,7 +76,7 @@ public interface ContentEntry extends Synthetic {
   List<SourceFolder> getSourceFolders(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns the list of directories for valid source roots under this content root.
+   * Returns the list of files and directories for valid source roots under this content root.
    *
    * @return list of all valid source roots.
    */
@@ -98,7 +98,7 @@ public interface ContentEntry extends Synthetic {
   List<String> getExcludeFolderUrls();
 
   /**
-   * Returns the list of directories for valid excluded roots under this content root.
+   * Returns the list of files and directories for valid excluded roots under this content root.
    *
    * @return list of all valid exclude roots including synthetic excludes like the module output
    */
@@ -108,8 +108,8 @@ public interface ContentEntry extends Synthetic {
   /**
    * Adds a source or test source root under the content root.
    *
-   * @param file         the directory to add as a source root.
-   * @param isTestSource true if the directory is added as a test source root.
+   * @param file         the file or directory to add as a source root.
+   * @param isTestSource true if the file or directory is added as a test source root.
    * @return the object representing the added root.
    */
   @NotNull
@@ -118,8 +118,8 @@ public interface ContentEntry extends Synthetic {
   /**
    * Adds a source or test source root with the specified package prefix under the content root.
    *
-   * @param file          the directory to add as a source root.
-   * @param isTestSource  true if the directory is added as a test source root.
+   * @param file          the file or directory to add as a source root.
+   * @param isTestSource  true if the file or directory is added as a test source root.
    * @param packagePrefix the package prefix for the root to add, or an empty string if no
    *                      package prefix is required.
    * @return the object representing the added root.
@@ -138,8 +138,8 @@ public interface ContentEntry extends Synthetic {
   /**
    * Adds a source or test source root under the content root.
    *
-   * @param  url the directory url to add as a source root.
-   * @param isTestSource true if the directory is added as a test source root.
+   * @param  url the file or directory url to add as a source root.
+   * @param isTestSource true if the file or directory is added as a test source root.
    * @return the object representing the added root.
    */
   @NotNull
@@ -165,7 +165,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Adds an exclude root under the content root.
    *
-   * @param file the directory to add as an exclude root.
+   * @param file the file or directory to add as an exclude root.
    * @return the object representing the added root.
    */
   ExcludeFolder addExcludeFolder(@NotNull VirtualFile file);
@@ -173,7 +173,7 @@ public interface ContentEntry extends Synthetic {
   /**
    * Adds an exclude root under the content root.
    *
-   * @param url the directory url to add as an exclude root.
+   * @param url the file or directory url to add as an exclude root.
    * @return the object representing the added root.
    */
   ExcludeFolder addExcludeFolder(@NotNull String url);

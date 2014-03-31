@@ -21,7 +21,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -77,7 +76,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask {
               if (isMake && cache.getTimestamp(url) == file.getTimeStamp()) {
                 final ValidityState state = cache.getExtState(url);
                 final ValidityState itemState = item.getValidityState();
-                if (Comparing.equal(state, itemState)) {
+                if (state != null ? state.equalsTo(itemState) : itemState == null) {
                   continue;
                 }
               }

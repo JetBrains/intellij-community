@@ -18,7 +18,7 @@ package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.newgraph.GraphFlags;
-import com.intellij.vcs.log.newgraph.utils.Flags;
+import com.intellij.vcs.log.facade.utils.Flags;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

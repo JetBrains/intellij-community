@@ -18,7 +18,6 @@ package com.intellij.ide.plugins;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -82,10 +81,9 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     view.addAll(myInstalled);
     reset(view);
 
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     for (Iterator<IdeaPluginDescriptor> iterator = view.iterator(); iterator.hasNext(); ) {
       @NonNls final String s = iterator.next().getPluginId().getIdString();
-      if ("com.intellij".equals(s) || applicationInfo.isEssentialPlugin(s)) iterator.remove();
+      if ("com.intellij".equals(s)) iterator.remove();
     }
 
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));

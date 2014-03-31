@@ -24,9 +24,9 @@ import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.impl.PermanentGraphBuilder;
-import com.intellij.vcs.log.newgraph.impl.PermanentGraphImpl;
-import com.intellij.vcs.log.newgraph.impl.PermanentGraphLayoutBuilder;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphImpl;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphLayoutBuilder;
 import com.intellij.vcs.log.newgraph.render.ElementColorManager;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public class GraphFacadeImpl implements GraphFacade {
                                             @NotNull Set<Integer> branchCommitHashIndexes,
                                             @NotNull final GraphColorManager colorManager) {
     GraphFlags flags = new GraphFlags(commits.size());
-    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits);
+    Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(commits);
     final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());

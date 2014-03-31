@@ -17,7 +17,6 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -84,7 +83,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   @Override
   public String getTitle() {
-    return IdeBundle.message("action.toolwindow.favorites");
+    return "Favorites";
   }
 
   @Override

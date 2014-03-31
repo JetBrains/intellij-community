@@ -134,7 +134,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.util.net.ssl.CertificatesManager</implementation-class>
+      <implementation-class>com.intellij.util.net.ssl.CertificateManager</implementation-class>
     </component>
 
     <component>
@@ -149,6 +149,10 @@
     <component>
       <interface-class>com.intellij.openapi.editor.EditorLastActionTracker</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.editor.impl.breakout.BreakoutMode</implementation-class>
     </component>
   </application-components>
 

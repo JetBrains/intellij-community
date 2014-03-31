@@ -14,36 +14,27 @@
  * limitations under the License.
  */
 package git4idea.repo
-
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.util.Processor
 import git4idea.GitBranch
 import git4idea.branch.GitBranchesCollection
-import git4idea.test.GitLightTest
+import git4idea.test.GitPlatformTest
 import org.jetbrains.annotations.NotNull
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 
-import static junit.framework.Assert.*;
-
-/**
- * @author Kirill Likhodedov
- */
-public class GitRepositoryReaderTest extends GitLightTest {
+public class GitRepositoryReaderTest extends GitPlatformTest {
 
   private GitRepositoryReader myRepositoryReader;
   private File myGitDir;
   private Collection<GitTestBranch> myLocalBranches;
   private Collection<GitTestBranch> myRemoteBranches;
 
-  @Before
-  void setUp() {
+  @Override
+  protected void setUp() {
     super.setUp();
 
-    File myTempDir = new File(myTestRoot, "test")
+    File myTempDir = new File(myProjectRoot.getPath(), "test")
     myTempDir.mkdir()
 
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
@@ -59,22 +50,19 @@ public class GitRepositoryReaderTest extends GitLightTest {
     myRemoteBranches = readBranches(false);
   }
 
-  @After
-  void tearDown() {
+  @Override
+  protected void tearDown() {
     super.tearDown();
   }
   
-  @Test
   public void testHEAD() {
     assertEquals("0e1d130689bc52f140c5c374aa9cc2b8916c0ad7", myRepositoryReader.readCurrentRevision());
   }
   
-  @Test
   public void testCurrentBranch() {
     assertBranch(myRepositoryReader.readCurrentBranch(), new GitTestBranch("master", "0e1d130689bc52f140c5c374aa9cc2b8916c0ad7"));
   }
   
-  @Test
   public void testBranches() {
     def remotes = GitConfig.read(myPlatformFacade, new File(myGitDir, "config")).parseRemotes();
     GitBranchesCollection branchesCollection = myRepositoryReader.readBranches(remotes);
