@@ -115,10 +115,10 @@ public interface PyCallExpression extends PyExpression {
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
    * @see com.jetbrains.python.nameResolver
-   * @param name provider that provides one or more names to check
+   * @param name providers that provides one or more names to check
    * @return true if matches, false otherwise
    */
-  boolean isCallee(@NotNull FQNamesProvider name);
+  boolean isCallee(@NotNull FQNamesProvider... name);
 
   /**
    * Couples function with a flag describing the way it is called.
