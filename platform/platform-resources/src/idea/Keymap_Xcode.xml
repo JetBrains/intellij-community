@@ -1,10 +1,15 @@
 <component>
   <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
-    <action id="ActivateFavoritesToolWindow"/>
+    <action id="ActivateHierarchyToolWindow"/>
+    <action id="ActivateFavoritesToolWindow">
+      <keyboard-shortcut first-keystroke="meta 8"/>
+    </action>
     <action id="ActivateMessagesToolWindow">
       <keyboard-shortcut first-keystroke="meta 4" />
     </action>
-    <action id="ActivateRunToolWindow" />
+    <action id="ActivateRunToolWindow">
+      <keyboard-shortcut first-keystroke="meta 0"/>
+    </action>
     <action id="ActivateStructureToolWindow">
       <keyboard-shortcut first-keystroke="meta 2" />
     </action>
@@ -54,7 +59,6 @@
     <action id="Compare.SameVersion">
       <keyboard-shortcut first-keystroke="alt shift meta ENTER" />
     </action>
-    <action id="DecrementWindowHeight" />
     <action id="Diff.NextChange">
       <keyboard-shortcut first-keystroke="shift meta CLOSE_BRACKET" />
     </action>
@@ -63,10 +67,18 @@
     </action>
     <action id="DuplicatesForm.SendToLeft" />
     <action id="DuplicatesForm.SendToRight" />
-    <action id="EditorCodeBlockEnd" />
-    <action id="EditorCodeBlockEndWithSelection" />
-    <action id="EditorCodeBlockStart" />
-    <action id="EditorCodeBlockStartWithSelection" />
+    <action id="EditorCodeBlockEnd">
+      <keyboard-shortcut first-keystroke="control CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockEndWithSelection">
+      <keyboard-shortcut first-keystroke="control shift CLOSE_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStart">
+      <keyboard-shortcut first-keystroke="control OPEN_BRACKET"/>
+    </action>
+    <action id="EditorCodeBlockStartWithSelection">
+      <keyboard-shortcut first-keystroke="control shift OPEN_BRACKET"/>
+    </action>
     <action id="EditorDeleteToWordEndInDifferentHumpsMode">
       <keyboard-shortcut first-keystroke="control DELETE" />
     </action>
@@ -190,10 +202,6 @@
       <keyboard-shortcut first-keystroke="shift F3" />
       <keyboard-shortcut first-keystroke="shift control L" />
     </action>
-    <action id="FindUsages">
-      <keyboard-shortcut first-keystroke="alt F7" />
-      <keyboard-shortcut first-keystroke="meta F7" />
-    </action>
     <action id="GotoDeclaration">
       <mouse-shortcut keystroke="meta button1" />
       <mouse-shortcut keystroke="button2" />
@@ -234,7 +242,6 @@
     <action id="ImplementMethods">
       <keyboard-shortcut first-keystroke="control meta I" />
     </action>
-    <action id="IncrementWindowHeight" />
     <action id="InspectCode">
       <keyboard-shortcut first-keystroke="meta shift B" />
     </action>
@@ -256,12 +263,20 @@
     <action id="MoveLineUp">
       <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET" />
     </action>
-    <action id="MoveStatementDown" />
-    <action id="MoveStatementUp" />
+    <action id="MoveStatementDown">
+      <keyboard-shortcut first-keystroke="meta control CLOSE_BRACKET" />
+    </action>
+    <action id="MoveStatementUp">
+      <keyboard-shortcut first-keystroke="meta control OPEN_BRACKET" />
+    </action>
     <action id="NextEditorTab" />
     <action id="NextProjectWindow" />
-    <action id="OCIntroduceDefine" />
-    <action id="OCIntroduceConstant" />
+    <action id="OCIntroduceDefine">
+      <keyboard-shortcut first-keystroke="meta alt G" />
+    </action>
+    <action id="OCIntroduceConstant">
+      <keyboard-shortcut first-keystroke="meta alt S" />
+    </action>
     <action id="OpenFile">
     </action>
     <action id="OpenXcodeProjectAction">
@@ -301,8 +316,6 @@
     <action id="RerunFailedTests">
       <keyboard-shortcut first-keystroke="control alt meta G"/>
     </action>
-    <action id="ResizeToolWindowDown" />
-    <action id="ResizeToolWindowUp" />
     <action id="Resume">
       <keyboard-shortcut first-keystroke="control Y"/>
       <keyboard-shortcut first-keystroke="meta F9" />
@@ -333,9 +346,6 @@
     <action id="ChooseDebugConfiguration">
       <keyboard-shortcut first-keystroke="alt meta U"/>
     </action>
-    <action id="SaveAll">
-      <keyboard-shortcut first-keystroke="meta alt S" />
-    </action>
     <action id="SelectIn">
       <keyboard-shortcut first-keystroke="shift meta J" />
       <keyboard-shortcut first-keystroke="alt F1" />
@@ -358,7 +368,9 @@
       <keyboard-shortcut first-keystroke="meta PERIOD"/>
       <keyboard-shortcut first-keystroke="meta F2" />
     </action>
-    <action id="Vcs.QuickListPopupAction" />
+    <action id="Vcs.QuickListPopupAction">
+      <keyboard-shortcut first-keystroke="control S"/>
+    </action>
     <action id="AddFilesToProjectAction">
       <keyboard-shortcut first-keystroke="meta alt A" />
     </action>
@@ -451,7 +463,26 @@
     </action>
 
     <action id="NewScratchFile"/>
-    <action id="ToggleBookmark"/>
-    <action id="FindUsagesInFile"/>
+    <action id="ToggleBookmark">
+      <keyboard-shortcut first-keystroke="control F3"/>
+    </action>
+    <action id="EditorSelectWord">
+      <keyboard-shortcut first-keystroke="meta alt UP"/>
+    </action>
+    <action id="EditorUnSelectWord">
+      <keyboard-shortcut first-keystroke="meta alt DOWN"/>
+    </action>
+    <action id="MethodUp">
+      <keyboard-shortcut first-keystroke="alt UP"/>
+    </action>
+    <action id="MethodDown">
+      <keyboard-shortcut first-keystroke="alt DOWN"/>
+    </action>
+    <action id="PreviousOccurence">
+      <keyboard-shortcut first-keystroke="control UP"/>
+    </action>
+    <action id="NextOccurence">
+      <keyboard-shortcut first-keystroke="control DOWN"/>
+    </action>
   </keymap>
 </component>
