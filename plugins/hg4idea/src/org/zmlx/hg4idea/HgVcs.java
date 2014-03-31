@@ -79,6 +79,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
+  public static final String DISPLAY_NAME = "Mercurial";
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
@@ -132,7 +133,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public String getDisplayName() {
-    return HgVcsMessages.message("hg4idea.mercurial");
+    return DISPLAY_NAME;
   }
 
   public Configurable getConfigurable() {
