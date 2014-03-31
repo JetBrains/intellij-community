@@ -62,6 +62,7 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   private final Random myRandom = new Random();
   private final Alarm myAlarm;
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myDisposed = new AtomicBoolean(false);
 
   private BufferedImage myTexture;
   private HashMap<Integer, BufferedImage> myCache = new HashMap<Integer, BufferedImage>();
@@ -101,7 +102,8 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
         if (System.currentTimeMillis() - myLastTime >= IDLE_THRESHOLD &&
             myPoint != null &&
             myAlarm.isEmpty() &&
-            myInitialized.get()) {
+            myInitialized.get() &&
+            !myDisposed.get()) {
           repaint();
         }
       }
@@ -111,20 +113,24 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
 
   @Override
   public void dispose() {
+    if (myDisposed.get()) return;
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     myFuture.cancel(true);
+    myDisposed.set(true);
   }
 
   @Override
   public void removeNotify() {
     super.removeNotify();
-    Disposer.dispose(this);
+    if (!myDisposed.get()) {
+      Disposer.dispose(this);
+    }
   }
 
   //update textures
   @Override
   public void run() {
-    if (myPoint == null) return;
+    if (myPoint == null || myDisposed.get()) return;
     if (Runtime.getRuntime().maxMemory() - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory() < 1L << 25) return;
     int width = getWidth();
     int height = getHeight();
@@ -220,6 +226,7 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   }
 
   private void scheduleUpdate() {
+    if (myDisposed.get()) return;
     myInitialized.set(false);
     repaint();
     myTexture = null;
@@ -250,12 +257,12 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
     }
 
     double linearProgress = (double)(myLastPaintTime - myStartPaintTime) / FADE_CYCLE;
-    if (linearProgress>1) {
+    if (linearProgress > 1) {
       myPoint = null;
       repaint();
       return;
     }
-    double progress = (1 - Math.cos(2 * Math.PI * linearProgress))/2;
+    double progress = (1 - Math.cos(2 * Math.PI * linearProgress)) / 2;
 
 
     Graphics2D g2d = (Graphics2D)g.create();
@@ -279,14 +286,6 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
         }
         g2d.drawImage(myTexture, -myEffectiveRadius, -myEffectiveRadius, this);
       }
-      //debug
-      //g2d.setComposite(AlphaComposite.SrcOver);
-      //g2d.setTransform(oldTransform);
-      //g2d.setColor(Color.WHITE);
-      //g2d.fillRoundRect(25, 25, 100, 100, 25, 25);
-      //g2d.setColor(Color.RED);
-      //g2d.drawString("" + (int)(progress * 100) + ": " + textureNumber + ": " + (int)(localProgress * 100), 50, 50);
-      //debug
     }
     finally {
       g2d.dispose();
