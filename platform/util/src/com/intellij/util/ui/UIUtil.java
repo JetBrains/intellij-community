@@ -2817,4 +2817,9 @@ public class UIUtil {
       }
     });
   }
+
+  public static boolean isFD() {
+    return Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL
+         && Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1;
+  }
 }
