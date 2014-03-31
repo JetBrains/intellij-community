@@ -119,14 +119,6 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
     myDisposed.set(true);
   }
 
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    if (!myDisposed.get()) {
-      Disposer.dispose(this);
-    }
-  }
-
   //update textures
   @Override
   public void run() {
