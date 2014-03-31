@@ -1,5 +1,7 @@
 package org.jetbrains.debugger.values;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -16,6 +18,7 @@ public abstract class ValueManager {
     cacheStamp.incrementAndGet();
   }
 
+  @NotNull
   public Runnable getClearCachesTask() {
     return new Runnable() {
       @Override

@@ -14,6 +14,7 @@ final class CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RE
 
   public CommandCallbackWithResponse(AsyncResult<TRANSFORMED_RESULT> asyncResult, String methodName, Function<RESULT, TRANSFORMED_RESULT> transform, @Nullable ErrorConsumer<AsyncResult<TRANSFORMED_RESULT>, ERROR_DETAILS> errorConsumer) {
     super(asyncResult, methodName, errorConsumer);
+
     this.transform = transform;
   }
 

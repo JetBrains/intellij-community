@@ -9,6 +9,7 @@ final class NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, MAIN_RES
 
   public NestedCommandCallbackWithResponse(AsyncResult<MAIN_RESULT> mainAsyncResult, String methodName, PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer) {
     super(mainAsyncResult, methodName, null);
+
     this.consumer = consumer;
   }
 

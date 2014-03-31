@@ -9,6 +9,7 @@ abstract class CommandCallbackWithResponseBase<SUCCESS_RESPONSE, C extends Actio
 
   public CommandCallbackWithResponseBase(C callback, String methodName, @Nullable ErrorConsumer<C, ERROR_DETAILS> errorConsumer) {
     super(callback, errorConsumer);
+    
     this.methodName = methodName;
 
   }
