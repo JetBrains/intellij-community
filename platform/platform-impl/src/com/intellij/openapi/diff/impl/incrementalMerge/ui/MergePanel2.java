@@ -331,7 +331,7 @@ public class MergePanel2 implements DiffViewer {
       String[] titles = myData.getContentTitles();
       for (int i = 0; i < myEditorsPanels.length; i++) {
         LabeledComponent editorsPanel = myEditorsPanels[i];
-        editorsPanel.getLabel().setText(titles[i]);
+        editorsPanel.getLabel().setText(titles[i].isEmpty() ? " " : titles[i]);
       }
       createMergeList();
       data.customizeToolbar(myPanel.resetToolbar());
