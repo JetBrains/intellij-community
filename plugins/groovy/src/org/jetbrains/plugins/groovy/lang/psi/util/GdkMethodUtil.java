@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
@@ -162,7 +163,7 @@ public class GdkMethodUtil {
                                                final PsiScopeProcessor processor,
                                                @NotNull final ResolveState state,
                                                @NotNull final PsiClass categoryClass) {
-    final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
+    final PsiScopeProcessor delegate = new GrDelegatingScopeProcessorWithHints(processor, null, ResolverProcessor.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
         if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
