@@ -60,6 +60,7 @@ import java.util.List;
  * @author dyoma
  */
 public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.impl.ExecutionManagerImpl");
 
   private final Project myProject;
@@ -142,7 +143,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
-        final Key executionSessionId = Key.create("execution_session_id");
+        final Long executionSessionId = new Long(id);
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           /** @noinspection SSBasedInspection*/
           @Override
@@ -158,7 +159,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
               }
               ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(env).setContentToReuse(null).build();
               taskEnvironment.setExecutionId(finalId);
-              ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
+              EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
               if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
