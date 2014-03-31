@@ -150,6 +150,10 @@
       <interface-class>com.intellij.openapi.editor.EditorLastActionTracker</interface-class>
       <implementation-class>com.intellij.openapi.editor.impl.EditorLastActionTrackerImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.editor.impl.breakout.BreakoutMode</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
