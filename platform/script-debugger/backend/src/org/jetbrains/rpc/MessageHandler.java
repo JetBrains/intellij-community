@@ -52,13 +52,13 @@ public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPON
   }
 
   @Override
-  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(RequestWithResponse message, Function<RESULT, TRANSFORMED_RESULT> transform) {
+  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message, @NotNull Function<RESULT, TRANSFORMED_RESULT> transform) {
     return send(message, transform, null);
   }
 
   @Override
-  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(RequestWithResponse message,
-                                                                                 Function<RESULT, TRANSFORMED_RESULT> transform,
+  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message,
+                                                                                 @NotNull Function<RESULT, TRANSFORMED_RESULT> transform,
                                                                                  @Nullable ErrorConsumer<AsyncResult<TRANSFORMED_RESULT>, ERROR_DETAILS> errorConsumer) {
     CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS> callback =
       new CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(message.getMethodName(), transform, errorConsumer);
@@ -67,17 +67,23 @@ public abstract class MessageHandler<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPON
   }
 
   @Override
-  public final <RESULT, TRANSFORMED_RESULT> void send(AsyncResult<TRANSFORMED_RESULT> precreatedAsyncResult,
-                                                      RequestWithResponse message,
-                                                      Function<RESULT, TRANSFORMED_RESULT> transform) {
-    messageManager.send(message, new CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(precreatedAsyncResult, message.getMethodName(), transform, null));
+  public final <RESULT, TRANSFORMED_RESULT> void send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
+                                                      @NotNull RequestWithResponse message,
+                                                      @NotNull Function<RESULT, TRANSFORMED_RESULT> transform) {
+    messageManager.send(message, new CommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), transform, null));
   }
 
   @Override
-  public final <RESULT, MAIN_RESULT> AsyncResult<MAIN_RESULT> sendNested(AsyncResult<MAIN_RESULT> mainAsyncResult,
-                                                                         RequestWithResponse message,
-                                                                         PairConsumer<RESULT, AsyncResult<MAIN_RESULT>> consumer) {
-    messageManager.send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, MAIN_RESULT, ERROR_DETAILS>(mainAsyncResult, message.getMethodName(), consumer));
-    return mainAsyncResult;
+  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull RequestWithResponse message,
+                                                                                 @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer) {
+    return send(new AsyncResult<TRANSFORMED_RESULT>(), message, consumer);
+  }
+
+  @Override
+  public final <RESULT, TRANSFORMED_RESULT> AsyncResult<TRANSFORMED_RESULT> send(@NotNull AsyncResult<TRANSFORMED_RESULT> result,
+                                                                                 @NotNull RequestWithResponse message,
+                                                                                 @NotNull PairConsumer<RESULT, AsyncResult<TRANSFORMED_RESULT>> consumer) {
+    messageManager.send(message, new NestedCommandCallbackWithResponse<SUCCESS_RESPONSE, RESULT, TRANSFORMED_RESULT, ERROR_DETAILS>(result, message.getMethodName(), consumer));
+    return result;
   }
 }

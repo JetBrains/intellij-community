@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface Scope {
-  void clearCaches();
-
   enum Type {
     GLOBAL,
     LOCAL,
@@ -26,7 +25,7 @@ public interface Scope {
 
   @Nullable
   /**
-   * Class or function or file name.
+   * Class or function or file name
    */
   String getDescription();
 
@@ -34,4 +33,11 @@ public interface Scope {
   AsyncResult<List<? extends Variable>> getVariables();
 
   boolean isGlobal();
+
+  /**
+   * Some backends requires to reload the whole call stack on scope variable modification, but not all API is asynchronous (compromise, to not increase complexity),
+   * for example, {@link CallFrame#getVariableScopes()} is not asynchronous method. So, you must use returned callback to postpone your code working with updated data.
+   */
+  @NotNull
+  ActionCallback clearCaches();
 }

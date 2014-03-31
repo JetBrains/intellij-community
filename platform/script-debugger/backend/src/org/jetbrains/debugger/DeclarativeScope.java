@@ -1,5 +1,6 @@
 package org.jetbrains.debugger;
 
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.AsyncValueLoaderManager;
 import org.jetbrains.annotations.NotNull;
@@ -53,9 +54,11 @@ public abstract class DeclarativeScope<VALUE_LOADER extends ValueManager> extend
     return VARIABLES_LOADER.get(this);
   }
 
+  @NotNull
   @Override
-  public void clearCaches() {
+  public ActionCallback clearCaches() {
     cacheStamp = -1;
     VARIABLES_LOADER.reset(this);
+    return ActionCallback.DONE;
   }
 }
