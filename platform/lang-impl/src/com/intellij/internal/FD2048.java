@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,6 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -56,9 +56,7 @@ public class FD2048 implements ProjectComponent {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        final int D = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
-        final int M = Calendar.getInstance().get(Calendar.MONTH);
-        if (D == 1 && M == Calendar.APRIL) {
+        if (UIUtil.isFD()) {
           final JFrame frame = (JFrame)WindowManagerEx.getInstanceEx().findFrameFor(myProject);
           final Point location = frame.getLocation();
           final Dimension size = frame.getSize();
