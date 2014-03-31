@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -54,6 +55,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -63,6 +65,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -2822,4 +2825,33 @@ public class UIUtil {
     return Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL
          && Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1;
   }
+
+  public static void doPlay(final Class<?> aClass, final String resourceName) {
+    doPlay(new Factory<InputStream>() {
+      @Override
+      public InputStream create() {
+        return aClass.getResourceAsStream(resourceName);
+      }
+    });
+  }
+
+  private static void doPlay(final Factory<InputStream> streamProducer) {
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+      public void run() {
+        try {
+          Clip clip = AudioSystem.getClip();
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+            streamProducer.create());
+          clip.open(inputStream);
+
+          clip.start();
+        } catch (Exception ignore) {
+          LOG.info(ignore);
+        }
+      }
+    }).start();
+  }
+
 }

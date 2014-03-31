@@ -53,9 +53,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import java.io.File;
 import java.util.*;
 
@@ -628,19 +625,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
   private static void playSuccess() {
     if (!UIUtil.isFD()) return;
-    new Thread(new Runnable() {
-      // The wrapper thread is unnecessary, unless it blocks on the
-      // Clip finishing; see comments.
-        public void run() {
-          try {
-            Clip clip = AudioSystem.getClip();
-            AudioInputStream inputStream = AudioSystem.getAudioInputStream(AbstractCommonUpdateAction.class.getResourceAsStream("success.wav"));
-            clip.open(inputStream);
-            clip.start();
-          } catch (Exception ignore) {
-            ignore.printStackTrace();
-          }
-        }
-      }).start();
+    UIUtil.doPlay(AbstractCommonUpdateAction.class, "success.wav");
   }
 }
