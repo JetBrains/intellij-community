@@ -174,10 +174,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void removeAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myCachedHighlighters = null;
     for (RangeHighlighter highlighter : getAllHighlighters()) {
       highlighter.dispose();
     }
+    myCachedHighlighters = null;
     myHighlighterTree.clear();
   }
 
