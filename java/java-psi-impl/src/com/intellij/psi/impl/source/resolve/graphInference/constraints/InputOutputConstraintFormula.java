@@ -118,6 +118,6 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Override
   public String toString() {
-    return "T: " + getT().getCanonicalText() + "; expr : " + getExpression().getText();
+    return getExpression().getText() + " -> " + getT().getPresentableText();
   }
 }

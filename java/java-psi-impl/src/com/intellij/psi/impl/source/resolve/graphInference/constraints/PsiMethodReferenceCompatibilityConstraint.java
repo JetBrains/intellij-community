@@ -234,6 +234,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
   @Override
   public String toString() {
-    return "T: " + myT.getCanonicalText() +"; expr: " + myExpression.getText();
+    return myExpression.getText() + " -> " + myT.getPresentableText();
   }
 }

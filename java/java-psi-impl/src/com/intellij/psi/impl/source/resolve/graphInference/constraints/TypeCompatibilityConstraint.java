@@ -111,6 +111,6 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
 
   @Override
   public String toString() {
-    return "T: " + myT.getCanonicalText() +"; myS: " + myS.getCanonicalText();
+    return myS.getPresentableText() + " -> " + myT.getPresentableText();
   }
 }
