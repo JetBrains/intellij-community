@@ -41,8 +41,8 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     ClassHint classHint = processor.getHint(ClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) return;

@@ -43,8 +43,8 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull final PsiType qualifierType,
                                      PsiClass aClass,
-                                     final PsiScopeProcessor processor,
-                                     final PsiElement place,
+                                     @NotNull final PsiScopeProcessor processor,
+                                     @NotNull final PsiElement place,
                                      @NotNull final ResolveState state) {
     final PsiType collectionType = PsiUtil.extractIterableTypeParameter(qualifierType, true);
     if (collectionType == null) return;
@@ -66,8 +66,8 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (element instanceof PsiField) {
         final PsiType type = ((PsiField)element).getType();
-        final String typeText =
-          type instanceof PsiClassType ? JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">" : JAVA_UTIL_COLLECTION;
+        final String typeText = type instanceof PsiClassType ? JAVA_UTIL_COLLECTION + "<" + type.getCanonicalText() + ">"
+                                                             : JAVA_UTIL_COLLECTION;
         LightFieldBuilder lightField = new LightFieldBuilder(((PsiField)element).getName(), typeText, element);
         lightField.setContainingClass(myCollectionClass);
         lightField.setOriginInfo("spread collection field");

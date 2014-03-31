@@ -29,8 +29,8 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     if (aClass == null) return;
 

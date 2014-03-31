@@ -187,7 +187,10 @@ public class ResolveUtil {
     return processor;
   }
 
-  static boolean processScopeNonCodeMethods(PsiElement place, PsiElement lastParent, PsiScopeProcessor processor, PsiElement scope) {
+  static boolean processScopeNonCodeMethods(@NotNull PsiElement place,
+                                            @Nullable PsiElement lastParent,
+                                            @NotNull PsiScopeProcessor processor,
+                                            @NotNull PsiElement scope) {
     if (scope instanceof GrTypeDefinition) {
       if (!processNonCodeMembers(createPsiType((GrTypeDefinition)scope), processor, place, ResolveState.initial())) return false;
 
@@ -224,16 +227,17 @@ public class ResolveUtil {
     return true;
   }
 
-  private static PsiClassType createPsiType(PsiClass psiClass) {
+  @NotNull
+  private static PsiClassType createPsiType(@NotNull PsiClass psiClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     return factory.createType(psiClass);
   }
 
-  public static boolean processChildren(PsiElement element,
-                                        PsiScopeProcessor processor,
-                                        ResolveState state,
-                                        PsiElement lastParent,
-                                        PsiElement place) {
+  public static boolean processChildren(@NotNull PsiElement element,
+                                        @NotNull PsiScopeProcessor processor,
+                                        @NotNull ResolveState state,
+                                        @Nullable PsiElement lastParent,
+                                        @NotNull PsiElement place) {
     if (!shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
 
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
@@ -255,7 +259,9 @@ public class ResolveUtil {
     return nameHint.getName(ResolveState.initial());
   }
 
-  public static boolean processElement(@NotNull PsiScopeProcessor processor, @NotNull PsiNamedElement namedElement, @NotNull ResolveState state) {
+  public static boolean processElement(@NotNull PsiScopeProcessor processor,
+                                       @NotNull PsiNamedElement namedElement,
+                                       @NotNull ResolveState state) {
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint == null ? null : nameHint.getName(state);
     if (name == null || name.equals(namedElement.getName())) {
@@ -273,10 +279,10 @@ public class ResolveUtil {
   }
 
   public static boolean processAllDeclarationsSeparately(@NotNull PsiType type,
-                                                          @NotNull PsiScopeProcessor processor,
-                                                          @NotNull PsiScopeProcessor nonCodeProcessor,
-                                                          @NotNull ResolveState state,
-                                                          @NotNull PsiElement place) {
+                                                         @NotNull PsiScopeProcessor processor,
+                                                         @NotNull PsiScopeProcessor nonCodeProcessor,
+                                                         @NotNull ResolveState state,
+                                                         @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -293,7 +299,7 @@ public class ResolveUtil {
 
   public static boolean processNonCodeMembers(@NotNull PsiType type,
                                               @NotNull PsiScopeProcessor processor,
-                                              PsiElement place,
+                                              @NotNull PsiElement place,
                                               @NotNull ResolveState state) {
     if (type instanceof PsiEllipsisType) {
       type = ((PsiEllipsisType)type).toArrayType();

@@ -36,8 +36,8 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     Project project = place.getProject();
     GlobalSearchScope resolveScope = place.getResolveScope();
