@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
@@ -34,8 +33,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -82,9 +79,7 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   private final ScheduledFuture<?> myFuture;
 
   static boolean isAvailable() {
-    return (new SimpleDateFormat("dd/MM").format(new Date()).equals("01/04") || Boolean.getBoolean("eggs"))
-           && !Registry.is("ui.no.bangs.and.whistles", false) && !Boolean.getBoolean("noeggs")
-           && Runtime.getRuntime().availableProcessors() >= 4;
+    return false;
   }
 
 
