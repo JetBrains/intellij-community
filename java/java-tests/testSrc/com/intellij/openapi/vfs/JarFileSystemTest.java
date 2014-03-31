@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
@@ -98,6 +99,16 @@ public class JarFileSystemTest extends IdeaTestCase {
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertContent(entry, "update");
+  }
+
+  public void testInvalidJar() throws Exception {
+    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
+    assertNotNull(vFile);
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + java.util.jar.JarFile.MANIFEST_NAME);
+    assertNotNull(manifest);
+    VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
+    assertNotNull(classFile);
   }
 
   private String getJdkRtPath(String relativePath) {

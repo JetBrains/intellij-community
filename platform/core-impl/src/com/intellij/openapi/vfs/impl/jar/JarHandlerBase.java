@@ -51,15 +51,18 @@ public class JarHandlerBase {
   protected final String myBasePath;
 
   protected static class EntryInfo {
-    protected final boolean isDirectory;
-    @NotNull
-    protected final String shortName;
     protected final EntryInfo parent;
+    protected final String shortName;
+    protected final boolean isDirectory;
+    protected final long length;
+    protected final long timestamp;
 
-    public EntryInfo(@NotNull String shortName, final EntryInfo parent, final boolean directory) {
-      this.shortName = shortName;
+    public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
       this.parent = parent;
-      isDirectory = directory;
+      this.shortName = shortName;
+      this.isDirectory = isDirectory;
+      this.length = length;
+      this.timestamp = timestamp;
     }
   }
 
@@ -106,10 +109,6 @@ public class JarHandlerBase {
 
         MyJarEntry(ZipEntry entry) {
           myEntry = entry;
-        }
-
-        public ZipEntry getEntry() {
-          return myEntry;
         }
 
         @Override
@@ -197,23 +196,7 @@ public class JarHandlerBase {
   }
 
   @NotNull
-  private static EntryInfo getOrCreate(@NotNull String entryName, boolean isDirectory, @NotNull Map<String, EntryInfo> map) {
-    EntryInfo info = map.get(entryName);
-    if (info == null) {
-      int idx = entryName.lastIndexOf('/');
-      final String parentEntryName = idx > 0 ? entryName.substring(0, idx) : "";
-      String shortName = idx > 0 ? entryName.substring(idx + 1) : entryName;
-      if (".".equals(shortName)) return getOrCreate(parentEntryName, true, map);
-
-      info = new EntryInfo(shortName, getOrCreate(parentEntryName, true, map), isDirectory);
-      map.put(entryName, info);
-    }
-
-    return info;
-  }
-
-  @NotNull
-  public String[] list(@NotNull final VirtualFile file) {
+  public String[] list(@NotNull VirtualFile file) {
     synchronized (lock) {
       EntryInfo parentEntry = getEntryInfo(file);
 
@@ -229,10 +212,12 @@ public class JarHandlerBase {
   }
 
   protected EntryInfo getEntryInfo(@NotNull VirtualFile file) {
-    synchronized (lock) {
-      String parentPath = getRelativePath(file);
-      return getEntryInfo(parentPath);
-    }
+    return getEntryInfo(getRelativePath(file));
+  }
+
+  private String getRelativePath(VirtualFile file) {
+    String path = file.getPath().substring(myBasePath.length() + 1);
+    return StringUtil.startsWithChar(path, '/') ? path.substring(1) : path;
   }
 
   public EntryInfo getEntryInfo(@NotNull String parentPath) {
@@ -245,18 +230,18 @@ public class JarHandlerBase {
       Map<String, EntryInfo> map = SoftReference.dereference(myRelPathsToEntries);
 
       if (map == null) {
-        final JarFile zip = getJar();
+        JarFile zip = getJar();
         if (zip != null) {
           LogUtil.debug(LOG, "mapping %s", myBasePath);
 
           map = new THashMap<String, EntryInfo>();
-          map.put("", new EntryInfo("", null, true));
-          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
+          map.put("", new EntryInfo(null, "", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP));
+
+          Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
           while (entries.hasMoreElements()) {
-            final JarFile.JarEntry entry = entries.nextElement();
-            final String name = entry.getName();
-            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
-            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
+            JarFile.JarEntry entry = entries.nextElement();
+            if (entry == null) break;  // corrupted .jar
+            getOrCreate(entry, map, zip);
           }
 
           myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
@@ -271,87 +256,119 @@ public class JarHandlerBase {
   }
 
   @NotNull
-  private String getRelativePath(@NotNull VirtualFile file) {
-    final String path = file.getPath().substring(myBasePath.length() + 1);
-    return StringUtil.startsWithChar(path, '/') ? path.substring(1) : path;
-  }
-
-  @Nullable
-  private JarFile.JarEntry convertToEntry(@NotNull VirtualFile file) {
-    String path = getRelativePath(file);
-    final JarFile jar = getJar();
-    return jar == null ? null : jar.getEntry(path);
-  }
-
-  public long getLength(@NotNull final VirtualFile file) {
-    final JarFile.JarEntry entry = convertToEntry(file);
-    synchronized (lock) {
-      return entry == null ? DEFAULT_LENGTH : entry.getSize();
+  private static EntryInfo getOrCreate(JarFile.JarEntry entry, Map<String, EntryInfo> map, JarFile zip) {
+    boolean isDirectory = entry.isDirectory();
+    String entryName = entry.getName();
+    if (StringUtil.endsWithChar(entryName, '/')) {
+      entryName = entryName.substring(0, entryName.length() - 1);
+      isDirectory = true;
     }
+
+    EntryInfo info = map.get(entryName);
+    if (info != null) return info;
+
+    int idx = entryName.lastIndexOf('/');
+    String parentName = idx > 0 ? entryName.substring(0, idx) : "";
+    String shortName = idx > 0 ? entryName.substring(idx + 1) : entryName;
+
+    EntryInfo parentInfo = getOrCreate(parentName, map, zip);
+
+    if (".".equals(shortName)) {
+      return parentInfo;
+    }
+
+    info = new EntryInfo(parentInfo, shortName, isDirectory, entry.getSize(), entry.getTime());
+    map.put(entryName, info);
+    return info;
   }
 
   @NotNull
-  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
+  private static EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, JarFile zip) {
+    EntryInfo info = map.get(entryName);
+
+    if (info == null) {
+      JarFile.JarEntry entry = zip.getEntry(entryName + "/");
+      if (entry != null) {
+        return getOrCreate(entry, map, zip);
+      }
+
+      int idx = entryName.lastIndexOf('/');
+      String parentName = idx > 0 ? entryName.substring(0, idx) : "";
+      String shortName = idx > 0 ? entryName.substring(idx + 1) : entryName;
+
+      EntryInfo parentInfo = getOrCreate(parentName, map, zip);
+      info = new EntryInfo(parentInfo, shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
+      map.put(entryName, info);
+    }
+
+    if (!info.isDirectory) {
+      //noinspection ConstantConditions
+      LOG.info(zip.getZipFile().getName() + ": " + entryName + " should be a directory");
+      info = new EntryInfo(info.parent, info.shortName, true, info.length, info.timestamp);
+      map.put(entryName, info);
+    }
+
+    return info;
+  }
+
+  public long getLength(@NotNull VirtualFile file) {
+    if (file.getParent() == null) return DEFAULT_LENGTH;
+    EntryInfo entry = getEntryInfo(file);
+    return entry == null ? DEFAULT_LENGTH : entry.length;
+  }
+
+  public long getTimeStamp(@NotNull VirtualFile file) {
+    if (file.getParent() == null) return getOriginalFile().lastModified();
+    EntryInfo entry = getEntryInfo(file);
+    return entry == null ? DEFAULT_TIMESTAMP : entry.timestamp;
+  }
+
+  public boolean isDirectory(@NotNull VirtualFile file) {
+    if (file.getParent() == null) return true;
+    EntryInfo info = getEntryInfo(file);
+    return info == null || info.isDirectory;
+  }
+
+  public boolean exists(@NotNull VirtualFile file) {
+    if (file.getParent() == null) {
+      return myJarFile.get() != null || getOriginalFile().exists();
+    }
+
+    return getEntryInfo(file) != null;
+  }
+
+  @Nullable
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    if (file.getParent() == null) {
+      return new FileAttributes(true, false, false, false, DEFAULT_LENGTH, getOriginalFile().lastModified(), false);
+    }
+
+    EntryInfo entry = getEntryInfo(file);
+    return entry == null ? null : new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false);
+  }
+
+  @NotNull
+  public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     return new BufferExposingByteArrayInputStream(contentsToByteArray(file));
   }
 
   @NotNull
-  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    final JarFile.JarEntry entry = convertToEntry(file);
-    if (entry == null) {
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
-    }
-    synchronized (lock) {
-      final JarFile jar = getJar();
-      assert jar != null : file;
-
-      final InputStream stream = jar.getInputStream(entry);
-      assert stream != null : file;
-
-      try {
-        return FileUtil.loadBytes(stream, (int)entry.getSize());
-      }
-      finally {
-        stream.close();
+  public byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
+    JarFile jar = getJar();
+    if (jar != null) {
+      JarFile.JarEntry entry = jar.getEntry(getRelativePath(file));
+      if (entry != null) {
+        InputStream stream = jar.getInputStream(entry);
+        if (stream != null) {
+          try {
+            return FileUtil.loadBytes(stream, (int)entry.getSize());
+          }
+          finally {
+            stream.close();
+          }
+        }
       }
     }
-  }
-
-  public long getTimeStamp(@NotNull final VirtualFile file) {
-    if (file.getParent() == null) return getOriginalFile().lastModified(); // Optimization
-    final JarFile.JarEntry entry = convertToEntry(file);
-    synchronized (lock) {
-      return entry == null ? DEFAULT_TIMESTAMP : entry.getTime();
-    }
-  }
-
-  public boolean isDirectory(@NotNull final VirtualFile file) {
-    if (file.getParent() == null) return true; // Optimization
-    synchronized (lock) {
-      final String path = getRelativePath(file);
-      final EntryInfo info = getEntryInfo(path);
-      return info == null || info.isDirectory;
-    }
-  }
-
-  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
-    if (fileOrDirectory.getParent() == null) {
-      // Optimization. Do not build entries if asked for jar root existence.
-      return myJarFile.get() != null || getOriginalFile().exists();
-    }
-
-    return getEntryInfo(fileOrDirectory) != null;
-  }
-
-  @Nullable
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    final JarFile.JarEntry entry = convertToEntry(file);
-    synchronized (lock) {
-      final EntryInfo entryInfo = getEntryInfo(getRelativePath(file));
-      if (entryInfo == null) return null;
-      final long length = entry != null ? entry.getSize() : DEFAULT_LENGTH;
-      final long timeStamp = entry != null ? entry.getTime() : DEFAULT_TIMESTAMP;
-      return new FileAttributes(entryInfo.isDirectory, false, false, false, length, timeStamp, false);
-    }
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 }
