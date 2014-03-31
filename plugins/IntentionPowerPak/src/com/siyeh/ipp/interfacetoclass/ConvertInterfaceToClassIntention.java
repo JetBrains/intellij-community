@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
       if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
       }
-      else {
+      else if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
       }
     }
