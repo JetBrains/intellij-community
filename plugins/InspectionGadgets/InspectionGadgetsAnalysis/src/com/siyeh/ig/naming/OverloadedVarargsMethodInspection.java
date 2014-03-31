@@ -64,7 +64,7 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
       }
       final String methodName = method.getName();
       final PsiMethod[] sameNameMethods =
-        aClass.findMethodsByName(methodName, false);
+        aClass.findMethodsByName(methodName, true);
       for (PsiMethod sameNameMethod : sameNameMethods) {
         if (!sameNameMethod.equals(method)) {
           registerMethodError(method, method);
