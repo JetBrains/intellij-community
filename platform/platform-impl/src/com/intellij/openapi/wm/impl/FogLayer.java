@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposable {
   private static final int MAX_SPOT_NUMBER = 20000;
-  private static final int LAYER_NUMBER = 20;
+  private static final int LAYER_NUMBER = 5;
   private static final int INIT_DELAY = 5000;
   private static final int IDLE_THRESHOLD = 20000;
   private static final int FADE_CYCLE = 20000;
