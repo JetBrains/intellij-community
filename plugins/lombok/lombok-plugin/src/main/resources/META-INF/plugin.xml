@@ -160,7 +160,7 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
-		<li>0.8.4
+		<li>0.8.5
 				<ol>
 				    <li>Fixed #44 : @SneakyThrows doesn't hide exception on Intellij13</li>
 				</ol>
