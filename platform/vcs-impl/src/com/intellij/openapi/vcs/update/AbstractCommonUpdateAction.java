@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import java.io.File;
 import java.util.*;
 
@@ -547,6 +551,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, VcsBundle.message("progress.text.updating.canceled"), MessageType.WARNING);
               } else {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, getAllFilesAreUpToDateMessage(myRoots), MessageType.INFO);
+                playSuccess();
               }
             }
             else if (! myUpdatedFiles.isEmpty()) {
@@ -559,6 +564,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
               } else {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Finished" + prepareNotificationWithUpdateInfo(), MessageType.INFO);
+                playSuccess();
               }
             }
 
@@ -618,5 +624,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         releaseIfNeeded();
       }
     }
+  }
+
+  private static void playSuccess() {
+    if (!UIUtil.isFD()) return;
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+        public void run() {
+          try {
+            Clip clip = AudioSystem.getClip();
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(AbstractCommonUpdateAction.class.getResourceAsStream("success.wav"));
+            clip.open(inputStream);
+            clip.start();
+          } catch (Exception ignore) {
+            ignore.printStackTrace();
+          }
+        }
+      }).start();
   }
 }
