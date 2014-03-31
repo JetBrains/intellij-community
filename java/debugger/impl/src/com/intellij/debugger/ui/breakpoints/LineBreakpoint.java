@@ -53,6 +53,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
@@ -123,7 +124,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   protected void reload(PsiFile file) {
     super.reload(file);
-    final SourcePosition position = getSourcePosition();
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
     if (position != null) {
       int offset = position.getOffset();
       myOwnerMethodName = findOwnerMethod(file, offset);
@@ -419,7 +420,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       sourceName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      sourceName = getSourcePosition().getFile().getName();
+      sourceName = getFileName();
     }
 
     final boolean printFullTrace = Registry.is("debugger.breakpoint.message.full.trace");

@@ -418,7 +418,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return getPsiClassAt(sourcePosition);
   }
 
-  protected static PsiClass getPsiClassAt(final SourcePosition sourcePosition) {
+  protected static PsiClass getPsiClassAt(@Nullable final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       @Nullable
       @Override
@@ -507,8 +507,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   public int getLineIndex() {
-    final SourcePosition sourcePosition = getSourcePosition();
+    XSourcePosition sourcePosition = myXBreakpoint.getSourcePosition();
     return sourcePosition != null ? sourcePosition.getLine() : -1;
+  }
+
+  protected String getFileName() {
+    XSourcePosition sourcePosition = myXBreakpoint.getSourcePosition();
+    return sourcePosition != null ? sourcePosition.getFile().getName() : "";
   }
 
   @Nullable
