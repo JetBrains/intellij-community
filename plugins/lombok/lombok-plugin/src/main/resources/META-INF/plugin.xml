@@ -3,9 +3,9 @@
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
   <vendor url="https://github.com/mplushnikov/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.8.4</version>
+  <version>0.8.5</version>
 
-  <idea-version since-build="135.00"/>
+  <idea-version since-build="133.00"/>
 
   <description><![CDATA[
     A plugin that adds first-class support for Project Lombok
@@ -160,6 +160,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.8.4
+				<ol>
+				    <li>Fixed #44 : @SneakyThrows doesn't hide exception on Intellij13</li>
+				</ol>
+			</li>
 		<li>0.8.4
 				<ol>
 				    <li>Fixed #20 : Inspection of lombok annotations say I can't use @Builder on constructor</li>

@@ -12,7 +12,7 @@ public class SneakyThrowsExample implements Runnable {
         if(1==1) {
             return new String(bytes, "UTgF-8");
         }else{
-            throw new IllegalAccessException();
+            throw new MyException();
         }
     }
 

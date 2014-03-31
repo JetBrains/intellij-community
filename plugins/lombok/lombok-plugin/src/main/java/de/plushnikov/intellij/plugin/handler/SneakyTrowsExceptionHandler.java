@@ -19,6 +19,7 @@ import java.util.Collection;
 public class SneakyTrowsExceptionHandler {
 
   private static final String ANNOTATION_FQN = SneakyThrows.class.getName();
+  private static final String JAVA_LANG_THROWABLE = "java.lang.Throwable";
 
   public static boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String exceptionFQN) {
     final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiModifierListOwner, ANNOTATION_FQN);
@@ -33,7 +34,7 @@ public class SneakyTrowsExceptionHandler {
     }
 
     for (PsiType sneakedExceptionType : sneakedExceptionTypes) {
-      if (sneakedExceptionType.equalsToText(exceptionFQN)) {
+      if (sneakedExceptionType.equalsToText(JAVA_LANG_THROWABLE) || sneakedExceptionType.equalsToText(exceptionFQN)) {
         return true;
       }
     }
@@ -48,7 +49,7 @@ public class SneakyTrowsExceptionHandler {
         if (sneakedExceptionType instanceof PsiClassType) {
           final PsiClass sneakedExceptionClass = ((PsiClassType) sneakedExceptionType).resolve();
 
-          if (null != sneakedExceptionClass && sneakedExceptionClass.isInheritor(unhandledExceptionClass, true)) {
+          if (null != sneakedExceptionClass && unhandledExceptionClass.isInheritor(sneakedExceptionClass, true)) {
             return true;
           }
         }
