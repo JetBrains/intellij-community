@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.jar.JarFile;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
@@ -72,8 +73,8 @@ public class JarFileSystemTest extends IdeaTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
 
-    final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "entry.txt");
-    assertContent(entry, "test");
+    final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
+    assertContent(entry, "");
 
     final Ref<Boolean> updated = Ref.create(false);
     ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(
@@ -91,7 +92,7 @@ public class JarFileSystemTest extends IdeaTestCase {
       }
     );
 
-    IoTestUtil.writeEntry(jar, "entry.txt", "update");
+    IoTestUtil.writeEntry(jar, JarFile.MANIFEST_NAME, "update");
     vFile.refresh(false, false);
 
     assertTrue(updated.get());
