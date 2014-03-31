@@ -734,6 +734,7 @@ public class InferenceSession {
         substitutor = substitutor.put(typeParameter, runtimeException);
       } 
       else {
+        if (substitutor.getSubstitutionMap().get(typeParameter) != null) continue;
         substitutor = substitutor.put(typeParameter, myErased ? null : getUpperBound(var, substitutor));
       }
     }
