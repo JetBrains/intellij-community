@@ -231,4 +231,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   public void apply(PsiSubstitutor substitutor) {
     myT = substitutor.substitute(myT);
   }
+
+  @Override
+  public String toString() {
+    return "T: " + myT.getCanonicalText() +"; expr: " + myExpression.getText();
+  }
 }
