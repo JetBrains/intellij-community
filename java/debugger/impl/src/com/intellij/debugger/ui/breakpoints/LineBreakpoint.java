@@ -347,7 +347,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if(isValid()) {
-      final int lineNumber = getSourcePosition().getLine() + 1;
+      final int lineNumber = myXBreakpoint.getSourcePosition().getLine() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
@@ -356,7 +356,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = StringBuilderSpinAllocator.alloc();
         try {
-          boolean isFile = getSourcePosition().getFile().getName().equals(className);
+          boolean isFile = myXBreakpoint.getSourcePosition().getFile().getName().equals(className);
           String packageName = null;
           if (hasClassInfo) {
             final int dotIndex = className.lastIndexOf(".");
