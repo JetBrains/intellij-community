@@ -90,11 +90,6 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
 
   FogLayer(Disposable parent) {
     setOpaque(false);
-    Toolkit.getDefaultToolkit().addAWTEventListener(this,
-                                                    AWTEvent.KEY_EVENT_MASK |
-                                                    AWTEvent.MOUSE_EVENT_MASK |
-                                                    AWTEvent.MOUSE_MOTION_EVENT_MASK
-    );
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
       @Override
@@ -114,9 +109,24 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   @Override
   public void dispose() {
     if (myDisposed.get()) return;
-    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     myFuture.cancel(true);
     myDisposed.set(true);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    Toolkit.getDefaultToolkit().addAWTEventListener(this,
+                                                    AWTEvent.KEY_EVENT_MASK |
+                                                    AWTEvent.MOUSE_EVENT_MASK |
+                                                    AWTEvent.MOUSE_MOTION_EVENT_MASK
+    );
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
   }
 
   //update textures
