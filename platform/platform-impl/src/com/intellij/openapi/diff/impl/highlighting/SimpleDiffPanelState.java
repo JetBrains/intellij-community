@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -108,10 +109,11 @@ public abstract class SimpleDiffPanelState implements Disposable  {
     ApplicationManager.getApplication().runWriteAction(new ResetMarkupRunnable(this));
   }
 
+  @Nullable
   public LineBlocks updateEditors() throws FilesTooBigForDiffException {
     resetMarkup();
     if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) {
-      return LineBlocks.EMPTY;
+      return null;
     }
 
     return addMarkup(

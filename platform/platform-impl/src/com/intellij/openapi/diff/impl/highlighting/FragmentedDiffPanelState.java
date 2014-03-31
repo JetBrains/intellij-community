@@ -32,6 +32,7 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,11 +91,12 @@ public class FragmentedDiffPanelState extends DiffPanelState {
     myAppender2.resetHighlighters();
   }
 
+  @Nullable
   public LineBlocks updateEditors() throws FilesTooBigForDiffException {
     resetMarkup();
     mySeparatorsPositionConsumer.clear();
     if (myAppender1.getEditor() == null || myAppender2.getEditor() == null) {
-      return LineBlocks.EMPTY;
+      return null;
     }
 
     int previousBefore = -1;
