@@ -235,12 +235,12 @@ public class PyOverrideImplementUtil {
         if (!langLevel.isPy3K()) {
           final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
           final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
-          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true);
+          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
           while(outerClass instanceof PyClass) {
             nameResult.add(0, ((PyClass)outerClass).getName());
-            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true);
+            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }
 
           className = StringUtil.join(nameResult, ".");
