@@ -31,7 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.sound.sampled.*;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -65,7 +67,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -2822,6 +2823,7 @@ public class UIUtil {
   }
 
   public static boolean isFD() {
+    if (Registry.is("no.jokes")) return false;
     return Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL
          && Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1;
   }

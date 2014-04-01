@@ -19,12 +19,17 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,8 +39,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -82,9 +86,22 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   private final ScheduledFuture<?> myFuture;
 
   static boolean isAvailable() {
-    return (new SimpleDateFormat("dd/MM").format(new Date()).equals("01/04") || Boolean.getBoolean("eggs"))
-           && !Registry.is("ui.no.bangs.and.whistles", false) && !Boolean.getBoolean("noeggs")
+    return UIUtil.isFD()         &&
+           !hasBgTasks()
            && Runtime.getRuntime().availableProcessors() >= 4;
+  }
+
+  private static boolean hasBgTasks() {
+    for (Frame frame : Frame.getFrames()) {
+      if (frame instanceof IdeFrameImpl) {
+        final StatusBar bar = ((IdeFrameImpl)frame).getStatusBar();
+        if (bar instanceof IdeStatusBarImpl) {
+          final List<Pair<TaskInfo, ProgressIndicator>> processes = ((IdeStatusBarImpl)bar).getBackgroundProcesses();
+          if (!processes.isEmpty()) return true;
+        }
+      }
+    }
+    return false;
   }
 
 
