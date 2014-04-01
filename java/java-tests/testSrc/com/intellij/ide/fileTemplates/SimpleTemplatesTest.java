@@ -42,4 +42,12 @@ public class SimpleTemplatesTest extends LightPlatformTestCase {
     attributes.setProperty("IJ_BASE_PACKAGE", "foo.bar");
     assertEquals("<option name=\"MAIN_CLASS_NAME\" value=\"foo.bar.Main\" />", template.getText(attributes));
   }
+
+  public void testInline() throws Exception {
+    CustomFileTemplate template = new CustomFileTemplate("foo", "bar");
+    template.setText("$IJ_BASE_PACKAGE.replace(\".\", \"/\")");
+    Properties attributes = new Properties();
+    attributes.setProperty("IJ_BASE_PACKAGE", "foo.bar");
+    assertEquals("foo/bar", template.getText(attributes));
+  }
 }
