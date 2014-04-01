@@ -42,6 +42,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -315,5 +316,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     return result;
+  }
+
+  @Override
+  public void disableValueLookup(@NotNull Editor editor) {
+    ValueLookupManager.DISABLE_VALUE_LOOKUP.set(editor, Boolean.TRUE);
   }
 }
