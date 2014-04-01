@@ -49,7 +49,7 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   private static final int MAX_SPOT_NUMBER = 20000;
   private static final int LAYER_NUMBER = 5;
   private static final int INIT_DELAY = 5000;
-  private static final int IDLE_THRESHOLD = 20000;
+  private static final int IDLE_THRESHOLD = 120000;
   private static final int FADE_CYCLE = 20000;
   private static final int EYE_SIZE = 50;
   private static final int REPAINT_INTERVAL = 66;//ms
