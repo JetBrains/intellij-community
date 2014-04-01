@@ -88,7 +88,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   private final DataIndexer<Integer, TIntArrayList, FileContent> myIndexer = new DataIndexer<Integer, TIntArrayList, FileContent>() {
     @Override
     @NotNull
-    public Map<Integer, TIntArrayList> map(final FileContent inputData) {
+    public Map<Integer, TIntArrayList> map(@NotNull final FileContent inputData) {
       FileType type = inputData.getFileType();
 
       DuplicatesProfile profile = findDuplicatesProfile(type);
