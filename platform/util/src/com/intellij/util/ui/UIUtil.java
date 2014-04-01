@@ -31,6 +31,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -54,6 +57,8 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -2835,5 +2840,35 @@ public class UIUtil {
          }
       }
     });
+  }
+
+  public static void doPlay(final Class<?> aClass, final String resourceName) {
+    doPlay(new Factory<InputStream>() {
+      @Override
+      public InputStream create() {
+        InputStream stream = aClass.getResourceAsStream(resourceName);
+        if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+        return stream;
+      }
+    });
+  }
+
+  private static void doPlay(final Factory<InputStream> streamProducer) {
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+      public void run() {
+        try {
+          Clip clip = AudioSystem.getClip();
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+            streamProducer.create());
+          clip.open(inputStream);
+
+          clip.start();
+        } catch (Exception ignore) {
+          LOG.info(ignore);
+        }
+      }
+    }).start();
   }
 }
