@@ -75,19 +75,13 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private final DetailController myDetailController = new DetailController(myMasterController);
 
-  private Collection<BreakpointItem> myBreakpointItems = new ArrayList<BreakpointItem>();
+  private final Collection<BreakpointItem> myBreakpointItems = new ArrayList<BreakpointItem>();
 
   private final List<XBreakpointGroupingRule> myRulesAvailable = new ArrayList<XBreakpointGroupingRule>();
 
-  private Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(new Comparator<XBreakpointGroupingRule>() {
-    @Override
-    public int compare(XBreakpointGroupingRule o1, XBreakpointGroupingRule o2) {
-      final int res = o2.getPriority() - o1.getPriority();
-      return res != 0 ? res : (o1.getId().compareTo(o2.getId()));
-    }
-  });
-  private Disposable myListenerDisposable = Disposer.newDisposable();
-  private List<ToggleActionButton> myToggleRuleActions = new ArrayList<ToggleActionButton>();
+  private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<XBreakpointGroupingRule>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
+  private final Disposable myListenerDisposable = Disposer.newDisposable();
+  private final List<ToggleActionButton> myToggleRuleActions = new ArrayList<ToggleActionButton>();
 
   private XBreakpointManagerImpl getBreakpointManager() {
     return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
@@ -326,6 +320,7 @@ public class BreakpointsDialog extends DialogWrapper {
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
       provider.createBreakpointsGroupingRules(myRulesAvailable);
     }
+    Collections.sort(myRulesAvailable, XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();
     XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();
