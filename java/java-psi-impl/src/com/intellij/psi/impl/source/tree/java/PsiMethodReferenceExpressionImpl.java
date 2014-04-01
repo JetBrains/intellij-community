@@ -426,16 +426,19 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
           final MethodSignature signature = interfaceMethod != null ? interfaceMethod.getSignature(functionalInterfaceSubstitutor) : null;
           final PsiType interfaceMethodReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-          if (isConstructor && interfaceMethod != null && containingClass.getConstructors().length == 0) {
-            final PsiClassType returnType = composeReturnType(containingClass, substitutor);
-            final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, getManager(), null);
-            if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
-              session.registerConstraints(returnType, interfaceMethodReturnType);
-              substitutor = session.infer();
+          if (isConstructor && containingClass.getConstructors().length == 0) {
+            if (interfaceMethod != null) {
+              final PsiClassType returnType = composeReturnType(containingClass, substitutor);
+              final InferenceSession session = new InferenceSession(containingClass.getTypeParameters(), substitutor, getManager(), null);
+              if (!(session.isProperType(returnType) && session.isProperType(interfaceMethodReturnType))) {
+                session.registerConstraints(returnType, interfaceMethodReturnType);
+                substitutor = session.infer();
+              }
             }
             ClassCandidateInfo candidateInfo = null;
             final boolean isArray = containingClass == JavaPsiFacade.getElementFactory(getProject()).getArrayClass(PsiUtil.getLanguageLevel(containingClass));
-            if (!isArray && (containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
+            if (signature == null ||
+                !isArray && (containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass)) && signature.getParameterTypes().length == 0 ||
                 isArray && arrayCreationSignature(signature)) {
               candidateInfo = new ClassCandidateInfo(containingClass, substitutor);
             }
