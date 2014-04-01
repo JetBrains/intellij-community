@@ -136,22 +136,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     super.setGlassPane(glass);
   }
 
-  @Override
-  public void setLayeredPane(final JLayeredPane layered) {
-    super.setLayeredPane(layered);
-    //noinspection UnnecessaryFullyQualifiedName
-    if (FogLayer.isAvailable()) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          layered.add(new FogLayer(myApplication), new Integer(JLayeredPane.DRAG_LAYER + 1));
-        }
-      });
-    }
-  }
-
-
   /**
    * Invoked when enclosed frame is being shown.
    */
