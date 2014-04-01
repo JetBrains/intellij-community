@@ -29,7 +29,6 @@
 1.6 =>
 
 1.3 => lib/idea_rt.jar
-1.5 => lib/util.jar
 
 1.7 => lib/fxHelpBrowser.jar
 1.7 => lib/optimizedFileManager.jar
