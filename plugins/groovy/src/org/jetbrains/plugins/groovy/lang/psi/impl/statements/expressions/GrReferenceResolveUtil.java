@@ -133,25 +133,35 @@ public class GrReferenceResolveUtil {
       if (!processQualifierType(processor, qualifierType, state, place)) return false;
       if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiClass) { //omitted .class
-          PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, place.getResolveScope());
-          if (javaLangClass != null) {
-            PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-            PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-            if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-            if (typeParameters.length == 1) {
-              substitutor = substitutor.put(typeParameters[0], qualifierType);
-              state = state.put(PsiSubstitutor.KEY, substitutor);
-            }
-            if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
-            PsiType javaLangClassType = TypesUtil.createJavaLangClassType(qualifierType, place.getProject(), place.getResolveScope());
-            if (javaLangClassType != null) {
-              if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
-            }
-          }
+        if (resolved instanceof PsiClass) {
+          if (!processJavaLangClass(qualifierType, processor, state, place)) return false;
         }
       }
     }
+    return true;
+  }
+
+  private static boolean processJavaLangClass(@NotNull PsiType qualifierType,
+                                              @NotNull PsiScopeProcessor processor,
+                                              @NotNull ResolveState state,
+                                              @NotNull GrReferenceExpression place) {
+    //omitted .class
+    PsiClass javaLangClass = PsiUtil.getJavaLangClass(place, place.getResolveScope());
+    if (javaLangClass == null) return true;
+
+    PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+    if (typeParameters.length == 1) {
+      substitutor = substitutor.put(typeParameters[0], qualifierType);
+      state = state.put(PsiSubstitutor.KEY, substitutor);
+    }
+    if (!javaLangClass.processDeclarations(processor, state, null, place)) return false;
+
+    PsiType javaLangClassType = JavaPsiFacade.getElementFactory(place.getProject()).createType(javaLangClass, substitutor);
+
+    if (!ResolveUtil.processNonCodeMembers(javaLangClassType, processor, place, state)) return false;
+
     return true;
   }
 
