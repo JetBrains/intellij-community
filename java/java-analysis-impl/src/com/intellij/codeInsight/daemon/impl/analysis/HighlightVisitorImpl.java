@@ -760,7 +760,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, aClass));
     }
-    if (!myHolder.hasErrorResults() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+    if (!myHolder.hasErrorResults() && (method.hasModifierProperty(PsiModifier.DEFAULT) || 
+                                        aClass != null && aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC))) {
       myHolder.add(HighlightUtil.checkExtensionMethodsFeature(method, myLanguageLevel, myFile));
     }
 
