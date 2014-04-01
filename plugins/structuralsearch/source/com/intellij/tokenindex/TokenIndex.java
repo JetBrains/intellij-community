@@ -125,7 +125,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     return new DataIndexer<TokenIndexKey, List<Token>, FileContent>() {
       @Override
       @NotNull
-      public Map<TokenIndexKey, List<Token>> map(FileContent inputData) {
+      public Map<TokenIndexKey, List<Token>> map(@NotNull FileContent inputData) {
         if (true) return Collections.EMPTY_MAP; // TODO: Eugene index is VERY unefficient and leads to OME
         Map<TokenIndexKey, List<Token>> result = new HashMap<TokenIndexKey, List<Token>>(1);
         RecursiveTokenizingVisitor visitor = new RecursiveTokenizingVisitor();
