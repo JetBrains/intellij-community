@@ -343,6 +343,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void scheduleDropCachesWithInvalidStubPsi() {
+    // invokeLater even if already on EDT, because
+    // we might be inside an index query and write actions might result in deadlocks there (http://youtrack.jetbrains.com/issue/IDEA-123118)
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
