@@ -68,7 +68,6 @@ import java.util.StringTokenizer;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
@@ -229,11 +228,9 @@ public class CompilerTask extends Task.Backgroundable {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
                 appIcon.requestAttention(myProject, true);
-                playError();
               } else if (!myCompilationStartedAutomatically) {
                 appIcon.setOkBadge(myProject, true);
                 appIcon.requestAttention(myProject, false);
-                playSuccess();
               }
             }
           }
@@ -264,20 +261,6 @@ public class CompilerTask extends Task.Backgroundable {
         prepareMessageView();
       }
     });
-  }
-
-  private static final AtomicInteger ourSuccessCounter = new AtomicInteger();
-  private static void playSuccess() {
-    if (!UIUtil.isFD()) return;
-    int value = ourSuccessCounter.getAndIncrement() % 3;
-    UIUtil.doPlay(CompilerTask.class, "success" + value + ".wav");
-  }
-
-  private static final AtomicInteger ourErrorCounter = new AtomicInteger();
-  private static void playError() {
-    if (!UIUtil.isFD()) return;
-    int value = ourErrorCounter.getAndIncrement() % 9;
-    UIUtil.doPlay(CompilerTask.class, "error" + value + ".wav");
   }
 
   public void cancel() {
