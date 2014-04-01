@@ -33,10 +33,13 @@ public class SimpleTemplatesTest extends LightPlatformTestCase {
 
   public void testConditional() throws Exception {
     CustomFileTemplate template = new CustomFileTemplate("foo", "bar");
-    template.setText("#set($value = \"#if($flag)red#{else}blue#end\")\n" +
-                     "$value");
+    template.setText("#set($flag = \"$!IJ_BASE_PACKAGE\" != \"\")\n" +
+                     "<option name=\"MAIN_CLASS_NAME\" value=\"$IJ_BASE_PACKAGE#if($flag).#{end}Main\" />"
+    );
     Properties attributes = new Properties();
+    attributes.setProperty("IJ_BASE_PACKAGE", "");
+    assertEquals("<option name=\"MAIN_CLASS_NAME\" value=\"Main\" />", template.getText(attributes));
     attributes.setProperty("IJ_BASE_PACKAGE", "foo.bar");
-    assertEquals("blue", template.getText(attributes));
+    assertEquals("<option name=\"MAIN_CLASS_NAME\" value=\"foo.bar.Main\" />", template.getText(attributes));
   }
 }
