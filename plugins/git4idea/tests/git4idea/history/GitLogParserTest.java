@@ -22,12 +22,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
@@ -98,7 +100,7 @@ public class GitLogParserTest extends GitPlatformTest {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myRoot = new LightVirtualFile();
+    myRoot = myProjectRoot;
     myRecord = RECORD1; // for single record tests
   }
 
@@ -200,11 +202,19 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {
-    assertEquals("Actual: " + actualPaths, expectedPaths.size(), actualPaths.size());
-    for (FilePath actualPath : actualPaths) {
-      String actualRelPath = FileUtil.getRelativePath(myRoot.getPath(), actualPath.getPath(), '/');
-      assertTrue(expectedPaths.contains(actualRelPath));
-    }
+    List<String> actual = ContainerUtil.map(actualPaths, new Function<FilePath, String>() {
+      @Override
+      public String fun(FilePath path) {
+        return FileUtil.getRelativePath(new File(myProjectPath), path.getIOFile());
+      }
+    });
+    List<String> expected = ContainerUtil.map(expectedPaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        return FileUtil.toSystemDependentName(s);
+      }
+    });
+    assertOrderedEquals(actual, expected);
   }
 
   private void assertChanges(List<Change> actual, List<GitTestChange> expected) {
@@ -221,14 +231,14 @@ public class GitLogParserTest extends GitPlatformTest {
     switch (actualChange.getType()) {
       case MODIFICATION:
       case MOVED:
-        assertEquals(getBeforePath(actualChange), expectedChange.myBeforePath);
-        assertEquals(getAfterPath(actualChange), expectedChange.myAfterPath);
+        assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.myBeforePath));
+        assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.myAfterPath));
         return;
       case NEW:
-        assertEquals(getAfterPath(actualChange), expectedChange.myAfterPath);
+        assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.myAfterPath));
         return;
       case DELETED:
-        assertEquals(getBeforePath(actualChange), expectedChange.myBeforePath);
+        assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.myBeforePath));
         return;
       default:
         throw new AssertionError();
@@ -236,11 +246,11 @@ public class GitLogParserTest extends GitPlatformTest {
   }
 
   private String getBeforePath(Change actualChange) {
-    return FileUtil.getRelativePath(myRoot.getPath(), actualChange.getBeforeRevision().getFile().getPath(), '/');
+    return FileUtil.getRelativePath(new File(myProjectPath), actualChange.getBeforeRevision().getFile().getIOFile());
   }
 
   private String getAfterPath(Change actualChange) {
-    return FileUtil.getRelativePath(myRoot.getPath(), actualChange.getAfterRevision().getFile().getPath(), '/');
+    return FileUtil.getRelativePath(new File(myProjectPath), actualChange.getAfterRevision().getFile().getIOFile());
   }
   
   private enum GitTestLogRecordInfo {
@@ -354,8 +364,8 @@ public class GitLogParserTest extends GitPlatformTest {
             paths.add(change.myBeforePath);
             break;
           case MOVED:
-            paths.add(change.myAfterPath);
             paths.add(change.myBeforePath);
+            paths.add(change.myAfterPath);
             break;
           default:
             throw new AssertionError();
