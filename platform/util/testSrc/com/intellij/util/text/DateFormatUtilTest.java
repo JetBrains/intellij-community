@@ -29,9 +29,7 @@ import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -62,7 +60,8 @@ public class DateFormatUtilTest {
       assertEquals("17:10:15", printTimeForLocale("de_DE.UTF-8", Clock.getTime()));
     }
     else if (SystemInfo.isWinVistaOrNewer) {
-      assertEquals(printWindowsTime(Clock.getTime()), DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
+      long time = new Date().getTime();
+      assertEquals(printWindowsTime(time), DateFormatUtil.formatTimeWithSeconds(time));
     }
     else {
       assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
