@@ -22,14 +22,17 @@ public class CreateAction extends PatchAction {
     patchOutput.putNextEntry(new ZipEntry(myPath));
 
     writeExecutableFlag(patchOutput, newerFile);
-    Utils.copyFileToStream(newerFile, patchOutput);
-
+    if (newerFile.isDirectory()){
+      Runner.logger.info("Do not add directory to the patch file: " +  newerFile.getName());
+      System.out.println("Do not add directory to the patch file: " + newerFile.getName());
+    }else{
+      Utils.copyFileToStream(newerFile, patchOutput);
+    }
     patchOutput.closeEntry();
   }
 
   @Override
   protected ValidationResult doValidate(File toFile) {
-    Runner.logger.info("validation the result");
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 

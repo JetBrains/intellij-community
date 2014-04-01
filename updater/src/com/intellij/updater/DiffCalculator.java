@@ -5,17 +5,20 @@ import java.util.Map;
 import java.util.Set;
 
 public class DiffCalculator {
+
   public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
     Result result = new Result();
-    result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);
-    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums).keySet();
+    Runner.logger.info("Elements to delete");
+    result.filesToDelete = withAllRemoved(oldChecksums, newChecksums, "delete");
+    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "").keySet();
     result.filesToUpdate = collect(oldChecksums, newChecksums, false);
     return result;
   }
 
-  private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove) {
+  private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove, String toDelete) {
     Map<String, Long> result = new HashMap<String, Long>(from);
     for (String each : toRemove.keySet()) {
+      if (toDelete != "") Runner.logger.info("Element to delete: " + each);
       result.remove(each);
     }
     return result;

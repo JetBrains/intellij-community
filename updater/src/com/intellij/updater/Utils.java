@@ -20,7 +20,7 @@ public class Utils {
       myTempDir = File.createTempFile("idea.updater.", ".tmp");
       delete(myTempDir);
       myTempDir.mkdirs();
-      Runner.logger.info("created temp file: " + myTempDir.getCanonicalPath());
+      Runner.logger.info("created temp file: " + myTempDir.getPath());
     }
 
     return File.createTempFile("temp.", ".tmp", myTempDir);
@@ -29,16 +29,16 @@ public class Utils {
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
-    Runner.logger.info("deleted tmp dir: " + result.getCanonicalPath());
+    Runner.logger.info("deleted tmp dir: " + result.getPath());
     result.mkdirs();
-    Runner.logger.info("created tmp dir: " + result.getCanonicalPath());
+    Runner.logger.info("created tmp dir: " + result.getPath());
     return result;
   }
 
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger.info("deleted file " + myTempDir.getCanonicalPath());
+    Runner.logger.info("deleted file " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -48,7 +48,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
-          Runner.logger.info("deleted file " + each.getCanonicalPath());
+          Runner.logger.info("deleted file " + each.getPath());
         }
       }
     }
@@ -72,7 +72,7 @@ public class Utils {
   }
 
   public static void copy(File from, File to) throws IOException {
-    Runner.logger.info("from " + from.getCanonicalPath() + " to " + to.getCanonicalPath());
+    Runner.logger.info("from " + from.getPath() + " to " + to.getPath());
     if (from.isDirectory()) {
       File[] files = from.listFiles();
       if (files == null) throw new IOException("Cannot get directory's content: " + from);
@@ -171,11 +171,18 @@ public class Utils {
 
   private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
     File[] children = dir.listFiles();
-    if (children == null) return;
+    if (children == null) {
+      Runner.logger.info("The folder is empty. Added the folder " + dir.getName());
+      result.add((parentPath == null ? "" : parentPath + "/") + dir.getName());
+      return;
+    }
 
     for (File each : children) {
       String relativePath = (parentPath == null ? "" : parentPath + "/") + each.getName();
       if (each.isDirectory()) {
+        // if the element is a folder - to add full path
+        Runner.logger.info("Added folder " + each.getName());
+        result.add(relativePath);
         collectRelativePaths(each, result, relativePath);
       }
       else {

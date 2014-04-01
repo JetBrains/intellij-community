@@ -54,11 +54,7 @@
     <key>NSHighResolutionCapable</key>
     <true/>
 
-    <key>LSArchitecturePriority</key>
-    <array>
-      <string>x86_64</string>
-      <string>i386</string>
-    </array>
+    @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     @@url_schemes@@

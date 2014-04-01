@@ -56,6 +56,7 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-Djsse.enableSNIExtension=false " +
                                         "-XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
@@ -312,7 +313,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
   String helpId = args.help_id != null ? args.help_id : "IJ"
   String icns = "idea.icns"
-  String helpIcns = "$path/Resources/${helpId}.help/Resources/Shared/product.icns"
+  String helpIcns = "$path/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
   if (args.icns != null) {
     ant.delete(file: "$path/Resources/idea.icns")
     ant.copy(file: args.icns, todir: "$path/Resources")
@@ -872,4 +873,13 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
 
   ant.available(file: targetFile, property: "searchable.options.exists");
   ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
+})
+
+binding.setVariable("reassignAltClickToMultipleCarets", {String communityHome ->
+  String defaultKeymapContent = new File("$communityHome/platform/platform-resources/src/idea/Keymap_Default.xml").text
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
+  defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",
+                                                      "<mouse-shortcut keystroke=\"alt button1\"/>")
+  patchedKeymapFile = new File("${paths.sandbox}/classes/production/platform-resources/idea/Keymap_Default.xml")
+  patchedKeymapFile.write(defaultKeymapContent)
 })

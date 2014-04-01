@@ -47,7 +47,6 @@ setProperty("paths", paths)
 
 target(compile: "Compile project") {
   loadProject()
-  projectBuilder.arrangeModuleCyclesOutputs = true
 
   projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
@@ -102,7 +101,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layouts.layout_core(home, paths.artifacts_core)
   notifyArtifactBuilt(paths.artifacts_core)
   if (buildJps) {
-    layouts.layoutCommunityJps(home, paths.artifacts_jps)
+    layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
     notifyArtifactBuilt(paths.artifacts_jps)
   }
 
@@ -126,7 +125,6 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
 
   buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
 
-//  def macAppRoot = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
   def macAppRoot = isEap() ?
                    "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents" :
                    "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
@@ -157,9 +155,9 @@ private layoutWin(Map args, String home, Paths paths) {
   winVMOptions(target, null, "idea.exe", "idea64.exe")
   List resourcePaths = ["$home/community-resources/src", "$home/platform/icons/src"]
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(),
-                   "$home/build/conf/ideaCE-launcher.properties", null, resourcePaths)
+                   "$home/build/conf/ideaCE-launcher.properties", args.ce_exe_selector, resourcePaths)
   buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(),
-                   "$home/build/conf/ideaCE64-launcher.properties", null, resourcePaths)
+                   "$home/build/conf/ideaCE64-launcher.properties", args.ce_exe_selector, resourcePaths)
 }
 
 private layoutMac(Map _args, String home, Paths paths) {

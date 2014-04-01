@@ -1,5 +1,10 @@
 package com.intellij.updater;
 
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.URI;
@@ -10,101 +15,87 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.PatternLayout;
-
 public class Runner {
   public static Logger logger = null;
+
   private static final String PATCH_FILE_NAME = "patch-file.zip";
   private static final String PATCH_PROPERTIES_ENTRY = "patch.properties";
   private static final String OLD_BUILD_DESCRIPTION = "old.build.description";
   private static final String NEW_BUILD_DESCRIPTION = "new.build.description";
 
   public static void main(String[] args) throws Exception {
-    initLogger();
-    logger.info("--- Updater started ---");
-
-    if (args.length != 2 && args.length < 6) {
-      printUsage();
-      return;
-    }
-
-    String command = args[0];
-    logger.info("args[0]: " + args[0]);
-
-    if ("create".equals(command)) {
-      if (args.length < 6) {
-        printUsage();
-        return;
-      }
+    if (args.length >= 6 && "create".equals(args[0])) {
       String oldVersionDesc = args[1];
       String newVersionDesc = args[2];
       String oldFolder = args[3];
       String newFolder = args[4];
       String patchFile = args[5];
+      initLogger();
+
       List<String> ignoredFiles = extractFiles(args, "ignored");
       List<String> criticalFiles = extractFiles(args, "critical");
       List<String> optionalFiles = extractFiles(args, "optional");
       create(oldVersionDesc, newVersionDesc, oldFolder, newFolder, patchFile, ignoredFiles, criticalFiles, optionalFiles);
     }
-    else if ("install".equals(command)) {
-      if (args.length != 2) {
-        printUsage();
-        return;
-      }
-
+    else if (args.length >= 2 && "install".equals(args[0])) {
       String destFolder = args[1];
+      initLogger();
       logger.info("destFolder: " + destFolder);
+
       install(destFolder);
     }
     else {
       printUsage();
-      return;
     }
   }
 
-  public final static void initLogger(){
-    if (logger == null){
-    String tmpDir = System.getProperty("java.io.tmpdir");
-    System.out.println("java.io.tmpdir: " + tmpDir);
-    //    String uHome = System.getProperty("user.home");
-    FileAppender update = new FileAppender();
-
-    update.setFile(tmpDir + "idea_updater.log");
-    update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update.setThreshold(Level.ALL);
-    update.setAppend(true);
-    update.activateOptions();
-
-    FileAppender update_error = new FileAppender();
-    update_error.setFile(tmpDir + "idea_updater_error.log");
-    update_error.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
-    update_error.setThreshold(Level.ERROR);
-    // The error(s) from an old run of the updater (if there were) could be found in idea_updater.log file
-    update_error.setAppend(false);
-    update_error.activateOptions();
-
-    logger = Logger.getLogger("com.intellij.updater");
-    logger.addAppender(update_error);
-    logger.addAppender(update);
-    logger.setLevel(Level.ALL);
-    }
+  // checks that log directory 1)exists 2)has write perm. and 3)has 1MB+ free space
+  private static boolean isValidLogDir(String logFolder) {
+    File fileLogDir = new File(logFolder);
+    return fileLogDir.isDirectory() && fileLogDir.canWrite() && fileLogDir.getUsableSpace() >= 1000000;
   }
 
-  public static void printStackTrace(Exception e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
+  private static String getLogDir() {
+    String logFolder = System.getProperty("idea.updater.log");
+    System.out.println("Logger: " + logFolder);
+    if (logFolder == null || !isValidLogDir(logFolder)) {
+      logFolder = System.getProperty("java.io.tmpdir");
+      if (!isValidLogDir(logFolder)) {
+        logFolder = System.getProperty("user.home");
+      }
+    }
+    return logFolder;
+  }
+
+  public static void initLogger() {
+    if (logger == null) {
+      String logFolder = getLogDir();
+      FileAppender update = new FileAppender();
+
+      update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
+      update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      update.setThreshold(Level.ALL);
+      update.setAppend(true);
+      update.activateOptions();
+
+      FileAppender updateError = new FileAppender();
+      updateError.setFile(new File(logFolder, "idea_updater_error.log").getAbsolutePath());
+      updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      updateError.setThreshold(Level.ERROR);
+      updateError.setAppend(false);
+      updateError.activateOptions();
+
+      logger = Logger.getLogger("com.intellij.updater");
+      logger.addAppender(updateError);
+      logger.addAppender(update);
+      logger.setLevel(Level.ALL);
+
+      logger.info("--- Updater started ---");
+    }
   }
 
   public static void printStackTrace(Throwable e){
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    e.printStackTrace(pw);
-    logger.error(sw.toString());
+    logger.error(e.getMessage(), e);
   }
 
   public static List<String> extractFiles(String[] args, String paramName) {
@@ -121,11 +112,12 @@ public class Runner {
     return result;
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void printUsage() {
     System.err.println("Usage:\n" +
                        "create <old_version_description> <new_version_description> <old_version_folder> <new_version_folder>" +
                        " <patch_file_name> [ignored=file1;file2;...] [critical=file1;file2;...] [optional=file1;file2;...]\n" +
-                       "install <destination_folder>\n");
+                       "install <destination_folder> [log_directory]\n");
   }
 
   private static void create(String oldBuildDesc,
@@ -205,17 +197,20 @@ public class Runner {
       in.close();
     }
 
-    SwingUtilities.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    // todo[r.sh] to delete in IDEA 14 (after a full circle of platform updates)
+    if (System.getProperty("swing.defaultlaf") == null) {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+          }
+          catch (Exception ignore) {
+            printStackTrace(ignore);
+          }
         }
-        catch (Exception ignore) {
-          printStackTrace(ignore);
-        }
-      }
-    });
+      });
+    }
 
     new SwingUpdaterUI(props.getProperty(OLD_BUILD_DESCRIPTION),
                   props.getProperty(NEW_BUILD_DESCRIPTION),

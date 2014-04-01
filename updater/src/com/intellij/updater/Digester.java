@@ -43,12 +43,17 @@ public class Digester {
   }
 
   private static long doDigestRegularFile(File file) throws IOException {
-    InputStream in = new BufferedInputStream(new FileInputStream(file));
-    try {
-      return digestStream(in);
-    }
-    finally {
-      in.close();
+    if (file.isDirectory()) {
+      Runner.logger.info("Added dir: " +  file.getName());
+      return 0;
+    } else {
+      InputStream in = new BufferedInputStream(new FileInputStream(file));
+      try {
+        return digestStream(in);
+      }
+      finally {
+        in.close();
+      }
     }
   }
 
