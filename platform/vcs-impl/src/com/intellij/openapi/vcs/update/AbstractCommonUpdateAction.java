@@ -48,7 +48,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -548,7 +547,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, VcsBundle.message("progress.text.updating.canceled"), MessageType.WARNING);
               } else {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, getAllFilesAreUpToDateMessage(myRoots), MessageType.INFO);
-                playSuccess();
               }
             }
             else if (! myUpdatedFiles.isEmpty()) {
@@ -561,7 +559,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Incomplete" + prepareNotificationWithUpdateInfo(), MessageType.WARNING);
               } else {
                 VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS Update Finished" + prepareNotificationWithUpdateInfo(), MessageType.INFO);
-                playSuccess();
               }
             }
 
@@ -621,10 +618,5 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         releaseIfNeeded();
       }
     }
-  }
-
-  private static void playSuccess() {
-    if (!UIUtil.isFD()) return;
-    UIUtil.doPlay(AbstractCommonUpdateAction.class, "success.wav");
   }
 }
