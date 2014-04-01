@@ -406,12 +406,13 @@ public class BreakpointManager {
     return myBreakpoints.get(xBreakpoint);
   }
 
-  private List<Element> myOriginalBreakpointsNodes = new ArrayList<Element>();
+  private HashMap<String, Element> myOriginalBreakpointsNodes = new HashMap<String, Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
+    myOriginalBreakpointsNodes.clear();
     // save old breakpoints
     for (Element element : parentNode.getChildren()) {
-      myOriginalBreakpointsNodes.add(element.clone());
+      myOriginalBreakpointsNodes.put(element.getName(), element.clone());
     }
     if (myProject.isOpen()) {
       doRead(parentNode);
@@ -644,14 +645,14 @@ public class BreakpointManager {
 
   public void writeExternal(@NotNull final Element parentNode) {
     // restore old breakpoints
-    for (Element group : myOriginalBreakpointsNodes) {
+    for (Element group : myOriginalBreakpointsNodes.values()) {
       if (group.getAttribute(CONVERTED_PARAM) == null) {
         group.setAttribute(CONVERTED_PARAM, "true");
       }
       group.detach();
     }
 
-    parentNode.addContent(myOriginalBreakpointsNodes);
+    parentNode.addContent(myOriginalBreakpointsNodes.values());
     //ApplicationManager.getApplication().runReadAction(new Runnable() {
     //  @Override
     //  public void run() {
