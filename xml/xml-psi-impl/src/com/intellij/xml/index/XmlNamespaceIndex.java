@@ -87,7 +87,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return new DataIndexer<String, XsdNamespaceBuilder, FileContent>() {
       @Override
       @NotNull
-      public Map<String, XsdNamespaceBuilder> map(final FileContent inputData) {
+      public Map<String, XsdNamespaceBuilder> map(@NotNull final FileContent inputData) {
         final XsdNamespaceBuilder builder;
         if ("dtd".equals(inputData.getFile().getExtension())) {
           builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.<String>emptyList());

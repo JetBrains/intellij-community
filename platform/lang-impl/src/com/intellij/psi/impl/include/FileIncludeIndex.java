@@ -82,7 +82,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
     return new DataIndexer<Key, List<FileIncludeInfoImpl>, FileContent>() {
       @Override
       @NotNull
-      public Map<Key, List<FileIncludeInfoImpl>> map(FileContent inputData) {
+      public Map<Key, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData) {
 
         Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
           @Override

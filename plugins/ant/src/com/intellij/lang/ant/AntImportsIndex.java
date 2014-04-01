@@ -38,7 +38,7 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   private static final DataIndexer<Integer,Void,FileContent> DATA_INDEXER = new DataIndexer<Integer, Void, FileContent>() {
     @Override
     @NotNull
-    public Map<Integer, Void> map(final FileContent inputData) {
+    public Map<Integer, Void> map(@NotNull final FileContent inputData) {
       final Map<Integer, Void> map = new HashMap<Integer, Void>();
 
       NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {

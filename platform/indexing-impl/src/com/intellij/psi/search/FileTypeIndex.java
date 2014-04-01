@@ -117,7 +117,7 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @NotNull
   @Override
-  public Map<FileType, Void> map(FileContent inputData) {
+  public Map<FileType, Void> map(@NotNull FileContent inputData) {
     return Collections.singletonMap(inputData.getFileType(), null);
   }
 

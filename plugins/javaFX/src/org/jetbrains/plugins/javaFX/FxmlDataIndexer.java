@@ -37,7 +37,7 @@ import java.util.*;
 public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileContent> {
   @Override
   @NotNull
-  public Map<String, Set<String>> map(final FileContent inputData) {
+  public Map<String, Set<String>> map(@NotNull final FileContent inputData) {
     final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile(), inputData.getProject());
     if (map != null) {
       return map;

@@ -80,7 +80,7 @@ public class FormClassIndex extends ScalarIndexExtension<String> {
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       String className = null;
       try {
         className = Utils.getBoundClassName(inputData.getContentAsText().toString());
