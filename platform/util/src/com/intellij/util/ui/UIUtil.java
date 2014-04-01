@@ -57,6 +57,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
@@ -2832,7 +2833,9 @@ public class UIUtil {
     doPlay(new Factory<InputStream>() {
       @Override
       public InputStream create() {
-        return aClass.getResourceAsStream(resourceName);
+        InputStream stream = aClass.getResourceAsStream(resourceName);
+        if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+        return stream;
       }
     });
   }
