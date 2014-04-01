@@ -2636,7 +2636,10 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
+    if (component.getBackground().equals(getPanelBackground()) 
+        || component instanceof JScrollPane 
+        || component instanceof JViewport 
+        || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
       }
