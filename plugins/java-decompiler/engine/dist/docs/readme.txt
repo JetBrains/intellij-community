@@ -63,6 +63,11 @@ ren (0): rename ambiguous (resp. obfuscated) classes and class elements
 urc    : full name of user-supplied class implementing IIdentifierRenamer. It is used to determine which
          class identifiers should be renamed and provides new identifier names. For more information 
          s. section 5    
+dpc (0): generate a special comment ('/** @deprecated */') for deprecated classes and class members 
+inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found 
+lac (0): decompile lambda expressions to anonymous classes
+nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Linux) 
+         
  
 The default logging level is INFO. This value can be overwritten by setting the option 'log' as follows:
 

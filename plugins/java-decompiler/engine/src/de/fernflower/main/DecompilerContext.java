@@ -88,6 +88,8 @@ public class DecompilerContext {
 		
 		mapDefault.put(IFernflowerPreferences.NEW_LINE_SEPARATOR, "0");
 		
+		mapDefault.put(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION, "1");
+		
 		if(propertiesCustom != null) {
 			mapDefault.putAll(propertiesCustom);
 		}
