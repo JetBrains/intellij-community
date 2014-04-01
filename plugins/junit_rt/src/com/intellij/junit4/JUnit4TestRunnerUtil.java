@@ -157,7 +157,20 @@ public class JUnit4TestRunnerUtil {
           catch (Throwable e) {
             //ignore
           }
-          return Request.method(clazz, methodName);
+          final Filter methodFilter = Filter.matchMethodDescription(Description.createTestDescription(clazz, methodName));
+          return Request.aClass(clazz).filterWith(new Filter() {
+            public boolean shouldRun(Description description) {
+              if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
+                return true;
+              }
+
+              return methodFilter.shouldRun(description);
+            }
+
+            public String describe() {
+              return methodFilter.describe();
+            }
+          });
         } else if (name != null && suiteClassNames.length == 1) {
           final Class clazz = loadTestClass(suiteClassName);
           if (clazz != null) {
