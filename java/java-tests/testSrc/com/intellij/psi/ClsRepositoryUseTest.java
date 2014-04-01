@@ -503,6 +503,9 @@ public class ClsRepositoryUseTest extends PsiTestCase {
 
     assertNotNull(parameters[0].getModifierList());
     assertNotNull(parameters[1].getModifierList());
+
+    assertEquals("ints", parameters[0].getName());
+    assertEquals("o", parameters[1].getName());
   }
 
   public void testGenericClass() throws Exception {
