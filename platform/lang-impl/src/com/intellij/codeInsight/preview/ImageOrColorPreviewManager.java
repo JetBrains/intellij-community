@@ -18,6 +18,7 @@ package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -145,14 +146,18 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
       return Collections.emptySet();
     }
 
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final Document document = editor.getDocument();
+    PsiFile psiFile = documentManager.getPsiFile(document);
     if (psiFile == null || psiFile instanceof PsiCompiledElement || !psiFile.isValid()) {
       return Collections.emptySet();
     }
 
     final Set<PsiElement> elements = Collections.newSetFromMap(new WeakHashMap<PsiElement, Boolean>());
     final int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
-    ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
+    if (documentManager.isCommitted(document)) {
+      ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
+    }
     for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
       ContainerUtil.addIfNotNull(elements, file.findElementAt(offset));
     }
