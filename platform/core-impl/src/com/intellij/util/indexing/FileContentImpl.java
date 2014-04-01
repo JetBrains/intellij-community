@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     return psi;
   }
 
-  public PsiFile createFileFromText(CharSequence text) {
+  public PsiFile createFileFromText(@NotNull CharSequence text) {
     Project project = getProject();
     if (project == null) {
       project = DefaultProjectFactory.getInstance().getDefaultProject();
@@ -105,7 +105,11 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     this(file, null, null, null, -1);
   }
 
-  private FileContentImpl(@NotNull VirtualFile file, CharSequence contentAsText, byte[] content, Charset charset, long stamp) {
+  private FileContentImpl(@NotNull VirtualFile file,
+                          CharSequence contentAsText,
+                          byte[] content,
+                          Charset charset,
+                          long stamp) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;

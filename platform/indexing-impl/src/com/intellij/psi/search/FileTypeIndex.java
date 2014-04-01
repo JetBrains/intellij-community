@@ -36,9 +36,10 @@ import java.util.Map;
  */
 public class FileTypeIndex extends ScalarIndexExtension<FileType>
   implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
-  private final EnumeratorStringDescriptor myEnumeratorStringDescriptor = new EnumeratorStringDescriptor();
+  private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
 
-  public static Collection<VirtualFile> getFiles(FileType fileType, GlobalSearchScope scope) {
+  @NotNull
+  public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
   }
 
@@ -96,12 +97,12 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public void save(@NotNull DataOutput out, FileType value) throws IOException {
-    myEnumeratorStringDescriptor.save(out, value.getName());
+    ENUMERATOR_STRING_DESCRIPTOR.save(out, value.getName());
   }
 
   @Override
   public FileType read(@NotNull DataInput in) throws IOException {
-    String read = myEnumeratorStringDescriptor.read(in);
+    String read = ENUMERATOR_STRING_DESCRIPTOR.read(in);
     return myFileTypeManager.findFileTypeByName(read);
   }
 
