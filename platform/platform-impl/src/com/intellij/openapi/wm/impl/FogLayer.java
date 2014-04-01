@@ -19,12 +19,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
@@ -39,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -86,23 +80,23 @@ class FogLayer extends JComponent implements AWTEventListener, Runnable, Disposa
   private final ScheduledFuture<?> myFuture;
 
   static boolean isAvailable() {
-    return UIUtil.isFD()         &&
-           !hasBgTasks()
+    return UIUtil.isFD()
+           //!hasBgTasks()
            && Runtime.getRuntime().availableProcessors() >= 4;
   }
 
-  private static boolean hasBgTasks() {
-    for (Frame frame : Frame.getFrames()) {
-      if (frame instanceof IdeFrameImpl) {
-        final StatusBar bar = ((IdeFrameImpl)frame).getStatusBar();
-        if (bar instanceof IdeStatusBarImpl) {
-          final List<Pair<TaskInfo, ProgressIndicator>> processes = ((IdeStatusBarImpl)bar).getBackgroundProcesses();
-          if (!processes.isEmpty()) return true;
-        }
-      }
-    }
-    return false;
-  }
+  //private static boolean hasBgTasks() {
+  //  for (Frame frame : Frame.getFrames()) {
+  //    if (frame instanceof IdeFrameImpl) {
+  //      final StatusBar bar = ((IdeFrameImpl)frame).getStatusBar();
+  //      if (bar instanceof IdeStatusBarImpl) {
+  //        final List<Pair<TaskInfo, ProgressIndicator>> processes = ((IdeStatusBarImpl)bar).getBackgroundProcesses();
+  //        if (!processes.isEmpty()) return true;
+  //      }
+  //    }
+  //  }
+  //  return false;
+  //}
 
 
   FogLayer(Disposable parent) {

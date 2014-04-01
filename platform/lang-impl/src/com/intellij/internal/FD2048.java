@@ -39,10 +39,11 @@ import java.util.List;
 @SuppressWarnings("UseJBColor")
 public class FD2048 implements ProjectComponent {
 
-  private static final int DELAY_MILLIS = 30 * 60 * 1000;
+  private static final int DELAY_MILLIS = 30 *  1000;
   private final Alarm myAlarm;
   private final Game2048 myPanel;
   private final Project myProject;
+
 
   public FD2048(Project project) {
     myProject = project;
@@ -101,6 +102,7 @@ public class FD2048 implements ProjectComponent {
           dialog.setLocation(x, y);
           UsageTrigger.trigger("foolsday2014.game.2048");
           dialog.setVisible(true);
+          dialog.requestFocusInWindow();
         } else {
           myAlarm.addRequest(this, DELAY_MILLIS);
         }
