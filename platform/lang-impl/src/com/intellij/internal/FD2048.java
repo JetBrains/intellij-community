@@ -39,7 +39,7 @@ import java.util.List;
 @SuppressWarnings("UseJBColor")
 public class FD2048 implements ProjectComponent {
 
-  private static final int DELAY_MILLIS = 30 *  1000;
+  private static final int DELAY_MILLIS = 40 * 60 * 1000;
   private final Alarm myAlarm;
   private final Game2048 myPanel;
   private final Project myProject;
@@ -107,7 +107,7 @@ public class FD2048 implements ProjectComponent {
           myAlarm.addRequest(this, DELAY_MILLIS);
         }
       }
-    }, DELAY_MILLIS);
+    }, 10 * 60 * 1000);
   }
 
   @Override
