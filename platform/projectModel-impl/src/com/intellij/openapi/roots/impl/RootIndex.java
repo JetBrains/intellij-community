@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -268,7 +268,7 @@ class RootIndex {
         return info == NULL_INFO ? null : info;
       }
 
-      if (FileTypeManager.getInstance().isFileIgnored(root)) {
+      if (isIgnored(root)) {
         return cacheInfos(dir, root, null);
       }
     }
@@ -335,7 +335,7 @@ class RootIndex {
   @Nullable
   public String getPackageName(@NotNull final VirtualFile dir) {
     if (dir.isDirectory()) {
-      if (FileTypeManager.getInstance().isFileIgnored(dir)) {
+      if (isIgnored(dir)) {
         return null;
       }
 
@@ -381,7 +381,7 @@ class RootIndex {
     boolean hasContentRoots = false;
     while (dir != null) {
       hasContentRoots |= info.contentRootOf.get(dir) != null;
-      if (!hasContentRoots && FileTypeManager.getInstance().isFileIgnored(dir)) {
+      if (!hasContentRoots && isIgnored(dir)) {
         return null;
       }
       if (allRoots.contains(dir)) {
@@ -390,6 +390,10 @@ class RootIndex {
       dir = dir.getParent();
     }
     return hierarchy;
+  }
+
+  private static boolean isIgnored(@NotNull VirtualFile dir) {
+    return FileTypeRegistry.getInstance().isFileIgnored(dir);
   }
 
   private static class RootInfo {
