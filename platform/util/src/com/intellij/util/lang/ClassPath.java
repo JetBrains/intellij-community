@@ -73,7 +73,6 @@ public class ClassPath {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
         ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
           public void run() {
             ourOrder.close();
             System.out.println(ourOrderSize);
@@ -304,12 +303,10 @@ public class ClassPath {
       return false;
     }
 
-    @Override
     public boolean hasMoreElements() {
       return next();
     }
 
-    @Override
     public URL nextElement() {
       if (!next()) {
         throw new NoSuchElementException();
