@@ -42,6 +42,7 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
 
   public static void createEmptyJar(@NotNull String dir, @NotNull String name) throws IOException {
     File jar = new File(dir, name);
+    FileUtil.ensureExists(jar.getParentFile());
     IoTestUtil.createTestJar(jar);
 
     MessageDigest digest;
