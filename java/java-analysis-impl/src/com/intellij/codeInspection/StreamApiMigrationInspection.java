@@ -255,7 +255,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           final PsiParameter parameter = foreachStatement.getIterationParameter();
           final PsiIfStatement ifStmt = extractIfStatement(body);
 
-          String foreEachText = body.getText();
+          String foreEachText = wrapInBlock(body);
           String iterated = iteratedValue.getText();
           if (ifStmt != null) {
             final PsiExpression condition = ifStmt.getCondition();
@@ -264,7 +264,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
               LOG.assertTrue(thenBranch != null);
               if (InheritanceUtil.isInheritor(iteratedValue.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) {
                 body = thenBranch;
-                foreEachText = thenBranch.getText();
+                foreEachText = wrapInBlock(thenBranch);
                 iterated += ".stream().filter(" + parameter.getName() + " -> " + condition.getText() +")";
               }
             }
@@ -297,6 +297,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
+    }
+
+    private static String wrapInBlock(PsiStatement body) {
+
+      if (body instanceof PsiExpressionStatement) {
+        return ((PsiExpressionStatement)body).getExpression().getText();
+      }
+
+      final String bodyText = body.getText();
+      if (!(body instanceof PsiBlockStatement)) {
+        return "{" + bodyText + "}";
+      }
+      return bodyText;
     }
   }
 
