@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.graph.permanent;
+package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.vcs.log.facade.utils.IntList;
 import com.intellij.vcs.log.facade.utils.impl.CompressedIntList;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,34 +29,37 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class PermanentGraphLayoutBuilder {
+public class GraphLayoutBuilder {
 
   @NotNull
-  public static PermanentGraphLayout build(@NotNull DfsUtil dfsUtil,
-                                           @NotNull PermanentGraph graph,
-                                           @NotNull Comparator<Integer> compareTwoHeaderNodeIndex) {
+  public static GraphLayout build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
     List<Integer> heads = new ArrayList<Integer>();
     for (int i = 0; i < graph.nodesCount(); i++) {
       if (graph.getUpNodes(i).size() == 0) {
         heads.add(i);
       }
     }
-    Collections.sort(heads, compareTwoHeaderNodeIndex);
-    PermanentGraphLayoutBuilder builder = new PermanentGraphLayoutBuilder(graph, heads, dfsUtil);
+    Collections.sort(heads, headerNodeIndexComparator);
+    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads, new DfsUtil());
     return builder.build();
   }
 
-  private final PermanentGraph myGraph;
+  @NotNull
+  private final LinearGraph myGraph;
+  @NotNull
   private final int[] myLayoutIndex;
 
+  @NotNull
   private final List<Integer> myHeadNodeIndex;
+  @NotNull
   private final int[] myStartLayoutIndexForHead;
 
+  @NotNull
   private final DfsUtil myDfsUtil;
 
   private int currentLayoutIndex = 1;
 
-  private PermanentGraphLayoutBuilder(PermanentGraph graph, List<Integer> headNodeIndex, DfsUtil dfsUtil) {
+  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex, @NotNull DfsUtil dfsUtil) {
     myGraph = graph;
     myDfsUtil = dfsUtil;
     myLayoutIndex = new int[graph.nodesCount()];
@@ -95,7 +98,7 @@ public class PermanentGraphLayoutBuilder {
   }
 
   @NotNull
-  private PermanentGraphLayout build() {
+  private GraphLayout build() {
     for(int i = 0; i < myHeadNodeIndex.size(); i++) {
       int headNodeIndex = myHeadNodeIndex.get(i);
       myStartLayoutIndexForHead[i] = currentLayoutIndex;
@@ -103,16 +106,19 @@ public class PermanentGraphLayoutBuilder {
       dfs(headNodeIndex);
     }
 
-    return new PermanentGraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
+    return new GraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
 
-  private static class PermanentGraphLayoutImpl implements PermanentGraphLayout {
+  private static class GraphLayoutImpl implements GraphLayout {
+    @NotNull
     private final IntList myLayoutIndex;
 
+    @NotNull
     private final List<Integer> myHeadNodeIndex;
+    @NotNull
     private final int[] myStartLayoutIndexForHead;
 
-    private PermanentGraphLayoutImpl(int[] layoutIndex, List<Integer> headNodeIndex, int[] startLayoutIndexForHead) {
+    private GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
       myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
       myHeadNodeIndex = headNodeIndex;
       myStartLayoutIndexForHead = startLayoutIndexForHead;

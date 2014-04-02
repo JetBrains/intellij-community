@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.newgraph;
+package com.intellij.vcs.log.graph.api;
 
 /**
  * @author erokhins
  */
-public interface PermanentGraphLayout {
+public interface GraphLayout {
   // nodeIndex must be in [0..graph.nodesCount() - 1]
 
   int getLayoutIndex(int nodeIndex);

@@ -19,7 +19,7 @@ package com.intellij.vcs.log.graph.impl.visible.utils;
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
-import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.graph.api.GraphLayout;
 import org.jetbrains.annotations.NotNull;
 
 public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWithHiddenNodesAsPrintedGraph implements LinearGraphWithCommitInfo<CommitId> {
@@ -28,9 +28,9 @@ public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWi
   private final PermanentCommitsInfo<CommitId> myPermanentCommitsInfo;
 
   public GraphWithHiddenNodesAsGraphWithCommitInfo(@NotNull LinearGraphWithHiddenNodes delegateGraph,
-                                                   @NotNull PermanentGraphLayout graphLayout,
+                                                   @NotNull GraphLayout permanentGraphLayout,
                                                    @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo) {
-    super(delegateGraph, graphLayout);
+    super(delegateGraph, permanentGraphLayout);
     myPermanentCommitsInfo = permanentCommitsInfo;
   }
 

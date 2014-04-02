@@ -21,12 +21,15 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.api.GraphLayout;
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +37,25 @@ import java.util.Set;
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
 
   @NotNull
-  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
-    PermanentCommitsInfo<CommitId> commitIdPermanentCommitsInfo = PermanentCommitsInfo.newInstance(graphCommits);
-
+  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                    @NotNull final Comparator<CommitId> headComparator) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
     PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build();
     Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = permanentLinearGraphBuilder.getCommitsWithNotLoadParent();
-    return new PermanentGraphImpl<CommitId>(commitIdPermanentCommitsInfo, linearGraph, commitsWithNotLoadParent);
+
+    final PermanentCommitsInfo<CommitId> commitIdPermanentCommitsInfo = PermanentCommitsInfo.newInstance(graphCommits);
+
+    GraphLayout permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
+      @Override
+      public int compare(@NotNull Integer nodeIndex1, @NotNull Integer nodeIndex2) {
+        CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
+        CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
+        return headComparator.compare(commitId1, commitId2);
+      }
+    });
+
+
+    return new PermanentGraphImpl<CommitId>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, commitsWithNotLoadParent);
   }
 
   @NotNull
@@ -48,13 +63,18 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId> {
 
   @NotNull
   private final PermanentLinearGraphImpl myLinearGraph;
+  @NotNull
+  private final GraphLayout myPermanentGraphLayout;
+
 
   @NotNull
   private final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
 
-  public PermanentGraphImpl(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
-                            @NotNull PermanentLinearGraphImpl linearGraph,
+  public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl linearGraph,
+                            @NotNull GraphLayout permanentGraphLayout,
+                            @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
                             @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent) {
+    myPermanentGraphLayout = permanentGraphLayout;
     myPermanentCommitsInfo = permanentCommitsInfo;
     myLinearGraph = linearGraph;
     myCommitsWithNotLoadParent = commitsWithNotLoadParent;

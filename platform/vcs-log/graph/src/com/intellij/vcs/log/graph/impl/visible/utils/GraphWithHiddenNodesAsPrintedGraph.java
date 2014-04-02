@@ -23,7 +23,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
 import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
-import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.graph.api.GraphLayout;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
@@ -32,7 +32,7 @@ import java.util.List;
 public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
 
   @NotNull
-  private final PermanentGraphLayout myGraphLayout;
+  private final GraphLayout myPermanentGraphLayout;
 
   @NotNull
   private final LinearGraphWithHiddenNodes myDelegateGraph;
@@ -41,8 +41,8 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
   private final UpdatableIntToIntMap myIntToIntMap;
 
   public GraphWithHiddenNodesAsPrintedGraph(@NotNull final LinearGraphWithHiddenNodes delegateGraph,
-                                            @NotNull PermanentGraphLayout graphLayout) {
-    myGraphLayout = graphLayout;
+                                            @NotNull GraphLayout permanentGraphLayout) {
+    myPermanentGraphLayout = permanentGraphLayout;
     myDelegateGraph = delegateGraph;
     myIntToIntMap = ListIntToIntMap.newInstance(new BooleanFunction<Integer>() {
       @Override
@@ -54,7 +54,7 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
 
   @Override
   public int getLayoutIndex(int nodeIndex) {
-    return myGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
+    return myPermanentGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
   }
 
   @NotNull
