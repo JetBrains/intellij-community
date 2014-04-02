@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ public class DumbServiceImpl extends DumbService {
   private final Queue<IndexUpdateRunnable> myUpdatesQueue = new Queue<IndexUpdateRunnable>(5);
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+  private final CacheUpdateRunner NULL_ACTION;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance(@NotNull Project project) {
@@ -66,6 +68,7 @@ public class DumbServiceImpl extends DumbService {
   public DumbServiceImpl(Project project, MessageBus bus) {
     myProject = project;
     myPublisher = bus.syncPublisher(DUMB_MODE);
+    NULL_ACTION = new CacheUpdateRunner(project, Collections.<CacheUpdater>emptyList());
   }
 
   @Override
@@ -90,7 +93,7 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public void runWhenSmart(Runnable runnable) {
+  public void runWhenSmart(@NotNull Runnable runnable) {
     if (!isDumb()) {
       runnable.run();
     }
@@ -101,15 +104,15 @@ public class DumbServiceImpl extends DumbService {
     }
   }
 
-  public void queueCacheUpdate(Collection<CacheUpdater> updaters) {
+  public void queueCacheUpdate(@NotNull Collection<CacheUpdater> updaters) {
     scheduleCacheUpdate(updaters, false);
   }
 
-  public void queueCacheUpdateInDumbMode(Collection<CacheUpdater> updaters) {
+  public void queueCacheUpdateInDumbMode(@NotNull Collection<CacheUpdater> updaters) {
     scheduleCacheUpdate(updaters, true);
   }
 
-  private void scheduleCacheUpdate(Collection<CacheUpdater> updaters, boolean forceDumbMode) {
+  private void scheduleCacheUpdate(@NotNull Collection<CacheUpdater> updaters, boolean forceDumbMode) {
     // prevent concurrent modifications
     final CacheUpdateRunner runner = new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters));
 
@@ -257,8 +260,6 @@ public class DumbServiceImpl extends DumbService {
       }
     });
   }
-
-  private static final CacheUpdateRunner NULL_ACTION = new CacheUpdateRunner(null,null);
 
   @Override
   public void waitForSmartMode() {
