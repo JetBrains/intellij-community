@@ -952,6 +952,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return getInfo(new File(path));
   }
 
+  // TODO: Most likely make getInfo(File) correspond to getInfo(File, SVNRevision.UNDEFINED)
+  // TODO: And create special method that tries also to resolve HEAD revision - to be used only in special code paths
   @Nullable
   public SVNInfo getInfo(@NotNull File ioFile) {
     SVNInfo result = null;
