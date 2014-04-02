@@ -175,17 +175,16 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
   @Override
   public void update() {
     GitRepoInfo previousInfo = myInfo;
-    myInfo = readRepoInfo(this, myPlatformFacade, myReader);
-    notifyListeners(this, previousInfo, myInfo);
+    myInfo = readRepoInfo();
+    notifyListeners(previousInfo);
   }
 
   @NotNull
-  private static GitRepoInfo readRepoInfo(@NotNull GitRepository repository, @NotNull GitPlatformFacade platformFacade,
-                                          @NotNull GitRepositoryReader reader) {
-    File configFile = new File(VfsUtilCore.virtualToIoFile(repository.getGitDir()), "config");
-    GitConfig config = GitConfig.read(platformFacade, configFile);
+  private GitRepoInfo readRepoInfo() {
+    File configFile = new File(VfsUtilCore.virtualToIoFile(getGitDir()), "config");
+    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
-    TempState tempState = readRepository(reader, remotes);
+    TempState tempState = readRepository(remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(tempState.myBranches.getLocalBranches(),
                                                                        tempState.myBranches.getRemoteBranches());
     return new GitRepoInfo(tempState.myCurrentBranch, tempState.myCurrentRevision, tempState.myState,
@@ -193,17 +192,18 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
                            tempState.myBranches.getRemoteBranches(), trackInfos);
   }
 
-  private static TempState readRepository(GitRepositoryReader reader, @NotNull Collection<GitRemote> remotes) {
-    return new TempState(reader.readState(), reader.readCurrentRevision(), reader.readCurrentBranch(), reader.readBranches(remotes));
+  private TempState readRepository(@NotNull Collection<GitRemote> remotes) {
+    return new TempState(myReader.readState(), myReader.readCurrentRevision(), myReader.readCurrentBranch(),
+                         myReader.readBranches(remotes));
   }
 
   // previous info can be null before the first update
-  private static void notifyListeners(@NotNull GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
-    if (Disposer.isDisposed(repository.getProject())) {
+  private void notifyListeners(@Nullable GitRepoInfo previousInfo) {
+    if (Disposer.isDisposed(getProject())) {
       return;
     }
-    if (!info.equals(previousInfo)) {
-      repository.getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
+    if (!myInfo.equals(previousInfo)) {
+      getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
     }
   }
 
