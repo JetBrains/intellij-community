@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     if (expressionToAssert == null) return;
     if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiElement element = descriptor.getPsiElement();
-    PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
+    PsiElement anchorElement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorElement != null);
     final PsiElement tempParent = anchorElement.getParent();
     if (tempParent instanceof PsiForStatement && !PsiTreeUtil.isAncestor(((PsiForStatement)tempParent).getBody(), anchorElement, false)) {
@@ -75,11 +76,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
         parent.addBefore(assertStatement, anchorElement);
       }
       else {
-        PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", null);
-        final PsiCodeBlock block = blockStatement.getCodeBlock();
-        block.add(assertStatement);
-        block.add(anchorElement);
-        anchorElement.replace(blockStatement);
+        RefactoringUtil.putStatementInLoopBody(assertStatement, parent, anchorElement);
       }
     }
     catch (IncorrectOperationException e) {
