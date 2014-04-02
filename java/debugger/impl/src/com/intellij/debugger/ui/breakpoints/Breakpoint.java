@@ -91,6 +91,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint.getProperties();
   }
 
+  public XBreakpoint<P> getXBreakpoint() {
+    return myXBreakpoint;
+  }
+
   @Nullable
   public abstract PsiClass getPsiClass();
   /**
