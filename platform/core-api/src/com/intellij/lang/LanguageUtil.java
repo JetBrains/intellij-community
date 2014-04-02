@@ -97,7 +97,7 @@ public final class LanguageUtil {
   public static Language getRootLanguage(@NotNull PsiElement element) {
     final FileViewProvider provider = element.getContainingFile().getViewProvider();
     final Set<Language> languages = provider.getLanguages();
-    if (languages.size() > 0) {
+    if (languages.size() > 1) {
       PsiElement current = element;
       while (current != null) {
         final Language language = current.getLanguage();
