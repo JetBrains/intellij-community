@@ -83,7 +83,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
-          ].flatten()
+    "ui-designer-core"
+  ].flatten()
   implementationModules.removeAll(jpsCommonModules) //todo[nik] remove jps modules from platformImplementationModules instead and update layouts of minor IDEs accordingly
 
   ant.patternset(id: "resources.included") {
@@ -687,15 +688,7 @@ def layoutAndroid(String androidHome) {
 
     dir("android-designer") {
       dir("lib") {
-        jar("resources_en.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.included")
-          }
-        }
         jar("android-designer.jar") {
-          module("ui-designer-core") {
-            patternset(refid: "resources.excluded")
-          }
           module("android-designer")
         }
       }
