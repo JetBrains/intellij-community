@@ -16,13 +16,14 @@
 
 package com.intellij.vcs.log.newgraph.utils;
 
+import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
 
 public class DfsUtil {
-  private final int[] myStack;
+  private final IntStack myStack;
 
-  public DfsUtil(int maxStackSize) {
-    myStack = new int[maxStackSize];
+  public DfsUtil() {
+    myStack = new IntStack();
   }
 
   public interface NextNode {
@@ -32,16 +33,14 @@ public class DfsUtil {
   }
 
   public void nodeDfsIterator(int startRowIndex, @NotNull NextNode nextNodeFun) {
-    myStack[0] = startRowIndex;
-    int stackIndex = 0;
+    myStack.push(startRowIndex);
 
-    while (stackIndex >= 0) {
-      int nextNode = nextNodeFun.fun(myStack[stackIndex]);
+    while (!myStack.empty()) {
+      int nextNode = nextNodeFun.fun(myStack.peek());
       if (nextNode != NextNode.NODE_NOT_FOUND) {
-        stackIndex++;
-        myStack[stackIndex] = nextNode;
+        myStack.push(nextNode);
       } else {
-        stackIndex--;
+        myStack.pop();
       }
     }
   }

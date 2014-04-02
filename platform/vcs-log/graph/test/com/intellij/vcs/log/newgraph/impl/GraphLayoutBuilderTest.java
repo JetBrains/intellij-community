@@ -44,7 +44,7 @@ public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
     final PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
 
-    DfsUtil dfsUtil = new DfsUtil(commits.size());
+    DfsUtil dfsUtil = new DfsUtil();
     PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, graph, new Comparator<Integer>() {
       @Override
       public int compare(@NotNull Integer o1, @NotNull Integer o2) {

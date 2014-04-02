@@ -43,7 +43,7 @@ public class GraphFacadeImpl implements GraphFacade {
     Pair<PermanentGraphImpl,Map<Integer,GraphCommit>> graphAndUnderdoneCommits = PermanentGraphBuilder.build(commits);
     final PermanentGraphImpl permanentGraph = graphAndUnderdoneCommits.first;
 
-    DfsUtil dfsUtil = new DfsUtil(commits.size());
+    DfsUtil dfsUtil = new DfsUtil();
 
     final PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, permanentGraph, new Comparator<Integer>() {
       @Override

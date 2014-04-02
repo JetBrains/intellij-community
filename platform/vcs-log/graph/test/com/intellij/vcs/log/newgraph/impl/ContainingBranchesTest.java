@@ -58,7 +58,7 @@ public class ContainingBranchesTest extends AbstractTestWithTextFile {
     PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
     ContainingBranchesGetter containingBranchesGetter = new ContainingBranchesGetter(graph,
                                                                                      parseBranchNodeIndex(in.substring(i + SEPARATOR.length())),
-                                                                                     new DfsUtil(1000),
+                                                                                     new DfsUtil(),
                                                                                      new GraphFlags(graph.nodesCount()).getTempFlags());
 
     assertEquals(out, containingBranchesGetterToStr(containingBranchesGetter, graph.nodesCount()));
