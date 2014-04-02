@@ -288,7 +288,6 @@ public class PythonSdkType extends SdkType {
         public void consume(@Nullable Sdk sdk) {
           if (sdk != null) {
             sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<Component>(parentComponent));
-            sdkCreatedCallback.consume(sdk);
           }
         }
       });
