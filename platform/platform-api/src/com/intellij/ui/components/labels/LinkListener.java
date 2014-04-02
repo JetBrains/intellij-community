@@ -17,13 +17,13 @@ package com.intellij.ui.components.labels;
 
 
 
-public interface LinkListener {
+public interface LinkListener<T> {
 
   LinkListener NULL = new LinkListener() {
     public void linkSelected(LinkLabel aSource, Object aLinkData) {
     }
   };
 
-  void linkSelected(LinkLabel aSource, Object aLinkData);
+  void linkSelected(LinkLabel aSource, T aLinkData);
 
 }
