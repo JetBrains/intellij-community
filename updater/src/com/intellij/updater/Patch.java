@@ -48,9 +48,17 @@ public class Patch {
       tempActions.add(new DeleteAction(each.getKey(), each.getValue()));
     }
 
-    for (String each : diff.filesToCreate) {
-      tempActions.add(new CreateAction(each));
+    for (Map.Entry<String, Long> each : diff.filesToCreate.entrySet()) {
+      if (each.getValue() != 0) {
+        Runner.logger.info("Create " +  each.getKey());
+        tempActions.add(new CreateAction(each.getKey()));
+      } else{
+        Runner.logger.info("Do not Create " +  each.getKey());
+      }
     }
+/*    for (String each : diff.filesToCreate) {
+      tempActions.add(new CreateAction(each));
+    }*/
 
     for (Map.Entry<String, Long> each : diff.filesToUpdate.entrySet()) {
       if (Utils.isZipFile(each.getKey())) {

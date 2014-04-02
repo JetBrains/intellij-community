@@ -10,7 +10,10 @@ public class DiffCalculator {
     Result result = new Result();
     Runner.logger.info("Elements to delete");
     result.filesToDelete = withAllRemoved(oldChecksums, newChecksums, "delete");
-    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "").keySet();
+    Runner.logger.info("Elements to add");
+//    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "").keySet();
+    result.filesToCreate = withAllRemoved(newChecksums, oldChecksums, "");
+    Runner.logger.info("Elements to modify");
     result.filesToUpdate = collect(oldChecksums, newChecksums, false);
     return result;
   }
@@ -18,7 +21,7 @@ public class DiffCalculator {
   private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove, String toDelete) {
     Map<String, Long> result = new HashMap<String, Long>(from);
     for (String each : toRemove.keySet()) {
-      if (toDelete != "") Runner.logger.info("Element to delete: " + each);
+      if (toDelete == "delete") Runner.logger.info("Element to delete: " + each);
       result.remove(each);
     }
     return result;
@@ -39,7 +42,8 @@ public class DiffCalculator {
 
   public static class Result {
     public Map<String, Long> filesToDelete;
-    public Set<String> filesToCreate;
+//    public Set<String> filesToCreate;
+    public Map<String, Long> filesToCreate;
     public Map<String, Long> filesToUpdate;
   }
 }

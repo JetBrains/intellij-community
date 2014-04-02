@@ -89,7 +89,8 @@ public class UpdateZipAction extends BaseUpdateAction {
 
     DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums);
 
-    myFilesToCreate = diff.filesToCreate;
+    myFilesToCreate = diff.filesToCreate.keySet();
+//    myFilesToCreate = diff.filesToCreate;
     myFilesToUpdate = diff.filesToUpdate.keySet();
     myFilesToDelete = diff.filesToDelete.keySet();
 
