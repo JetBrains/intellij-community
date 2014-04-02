@@ -49,7 +49,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
    *                           if some of these tags do not exist on any interpreter, all test methods would be skipped using
    *                           {@link org.junit.Assume}.
    *                           See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
-   *                           Check [IDEA-122939] and [IDEA-22193] as well.
+   *                           Check [IDEA-122939] and [TW-25043] as well.
    *
    */
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
