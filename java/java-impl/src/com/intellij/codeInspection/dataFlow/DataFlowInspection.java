@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInspection.AddAssertStatementFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SurroundWithIfFix;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.tree.IElementType;
 
@@ -58,6 +60,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
+  }
+
+  @Override
+  protected AddAssertStatementFix createAssertFix(PsiBinaryExpression binary) {
+    return new AddAssertStatementFix(binary);
   }
 
   private class OptionsPanel extends JPanel {
