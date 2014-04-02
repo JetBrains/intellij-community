@@ -31,14 +31,14 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
                                                   @NotNull final String projectPath,
                                                   final boolean isPreviewMode,
-                                                  ExternalSystemExecutionSettings settings)
+                                                  final S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     return execute(id, new Producer<DataNode<ProjectData>>() {
       @Nullable
       @Override
       public DataNode<ProjectData> produce() {
-        return myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, getSettings(), getNotificationListener());
+        return myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, getNotificationListener());
       }
     });
   }
