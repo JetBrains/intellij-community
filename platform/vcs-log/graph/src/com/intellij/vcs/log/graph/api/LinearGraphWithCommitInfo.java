@@ -18,10 +18,10 @@ package com.intellij.vcs.log.graph.api;
 /**
  * @author erokhins
  */
-public interface LinearGraphWithCommitInfo extends PrintedLinearGraph {
+public interface LinearGraphWithCommitInfo<CommitId> extends PrintedLinearGraph {
 
   // nodeIndex >= 0 && node nodeIndex < nodesCount()
-  int getHashIndex(int nodeIndex);
+  CommitId getHashIndex(int nodeIndex);
   long getTimestamp(int nodeIndex);
 
 }

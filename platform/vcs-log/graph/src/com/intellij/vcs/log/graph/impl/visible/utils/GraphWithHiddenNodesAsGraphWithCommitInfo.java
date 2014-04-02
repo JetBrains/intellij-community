@@ -18,25 +18,25 @@ package com.intellij.vcs.log.graph.impl.visible.utils;
 
 import com.intellij.vcs.log.graph.api.LinearGraphWithCommitInfo;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
-import com.intellij.vcs.log.facade.graph.permanent.PermanentCommitsInfo;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import org.jetbrains.annotations.NotNull;
 
-public class GraphWithHiddenNodesAsGraphWithCommitInfo extends GraphWithHiddenNodesAsPrintedGraph implements LinearGraphWithCommitInfo {
+public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWithHiddenNodesAsPrintedGraph implements LinearGraphWithCommitInfo<CommitId> {
 
   @NotNull
-  private final PermanentCommitsInfo myPermanentCommitsInfo;
+  private final PermanentCommitsInfo<CommitId> myPermanentCommitsInfo;
 
   public GraphWithHiddenNodesAsGraphWithCommitInfo(@NotNull LinearGraphWithHiddenNodes delegateGraph,
                                                    @NotNull PermanentGraphLayout graphLayout,
-                                                   @NotNull PermanentCommitsInfo permanentCommitsInfo) {
+                                                   @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo) {
     super(delegateGraph, graphLayout);
     myPermanentCommitsInfo = permanentCommitsInfo;
   }
 
   @Override
-  public int getHashIndex(int nodeIndex) {
-    return myPermanentCommitsInfo.getHashIndex(getIndexInPermanentGraph(nodeIndex));
+  public CommitId getHashIndex(int nodeIndex) {
+    return myPermanentCommitsInfo.getCommitId(getIndexInPermanentGraph(nodeIndex));
   }
 
   @Override
