@@ -16,8 +16,8 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.vcs.log.facade.utils.IntList;
-import com.intellij.vcs.log.facade.utils.impl.CompressedIntList;
+import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.newgraph.SomeGraph;

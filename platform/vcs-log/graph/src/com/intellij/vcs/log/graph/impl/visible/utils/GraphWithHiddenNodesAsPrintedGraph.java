@@ -21,8 +21,8 @@ import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
 import com.intellij.vcs.log.graph.api.PrintedLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.facade.utils.impl.ListIntToIntMap;
+import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.impl.ListIntToIntMap;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import org.jetbrains.annotations.NotNull;
 

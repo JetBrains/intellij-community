@@ -17,11 +17,11 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
-import com.intellij.vcs.log.facade.utils.IntList;
-import com.intellij.vcs.log.facade.utils.impl.CompressedIntList;
-import com.intellij.vcs.log.facade.utils.impl.FullIntList;
+import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
+import com.intellij.vcs.log.graph.utils.impl.FullIntList;
 import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.facade.utils.Flags;
+import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;

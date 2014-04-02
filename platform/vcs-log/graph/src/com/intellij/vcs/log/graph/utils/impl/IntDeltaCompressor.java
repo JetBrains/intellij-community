@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils.impl;
+package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.util.BooleanFunction;
-import com.intellij.vcs.log.facade.utils.Flags;
-import com.intellij.vcs.log.facade.utils.IntList;
-import com.intellij.vcs.log.facade.utils.IntToIntMap;
+import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 /*package*/ class IntDeltaCompressor {

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.facade.utils;
+package com.intellij.vcs.log.graph.utils;
 
 /**
  * @author erokhins
  */
-public interface IntList {
-  int size();
-  int get(int index);
+public interface UpdatableIntToIntMap extends IntToIntMap {
+  void update(int startLongIndex, int endLongIndex);
 }

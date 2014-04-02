@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils.impl;
+package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 
 public abstract class AbstractUpdatableIntToIntMap implements UpdatableIntToIntMap {
 

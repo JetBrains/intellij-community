@@ -16,10 +16,9 @@
 package com.intellij.vcs.log.newgraph.gpaph.impl;
 
 import com.intellij.util.SmartList;
-import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import com.intellij.vcs.log.newgraph.gpaph.*;
-import com.intellij.vcs.log.facade.utils.IntToIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

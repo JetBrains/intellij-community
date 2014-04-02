@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.facade.utils;
+package com.intellij.vcs.log.graph.utils;
 
 /**
  * @author erokhins
  */
-public interface IntToIntMap {
-  int shortSize();
-  int longSize();
-  int getLongIndex(int shortIndex); // must be very fast
-
-  /**
-   * @param longIndex
-   * @return max shortIndex, witch getLongIndex(shortIndex) <= longIndex or 0
-   */
-  int getShortIndex(int longIndex);
+public interface Flags {
+  int size();
+  boolean get(int index);
+  void set(int index, boolean value);
 }

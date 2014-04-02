@@ -18,8 +18,8 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.facade.utils.TimestampGetter;
-import com.intellij.vcs.log.facade.utils.impl.IntTimestampGetter;
+import com.intellij.vcs.log.graph.utils.TimestampGetter;
+import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import com.intellij.vcs.log.graph.GraphCommit;
 import org.jetbrains.annotations.NotNull;
 

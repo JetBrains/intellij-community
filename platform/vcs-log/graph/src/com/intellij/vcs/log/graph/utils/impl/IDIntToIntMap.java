@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.facade.utils.impl;
+package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.vcs.log.facade.utils.IntToIntMap;
-import com.intellij.vcs.log.facade.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.IntToIntMap;
+import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class IDIntToIntMap implements IntToIntMap {

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.utils.impl;
+package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.vcs.log.facade.utils.IntList;
-import com.intellij.vcs.log.facade.utils.TimestampGetter;
+import com.intellij.vcs.log.graph.utils.IntList;
+import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;

@@ -17,9 +17,9 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
-import com.intellij.vcs.log.facade.utils.Flags;
-import com.intellij.vcs.log.facade.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
