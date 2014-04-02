@@ -81,6 +81,11 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
+      if (myCurrentCallback instanceof CustomizeColoredTreeCellRendererReplacement) {
+        return ((CustomizeColoredTreeCellRendererReplacement)myCurrentCallback)
+          .getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+      }
+
       clear();
       setBackground(UIUtil.getBgFillColor(tree));
 
@@ -131,6 +136,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
+      myPanel.removeAll();
       myPanel.setBackground(tree.getBackground());
       myPanel.add(myLeft.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.WEST);
       myPanel.add(myRight.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus), BorderLayout.EAST);
@@ -139,7 +145,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   }
 
   @NotNull
-  static String calcPrefix(@Nullable ErrorTreeElement element) {
+  public static String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       String prefix = element.getKind().getPresentableText();
 

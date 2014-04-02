@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import org.gradle.api.internal.LocationAwareException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +40,13 @@ public abstract class AbstractProjectImportErrorHandler {
   public static final Pattern UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN;
   public static final Pattern MISSING_METHOD_PATTERN;
   public static final Pattern ERROR_LOCATION_PATTERN;
+  private static final Pattern ERROR_IN_FILE_PATTERN;
 
   static {
     UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN = Pattern.compile("Gradle version .* is required.*");
     MISSING_METHOD_PATTERN = Pattern.compile("org.gradle.api.internal.MissingMethodException: Could not find method (.*?) .*");
-    ERROR_LOCATION_PATTERN = Pattern.compile("Build file '(.*?)' line: (\\d+).*");
+    ERROR_LOCATION_PATTERN = Pattern.compile("Build file '(.*)' line: ([\\d]+)");
+    ERROR_IN_FILE_PATTERN = Pattern.compile("Build file '(.*)'");
   }
 
   public static final String EMPTY_LINE = "\n\n";
@@ -74,7 +76,7 @@ public abstract class AbstractProjectImportErrorHandler {
   @Nullable
   public String getLocationFrom(@NotNull Throwable error) {
     String errorToString = error.toString();
-    if (errorToString.startsWith(LocationAwareException.class.getName())) {
+    if (errorToString.contains("LocationAwareException")) {
       // LocationAwareException is never passed, but converted into a PlaceholderException that has the toString value of the original
       // LocationAwareException.
       String location = error.getMessage();
@@ -88,7 +90,7 @@ public abstract class AbstractProjectImportErrorHandler {
   }
 
   @NotNull
-  public ExternalSystemException createUserFriendlyError(@NotNull String msg, @Nullable String location) {
+  public ExternalSystemException createUserFriendlyError(@NotNull String msg, @Nullable String location, @NotNull String... quickFixes) {
     String newMsg = msg;
     if (!newMsg.isEmpty() && Character.isLowerCase(newMsg.charAt(0))) {
       // Message starts with lower case letter. Sentences should start with uppercase.
@@ -96,16 +98,38 @@ public abstract class AbstractProjectImportErrorHandler {
     }
 
     if (!StringUtil.isEmpty(location)) {
-      Matcher matcher = ERROR_LOCATION_PATTERN.matcher(location);
-      if(matcher.find()) {
-        String href = "error in file: " + matcher.group(1) + " at line: " + matcher.group(2);
-        newMsg = newMsg + EMPTY_LINE + "<a href=\"" + href + "\">" + location + "</a>\n";
-      } else {
-        newMsg = newMsg + EMPTY_LINE + location;
+      Pair<String, Integer> pair = getErrorLocation(location);
+      if (pair != null) {
+        return new LocationAwareExternalSystemException(newMsg, pair.first, pair.getSecond(), quickFixes);
       }
     }
-    return new ExternalSystemException(newMsg);
+    return new ExternalSystemException(newMsg, null, quickFixes);
   }
+
+
+  @Nullable
+  private static Pair<String, Integer> getErrorLocation(@NotNull String location) {
+    Matcher matcher = ERROR_LOCATION_PATTERN.matcher(location);
+    if (matcher.matches()) {
+      String filePath = matcher.group(1);
+      int line = -1;
+      try {
+        line = Integer.parseInt(matcher.group(2));
+      }
+      catch (NumberFormatException e) {
+        // ignored.
+      }
+      return Pair.create(filePath, line);
+    }
+
+    matcher = ERROR_IN_FILE_PATTERN.matcher(location);
+    if (matcher.matches()) {
+      String filePath = matcher.group(1);
+      return Pair.create(filePath, -1);
+    }
+    return null;
+  }
+
 
   @Nullable
   public String parseMissingMethod(@NotNull String rootCauseText) {
