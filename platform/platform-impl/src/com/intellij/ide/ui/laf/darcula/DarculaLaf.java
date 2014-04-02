@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
@@ -38,9 +39,11 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.List;
 import java.util.Properties;
 
@@ -102,7 +105,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
-      patchStyledEditorKit();
+      patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
@@ -140,20 +143,16 @@ public class DarculaLaf extends BasicLookAndFeel {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private void patchStyledEditorKit() {
+  private void patchStyledEditorKit(UIDefaults defaults) {
+    URL url = getClass().getResource(getPrefix() + ".css");
+    StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
+    defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
-      InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
-      if (is != null) {
-        StyleSheet defaultStyles = new StyleSheet();
-        Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-        defaultStyles.loadRules(r, null);
-        r.close();
-        final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-        keyField.setAccessible(true);
-        final Object key = keyField.get(null);
-        AppContext.getAppContext().put(key, defaultStyles);
-      }
-    } catch (Exception e) {
+      Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
+      keyField.setAccessible(true);
+      AppContext.getAppContext().put(keyField.get(null), UIUtil.loadStyleSheet(url));
+    }
+    catch (Exception e) {
       log(e);
     }
   }
