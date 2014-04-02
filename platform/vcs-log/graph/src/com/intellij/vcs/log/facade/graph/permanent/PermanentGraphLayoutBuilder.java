@@ -106,9 +106,6 @@ public class PermanentGraphLayoutBuilder {
     return new PermanentGraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
 
-
-
-
   private static class PermanentGraphLayoutImpl implements PermanentGraphLayout {
     private final IntList myLayoutIndex;
 
@@ -147,11 +144,6 @@ public class PermanentGraphLayoutBuilder {
           b = middle - 1;
       }
       return a;
-    }
-
-    @Override
-    public int getStartLayout(int layoutIndex) {
-      return myStartLayoutIndexForHead[getHeadOrder(layoutIndex)];
     }
   }
 }

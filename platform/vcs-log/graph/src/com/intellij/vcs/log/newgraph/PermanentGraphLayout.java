@@ -21,12 +21,8 @@ package com.intellij.vcs.log.newgraph;
 public interface PermanentGraphLayout {
   // nodeIndex must be in [0..graph.nodesCount() - 1]
 
-
   int getLayoutIndex(int nodeIndex);
   int getOneOfHeadNodeIndex(int nodeIndex);
 
   int getHeadNodeIndex(int layoutIndex);
-
-  // return layout index head node
-  int getStartLayout(int layoutIndex);
 }

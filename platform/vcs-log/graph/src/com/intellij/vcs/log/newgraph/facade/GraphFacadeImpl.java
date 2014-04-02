@@ -60,7 +60,7 @@ public class GraphFacadeImpl implements GraphFacade {
       public JBColor getColor(@NotNull GraphElement element) {
         int headNodeIndex = graphLayout.getHeadNodeIndex(element.getLayoutIndex());
         int headHashIndex = permanentGraph.getHashIndex(headNodeIndex);
-        int baseLayoutIndex = graphLayout.getStartLayout(element.getLayoutIndex());
+        int baseLayoutIndex = graphLayout.getLayoutIndex(headNodeIndex);
         if (baseLayoutIndex == element.getLayoutIndex()) {
           return colorManager.getColorOfBranch(headHashIndex);
         } else {
