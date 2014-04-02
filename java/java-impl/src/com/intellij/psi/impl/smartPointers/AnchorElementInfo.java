@@ -38,7 +38,7 @@ class AnchorElementInfo extends SelfElementInfo {
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
     super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile,
-          containingFile.getLanguage());
+          containingFile.getViewProvider().getRootLanguage(anchor));
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
   // will restore by stub index until file tree get loaded

@@ -48,7 +48,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
     this(project, ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), anchor.getContainingFile(),
-         anchor.getContainingFile().getLanguage());
+         anchor.getContainingFile().getViewProvider().getRootLanguage(anchor));
   }
   public SelfElementInfo(@NotNull Project project,
                          @NotNull ProperTextRange range,

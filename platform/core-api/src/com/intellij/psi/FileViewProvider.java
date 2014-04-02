@@ -103,4 +103,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
 
   @NotNull
   PsiFile getStubBindingRoot();
+
+  @NotNull
+  Language getRootLanguage(PsiElement element);
 }

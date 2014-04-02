@@ -190,4 +190,17 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       }
     }
   }
+
+  @NotNull
+  @Override
+  public Language getRootLanguage(PsiElement element) {
+    final Set<Language> languages = getLanguages();
+    PsiElement current = element;
+    while (current != null) {
+      final Language language = current.getLanguage();
+      if (languages.contains(language)) return language;
+      current = current.getParent();
+    }
+    return super.getRootLanguage(element);
+  }
 }

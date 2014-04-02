@@ -168,6 +168,12 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return getPsi(getBaseLanguage());
   }
 
+  @NotNull
+  @Override
+  public Language getRootLanguage(PsiElement element) {
+    return getBaseLanguage();
+  }
+
   @Override
   public PsiElement findElementAt(final int offset) {
     final LeafElement element = ((PsiFileImpl)getPsi(getBaseLanguage())).calcTreeElement().findLeafElementAt(offset);

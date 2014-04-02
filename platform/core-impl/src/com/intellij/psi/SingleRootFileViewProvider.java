@@ -586,4 +586,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     assert psi != null;
     return psi;
   }
+
+  @NotNull
+  public Language getRootLanguage(final PsiElement element) {
+    return getBaseLanguage();
+  }
 }
