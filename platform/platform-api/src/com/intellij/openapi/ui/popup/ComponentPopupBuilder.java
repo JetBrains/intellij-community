@@ -96,6 +96,13 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setMinSize(Dimension minSize);
 
+  /**
+   * Use this method to customize shape of popup window (e.g. to use bounded corners).
+   */
+  @SuppressWarnings("UnusedDeclaration")//used in 'Presentation Assistant' plugin
+  @NotNull
+  ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider);
+
   @NotNull
   ComponentPopupBuilder setAlpha(float alpha);
 
