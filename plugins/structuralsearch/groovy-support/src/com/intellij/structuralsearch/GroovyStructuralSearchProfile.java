@@ -4,8 +4,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,5 +63,18 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return CLASS_CONTEXT.equals(contextName)
            ? "class AAAAA { " + PATTERN_PLACEHOLDER + " }"
            : PATTERN_PLACEHOLDER;
+  }
+
+  @Override
+  public Class getElementContextByPsi(PsiElement element) {
+    if (element instanceof PsiIdentifier) {
+      element = element.getParent();
+    }
+
+    if (element instanceof PsiMember) {
+      return PsiMember.class;
+    } else {
+      return PsiExpression.class;
+    }
   }
 }
