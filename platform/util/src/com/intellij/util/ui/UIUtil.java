@@ -2842,26 +2842,27 @@ public class UIUtil {
     });
   }
 
-  public static void doPlay(final Class<?> aClass, final String resourceName) {
-    doPlay(new Factory<InputStream>() {
+  public static void playSoundFromResource(final String resourceName) {
+    final Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return;
+    playSoundFromStream(new Factory<InputStream>() {
       @Override
       public InputStream create() {
-        InputStream stream = aClass.getResourceAsStream(resourceName);
-        if (!stream.markSupported()) stream = new BufferedInputStream(stream);
-        return stream;
+        return callerClass.getResourceAsStream(resourceName);
       }
     });
   }
 
-  private static void doPlay(final Factory<InputStream> streamProducer) {
+  public static void playSoundFromStream(final Factory<InputStream> streamProducer) {
     new Thread(new Runnable() {
       // The wrapper thread is unnecessary, unless it blocks on the
       // Clip finishing; see comments.
       public void run() {
         try {
           Clip clip = AudioSystem.getClip();
-          AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-            streamProducer.create());
+          InputStream stream = streamProducer.create();
+          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
           clip.open(inputStream);
 
           clip.start();
