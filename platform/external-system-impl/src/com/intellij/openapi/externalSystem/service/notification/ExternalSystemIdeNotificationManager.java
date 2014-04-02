@@ -128,16 +128,21 @@ public class ExternalSystemIdeNotificationManager {
   public void clearNotificationMessages(@NotNull final Project project,
                                         @NotNull final NotificationSource notificationSource,
                                         @NotNull final ProjectSystemId externalSystemId) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-    if (toolWindow == null) return;
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+        if (toolWindow == null) return;
 
-    final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
-    final MessageView messageView = ServiceManager.getService(project, MessageView.class);
-    for (Content content : messageView.getContentManager().getContents()) {
-      if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
-        messageView.getContentManager().removeContent(content, true);
+        final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
+        final MessageView messageView = ServiceManager.getService(project, MessageView.class);
+        for (Content content : messageView.getContentManager().getContents()) {
+          if (!content.isPinned() && contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))) {
+            messageView.getContentManager().removeContent(content, true);
+          }
+        }
       }
-    }
+    });
   }
 
 
