@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.graph.permanent;
+package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.util.SmartList;
 import com.intellij.vcs.log.facade.utils.IntList;
 import com.intellij.vcs.log.facade.utils.impl.CompressedIntList;
 import com.intellij.vcs.log.facade.utils.impl.FullIntList;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.facade.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,17 +28,15 @@ import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
-public class PermanentGraphImpl implements PermanentGraph {
+public class PermanentLinearGraphImpl implements LinearGraph {
   private final Flags mySimpleNodes;
-  private final IntList myNodeToHashIndex;
 
   // myNodeToEdgeIndex.length = nodesCount() + 1. See adjacentNodes().
   private final IntList myNodeToEdgeIndex;
   private final IntList myLongEdges;
 
-  /*package*/ PermanentGraphImpl(Flags simpleNodes, int[] nodeToHashIndex, int[] nodeToEdgeIndex, int[] longEdges) {
+  /*package*/ PermanentLinearGraphImpl(Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
     mySimpleNodes = simpleNodes;
-    myNodeToHashIndex = CompressedIntList.newInstance(nodeToHashIndex);
     myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
     myLongEdges = new FullIntList(longEdges);
   }
@@ -96,12 +94,5 @@ public class PermanentGraphImpl implements PermanentGraph {
     }
 
     return result;
-  }
-
-  @Override
-  public int getHashIndex(int nodeIndex) {
-    if (nodeIndex == nodesCount())
-      return NOT_LOAD_COMMIT;
-    return myNodeToHashIndex.get(nodeIndex);
   }
 }

@@ -14,80 +14,72 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.facade.graph.permanent;
+package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
-import com.intellij.vcs.log.GraphCommit;
 import com.intellij.vcs.log.facade.utils.Flags;
 import com.intellij.vcs.log.facade.utils.impl.BitSetFlags;
+import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.newgraph.SomeGraph;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.facade.graph.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
+import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
-public class PermanentGraphBuilder {
+public class PermanentLinearGraphBuilder<CommitId> {
 
   @NotNull
-  public static Pair<PermanentGraphImpl, Map<Integer, GraphCommit>> build(@NotNull List<? extends GraphCommit> commits) {
-    commits = fixDuplicateParentCommits(commits);
-    Flags simpleNodes = new BitSetFlags(commits.size());
+  public static <CommitId> PermanentLinearGraphBuilder<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits) {
+    graphCommits = fixDuplicateParentCommits(graphCommits);
+    Flags simpleNodes = new BitSetFlags(graphCommits.size());
 
     int longEdgesCount = 0;
-    int[] nodeToHashIndex = new int[commits.size()];
 
-    for (int nodeIndex = 0; nodeIndex < commits.size(); nodeIndex++) {
-      GraphCommit commit = commits.get(nodeIndex);
-      nodeToHashIndex[nodeIndex] = commit.getIndex();
+    for (int nodeIndex = 0; nodeIndex < graphCommits.size(); nodeIndex++) {
+      GraphCommit<CommitId> commit = graphCommits.get(nodeIndex);
 
-      int nextCommitHashIndex = nextCommitHashIndex(commits, nodeIndex);
+      CommitId nextCommitHashIndex = nextCommitHashIndex(graphCommits, nodeIndex);
 
-      int[] parentHashIndices = commit.getParentIndices();
-      if (parentHashIndices.length == 1 && parentHashIndices[0] == nextCommitHashIndex) {
+      List parents = commit.getParents();
+      if (parents.size() == 1 && parents.get(0) == nextCommitHashIndex) {
         simpleNodes.set(nodeIndex, true);
       } else {
-        longEdgesCount += parentHashIndices.length;
+        longEdgesCount += parents.size();
       }
     }
 
-    PermanentGraphBuilder builder = new PermanentGraphBuilder(commits, simpleNodes, longEdgesCount, nodeToHashIndex);
-    PermanentGraphImpl permanentGraph = builder.build();
-    return Pair.create(permanentGraph, builder.commitsWithNotLoadParentMap);
+    return new PermanentLinearGraphBuilder<CommitId>(graphCommits, simpleNodes, longEdgesCount);
   }
 
-  private static int nextCommitHashIndex(List<? extends GraphCommit> commits, int nodeIndex) {
-    int nextCommitHashIndex = -1;
+  @Nullable
+  private static <CommitId> CommitId nextCommitHashIndex(List<? extends GraphCommit<CommitId>> commits, int nodeIndex) {
     if (nodeIndex < commits.size() - 1)
-      nextCommitHashIndex = commits.get(nodeIndex + 1).getIndex();
-    return nextCommitHashIndex;
+      return commits.get(nodeIndex + 1).getId();
+    return null;
   }
 
-
-  private final List<? extends GraphCommit> myCommits;
+  private final List<? extends GraphCommit<CommitId>> myCommits;
   private final Flags mySimpleNodes;
 
   private final int myNodesCount;
 
-  private final int[] myNodeToHashIndex;
-
   private final int[] myNodeToEdgeIndex;
   private final int[] myLongEdges;
 
-  // downHashIndex -> List of upNodeIndex
-  private final Map<Integer, List<Integer>> upAdjacentNodes = new HashMap<Integer, List<Integer>>();
+  // downCommitId -> List of upNodeIndex
+  private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<CommitId, List<Integer>>();
 
   // commitHash -> GraphCommit
-  private final Map<Integer, GraphCommit> commitsWithNotLoadParentMap = new HashMap<Integer, GraphCommit>();
+  private final Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = new HashMap<CommitId, GraphCommit<CommitId>>();
 
-  private PermanentGraphBuilder(List<? extends GraphCommit> commits, Flags simpleNodes, int longEdgesCount, int[] nodeToHashIndex) {
+  private PermanentLinearGraphBuilder(List<? extends GraphCommit<CommitId>> commits, Flags simpleNodes, int longEdgesCount) {
     myCommits = commits;
     mySimpleNodes = simpleNodes;
-    myNodeToHashIndex = nodeToHashIndex;
 
     myNodesCount = simpleNodes.size();
 
@@ -95,18 +87,18 @@ public class PermanentGraphBuilder {
     myLongEdges = new int[2 * longEdgesCount];
   }
 
-  private void addUnderdoneEdge(int upNodeIndex, int downHashIndex) {
-    List<Integer> upNodes = upAdjacentNodes.get(downHashIndex);
+  private void addUnderdoneEdge(int upNodeIndex, CommitId downCommitId) {
+    List<Integer> upNodes = upAdjacentNodes.get(downCommitId);
     if (upNodes == null) {
       upNodes = new SmartList<Integer>();
-      upAdjacentNodes.put(downHashIndex, upNodes);
+      upAdjacentNodes.put(downCommitId, upNodes);
     }
     upNodes.add(upNodeIndex);
   }
 
   private void addCommitWithNotLoadParent(int nodeIndex) {
-    GraphCommit commit = myCommits.get(nodeIndex);
-    commitsWithNotLoadParentMap.put(commit.getIndex(), commit);
+    GraphCommit<CommitId> commit = myCommits.get(nodeIndex);
+    commitsWithNotLoadParent.put(commit.getId(), commit);
   }
 
   private void fixUnderdoneEdgeForNotLoadCommit(int upNodeIndex) {
@@ -120,15 +112,15 @@ public class PermanentGraphBuilder {
     throw new IllegalStateException("Not found underdone edge to not load commit for node: " + upNodeIndex);
   }
 
-  private void fixUnderdoneEdge(int upNodeIndex, int downNodeIndex, int downNodeHashIndex) {
+  private void fixUnderdoneEdge(int upNodeIndex, int downNodeIndex, CommitId downCommitId) {
     int end = myNodeToEdgeIndex[upNodeIndex + 1];
 
-    GraphCommit upCommit = myCommits.get(upNodeIndex);
-    int[] parentHashIndices = upCommit.getParentIndices();
+    GraphCommit<CommitId> upCommit = myCommits.get(upNodeIndex);
+    List<CommitId> parentHashIndices = upCommit.getParents();
 
-    for (int i = 0; i < parentHashIndices.length; i++) {
-      if (parentHashIndices[i] == downNodeHashIndex) {
-        int offset = parentHashIndices.length - i;
+    for (int i = 0; i < parentHashIndices.size(); i++) {
+      if (parentHashIndices.get(i) == downCommitId) {
+        int offset = parentHashIndices.size() - i;
         int edgeIndex = end - offset;
 
         if (myLongEdges[edgeIndex] == -1) {
@@ -143,23 +135,23 @@ public class PermanentGraphBuilder {
   }
 
   private void doStep(int nodeIndex) {
-    GraphCommit commit = myCommits.get(nodeIndex);
+    GraphCommit<CommitId> commit = myCommits.get(nodeIndex);
 
-    List<Integer> upNodes = upAdjacentNodes.remove(commit.getIndex());
+    List<Integer> upNodes = upAdjacentNodes.remove(commit.getId());
     if (upNodes == null)
       upNodes = Collections.emptyList();
 
     int edgeIndex = myNodeToEdgeIndex[nodeIndex];
     for (Integer upNodeIndex : upNodes) {
-      fixUnderdoneEdge(upNodeIndex, nodeIndex, commit.getIndex());
+      fixUnderdoneEdge(upNodeIndex, nodeIndex, commit.getId());
       myLongEdges[edgeIndex] = upNodeIndex;
       edgeIndex++;
     }
 
     // down nodes
     if (!mySimpleNodes.get(nodeIndex)) {
-      for (Integer downHashIndex : commit.getParentIndices()) {
-        addUnderdoneEdge(nodeIndex, downHashIndex);
+      for (CommitId downCommitId : commit.getParents()) {
+        addUnderdoneEdge(nodeIndex, downCommitId);
         myLongEdges[edgeIndex] = -1;
         edgeIndex++;
       }
@@ -175,14 +167,17 @@ public class PermanentGraphBuilder {
     }
   }
 
-  private PermanentGraphImpl build() {
+  public PermanentLinearGraphImpl build() {
     for (int nodeIndex = 0; nodeIndex < myNodesCount; nodeIndex++) {
       doStep(nodeIndex);
     }
 
     fixUnderdoneEdges();
 
-    return new PermanentGraphImpl(mySimpleNodes, myNodeToHashIndex, myNodeToEdgeIndex, myLongEdges);
+    return new PermanentLinearGraphImpl(mySimpleNodes, myNodeToEdgeIndex, myLongEdges);
   }
 
+  public Map<CommitId, GraphCommit<CommitId>> getCommitsWithNotLoadParent() {
+    return commitsWithNotLoadParent;
+  }
 }
