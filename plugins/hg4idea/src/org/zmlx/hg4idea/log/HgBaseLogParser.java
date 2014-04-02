@@ -87,6 +87,10 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
       LOG.warn("Error parsing date in line " + line);
       return null;
     }
+    catch (NumberFormatException e) {
+      LOG.warn("Error parsing rev in line " + line);
+      return null;
+    }
   }
 
   @Override
