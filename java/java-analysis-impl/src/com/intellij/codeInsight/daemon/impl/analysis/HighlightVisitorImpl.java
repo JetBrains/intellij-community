@@ -1328,9 +1328,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
 
         if (description != null) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
-                         .descriptionAndTooltip(description)
-                         .range(expression.getReferenceNameElement()).create());
+          final PsiElement referenceNameElement = expression.getReferenceNameElement();
+          final HighlightInfo highlightInfo =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).descriptionAndTooltip(description).range(referenceNameElement).create();
+          myHolder.add(highlightInfo);
+          final TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);
+          QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QuickFixFactory.getInstance().createCreateMethodFromUsageFix(expression));
         }
       }
     }
