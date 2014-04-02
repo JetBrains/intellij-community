@@ -2831,12 +2831,6 @@ public class UIUtil {
     });
   }
 
-  public static boolean isFD() {
-    if (Registry.is("no.jokes")) return false;
-    return Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL
-         && Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1;
-  }
-
   public static void doPlay(final Class<?> aClass, final String resourceName) {
     doPlay(new Factory<InputStream>() {
       @Override

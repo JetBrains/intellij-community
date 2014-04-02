@@ -18,9 +18,9 @@ package com.intellij.openapi.editor.impl.breakout;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.util.ui.UIUtil;
 
 @SuppressWarnings("ComponentNotRegistered")
 public class ToggleBreakoutModeAction extends ToggleAction {
@@ -42,7 +42,7 @@ public class ToggleBreakoutModeAction extends ToggleAction {
     @Override
     public void update(AnActionEvent e) {
         super.update(e);
-        e.getPresentation().setVisible(UIUtil.isFD() && getEditor(e) != null);
+        e.getPresentation().setVisible(ApplicationManager.getApplication().isInternal() && getEditor(e) != null);
     }
 
     private static EditorImpl getEditor(AnActionEvent e) {
