@@ -28,7 +28,7 @@ public class ExecutionStackImpl extends XExecutionStack {
   @Nullable
   public CallFrameView getTopFrame() {
     CallFrame topCallFrame = suspendContext.getTopFrame();
-    if (topCallFrameView.getCallFrame() != topCallFrame) {
+    if (topCallFrameView == null || topCallFrameView.getCallFrame() != topCallFrame) {
       topCallFrameView = topCallFrame == null ? null : new CallFrameView(topCallFrame, debugProcess, topFrameScript);
     }
     return topCallFrameView;
