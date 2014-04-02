@@ -174,23 +174,23 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
 
   @Override
   public void update() {
-    myInfo = readRepoInfo(this, myPlatformFacade, myReader, myInfo);
+    GitRepoInfo previousInfo = myInfo;
+    myInfo = readRepoInfo(this, myPlatformFacade, myReader);
+    notifyListeners(this, previousInfo, myInfo);
   }
 
   @NotNull
   private static GitRepoInfo readRepoInfo(@NotNull GitRepository repository, @NotNull GitPlatformFacade platformFacade,
-                                          @NotNull GitRepositoryReader reader, @Nullable GitRepoInfo previousInfo) {
+                                          @NotNull GitRepositoryReader reader) {
     File configFile = new File(VfsUtilCore.virtualToIoFile(repository.getGitDir()), "config");
     GitConfig config = GitConfig.read(platformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
     TempState tempState = readRepository(reader, remotes);
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(tempState.myBranches.getLocalBranches(),
                                                                        tempState.myBranches.getRemoteBranches());
-    GitRepoInfo info = new GitRepoInfo(tempState.myCurrentBranch, tempState.myCurrentRevision, tempState.myState,
-                                       remotes, tempState.myBranches.getLocalBranches(),
-                                       tempState.myBranches.getRemoteBranches(), trackInfos);
-    notifyListeners(repository, previousInfo, info);
-    return info;
+    return new GitRepoInfo(tempState.myCurrentBranch, tempState.myCurrentRevision, tempState.myState,
+                           remotes, tempState.myBranches.getLocalBranches(),
+                           tempState.myBranches.getRemoteBranches(), trackInfos);
   }
 
   private static TempState readRepository(GitRepositoryReader reader, @NotNull Collection<GitRemote> remotes) {
