@@ -1916,16 +1916,24 @@ public class UIUtil {
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final StyleSheet style = new StyleSheet();
-    style.addStyleSheet(DEFAULT_HTML_KIT_CSS);
-    style.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
+    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
 
-    return new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return style;
-      }
-    };
+    if (isUnderDarcula()) {
+      final HTMLEditorKit kit = new HTMLEditorKit();
+      kit.getStyleSheet().addRule(customCss);
+      return kit;
+    } else {
+      final StyleSheet style = new StyleSheet();
+      style.addStyleSheet(DEFAULT_HTML_KIT_CSS);
+      style.addRule(customCss);
+
+      return new HTMLEditorKit() {
+        @Override
+        public StyleSheet getStyleSheet() {
+          return style;
+        }
+      };
+    }
   }
 
   public static void removeScrollBorder(final Component c) {
