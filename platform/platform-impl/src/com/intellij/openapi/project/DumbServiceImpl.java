@@ -49,7 +49,6 @@ import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class DumbServiceImpl extends DumbService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
@@ -347,7 +346,6 @@ public class DumbServiceImpl extends DumbService {
                     if (appIcon.hideProgress(myProject, "indexUpdate")) {
                       appIcon.requestAttention(myProject, false);
                       appIcon.setOkBadge(myProject, true);
-                      playSuccess();
                     }
                   }
                 });
@@ -452,14 +450,6 @@ public class DumbServiceImpl extends DumbService {
         }
       });
     }
-
-    private void playSuccess() {
-      if (!UIUtil.isFD()) return;
-      int increment = ourCounter.getAndIncrement();
-      increment %= 2;
-      UIUtil.doPlay(DumbServiceImpl.class, "success" + increment + ".wav");
-    }
   }
 
-  private static final AtomicInteger ourCounter = new AtomicInteger();
 }
