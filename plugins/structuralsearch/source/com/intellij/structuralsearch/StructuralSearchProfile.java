@@ -178,6 +178,9 @@ public abstract class StructuralSearchProfile {
   }
 
   public String getTypedVarString(PsiElement element) {
+    if (element instanceof PsiNamedElement) {
+      return ((PsiNamedElement)element).getName();
+    }
     return element.getText();
   }
 
