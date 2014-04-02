@@ -423,7 +423,7 @@ public class PositionHighlighter {
       DefaultActionGroup group = new DefaultActionGroup();
       for (Pair<Breakpoint, Event> eventDescriptor : myEventsOutOfLine) {
         Breakpoint breakpoint = eventDescriptor.getFirst();
-        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
+        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint.getXBreakpoint());
         group.add(viewBreakpointsAction);
       }
 

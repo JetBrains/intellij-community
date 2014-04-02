@@ -268,7 +268,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    return project.toString() + (place != null ? place : "") + base;
+    return project + (place != null ? place : "") + base;
   }
 
   protected void runStartupActivities() {

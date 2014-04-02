@@ -17,6 +17,7 @@ body {
     margin-left: 10px;
     margin-right: 2px;
     margin-bottom: 6px;
+    color: #bbbbbb;
 }
 h1, p, ul {
    font-family: 'MS Reference Sans Serif', verdana, arial, sans-serif;
@@ -47,9 +48,8 @@ h1, .image, pre {
 pre {
     margin-right: 6px;
     border-style: solid;
-    border-width: 1px;
-    border-color: #d0d0d0;
-    background-color: #fbfbfb;
+    border-width: 0px;
+    padding-left: 10px;
     padding-left: 10px;
     padding-top: 6px;
     padding-bottom: 6px;

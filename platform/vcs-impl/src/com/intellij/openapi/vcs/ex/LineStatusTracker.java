@@ -613,6 +613,10 @@ public class LineStatusTracker {
     return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, false);
   }
 
+  TextRange getCurrentTextRangeWithEndSymbol(Range range) {
+    return getRange(range.getType(), range.getOffset1(), range.getOffset2(), Range.DELETED, myDocument, true);
+  }
+
   // a hack
   TextRange getUpToDateRangeWithEndSymbol(Range range) {
     return getRange(range.getType(), range.getUOffset1(), range.getUOffset2(), Range.INSERTED, myUpToDateDocument, true);

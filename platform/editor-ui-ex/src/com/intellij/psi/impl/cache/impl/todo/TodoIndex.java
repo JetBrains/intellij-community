@@ -93,7 +93,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
     @Override
     @NotNull
-    public Map<TodoIndexEntry,Integer> map(final FileContent inputData) {
+    public Map<TodoIndexEntry,Integer> map(@NotNull final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding
         .getTodoIndexer(inputData.getFileType(), file);

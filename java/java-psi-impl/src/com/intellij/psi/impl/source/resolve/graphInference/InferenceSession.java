@@ -849,8 +849,7 @@ public class InferenceSession {
       }
 
       //resolve input variables
-      PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
-
+      PsiSubstitutor substitutor = resolveSubset(varsToResolve, retrieveNonPrimitiveEqualsBounds(getInferenceVariables()).putAll(siteSubstitutor));
       if (substitutor == null) {
         return false;
       }

@@ -41,6 +41,7 @@ import java.util.List;
  * @since 10/22/13
  */
 public class AddGradleDslPluginAction extends CodeInsightAction {
+  public static final String ID = "AddGradleDslPluginAction";
   static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<String>();
   private final KeyValue[] myPlugins;
 

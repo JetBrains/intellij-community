@@ -28,7 +28,6 @@ public interface Condition<T> {
   boolean value(T t);
 
   Condition<Object> NOT_NULL = new Condition<Object>() {
-    @Override
     public boolean value(final Object object) {
       return object != null;
     }
@@ -44,7 +43,6 @@ public interface Condition<T> {
    * @see com.intellij.openapi.util.Conditions#alwaysTrue()
    */
   Condition TRUE = new Condition() {
-    @Override
     public boolean value(final Object object) {
       return true;
     }
@@ -59,7 +57,6 @@ public interface Condition<T> {
    * @see com.intellij.openapi.util.Conditions#alwaysFalse()
    */
   Condition FALSE = new Condition() {
-    @Override
     public boolean value(final Object object) {
       return false;
     }

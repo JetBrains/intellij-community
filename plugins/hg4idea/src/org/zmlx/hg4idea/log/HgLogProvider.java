@@ -33,7 +33,6 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.zmlx.hg4idea.util.HgHistoryUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.SimpleDateFormat;
@@ -88,6 +87,9 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
+    if (myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
     HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);

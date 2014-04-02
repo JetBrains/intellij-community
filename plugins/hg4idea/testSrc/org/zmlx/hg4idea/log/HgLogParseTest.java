@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package hg4idea.test.history;
+package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.util.Pair;
 import org.junit.Test;
-import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Map;
@@ -25,14 +24,12 @@ import java.util.Map;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgLogParseTest {
 
   @Test
   public void testParseFileCopiesWithWhitespaces() {
-    Map<String, String> filesMap = HgLogCommand.parseCopiesFileList("/a/b c/d.txt (a/b a/d.txt)\u0001/a/b c/(d).txt (/a/b c/(f).txt)");
+    Map<String, String> filesMap = HgFileRevisionLogParser.parseCopiesFileList(
+      "/a/b c/d.txt (a/b a/d.txt)\u0001/a/b c/(d).txt (/a/b c/(f).txt)");
     assertTrue(filesMap.containsKey("a/b a/d.txt"));
     assertTrue(filesMap.containsKey("/a/b c/(f).txt"));
     assertTrue(filesMap.containsValue("/a/b c/d.txt"));
@@ -41,7 +38,7 @@ public class HgLogParseTest {
 
   @Test
   public void testParseFileCopiesOldVersion() {
-    Map<String, String> filesMap = HgLogCommand.parseCopiesFileListAsOldVersion(
+    Map<String, String> filesMap = HgFileRevisionLogParser.parseCopiesFileListAsOldVersion(
       "/a/b c/d.txt (a/b a/d.txt)/a/b c/(d).txt (/a/b c/(f).txt)");
     assertTrue(filesMap.containsKey("a/b a/d.txt"));
     assertTrue(filesMap.containsKey("/a/b c/(f).txt"));

@@ -144,10 +144,10 @@ class MyTest7{
     enum E { }
     
     void test() {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest7.I'">I s1 = A::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest7.I'">I s2 = I::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest7.I'">I s3 = AC::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest7.I'">I s4 = E::new;</error>
+        I s1 = <error descr="'A' is abstract; cannot be instantiated">A::new</error>;
+        I s2 = <error descr="'I' is abstract; cannot be instantiated">I::new</error>;
+        I s3 = <error descr="'AC' is abstract; cannot be instantiated">AC::new</error>;
+        I s4 = <error descr="Enum types cannot be instantiated">E::new</error>;
     }
 }
 
@@ -165,7 +165,7 @@ class MyTest8{
         }
 
         void test() {
-            <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest8.Sub.I'">I var = Sub.Inner::new;</error>;
+            I var = Sub.Inner::<error descr="Cannot resolve constructor 'Inner'">new</error>;;
         }
     }
 }

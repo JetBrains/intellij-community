@@ -28,7 +28,6 @@ public interface Function<Param, Result> {
   Result fun(Param param);
 
   Function ID = new Function() {
-    @Override
     public Object fun(final Object o) {
       return o;
     }
@@ -37,14 +36,12 @@ public interface Function<Param, Result> {
   Function NULL = NullableFunction.NULL;
 
   Function TO_STRING = new Function() {
-    @Override
     public Object fun(Object o) {
       return String.valueOf(o);
     }
   };
 
   final class Self<P, R> implements Function<P, R> {
-    @Override
     public R fun(P p) {
       return (R)p;
     }
@@ -59,21 +56,18 @@ public interface Function<Param, Result> {
     }
 
     @Nullable
-    @Override
     public R fun(P p) {
       return p.getClass().isAssignableFrom(myResultClass) ? (R)p : null;
     }
   }
 
   final class First<P, R extends P> implements Function<P[], R> {
-    @Override
     public R fun(P[] ps) {
       return (R)ps[0];
     }
   }
 
   final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
-    @Override
     public R fun(Collection<P> ps) {
       return (R)ps.iterator().next();
     }

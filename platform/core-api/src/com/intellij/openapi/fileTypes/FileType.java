@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ public interface FileType extends Scheme {
    * Returns the name of the file type. The name must be unique among all file types registered in the system.
    * @return The file type name.
    */
-
   @Override
   @NotNull
   @NonNls
@@ -82,12 +81,11 @@ public interface FileType extends Scheme {
   /**
    * Returns the character set for the specified file.
    * @param file The file for which the character set is requested.
-   * @param content
    * @return The character set name, in the format supported by {@link java.nio.charset.Charset} class.
    */
 
   @Nullable
   @NonNls
-  String getCharset(@NotNull VirtualFile file, final byte[] content);
+  String getCharset(@NotNull VirtualFile file, @NotNull byte[] content);
 
 }

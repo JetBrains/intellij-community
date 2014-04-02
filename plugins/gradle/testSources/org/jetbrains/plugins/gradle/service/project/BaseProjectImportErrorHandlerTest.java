@@ -15,11 +15,13 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import org.gradle.api.internal.LocationAwareException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -54,9 +56,11 @@ public class BaseProjectImportErrorHandlerTest {
 
     //noinspection ThrowableResultOfMethodCallIgnored
     RuntimeException realCause = myErrorHandler.getUserFriendlyError(error, myProjectPath, null);
-    String actualMsg = realCause.getMessage();
-    assertTrue(actualMsg.contains(locationMsg));
-    assertTrue(actualMsg.contains("Cause: " + causeMsg));
+    assertTrue(realCause instanceof LocationAwareExternalSystemException);
+    LocationAwareExternalSystemException locationAwareExternalSystemException = (LocationAwareExternalSystemException)realCause;
+    assertEquals("~/project/build.gradle", locationAwareExternalSystemException.getFilePath());
+    assertEquals(Integer.valueOf(-1), locationAwareExternalSystemException.getColumn());
+    assertEquals(Integer.valueOf(86), locationAwareExternalSystemException.getLine());
   }
 
   @Test

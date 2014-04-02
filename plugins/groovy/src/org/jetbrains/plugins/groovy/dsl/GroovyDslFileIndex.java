@@ -503,7 +503,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       return Collections.singletonMap(OUR_KEY, null);
     }
   }

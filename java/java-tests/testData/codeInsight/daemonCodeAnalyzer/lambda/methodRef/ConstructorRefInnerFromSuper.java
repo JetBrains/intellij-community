@@ -13,7 +13,7 @@ class MyTest {
         }
 
         void test() {
-            <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.Child.I'">I var = Child.Inner::new;</error>
+            I var = Child.Inner::<error descr="Cannot resolve constructor 'Inner'">new</error>;
         }
     }
 }
