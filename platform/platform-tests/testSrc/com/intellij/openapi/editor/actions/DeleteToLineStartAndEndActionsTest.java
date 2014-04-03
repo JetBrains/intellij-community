@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class DeleteToLineStartAndEndActionsTest extends LightPlatformCodeInsightTestCase {
+public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
   public void testEmpty() throws IOException {
     doTestDeleteToStart("<caret>", "<caret>");
     doTestDeleteToEnd("<caret>", "<caret>");
@@ -54,20 +57,67 @@ public class DeleteToLineStartAndEndActionsTest extends LightPlatformCodeInsight
     doTestDeleteToEnd(" a a <caret> b b ", " a a <caret>");
   }
 
+  public void testMoveCaretFromVirtualSpaceToRealOffset() throws IOException {
+    boolean virtualSpacesBefore = EditorSettingsExternalizable.getInstance().isVirtualSpace();
+    EditorSettingsExternalizable.getInstance().setVirtualSpace(true);
+
+    try {
+      doTestDeleteToStart("\n a a \n b b \n", new VisualPosition(1, 10), "\n<caret>\n b b \n", new VisualPosition(1, 0));
+      doTestDeleteToStart("\n a a \n b b \n", new VisualPosition(2, 10), "\n a a \n<caret>\n", new VisualPosition(2, 0));
+      doTestDeleteToStart("\n a a \n b b \n", new VisualPosition(3, 10), "\n a a \n b b \n<caret>", new VisualPosition(3, 0));
+
+      doTestDeleteToStart("\n a a \n b b \n", new VisualPosition(20, 10), "\n a a \n b b \n<caret>", new VisualPosition(3, 0));
+
+      doTestDeleteToEnd("\n a a \n b b \n", new VisualPosition(1, 10), "\n a a <caret> b b \n", new VisualPosition(1, 5));
+
+      // keep old behavior - not sure if it was intentional or not
+      doTestDeleteToEnd("\n a a \n b b \n", new VisualPosition(3, 10), "\n a a \n b b \n<caret>", new VisualPosition(3, 10));
+    }
+    finally {
+      EditorSettingsExternalizable.getInstance().setVirtualSpace(virtualSpacesBefore);
+    }
+  }
+
   public void testDeleteSelectionFirst() throws IOException {
     doTestDeleteToStart("aaa <selection>bbb \n ccc</selection><caret> ddd", "aaa <caret> ddd");
     doTestDeleteToEnd("aaa <selection>bbb \n ccc</selection><caret> ddd", "aaa <caret> ddd");
   }
 
   private void doTestDeleteToStart(@NotNull String before, @NotNull String after) throws IOException {
-    configureFromFileText(getTestName(false) + ".txt", before);
-    deleteToLineStart();
-    checkResultByText(after);
+    doTestDelete(true, before, null, after, null);
+  }
+
+  private void doTestDeleteToStart(@NotNull String before, @Nullable VisualPosition positionBefore,
+                                   @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
+    doTestDelete(true, before, positionBefore, after, positionAfter);
   }
 
   private void doTestDeleteToEnd(@NotNull String before, @NotNull String after) throws IOException {
+    doTestDelete(false, before, null, after, null);
+  }
+
+  private void doTestDeleteToEnd(@NotNull String before, @Nullable VisualPosition positionBefore,
+                                 @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
+    doTestDelete(false, before, positionBefore, after, positionAfter);
+  }
+
+  private void doTestDelete(boolean toStart,
+                            @NotNull String before, @Nullable VisualPosition positionBefore,
+                            @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
     configureFromFileText(getTestName(false) + ".txt", before);
-    deleteToLineEnd();
+    if (positionBefore != null) mouse().clickAt(positionBefore.line, positionBefore.column);
+
+    if (toStart) {
+      deleteToLineStart();
+    }
+    else {
+      deleteToLineEnd();
+    }
+
     checkResultByText(after);
+
+    if (positionAfter != null) {
+      assertEquals(positionAfter, getEditor().getCaretModel().getVisualPosition());
+    }
   }
 }

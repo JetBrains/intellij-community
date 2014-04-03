@@ -93,7 +93,7 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     }
     editor.getDocument().deleteString(start, end);
 
-    // in case the caret was in the version space, we force it to go back to the real offset
+    // in case the caret was in the virtual space, we force it to go back to the real offset
     caret.moveToOffset(start);
   }
 }
