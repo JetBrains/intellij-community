@@ -83,6 +83,9 @@
       <keyboard-shortcut first-keystroke="control DELETE" />
     </action>
     <action id="EditorDeleteLine">
+      <keyboard-shortcut first-keystroke="meta alt BACK_SPACE"/>
+    </action>
+    <action id="EditorDeleteToLineStart">
       <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
     <action id="EditorDeleteToWordStart">
