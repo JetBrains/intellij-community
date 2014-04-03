@@ -4,10 +4,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public abstract class JavaScriptDebugAware {
   }
 
   @Nullable
-  public Pair<TextRange, String> getEvaluationExpression(@NotNull PsiElement element, @NotNull Document document, @NotNull Project project) {
+  public ExpressionInfo getEvaluationInfo(@NotNull PsiElement element, @NotNull Document document, @NotNull Project project) {
     return null;
   }
 
