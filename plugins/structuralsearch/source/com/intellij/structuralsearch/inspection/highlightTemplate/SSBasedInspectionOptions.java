@@ -162,19 +162,41 @@ public class SSBasedInspectionOptions {
           }
           configurationsChanged(createSearchContext());
         }
-      }).disableUpDownActions().createPanel());
+      }).setMoveUpAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          performMoveUpDown(false);
+        }
+      }).setMoveDownAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          performMoveUpDown(true);
+        }
+      }).createPanel()
+    );
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        //final int row = rowAtPoint(e.getPoint());
-        //if (row < 0) return false;
-        //if (columnAtPoint(e.getPoint()) <= 0) return false;
-        //myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
         performEditAction();
         return true;
       }
     }.installOn(myTemplatesList);
     return panel;
+  }
+
+  private void performMoveUpDown(boolean down) {
+    final int[] indices = myTemplatesList.getSelectedIndices();
+    for (int index : indices) {
+      Configuration temp = myConfigurations.get(index);
+      myConfigurations.set(index, myConfigurations.get(index + (down ? 1 : -1)));
+      myConfigurations.set(index + (down ? 1 : - 1), temp);
+      myTemplatesList.removeSelectionInterval(index, index);
+      myTemplatesList.addSelectionInterval(index + (down ? 1 : -1), index + (down ? 1 : -1));
+    }
+    Rectangle cellBounds = myTemplatesList.getCellBounds(indices[0] - 1, indices[indices.length - 1] - 1);
+    if (cellBounds != null) {
+      myTemplatesList.scrollRectToVisible(cellBounds);
+    }
   }
 
   private void performEditAction() {
