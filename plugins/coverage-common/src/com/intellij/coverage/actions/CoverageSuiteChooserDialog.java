@@ -335,7 +335,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private class DeleteSuiteAction extends AnAction {
     public DeleteSuiteAction() {
       super("Delete", "Delete", PlatformIcons.DELETE_ICON);
-      registerCustomShortcutSet(CommonShortcuts.DELETE, mySuitesTree);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }
 
     @Override
