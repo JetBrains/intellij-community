@@ -1930,7 +1930,7 @@ public class UIUtil {
 
   public static HTMLEditorKit getHTMLEditorKit() {
     Font font = getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
     final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
