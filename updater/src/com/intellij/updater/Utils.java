@@ -65,7 +65,7 @@ public class Utils {
   }
 
   public static void setExecutable(File file, boolean executable) throws IOException {
-    if (executable && !file.setExecutable(true)) {
+    if (executable && !file.setExecutable(true, false)) {
       Runner.logger.error("Can't set executable permissions for file");
       throw new IOException("Cannot set executable permissions for: " + file);
     }
