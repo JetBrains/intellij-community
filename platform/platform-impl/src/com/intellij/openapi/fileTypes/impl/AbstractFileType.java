@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,7 +317,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
 
-  public static List<Pair<FileNameMatcher, String>> readAssociations(final Element e) {
+  @NotNull
+  public static List<Pair<FileNameMatcher, String>> readAssociations(@NotNull Element e) {
     ArrayList<Pair<FileNameMatcher, String>> result = new ArrayList<Pair<FileNameMatcher, String>>();
     List mappings = e.getChildren(ELEMENT_MAPPING);
 
@@ -333,7 +334,8 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return result;
   }
 
-  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(final Element e) {
+  @NotNull
+  public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element e) {
     ArrayList<Trinity<FileNameMatcher, String, Boolean>> result = new ArrayList<Trinity<FileNameMatcher, String, Boolean>>();
     List removedMappings = e.getChildren(ELEMENT_REMOVED_MAPPING);
     for (Object removedMapping : removedMappings) {
@@ -349,7 +351,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return result;
   }
 
-  public static Element writeMapping(final FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
+  public static Element writeMapping(@NotNull FileType type, final FileNameMatcher matcher, boolean specifyTypeName) {
     Element mapping = new Element(ELEMENT_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());

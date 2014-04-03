@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -48,11 +48,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Tool implements SchemeElement {
-  @NonNls public final static String ACTION_ID_PREFIX = "Tool_";
+  @NonNls public static final String ACTION_ID_PREFIX = "Tool_";
 
   private String myName;
   private String myDescription;
-  private String myGroup;
+  @NotNull private String myGroup;
   private boolean myShownInMainMenu;
   private boolean myShownInEditor;
   private boolean myShownInProjectViews;
@@ -81,6 +81,7 @@ public class Tool implements SchemeElement {
     return myDescription;
   }
 
+  @NotNull
   public String getGroup() {
     return myGroup;
   }
@@ -133,7 +134,7 @@ public class Tool implements SchemeElement {
     myDescription = description;
   }
 
-  void setGroup(String group) {
+  void setGroup(@NotNull String group) {
     myGroup = group;
   }
 
@@ -256,10 +257,8 @@ public class Tool implements SchemeElement {
 
   public String getActionId() {
     StringBuilder name = new StringBuilder(getActionIdPrefix());
-    if (myGroup != null) {
-      name.append(myGroup);
-      name.append('_');
-    }
+    name.append(myGroup);
+    name.append('_');
     if (myName != null) {
       name.append(myName);
     }
@@ -354,7 +353,7 @@ public class Tool implements SchemeElement {
   }
 
   @Override
-  public void setGroupName(final String name) {
+  public void setGroupName(@NotNull final String name) {
     setGroup(name);
   }
 
