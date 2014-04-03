@@ -40,7 +40,8 @@ public abstract class Animator implements Disposable {
 
   private int myCurrentFrame;
   private long myStartTime;
-  private int myCycleOffset;
+  private long myStartDeltaTime;
+  private boolean myInitialStep;
   private volatile boolean myDisposed = false;
 
   public Animator(@NonNls final String name,
@@ -60,36 +61,34 @@ public abstract class Animator implements Disposable {
     myCycleDuration = cycleDuration;
     myRepeatable = repeatable;
     myForward = forward;
-    myCurrentFrame = 0;
+
+    reset();
 
     if (ApplicationManager.getApplication() == null) {
       animationDone();
-    }
-    else {
-      reset();
     }
   }
 
   private void onTick() {
     if (isDisposed()) return;
 
-    boolean initialStep = false;
-    if (myStartTime == -1) {
-      myStartTime = System.currentTimeMillis();
-      myCycleOffset = myCurrentFrame; // keep animation state on suspend
-      initialStep = true;
+    if (myInitialStep) {
+      myInitialStep = false;
+      myStartTime = System.currentTimeMillis() - myStartDeltaTime; // keep animation state on suspend
+      paint();
+      return;
     }
 
     double cycleTime = System.currentTimeMillis() - myStartTime;
     if (cycleTime < 0) return; // currentTimeMillis() is not monotonic - let's pretend that animation didn't changed
 
-    long newFrame = (long)(cycleTime * myTotalFrames / myCycleDuration) + myCycleOffset;
+    long newFrame = (long)(cycleTime * myTotalFrames / myCycleDuration);
 
     if (myRepeatable) {
       newFrame = newFrame % myTotalFrames;
     }
 
-    if (!initialStep && newFrame == myCurrentFrame) return;
+    if (newFrame == myCurrentFrame) return;
 
     if (!myRepeatable && newFrame >= myTotalFrames) {
       animationDone();
@@ -128,7 +127,8 @@ public abstract class Animator implements Disposable {
   }
 
   public void suspend() {
-    myStartTime = -1;
+    myStartDeltaTime = System.currentTimeMillis() - myStartTime;
+    myInitialStep = true;
     stopTicker();
   }
 
@@ -178,7 +178,8 @@ public abstract class Animator implements Disposable {
 
   public void reset() {
     myCurrentFrame = 0;
-    myStartTime = -1;
+    myStartDeltaTime = 0;
+    myInitialStep = true;
   }
 
   public final boolean isForward() {
