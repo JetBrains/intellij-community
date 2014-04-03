@@ -113,11 +113,15 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * Commits changes to a <code>{@link ModuleRootManager}</code>.
    * Should be invoked in a write action. After <code>commit()<code>, the model
    * becomes read-only.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void commit();
 
   /**
-   * Must be invoked for uncommited models that are no longer needed.
+   * Must be invoked for uncommitted models that are no longer needed.
+   *
+   * Use of ModuleRootModificationUtil.updateModel() is recommended.
    */
   void dispose();
 
