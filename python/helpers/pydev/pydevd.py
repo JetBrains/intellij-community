@@ -992,9 +992,14 @@ class PyDB:
                     f = f.f_back
 
             # if thread is not alive, cancel trace_dispatch processing
-            if not t.isAlive():
+            try:
+                alive = t.isAlive()
+            except:
+                alive = False  #Workaround for Python 3.4 http://youtrack.jetbrains.com/issue/PY-12317
+
+            if not alive:
                 self.processThreadNotAlive(GetThreadId(t))
-                return None # suspend tracing
+                return None  # suspend tracing
 
             if is_file_to_ignore:
                 return None
