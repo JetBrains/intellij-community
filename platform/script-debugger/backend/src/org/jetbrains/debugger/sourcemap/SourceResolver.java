@@ -113,13 +113,13 @@ public class SourceResolver {
   }
 
   @Nullable
-  public MappingEntry[] findEntries(@NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
+  public MappingList findMappings(@NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
     int index = resolver.resolve(canonicalizedSourcesMap);
     return index < 0 ? null : sourceMap.sourceIndexToMappings[index];
   }
 
   @Nullable
-  public MappingEntry[] findEntries(@NotNull List<Url> sourceUrls, @NotNull SourceMap sourceMap, @Nullable VirtualFile sourceFile) {
+  public MappingList findMappings(@NotNull List<Url> sourceUrls, @NotNull SourceMap sourceMap, @Nullable VirtualFile sourceFile) {
     for (Url sourceUrl : sourceUrls) {
       int index = canonicalizedSourcesMap.get(sourceUrl.trimParameters());
       if (index != -1) {
@@ -128,28 +128,29 @@ public class SourceResolver {
     }
 
     if (sourceFile != null) {
-      MappingEntry[] entries = findByFile(sourceMap, sourceFile);
-      if (entries != null) {
-        return entries;
+      MappingList mappings = findByFile(sourceMap, sourceFile);
+      if (mappings != null) {
+        return mappings;
       }
     }
 
     return null;
   }
 
-  private MappingEntry[] findByFile(@NotNull SourceMap sourceMap, @NotNull VirtualFile sourceFile) {
-    MappingEntry[] entries = null;
+  @Nullable
+  private MappingList findByFile(@NotNull SourceMap sourceMap, @NotNull VirtualFile sourceFile) {
+    MappingList mappings = null;
     if (absoluteLocalPathToSourceIndex != null && sourceFile.isInLocalFileSystem()) {
-      entries = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFile.getPath())];
-      if (entries == null) {
+      mappings = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFile.getPath())];
+      if (mappings == null) {
         String sourceFileCanonicalPath = sourceFile.getCanonicalPath();
         if (sourceFileCanonicalPath != null) {
-          entries = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFileCanonicalPath)];
+          mappings = sourceMap.sourceIndexToMappings[absoluteLocalPathToSourceIndex.get(sourceFileCanonicalPath)];
         }
       }
     }
 
-    if (entries == null) {
+    if (mappings == null) {
       int index = canonicalizedSourcesMap.get(Urls.newFromVirtualFile(sourceFile).trimParameters());
       if (index != -1) {
         return sourceMap.sourceIndexToMappings[index];
@@ -167,6 +168,6 @@ public class SourceResolver {
         }
       }
     }
-    return entries;
+    return mappings;
   }
 }

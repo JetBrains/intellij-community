@@ -11,7 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import static org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator;
 
@@ -19,14 +22,27 @@ import static org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator;
 public final class SourceMapDecoder {
   public static final int UNMAPPED = -1;
 
-  private static final Comparator<MappingEntry> MAPPING_ENTRY_COMPARATOR = new Comparator<MappingEntry>() {
+  private static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_SOURCE_POSITION = new Comparator<MappingEntry>() {
     @Override
     public int compare(MappingEntry o1, MappingEntry o2) {
-      int d = o1.getSourceLine() - o2.getSourceLine();
-      if (d == 0) {
+      if (o1.getSourceLine() == o2.getSourceLine()) {
         return o1.getSourceColumn() - o2.getSourceColumn();
       }
-      return d;
+      else {
+        return o1.getSourceLine() - o2.getSourceLine();
+      }
+    }
+  };
+
+  public static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_GENERATED_POSITION = new Comparator<MappingEntry>() {
+    @Override
+    public int compare(MappingEntry o1, MappingEntry o2) {
+      if (o1.getGeneratedLine() == o2.getGeneratedLine()) {
+        return o1.getGeneratedColumn() - o2.getGeneratedColumn();
+      }
+      else {
+        return o1.getGeneratedLine() - o2.getGeneratedLine();
+      }
     }
   };
 
@@ -120,17 +136,18 @@ public final class SourceMapDecoder {
     List<String> sources = readSources(sourcesReader, sourceRoot);
 
     @SuppressWarnings("unchecked")
-    TreeSet<MappingEntry>[] reverseMappingsBySourceUrl = new TreeSet[sources.size()];
+    List<MappingEntry>[] reverseMappingsBySourceUrl = new List[sources.size()];
     readMappings(encodedMappings, line, column, mappings, reverseMappingsBySourceUrl, names);
 
-    MappingEntry[][] sourceToEntries = new MappingEntry[reverseMappingsBySourceUrl.length][];
+    MappingList[] sourceToEntries = new MappingList[reverseMappingsBySourceUrl.length];
     for (int i = 0; i < reverseMappingsBySourceUrl.length; i++) {
-      TreeSet<MappingEntry> entries = reverseMappingsBySourceUrl[i];
+      List<MappingEntry> entries = reverseMappingsBySourceUrl[i];
       if (entries != null) {
-        sourceToEntries[i] = entries.toArray(new MappingEntry[entries.size()]);
+        entries.sort(MAPPING_COMPARATOR_BY_SOURCE_POSITION);
+        sourceToEntries[i] = new SourceMappingList(entries);
       }
     }
-    return new SourceMap(file, mappings, sourceToEntries, sourceResolverFactory.fun(sources));
+    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.fun(sources));
   }
 
   @Nullable
@@ -142,7 +159,7 @@ public final class SourceMapDecoder {
                                    int line,
                                    int column,
                                    @NotNull List<MappingEntry> mappings,
-                                   @NotNull TreeSet<MappingEntry>[] reverseMappingsBySourceUrl,
+                                   @NotNull List<MappingEntry>[] reverseMappingsBySourceUrl,
                                    @Nullable List<String> names) {
     if (StringUtil.isEmpty(value)) {
       return;
@@ -150,7 +167,7 @@ public final class SourceMapDecoder {
 
     CharSequenceIterator charIterator = new CharSequenceIterator(value);
     int sourceIndex = 0;
-    TreeSet<MappingEntry> reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex);
+    List<MappingEntry> reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex);
     int sourceLine = 0;
     int sourceColumn = 0;
     int nameIndex = 0;
@@ -216,10 +233,10 @@ public final class SourceMapDecoder {
     return sources;
   }
 
-  private static TreeSet<MappingEntry> getMapping(TreeSet<MappingEntry>[] reverseMappingsBySourceUrl, int sourceIndex) {
-    TreeSet<MappingEntry> reverseMappings = reverseMappingsBySourceUrl[sourceIndex];
+  private static List<MappingEntry> getMapping(@NotNull List<MappingEntry>[] reverseMappingsBySourceUrl, int sourceIndex) {
+    List<MappingEntry> reverseMappings = reverseMappingsBySourceUrl[sourceIndex];
     if (reverseMappings == null) {
-      reverseMappings = new TreeSet<MappingEntry>(MAPPING_ENTRY_COMPARATOR);
+      reverseMappings = new ArrayList<MappingEntry>();
       reverseMappingsBySourceUrl[sourceIndex] = reverseMappings;
     }
     return reverseMappings;
@@ -339,6 +356,48 @@ public final class SourceMapDecoder {
     @Override
     public boolean hasNext() {
       return current < length;
+    }
+  }
+
+  private static final class SourceMappingList extends MappingList {
+    public SourceMappingList(@NotNull List<MappingEntry> mappings) {
+      super(mappings);
+    }
+
+    @Override
+    public int getLine(@NotNull MappingEntry mapping) {
+      return mapping.getSourceLine();
+    }
+
+    @Override
+    public int getColumn(@NotNull MappingEntry mapping) {
+      return mapping.getSourceColumn();
+    }
+
+    @Override
+    protected Comparator<MappingEntry> getComparator() {
+      return MAPPING_COMPARATOR_BY_SOURCE_POSITION;
+    }
+  }
+
+  private static final class GeneratedMappingList extends MappingList {
+    public GeneratedMappingList(List<MappingEntry> mappings) {
+      super(mappings);
+    }
+
+    @Override
+    public int getLine(@NotNull MappingEntry mapping) {
+      return mapping.getGeneratedLine();
+    }
+
+    @Override
+    public int getColumn(@NotNull MappingEntry mapping) {
+      return mapping.getGeneratedColumn();
+    }
+
+    @Override
+    protected Comparator<MappingEntry> getComparator() {
+      return MAPPING_COMPARATOR_BY_GENERATED_POSITION;
     }
   }
 }
