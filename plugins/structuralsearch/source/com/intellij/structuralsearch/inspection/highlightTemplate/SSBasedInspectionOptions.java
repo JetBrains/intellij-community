@@ -27,6 +27,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jdom.Element;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Iterator;
 import java.util.List;
 
@@ -142,33 +144,7 @@ public class SSBasedInspectionOptions {
         }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
-          if (configuration == null) return;
-
-          SearchDialog dialog = createDialog(new SearchDialogFactory() {
-            public SearchDialog createDialog(SearchContext searchContext) {
-              return configuration instanceof SearchConfiguration ? new SearchDialog(searchContext, false, false) {
-                public Configuration createConfiguration() {
-                  SearchConfiguration newConfiguration = new SearchConfiguration();
-                  copyConfiguration(configuration, newConfiguration);
-                  return newConfiguration;
-                }
-              } : new ReplaceDialog(searchContext, false, false) {
-                       public Configuration createConfiguration() {
-                         ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
-                         copyConfiguration(configuration, newConfiguration);
-                         return newConfiguration;
-                       }
-                     };
-            }
-          });
-          dialog.setValuesFromConfig(configuration);
-          dialog.setUseLastConfiguration(true);
-          dialog.show();
-          if (!dialog.isOK()) return;
-          Configuration newConfiguration = dialog.getConfiguration();
-          copyConfiguration(newConfiguration, configuration);
-          configurationsChanged(dialog.getSearchContext());
+          performEditAction();
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -187,7 +163,53 @@ public class SSBasedInspectionOptions {
           configurationsChanged(createSearchContext());
         }
       }).disableUpDownActions().createPanel());
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        //final int row = rowAtPoint(e.getPoint());
+        //if (row < 0) return false;
+        //if (columnAtPoint(e.getPoint()) <= 0) return false;
+        //myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
+        performEditAction();
+        return true;
+      }
+    }.installOn(myTemplatesList);
     return panel;
+  }
+
+  private void performEditAction() {
+    final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
+    if (configuration == null) return;
+
+    SearchDialog dialog = createDialog(new SearchDialogFactory() {
+      public SearchDialog createDialog(SearchContext searchContext) {
+        if (configuration instanceof SearchConfiguration) {
+          return new SearchDialog(searchContext, false, false) {
+            public Configuration createConfiguration() {
+              SearchConfiguration newConfiguration = new SearchConfiguration();
+              copyConfiguration(configuration, newConfiguration);
+              return newConfiguration;
+            }
+          };
+        }
+        else {
+          return new ReplaceDialog(searchContext, false, false) {
+            public Configuration createConfiguration() {
+              ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
+              copyConfiguration(configuration, newConfiguration);
+              return newConfiguration;
+            }
+          };
+        }
+      }
+    });
+    dialog.setValuesFromConfig(configuration);
+    dialog.setUseLastConfiguration(true);
+    dialog.show();
+    if (!dialog.isOK()) return;
+    Configuration newConfiguration = dialog.getConfiguration();
+    copyConfiguration(newConfiguration, configuration);
+    configurationsChanged(dialog.getSearchContext());
   }
 
   private class MyListModel extends AbstractListModel {
