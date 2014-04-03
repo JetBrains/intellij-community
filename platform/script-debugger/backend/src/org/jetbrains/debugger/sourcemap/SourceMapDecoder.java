@@ -143,7 +143,7 @@ public final class SourceMapDecoder {
     for (int i = 0; i < reverseMappingsBySourceUrl.length; i++) {
       List<MappingEntry> entries = reverseMappingsBySourceUrl[i];
       if (entries != null) {
-        entries.sort(MAPPING_COMPARATOR_BY_SOURCE_POSITION);
+        Collections.sort(entries, MAPPING_COMPARATOR_BY_SOURCE_POSITION);
         sourceToEntries[i] = new SourceMappingList(entries);
       }
     }
