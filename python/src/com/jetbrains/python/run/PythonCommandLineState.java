@@ -41,6 +41,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
@@ -208,7 +209,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = createCommandLine();
 
     setRunnerPath(commandLine);
 
@@ -219,6 +220,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     initEnvironment(commandLine);
     return commandLine;
+  }
+
+  private static GeneralCommandLine createCommandLine() {
+    return Registry.is("run.processes.with.pty") ? new PtyCommandLine() : new GeneralCommandLine();
   }
 
   /**
