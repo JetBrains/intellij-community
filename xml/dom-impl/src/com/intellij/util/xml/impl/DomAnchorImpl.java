@@ -37,10 +37,15 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t) {
-    return createAnchor(t, false);
+    return createAnchor(t, true);
   }
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t, boolean usePsi) {
+    DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
+    if (handler.getStub() != null) {
+      return new StubAnchor<T>(handler);
+    }
+
     if (usePsi) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
@@ -48,10 +53,6 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       }
     }
 
-    DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
-    if (handler.getStub() != null) {
-      return new StubAnchor<T>(handler);
-    }
 
     final DomElement parent = t.getParent();
     if (parent == null) {
