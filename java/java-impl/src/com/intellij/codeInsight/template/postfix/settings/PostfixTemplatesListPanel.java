@@ -60,11 +60,9 @@ public class PostfixTemplatesListPanel {
     ListTableModel<PostfixTemplate> templatesTableModel = new ListTableModel<PostfixTemplate>(columns, templates, 0);
     templatesTableModel.setSortable(true);
     myTemplatesTableView = new TableView<PostfixTemplate>();
-    myTemplatesTableView.setStriped(false);
     myTemplatesTableView.setModelAndUpdateColumns(templatesTableModel);
     myTemplatesTableView.setAutoCreateRowSorter(true);
     myTemplatesTableView.setShowGrid(false);
-    myTemplatesTableView.setStriped(false);
     myTemplatesTableView.setBorder(null);
 
     new TableViewSpeedSearch<PostfixTemplate>(myTemplatesTableView) {
