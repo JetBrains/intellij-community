@@ -22,6 +22,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
  */
 public class DeleteToLineEndAction extends EditorAction {
   public DeleteToLineEndAction() {
-    super(new CutLineEndAction.Handler(false));
+    super(new CutLineActionHandler(false));
   }
 }
