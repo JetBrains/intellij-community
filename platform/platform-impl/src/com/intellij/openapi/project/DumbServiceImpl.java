@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -45,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
@@ -63,6 +66,38 @@ public class DumbServiceImpl extends DumbService {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static DumbServiceImpl getInstance(@NotNull Project project) {
     return (DumbServiceImpl)DumbService.getInstance(project);
+  }
+
+  @Override
+  public void queueTask(final DumbModeTask task) {
+    CacheUpdater wrapper = new CacheUpdater() {
+      @Override
+      public int getNumberOfPendingUpdateJobs() {
+        return 0;
+      }
+
+      @NotNull
+      @Override
+      public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
+        task.performInDumbMode(indicator);
+        return new VirtualFile[0];
+      }
+
+      @Override
+      public void processFile(@NotNull FileContent fileContent) {
+
+      }
+
+      @Override
+      public void updatingDone() {
+      }
+
+      @Override
+      public void canceled() {
+
+      }
+    };
+    queueCacheUpdateInDumbMode(Arrays.asList(wrapper));
   }
 
   public DumbServiceImpl(Project project, MessageBus bus) {
