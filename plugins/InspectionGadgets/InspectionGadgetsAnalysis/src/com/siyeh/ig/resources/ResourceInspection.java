@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-abstract class ResourceInspection extends BaseInspection {
+public abstract class ResourceInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean insideTryAllowed = false;

@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.openapi.project;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EventListener;
+/**
+ * @author peter
+ */
+public abstract class DumbModeTask {
 
-public interface FileTypeListener extends EventListener {
-  class Adapter implements FileTypeListener {
-    @Override public void beforeFileTypesChanged(@NotNull FileTypeEvent event) { }
-    @Override public void fileTypesChanged(@NotNull FileTypeEvent event) { }
-  }
+  public abstract void performInDumbMode(@NotNull ProgressIndicator indicator);
 
-  void beforeFileTypesChanged(@NotNull FileTypeEvent event);
-  void fileTypesChanged(@NotNull FileTypeEvent event);
 }

@@ -201,7 +201,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
-    assert fsItem instanceof FSFile;
+    assert fsItem instanceof FSFile : fsItem;
     return ((FSFile)fsItem).myContent;
   }
 

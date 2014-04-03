@@ -291,7 +291,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
     myExcludeAction = new AnAction(InspectionsBundle.message("inspections.result.view.exclude.action.text")) {
       {
-        registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+        registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
       }
 
       @Override

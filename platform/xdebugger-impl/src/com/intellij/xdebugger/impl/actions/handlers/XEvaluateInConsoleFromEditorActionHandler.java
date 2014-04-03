@@ -9,11 +9,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,13 +60,13 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
     else {
       XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
       if (evaluator != null) {
-        Pair<TextRange, String> expressionInfo = evaluator.getExpressionAtOffset(session.getProject(), editor.getDocument(), selectionStart, true);
+        ExpressionInfo expressionInfo = evaluator.getExpressionInfoAtOffset(session.getProject(), editor.getDocument(), selectionStart, true);
         if (expressionInfo == null) {
           return;
         }
 
         // todo check - is it wrong in case of not-null expressionInfo.second - copied (to console history document) text (text range) could be not correct statement?
-        range = expressionInfo.first;
+        range = expressionInfo.getTextRange();
         text = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
       }
       else {

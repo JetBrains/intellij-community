@@ -16,6 +16,8 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +46,11 @@ public class MockDumbService extends DumbService {
 
   @Override
   public void waitForSmartMode() {
+  }
+
+  @Override
+  public void queueTask(DumbModeTask task) {
+    task.performInDumbMode(new EmptyProgressIndicator());
   }
 
   @Override

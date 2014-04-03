@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -139,8 +140,13 @@ public class TextPanel extends JComponent {
     return result.toString();
   }
 
-  public final void setText(@Nullable final String text) {
-    myText = text == null ? "" : text;
+  public final void setText(@Nullable String text) {
+    text = StringUtil.notNullize(text);
+    if (text.equals(myText)) {
+      return;
+    }
+
+    myText = text;
     setPreferredSize(getPanelDimensionFromFontMetrics(myText));
     revalidate();
     repaint();

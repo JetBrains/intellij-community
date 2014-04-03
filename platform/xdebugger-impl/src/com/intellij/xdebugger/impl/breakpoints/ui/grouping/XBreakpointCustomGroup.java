@@ -13,18 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.EventListener;
+import javax.swing.*;
 
-public interface FileTypeListener extends EventListener {
-  class Adapter implements FileTypeListener {
-    @Override public void beforeFileTypesChanged(@NotNull FileTypeEvent event) { }
-    @Override public void fileTypesChanged(@NotNull FileTypeEvent event) { }
+/**
+ * @author Egor
+ */
+public class XBreakpointCustomGroup extends XBreakpointGroup {
+  private final String myName;
+
+  public XBreakpointCustomGroup(@NotNull String name) {
+    myName = name;
   }
 
-  void beforeFileTypesChanged(@NotNull FileTypeEvent event);
-  void fileTypesChanged(@NotNull FileTypeEvent event);
+  @Nullable
+  public Icon getIcon(final boolean isOpen) {
+    return AllIcons.Nodes.NewFolder;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
+  }
 }

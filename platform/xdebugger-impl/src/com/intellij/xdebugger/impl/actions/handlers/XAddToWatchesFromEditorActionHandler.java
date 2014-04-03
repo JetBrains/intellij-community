@@ -49,7 +49,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
       }
     }
 
-    return StringUtil.isEmptyOrSpaces(text) ? null : text;
+    return StringUtil.nullize(text, true);
   }
 
   @Override
