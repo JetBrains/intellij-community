@@ -19,6 +19,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -92,13 +93,34 @@ public class TerminalExecutor extends CommandExecutor {
     LOG.info("Terminal output " + ((TerminalProcessHandler) myHandler).getTerminalOutput());
   }
 
-  private static List<String> escapeArguments(List<String> collection) {
-    // TODO: Add additional checks like in java.lang.ProcessImpl constructor
-    return ContainerUtil.map(collection, new Function<String, String>() {
+  @NotNull
+  private static List<String> escapeArguments(@NotNull List<String> arguments) {
+    return SystemInfo.isWindows ? escapeForWin(arguments) : arguments;
+  }
+
+  /**
+   * TODO: Identify pty4j quoting requirements for Windows and implement accordingly
+   */
+  @NotNull
+  private static List<String> escapeForWin(@NotNull List<String> arguments) {
+    return ContainerUtil.map(arguments, new Function<String, String>() {
       @Override
-      public String fun(String s) {
-        return s.contains(" ") ? "\"" + s + "\"" : s;
+      public String fun(String argument) {
+        return needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument;
       }
     });
+  }
+
+  @NotNull
+  private static String quote(@NotNull String argument) {
+    return StringUtil.wrapWithDoubleQuote(argument);
+  }
+
+  private static boolean needQuote(@NotNull String argument) {
+    return argument.contains(" ");
+  }
+
+  private static boolean isQuoted(@NotNull String argument) {
+    return StringUtil.startsWithChar(argument, '\"') && StringUtil.endsWithChar(argument, '\"');
   }
 }
