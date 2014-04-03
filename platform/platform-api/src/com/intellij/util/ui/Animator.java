@@ -40,7 +40,7 @@ public abstract class Animator implements Disposable {
 
   private int myCurrentFrame;
   private long myStartTime;
-  private long myStopTime;
+  private int myCycleOffset;
   private volatile boolean myDisposed = false;
 
   public Animator(@NonNls final String name,
@@ -60,7 +60,7 @@ public abstract class Animator implements Disposable {
     myCycleDuration = cycleDuration;
     myRepeatable = repeatable;
     myForward = forward;
-    myCurrentFrame = forward ? 0 : totalFrames;
+    myCurrentFrame = 0;
 
     if (ApplicationManager.getApplication() == null) {
       animationDone();
@@ -69,31 +69,34 @@ public abstract class Animator implements Disposable {
       reset();
     }
   }
-  
+
   private void onTick() {
     if (isDisposed()) return;
-    
+
+    boolean initialStep = false;
     if (myStartTime == -1) {
       myStartTime = System.currentTimeMillis();
-      myStopTime = myStartTime + myCycleDuration * (myTotalFrames - myCurrentFrame) / myTotalFrames;
+      myCycleOffset = myCurrentFrame; // keep animation state on suspend
+      initialStep = true;
     }
 
-    final double passedTime = System.currentTimeMillis() - myStartTime;
-    final double totalTime = myStopTime - myStartTime;
-    
-    final int newFrame = (int)(passedTime * myTotalFrames / totalTime);
-    if (myCurrentFrame > 0 && newFrame == myCurrentFrame) return;
-    myCurrentFrame = newFrame;
+    double cycleTime = System.currentTimeMillis() - myStartTime;
+    if (cycleTime < 0) return; // currentTimeMillis() is not monotonic - let's pretend that animation didn't changed
 
-    if (myCurrentFrame >= myTotalFrames) {
-      if (myRepeatable) {
-        reset();
-      }
-      else {
-        animationDone();
-        return;
-      }
+    long newFrame = (long)(cycleTime * myTotalFrames / myCycleDuration) + myCycleOffset;
+
+    if (myRepeatable) {
+      newFrame = newFrame % myTotalFrames;
     }
+
+    if (!initialStep && newFrame == myCurrentFrame) return;
+
+    if (!myRepeatable && newFrame >= myTotalFrames) {
+      animationDone();
+      return;
+    }
+
+    myCurrentFrame = (int)(newFrame);
 
     paint();
   }
