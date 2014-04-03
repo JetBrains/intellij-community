@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.ide.caches;
+package com.intellij.openapi.project;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated use {@link com.intellij.openapi.project.DumbModeTask}
+ * @author peter
  */
-public interface CacheUpdater {
-  int getNumberOfPendingUpdateJobs();
+public abstract class DumbModeTask {
 
-  @NotNull
-  VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator);
+  public abstract void performInDumbMode(@NotNull ProgressIndicator indicator);
 
-  void processFile(@NotNull FileContent fileContent);
-
-  void updatingDone();
-
-  void canceled();
 }

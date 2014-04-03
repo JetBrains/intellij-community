@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
@@ -129,7 +130,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
-    document = JDOMXIncluder.resolve(document, url.toExternalForm(), ApplicationManager.getApplication().isUnitTestMode());
+    Application application = ApplicationManager.getApplication();
+    document = JDOMXIncluder.resolve(document, url.toExternalForm(), application != null && application.isUnitTestMode());
     Element rootElement = document.getRootElement();
     internJDOMElement(rootElement);
     readExternal(document.getRootElement());

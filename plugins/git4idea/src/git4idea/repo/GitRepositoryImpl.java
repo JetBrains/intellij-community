@@ -176,7 +176,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
   public void update() {
     GitRepoInfo previousInfo = myInfo;
     myInfo = readRepoInfo();
-    notifyListeners(previousInfo);
+    notifyListeners(this, previousInfo, myInfo);
   }
 
   @NotNull
@@ -198,12 +198,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository, 
   }
 
   // previous info can be null before the first update
-  private void notifyListeners(@Nullable GitRepoInfo previousInfo) {
-    if (Disposer.isDisposed(getProject())) {
+  private static void notifyListeners(@NotNull GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+    if (Disposer.isDisposed(repository.getProject())) {
       return;
     }
-    if (!myInfo.equals(previousInfo)) {
-      getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(this);
+    if (!info.equals(previousInfo)) {
+      repository.getProject().getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
     }
   }
 
