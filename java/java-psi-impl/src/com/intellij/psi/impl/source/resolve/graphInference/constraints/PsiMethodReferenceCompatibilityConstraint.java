@@ -24,7 +24,6 @@ import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 
 import java.util.List;
 import java.util.Map;
@@ -110,11 +109,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return true;
     }
 
-    Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.ourRefs.get();
-    if (map == null) {
-      map = new HashMap<PsiMethodReferenceExpression, PsiType>();
-      PsiMethodReferenceUtil.ourRefs.set(map);
-    }
+    final Map<PsiMethodReferenceExpression, PsiType> map = PsiMethodReferenceUtil.getFunctionalTypeMap();
     final PsiType added = map.put(myExpression, groundTargetType);
     final PsiElement resolve;
     try {

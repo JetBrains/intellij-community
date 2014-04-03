@@ -32,6 +32,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
     rules.add(new XBreakpointGroupingByTypeRule());
     rules.add(new XBreakpointFileGroupingRule());
+    rules.add(new XBreakpointCustomGroupingRule());
   }
 
   @Override

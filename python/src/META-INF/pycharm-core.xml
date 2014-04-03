@@ -96,7 +96,7 @@
 
     <group id="WelcomeScreen.Platform.NewProject">
       <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.PythonNewDirectoryProjectAction" icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.platform.OpenDirectoryProjectAction" icon="AllIcons.General.OpenProject"/>
+      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>

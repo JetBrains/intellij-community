@@ -27,7 +27,10 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -42,7 +45,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
@@ -64,7 +68,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
@@ -1217,7 +1220,7 @@ class RunConfigurable extends BaseConfigurable {
     public MyRemoveAction() {
       super(ExecutionBundle.message("remove.run.configuration.action.name"),
             ExecutionBundle.message("remove.run.configuration.action.name"), REMOVE_ICON);
-      registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
     }
 
     @Override

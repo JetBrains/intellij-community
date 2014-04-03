@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +59,9 @@ import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -1919,29 +1922,37 @@ public class UIUtil {
     return getBorderColor();
   }
 
+  @Nullable
+  public static StyleSheet loadStyleSheet(@Nullable URL url) {
+    if (url == null) return null;
+    try {
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      return styleSheet;
+    }
+    catch (IOException e) {
+      LOG.warn(url + " loading failed", e);
+      return null;
+    }
+  }
+
   public static HTMLEditorKit getHTMLEditorKit() {
     Font font = getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
     final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
 
-    if (isUnderDarcula()) {
-      final HTMLEditorKit kit = new HTMLEditorKit();
-      kit.getStyleSheet().addRule(customCss);
-      return kit;
-    } else {
-      final StyleSheet style = new StyleSheet();
-      style.addStyleSheet(DEFAULT_HTML_KIT_CSS);
-      style.addRule(customCss);
+    final StyleSheet style = new StyleSheet();
+    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+    style.addRule(customCss);
 
-      return new HTMLEditorKit() {
-        @Override
-        public StyleSheet getStyleSheet() {
-          return style;
-        }
-      };
-    }
+    return new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return style;
+      }
+    };
   }
 
   public static void removeScrollBorder(final Component c) {

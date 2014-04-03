@@ -29,7 +29,9 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -467,7 +469,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void cutToLineEnd() {
     executeAction("EditorCutLineEnd");
   }
-
+  
+  protected static void deleteToLineStart() {
+    executeAction("EditorDeleteToLineStart");
+  }
+  
+  protected static void deleteToLineEnd() {
+    executeAction("EditorDeleteToLineEnd");
+  }
+  
   protected static void killToWordStart() {
     executeAction("EditorKillToWordStart");
   }

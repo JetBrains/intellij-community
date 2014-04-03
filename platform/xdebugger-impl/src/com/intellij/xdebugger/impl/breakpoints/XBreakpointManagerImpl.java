@@ -456,6 +456,17 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     myBreakpointsDialogSettings = breakpointsDialogSettings;
   }
 
+  public Set<String> getAllGroups() {
+    HashSet<String> res = new HashSet<String>();
+    for (XBreakpointBase breakpoint : myBreakpoints.values()) {
+      String group = breakpoint.getGroup();
+      if (group != null) {
+        res.add(group);
+      }
+    }
+    return res;
+  }
+
   @Nullable
   private XBreakpointBase<?,?,?> createBreakpoint(final BreakpointState breakpointState) {
     XBreakpointType<?,?> type = XBreakpointUtil.findType(breakpointState.getTypeId());
