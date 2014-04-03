@@ -18,43 +18,62 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 class CutLineActionHandler extends EditorWriteActionHandler {
+  private final boolean myToLineStart;
+  private final boolean myIgnoreSelection;
   private final boolean myCopyToClipboard;
 
-  CutLineActionHandler(boolean copyToClipboard) {
+  CutLineActionHandler(boolean toLineStart, boolean ignoreSelection, boolean copyToClipboard) {
+    myToLineStart = toLineStart;
+    myIgnoreSelection = ignoreSelection;
     myCopyToClipboard = copyToClipboard;
   }
 
   @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (!myIgnoreSelection && selectionModel.hasSelection()) {
+      delete(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
+      return;
+    }
+    
     final Document doc = editor.getDocument();
     int caretOffset = editor.getCaretModel().getOffset();
-    if (caretOffset >= doc.getTextLength()) {
+    if ((myToLineStart && (caretOffset == 0)) || (!myToLineStart && (caretOffset >= doc.getTextLength()))) {
       return;
     }
     final int lineNumber = doc.getLineNumber(caretOffset);
     int lineEndOffset = doc.getLineEndOffset(lineNumber);
+    int lineStartOffset = doc.getLineStartOffset(lineNumber);
 
-    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && caretOffset == lineEndOffset) {
+    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() 
+        && caretOffset == (myToLineStart ? lineStartOffset : lineEndOffset)) {
       return;
     }
 
     int start;
     int end;
-    if (caretOffset >= lineEndOffset) {
-      start = lineEndOffset;
-      end = lineEndOffset + 1;
+    if (myToLineStart) {
+      start = lineStartOffset;
+      end = caretOffset;
     }
     else {
-      start = caretOffset;
-      end = lineEndOffset;
-      if (lineEndOffset < doc.getTextLength() && CharArrayUtil.isEmptyOrSpaces(doc.getCharsSequence(), caretOffset, lineEndOffset)) {
-        end++;
+      if (caretOffset >= lineEndOffset) {
+        start = lineEndOffset;
+        end = lineEndOffset + 1;
+      }
+      else {
+        start = caretOffset;
+        end = lineEndOffset;
+        if (lineEndOffset < doc.getTextLength() && CharArrayUtil.isEmptyOrSpaces(doc.getCharsSequence(), caretOffset, lineEndOffset)) {
+          end++;
+        }
       }
     }
 
@@ -69,5 +88,8 @@ class CutLineActionHandler extends EditorWriteActionHandler {
       CopyPasteManager.getInstance().stopKillRings();
     }
     editor.getDocument().deleteString(start, end);
+
+    // in case the caret was in the version space, we force it to go back to the real offset
+    editor.getCaretModel().moveToOffset(start);
   }
 }

@@ -28,6 +28,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
-    super(new CutLineActionHandler(true));
+    super(new CutLineActionHandler(false, true, true));
   }
 }
