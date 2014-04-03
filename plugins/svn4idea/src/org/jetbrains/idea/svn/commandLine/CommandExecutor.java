@@ -157,26 +157,45 @@ public class CommandExecutor {
 
   private void ensureMessageFile() throws SvnBindException {
     if (myMessage != null) {
+      myMessageFile = createTempFile("commit-message", ".txt");
       try {
-        File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
-        myMessageFile = FileUtil.createTempFile(new File(vcsFolder, "svn"), "commit-message", ".txt");
         FileUtil.writeToFile(myMessageFile, myMessage);
-
-        myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
-        myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
       }
       catch (IOException e) {
         throw new SvnBindException(e);
       }
+      myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
+      myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
     }
   }
 
   private void cleanupMessageFile() {
-    if (myMessageFile != null) {
-      boolean wasDeleted = FileUtil.delete(myMessageFile);
+    deleteTempFile(myMessageFile);
+  }
+
+  @NotNull
+  protected static File getSvnFolder() {
+    File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
+
+    return new File(vcsFolder, "svn");
+  }
+
+  @NotNull
+  protected static File createTempFile(@NotNull String prefix, @NotNull String extension) throws SvnBindException {
+    try {
+      return FileUtil.createTempFile(getSvnFolder(), prefix, extension);
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  protected static void deleteTempFile(@Nullable File file) {
+    if (file != null) {
+      boolean wasDeleted = FileUtil.delete(file);
 
       if (!wasDeleted) {
-        LOG.info("Failed to delete temp commit message file " + myMessageFile.getAbsolutePath());
+        LOG.info("Failed to delete temp file " + file.getAbsolutePath());
       }
     }
   }
