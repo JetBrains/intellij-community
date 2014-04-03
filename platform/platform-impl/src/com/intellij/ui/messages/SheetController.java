@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
  */
 public class SheetController {
 
+  private static final int SHEET_MINIMUM_HEIGHT = 143;
   private static String fontName = "Lucida Grande";
   private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
   private static Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
@@ -64,7 +65,7 @@ public class SheetController {
   // SHEET
   public int SHEET_WIDTH = 400;
 
-  public int SHEET_HEIGHT = 150;
+  public int SHEET_HEIGHT = 143;
 
   // SHEET + shadow
   int SHEET_NC_WIDTH = SHEET_WIDTH + SHADOW_BORDER * 2;
@@ -287,8 +288,6 @@ public class SheetController {
 
     messageTextPane.repaint();
 
-
-
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
     ico.setLocation(LEFT_SHEET_PADDING, TOP_SHEET_PADDING);
@@ -306,6 +305,11 @@ public class SheetController {
 
     SHEET_HEIGHT += BOTTOM_SHEET_PADDING;
 
+    if (SHEET_HEIGHT < SHEET_MINIMUM_HEIGHT) {
+      SHEET_HEIGHT = SHEET_MINIMUM_HEIGHT;
+      shiftButtonsToTheBottom(SHEET_MINIMUM_HEIGHT - SHEET_HEIGHT);
+    }
+
     sheetPanel.setFocusCycleRoot(true);
 
     recalculateShadow();
@@ -313,6 +317,12 @@ public class SheetController {
     sheetPanel.setSize(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
 
     return sheetPanel;
+  }
+
+  private void shiftButtonsToTheBottom(int shiftDistance) {
+    for (JButton b : buttons) {
+      b.setLocation(b.getX(), b.getY() + shiftDistance);
+    }
   }
 
   private void recalculateShadow() {
@@ -344,6 +354,7 @@ public class SheetController {
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
     int widestButtonWidth = 0;
+    SHEET_HEIGHT += GAP_BETWEEN_LINES;
 
     for (JButton button : buttons) {
       button.repaint();
