@@ -31,6 +31,11 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
     super(process);
   }
 
+  @Override
+  protected boolean processHasSeparateErrorStream() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected String filterCombinedText(@NotNull String currentLine) {

@@ -15,14 +15,19 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessWrapper;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.*;
 import java.util.List;
 
 /**
@@ -42,6 +47,9 @@ public class WinTerminalExecutor extends TerminalExecutor {
     }
   }
 
+  @Nullable private File myRedirectFile;
+  @Nullable private FileInputStream myRedirectStream;
+
   public WinTerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     super(exePath, command);
   }
@@ -50,6 +58,80 @@ public class WinTerminalExecutor extends TerminalExecutor {
   @Override
   protected OSProcessHandler createProcessHandler() {
     return new WinTerminalProcessHandler(myProcess);
+  }
+
+  @Override
+  protected void beforeCreateProcess() throws SvnBindException {
+    super.beforeCreateProcess();
+
+    createRedirectFile();
+  }
+
+  private void createRedirectFile() throws SvnBindException {
+    myRedirectFile = createTempFile("terminal-output", "");
+
+    try {
+      myRedirectStream = new FileInputStream(myRedirectFile);
+    }
+    catch (FileNotFoundException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  @Override
+  protected void cleanup() {
+    super.cleanup();
+
+    deleteRedirectFile();
+  }
+
+  private void deleteRedirectFile() {
+    if (myRedirectStream != null) {
+      try {
+        myRedirectStream.close();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    deleteTempFile(myRedirectFile);
+  }
+
+  @NotNull
+  @Override
+  protected Process createProcess() throws ExecutionException {
+    checkRedirectFile();
+
+    List<String> parameters = escapeArguments(buildParameters());
+    parameters.add(0, ExecUtil.getWindowsShellName());
+    parameters.add(1, "/c");
+    parameters.add(">>");
+    //noinspection ConstantConditions
+    parameters.add(quote(myRedirectFile.getAbsolutePath()));
+
+    Process process = createProcess(parameters);
+
+    return new ProcessWrapper(process) {
+      @Override
+      public InputStream getInputStream() {
+        return myRedirectStream;
+      }
+
+      @Override
+      public InputStream getErrorStream() {
+        return getOriginalProcess().getInputStream();
+      }
+    };
+  }
+
+  private void checkRedirectFile() {
+    if (myRedirectFile == null) {
+      throw new IllegalStateException("No redirect file found");
+    }
+    if (myRedirectStream == null) {
+      throw new IllegalStateException("No redirect stream found");
+    }
   }
 
   /**

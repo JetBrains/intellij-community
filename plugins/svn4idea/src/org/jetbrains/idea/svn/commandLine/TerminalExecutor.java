@@ -18,10 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NonNls;
@@ -63,12 +60,21 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   @Override
   protected Process createProcess() throws ExecutionException {
-    List<String> parameters =
-      escapeArguments(CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList()));
+    List<String> parameters = escapeArguments(buildParameters());
 
+    return createProcess(parameters);
+  }
+
+  @NotNull
+  protected List<String> buildParameters() {
+    return CommandLineUtil.toCommandLine(myCommandLine.getExePath(), myCommandLine.getParametersList().getList());
+  }
+
+  @NotNull
+  protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
     try {
-      return PtyProcess
-        .exec(ArrayUtil.toStringArray(parameters), myCommandLine.getEnvironment(), myCommandLine.getWorkDirectory().getAbsolutePath());
+      return PtyProcess.exec(ArrayUtil.toStringArray(parameters), myCommandLine.getEnvironment(),
+                             myCommandLine.getWorkDirectory().getAbsolutePath());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -79,7 +85,7 @@ public class TerminalExecutor extends CommandExecutor {
   public void logCommand() {
     super.logCommand();
 
-    LOG.info("Terminal output " + ((TerminalProcessHandler) myHandler).getTerminalOutput());
+    LOG.info("Terminal output " + ((TerminalProcessHandler)myHandler).getTerminalOutput());
   }
 
   @NotNull
