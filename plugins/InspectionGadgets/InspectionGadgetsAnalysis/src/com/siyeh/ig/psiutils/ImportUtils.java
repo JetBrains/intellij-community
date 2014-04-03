@@ -44,9 +44,9 @@ public class ImportUtils {
         return;
       }
     }
-    else {
-      if (PsiTreeUtil.isAncestor(outerClass, context, true) &&
-          !PsiTreeUtil.isAncestor(outerClass.getModifierList(), context, true)) {
+    else if (PsiTreeUtil.isAncestor(outerClass, context, true)) {
+      final PsiElement brace = outerClass.getLBrace();
+      if (brace != null && brace.getTextOffset() < context.getTextOffset()) {
         return;
       }
     }
@@ -406,7 +406,7 @@ public class ImportUtils {
       return false;
     }
     final List<PsiImportStaticStatement> imports = getMatchingImports(importList, qualifiedName);
-    int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
+    final int onDemandCount = JavaCodeStyleSettingsFacade.getInstance(project).getNamesCountToUseImportOnDemand();
     final PsiElementFactory elementFactory = psiFacade.getElementFactory();
     if (imports.size() < onDemandCount) {
       importList.add(elementFactory.createImportStaticStatement(aClass, memberName));

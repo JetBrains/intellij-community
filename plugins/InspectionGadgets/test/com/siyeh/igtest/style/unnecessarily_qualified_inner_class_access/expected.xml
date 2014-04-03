@@ -3,6 +3,20 @@
 
   <problem>
     <file>Test.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
+    <description>'X' is unnecessarily qualified with &lt;code&gt;Test&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
+    <description>'Entry' is unnecessarily qualified with &lt;code&gt;Map&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
     <line>11</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
     <description>'Inner' is unnecessarily qualified with &lt;code&gt;Test&lt;/code&gt; #loc</description>
@@ -15,5 +29,17 @@
     <description>'Y' is unnecessarily qualified with &lt;code&gt;Test&lt;/code&gt; #loc</description>
   </problem>
 
+  <problem>
+    <file>Test.java</file>
+    <line>34</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
+    <description>'Bar' is unnecessarily qualified with &lt;code&gt;Foo&lt;/code&gt; #loc</description>
+  </problem>
 
+  <problem>
+    <file>Test.java</file>
+    <line>63</line>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Unnecessarily qualified inner class access</problem_class>
+    <description>'TestInner' is unnecessarily qualified with &lt;code&gt;TestOuter&lt;/code&gt; #loc</description>
+  </problem>
 </problems>
