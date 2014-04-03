@@ -318,7 +318,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     model.apply(getModuleSelector().getModule(), config);
     getModuleSelector().applyTo(config);
     TestData data = config.getPersistantData();
-    if (packageTest.isSelected()) {
+    if (!classTest.isSelected() && !methodTest.isSelected()) {
       if (packagesInProject.isSelected()) {
         data.setScope(TestSearchScope.WHOLE_PROJECT);
       }
