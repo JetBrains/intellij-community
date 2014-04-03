@@ -67,6 +67,26 @@
     </action>
     <action id="DuplicatesForm.SendToLeft" />
     <action id="DuplicatesForm.SendToRight" />
+    
+    <action id="$Cut">
+      <keyboard-shortcut first-keystroke="meta X"/>
+    </action>
+    <action id="$Delete">
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
+    </action>
+    
+    <action id="EditorDelete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+    </action>
+    <action id="EditorBackSpace">
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+    </action>
+
+    <action id="SafeDelete">
+      <keyboard-shortcut first-keystroke="meta DELETE"/>
+    </action>
+    
     <action id="EditorCodeBlockEnd">
       <keyboard-shortcut first-keystroke="control CLOSE_BRACKET"/>
     </action>
