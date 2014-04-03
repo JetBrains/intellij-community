@@ -21,7 +21,16 @@ class Contracts {
 
   public void varargFail(@Nullable String message) {
     notBlank(message, "Message should not be blank");
-    log(message); // highlighted
+    log(message);
+  }
+
+  public void vararg1(@Nullable String message) {
+    notBlank(message, "Message should not be blank", new Object());
+    log(message);
+  }
+  public void vararg2(@Nullable String message) {
+    notBlank(message, "Message should not be blank", new Object(), new Object());
+    log(message);
   }
 
   public void log(@NotNull String message) {
