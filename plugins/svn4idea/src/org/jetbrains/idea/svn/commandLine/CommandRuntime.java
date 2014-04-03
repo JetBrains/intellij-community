@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,11 +209,16 @@ public class CommandRuntime {
     else {
       // do not explicitly specify "--force-interactive" as it is not supported in svn 1.7 - commands will be interactive by default as
       // running under terminal
-      executor = new TerminalExecutor(exePath, command);
+      executor = newTerminalExecutor(command);
       ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
     }
 
     return executor;
+  }
+
+  @NotNull
+  private TerminalExecutor newTerminalExecutor(@NotNull Command command) {
+    return SystemInfo.isWindows ? new WinTerminalExecutor(exePath, command) : new TerminalExecutor(exePath, command);
   }
 
   private static boolean isLocal(@NotNull Command command) {

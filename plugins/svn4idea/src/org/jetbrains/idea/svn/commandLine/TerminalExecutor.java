@@ -35,17 +35,6 @@ import java.util.List;
  */
 public class TerminalExecutor extends CommandExecutor {
 
-  // max available value is 480
-  // if greater value is provided than the default value of 80 will be assumed
-  // this could provide unnecessary line breaks and thus could break parsing logic
-  private static final int TERMINAL_WINDOW_MAX_COLUMNS = 480;
-
-  static {
-    if (SystemInfo.isWindows) {
-      System.setProperty("win.pty.cols", String.valueOf(TERMINAL_WINDOW_MAX_COLUMNS));
-    }
-  }
-
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public TerminalExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
@@ -94,33 +83,7 @@ public class TerminalExecutor extends CommandExecutor {
   }
 
   @NotNull
-  private static List<String> escapeArguments(@NotNull List<String> arguments) {
-    return SystemInfo.isWindows ? escapeForWin(arguments) : arguments;
-  }
-
-  /**
-   * TODO: Identify pty4j quoting requirements for Windows and implement accordingly
-   */
-  @NotNull
-  private static List<String> escapeForWin(@NotNull List<String> arguments) {
-    return ContainerUtil.map(arguments, new Function<String, String>() {
-      @Override
-      public String fun(String argument) {
-        return needQuote(argument) && !isQuoted(argument) ? quote(argument) : argument;
-      }
-    });
-  }
-
-  @NotNull
-  private static String quote(@NotNull String argument) {
-    return StringUtil.wrapWithDoubleQuote(argument);
-  }
-
-  private static boolean needQuote(@NotNull String argument) {
-    return argument.contains(" ");
-  }
-
-  private static boolean isQuoted(@NotNull String argument) {
-    return StringUtil.startsWithChar(argument, '\"') && StringUtil.endsWithChar(argument, '\"');
+  protected List<String> escapeArguments(@NotNull List<String> arguments) {
+    return arguments;
   }
 }
