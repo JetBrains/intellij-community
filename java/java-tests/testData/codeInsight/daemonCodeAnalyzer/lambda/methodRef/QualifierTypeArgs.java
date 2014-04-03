@@ -12,7 +12,7 @@ class MyTest {
 
     {
       I i = Foo<String> :: foo;
-      <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest.I'">I i1 = Foo<Integer> :: foo;</error>
+      I i1 = Foo<Integer> :: <error descr="Cannot resolve method 'foo'">foo</error>;
     }
   }
 }

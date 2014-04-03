@@ -469,6 +469,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression) {
+    return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateAbstractMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateAbstractMethodFromUsageFix(call);
   }

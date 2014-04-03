@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
@@ -157,6 +158,12 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   public boolean isCalleeText(@NotNull String... nameCandidates) {
     return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
   }
+
+  @Override
+  public boolean isCallee(@NotNull final FQNamesProvider... name) {
+    return PyCallExpressionHelper.isCallee(this, name);
+  }
+
 
   @Override
   public String toString() {

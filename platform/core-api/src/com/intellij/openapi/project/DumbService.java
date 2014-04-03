@@ -190,6 +190,8 @@ public abstract class DumbService {
     return new ArrayList<T>(collection);
   }
 
+  public abstract void queueTask(DumbModeTask task);
+
   public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
 
   public void makeDumbAware(@NotNull final JComponent component, @NotNull Disposable disposable) {

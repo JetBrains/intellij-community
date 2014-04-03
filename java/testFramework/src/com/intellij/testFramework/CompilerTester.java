@@ -242,11 +242,14 @@ public class CompilerTester {
 
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+      System.out.println("ErrorReportingCallback.finished");
       try {
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
+          System.out.println("category = " + category);
           CompilerMessage[] messages = compileContext.getMessages(category);
           for (CompilerMessage message : messages) {
             final String text = message.getMessage();
+            System.out.println("message = " + message);
             if (category != CompilerMessageCategory.INFORMATION || !(text.startsWith("Compilation completed successfully") || text.startsWith("Using javac"))) {
               myMessages.add(message);
             }

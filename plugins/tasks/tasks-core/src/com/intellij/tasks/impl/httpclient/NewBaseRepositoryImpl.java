@@ -6,7 +6,7 @@ import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.ssl.CertificatesManager;
+import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -60,10 +60,10 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
   protected HttpClient getHttpClient() {
     HttpClientBuilder builder = HttpClients.custom()
       .setDefaultRequestConfig(createRequestConfig())
-      .setSslcontext(CertificatesManager.getInstance().getSslContext())
+      .setSslcontext(CertificateManager.getInstance().getSslContext())
         // TODO: use custom one for additional certificate check
         //.setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-      .setHostnameVerifier((X509HostnameVerifier)CertificatesManager.HOSTNAME_VERIFIER)
+      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER)
       .setDefaultCredentialsProvider(createCredentialsProvider())
       .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
       .addInterceptorLast(createRequestInterceptor());

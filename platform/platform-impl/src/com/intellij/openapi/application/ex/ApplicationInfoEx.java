@@ -97,7 +97,12 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract List<PluginChooserPage> getPluginChooserPages();
 
-  public abstract boolean isEssentialPlugin(String pluginId);
+
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean isEssentialPlugin(String pluginId) {
+    return false;
+  }
 
   /** @deprecated to remove in IDEA 14 */
   @SuppressWarnings("UnusedDeclaration")

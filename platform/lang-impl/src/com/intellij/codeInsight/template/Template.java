@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,23 +36,23 @@ public abstract class Template {
   private final Map<Property, Boolean> myProperties = new EnumMap<Property, Boolean>(Property.class);
 
   public abstract void addTextSegment(@NotNull String text);
-  public abstract void addVariableSegment(@NonNls String name);
+  public abstract void addVariableSegment(@NonNls @NotNull String name);
 
-  public Variable addVariable(@NonNls String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);
   }
   public abstract Variable addVariable(Expression expression, boolean isAlwaysStopAt);
 
-  public Variable addVariable(@NonNls String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NonNls @NotNull String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
   }
 
-  public abstract Variable addVariable(@NonNls String name,
+  public abstract Variable addVariable(@NonNls @NotNull String name,
                                        Expression expression,
                                        Expression defaultValueExpression,
                                        boolean isAlwaysStopAt,
                                        boolean skipOnStart);
-  public abstract Variable addVariable(@NonNls String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
+  public abstract Variable addVariable(@NonNls @NotNull String name, @NonNls String expression, @NonNls String defaultValueExpression, boolean isAlwaysStopAt);
 
   public abstract void addEndVariable();
   public abstract void addSelectionStartVariable();

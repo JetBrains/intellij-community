@@ -134,13 +134,8 @@ public class BreakpointManager {
       @Override
       public void changeEvent(@NotNull DebuggerContextImpl newContext, int event) {
         if (event == DebuggerSession.EVENT_ATTACHED) {
-          // notify about possibly slow method breakpoints
-          for (XLineBreakpoint breakpoint : getXBreakpointManager().getBreakpoints(JavaMethodBreakpointType.class)) {
-            if (breakpoint.isEnabled()) {
-              XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(
-                myProject);
-              break;
-            }
+          for (XBreakpoint breakpoint : getXBreakpointManager().getAllBreakpoints()) {
+            if (checkAndNotifyPossiblySlowBreakpoint(breakpoint)) break;
           }
         }
         if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.EVENT_DETACHED) {
@@ -149,6 +144,15 @@ public class BreakpointManager {
         }
       }
     });
+  }
+
+  private boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
+    if (breakpoint.isEnabled() &&
+        (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
+      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
+      return true;
+    }
+    return false;
   }
 
   public void init() {
@@ -323,8 +327,6 @@ public class BreakpointManager {
       return null;
     }
 
-    XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
-
     addBreakpoint(breakpoint);
     return breakpoint;
   }
@@ -409,12 +411,13 @@ public class BreakpointManager {
     return breakpointManager.myBreakpoints.get(xBreakpoint);
   }
 
-  private List<Element> myOriginalBreakpointsNodes = new ArrayList<Element>();
+  private HashMap<String, Element> myOriginalBreakpointsNodes = new HashMap<String, Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
+    myOriginalBreakpointsNodes.clear();
     // save old breakpoints
     for (Element element : parentNode.getChildren()) {
-      myOriginalBreakpointsNodes.add(element.clone());
+      myOriginalBreakpointsNodes.put(element.getName(), element.clone());
     }
     if (myProject.isOpen()) {
       doRead(parentNode);
@@ -607,9 +610,7 @@ public class BreakpointManager {
     breakpoint.updateUI();
     RequestManagerImpl.createRequests(breakpoint);
     myDispatcher.getMulticaster().breakpointsChanged();
-    if (breakpoint instanceof MethodBreakpoint || breakpoint instanceof WildcardMethodBreakpoint) {
-      XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Method breakpoints may dramatically slow down debugging", MessageType.WARNING).notify(myProject);
-    }
+    checkAndNotifyPossiblySlowBreakpoint(breakpoint.myXBreakpoint);
   }
 
   private synchronized void onBreakpointAdded(XBreakpoint xBreakpoint) {
@@ -649,14 +650,14 @@ public class BreakpointManager {
 
   public void writeExternal(@NotNull final Element parentNode) {
     // restore old breakpoints
-    for (Element group : myOriginalBreakpointsNodes) {
+    for (Element group : myOriginalBreakpointsNodes.values()) {
       if (group.getAttribute(CONVERTED_PARAM) == null) {
         group.setAttribute(CONVERTED_PARAM, "true");
       }
       group.detach();
     }
 
-    parentNode.addContent(myOriginalBreakpointsNodes);
+    parentNode.addContent(myOriginalBreakpointsNodes.values());
     //ApplicationManager.getApplication().runReadAction(new Runnable() {
     //  @Override
     //  public void run() {

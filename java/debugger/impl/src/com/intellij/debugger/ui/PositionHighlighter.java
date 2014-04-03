@@ -240,8 +240,8 @@ public class PositionHighlighter {
         if (breakpoint instanceof BreakpointWithHighlighter) {
           if (((BreakpointWithHighlighter)breakpoint).isVisible() && breakpoint.isValid()) {
             breakpoint.reload();
-            final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
-            if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {
+            int bptLine = ((BreakpointWithHighlighter)breakpoint).getLineIndex();
+            if (bptLine < 0 || bptLine != lineIndex) {
               eventsOutOfLine.add(eventDescriptor);
             }
           }
@@ -423,7 +423,7 @@ public class PositionHighlighter {
       DefaultActionGroup group = new DefaultActionGroup();
       for (Pair<Breakpoint, Event> eventDescriptor : myEventsOutOfLine) {
         Breakpoint breakpoint = eventDescriptor.getFirst();
-        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
+        AnAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint.getXBreakpoint());
         group.add(viewBreakpointsAction);
       }
 

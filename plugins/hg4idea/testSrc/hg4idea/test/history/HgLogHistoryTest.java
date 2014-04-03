@@ -22,20 +22,14 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.util.HgHistoryUtil;
+import org.zmlx.hg4idea.log.HgHistoryUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.echo;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgLogHistoryTest extends HgPlatformTest {
 
   @Override

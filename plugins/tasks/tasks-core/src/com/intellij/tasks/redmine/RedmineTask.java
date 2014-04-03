@@ -2,6 +2,7 @@ package com.intellij.tasks.redmine;
 
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import icons.TasksIcons;
@@ -87,5 +88,11 @@ public class RedmineTask extends Task {
   @Override
   public String getIssueUrl() {
     return myRepository.getRestApiUrl("issues", getId());
+  }
+
+  @Nullable
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

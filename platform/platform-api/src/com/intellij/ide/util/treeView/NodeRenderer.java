@@ -73,7 +73,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
             if (textAttributesKey != null) {
               final TextAttributes forcedAttributes = getColorsScheme().getAttributes(textAttributesKey);
               if (forcedAttributes != null) {
-                simpleTextAttributes = SimpleTextAttributes.merge(SimpleTextAttributes.fromTextAttributes(forcedAttributes), simpleTextAttributes);
+                simpleTextAttributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.fromTextAttributes(forcedAttributes));
               }
             }
             first = false;

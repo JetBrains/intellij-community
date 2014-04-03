@@ -173,21 +173,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         return super.shouldCheckTimeLimit();
       }
     };
-    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()));
+    analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Arrays.asList(dfaRunner.createMemoryState()), onTheFly);
   }
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
                                             ProblemsHolder holder,
                                             StandardDataFlowRunner dfaRunner,
-                                            Collection<DfaMemoryState> initialStates) {
+                                            Collection<DfaMemoryState> initialStates, final boolean onTheFly) {
     final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
-      createDescription(dfaRunner, holder, visitor);
+      createDescription(dfaRunner, holder, visitor, onTheFly);
 
       MultiMap<PsiElement,DfaMemoryState> nestedClosures = dfaRunner.getNestedClosures();
       for (PsiElement closure : nestedClosures.keySet()) {
-        analyzeDfaWithNestedClosures(closure, holder, dfaRunner, nestedClosures.get(closure));
+        analyzeDfaWithNestedClosures(closure, holder, dfaRunner, nestedClosures.get(closure), onTheFly);
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {
@@ -215,7 +215,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
         final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
         binary.getLOperand().replace(qualifier);
-        fixes.add(new AddAssertStatementFix(binary));
+        ContainerUtil.addIfNotNull(fixes, createAssertFix(binary));
       }
 
       addSurroundWithIfFix(qualifier, fixes, onTheFly);
@@ -231,10 +231,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
+  protected LocalQuickFix createAssertFix(PsiBinaryExpression binary) {
+    return null;
+  }
+
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
-  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
+  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly) {
     Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
@@ -265,7 +269,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         reportCastMayFail(holder, (TypeCastInstruction)instruction);
       }
       else if (instruction instanceof BranchingInstruction) {
-        handleBranchingInstruction(holder, visitor, trueSet, falseSet, reportedAnchors, (BranchingInstruction)instruction);
+        handleBranchingInstruction(holder, visitor, trueSet, falseSet, reportedAnchors, (BranchingInstruction)instruction, onTheFly);
       }
     }
 
@@ -410,7 +414,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void handleBranchingInstruction(ProblemsHolder holder,
                                           StandardInstructionVisitor visitor,
                                           Set<Instruction> trueSet,
-                                          Set<Instruction> falseSet, HashSet<PsiElement> reportedAnchors, BranchingInstruction instruction) {
+                                          Set<Instruction> falseSet, HashSet<PsiElement> reportedAnchors, BranchingInstruction instruction, final boolean onTheFly) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
     boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
     if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
@@ -434,11 +438,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
-      if (onTheLeftSideOfConditionalAssignment(psiAnchor)) {
+      final PsiElement parent = psiAnchor.getParent();
+      if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor) {
         holder.registerProblem(
           psiAnchor,
           InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
-          createSimplifyToAssignmentFix()
+          createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, onTheFly)
         );
       }
       else if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
@@ -450,6 +455,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
       reportedAnchors.add(psiAnchor);
     }
+  }
+
+  protected LocalQuickFix[] createConditionalAssignmentFixes(boolean evaluatesToTrue, PsiAssignmentExpression parent, final boolean onTheFly) {
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   private boolean skipReportingConstantCondition(StandardInstructionVisitor visitor, PsiElement psiAnchor, boolean evaluatesToTrue) {
@@ -581,15 +590,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return false;
   }
 
-  private static boolean onTheLeftSideOfConditionalAssignment(final PsiElement psiAnchor) {
-    final PsiElement parent = psiAnchor.getParent();
-    if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression expression = (PsiAssignmentExpression)parent;
-      if (expression.getLExpression() == psiAnchor) return true;
-    }
-    return false;
-  }
-
   @Nullable
   private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
     SimplifyBooleanExpressionFix fix = createIntention(element, value);
@@ -626,7 +626,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   @NotNull
-  private static LocalQuickFix createSimplifyToAssignmentFix() {
+  protected static LocalQuickFix createSimplifyToAssignmentFix() {
     return new LocalQuickFix() {
       @NotNull
       @Override

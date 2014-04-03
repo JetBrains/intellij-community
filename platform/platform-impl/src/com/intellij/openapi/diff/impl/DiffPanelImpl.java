@@ -347,8 +347,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         myPanel.removeTopComponent(myTopMessageDiffPanel);
       }
       LineBlocks blocks = myData.updateEditors();
-      setLineBlocks(blocks);
-      if (blocks.getCount() == 0) {
+      setLineBlocks(blocks != null ? blocks : LineBlocks.EMPTY);
+      if (blocks != null && blocks.getCount() == 0) {
         if (myData.isContentsEqual()) {
           setFileContentsAreIdentical();
         }
@@ -420,7 +420,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     setTitle(title, false);
   }
 
-  private void setLineBlocks(LineBlocks blocks) {
+  private void setLineBlocks(@NotNull LineBlocks blocks) {
     myLineBlocks = blocks;
     mySplitter.redrawDiffs();
     updateStatusBar();

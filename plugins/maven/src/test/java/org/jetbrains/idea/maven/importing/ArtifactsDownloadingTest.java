@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
@@ -181,7 +181,7 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
                            "<mirrors>" +
                            "  <mirror>" +
                            "    <id>central</id>" +
-                           "    <url>" + VfsUtil.pathToUrl(remoteRepo) + "</url>" +
+                           "    <url>" + VfsUtilCore.pathToUrl(remoteRepo) + "</url>" +
                            "    <mirrorOf>*</mirrorOf>" +
                            "  </mirror>" +
                            "</mirrors>" +

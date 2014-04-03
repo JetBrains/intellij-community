@@ -298,6 +298,10 @@
     <action id="Rerun">
       <keyboard-shortcut first-keystroke="control F5"/>
     </action>
+    <action id="RerunTests">
+      <keyboard-shortcut first-keystroke="control meta R"/>
+      <keyboard-shortcut first-keystroke="shift alt R"/>
+    </action>
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control shift F10"/>
     </action>

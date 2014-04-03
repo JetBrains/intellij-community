@@ -68,7 +68,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final VirtualFile a = createFileInCommand("a.txt", "test");
     checkin();
 
-    editFileInCommand(myProject, a, "tset");
+    VcsTestUtil.editFileInCommand(myProject, a, "tset");
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
@@ -107,7 +107,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
+    VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -127,7 +127,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final VirtualFile unv = createFileInCommand(tree.mySourceDir, "unv.txt", "***");
     final File wasUnversioned = new File(unv.getPath());
 
-    moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
+    VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -159,7 +159,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     checkin();
     runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
 
-    renameFileInCommand(myProject, tree.mySourceDir, "newName");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -187,8 +187,8 @@ public class SvnRollbackTest extends Svn17TestCase {
     checkin();
     runAndVerifyStatus();
 
-    editFileInCommand(myProject, innerFile, "some content");
-    renameFileInCommand(myProject, tree.mySourceDir, "newName");
+    VcsTestUtil.editFileInCommand(myProject, innerFile, "some content");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -226,16 +226,16 @@ public class SvnRollbackTest extends Svn17TestCase {
                       File.separator + "inner1" + File.separator + "inner2" + File.separator +
                       "inner3" + File.separator + "deep.txt");
 
-    editFileInCommand(myProject, innerFile, "some content");
+    VcsTestUtil.editFileInCommand(myProject, innerFile, "some content");
     final File inner2Before = new File(inner2.getPath());
-    renameFileInCommand(myProject, inner2, "newName2");
+    VcsTestUtil.renameFileInCommand(myProject, inner2, "newName2");
     final File wasU2 = new File(deepUNversioned.getPath());
     final File inner2After = new File(inner2.getPath());
     final File wasInnerFileAfter = new File(innerFile.getPath());
     final File wasInnerFile1After = new File(innerFile1.getPath());
     final File wasLowestDirAfter = new File(inner3.getPath());
 
-    renameFileInCommand(myProject, tree.mySourceDir, "newNameSource");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newNameSource");
 
     Assert.assertTrue(! wasU.exists());
     Assert.assertTrue(! wasU2.exists());
@@ -278,10 +278,10 @@ public class SvnRollbackTest extends Svn17TestCase {
     setProperty(fileBefore, "abc", "cde");
     Assert.assertEquals("cde", getProperty(new File(innerFile.getPath()), "abc"));
     final File innerBefore = new File(inner.getPath());
-    renameFileInCommand(myProject, inner, "innerNew");
+    VcsTestUtil.renameFileInCommand(myProject, inner, "innerNew");
     final File innerAfter = new File(inner.getPath());
     final File fileAfter = new File(innerFile.getPath());
-    renameFileInCommand(myProject, tree.mySourceDir, "newName");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -326,8 +326,8 @@ public class SvnRollbackTest extends Svn17TestCase {
 
     final FilePath fpSource = new FilePathImpl(new File(tree.mySourceDir.getPath()), true);
     final FilePath fpT11 = new FilePathImpl(new File(tree.myTargetFiles.get(0).getPath()), false);
-    deleteFileInCommand(myProject, tree.mySourceDir);
-    deleteFileInCommand(myProject, tree.myTargetFiles.get(0));
+    VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
+    VcsTestUtil.deleteFileInCommand(myProject, tree.myTargetFiles.get(0));
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -379,7 +379,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     checkin();
 
     final String editedText = "s1 edited";
-    editFileInCommand(myProject, tree.myS1File, editedText);
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, editedText);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile unverionedDir = createDirInCommand(tree.mySourceDir, "unverionedDir");
     final String unvText = "unv content";
@@ -387,7 +387,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasUnvDir = new File(unverionedDir.getPath());
     final File wasUnvFile = new File(unvFile.getPath());
 
-    renameFileInCommand(myProject, tree.mySourceDir, "renamed");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -424,7 +424,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     myChangeListManager.ensureUpToDate(false);
     Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
 
-    renameFileInCommand(myProject, tree.mySourceDir, "renamed");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -458,7 +458,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     myChangeListManager.ensureUpToDate(false);
     Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
 
-    renameFileInCommand(myProject, tree.mySourceDir, "renamed");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -482,9 +482,9 @@ public class SvnRollbackTest extends Svn17TestCase {
     checkin();
 
     final String editedText = "s1 edited";
-    editFileInCommand(myProject, tree.myS1File, editedText);
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, editedText);
 
-    renameFileInCommand(myProject, tree.mySourceDir, "renamed");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -503,10 +503,10 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File was2 = new File(tree.myS2File.getPath());
 
     final String editedText = "s1 edited";
-    editFileInCommand(myProject, tree.myS1File, editedText);
-    editFileInCommand(myProject, tree.myS2File, "s2 edited");
+    VcsTestUtil.editFileInCommand(myProject, tree.myS1File, editedText);
+    VcsTestUtil.editFileInCommand(myProject, tree.myS2File, "s2 edited");
 
-    renameFileInCommand(myProject, tree.mySourceDir, "renamed");
+    VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -526,7 +526,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     checkin();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final File wasFile = new File(tree.myS1File.getPath());
-    deleteFileInCommand(myProject, tree.myS1File);
+    VcsTestUtil.deleteFileInCommand(myProject, tree.myS1File);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -547,7 +547,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasFile = new File(tree.mySourceDir.getPath());
     final File wasFileS1 = new File(tree.myS1File.getPath());
     final File wasFileS2 = new File(tree.myS2File.getPath());
-    deleteFileInCommand(myProject, tree.mySourceDir);
+    VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -589,8 +589,8 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasFile2 = new File(dir.getPath());
     final File wasFile3 = new File(f2.getPath());
 
-    deleteFileInCommand(myProject, f1);
-    deleteFileInCommand(myProject, dir);
+    VcsTestUtil.deleteFileInCommand(myProject, f1);
+    VcsTestUtil.deleteFileInCommand(myProject, dir);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -617,7 +617,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File wasInitially = new File(tree.mySourceDir.getPath());
     Assert.assertTrue(wasInitially.exists());
 
-    moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
+    VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
     Assert.assertTrue(!wasInitially.exists());
 
     myDirtyScopeManager.markEverythingDirty();
@@ -627,7 +627,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final File was = new File(tree.mySourceDir.getPath());
     Assert.assertNotSame(wasInitially, was);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    deleteFileInCommand(myProject, tree.mySourceDir);
+    VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
 
     runAndVerifyStatusSorted(
       "! root" + File.separator + "target" + File.separator + "source",

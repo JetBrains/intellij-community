@@ -178,6 +178,14 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA122406() throws Exception {
+    doTest();
+  }
+
+  public void testNestedCallsInsideLambdaReturnExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

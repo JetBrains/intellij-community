@@ -184,7 +184,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       locationFileName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      locationFileName = getSourcePosition().getFile().getName();
+      locationFileName = getFileName();
     }
     final int locationLine = location.lineNumber();
     if (event instanceof MethodEntryEvent) {

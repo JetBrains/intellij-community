@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Ref;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.jar.JarFile;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
@@ -72,8 +74,8 @@ public class JarFileSystemTest extends IdeaTestCase {
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
 
-    final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "entry.txt");
-    assertContent(entry, "test");
+    final VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
+    assertContent(entry, "");
 
     final Ref<Boolean> updated = Ref.create(false);
     ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(
@@ -91,12 +93,22 @@ public class JarFileSystemTest extends IdeaTestCase {
       }
     );
 
-    IoTestUtil.writeEntry(jar, "entry.txt", "update");
+    IoTestUtil.writeEntry(jar, JarFile.MANIFEST_NAME, "update");
     vFile.refresh(false, false);
 
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertContent(entry, "update");
+  }
+
+  public void testInvalidJar() throws Exception {
+    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
+    assertNotNull(vFile);
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + java.util.jar.JarFile.MANIFEST_NAME);
+    assertNotNull(manifest);
+    VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
+    assertNotNull(classFile);
   }
 
   private String getJdkRtPath(String relativePath) {

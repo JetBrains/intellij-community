@@ -19,9 +19,11 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.graph.ClickGraphAction;
+import com.intellij.vcs.log.graph.MouseOverAction;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.ui.render.GraphCommitCell;
+import com.intellij.vcs.log.newgraph.render.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -42,7 +44,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 

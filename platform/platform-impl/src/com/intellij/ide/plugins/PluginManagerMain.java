@@ -80,6 +80,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Konstantin Bulenkov
  */
 public abstract class PluginManagerMain implements Disposable {
+  public static final String JETBRAINS_VENDOR = "JetBrains";
   public static Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManagerMain");
 
   @NonNls private static final String TEXT_PREFIX = "<html><head>" +
@@ -122,6 +123,10 @@ public abstract class PluginManagerMain implements Disposable {
   public PluginManagerMain(
     PluginManagerUISettings uiSettings) {
     myUISettings = uiSettings;
+  }
+
+  public static boolean isJetBrainsPlugin(@NotNull IdeaPluginDescriptor plugin) {
+    return JETBRAINS_VENDOR.equals(plugin.getVendor());
   }
 
   protected void init() {

@@ -19,7 +19,6 @@ import static com.intellij.util.net.ssl.CertificateWrapper.CommonField;
 public class CertificateInfoPanel extends JPanel {
   private static DateFormat DATE_FORMAT = DateFormat.getDateInstance(DateFormat.SHORT);
 
-  private JPanel myPanel;
   private final CertificateWrapper myCertificateWrapper;
 
   public CertificateInfoPanel(@NotNull X509Certificate certificate) {
@@ -29,25 +28,23 @@ public class CertificateInfoPanel extends JPanel {
     FormBuilder builder = FormBuilder.createFormBuilder();
 
     // I'm not using separate panels and form builders to preserve alignment of labels
-    builder = updateBuilderWithTitle(builder, "Issued To");
-    builder = updateBuilderWithPrincipalData(builder, myCertificateWrapper.getSubjectFields());
-    builder = updateBuilderWithTitle(builder, "Issued By");
-    builder = updateBuilderWithPrincipalData(builder, myCertificateWrapper.getIssuerFields());
-    builder = updateBuilderWithTitle(builder, "Validity Period");
+    updateBuilderWithTitle(builder, "Issued To");
+    updateBuilderWithPrincipalData(builder, myCertificateWrapper.getSubjectFields());
+    updateBuilderWithTitle(builder, "Issued By");
+    updateBuilderWithPrincipalData(builder, myCertificateWrapper.getIssuerFields());
+    updateBuilderWithTitle(builder, "Validity Period");
     String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
     String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
     builder = builder
       .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
       .addLabeledComponent("Valid from:", createColoredComponent(notBefore, "not yet valid", myCertificateWrapper.isNotYetValid()))
       .addLabeledComponent("Valid until:", createColoredComponent(notAfter, "expired", myCertificateWrapper.isExpired()));
-    builder = builder.setIndent(0);
-    builder = updateBuilderWithTitle(builder, "Fingerprints");
-    builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
-    builder = builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint())));
-    builder = builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint())));
+    builder.setIndent(0);
+    updateBuilderWithTitle(builder, "Fingerprints");
+    builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
+    builder.addLabeledComponent("SHA-256:", getTextPane(formatHex(myCertificateWrapper.getSha256Fingerprint())));
+    builder.addLabeledComponent("SHA-1:", getTextPane(formatHex(myCertificateWrapper.getSha1Fingerprint())));
     add(builder.getPanel(), BorderLayout.NORTH);
-
-    SimpleColoredComponent component = new SimpleColoredComponent();
   }
 
   @NotNull
@@ -71,7 +68,7 @@ public class CertificateInfoPanel extends JPanel {
     return myCertificateWrapper.getCertificate();
   }
 
-  private static FormBuilder updateBuilderWithPrincipalData(FormBuilder builder, Map<String, String> fields) {
+  private static void updateBuilderWithPrincipalData(FormBuilder builder, Map<String, String> fields) {
     builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     for (CommonField field : CommonField.values()) {
       String value = fields.get(field.getShortName());
@@ -81,11 +78,11 @@ public class CertificateInfoPanel extends JPanel {
       String label = String.format("<html>%s (<b>%s</b>)</html>", field.getShortName(), field.getLongName());
       builder = builder.addLabeledComponent(label, new JBLabel(value));
     }
-    return builder.setIndent(0);
+    builder.setIndent(0);
   }
 
-  private static FormBuilder updateBuilderWithTitle(FormBuilder builder, String title) {
-    return builder.addComponent(new TitledSeparator(title), IdeBorderFactory.TITLED_BORDER_TOP_INSET);
+  private static void updateBuilderWithTitle(FormBuilder builder, String title) {
+    builder.addComponent(new TitledSeparator(title), IdeBorderFactory.TITLED_BORDER_TOP_INSET);
   }
 
   private static JComponent getTextPane(String text) {

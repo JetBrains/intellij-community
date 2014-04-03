@@ -17,8 +17,9 @@
 package com.intellij.vcs.log.newgraph.impl;
 
 import com.intellij.vcs.log.GraphCommit;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphBuilder;
+import com.intellij.vcs.log.facade.graph.permanent.PermanentGraphLayoutBuilder;
 import com.intellij.vcs.log.newgraph.AbstractTestWithTextFile;
-import com.intellij.vcs.log.newgraph.GraphFlags;
 import com.intellij.vcs.log.newgraph.PermanentGraph;
 import com.intellij.vcs.log.newgraph.PermanentGraphLayout;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
@@ -41,8 +42,7 @@ public class GraphLayoutBuilderTest extends AbstractTestWithTextFile {
   @Override
   protected void runTest(String in, String out) {
     List<GraphCommit> commits = SimpleCommitListParser.parseCommitList(in);
-    GraphFlags flags = new GraphFlags(commits.size());
-    final PermanentGraph graph = PermanentGraphBuilder.build(flags.getSimpleNodeFlags(), commits).first;
+    final PermanentGraph graph = PermanentGraphBuilder.build(commits).first;
 
     DfsUtil dfsUtil = new DfsUtil(commits.size());
     PermanentGraphLayout graphLayout = PermanentGraphLayoutBuilder.build(dfsUtil, graph, new Comparator<Integer>() {

@@ -63,6 +63,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myParentDirectory;
   private JButton myTestButton; // test repository
   private JTextField myDirectoryName;
+  private JLabel myRepositoryUrlLabel;
 
   @NotNull private String myTestURL; // the repository URL at the time of the last test
   @Nullable private Boolean myTestResult; // the test result of the last test or null if not tested
@@ -70,13 +71,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull protected final Project myProject;
   @NotNull protected final String myVcsDirectoryName;
 
-  public CloneDvcsDialog(@NotNull Project project, @NotNull String vcsDirectoryName) {
+  public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     super(project, true);
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
     init();
     initListeners();
     setTitle(DvcsBundle.getString("clone.title"));
+    myRepositoryUrlLabel.setText(DvcsBundle.message("clone.repository.url", displayName));
     setOKButtonText(DvcsBundle.getString("clone.button"));
   }
 

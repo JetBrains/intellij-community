@@ -46,9 +46,13 @@ class NSScrollerHelper {
   private static final EventListenerList ourListeners = new EventListenerList();
 
   static {
-    if (SystemInfo.isMac) {
+    if (isOverlayScrollbarSupported()) {
       initNotificationObserver();
     }
+  }
+
+  private static boolean isOverlayScrollbarSupported() {
+    return SystemInfo.isMac && SystemInfo.isMacOSMountainLion;
   }
 
   private static void initNotificationObserver() {
@@ -77,7 +81,7 @@ class NSScrollerHelper {
 
   @Nullable
   public static Style getScrollerStyle() {
-    if (!SystemInfo.isMac) return null;
+    if (!isOverlayScrollbarSupported()) return null;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

@@ -45,24 +45,19 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     myFilter = filter;
   }
 
-  protected void createOrWaitPrepare(DebugProcessImpl debugProcess, SourcePosition classPosition) {
-    super.createOrWaitPrepare(debugProcess, classPosition);
-  }
-
   protected void createRequestForPreparedClass(DebugProcessImpl debugProcess, ReferenceType classType) {
     try {
       final CompoundPositionManager positionManager = debugProcess.getPositionManager();
-      final SourcePosition startPosition = getSourcePosition();
-      List<Location> locations = positionManager.locationsOfLine(classType, startPosition);
+      List<Location> locations = positionManager.locationsOfLine(classType, myCustomPosition);
 
       if (locations.isEmpty()) {
         // sometimes first statements are mapped to some weird line number, or there are no executable instructions at first statement's line
         // so if lambda or method body spans for more than one lines, try get some locations from these lines
         final int lastLine = myFilter.getLastStatementLine();
         if (lastLine >= 0) {
-          int nextLine = startPosition.getLine() + 1;
+          int nextLine = myCustomPosition.getLine() + 1;
           while (nextLine <= lastLine && locations.isEmpty()) {
-            locations = positionManager.locationsOfLine(classType, SourcePosition.createFromLine(startPosition.getFile(), nextLine++));
+            locations = positionManager.locationsOfLine(classType, SourcePosition.createFromLine(myCustomPosition.getFile(), nextLine++));
           }
         }
       }

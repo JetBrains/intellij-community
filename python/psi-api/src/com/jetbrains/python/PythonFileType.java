@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
     if (CharsetToolkit.hasUTF8Bom(content)) {
       return CharsetToolkit.UTF8;
     }

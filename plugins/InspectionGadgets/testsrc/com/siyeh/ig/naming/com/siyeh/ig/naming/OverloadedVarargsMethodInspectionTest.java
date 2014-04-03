@@ -37,4 +37,13 @@ public class OverloadedVarargsMethodInspectionTest extends LightInspectionTestCa
            "  public void /*Overloaded variable argument method 'overload()'*/overload/**/(int p1, String p2, String... p3) {}" +
            "}");
   }
+
+  public void testWarnWhenSuperMethod() {
+    doTest("class Super {" +
+           "  public void method() {}" +
+           "}" +
+           "class Overload extends Super {" +
+           "  public void /*Overloaded variable argument method 'method()'*/method/**/(String... ss) {}" +
+           "}");
+  }
 }

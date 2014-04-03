@@ -22,6 +22,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.nameResolver.FQNamesProvider;
+import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -45,7 +47,8 @@ public class PyCallExpressionHelper {
   /**
    * TODO: Copy/Paste with {@link com.jetbrains.python.psi.PyArgumentList#addArgument(com.jetbrains.python.psi.PyExpression)}
    * Adds an argument to the end of argument list.
-   * @param us the arg list
+   *
+   * @param us         the arg list
    * @param expression what to add
    */
   public static void addArgument(PyCallExpression us, PyExpression expression) {
@@ -58,7 +61,7 @@ public class PyCallExpressionHelper {
    * Tries to interpret a call as a call to built-in {@code classmethod} or {@code staticmethod}.
    *
    * @param redefiningCall the possible call, generally a result of chasing a chain of assignments
-   * @param us              any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
+   * @param us             any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
    * @return a pair of wrapper name and wrapped function; for {@code staticmethod(foo)} it would be ("staticmethod", foo).
    */
   @Nullable
@@ -115,8 +118,8 @@ public class PyCallExpressionHelper {
       return (PyClass)resolved;
     }
     else if (resolved instanceof PyFunction) {
-        final PyFunction pyFunction = (PyFunction) resolved;
-        return pyFunction.getContainingClass();
+      final PyFunction pyFunction = (PyFunction)resolved;
+      return pyFunction.getContainingClass();
     }
 
     return null;
@@ -146,11 +149,11 @@ public class PyCallExpressionHelper {
       }
     }
     if (resolved instanceof Callable) {
-      return (Callable) resolved;
+      return (Callable)resolved;
     }
     return null;
   }
-  
+
 
   @Nullable
   public static PyCallExpression.PyMarkedCallee resolveCallee(PyCallExpression us, PyResolveContext resolveContext) {
@@ -209,19 +212,19 @@ public class PyCallExpressionHelper {
     }
     if (resolved instanceof Callable) {
       PyFunction.Modifier modifier = resolved instanceof PyFunction
-                                   ? ((PyFunction)resolved).getModifier()
-                                   : null;
+                                     ? ((PyFunction)resolved).getModifier()
+                                     : null;
       if (modifier == null && wrappedModifier != null) {
         modifier = wrappedModifier;
       }
       boolean isByInstance = isConstructorCall || isQualifiedByInstance((Callable)resolved, qualifiers, context)
                              || resolved instanceof PyBoundFunction;
-      PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
+      PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size() - 1);
       boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, context);
       final Callable callable = (Callable)resolved;
 
       implicitOffset += getImplicitArgumentCount(callable, modifier, isConstructorCall, isByInstance, isByClass);
-      implicitOffset = implicitOffset < 0? 0: implicitOffset; // wrong source can trigger strange behaviour
+      implicitOffset = implicitOffset < 0 ? 0 : implicitOffset; // wrong source can trigger strange behaviour
       return new PyCallExpression.PyMarkedCallee(callable, modifier, implicitOffset,
                                                  resolveResult != null ? resolveResult.isImplicit() : false);
     }
@@ -254,11 +257,11 @@ public class PyCallExpressionHelper {
   /**
    * Finds how many arguments are implicit in a given call.
    *
-   * @param callable      resolved method which is being called; non-methods immediately return 0.
-   * @param flags         set of flags for the call
-   * @param isByInstance  true if the call is known to be by instance (not by class).
+   * @param callable     resolved method which is being called; non-methods immediately return 0.
+   * @param flags        set of flags for the call
+   * @param isByInstance true if the call is known to be by instance (not by class).
    * @return a non-negative number of parameters that are implicit to this call. E.g. for a typical method call 1 is returned
-   *         because one parameter ('self') is implicit.
+   * because one parameter ('self') is implicit.
    */
   private static int getImplicitArgumentCount(
     Callable callable,
@@ -449,7 +452,7 @@ public class PyCallExpressionHelper {
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
           if (providedType instanceof PyCallableType) {
-            return ((PyCallableType) providedType).getCallType(context, (PyReferenceExpression)callee);
+            return ((PyCallableType)providedType).getCallType(context, (PyReferenceExpression)callee);
           }
           if (target instanceof Callable) {
             final Callable callable = (Callable)target;
@@ -565,5 +568,18 @@ public class PyCallExpressionHelper {
       return PyUnionType.union(superTypes);
     }
     return null;
+  }
+
+  /**
+   * Checks if expression callee's name matches one of names, provided by appropriate {@link com.jetbrains.python.nameResolver.FQNamesProvider}
+   *
+   * @param expression     call expression
+   * @param namesProviders name providers to check name against
+   * @return true if matches
+   * @see com.jetbrains.python.nameResolver
+   */
+  public static boolean isCallee(@NotNull final PyCallExpression expression, @NotNull final FQNamesProvider... namesProviders) {
+    final PyExpression callee = expression.getCallee();
+    return (callee != null) && NameResolverTools.isName(callee, namesProviders);
   }
 }

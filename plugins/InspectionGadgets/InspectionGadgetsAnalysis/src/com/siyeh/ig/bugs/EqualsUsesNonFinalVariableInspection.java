@@ -59,34 +59,12 @@ public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
     return new EqualsUsesNonFinalVariableVisitor();
   }
 
-  private static class EqualsUsesNonFinalVariableVisitor
-    extends BaseInspectionVisitor {
+  private static class EqualsUsesNonFinalVariableVisitor extends NonFinalFieldsVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       if (MethodUtils.isEquals(method)) {
-        method.accept(new JavaRecursiveElementVisitor() {
-
-          @Override
-          public void visitClass(PsiClass aClass) {
-            // Do not recurse into.
-          }
-
-          @Override
-          public void visitReferenceExpression(
-            @NotNull PsiReferenceExpression expression) {
-            super.visitReferenceExpression(expression);
-            final PsiElement element = expression.resolve();
-            if (!(element instanceof PsiField)) {
-              return;
-            }
-            final PsiField field = (PsiField)element;
-            if (field.hasModifierProperty(PsiModifier.FINAL)) {
-              return;
-            }
-            registerError(expression, field);
-          }
-        });
+        checkUsedNonFinalFields(method);
       }
     }
   }

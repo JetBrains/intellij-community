@@ -111,4 +111,20 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   protected PsiClass addBaseScript() {
     myFixture.addClass("package groovy.transform; public @interface BaseScript {}")
   }
+
+  protected PsiClass addImmutable() {
+    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+  }
+
+  protected PsiClass addTupleConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+  }
+
+  protected PsiClass addCanonical() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+  }
+
+  protected PsiClass addInheritConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+  }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -54,6 +58,10 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -72,6 +80,23 @@ import java.util.regex.Pattern;
 public class UIUtil {
 
   @NonNls public static final String BORDER_LINE = "<hr size=1 noshade>";
+  private static final StyleSheet DEFAULT_HTML_KIT_CSS;
+
+  static {
+    // save the default JRE CSS and ..
+    HTMLEditorKit kit = new HTMLEditorKit();
+    DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
+    // .. erase global ref to this CSS so no one can alter it
+    kit.setStyleSheet(null);
+  }
+
+  public static int getMultiClickInterval() {
+    Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
+    if (property instanceof Integer) {
+      return (Integer)property;
+    }
+    return 500;
+  }
 
   private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
@@ -1897,18 +1922,37 @@ public class UIUtil {
     return getBorderColor();
   }
 
-  public static HTMLEditorKit getHTMLEditorKit() {
-    final HTMLEditorKit kit = new HTMLEditorKit();
+  @Nullable
+  public static StyleSheet loadStyleSheet(@Nullable URL url) {
+    if (url == null) return null;
+    try {
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      return styleSheet;
+    }
+    catch (IOException e) {
+      LOG.warn(url + " loading failed", e);
+      return null;
+    }
+  }
 
+  public static HTMLEditorKit getHTMLEditorKit() {
     Font font = getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
-    final StyleSheet styleSheet = kit.getStyleSheet();
-    styleSheet.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
-    kit.setStyleSheet(styleSheet);
+    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
 
-    return kit;
+    final StyleSheet style = new StyleSheet();
+    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+    style.addRule(customCss);
+
+    return new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return style;
+      }
+    };
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -2616,7 +2660,10 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
+    if (component.getBackground().equals(getPanelBackground()) 
+        || component instanceof JScrollPane 
+        || component instanceof JViewport 
+        || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
       }
@@ -2804,5 +2851,36 @@ public class UIUtil {
          }
       }
     });
+  }
+
+  public static void playSoundFromResource(final String resourceName) {
+    final Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return;
+    playSoundFromStream(new Factory<InputStream>() {
+      @Override
+      public InputStream create() {
+        return callerClass.getResourceAsStream(resourceName);
+      }
+    });
+  }
+
+  public static void playSoundFromStream(final Factory<InputStream> streamProducer) {
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+      public void run() {
+        try {
+          Clip clip = AudioSystem.getClip();
+          InputStream stream = streamProducer.create();
+          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
+          clip.open(inputStream);
+
+          clip.start();
+        } catch (Exception ignore) {
+          LOG.info(ignore);
+        }
+      }
+    }).start();
   }
 }

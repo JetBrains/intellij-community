@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.IconLoader;
@@ -34,6 +36,7 @@ public class DarculaInstaller {
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
       }
     }
+    update();
   }
 
   public static void install() {
@@ -45,5 +48,11 @@ public class DarculaInstaller {
         EditorColorsManager.getInstance().setGlobalScheme(scheme);
       }
     }
+    update();
+  }
+
+  protected static void update() {
+    UISettings.getInstance().fireUISettingsChanged();
+    ActionToolbarImpl.updateAllToolbarsImmediately();
   }
 }

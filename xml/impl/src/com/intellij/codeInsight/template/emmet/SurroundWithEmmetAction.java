@@ -36,7 +36,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return EmmetOptions.getInstance().isEmmetEnabled() && new ZenCodingTemplate().isApplicable(file, editor.getCaretModel().getOffset(), true);
+    return EmmetOptions.getInstance().isEmmetEnabled() && new ZenCodingTemplate().isApplicable(file, editor.getSelectionModel().getSelectionStart(), true);
   }
 
   @NotNull

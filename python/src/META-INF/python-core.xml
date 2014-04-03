@@ -356,8 +356,10 @@
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
     <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
+    <elementDescriptionProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralElementDescriptionProvider"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
     <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
+    <usageTargetProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralUsageTargetProvider"/>
     <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
 
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
@@ -388,15 +390,18 @@
                   order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
     <findUsagesHandlerFactory implementation="com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory" id="Python"
                               order="last, before default"/>
     <readWriteAccessDetector implementation="com.jetbrains.python.findUsages.PyReadWriteAccessDetector"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralFindUsagesHandlerFactory"/>
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyClassProcessor" order="before pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
@@ -522,8 +527,9 @@
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
   </extensions>
 
-  <extensionPoints>
+  <extensionPoints>    
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
+    <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>

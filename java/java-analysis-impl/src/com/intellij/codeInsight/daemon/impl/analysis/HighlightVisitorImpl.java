@@ -760,7 +760,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
       myHolder.add(HighlightClassUtil.checkThingNotAllowedInInterface(method, aClass));
     }
-    if (!myHolder.hasErrorResults() && method.hasModifierProperty(PsiModifier.DEFAULT)) {
+    if (!myHolder.hasErrorResults() && (method.hasModifierProperty(PsiModifier.DEFAULT) || 
+                                        aClass != null && aClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC))) {
       myHolder.add(HighlightUtil.checkExtensionMethodsFeature(method, myLanguageLevel, myFile));
     }
 
@@ -1211,9 +1212,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
     myHolder.add(HighlightUtil.checkMethodReferencesFeature(expression, myLanguageLevel,myFile));
-    JavaResolveResult result;
+    final JavaResolveResult result;
+    final JavaResolveResult[] results;
     try {
-      result = expression.advancedResolve(true);
+      results = expression.multiResolve(true);
+      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     }
     catch (IndexNotReadyException e) {
       return;
@@ -1304,6 +1307,35 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         typeParameters = ArrayUtil.mergeArrays(typeParameters, containingClass.getTypeParameters());
       }
       myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments(typeParameters, expression, result.getSubstitutor()));
+    }
+
+    if (!myHolder.hasErrorResults()) {
+      if (results.length == 0) {
+        String description = null;
+        if (expression.isConstructor()) {
+          final PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
+
+          if (containingClass != null) {
+            if (!myHolder.add(HighlightClassUtil.checkInstantiationOfAbstractClass(containingClass, expression)) &&
+                !myHolder.add(GenericsHighlightUtil.checkEnumInstantiation(expression, containingClass)) &&
+                containingClass.isPhysical()) {
+              description = JavaErrorMessages.message("cannot.resolve.constructor", containingClass.getName());
+            }
+          }
+        }
+        else {
+          description = JavaErrorMessages.message("cannot.resolve.method", expression.getReferenceName());
+        }
+
+        if (description != null) {
+          final PsiElement referenceNameElement = expression.getReferenceNameElement();
+          final HighlightInfo highlightInfo =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).descriptionAndTooltip(description).range(referenceNameElement).create();
+          myHolder.add(highlightInfo);
+          final TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);
+          QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QuickFixFactory.getInstance().createCreateMethodFromUsageFix(expression));
+        }
+      }
     }
   }
 

@@ -107,7 +107,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @NotNull
   @Override
-  public Map<Key, String> map(FileContent inputData) {
+  public Map<Key, String> map(@NotNull FileContent inputData) {
     CharSequence text = inputData.getContentAsText();
     if(CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
       return Collections.emptyMap();

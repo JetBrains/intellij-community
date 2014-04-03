@@ -207,7 +207,7 @@ public class CompileDriver {
       compileScope = projectScope;
     }
     else {
-      CompileScope scopeWithArtifacts = ArtifactCompileScope.createScopeWithArtifacts(projectScope, ArtifactUtil.getArtifactWithOutputPaths(myProject), false);
+      CompileScope scopeWithArtifacts = ArtifactCompileScope.createScopeWithArtifacts(projectScope, ArtifactUtil.getArtifactWithOutputPaths(myProject));
       compileScope = addAdditionalRoots(scopeWithArtifacts, ALL_EXCEPT_SOURCE_PROCESSING);
     }
     doRebuild(callback, null, true, compileScope);
@@ -280,7 +280,9 @@ public class CompileDriver {
           }
           finally {
             result.set(COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-            CompilerCacheManager.getInstance(myProject).flushCaches();
+            if (!myProject.isDisposed()) {
+              CompilerCacheManager.getInstance(myProject).flushCaches();
+            }
           }
         }
       };

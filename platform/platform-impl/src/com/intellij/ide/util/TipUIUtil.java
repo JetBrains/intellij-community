@@ -44,7 +44,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 
@@ -205,8 +204,6 @@ public class TipUIUtil {
   public static JEditorPane createTipBrowser() {
     JEditorPane browser = new JEditorPane();
     browser.setEditable(false);
-    HTMLEditorKit editorKit = new HTMLEditorKit();
-    browser.setEditorKit(editorKit);
     browser.setBackground(UIUtil.getTextFieldBackground());
     browser.addHyperlinkListener(
       new HyperlinkListener() {
@@ -217,16 +214,15 @@ public class TipUIUtil {
         }
       }
     );
-    try {
-      // set default CSS for plugin tips
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      StyleSheet sheet = new StyleSheet();
-      sheet.loadRules(new InputStreamReader(resource.openStream()), resource);
-      editorKit.setStyleSheet(sheet);
-    }
-    catch (IOException ignored) {
-    }
-
+    URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+    final StyleSheet styleSheet = UIUtil.loadStyleSheet(resource);
+    HTMLEditorKit kit = new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return styleSheet != null ? styleSheet : super.getStyleSheet();
+      }
+    };
+    browser.setEditorKit(kit);
     return browser;
   }
 }

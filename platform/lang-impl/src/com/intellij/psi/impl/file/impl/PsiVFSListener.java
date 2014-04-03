@@ -72,7 +72,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
         myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
         myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
           @Override
-          public void fileTypesChanged(FileTypeEvent e) {
+          public void fileTypesChanged(@NotNull FileTypeEvent e) {
             myFileManager.processFileTypesChanged();
           }
         });

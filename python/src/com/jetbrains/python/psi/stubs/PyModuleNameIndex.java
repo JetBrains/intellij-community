@@ -43,7 +43,7 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   private final DataIndexer<String, Void, FileContent> myDataIndexer = new DataIndexer<String, Void, FileContent>() {
     @NotNull
     @Override
-    public Map<String, Void> map(FileContent inputData) {
+    public Map<String, Void> map(@NotNull FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final String name = file.getName();
       if (PyNames.INIT_DOT_PY.equals(name)) {

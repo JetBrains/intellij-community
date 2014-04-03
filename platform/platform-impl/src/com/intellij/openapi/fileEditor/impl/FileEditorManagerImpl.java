@@ -1772,7 +1772,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    */
   private final class MyFileTypeListener extends FileTypeListener.Adapter {
     @Override
-    public void fileTypesChanged(final FileTypeEvent event) {
+    public void fileTypesChanged(@NotNull final FileTypeEvent event) {
       assertDispatchThread();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {

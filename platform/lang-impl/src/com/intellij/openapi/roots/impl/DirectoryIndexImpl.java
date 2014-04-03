@@ -94,12 +94,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
-    startupManager.registerPreStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        initialize();
-      }
-    });
+    if (ourUseRootIndexOnly) {
+      initialize();
+    } else {
+      startupManager.registerPreStartupActivity(new Runnable() {
+        @Override
+        public void run() {
+          initialize();
+        }
+      });
+    }
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -145,7 +149,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
-      public void fileTypesChanged(FileTypeEvent event) {
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
         doInitialize();
       }
     });

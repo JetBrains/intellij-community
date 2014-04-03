@@ -433,6 +433,9 @@ public class AllIcons {
     public static final Icon Mouse = IconLoader.getIcon("/general/mouse.png"); // 32x32
     public static final Icon MouseShortcut = IconLoader.getIcon("/general/mouseShortcut.png"); // 13x13
     public static final Icon NoAnalysis = IconLoader.getIcon("/general/noAnalysis.png"); // 12x12
+    public static final Icon NotificationError = IconLoader.getIcon("/general/notificationError.png"); // 24x24
+    public static final Icon NotificationInfo = IconLoader.getIcon("/general/notificationInfo.png"); // 24x24
+    public static final Icon NotificationWarning = IconLoader.getIcon("/general/notificationWarning.png"); // 24x24
     public static final Icon OpenProject = IconLoader.getIcon("/general/openProject.png"); // 32x32
     public static final Icon OverridenMethod = IconLoader.getIcon("/general/overridenMethod.png"); // 10x14
     public static final Icon OverridingMethod = IconLoader.getIcon("/general/overridingMethod.png"); // 10x14
@@ -988,8 +991,10 @@ public class AllIcons {
     public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.png"); // 16x16
     public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.png"); // 16x16
     public static final Icon ConfigurationWarning = IconLoader.getIcon("/runConfigurations/configurationWarning.png"); // 16x16
+    public static final Icon HideIgnored = IconLoader.getIcon("/runConfigurations/hideIgnored.png"); // 16x16
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.png"); // 16x16
+    public static final Icon IncludeNonStartedTests_Rerun = IconLoader.getIcon("/runConfigurations/includeNonStartedTests_Rerun.png"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
     public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png"); // 16x16
@@ -1000,6 +1005,7 @@ public class AllIcons {
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.png"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); // 16x16
+    public static final Icon ShowStatistics = IconLoader.getIcon("/runConfigurations/showStatistics.png"); // 16x16
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.png"); // 16x16
     public static final Icon TestFailed = IconLoader.getIcon("/runConfigurations/testFailed.png"); // 16x16

@@ -876,7 +876,7 @@ public class PluginManagerCore {
     final String pathProperty = System.getProperty(PROPERTY_PLUGIN_PATH);
     if (pathProperty == null) return;
 
-    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator); t.hasMoreTokens();) {
+    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparator + ","); t.hasMoreTokens();) {
       String s = t.nextToken();
       final IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML);
       if (ideaPluginDescriptor != null) {

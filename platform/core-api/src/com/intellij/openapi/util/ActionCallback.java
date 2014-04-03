@@ -18,11 +18,11 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ActionCallback implements Disposable {
@@ -182,7 +182,7 @@ public class ActionCallback implements Disposable {
   }
 
   public static class Chunk {
-    private final Set<ActionCallback> myCallbacks = new LinkedHashSet<ActionCallback>();
+    private final Set<ActionCallback> myCallbacks = new OrderedSet<ActionCallback>();
 
     public void add(@NotNull ActionCallback callback) {
       myCallbacks.add(callback);
@@ -191,7 +191,7 @@ public class ActionCallback implements Disposable {
     @NotNull
     public ActionCallback create() {
       if (myCallbacks.isEmpty()) {
-        return new Done();
+        return DONE;
       }
 
       ActionCallback result = new ActionCallback(myCallbacks.size());

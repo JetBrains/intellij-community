@@ -21,10 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-class VcsLogSorter<Commit extends TimedVcsCommit> {
+public class VcsLogSorter {
 
   @NotNull
-  List<Commit> sortByDateTopoOrder(@NotNull List<Commit> commits) {
+  public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull List<Commit> commits) {
     return new VcsLogJoiner.NewCommitIntegrator<Commit>(new ArrayList<Commit>(), commits).getResultList();
   }
 

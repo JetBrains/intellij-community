@@ -125,7 +125,7 @@ public abstract class PlatformIdTableBuilding {
 
     @NotNull
     @Override
-    public Map<TodoIndexEntry, Integer> map(FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData) {
       Map<TodoIndexEntry, Integer> result = ContainerUtil.newTroveMap();
       for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
         for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
@@ -152,7 +152,7 @@ public abstract class PlatformIdTableBuilding {
 
     @Override
     @NotNull
-    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
       if (IndexPatternUtil.getIndexPatternCount() > 0) {
         final CharSequence chars = inputData.getContentAsText();
         final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
@@ -204,7 +204,7 @@ public abstract class PlatformIdTableBuilding {
   public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
     @Override
     @NotNull
-    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
       String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
 
       final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();

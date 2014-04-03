@@ -58,15 +58,17 @@ public class TemplateContext {
   }
 
   public boolean isEnabled(TemplateContextType contextType) {
-    Boolean storedValue = getOwnValue(contextType);
-    if (storedValue == null) {
-      TemplateContextType baseContextType = contextType.getBaseContextType();
-      if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
-        return isEnabled(baseContextType);
+    synchronized (myContextStates) {
+      Boolean storedValue = getOwnValue(contextType);
+      if (storedValue == null) {
+        TemplateContextType baseContextType = contextType.getBaseContextType();
+        if (baseContextType != null && !(baseContextType instanceof EverywhereContextType)) {
+          return isEnabled(baseContextType);
+        }
+        return false;
       }
-      return false;
+      return storedValue.booleanValue();
     }
-    return storedValue.booleanValue();
   }
 
   public void putValue(TemplateContextType context, boolean enabled) {
@@ -92,6 +94,7 @@ public class TemplateContext {
     }
   }
 
+  // used during initialization => no sync
   void setDefaultContext(@NotNull TemplateContext defContext) {
     HashMap<String, Boolean> copy = new HashMap<String, Boolean>(myContextStates);
     myContextStates.clear();
@@ -99,6 +102,7 @@ public class TemplateContext {
     myContextStates.putAll(copy);
   }
 
+  // used during initialization => no sync
   void readTemplateContext(Element element) throws InvalidDataException {
     List options = element.getChildren("option");
     for (Object e : options) {

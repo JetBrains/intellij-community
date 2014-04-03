@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />

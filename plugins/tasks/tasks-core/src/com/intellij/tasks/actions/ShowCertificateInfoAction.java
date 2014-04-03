@@ -4,8 +4,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.CertificateWarningDialog;
-import com.intellij.util.net.ssl.CertificatesManager;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -23,7 +23,7 @@ public class ShowCertificateInfoAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     try {
-      CertificatesManager manager = CertificatesManager.getInstance();
+      CertificateManager manager = CertificateManager.getInstance();
       List<X509Certificate> certificates = manager.getCustomTrustManager().getCertificates();
       if (certificates.isEmpty()) {
         Messages.showInfoMessage(String.format("Key store '%s' is empty", manager.getCacertsPath()), "No Certificates Available");

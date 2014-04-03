@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -95,7 +96,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
     // rev 3
 
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
@@ -141,7 +142,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
@@ -200,7 +201,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
@@ -269,7 +270,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
@@ -328,12 +329,12 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
     // rev4
-    editFileInCommand(myProject, vf, "123\n456\n123\n4");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123\n4");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
@@ -411,9 +412,9 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
-    editFileInCommand(myProject, vf2, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf2, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
     Thread.sleep(100);
@@ -489,7 +490,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3 : f2 changed
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f2);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 
@@ -543,7 +544,7 @@ public class SvnMergeInfoTest extends Svn16TestCase {
 
     // rev 3
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f1);
-    editFileInCommand(myProject, vf, "123\n456\n123");
+    VcsTestUtil.editFileInCommand(myProject, vf, "123\n456\n123");
     Thread.sleep(100);
     runInAndVerifyIgnoreOutput("ci", "-m", "test", trunk.getAbsolutePath());
 

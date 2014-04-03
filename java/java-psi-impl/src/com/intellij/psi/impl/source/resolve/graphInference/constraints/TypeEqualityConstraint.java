@@ -145,4 +145,9 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     result = 31 * result + (myS != null ? myS.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return myT.getPresentableText() + " == " + myS.getPresentableText();
+  }
 }

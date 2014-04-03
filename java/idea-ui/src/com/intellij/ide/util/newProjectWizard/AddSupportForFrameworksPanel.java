@@ -249,7 +249,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
       component = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
                                                        node.getUserObject(), node.getConfigurable());
       if (addToOptions) {
-        myOptionsPanel.add(node.getId(), component.getMainPanel());
+        JPanel panel = component.getMainPanel();
+        JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        myOptionsPanel.add(node.getId(), scrollPane);
       }
       myInitializedOptionsComponents.put(node, component);
     }

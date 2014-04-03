@@ -312,6 +312,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
+  public boolean markNewFilesAsDirty() {
+    return true;
+  }
+
+  @Override
   public int getRank() {
     return 2;
   }

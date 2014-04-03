@@ -380,7 +380,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
     if (generator == null) {
-      LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName(),
+      int offset = callback.getEditor().getCaretModel().getOffset();
+      LOG.error("Emmet is disabled for context for file " + callback.getFileType().getName() + " in offset: " + offset,
                 AttachmentFactory.createAttachment(callback.getEditor().getDocument()));
       return false;
     }

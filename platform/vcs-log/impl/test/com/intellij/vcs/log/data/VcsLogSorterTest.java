@@ -37,7 +37,7 @@ public class VcsLogSorterTest {
   }
 
   private static void doTest(List<TimedVcsCommit> started, List<TimedVcsCommit> expected) {
-    List<TimedVcsCommit> sorted = new VcsLogSorter<TimedVcsCommit>().sortByDateTopoOrder(started);
+    List<TimedVcsCommit> sorted = VcsLogSorter.sortByDateTopoOrder(started);
     assertEquals(toStr(expected), toStr(sorted));
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.ide.caches;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -32,7 +33,7 @@ public class FileContent extends UserDataHolderBase {
   private long myCachedTimeStamp = -1;
   private Boolean myCachedWritable;
 
-  public FileContent(VirtualFile virtualFile) {
+  public FileContent(@NotNull VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
   }
 
@@ -43,6 +44,7 @@ public class FileContent extends UserDataHolderBase {
     isWritable();
   }
 
+  @NotNull
   public byte[] getBytes() throws IOException {
     if (myCachedBytes == null) {
       myCachedBytes = myVirtualFile.contentsToByteArray(false);
@@ -56,6 +58,7 @@ public class FileContent extends UserDataHolderBase {
     myCachedLength = 0;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }

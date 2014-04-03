@@ -66,6 +66,7 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     DumbServiceImpl.getInstance(project).setDumb(true);
     try {
       assertOneElement(((GroovyFile) fooFile).classes);
+      assertFalse(fooFile.isContentsLoaded());
     }
     finally {
       DumbServiceImpl.getInstance(project).setDumb(false);

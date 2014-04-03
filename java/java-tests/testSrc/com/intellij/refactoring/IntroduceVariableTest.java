@@ -433,7 +433,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testLambdaExprNotAccepted() {
-    doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<X>"));
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, "SAM<java.lang.Integer>"));
   }
 
   public void testOneLineLambdaVoidCompatible() {

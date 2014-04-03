@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

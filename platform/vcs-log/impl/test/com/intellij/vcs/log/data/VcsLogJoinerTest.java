@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsRefImpl;
@@ -143,13 +142,7 @@ public class VcsLogJoinerTest {
   }
 
   private static VcsRef ref(String name, String hash) {
-    return new VcsRefImpl(new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        return Integer.parseInt(hash.asString().substring(0, Math.min(4, hash.asString().length())), 16);
-      }
-    }, new SimpleHash(hash), name, new VcsRefType() {
+    return new VcsRefImpl(new SimpleHash(hash), name, new VcsRefType() {
       @Override
       public boolean isBranch() {
         return true;

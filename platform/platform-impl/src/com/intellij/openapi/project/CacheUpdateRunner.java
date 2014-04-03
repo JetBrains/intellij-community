@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,24 +45,27 @@ class CacheUpdateRunner {
   private final Collection<CacheUpdater> myUpdaters;
   private CacheUpdateSession mySession;
 
-  CacheUpdateRunner(Project project, Collection<CacheUpdater> updaters) {
+  CacheUpdateRunner(@NotNull Project project, @NotNull Collection<CacheUpdater> updaters) {
     myProject = project;
     myUpdaters = updaters;
   }
 
-  public int queryNeededFiles(ProgressIndicator indicator) {
+  public int queryNeededFiles(@NotNull ProgressIndicator indicator) {
     // can be queried twice in DumbService  
-    if (mySession == null) {
-      mySession = new CacheUpdateSession(myUpdaters, indicator);
-    }
-    return mySession.getFilesToUpdate().size();
+    return getSession(indicator).getFilesToUpdate().size();
   }
 
-  public int getNumberOfPendingUpdateJobs(ProgressIndicator indicator) {
-    if (mySession == null) {
-      mySession = new CacheUpdateSession(myUpdaters, indicator);
+  public int getNumberOfPendingUpdateJobs(@NotNull ProgressIndicator indicator) {
+    return getSession(indicator).getNumberOfPendingUpdateJobs();
+  }
+
+  @NotNull
+  private CacheUpdateSession getSession(@NotNull ProgressIndicator indicator) {
+    CacheUpdateSession session = mySession;
+    if (session == null) {
+      mySession = session = new CacheUpdateSession(myUpdaters, indicator);
     }
-    return mySession.getNumberOfPendingUpdateJobs();
+    return session;
   }
 
   public void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {

@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTION;
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.shouldProcessMethods;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -115,8 +116,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
+    if (shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
       final NameHint nameHint = processor.getHint(NameHint.KEY);
       final String name = nameHint == null ? null : nameHint.getName(state);
       for (PsiMethod method : getDefEnumMethods()) {

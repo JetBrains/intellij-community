@@ -217,6 +217,9 @@
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
+    <lang.treePatcher language="HTML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
+    <lang.treePatcher language="XML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
+
     <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="XML"
                                        implementationClass="com.intellij.lang.xml.XmlWhiteSpaceFormattingStrategy"/>

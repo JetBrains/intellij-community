@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.ui.BalloonImpl;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -211,6 +209,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       if (layout == null) return null;
       layout.add(balloon);
+      ((BalloonImpl)balloon).startFadeoutTimer(0);
       if (NotificationDisplayType.BALLOON == displayType) {
         FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
           @Override
@@ -220,7 +219,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             }
 
             if (!sticky) {
-              ((BalloonImpl)balloon).startFadeoutTimer(15000);
+              ((BalloonImpl)balloon).startFadeoutTimer(0);
               ((BalloonImpl)balloon).setHideOnClickOutside(true);
             }
             else //noinspection ConstantConditions
@@ -265,7 +264,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final JLabel label = new JLabel(NotificationsUtil.buildHtml(notification, null));
-    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(400, label.getPreferredSize().width) + "px;"));
+    text.setText(NotificationsUtil.buildHtml(notification, "width:" + Math.min(350, label.getPreferredSize().width) + "px;"));
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -305,13 +304,18 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(content);
-    builder.setFillColor(NotificationsUtil.getBackground(notification)).setCloseButtonEnabled(true).setShowCallout(showCallout)
+    builder.setFillColor(new JBColor(Gray._234, Gray._92))
+      .setCloseButtonEnabled(true)
+      .setShowCallout(showCallout)
+      .setShadow(false)
       .setHideOnClickOutside(hideOnClickOutside)
       .setHideOnAction(hideOnClickOutside)
-      .setHideOnKeyOutside(hideOnClickOutside).setHideOnFrameResize(false)
-      .setBorderColor(NotificationsUtil.getBorderColor(notification));
+      .setHideOnKeyOutside(hideOnClickOutside)
+      .setHideOnFrameResize(false)
+      .setBorderColor(new JBColor(Gray._180, Gray._110));
 
     final Balloon balloon = builder.createBalloon();
+    balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
     return balloon;
   }

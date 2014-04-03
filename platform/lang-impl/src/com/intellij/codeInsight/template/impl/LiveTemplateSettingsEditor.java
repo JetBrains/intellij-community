@@ -404,7 +404,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          context.putValue(type, node.isChecked());
+          context.setEnabled(type, node.isChecked());
         }
         onChange.run();
 

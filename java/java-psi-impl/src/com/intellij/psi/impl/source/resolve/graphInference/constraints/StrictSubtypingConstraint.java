@@ -141,4 +141,9 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     result = 31 * result + (myT != null ? myT.hashCode() : 0);
     return result;
   }
+
+  @Override
+  public String toString() {
+    return myS.getPresentableText() + " < " + myT.getPresentableText();
+  }
 }

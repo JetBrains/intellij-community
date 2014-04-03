@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -104,6 +105,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
       highlighter.setGutterIconRenderer(createGutterIconRenderer());
       highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
+      highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
       myHighlighter = highlighter;
     }
     else {

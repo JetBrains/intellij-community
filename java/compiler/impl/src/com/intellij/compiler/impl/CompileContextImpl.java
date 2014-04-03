@@ -26,7 +26,7 @@ import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
@@ -41,7 +41,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -101,7 +100,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myIsAnnotationProcessorsEnabled = CompilerConfiguration.getInstance(project).isAnnotationProcessorsEnabled();
 
     if (compilerSession != null) {
-      final Key sessionId = ExecutionEnvironment.EXECUTION_SESSION_ID_KEY.get(compileScope);
+      final Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(compileScope);
       if (sessionId != null) {
         // in case compilation is started as a part of some execution session, 
         // all compilation tasks should have the same sessionId in order for successive task not to clean messages 
