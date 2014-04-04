@@ -69,7 +69,7 @@
     <action id="DuplicatesForm.SendToRight" />
     
     <action id="$Cut">
-      <keyboard-shortcut first-keystroke="meta X"/>
+      <keyboard-shortcut first-keystroke="meta X"/> <!--disable shift DELETE-->
     </action>
     <action id="$Delete">
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
