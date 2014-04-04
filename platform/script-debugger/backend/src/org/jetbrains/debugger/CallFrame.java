@@ -8,12 +8,14 @@ import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public interface CallFrame {
   /**
-   * @return the scopes known in this frame; ordered, innermost first, global scope last
+   * @return the scopes known in this frame
    */
   @NotNull
-  Scope[] getVariableScopes();
+  List<Scope> getVariableScopes();
 
   /**
    * @return the receiver variable known in this frame

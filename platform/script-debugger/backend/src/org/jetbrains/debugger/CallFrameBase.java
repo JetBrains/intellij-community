@@ -4,12 +4,14 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class CallFrameBase implements CallFrame {
   private final String functionName;
   private final int line;
   private final int column;
 
-  protected NotNullLazyValue<Scope[]> scopes;
+  protected NotNullLazyValue<List<Scope>> scopes;
 
   /**
    * You must initialize {@link #scopes} or override {@link #getVariableScopes()}
@@ -22,7 +24,7 @@ public abstract class CallFrameBase implements CallFrame {
 
   @NotNull
   @Override
-  public Scope[] getVariableScopes() {
+  public List<Scope> getVariableScopes() {
     return scopes.getValue();
   }
 
