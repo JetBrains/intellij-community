@@ -58,7 +58,8 @@ public class GrReferenceResolveUtil {
   private GrReferenceResolveUtil() {
   }
 
-  static boolean resolveImpl(ResolverProcessor processor, GrReferenceExpression place) {
+  static boolean resolveImpl(@NotNull ResolverProcessor processor,
+                             @NotNull GrReferenceExpression place) {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
@@ -93,10 +94,10 @@ public class GrReferenceResolveUtil {
     return true;
   }
 
-  private static boolean processIfJavaLangClass(ResolverProcessor processor,
+  private static boolean processIfJavaLangClass(@NotNull ResolverProcessor processor,
                                                 @Nullable PsiType type,
-                                                GroovyPsiElement resolveContext,
-                                                GrReferenceExpression place) {
+                                                @NotNull GroovyPsiElement resolveContext,
+                                                @NotNull GrReferenceExpression place) {
     if (!(type instanceof PsiClassType)) return true;
 
     final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -111,7 +112,9 @@ public class GrReferenceResolveUtil {
     return true;
   }
 
-  public static boolean processQualifier(PsiScopeProcessor processor, GrExpression qualifier, GrReferenceExpression place) {
+  public static boolean processQualifier(@NotNull PsiScopeProcessor processor,
+                                         @NotNull GrExpression qualifier,
+                                         @NotNull GrReferenceExpression place) {
     PsiType qualifierType = qualifier.getType();
     ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, qualifier);
     if (qualifierType == null || qualifierType == PsiType.VOID) {
@@ -165,10 +168,10 @@ public class GrReferenceResolveUtil {
     return true;
   }
 
-  private static boolean processQualifierType(final PsiScopeProcessor processor,
-                                              final PsiType originalQualifierType,
-                                              final ResolveState state,
-                                              final GrReferenceExpression place) {
+  private static boolean processQualifierType(@NotNull PsiScopeProcessor processor,
+                                              @NotNull PsiType originalQualifierType,
+                                              @NotNull ResolveState state,
+                                              @NotNull GrReferenceExpression place) {
     PsiType qualifierType = originalQualifierType instanceof PsiDisjunctionType
                             ? ((PsiDisjunctionType)originalQualifierType).getLeastUpperBound()
                             : originalQualifierType;
@@ -180,13 +183,7 @@ public class GrReferenceResolveUtil {
       return true;
     }
 
-    /*if (qualifierType instanceof GrAnonymousClassType) {
-      final GrAnonymousClassDefinition anonymous = ((GrAnonymousClassType)qualifierType).getAnonymous();
-      if (!anonymous.processDeclarations(processor, state, null, place)) {
-        return false;
-      }
-    }
-    else */if (qualifierType instanceof PsiClassType) {
+    if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
       if (qualifierClass != null) {
@@ -248,7 +245,8 @@ public class GrReferenceResolveUtil {
     return null;
   }
 
-  public static boolean resolveThisExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {
+  public static boolean resolveThisExpression(@NotNull GrReferenceExpression ref,
+                                              @NotNull List<GroovyResolveResult> results) {
     GrExpression qualifier = ref.getQualifier();
 
     if (qualifier == null) {
@@ -278,7 +276,8 @@ public class GrReferenceResolveUtil {
     }
   }
 
-  public static boolean resolveSuperExpression(GrReferenceExpression ref, List<GroovyResolveResult> results) {
+  public static boolean resolveSuperExpression(@NotNull GrReferenceExpression ref,
+                                               @NotNull List<GroovyResolveResult> results) {
     GrExpression qualifier = ref.getQualifier();
 
     PsiClass aClass;
@@ -311,7 +310,7 @@ public class GrReferenceResolveUtil {
     return true;
   }
 
-  public static boolean isClassReference(GrReferenceExpression ref) {
+  public static boolean isClassReference(@NotNull GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifier();
     return "class".equals(ref.getReferenceName()) &&
            qualifier instanceof GrReferenceExpression &&
@@ -319,13 +318,13 @@ public class GrReferenceResolveUtil {
            !PsiUtil.isThisReference(qualifier);
   }
 
-  public static boolean isPropertyAccessInStaticMethod(GrReferenceExpression referenceExpression) {
+  public static boolean isPropertyAccessInStaticMethod(@NotNull GrReferenceExpression referenceExpression) {
     return isInStaticContext(referenceExpression) &&
            !(referenceExpression.getParent() instanceof GrMethodCall) &&
            referenceExpression.getQualifier() == null;
   }
 
-  public static boolean isInStaticContext(PsiElement place) {
+  public static boolean isInStaticContext(@NotNull PsiElement place) {
     GrMember context = PsiTreeUtil.getParentOfType(place, GrMember.class, true, GrClosableBlock.class);
     return (context instanceof GrMethod || context instanceof GrClassInitializer) && context.hasModifierProperty(STATIC);
   }
