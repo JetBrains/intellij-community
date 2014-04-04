@@ -156,7 +156,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   }
 
   private static void parseResult(@NotNull final ISVNInfoHandler handler, @Nullable File base, @Nullable String result) throws SVNException {
-    if (StringUtil.isEmpty(result)) {
+    if (StringUtil.isEmptyOrSpaces(result)) {
       return;
     }
 
@@ -176,7 +176,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     try {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
 
-      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
+      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
     }
     catch (SvnExceptionWrapper e) {
       LOG.info("info output " + result);
