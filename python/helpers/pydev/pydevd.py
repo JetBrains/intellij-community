@@ -120,6 +120,12 @@ remote = False
 
 PyDBUseLocks = True
 
+def isThreadAlive(t):
+    try:
+        alive = t.isAlive()
+    except:
+        alive = False  #Workaround for Python 3.4 http://youtrack.jetbrains.com/issue/PY-12317
+    return alive
 
 #=======================================================================================================================
 # PyDBCommandThread
@@ -302,7 +308,7 @@ class PyDB:
 
     def haveAliveThreads(self):
         for t in threadingEnumerate():
-            if not isinstance(t, PyDBDaemonThread) and t.isAlive() and not t.isDaemon():
+            if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t) and not t.isDaemon():
                 return True
 
         return False
@@ -407,7 +413,7 @@ class PyDB:
                 for t in all_threads:
                     thread_id = GetThreadId(t)
 
-                    if not isinstance(t, PyDBDaemonThread) and t.isAlive():
+                    if not isinstance(t, PyDBDaemonThread) and isThreadAlive(t):
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):
@@ -992,12 +998,7 @@ class PyDB:
                     f = f.f_back
 
             # if thread is not alive, cancel trace_dispatch processing
-            try:
-                alive = t.isAlive()
-            except:
-                alive = False  #Workaround for Python 3.4 http://youtrack.jetbrains.com/issue/PY-12317
-
-            if not alive:
+            if not isThreadAlive(t):
                 self.processThreadNotAlive(GetThreadId(t))
                 return None  # suspend tracing
 
