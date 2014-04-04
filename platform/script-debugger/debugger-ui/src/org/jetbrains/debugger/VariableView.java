@@ -454,7 +454,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     @Override
     public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-      if (!(value instanceof StringValue) || ((StringValue)value).isTruncated()) {
+      if (!(value instanceof StringValue) || !((StringValue)value).isTruncated()) {
         callback.evaluated(value.getValueString());
         return;
       }
