@@ -6,6 +6,7 @@
   <module value="com.intellij.modules.python"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <targetElement implementation="com.jetbrains.python.magicLiteral.PyMagicTargetElementExtensionPoint"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
     <copyPastePreProcessor implementation="com.jetbrains.python.editor.PythonCopyPasteProcessor"/>
