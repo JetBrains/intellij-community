@@ -295,6 +295,9 @@ binding.setVariable("platformImplementationModules", [
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
+  "protocol-reader-runtime",
+  "script-debugger-backend",
+  "script-debugger-ui"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
