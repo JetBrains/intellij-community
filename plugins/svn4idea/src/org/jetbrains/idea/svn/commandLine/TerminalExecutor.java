@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.pty4j.PtyProcess;
@@ -53,8 +52,8 @@ public class TerminalExecutor extends CommandExecutor {
 
   @NotNull
   @Override
-  protected OSProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess);
+  protected SvnProcessHandler createProcessHandler() {
+    return new TerminalProcessHandler(myProcess, needsUtf8Output(), needsBinaryOutput());
   }
 
   @NotNull

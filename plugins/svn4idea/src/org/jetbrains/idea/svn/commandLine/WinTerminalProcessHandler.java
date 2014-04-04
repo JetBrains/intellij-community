@@ -27,8 +27,8 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
   private static final String NON_CSI_ESCAPE_CODE = "\u001B.[@-_]";
   private static final String CSI_ESCAPE_CODE = "\u001B\\[(.*?)[@-~]";
 
-  public WinTerminalProcessHandler(@NotNull Process process) {
-    super(process);
+  public WinTerminalProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
+    super(process, forceUtf8, forceBinary);
   }
 
   @Override

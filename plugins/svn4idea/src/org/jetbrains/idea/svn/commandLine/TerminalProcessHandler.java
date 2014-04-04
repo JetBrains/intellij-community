@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
@@ -31,7 +30,7 @@ import java.util.regex.Matcher;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class TerminalProcessHandler extends OSProcessHandler {
+public class TerminalProcessHandler extends SvnProcessHandler {
 
   private final List<InteractiveCommandListener> myInteractiveListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final CapturingProcessAdapter terminalOutputCapturer = new CapturingProcessAdapter();
@@ -39,8 +38,8 @@ public class TerminalProcessHandler extends OSProcessHandler {
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
-  public TerminalProcessHandler(@NotNull Process process) {
-    super(process);
+  public TerminalProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
+    super(process, forceUtf8, forceBinary);
   }
 
   public void addInteractiveListener(@NotNull InteractiveCommandListener listener) {

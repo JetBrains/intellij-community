@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessWrapper;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -56,8 +55,8 @@ public class WinTerminalExecutor extends TerminalExecutor {
 
   @NotNull
   @Override
-  protected OSProcessHandler createProcessHandler() {
-    return new WinTerminalProcessHandler(myProcess);
+  protected SvnProcessHandler createProcessHandler() {
+    return new WinTerminalProcessHandler(myProcess, needsUtf8Output(), needsBinaryOutput());
   }
 
   @Override
