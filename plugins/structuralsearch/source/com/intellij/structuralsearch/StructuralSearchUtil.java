@@ -19,6 +19,8 @@ import java.util.*;
 public class StructuralSearchUtil {
   private static LanguageFileType ourDefaultFileType = null;
 
+  public static boolean ourUseUniversalMatchingAlgorithm = false;
+  private static StructuralSearchProfile[] ourNewStyleProfiles;
   private static List<Configuration> ourPredefinedConfigurations = null;
 
   private StructuralSearchUtil() {}
@@ -28,8 +30,25 @@ public class StructuralSearchUtil {
     return getProfileByLanguage(element.getLanguage());
   }
 
+  private static StructuralSearchProfile[] getNewStyleProfiles() {
+    if (ourNewStyleProfiles == null) {
+      final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
+
+      for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+        if (profile instanceof StructuralSearchProfileBase) {
+          list.add(profile);
+        }
+      }
+      list.add(new XmlStructuralSearchProfile());
+      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[list.size()]);
+    }
+    return ourNewStyleProfiles;
+  }
+
   private static StructuralSearchProfile[] getProfiles() {
-    return StructuralSearchProfile.EP_NAME.getExtensions();
+    return ourUseUniversalMatchingAlgorithm
+           ? getNewStyleProfiles()
+           : StructuralSearchProfile.EP_NAME.getExtensions();
   }
 
   public static FileType getDefaultFileType() {
@@ -55,13 +74,6 @@ public class StructuralSearchUtil {
     }
     return null;
   }
-
-  /*public static List<StructuralSearchProfile> getAllProfiles() {
-    List<StructuralSearchProfile> profiles = new ArrayList<StructuralSearchProfile>();
-    Collections.addAll(profiles, StructuralSearchProfile.EP_NAME.getExtensions());
-    profiles.addAll(myRegisteredProfiles);
-    return profiles;
-  }*/
 
   @Nullable
   public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {

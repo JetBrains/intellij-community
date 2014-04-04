@@ -22,6 +22,8 @@ abstract class StructuralReplaceTestCase extends LightIdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
+
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
 
     options = new ReplaceOptions();
