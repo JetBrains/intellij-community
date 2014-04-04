@@ -13,7 +13,7 @@
     <orderEntry type="module-library">
       <library name="jediterm-pty">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jediterm-pty-1.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jediterm-pty-2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
