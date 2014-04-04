@@ -1,26 +1,26 @@
 package com.jetbrains.python.magicLiteral;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementExtensionPoint;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Supports name literal obtaining for magic literals.
- * <strong>Install it</strong> as {@link com.intellij.codeInsight.TargetElementUtilBase} service implementation
+ * Makes magic literals work as target elements (to support renaming)
+ * <strong>Install it</strong> as {@link com.intellij.codeInsight.TargetElementExtensionPoint}
+ *
  * @author Ilya.Kazakevich
  */
-class PyMagicLiteralTargetElementUtil extends TargetElementUtilBase {
-
-
+class PyMagicTargetElementExtensionPoint implements TargetElementExtensionPoint {
   @Nullable
   @Override
-  protected PsiElement getNamedElement(@Nullable final PsiElement element) {
+  public PsiElement getNearestTargetElement(@NotNull final PsiElement element) {
     final PyStringLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if ((literalExpression != null) && (PyMagicLiteralTools.isMagicLiteral(literalExpression))) {
       return literalExpression;
     }
-    return super.getNamedElement(element);
+    return null;
   }
 }

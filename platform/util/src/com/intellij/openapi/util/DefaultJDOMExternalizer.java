@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,10 @@ public class DefaultJDOMExternalizer {
     for (Field field : fields) {
       if (field.getName().indexOf('$') >= 0) continue;
       int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+      if (!(Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
+          /*!Modifier.isFinal(modifiers) &&*/ !Modifier.isTransient(modifiers) &&
+          field.getAnnotation(Transient.class) == null)) continue;
+
       field.setAccessible(true); // class might be non-public
       Class type = field.getType();
       if (filter != null && !filter.isAccept(field)) {

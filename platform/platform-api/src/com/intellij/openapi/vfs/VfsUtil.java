@@ -508,6 +508,25 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
+  /**
+   * Returns all files in some virtual files recursively
+   * @param root virtual file to get descendants
+   * @return descendants
+   */
+  @NotNull
+  public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    processFilesRecursively(root, new Processor<VirtualFile>() {
+      @Override
+      public boolean process(final VirtualFile t) {
+        result.add(t);
+        return true;
+      }
+    });
+    return result;
+  }
+
+
   public static void processFileRecursivelyWithoutIgnored(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
     final FileTypeManager ftm = FileTypeManager.getInstance();
     processFilesRecursively(root, processor, new Convertor<VirtualFile, Boolean>() {

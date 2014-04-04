@@ -139,6 +139,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
 
+  @Nullable
   @Override
   protected PsiElement getNamedElement(final PsiElement element) {
     PsiElement parent = element.getParent();
@@ -156,6 +157,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
         return parent;
       }
     }
+    //TODO: Code below this comment is very similar to parent code. We probably need to use "super()" instead, to prevent copy/paste in inheritors
     else if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       // A bit hacky depends on navigation offset correctly overridden
       if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)
@@ -163,7 +165,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
         return parent;
       }
     }
-    return null;
+    if (element == null) {
+      return null;
+    }
+    return getTargetElementByExtensions(element);
   }
 
   @Nullable

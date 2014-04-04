@@ -2,15 +2,15 @@ package org.jetbrains.idea.svn.content;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.commandLine.*;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,9 +31,7 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
     CommandUtil.put(parameters, revision);
 
     CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.cat, parameters, null);
-    // TODO: currently binary output will be null for terminal mode - use text output in this case
-    ByteArrayOutputStream output = command.getBinaryOutput();
-    byte[] bytes = output != null ? output.toByteArray() : CharsetToolkit.getUtf8Bytes(command.getOutput());
+    byte[] bytes = command.getBinaryOutput().toByteArray();
 
     ContentRevisionCache.checkContentsSize(target.getPathOrUrlString(), bytes.length);
 

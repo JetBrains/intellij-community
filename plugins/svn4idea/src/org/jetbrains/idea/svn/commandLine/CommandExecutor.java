@@ -26,16 +26,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.io.BaseDataReader;
-import com.intellij.util.io.BinaryOutputReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNCancelException;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,7 +57,7 @@ public class CommandExecutor {
   private volatile boolean myWasCancelled;
   protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
-  protected OSProcessHandler myHandler;
+  protected SvnProcessHandler myHandler;
   private OutputStreamWriter myProcessWriter;
   // TODO: Try to implement commands in a way that they manually indicate if they need full output - to prevent situations
   // TODO: when large amount of data needs to be stored instead of just sequential processing.
@@ -157,39 +157,60 @@ public class CommandExecutor {
 
   private void ensureMessageFile() throws SvnBindException {
     if (myMessage != null) {
+      myMessageFile = createTempFile("commit-message", ".txt");
       try {
-        File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
-        myMessageFile = FileUtil.createTempFile(new File(vcsFolder, "svn"), "commit-message", ".txt");
         FileUtil.writeToFile(myMessageFile, myMessage);
-
-        myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
-        myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
       }
       catch (IOException e) {
         throw new SvnBindException(e);
       }
+      myCommandLine.addParameters("-F", myMessageFile.getAbsolutePath());
+      myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
     }
   }
 
   private void cleanupMessageFile() {
-    if (myMessageFile != null) {
-      boolean wasDeleted = FileUtil.delete(myMessageFile);
+    deleteTempFile(myMessageFile);
+  }
+
+  @NotNull
+  protected static File getSvnFolder() {
+    File vcsFolder = new File(PathManager.getSystemPath(), "vcs");
+
+    return new File(vcsFolder, "svn");
+  }
+
+  @NotNull
+  protected static File createTempFile(@NotNull String prefix, @NotNull String extension) throws SvnBindException {
+    try {
+      return FileUtil.createTempFile(getSvnFolder(), prefix, extension);
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  protected static void deleteTempFile(@Nullable File file) {
+    if (file != null) {
+      boolean wasDeleted = FileUtil.delete(file);
 
       if (!wasDeleted) {
-        LOG.info("Failed to delete temp commit message file " + myMessageFile.getAbsolutePath());
+        LOG.info("Failed to delete temp file " + file.getAbsolutePath());
       }
     }
   }
 
   @NotNull
-  protected OSProcessHandler createProcessHandler() {
-    return needsBinaryOutput()
-           ? new BinaryOSProcessHandler(myProcess, myCommandLine.getCommandLineString())
-           : new MyOSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+  protected SvnProcessHandler createProcessHandler() {
+    return new SvnProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
   }
 
-  private boolean needsBinaryOutput() {
+  protected boolean needsBinaryOutput() {
     return SvnCommandName.cat.equals(myCommand.getName());
+  }
+
+  protected boolean needsUtf8Output() {
+    return myCommand.getParameters().contains("--xml");
   }
 
   @NotNull
@@ -218,9 +239,9 @@ public class CommandExecutor {
     return outputAdapter.getOutput();
   }
 
-  @Nullable
+  @NotNull
   public ByteArrayOutputStream getBinaryOutput() {
-    return myHandler instanceof BinaryOSProcessHandler ? ((BinaryOSProcessHandler)myHandler).myBinaryOutput : null;
+    return myHandler.getBinaryOutput();
   }
 
   // TODO: Carefully here - do not modify command from threads other than the one started command execution
@@ -441,55 +462,6 @@ public class CommandExecutor {
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
-      }
-    }
-  }
-
-  private class MyOSProcessHandler extends OSProcessHandler {
-
-    public MyOSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
-      super(process, commandLine);
-    }
-
-    @Override
-    protected Reader createProcessOutReader() {
-      if (myCommand.getParameters().contains("--xml")) {
-        return new InputStreamReader(myProcess.getInputStream(), CharsetToolkit.UTF8_CHARSET);
-      }
-      return super.createProcessOutReader();
-    }
-  }
-
-  private static class BinaryOSProcessHandler extends OSProcessHandler {
-
-    @NotNull private final ByteArrayOutputStream myBinaryOutput;
-
-    public BinaryOSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
-      super(process, commandLine);
-      myBinaryOutput = new ByteArrayOutputStream();
-    }
-
-    @NotNull
-    @Override
-    protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-      return new SimpleBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy);
-    }
-
-    private class SimpleBinaryOutputReader extends BinaryOutputReader {
-
-      public SimpleBinaryOutputReader(@NotNull InputStream stream, SleepingPolicy sleepingPolicy) {
-        super(stream, sleepingPolicy);
-        start();
-      }
-
-      @Override
-      protected void onBinaryAvailable(@NotNull byte[] data, int size) {
-        myBinaryOutput.write(data, 0, size);
-      }
-
-      @Override
-      protected Future<?> executeOnPooledThread(Runnable runnable) {
-        return BinaryOSProcessHandler.this.executeOnPooledThread(runnable);
       }
     }
   }

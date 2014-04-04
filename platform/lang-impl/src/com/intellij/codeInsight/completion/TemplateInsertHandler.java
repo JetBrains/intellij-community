@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author spleaner
  */
-public abstract class TemplateInsertHandler implements InsertHandler {
+public abstract class TemplateInsertHandler<T extends LookupElement> implements InsertHandler<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.TemplateInsertHandler");
 
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
