@@ -185,6 +185,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myActionButtonSynchronizer = new ActionButtonSynchronizer();
       myPresentation.addPropertyChangeListener(myActionButtonSynchronizer);
     }
+    AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
+    ActionUtil.performDumbAwareUpdate(myAction, e, false);
     updateToolTipText();
     updateIcon();
   }
