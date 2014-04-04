@@ -23,6 +23,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -207,17 +209,23 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final Runnable applyRunnable = new Runnable() {
       @Override
       public void run() {
-        new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            if (!inferrer.nothingFoundMessage(project)) {
-              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new AnnotateTask(project, inferrer, progressTask));
-              ProgressManager.getInstance().run(progressTask);
+        final LocalHistoryAction action = LocalHistory.getInstance().startAction(INFER_NULLITY_ANNOTATIONS);
+        try {
+          new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
+            @Override
+            protected void run(Result result) throws Throwable {
+              if (!inferrer.nothingFoundMessage(project)) {
+                final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+                progressTask.setMinIterationTime(200);
+                progressTask.setTask(new AnnotateTask(project, inferrer, progressTask));
+                ProgressManager.getInstance().run(progressTask);
+              }
             }
-          }
-        }.execute();
+          }.execute();
+        }
+        finally {
+          action.finish();
+        }
       }
     };
     SwingUtilities.invokeLater(applyRunnable);

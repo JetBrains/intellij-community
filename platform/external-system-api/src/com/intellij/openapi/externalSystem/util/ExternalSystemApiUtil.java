@@ -403,7 +403,7 @@ public class ExternalSystemApiUtil {
     if (unitTestMode) {
       UIUtil.invokeLaterIfNeeded(runnable);
     }
-    else if (application.isHeadlessEnvironment() || SwingUtilities.isEventDispatchThread()) {
+    else if (application.isHeadlessEnvironment() || application.isDispatchThread()) {
       runnable.run();
     }
     else {

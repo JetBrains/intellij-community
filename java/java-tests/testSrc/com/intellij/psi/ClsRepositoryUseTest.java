@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,9 +36,8 @@ import java.io.File;
 
 @PlatformTestCase.WrapInCommand
 public class ClsRepositoryUseTest extends PsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ClsRepositoryUseTest");
-
   private static final String TEST_ROOT = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls";
+
   private GlobalSearchScope RESOLVE_SCOPE;
 
   @Override
@@ -50,15 +48,9 @@ public class ClsRepositoryUseTest extends PsiTestCase {
       new Runnable() {
         @Override
         public void run() {
-          try {
-            VirtualFile vDir = getRootFile();
-            PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-            addLibraryToRoots(vDir, OrderRootType.CLASSES);
-//            PsiTestUtil.addSourceContentToRoots(myProject, vDir);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+          VirtualFile vDir = getRootFile();
+          PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
+          addLibraryToRoots(vDir, OrderRootType.CLASSES);
         }
       }
     );
@@ -76,28 +68,21 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     final File classes = createTempDir("classes", false);
 
     final File com = new File(classes, "com");
-    //noinspection ResultOfMethodCallIgnored
-    com.mkdir();
+    FileUtil.ensureExists(com);
 
     File dataPath = new File(PathManagerEx.getTestDataPath() + "/psi/cls");
 
     final File target = new File(com, "TestClass.class");
     FileUtil.copy(new File(dataPath, "1/TestClass.class"), target);
-    //noinspection ResultOfMethodCallIgnored
-    target.setLastModified(System.currentTimeMillis());
+    assertTrue(target.setLastModified(System.currentTimeMillis()));
 
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         @Override
         public void run() {
-          try {
-            VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classes);
-            assertNotNull(vDir);
-            addLibraryToRoots(vDir, OrderRootType.CLASSES);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+          VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classes);
+          assertNotNull(vDir);
+          addLibraryToRoots(vDir, OrderRootType.CLASSES);
         }
       }
     );
@@ -123,20 +108,14 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("method1", psiClass.getMethods()[1].getName());
 
     FileUtil.copy(new File(dataPath, "2/TestClass.class"), target);
-    //noinspection ResultOfMethodCallIgnored
-    target.setLastModified(System.currentTimeMillis() + 5000);
+    assertTrue(target.setLastModified(System.currentTimeMillis() + 5000));
 
     assert vFile != null;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         @Override
         public void run() {
-          try {
-            vFile.refresh(false, false);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
+          vFile.refresh(false, false);
         }
       }
     );
@@ -375,7 +354,6 @@ public class ClsRepositoryUseTest extends PsiTestCase {
 
     assertEquals("void", type1.getText());
     assertTrue(type1.getType() instanceof PsiPrimitiveType);
-    assertTrue(!(type1.getType() instanceof PsiArrayType));
 
     PsiMethod method3 = aClass.getMethods()[2];
     assertNull(method3.getReturnType());
@@ -400,7 +378,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
 
     PsiField field = aClass.getFields()[1];
     PsiType type = field.getType();
-    LOG.assertTrue(type instanceof PsiArrayType);
+    assertTrue(type instanceof PsiArrayType);
     PsiType componentType = ((PsiArrayType)type).getComponentType();
 
     assertTrue(componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
@@ -497,7 +475,6 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("java.io.IOException", refs[1].getCanonicalText());
   }
 
-
   public void testParameters() throws Exception {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
@@ -524,7 +501,11 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     PsiClass objectClass = myJavaFacade.findClasses(CommonClassNames.JAVA_LANG_OBJECT, RESOLVE_SCOPE)[1];
     assertEquals(objectClass, target2);
 
-    parameters[0].getModifierList();
+    assertNotNull(parameters[0].getModifierList());
+    assertNotNull(parameters[1].getModifierList());
+
+    assertEquals("ints", parameters[0].getName());
+    assertEquals("o", parameters[1].getName());
   }
 
   public void testGenericClass() throws Exception {
@@ -706,10 +687,6 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     final PsiType returnType = methodsWithReturnType.getReturnType();
     assert returnType != null : methodsWithReturnType;
     assertEquals("pack.Parametrized<? extends T>", returnType.getCanonicalText());
-
-    //TODO[ven, max]: After fix for loading decompiled stuff the result had been change. Need to discuss whether this is important
-    //enough to try to conform old output.
-    //assertEquals("public Parametrized<? extends T> method() { /* compiled code */ }", methodsWithReturnType.getText());
     assertEquals("public pack.Parametrized<? extends T> method() { /* compiled code */ }", methodsWithReturnType.getText());
   }
 

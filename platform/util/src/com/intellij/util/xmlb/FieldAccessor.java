@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -25,32 +26,36 @@ import java.lang.reflect.Type;
 class FieldAccessor implements Accessor {
   private final Field myField;
 
-  public FieldAccessor(Field myField) {
-    this.myField = myField;
+  public FieldAccessor(@NotNull Field field) {
+    myField = field;
+    field.setAccessible(true);
   }
 
   @Override
   public Object read(Object o) {
-    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
+    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + myField.getDeclaringClass();
     try {
       return myField.get(o);
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
+      throw new XmlSerializationException("Reading "+myField, e);
     }
   }
 
   @Override
   public void write(Object o, Object value) {
-    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
+    Class<?> declaringClass = myField.getDeclaringClass();
+    assert declaringClass.isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + declaringClass;
     try {
-      myField.set(o, XmlSerializerImpl.convert(value, myField.getType()));
+      Class<?> type = myField.getType();
+      myField.set(o, XmlSerializerImpl.convert(value, type));
     }
     catch (IllegalAccessException e) {
-      throw new XmlSerializationException(e);
+      throw new XmlSerializationException("Writing "+myField,e);
     }
   }
 
+  @NotNull
   @Override
   public Annotation[] getAnnotations() {
     return myField.getAnnotations();

@@ -50,8 +50,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -582,11 +580,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int rightMargin = settings.getRightMargin(myEditor.getProject());
     if (rightMargin <= 0) return;
 
-    IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myEditor.getProject());
-
+    Window frame = SwingUtilities.getWindowAncestor(myEditor.getComponent());
     JComponent editorComponent = myEditor.getComponent();
     RelativePoint point = new RelativePoint(editorComponent, new Point(0, 0));
-    Point editorLocationInWindow = point.getPoint(ideFrame.getComponent());
+    Point editorLocationInWindow = point.getPoint(frame);
 
     int editorLocationX = (int)editorLocationInWindow.getX();
     int rightMarginX = rightMargin * EditorUtil.getSpaceWidth(Font.PLAIN, myEditor) + editorLocationX;

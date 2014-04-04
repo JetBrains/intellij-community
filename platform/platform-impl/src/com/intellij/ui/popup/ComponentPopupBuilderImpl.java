@@ -64,6 +64,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myPlaceWithinScreen = true;
   private Processor<JBPopup> myPinCallback = null;
   private Dimension myMinSize;
+  private MaskProvider myMaskProvider;
   private float myAlpha;
   private List<Object> myUserData;
 
@@ -234,7 +235,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
       myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-      myPlaceWithinScreen, myMinSize, myAlpha, null, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
+      myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myCancelOnWindowDeactivation, myKeyEventHandler
     );
@@ -284,6 +285,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setMinSize(final Dimension minSize) {
     myMinSize = minSize;
+    return this;
+  }
+
+  @Override
+  @NotNull
+  public ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider) {
+    myMaskProvider = maskProvider;
     return this;
   }
 

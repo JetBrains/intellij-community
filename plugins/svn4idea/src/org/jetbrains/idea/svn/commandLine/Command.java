@@ -28,7 +28,7 @@ public class Command {
   private File workingDirectory;
   @Nullable private File myConfigDir;
   @Nullable private LineCommandListener myResultBuilder;
-  @Nullable private SVNURL myRepositoryUrl;
+  @Nullable private volatile SVNURL myRepositoryUrl;
   @NotNull private SvnTarget myTarget;
 
   @Nullable private ISVNCanceller myCanceller;

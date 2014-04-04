@@ -29,7 +29,9 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -62,6 +64,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -467,7 +470,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void cutToLineEnd() {
     executeAction("EditorCutLineEnd");
   }
-
+  
+  protected static void deleteToLineStart() {
+    executeAction("EditorDeleteToLineStart");
+  }
+  
+  protected static void deleteToLineEnd() {
+    executeAction("EditorDeleteToLineEnd");
+  }
+  
   protected static void killToWordStart() {
     executeAction("EditorKillToWordStart");
   }
@@ -565,7 +576,12 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
 
-    PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+    try {
+      PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+    }
+    catch (IllegalArgumentException ignore) {
+      //allow to run out of idea project
+    }
 
     final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
     String testDataPath = testCase.getTestDataPath();

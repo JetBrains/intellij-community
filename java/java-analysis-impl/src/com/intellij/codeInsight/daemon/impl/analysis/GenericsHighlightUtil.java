@@ -715,8 +715,10 @@ public class GenericsHighlightUtil {
   }
 
   @Nullable
-  public static HighlightInfo checkEnumInstantiation(PsiNewExpression expression, PsiClass aClass) {
-    if (aClass != null && aClass.isEnum() && expression.getArrayDimensions().length == 0 && expression.getArrayInitializer() == null) {
+  public static HighlightInfo checkEnumInstantiation(PsiElement expression, PsiClass aClass) {
+    if (aClass != null && aClass.isEnum() && 
+        (!(expression instanceof PsiNewExpression) ||
+         ((PsiNewExpression)expression).getArrayDimensions().length == 0 && ((PsiNewExpression)expression).getArrayInitializer() == null)) {
       String description = JavaErrorMessages.message("enum.types.cannot.be.instantiated");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }

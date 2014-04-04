@@ -16,9 +16,9 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,23 +35,19 @@ import java.util.Set;
  * @author alex
  */
 public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider");
+
   private final Project myProject;
   private final SvnAuthenticationNotifier myAuthenticationNotifier;
   private final ISVNAuthenticationProvider mySvnInteractiveAuthenticationProvider;
-  private final ISVNAuthenticationStorage myAuthenticationStorage;
+  private final SvnAuthenticationManager myAuthenticationManager;
   private static final Set<Thread> ourForceInteractive = new HashSet<Thread>();
 
   public SvnAuthenticationProvider(final SvnVcs svnVcs, final ISVNAuthenticationProvider provider,
-                                   final ISVNAuthenticationStorage authenticationStorage) {
-    myAuthenticationStorage = authenticationStorage;
+                                   final SvnAuthenticationManager authenticationManager) {
+    myAuthenticationManager = authenticationManager;
     myProject = svnVcs.getProject();
     myAuthenticationNotifier = svnVcs.getAuthNotifier();
     mySvnInteractiveAuthenticationProvider = provider;
-  }
-
-  private void log(final String s) {
-    LOG.debug(s);
   }
 
   public SVNAuthentication requestClientAuthentication(final String kind,
@@ -73,7 +68,7 @@ public class SvnAuthenticationProvider implements ISVNAuthenticationProvider {
       return mySvnInteractiveAuthenticationProvider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
     } else {
       if (myAuthenticationNotifier.ensureNotify(obj)) {
-        return (SVNAuthentication) myAuthenticationStorage.getData(kind, realm);
+        return myAuthenticationManager.requestFromCache(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
       }
     }
     return null;

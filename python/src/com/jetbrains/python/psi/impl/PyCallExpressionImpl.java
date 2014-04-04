@@ -100,7 +100,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Override
-  public boolean isCallee(@NotNull final FQNamesProvider name) {
+  public boolean isCallee(@NotNull final FQNamesProvider... name) {
     return PyCallExpressionHelper.isCallee(this, name);
   }
 

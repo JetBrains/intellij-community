@@ -121,7 +121,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     return new DataIndexer<String, Set<SchemaTypeInfo>, FileContent>() {
       @NotNull
       @Override
-      public Map<String, Set<SchemaTypeInfo>> map(FileContent inputData) {
+      public Map<String, Set<SchemaTypeInfo>> map(@NotNull FileContent inputData) {
         final Map<String, Set<SchemaTypeInfo>> map = new HashMap<String, Set<SchemaTypeInfo>>();
         final MultiMap<SchemaTypeInfo,SchemaTypeInfo> multiMap =
           XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));

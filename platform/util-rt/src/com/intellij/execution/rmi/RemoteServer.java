@@ -112,13 +112,11 @@ public class RemoteServer {
 
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
-    @Override
     public Context getInitialContext(final Hashtable<?, ?> environment) throws NamingException {
       return (Context)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Context.class}, this);
     }
 
     @Nullable
-    @Override
     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);

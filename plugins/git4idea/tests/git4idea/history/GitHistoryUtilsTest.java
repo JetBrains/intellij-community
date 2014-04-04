@@ -74,7 +74,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
       "simple commit",
       "moved a.txt to dir/b.txt",
       "simple commit after rename",
-      "commit with {%n} some [%ct] special <format:%H%at> characters including \"--pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01\"",
+      "commit with {%n} some [%ct] special <format:%H%at> characters including --pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
       "commit subject\n\ncommit body which is \n multilined.",
       "first line\nsecond line\nthird line\n\nfifth line\n\nseventh line & the end.",
     };
@@ -247,7 +247,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     StringBuilder sb = new StringBuilder();
     for (VcsFileRevision revision : history) {
       GitFileRevision rev = (GitFileRevision)revision;
-      String relPath = FileUtil.getRelativePath(myProjectRoot.getPath(), rev.getPath().getPath(), '/');
+      String relPath = FileUtil.getRelativePath(new File(myProjectPath), rev.getPath().getIOFile());
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(rev.getHash()), rev.getCommitMessage(), relPath));
     }
     return sb.toString();
@@ -262,7 +262,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     });
     StringBuilder sb = new StringBuilder();
     for (TestCommit commit : commits) {
-      String relPath = FileUtil.getRelativePath(myProjectRoot.getPath(), commit.myPath, '/');
+      String relPath = FileUtil.getRelativePath(new File(myProjectPath), new File(commit.myPath));
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.getHash()), commit.getCommitMessage(), relPath));
     }
     return sb.toString();

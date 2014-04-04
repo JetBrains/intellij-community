@@ -136,21 +136,15 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     if (ideaPlugin == null) return;
 
-    String prefix = getEpPrefix(extensions);
+    String epPrefix = extensions.getEpPrefix();
     for (IdeaPlugin plugin : getVisiblePlugins(ideaPlugin)) {
       final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
       for (ExtensionPoints points : plugin.getExtensionPoints()) {
         for (ExtensionPoint point : points.getExtensionPoints()) {
-          registerExtensionPoint(registrar, point, prefix, pluginId);
+          registerExtensionPoint(registrar, point, epPrefix, pluginId);
         }
       }
     }
-  }
-
-  private static String getEpPrefix(Extensions extensions) {
-    String prefix = extensions.getDefaultExtensionNs().getStringValue();
-    if (prefix == null) prefix = extensions.getXmlns().getStringValue();
-    return prefix != null ? prefix + "." : "";
   }
 
   private static Set<IdeaPlugin> getVisiblePlugins(IdeaPlugin ideaPlugin) {
@@ -184,15 +178,15 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
   private static void registerExtensionPoint(final DomExtensionsRegistrar registrar,
                                              final ExtensionPoint extensionPoint,
-                                             String prefix,
+                                             String epPrefix,
                                              @Nullable String pluginId) {
     String epName = extensionPoint.getName().getStringValue();
     if (epName != null && StringUtil.isNotEmpty(pluginId)) epName = pluginId + "." + epName;
     if (epName == null) epName = extensionPoint.getQualifiedName().getStringValue();
     if (epName == null) return;
-    if (!epName.startsWith(prefix)) return;
+    if (!epName.startsWith(epPrefix)) return;
 
-    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(prefix.length())), Extension.class);
+    final DomExtension domExtension = registrar.registerCollectionChildrenExtension(new XmlName(epName.substring(epPrefix.length())), Extension.class);
     domExtension.setDeclaringElement(extensionPoint);
     domExtension.addExtender(EXTENSION_EXTENDER);
   }

@@ -82,7 +82,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
     return new DataIndexer<String, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<String, Void> map(FileContent inputData) {
+      public Map<String, Void> map(@NotNull FileContent inputData) {
         final HashMap<String, Void> map = new HashMap<String, Void>();
         if (inputData.getFileType() == XmlFileType.INSTANCE) {
           CharSequence inputDataContentAsText = inputData.getContentAsText();

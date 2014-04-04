@@ -94,6 +94,11 @@ public class SortedList<T> extends AbstractList<T>{
   }
 
   @Override
+  public boolean isEmpty() {
+    return myMap.isEmpty();
+  }
+
+  @Override
   public int size() {
     ensureLinearized();
     return myDelegate.size();

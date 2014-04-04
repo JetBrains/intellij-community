@@ -83,7 +83,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       final String className = getControllerClassName(inputData.getContentAsText().toString());
       if (className != null) {
         return Collections.singletonMap(className, null);

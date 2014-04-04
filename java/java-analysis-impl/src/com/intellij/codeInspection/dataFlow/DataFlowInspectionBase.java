@@ -215,7 +215,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
         final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
         binary.getLOperand().replace(qualifier);
-        fixes.add(new AddAssertStatementFix(binary));
+        ContainerUtil.addIfNotNull(fixes, createAssertFix(binary));
       }
 
       addSurroundWithIfFix(qualifier, fixes, onTheFly);
@@ -229,6 +229,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       LOG.error(e);
       return null;
     }
+  }
+
+  protected LocalQuickFix createAssertFix(PsiBinaryExpression binary) {
+    return null;
   }
 
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {

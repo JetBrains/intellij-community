@@ -178,8 +178,11 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @NotNull
   private PsiClass[] getCachedClassesByName(String name) {
-    SoftReference<Map<String, PsiClass[]>> ref = myClassCache;
-    Map<String, PsiClass[]> map = SoftReference.dereference(ref);
+    if (DumbService.getInstance(getProject()).isDumb()) {
+      return getCachedClassInDumbMode(name);
+    }
+
+    Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
     if (map == null) {
       myClassCache = new SoftReference<Map<String, PsiClass[]>>(map = new ConcurrentSoftValueHashMap<String, PsiClass[]>());
     }
@@ -187,29 +190,30 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     if (classes != null) {
       return classes;
     }
-    
-    GlobalSearchScope scope = new EverythingGlobalScope(getProject());
 
-    if (DumbService.getInstance(getProject()).isDumb()) {
-      if (ref == null) {
-        for (PsiClass psiClass : getClasses(scope)) {
-          String psiClassName = psiClass.getName();
-          if (psiClassName != null) {
-            PsiClass[] existing = map.get(psiClassName);
-            map.put(psiClassName, existing == null ? new PsiClass[]{psiClass} : ArrayUtil.append(existing, psiClass));
-          }
-        }
-      }
-      classes = map.get(name);
-      return classes == null ? PsiClass.EMPTY_ARRAY : classes;
-    }
-    
     final String qName = getQualifiedName();
     final String classQName = !qName.isEmpty() ? qName + "." + name : name;
-    map.put(name, classes = getFacade().findClasses(classQName, scope));
+    map.put(name, classes = getFacade().findClasses(classQName, new EverythingGlobalScope(getProject())));
     return classes;
   }
-  
+
+  private PsiClass[] getCachedClassInDumbMode(String name) {
+    Map<String, PsiClass[]> map = SoftReference.dereference(myClassCache);
+    if (map == null) {
+      map = new HashMap<String, PsiClass[]>();
+      for (PsiClass psiClass : getClasses(new EverythingGlobalScope(getProject()))) {
+        String psiClassName = psiClass.getName();
+        if (psiClassName != null) {
+          PsiClass[] existing = map.get(psiClassName);
+          map.put(psiClassName, existing == null ? new PsiClass[]{psiClass} : ArrayUtil.append(existing, psiClass));
+        }
+      }
+      myClassCache = new SoftReference<Map<String, PsiClass[]>>(map);
+    }
+    PsiClass[] classes = map.get(name);
+    return classes == null ? PsiClass.EMPTY_ARRAY : classes;
+  }
+
   @Override
   public boolean containsClassNamed(String name) {
     return getCachedClassesByName(name).length > 0;

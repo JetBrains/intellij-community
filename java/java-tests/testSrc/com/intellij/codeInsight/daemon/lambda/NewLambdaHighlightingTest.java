@@ -182,6 +182,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNestedCallsInsideLambdaReturnExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

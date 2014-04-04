@@ -22,6 +22,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.notification.ApplyGradlePluginCallback;
+import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
+import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -50,6 +53,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
     Pair<Throwable, String> rootCauseAndLocation = getRootCauseAndLocation(error);
 
+    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable rootCause = rootCauseAndLocation.getFirst();
 
     String location = rootCauseAndLocation.getSecond();
@@ -69,10 +73,17 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       String method = parseMissingMethod(rootCauseText);
       String msg = "Build script error, unsupported Gradle DSL method found: '" + method + "'!";
       msg += (EMPTY_LINE + "Possible causes could be:  ");
-      msg += ('\n' + "  - you are using Gradle version where the method is absent ");
-      msg += ('\n' + "  - you didn't apply Gradle plugin which provides the method");
-      msg += ('\n' + "  - or there is a mistake in a build script");
-      return createUserFriendlyError(msg, location);
+      msg += String.format(
+        "%s  - you are using Gradle version where the method is absent (<a href=\"%s\">Fix Gradle settings</a>)",
+        '\n', OpenGradleSettingsCallback.ID);
+      msg += String.format(
+        "%s  - you didn't apply Gradle plugin which provides the method (<a href=\"%s\">Apply Gradle plugin</a>)",
+        '\n', ApplyGradlePluginCallback.ID);
+      msg += String.format(
+        "%s  - or there is a mistake in a build script (<a href=\"%s\">Goto source</a>)",
+        '\n', GotoSourceNotificationCallback.ID);
+      return createUserFriendlyError(
+        msg, location, OpenGradleSettingsCallback.ID, ApplyGradlePluginCallback.ID, GotoSourceNotificationCallback.ID);
     }
 
     if (rootCause instanceof OutOfMemoryError) {

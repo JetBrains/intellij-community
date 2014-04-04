@@ -167,7 +167,7 @@ public class CommandUtil {
     JAXBContext context = JAXBContext.newInstance(type);
     Unmarshaller unmarshaller = context.createUnmarshaller();
 
-    return (T) unmarshaller.unmarshal(new StringReader(data));
+    return (T) unmarshaller.unmarshal(new StringReader(data.trim()));
   }
 
   /**

@@ -80,7 +80,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
-    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, SvnConfiguration.RUNTIME_AUTH_CACHE));
+    myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, myAuthenticationManager));
     myAuthenticationManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
 
     myTestInteraction = new TestInteraction();

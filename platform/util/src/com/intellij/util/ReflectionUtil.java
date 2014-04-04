@@ -423,6 +423,18 @@ public class ReflectionUtil {
     }
   }
 
+  public static @Nullable Class getGrandCallerClass() {
+    int stackFrameCount = 3;
+    Class callerClass = findCallerClass(stackFrameCount);
+    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
+      callerClass = findCallerClass(++stackFrameCount);
+    }
+    if (callerClass == null) {
+      callerClass = findCallerClass(2);
+    }
+    return callerClass;
+  }
+
 
   private static class MySecurityManager extends SecurityManager {
     private static final MySecurityManager INSTANCE = new MySecurityManager();

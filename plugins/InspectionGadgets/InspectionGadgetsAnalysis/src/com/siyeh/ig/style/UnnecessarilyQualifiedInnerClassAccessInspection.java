@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,15 +175,18 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection
       visitReferenceElement(expression);
     }
 
-    private boolean isReferenceToTarget(String referenceText, PsiClass target, PsiElement context) {
-      final PsiManager manager = target.getManager();
-      final JavaPsiFacade facade =
-        JavaPsiFacade.getInstance(manager.getProject());
-      final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-      final PsiClass referencedClass =
-        resolveHelper.resolveReferencedClass(referenceText,
-                                             context);
-      return manager.areElementsEquivalent(target, referencedClass);
+    private boolean isReferenceToTarget(String referenceText, @NotNull PsiClass target, PsiElement context) {
+      final PsiJavaCodeReferenceElement reference =
+        JavaPsiFacade.getElementFactory(target.getProject()).createReferenceFromText(referenceText, context);
+      final JavaResolveResult[] results = reference.multiResolve(false);
+      if (results.length == 0) {
+        return true;
+      }
+      if (results.length > 1) {
+        return false;
+      }
+      final JavaResolveResult result = results[0];
+      return result.isAccessible() && target.equals(result.getElement());
     }
 
     private boolean isInImportOrPackage(PsiElement element) {

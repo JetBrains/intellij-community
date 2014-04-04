@@ -115,6 +115,9 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
       new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
     try {
       final String[] visibleFiles = component.getVisibleFiles();
+      assertTrue(visibleFiles.length > 0);
+      assertEquals(visibleFiles[0], "a.java (AFoo)");
+      Arrays.sort(visibleFiles);
       Assert.assertArrayEquals(Arrays.toString(visibleFiles),
                                new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"}, visibleFiles);
     }

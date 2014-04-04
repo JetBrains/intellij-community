@@ -1,7 +1,7 @@
 package com.siyeh.igtest.abstraction.magic_number;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
+import java.io.*;
 
 @Size(max = 15)
 public class MagicNumber
@@ -40,6 +40,8 @@ public class MagicNumber
     void foo() {
       final int value = 101 * 55;
     }
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream(756);
 }
 @interface Size {
   int max();

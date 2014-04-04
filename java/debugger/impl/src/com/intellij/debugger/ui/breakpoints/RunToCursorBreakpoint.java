@@ -32,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends LineBreakpoint {
   private final boolean myRestoreBreakpoints;
-  private final SourcePosition myCustomPosition;
+  @NotNull
+  protected final SourcePosition myCustomPosition;
   private String mySuspendPolicy;
 
   protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {

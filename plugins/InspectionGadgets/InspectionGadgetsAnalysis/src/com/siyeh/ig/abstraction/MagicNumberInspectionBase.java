@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class MagicNumberInspectionBase extends BaseInspection {
 
     private boolean isInitialCapacity(PsiLiteralExpression expression) {
       final PsiElement element =
-        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
       if (!(element instanceof PsiExpressionList)) {
         return false;
       }
@@ -110,8 +110,11 @@ public class MagicNumberInspectionBase extends BaseInspection {
         return false;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
-      return TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
-                                                  CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null;
+      return TypeUtils.expressionHasTypeOrSubtype(newExpression,
+                                                  CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
+                                                  CommonClassNames.JAVA_UTIL_MAP,
+                                                  CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                  "java.io.ByteArrayOutputStream") != null;
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {

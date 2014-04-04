@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
@@ -41,7 +42,7 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
       result = new Repository(myTarget.getURL());
     }
     else {
-      SVNInfo info = myVcs.getInfo(myTarget.getFile());
+      SVNInfo info = myVcs.getInfo(myTarget.getFile(), SVNRevision.UNDEFINED);
       result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
     }
 

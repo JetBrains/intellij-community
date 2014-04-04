@@ -20,14 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * <p>Represents a commit in a VCS. A commit is represented by its {@link Hash} and the hashes of its parents.</p>
- *
- * <p>It is highly recommended to use the standard VcsCommit implementation which can be achieved from the
- *    {@link VcsLogObjectsFactory#createCommit(Hash, List) VcsLogObjectsFactory}.
- *    Otherwise it is important to implement the equals() and hashcode() methods so that they consider only the hash, and not other fields.
- *    If this rule is abandoned, it may lead to incorrect log building if different {@link VcsCommit} implementations meet together.</p>
- *
- * @author Kirill Likhodedov
+ * Represents a commit in a VCS. A commit is represented by its {@link Hash} and the hashes of its parents.
+ * <p/>
+ * It is highly recommended to use the standard VcsCommit implementation which can be achieved from the
+ * {@link VcsLogObjectsFactory#createCommit(Hash, List) VcsLogObjectsFactory}.
+ * Otherwise it is important to implement the equals() and hashcode() methods so that they consider only the hash, and not other fields.
+ * If this rule is abandoned, it may lead to incorrect log building if different {@link VcsCommit} implementations meet together.
  */
 public interface VcsCommit {
 
@@ -40,10 +38,9 @@ public interface VcsCommit {
   /**
    * <p>Returns parents of this commit.</p>
    * <p>A commit usually has one parent, but it can have two in the case of merge, more in the case of so called octopus merge,
-   *    or zero parents if it is the initial commit in the log
-   *    (or one of initial commits, if histories from several repositories are merged together).</p>
+   * or zero parents if it is the initial commit in the log
+   * (or one of initial commits, if histories from several repositories are merged together).</p>
    */
   @NotNull
   List<Hash> getParents();
-
 }

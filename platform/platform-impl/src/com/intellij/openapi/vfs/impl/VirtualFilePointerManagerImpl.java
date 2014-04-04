@@ -159,7 +159,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   @NotNull
   private VirtualFilePointer create(@Nullable VirtualFile file,
                                     @NotNull String url,
-                                    @NotNull final Disposable parentDisposable,
+                                    @NotNull Disposable parentDisposable,
                                     @Nullable VirtualFilePointerListener listener) {
     String protocol;
     VirtualFileSystem fileSystem;
@@ -171,11 +171,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       protocol = null;
       fileSystem = file.getFileSystem();
     }
+
     if (fileSystem == TEMP_FILE_SYSTEM) {
       // for tests, recreate always
       VirtualFile found = file == null ? VirtualFileManager.getInstance().findFileByUrl(url) : file;
       return new IdentityVirtualFilePointer(found, url);
     }
+
     if (fileSystem != LOCAL_FILE_SYSTEM && fileSystem != JAR_FILE_SYSTEM) {
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
@@ -190,14 +192,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       url = VirtualFileManager.constructUrl(protocol, path);
     }
     else {
-      path = file.getPath();
-      // url has come from VirtualFile.getUrl() and is good enough
+      path = file.getPath();  // url has come from VirtualFile.getUrl() and is good enough
     }
 
     VirtualFilePointerImpl pointer = getOrCreate(parentDisposable, listener, path, Pair.create(file, url));
-
     DelegatingDisposable.registerDisposable(parentDisposable, pointer);
-
     return pointer;
   }
 
@@ -310,13 +309,14 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
-  private final Set<VirtualFilePointerImpl> myStoredPointers = ContainerUtil.<VirtualFilePointerImpl>newIdentityTroveSet();
+  private final Set<VirtualFilePointerImpl> myStoredPointers = ContainerUtil.newIdentityTroveSet();
+
   @TestOnly
   public void storePointers() {
-    //assert myStoredPointers.isEmpty() : myStoredPointers;
     myStoredPointers.clear();
     addAllPointers(myStoredPointers);
   }
+
   @TestOnly
   public void assertPointersAreDisposed() {
     List<VirtualFilePointerImpl> pointers = new ArrayList<VirtualFilePointerImpl>();
@@ -422,7 +422,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
           final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
           VirtualFile eventFile = moveEvent.getFile();
           addPointersUnder(moveEvent.getNewParent().getPath() + "/" + eventFile.getName(), toFireEvents);
-          
+
           List<FilePointerPartNode> nodes = new ArrayList<FilePointerPartNode>();
           addPointersUnder(eventFile.getPath(), nodes);
           for (FilePointerPartNode pair : nodes) {

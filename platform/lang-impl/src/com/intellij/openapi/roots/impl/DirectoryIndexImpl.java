@@ -149,7 +149,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
-      public void fileTypesChanged(FileTypeEvent event) {
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
         doInitialize();
       }
     });

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,12 +193,16 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
     }
     for (final ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
-      JButton button = new JButton(importHandler.getTitle());
+      final JButton button = new JButton(importHandler.getTitle());
       button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          EditorColorsScheme scheme = importHandler.performImport();
-          if (scheme != null) myOptions.addImportedScheme(scheme);
+          importHandler.performImport(button, new Consumer<EditorColorsScheme>() {
+            @Override
+            public void consume(EditorColorsScheme scheme) {
+              if (scheme != null) myOptions.addImportedScheme(scheme);
+            }
+          });
         }
       });
       panel.add(button,

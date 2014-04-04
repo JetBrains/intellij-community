@@ -33,7 +33,6 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.zmlx.hg4idea.util.HgHistoryUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.SimpleDateFormat;
@@ -60,9 +59,9 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsCommitMetadata> readFirstBlock(@NotNull VirtualFile root,
-                                                          boolean ordered, int commitCount) throws VcsException {
-    return HgHistoryUtil.loadMetadata(myProject, root, commitCount,
-                                      ordered ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
+                                                          @NotNull Requirements requirements) throws VcsException {
+    return HgHistoryUtil.loadMetadata(myProject, root, requirements.getCommitCount(),
+                                      requirements.isOrdered() ? Collections.<String>emptyList() : Arrays.asList("-r", "0:tip"));
   }
 
   @NotNull
@@ -88,6 +87,9 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException {
     myRepositoryManager.waitUntilInitialized();
+    if (myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
     HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
@@ -244,11 +246,6 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public Collection<String> getContainingBranches(@NotNull VirtualFile root, @NotNull Hash commitHash) throws VcsException {
     return HgHistoryUtil.getDescendingHeadsOfBranches(myProject, root, commitHash);
-  }
-
-  @Override
-  public boolean supportsFastUnorderedCommits() {
-    return false;
   }
 
   private static String prepareParameter(String paramName, String value) {

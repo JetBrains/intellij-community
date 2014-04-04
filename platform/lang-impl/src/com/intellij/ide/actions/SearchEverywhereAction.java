@@ -72,10 +72,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
@@ -1048,7 +1045,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           Icon icon = templatePresentation.getIcon();
           if (anAction instanceof ActivateToolWindowAction) {
             final String id = ((ActivateToolWindowAction)anAction).getToolWindowId();
-            icon = ToolWindowManager.getInstance(myProject).getToolWindow(id).getIcon();
+            ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(id);
+            if (toolWindow != null) {
+              icon = toolWindow.getIcon();
+            }
           }
 
           append(templatePresentation.getText());

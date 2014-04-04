@@ -136,7 +136,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
       svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
+      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (!svnHandl[0].isAnythingReported()) {
         if (!SvnUtil.isSvnVersioned(myVcs, path)) {
           throw new SVNException(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -35,10 +36,9 @@ public class CacheUpdateSession {
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create(CacheUpdateSession.class.getSimpleName() + ".FAILED_TO_INDEX");
   private final List<VirtualFile> myFilesToUpdate;
   private final int myJobsToDo;
-  private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles =
-    new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
+  private final List<Pair<CacheUpdater, Collection<VirtualFile>>> myUpdatersWithFiles = new ArrayList<Pair<CacheUpdater, Collection<VirtualFile>>>();
 
-  public CacheUpdateSession(Collection<CacheUpdater> updaters, ProgressIndicator indicator) {
+  CacheUpdateSession(@NotNull Collection<CacheUpdater> updaters, @NotNull ProgressIndicator indicator) {
     List<CacheUpdater> processedUpdaters = new ArrayList<CacheUpdater>();
 
     LinkedHashSet<VirtualFile> set = ContainerUtil.newLinkedHashSet();
@@ -74,13 +74,14 @@ public class CacheUpdateSession {
   public int getNumberOfPendingUpdateJobs() {
     return myJobsToDo;
   }
-  
+
+  @NotNull
   public Collection<VirtualFile> getFilesToUpdate() {
     return myFilesToUpdate;
   }
 
   @Nullable
-  private synchronized Pair<CacheUpdater, Collection<VirtualFile>> getPair(final VirtualFile file) {
+  private synchronized Pair<CacheUpdater, Collection<VirtualFile>> getPair(@NotNull final VirtualFile file) {
     return ContainerUtil.find(myUpdatersWithFiles, new Condition<Pair<CacheUpdater, Collection<VirtualFile>>>() {
       @Override
       public boolean value(Pair<CacheUpdater, Collection<VirtualFile>> cacheUpdaterCollectionPair) {
@@ -89,7 +90,7 @@ public class CacheUpdateSession {
     });
   }
 
-  public void processFile(FileContent content) {
+  public void processFile(@NotNull FileContent content) {
     VirtualFile file = content.getVirtualFile();
     boolean isValid = file.isValid() && !file.isDirectory();
 
@@ -114,7 +115,7 @@ public class CacheUpdateSession {
     }
   }
 
-  private synchronized void removeFile(VirtualFile file, CacheUpdater eachUpdater, Collection<VirtualFile> eachFiles) {
+  private synchronized void removeFile(@NotNull VirtualFile file, @NotNull CacheUpdater eachUpdater, @NotNull Collection<VirtualFile> eachFiles) {
     eachFiles.remove(file);
 
     if (eachFiles.isEmpty()) {

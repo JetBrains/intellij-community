@@ -84,7 +84,6 @@ public abstract class LoggerRt {
   private static class JavaFactory implements Factory {
     private final LogManager myManager = LogManager.getLogManager();
 
-    @Override
     public LoggerRt getInstance(@NotNull @NonNls final String category) {
       final Logger logger = myManager.getLogger(category);
       return new LoggerRt() {
@@ -124,7 +123,6 @@ public abstract class LoggerRt {
       myError.setAccessible(true);
     }
 
-    @Override
     public LoggerRt getInstance(@NotNull @NonNls final String category) {
       try {
         final Object logger = myGetInstance.invoke(null, category);

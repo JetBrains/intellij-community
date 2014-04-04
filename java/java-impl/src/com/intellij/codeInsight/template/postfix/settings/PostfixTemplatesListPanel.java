@@ -29,7 +29,7 @@ public class PostfixTemplatesListPanel {
       @NotNull
       @Override
       public String fun(@NotNull PostfixTemplate template) {
-        return template.getKey();
+        return template.getKey().replaceFirst(".", "");
       }
     };
 
@@ -58,10 +58,11 @@ public class PostfixTemplatesListPanel {
   public PostfixTemplatesListPanel(@NotNull List<PostfixTemplate> templates) {
     ColumnInfo[] columns = generateColumns(templates);
     ListTableModel<PostfixTemplate> templatesTableModel = new ListTableModel<PostfixTemplate>(columns, templates, 0);
+    templatesTableModel.setSortable(true);
     myTemplatesTableView = new TableView<PostfixTemplate>();
     myTemplatesTableView.setModelAndUpdateColumns(templatesTableModel);
+    myTemplatesTableView.setAutoCreateRowSorter(true);
     myTemplatesTableView.setShowGrid(false);
-    myTemplatesTableView.setStriped(true);
     myTemplatesTableView.setBorder(null);
 
     new TableViewSpeedSearch<PostfixTemplate>(myTemplatesTableView) {

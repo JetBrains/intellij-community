@@ -355,7 +355,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     }
     popupActionGroup.add(createAddNonCompositeElementGroup());
     final RemovePackagingElementAction removeAction = new RemovePackagingElementAction(this);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, tree);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), tree);
     popupActionGroup.add(removeAction);
     popupActionGroup.add(new ExtractArtifactAction(this));
     popupActionGroup.add(new InlineArtifactAction(this));

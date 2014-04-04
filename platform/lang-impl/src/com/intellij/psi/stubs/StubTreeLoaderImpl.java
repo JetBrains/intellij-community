@@ -55,22 +55,11 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);
-      if (psiFile != null) {
-        fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
-        if (!vFile.getFileType().isBinary()) {
-          fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
-        }
-        psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+      if (psiFile != null && !vFile.getFileType().isBinary()) {
+        fc.putUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY, psiFile.getViewProvider().getContents());
+        // but don't reuse psiFile itself to avoid loading its contents. If we load AST, the stub will be thrown out anyway.
       }
-      Stub element;
-      try {
-        element = StubTreeBuilder.buildStubTree(fc);
-      }
-      finally {
-        if (psiFile != null) {
-          psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
-        }
-      }
+      Stub element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         StubTree tree = new StubTree((PsiFileStub)element);
         tree.setDebugInfo("created from file content");

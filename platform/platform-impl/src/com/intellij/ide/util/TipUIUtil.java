@@ -44,7 +44,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 
@@ -215,22 +214,14 @@ public class TipUIUtil {
         }
       }
     );
-    HTMLEditorKit kit;
-    try {
-      // set default CSS for plugin tips
-      URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-      final StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(resource.openStream()), resource);
-      kit = new HTMLEditorKit() {
-        @Override
-        public StyleSheet getStyleSheet() {
-          return styleSheet;
-        }
-      };
-    }
-    catch (IOException ignored) {
-      kit = new HTMLEditorKit();
-    }
+    URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
+    final StyleSheet styleSheet = UIUtil.loadStyleSheet(resource);
+    HTMLEditorKit kit = new HTMLEditorKit() {
+      @Override
+      public StyleSheet getStyleSheet() {
+        return styleSheet != null ? styleSheet : super.getStyleSheet();
+      }
+    };
     browser.setEditorKit(kit);
     return browser;
   }

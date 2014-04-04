@@ -217,7 +217,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       @Override
       public ShortcutSet getShortcut() {
-        return CommonShortcuts.DELETE;
+        return CommonShortcuts.getDelete();
       }
     });
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {

@@ -179,7 +179,7 @@ public class VcsTestUtil {
   /**
    * Testng compares by iterating over 2 collections, but it won't work for sets which may have different order.
    */
-  public static <T, E> void assertEqualCollections(@NotNull Collection<T> actual,
+  public static <T, E> void assertEqualCollections(@NotNull Collection<? extends T> actual,
                                                    @NotNull Collection<E> expected,
                                                    @NotNull EqualityChecker<T, E> equalityChecker) {
     if (actual.size() != expected.size()) {
@@ -198,7 +198,7 @@ public class VcsTestUtil {
     }
   }
 
-  private static <T, E> boolean contains(@NotNull Collection<T> collection,
+  private static <T, E> boolean contains(@NotNull Collection<? extends T> collection,
                                          @NotNull E object,
                                          @NotNull EqualityChecker<T, E> equalityChecker) {
     for (T t : collection) {

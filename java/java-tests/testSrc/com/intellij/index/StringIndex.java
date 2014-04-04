@@ -59,7 +59,7 @@ public class StringIndex {
   private static class Indexer implements DataIndexer<String, String, PathContentPair> {
     @Override
     @NotNull
-    public Map<String,String> map(final PathContentPair inputData) {
+    public Map<String,String> map(@NotNull final PathContentPair inputData) {
       final Map<String,String> _map = new HashMap<String, String>();
       final StringBuilder builder = new StringBuilder();
       final String content = inputData.content;

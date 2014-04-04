@@ -38,11 +38,11 @@ import java.util.Set;
 /**
  * @author kir
  */
-public class LinkLabel extends JLabel {
+public class LinkLabel<T> extends JLabel {
   protected boolean myUnderline;
 
   private LinkListener myLinkListener;
-  private Object myLinkData;
+  private T myLinkData;
 
   private static final Set ourVisitedLinks = new HashSet();
 
@@ -69,14 +69,14 @@ public class LinkLabel extends JLabel {
     this(text, icon, aListener, null, null);
   }
 
-  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener, @Nullable Object aLinkData) {
+  public LinkLabel(String text, @Nullable Icon icon, @Nullable LinkListener aListener, @Nullable T aLinkData) {
     this(text, icon, aListener, aLinkData, null);
   }
 
   public LinkLabel(String text,
                    @Nullable Icon icon,
-                   @Nullable LinkListener aListener,
-                   @Nullable Object aLinkData,
+                   @Nullable LinkListener<T> aListener,
+                   @Nullable T aLinkData,
                    @Nullable String aVisitedLinksKey) {
     super(text, icon, SwingConstants.LEFT);
     setOpaque(false);
@@ -97,7 +97,7 @@ public class LinkLabel extends JLabel {
     myHoveringIcon = iconForHovering;
   }
 
-  public void setListener(LinkListener listener, @Nullable Object linkData) {
+  public void setListener(LinkListener listener, @Nullable T linkData) {
     myLinkListener = listener;
     myLinkData = linkData;
   }

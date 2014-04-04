@@ -49,7 +49,6 @@ public class CurrentBranches {
       setAllValues(myVisibleNodesInBranches, true);
       return;
     }
-    setAllValues(myVisibleNodesInBranches, false);
     Set<Integer> startedNodes = new HashSet<Integer>();
     for (int i = 0; i < myPermanentGraph.nodesCount(); i++) {
       if (heads.contains(myPermanentGraph.getHashIndex(i)))
@@ -58,6 +57,7 @@ public class CurrentBranches {
     if (startedNodes.size() != heads.size() || heads.isEmpty()) {
       throw new InvalidRequestException("Heads size is invalid! startedNodes " + startedNodes + "; heads: " + heads);
     }
+    setAllValues(myVisibleNodesInBranches, false);
     selectAllVisibleNodes(startedNodes);
   }
 
