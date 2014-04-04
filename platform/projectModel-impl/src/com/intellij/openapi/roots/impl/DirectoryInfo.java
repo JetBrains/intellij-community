@@ -261,6 +261,7 @@ public class DirectoryInfo {
     }
   };
 
+  @Nullable
   public VirtualFile getSourceRoot() {
     return sourceRoot;
   }
@@ -273,6 +274,7 @@ public class DirectoryInfo {
     return getLibraryClassRoot() != null;
   }
 
+  @Nullable
   public VirtualFile getContentRoot() {
     return contentRoot;
   }
