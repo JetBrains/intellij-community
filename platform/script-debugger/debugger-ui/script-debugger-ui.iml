@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-debugger-backend" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="script-debugger-backend" />
   </component>
 </module>
 
