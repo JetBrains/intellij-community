@@ -625,7 +625,6 @@ public class AllIcons {
       public static final Icon Top = IconLoader.getIcon("/ide/shadow/top.png"); // 1x20
 
     }
-    public static final Icon SharedScope = IconLoader.getIcon("/ide/sharedScope.png"); // 16x16
     public static final Icon Statusbar_arrows = IconLoader.getIcon("/ide/statusbar_arrows.png"); // 7x10
     public static final Icon UpDown = IconLoader.getIcon("/ide/upDown.png"); // 16x16
     public static final Icon Warning_notifications = IconLoader.getIcon("/ide/warning_notifications.png"); // 16x16
@@ -844,6 +843,7 @@ public class AllIcons {
     public static final Icon Rw_access = IconLoader.getIcon("/nodes/rw-access.png"); // 13x9
     public static final Icon SecurityRole = IconLoader.getIcon("/nodes/SecurityRole.png"); // 16x16
     public static final Icon Servlet = IconLoader.getIcon("/nodes/servlet.png"); // 16x16
+    public static final Icon Shared = IconLoader.getIcon("/nodes/shared.png"); // 16x16
     public static final Icon SortBySeverity = IconLoader.getIcon("/nodes/sortBySeverity.png"); // 16x16
     public static final Icon SourceFolder = IconLoader.getIcon("/nodes/sourceFolder.png"); // 16x16
     public static final Icon Static = IconLoader.getIcon("/nodes/static.png"); // 16x16

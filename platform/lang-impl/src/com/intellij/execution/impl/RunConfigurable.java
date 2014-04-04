@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -74,7 +73,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SHARED_ICON = IconLoader.getTransparentIcon(AllIcons.Nodes.Symlink, .6f);
+  private static final Icon SHARED_ICON = AllIcons.Nodes.Shared;
   private static final Icon NON_SHARED_ICON = EmptyIcon.ICON_16;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
   @NonNls private static final Object DEFAULTS = new Object() {
@@ -200,9 +199,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           if (shared != null) {
             Icon icon = getIcon();
-            LayeredIcon layeredIcon = new LayeredIcon(2);
-            layeredIcon.setIcon(icon, 0, 0, 0);
-            layeredIcon.setIcon(shared ? SHARED_ICON : NON_SHARED_ICON, 1, 8, 0);
+            LayeredIcon layeredIcon = new LayeredIcon(icon, shared ? SHARED_ICON : NON_SHARED_ICON);
             setIcon(layeredIcon);
             setIconTextGap(0);
           } else {
