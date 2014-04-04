@@ -1,4 +1,6 @@
 <component>
+  <!--todo move to next work with different camel hump-->
+  <!--todo goto delcaratons /definitions conflict-->
   <keymap version="1" name="Xcode" parent="Mac OS X 10.5+">
     <action id="ActivateHierarchyToolWindow"/>
     <action id="ActivateFavoritesToolWindow">
