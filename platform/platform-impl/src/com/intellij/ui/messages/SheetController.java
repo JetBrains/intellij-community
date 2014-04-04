@@ -51,7 +51,7 @@ public class SheetController {
 
   public static int SHADOW_BORDER = 5;
 
-  private static int RIGHT_OFFSET = 20 + SHADOW_BORDER;
+  private static int RIGHT_OFFSET = 10 - SHADOW_BORDER;
   private static int BOTTOM_SHEET_PADDING = 10;
 
   private final static int TOP_SHEET_PADDING = 20;
@@ -353,24 +353,23 @@ public class SheetController {
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int widestButtonWidth = 0;
+    //int widestButtonWidth = 0;
+    int buttonWidth = 0;
     SHEET_HEIGHT += GAP_BETWEEN_LINES;
 
-    for (JButton button : buttons) {
-      button.repaint();
-      widestButtonWidth = Math.max(button.getPreferredSize().width, widestButtonWidth);
+    for (int i = 0; i < buttons.length; i ++) {
+      buttons[i].repaint();
+      buttons[i].setSize(buttons[i].getPreferredSize());
+      buttonWidth += buttons[i].getWidth();
+      if (i == buttons.length - 1) break;
+      buttonWidth += GAP_BETWEEN_BUTTONS;
     }
 
-    for (JButton button : buttons) {
-      button.setSize(widestButtonWidth, button.getPreferredSize().height);
-      panel.add(button);
-    }
+    int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
 
-    int buttonsWidth = (widestButtonWidth + GAP_BETWEEN_BUTTONS) * buttons.length + RIGHT_OFFSET;
+    SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
 
-    SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
-
-    int buttonShift = 0;
+    int buttonShift = RIGHT_OFFSET;
 
     for (JButton button : buttons) {
       Dimension size = button.getSize();
@@ -378,6 +377,7 @@ public class SheetController {
       button.setBounds(SHEET_WIDTH - buttonShift,
                        SHEET_HEIGHT,
                        size.width, size.height);
+      panel.add(button);
       buttonShift += GAP_BETWEEN_BUTTONS;
     }
 
