@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
@@ -22,7 +24,9 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
 import org.junit.Before;
@@ -32,9 +36,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +64,7 @@ public abstract class AbstractModelBuilderTest {
     TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*)\\]");
   }
 
+  private static final String GRADLE_EXECUTABLE_NAME = SystemInfo.isWindows ? "gradle.bat" : "gradle";
   private static File ourTempDir;
 
   @NotNull
@@ -114,6 +121,7 @@ public abstract class AbstractModelBuilderTest {
     DefaultGradleConnector gradleConnector = (DefaultGradleConnector)connector;
     gradleConnector.useGradleVersion(gradleVersion);
     gradleConnector.forProjectDirectory(testDir);
+    gradleConnector.daemonMaxIdleTime(1, TimeUnit.SECONDS);
     ProjectConnection connection = gradleConnector.connect();
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(false);
