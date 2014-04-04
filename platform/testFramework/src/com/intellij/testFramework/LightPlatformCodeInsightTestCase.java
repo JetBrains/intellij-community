@@ -62,6 +62,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -565,7 +566,12 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
 
-    PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+    try {
+      PathManagerEx.replaceLookupStrategy(klass, com.intellij.testFramework.Parameterized.class);
+    }
+    catch (IllegalArgumentException ignore) {
+      //allow to run out of idea project
+    }
 
     final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
     String testDataPath = testCase.getTestDataPath();
