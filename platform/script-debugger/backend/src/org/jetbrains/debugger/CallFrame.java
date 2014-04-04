@@ -19,6 +19,8 @@ public interface CallFrame {
 
   /**
    * @return the receiver variable known in this frame ("this" variable)
+   *
+   * Computed variable must be null if no receiver variable, call {@link com.intellij.openapi.util.AsyncResult#setDone(Object null)}
    */
   @NotNull
   AsyncResult<Variable> getReceiverVariable();
@@ -36,5 +38,6 @@ public interface CallFrame {
   /**
    * @return context for evaluating expressions in scope of this frame
    */
+  @NotNull
   EvaluateContext getEvaluateContext();
 }
