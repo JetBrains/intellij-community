@@ -18,8 +18,9 @@ public interface CallFrame {
   List<Scope> getVariableScopes();
 
   /**
-   * @return the receiver variable known in this frame
+   * @return the receiver variable known in this frame ("this" variable)
    */
+  @NotNull
   AsyncResult<Variable> getReceiverVariable();
 
   int getLine();
