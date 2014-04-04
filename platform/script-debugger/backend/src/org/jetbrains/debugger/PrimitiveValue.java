@@ -2,13 +2,21 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 
-public abstract class PrimitiveValue extends ValueBase {
+public class PrimitiveValue extends ValueBase {
   private final String valueString;
 
-  protected PrimitiveValue(@NotNull ValueType type, String valueString) {
+  public PrimitiveValue(@NotNull ValueType type, @NotNull String valueString) {
     super(type);
 
     this.valueString = valueString;
+  }
+
+  public PrimitiveValue(ValueType type, int value) {
+    this(type, Integer.toString(value));
+  }
+
+  public PrimitiveValue(ValueType type, long value) {
+    this(type, Long.toString(value));
   }
 
   @Override

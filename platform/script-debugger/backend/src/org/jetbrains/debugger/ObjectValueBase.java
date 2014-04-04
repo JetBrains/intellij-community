@@ -15,7 +15,7 @@ public abstract class ObjectValueBase<VALUE_LOADER extends ValueLoader> extends 
 
   protected final VALUE_LOADER valueLoader;
 
-  public ObjectValueBase(@NotNull ValueType type, VALUE_LOADER valueLoader) {
+  public ObjectValueBase(@NotNull ValueType type, @NotNull VALUE_LOADER valueLoader) {
     super(type);
 
     this.valueLoader = valueLoader;

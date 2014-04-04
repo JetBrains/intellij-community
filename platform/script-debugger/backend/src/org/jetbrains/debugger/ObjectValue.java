@@ -4,8 +4,7 @@ import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A compound JsValue that has zero or more properties. Note that JavaScript {@code null}
- * value while officially being 'object' in the SDK is represented as a plain {@link Value}.
+ * A compound value that has zero or more properties
  */
 public interface ObjectValue extends Value {
   @Nullable

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface SuspendContextManager {
+public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   /**
    * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)}
    * will be called.
@@ -39,7 +39,8 @@ public interface SuspendContextManager {
    *     a standard 'resumed' notification), and is false if call frames list is already updated
    *     without VM state change (this case presently is never actually happening)
    */
-  AsyncResult<Boolean> restartFrame(@NotNull CallFrame callFrame);
+  @NotNull
+  AsyncResult<Boolean> restartFrame(@NotNull CALL_FRAME callFrame);
 
   /**
    * @return whether reset operation is supported for the particular callFrame
