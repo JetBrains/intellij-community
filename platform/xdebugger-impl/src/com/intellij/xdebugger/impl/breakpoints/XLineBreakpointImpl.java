@@ -89,7 +89,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
     RangeHighlighterEx highlighter = myHighlighter;
-    if (highlighter != null && (!highlighter.isValid() || document.getLineNumber(highlighter.getStartOffset()) != getLine())) {
+    if (highlighter != null &&
+        (!highlighter.isValid() ||
+         highlighter.getStartOffset() >= document.getTextLength() ||
+         document.getLineNumber(highlighter.getStartOffset()) != getLine())) {
       highlighter.dispose();
       myHighlighter = null;
       highlighter = null;
