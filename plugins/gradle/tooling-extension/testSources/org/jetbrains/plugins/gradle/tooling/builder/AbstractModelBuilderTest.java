@@ -35,6 +35,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,6 +115,7 @@ public abstract class AbstractModelBuilderTest {
     DefaultGradleConnector gradleConnector = (DefaultGradleConnector)connector;
     gradleConnector.useGradleVersion(gradleVersion);
     gradleConnector.forProjectDirectory(testDir);
+    gradleConnector.daemonMaxIdleTime(1, TimeUnit.SECONDS);
     ProjectConnection connection = gradleConnector.connect();
 
     final ProjectImportAction projectImportAction = new ProjectImportAction(false);
