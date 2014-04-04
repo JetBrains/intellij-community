@@ -686,7 +686,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     public RemoveMetaTargetsOrBuildFileAction() {
       super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
-      registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)), myTree);
+      registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
       Disposer.register(AntExplorer.this, new Disposable() {
         public void dispose() {
           RemoveMetaTargetsOrBuildFileAction.this.unregisterCustomShortcutSet(myTree);
