@@ -100,8 +100,7 @@ public class SheetController {
     myResult = null;
 
     for (int i = 0; i < buttons.length; i++) {
-      int titleIndex = buttonTitles.length - 1 - i;
-      String buttonTitle = buttonTitles[titleIndex];
+      String buttonTitle = buttonTitles[i];
 
       buttons[i] = new JButton();
       buttons[i].setOpaque(false);
