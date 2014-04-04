@@ -1,13 +1,17 @@
 package com.jetbrains.javascript.debugger;
 
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.util.Url;
 import com.jetbrains.javascript.debugger.sourcemap.SourceMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An objects that holds data for a "script" which is a part of a resource
  * loaded into the browser, identified by its original document URL, line offset
  * in the original document, and the line count this script spans.
  */
-public interface Script extends ScriptInfo {
+public interface Script extends UserDataHolderEx {
   void setSourceMap(SourceMap sourceMap);
 
   enum Type {
@@ -22,4 +26,19 @@ public interface Script extends ScriptInfo {
   }
 
   Type getType();
+
+  @Nullable
+  SourceMap getSourceMap();
+
+  @NotNull
+  Url getUrl();
+
+  @Nullable
+  String getFunctionName();
+
+  int getLine();
+
+  int getColumn();
+
+  int getEndLine();
 }
