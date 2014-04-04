@@ -142,7 +142,7 @@ public class SheetController {
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.75f);
+    renderer.setOpacity(.80f);
     renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
@@ -341,8 +341,13 @@ public class SheetController {
     g2d.clearRect(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
   }
 
+
+  private static float getShadowAlpha() {
+    return ((UIUtil.isUnderDarcula())) ? .85f : .35f;
+  }
+
   private void paintShadowFromParent(Graphics2D g2d) {
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .35f));
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
     g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
   }
 
