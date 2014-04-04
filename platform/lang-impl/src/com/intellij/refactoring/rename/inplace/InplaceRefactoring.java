@@ -735,7 +735,7 @@ public abstract class InplaceRefactoring {
       if (initialInjectedHost != null && initialInjectedHost != injectionHost) {
         return false;
       }
-      return injectedLanguageManager.injectedToHost(element, textRange).shiftRight(shiftOffset).contains(offset);
+      return injectedLanguageManager.injectedToHost(element, textRange).shiftRight(shiftOffset).containsOffset(offset);
     }
     return textRange.shiftRight(shiftOffset).containsOffset(offset);
   }
