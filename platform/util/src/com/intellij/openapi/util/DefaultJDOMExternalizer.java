@@ -56,7 +56,7 @@ public class DefaultJDOMExternalizer {
       if (field.getName().indexOf('$') >= 0) continue;
       int modifiers = field.getModifiers();
       if (!(Modifier.isPublic(modifiers) && !Modifier.isStatic(modifiers) &&
-          !Modifier.isFinal(modifiers) && !Modifier.isTransient(modifiers) &&
+          /*!Modifier.isFinal(modifiers) &&*/ !Modifier.isTransient(modifiers) &&
           field.getAnnotation(Transient.class) == null)) continue;
 
       field.setAccessible(true); // class might be non-public
