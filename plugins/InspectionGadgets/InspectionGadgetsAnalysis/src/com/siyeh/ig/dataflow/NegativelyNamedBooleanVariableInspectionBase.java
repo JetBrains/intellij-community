@@ -32,7 +32,7 @@ public class NegativelyNamedBooleanVariableInspectionBase extends BaseInspection
 
   @NonNls
   private static final String[] NEGATIVE_NAMES = {"not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "cant", "hasNot",
-    "couldNot", "hidden", "isHidden", "disabled", "isDisabled"};
+    "couldNot", "doesNot", "hidden", "isHidden", "disabled", "isDisabled", "isInvalid", "invalid"};
 
   @Nls
   @NotNull
