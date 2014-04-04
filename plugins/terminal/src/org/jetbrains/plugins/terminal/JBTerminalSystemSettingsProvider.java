@@ -207,7 +207,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider imp
   }
 
   @Override
-  public boolean allowSelectionOnMouseReporting() {
+  public boolean forceActionOnMouseReporting() {
     return true;
   }
 
