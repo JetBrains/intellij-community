@@ -93,7 +93,7 @@ public class SheetController {
     }
 
     myDoNotAskOption = doNotAskOption;
-    myDoNotAskResult = (doNotAskOption == null) ? false : !doNotAskOption.isToBeShown();
+    myDoNotAskResult = (doNotAskOption != null) && !doNotAskOption.isToBeShown();
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
 
@@ -142,7 +142,7 @@ public class SheetController {
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.75f);
+    renderer.setOpacity(.80f);
     renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
@@ -197,7 +197,7 @@ public class SheetController {
   }
 
   private static float getSheetAlpha() {
-    return ((UIUtil.isUnderDarcula())) ? .95f : .85f;
+    return .95f;
   }
 
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
@@ -208,7 +208,7 @@ public class SheetController {
         super.paintComponent(g);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
-        g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
+        g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
 
         paintShadow(g);
@@ -348,7 +348,7 @@ public class SheetController {
 
   private void paintShadowFromParent(Graphics2D g2d) {
     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
-    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
+    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT - SHADOW_BORDER, null);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
