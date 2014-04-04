@@ -11,6 +11,9 @@ public abstract class CallFrameBase implements CallFrame {
 
   protected NotNullLazyValue<Scope[]> scopes;
 
+  /**
+   * You must initialize {@link #scopes} or override {@link #getVariableScopes()}
+   */
   protected CallFrameBase(@Nullable String functionName, int line, int column) {
     this.functionName = functionName;
     this.line = line;
