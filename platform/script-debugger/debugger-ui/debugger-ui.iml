@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-debugger-backend" />
+    <orderEntry type="module" module-name="xdebugger-api" />
   </component>
 </module>
 
