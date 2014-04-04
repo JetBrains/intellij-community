@@ -177,6 +177,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (myRefreshCacheUpdaters.size() == 0) {
       return; // default project
     }
+
+    if (ApplicationManager.getApplication().isInternal()) LOG.info(new Throwable("refresh"));
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
@@ -291,6 +293,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
+    if (ApplicationManager.getApplication().isInternal()) LOG.info(new Throwable("sync roots"));
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
