@@ -156,6 +156,10 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
     checkResultByFile();
   }
 
+  public void testMultiCaret() {
+    doCompleteTest(".if", '\t');
+  }
+  
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";
