@@ -93,7 +93,7 @@ public class SheetController {
     }
 
     myDoNotAskOption = doNotAskOption;
-    myDoNotAskResult = (doNotAskOption == null) ? false : !doNotAskOption.isToBeShown();
+    myDoNotAskResult = (doNotAskOption != null) && !doNotAskOption.isToBeShown();
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
 
