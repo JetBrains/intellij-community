@@ -555,9 +555,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
 
-    if ("serviceClassName".equals(getReferenceName()) && getParent() instanceof GrIfStatement) {
-      System.out.println(1);
-    }
     for (GrReferenceTypeEnhancer enhancer : GrReferenceTypeEnhancer.EP_NAME.getExtensions()) {
       PsiType type = enhancer.getReferenceType(this, resolved);
       if (type != null) {
