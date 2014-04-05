@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
@@ -132,6 +133,21 @@ public class FileManagerImpl implements FileManager {
     });
   }
 
+  public void forceReload(@NotNull VirtualFile vFile) {
+    if (findCachedViewProvider(vFile) == null) {
+      return;
+    }
+    setViewProvider(vFile, null);
+
+    VirtualFile dir = vFile.getParent();
+    PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
+    if (parentDir != null) {
+      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
+      treeEvent.setParent(parentDir);
+      myManager.childrenChanged(treeEvent);
+    }
+  }
+
   @Override
   public void dispose() {
     if (myInitialized) {
@@ -185,6 +201,11 @@ public class FileManagerImpl implements FileManager {
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (fileViewProvider == null) {
         myVFileToViewProviderMap.remove(virtualFile);
+
+        Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+        if (document != null) {
+          PsiDocumentManagerBase.cachePsi(document, null);
+        }
       }
       else {
         myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
@@ -382,19 +403,6 @@ public class FileManagerImpl implements FileManager {
 
   PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
     return myVFileToPsiDirMap.get(vFile);
-  }
-
-  void cacheViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
-    if (viewProvider == null) {
-      removeCachedViewProvider(vFile);
-    }
-    else {
-      myVFileToViewProviderMap.put(vFile, viewProvider);
-    }
-  }
-
-  void removeCachedViewProvider(@NotNull VirtualFile vFile) {
-    myVFileToViewProviderMap.remove(vFile);
   }
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
