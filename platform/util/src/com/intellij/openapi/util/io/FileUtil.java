@@ -633,7 +633,7 @@ public class FileUtil extends FileUtilRt {
    */
   @Contract("null -> null")
   public static String toCanonicalPath(@Nullable String path) {
-    return toCanonicalPath(path, File.separatorChar);
+    return toCanonicalPath(path, File.separatorChar, true);
   }
 
   @Contract("null, _ -> null")
@@ -660,11 +660,9 @@ public class FileUtil extends FileUtilRt {
       return path;
     }
 
-    int start = pathRootEnd(path) + 1, dots = 0;
-    boolean separator = true;
-
     StringBuilder result = new StringBuilder(path.length());
-    result.append(path, 0, start);
+    int start = processRoot(path, result), dots = 0;
+    boolean separator = true;
 
     for (int i = start; i < path.length(); ++i) {
       char c = path.charAt(i);
@@ -706,17 +704,39 @@ public class FileUtil extends FileUtilRt {
     return result.toString();
   }
 
-  private static int pathRootEnd(CharSequence path) {
-    if (path.length() > 0 && path.charAt(0) == '/') {
-      return 0;
+  private static int processRoot(String path, StringBuilder result) {
+    if (SystemInfo.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+      result.append("//");
+
+      int hostStart = 2;
+      while (hostStart < path.length() && path.charAt(hostStart) == '/') hostStart++;
+      if (hostStart == path.length()) return hostStart;
+      int hostEnd = path.indexOf('/', hostStart);
+      if (hostEnd < 0) hostEnd = path.length();
+      result.append(path, hostStart, hostEnd);
+      result.append('/');
+
+      int shareStart = hostEnd;
+      while (shareStart < path.length() && path.charAt(shareStart) == '/') shareStart++;
+      if (shareStart == path.length()) return shareStart;
+      int shareEnd = path.indexOf('/', shareStart);
+      if (shareEnd < 0) shareEnd = path.length();
+      result.append(path, shareStart, shareEnd);
+      result.append('/');
+
+      return shareEnd;
     }
-    else if (path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
+    else if (path.length() > 0 && path.charAt(0) == '/') {
+      result.append('/');
       return 1;
     }
     else if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
-      return 2;
+      result.append(path, 0, 3);
+      return 3;
     }
-    return -1;
+    else {
+      return 0;
+    }
   }
 
   private static void processDots(StringBuilder result, int dots, int start) {
@@ -756,12 +776,13 @@ public class FileUtil extends FileUtilRt {
     final StringBuilder result = new StringBuilder(path.length());
 
     int start = 0;
+    boolean separator = false;
     if (SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
       start = 2;
       result.append("//");
+      separator = true;
     }
 
-    boolean separator = false;
     for (int i = start; i < path.length(); ++i) {
       final char c = path.charAt(i);
       if (c == '/' || c == '\\') {
