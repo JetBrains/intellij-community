@@ -21,7 +21,7 @@ public class SneakyTrowsExceptionHandler {
   private static final String ANNOTATION_FQN = SneakyThrows.class.getName();
   private static final String JAVA_LANG_THROWABLE = "java.lang.Throwable";
 
-  public static boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String exceptionFQN) {
+  public static boolean isExceptionHandled(@NotNull PsiModifierListOwner psiModifierListOwner, String... exceptionFQNs) {
     final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiModifierListOwner, ANNOTATION_FQN);
     if (psiAnnotation == null) {
       return false;
@@ -29,10 +29,19 @@ public class SneakyTrowsExceptionHandler {
 
     final Collection<PsiType> sneakedExceptionTypes = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class);
     //Default SneakyThrows handles all exceptions
-    if (sneakedExceptionTypes.isEmpty()) {
+    if (sneakedExceptionTypes.isEmpty() || sneakedExceptionTypes.iterator().next().equalsToText(JAVA_LANG_THROWABLE)) {
       return true;
     }
 
+    for (String exceptionFQN : exceptionFQNs) {
+      if (!isExceptionHandled(exceptionFQN.trim(), psiModifierListOwner, sneakedExceptionTypes)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean isExceptionHandled(@NotNull String exceptionFQN, @NotNull PsiModifierListOwner psiModifierListOwner, @NotNull Collection<PsiType> sneakedExceptionTypes) {
     for (PsiType sneakedExceptionType : sneakedExceptionTypes) {
       if (sneakedExceptionType.equalsToText(JAVA_LANG_THROWABLE) || sneakedExceptionType.equalsToText(exceptionFQN)) {
         return true;
@@ -55,7 +64,6 @@ public class SneakyTrowsExceptionHandler {
         }
       }
     }
-
     return false;
   }
 }
