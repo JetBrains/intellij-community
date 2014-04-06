@@ -19,6 +19,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -118,6 +119,8 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     return new DumbModeTask() {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        indicator.setText(IdeBundle.message("progress.indexing.updating"));
         CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
           @Override
           public void consume(FileContent content) {
