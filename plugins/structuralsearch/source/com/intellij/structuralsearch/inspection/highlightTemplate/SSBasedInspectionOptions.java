@@ -187,13 +187,16 @@ public class SSBasedInspectionOptions {
   private void performMoveUpDown(boolean down) {
     final int[] indices = myTemplatesList.getSelectedIndices();
     if (indices.length == 0) return;
-    final int increment = down ? 1 : -1;
+    final int delta = down ? 1 : -1;
     myTemplatesList.removeSelectionInterval(0, myConfigurations.size() - 1);
-    for (int index : indices) {
+    for (int i = down ? indices[indices.length - 1] : 0;
+         down ? i >= 0 : i < indices.length;
+         i -= delta) {
+      final int index = indices[i];
       final Configuration temp = myConfigurations.get(index);
-      myConfigurations.set(index, myConfigurations.get(index + increment));
-      myConfigurations.set(index + increment, temp);
-      myTemplatesList.addSelectionInterval(index + increment, index + increment);
+      myConfigurations.set(index, myConfigurations.get(index + delta));
+      myConfigurations.set(index + delta, temp);
+      myTemplatesList.addSelectionInterval(index + delta, index + delta);
     }
     final int index = down ? myTemplatesList.getMaxSelectionIndex() : myTemplatesList.getMinSelectionIndex();
     final Rectangle cellBounds = myTemplatesList.getCellBounds(index, index);
