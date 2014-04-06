@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
+import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,12 +176,22 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
       return; // in test mode suppress addition to a queue unless project is properly initialized
     }
-    if (myRefreshCacheUpdaters.size() == 0) {
-      return; // default project
+    if (myProject.isDefault()) {
+      return;
     }
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info(new Throwable("refresh"));
+
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+    if (task != null) {
+      dumbService.queueTask(task);
+    }
+
+    if (myRefreshCacheUpdaters.size() == 0) {
+      return;
+    }
+
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
     }
