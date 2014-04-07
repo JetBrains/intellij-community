@@ -19,13 +19,14 @@ package com.intellij.vcs.log.graph.impl.visible;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
+import com.intellij.vcs.log.graph.utils.ListenerController;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
-import com.intellij.vcs.log.newgraph.PermanentGraph;
-import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.newgraph.gpaph.Edge;
-import com.intellij.vcs.log.newgraph.gpaph.GraphWithElementsInfo;
-import com.intellij.vcs.log.newgraph.gpaph.Node;
+import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,9 +36,9 @@ import java.util.Map;
 
 import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
-public class GraphWithElementsInfoImpl implements GraphWithElementsInfo {
+public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
-  private final PermanentGraph myPermanentGraph;
+  private final LinearGraph myPermanentGraph;
 
   @NotNull
   private final Flags visibleNodesInBranches;
@@ -57,11 +58,14 @@ public class GraphWithElementsInfoImpl implements GraphWithElementsInfo {
   @NotNull
   private final Map<Integer, Pair<Integer, Integer>> downToEdge = new HashMap<Integer, Pair<Integer, Integer>>();
 
-  public GraphWithElementsInfoImpl(@NotNull PermanentGraph permanentGraph,
-                                   @NotNull Flags visibleNodesInBranches,
-                                   @NotNull Flags visibleNodes,
-                                   @NotNull UpdatableIntToIntMap intToIntMap,
-                                   @NotNull DfsUtil dfsUtil) {
+  @NotNull
+  private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
+
+  public CollapsedGraphWithHiddenNodes(@NotNull LinearGraph permanentGraph,
+                                       @NotNull Flags visibleNodesInBranches,
+                                       @NotNull Flags visibleNodes,
+                                       @NotNull UpdatableIntToIntMap intToIntMap,
+                                       @NotNull DfsUtil dfsUtil) {
     myPermanentGraph = permanentGraph;
     this.visibleNodesInBranches = visibleNodesInBranches;
     this.visibleNodes = visibleNodes;
@@ -121,7 +125,7 @@ public class GraphWithElementsInfoImpl implements GraphWithElementsInfo {
   }
 
   public boolean nodeIsVisible(int nodeIndex) {
-    if (nodeIndex == SomeGraph.NOT_LOAD_COMMIT)
+    if (nodeIndex == LinearGraph.NOT_LOAD_COMMIT)
       return true;
     return visibleNodes.get(nodeIndex) && visibleNodesInBranches.get(nodeIndex);
   }
@@ -135,17 +139,23 @@ public class GraphWithElementsInfoImpl implements GraphWithElementsInfo {
 
   @NotNull
   @Override
-  public Node.Type getNodeType(int nodeIndex) {
-    return Node.Type.USUAL;
+  public GraphNode.Type getNodeType(int nodeIndex) {
+    return GraphNode.Type.USUAL;
   }
 
   @NotNull
   @Override
-  public Edge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
+  public GraphEdge.Type getEdgeType(int upNodeIndex, int downNodeIndex) {
     if (upToEdge.containsKey(upNodeIndex))
-      return Edge.Type.HIDE_FRAGMENT;
+      return GraphEdge.Type.HIDE;
     else
-      return Edge.Type.USUAL;
+      return GraphEdge.Type.USUAL;
+  }
+
+  @NotNull
+  @Override
+  public ListenerController<UpdateListener> getListenerController() {
+    return myListenerController;
   }
 
   @Override
