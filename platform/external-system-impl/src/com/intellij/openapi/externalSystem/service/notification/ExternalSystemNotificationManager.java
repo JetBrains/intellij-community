@@ -167,6 +167,15 @@ public class ExternalSystemNotificationManager {
     });
   }
 
+  public void openMessageView(@NotNull final ProjectSystemId externalSystemId, @NotNull final NotificationSource notificationSource) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        prepareMessagesView(externalSystemId, notificationSource, true);
+      }
+    });
+  }
+
   public void clearNotifications(@NotNull final NotificationSource notificationSource,
                                  @NotNull final ProjectSystemId externalSystemId) {
     clearNotifications(null, notificationSource, externalSystemId);
@@ -256,7 +265,11 @@ public class ExternalSystemNotificationManager {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final NewErrorTreeViewPanel errorTreeView = prepareMessagesView(externalSystemId, notificationData);
+        boolean activate =
+          notificationData.getNotificationCategory() == NotificationCategory.ERROR ||
+          notificationData.getNotificationCategory() == NotificationCategory.WARNING;
+        final NewErrorTreeViewPanel errorTreeView =
+          prepareMessagesView(externalSystemId, notificationData.getNotificationSource(), activate);
         final GroupingElement groupingElement = errorTreeView.getErrorViewStructure().getGroupingElement(groupName, null, virtualFile);
         final NavigatableMessageElement navigatableMessageElement;
         if (notificationData.hasLinks()) {
@@ -293,9 +306,9 @@ public class ExternalSystemNotificationManager {
 
   @NotNull
   private NewErrorTreeViewPanel prepareMessagesView(@NotNull final ProjectSystemId externalSystemId,
-                                                    @NotNull final NotificationData notificationData) {
+                                                    @NotNull final NotificationSource notificationSource,
+                                                    boolean activateView) {
     final NewErrorTreeViewPanel errorTreeView;
-    final NotificationSource notificationSource = notificationData.getNotificationSource();
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);
     final Pair<NotificationSource, ProjectSystemId> contentIdPair = Pair.create(notificationSource, externalSystemId);
     Content targetContent = findContent(contentIdPair, contentDisplayName);
@@ -316,7 +329,7 @@ public class ExternalSystemNotificationManager {
 
     messageView.getContentManager().setSelectedContent(targetContent);
     final ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-    if (tw != null && !tw.isActive()) {
+    if (activateView && tw != null && !tw.isActive()) {
       tw.activate(null, false);
     }
     return errorTreeView;
@@ -336,8 +349,8 @@ public class ExternalSystemNotificationManager {
   }
 
   @NotNull
-  private static String getContentDisplayName(@NotNull final NotificationSource notificationSource,
-                                              @NotNull final ProjectSystemId externalSystemId) {
+  public static String getContentDisplayName(@NotNull final NotificationSource notificationSource,
+                                             @NotNull final ProjectSystemId externalSystemId) {
     final String contentDisplayName;
     switch (notificationSource) {
       case PROJECT_SYNC:
