@@ -23,10 +23,13 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.PatternUtil;
 
@@ -184,7 +187,7 @@ public class FileTypesTest extends PlatformTestCase {
     FileUtil.writeToFile(file, "xxx xxx xxx xxx");
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(virtualFile);
-    assertEquals(FileTypes.UNKNOWN, virtualFile.getFileType());
+    assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
   }
 
   public void testAutoDetectEmptyFile() throws IOException {
@@ -204,5 +207,30 @@ public class FileTypesTest extends PlatformTestCase {
     assertFalse(psi.isValid());
     assertTrue(after.isValid());
     assertTrue(after instanceof PsiPlainTextFile);
+  }
+
+  public void testAutoDetectTextFileFromContents() throws IOException {
+    File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile vFile = vDir.createChildData(this, "test.xxxxxxxx");
+    VfsUtil.saveText(vFile, "text");
+
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
+
+    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().findFile(vFile); // autodetect text file if needed
+    assertNotNull(psiFile);
+    assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
+  }
+
+  public void testAutoDetectTextFileEvenOutsideTheProject() throws IOException {
+    File d = createTempDirectory();
+    File f = new File(d, "xx.asfdasdfas");
+    FileUtil.writeToFile(f, "asdasdasdfafds");
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+
+    assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType());
+
+    //FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, myProject, GlobalSearchScope.allScope(myProject));
+    //assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
   }
 }
