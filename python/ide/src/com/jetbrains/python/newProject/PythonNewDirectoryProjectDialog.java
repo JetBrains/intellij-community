@@ -295,6 +295,7 @@ public class PythonNewDirectoryProjectDialog extends NewDirectoryProjectDialog {
   }
 
   public Sdk getSdk() {
-    return (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+    final Sdk selectedItem = (Sdk)mySdkCombo.getComboBox().getSelectedItem();
+    return PyConfigurableInterpreterList.getInstance(myProject).getModel().findSdk(selectedItem);
   }
 }
