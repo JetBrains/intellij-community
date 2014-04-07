@@ -255,12 +255,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                               final boolean withClosed,
                               @NotNull ProgressIndicator indicator,
                               boolean forceRequest) {
-    long start = System.currentTimeMillis();
     List<Task> tasks = getIssuesFromRepositories(query, offset, limit, withClosed, forceRequest, indicator);
-    if (tasks != null) {
-      LOG.debug(String.format("Total %s ms to download %d issues", System.currentTimeMillis() - start, tasks.size()));
-    }
-    else {
+    if (tasks == null) {
       return getCachedIssues(withClosed);
     }
     myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
@@ -775,7 +771,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
+        long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
+        long timeSpent = System.currentTimeMillis() - start;
+        LOG.debug(String.format("Total %s ms to download %d issues from '%s'", timeSpent, tasks.length, repository.getUrl()));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
