@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
@@ -23,6 +24,15 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testExtensionMethods() { doTest(); }
   public void testInnerInterface() { doTest(); }
   public void testStaticMethods() { doTest(); }
+  public void testFunctionalExpressions() {
+    try {
+      doTest();
+      fail("Conflict not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Functional expression in Test will not compile after converting class <b><code>FunctionalExpressions</code></b> to a class", e.getMessage());
+    }
+  }
 
   @Override
   protected String getRelativePath() {
