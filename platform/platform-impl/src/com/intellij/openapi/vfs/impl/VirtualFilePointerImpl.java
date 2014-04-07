@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +43,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @Override
   @NotNull
   public String getFileName() {
-    checkDisposed();
+    if (!checkDisposed()) return "";
     Pair<VirtualFile, String> result = myNode.update();
     VirtualFile file = result.first;
     if (file != null) {
@@ -57,7 +56,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   @Override
   public VirtualFile getFile() {
-    checkDisposed();
+    if (!checkDisposed()) return null;
     Pair<VirtualFile, String> result = myNode.update();
     return result.first;
   }
@@ -78,15 +77,16 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   @Override
   @NotNull
   public String getPresentableUrl() {
-    checkDisposed();
+    if (!checkDisposed()) return "";
     return PathUtil.toPresentableUrl(getUrl());
   }
 
-  private void checkDisposed() {
+  private boolean checkDisposed() {
     if (isDisposed()) {
-      ProgressManager.checkCanceled();
-      throwDisposalError("Already disposed: URL='" + this+"'");
+      LOG.error("Already disposed: URL='" + this+"'");
+      return false;
     }
+    return true;
   }
 
 
