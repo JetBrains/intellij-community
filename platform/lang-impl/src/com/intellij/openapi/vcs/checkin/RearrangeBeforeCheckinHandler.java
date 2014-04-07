@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.RearrangeCodeProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -44,7 +45,7 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
     final JCheckBox rearrangeBox = new JCheckBox(VcsBundle.message("checkbox.checkin.options.rearrange.code"));
-
+    TodoCheckinHandler.disableWhenDumb(myProject, rearrangeBox, "Impossible until indices are up-to-date");
     return new RefreshableOnComponent() {
       @Override
       public JComponent getComponent() {
@@ -83,7 +84,7 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
       }
     };
 
-    if (VcsConfiguration.getInstance(myProject).REARRANGE_BEFORE_PROJECT_COMMIT) {
+    if (VcsConfiguration.getInstance(myProject).REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
       new RearrangeCodeProcessor(
         myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME, performCheckoutAction
       ).run();
