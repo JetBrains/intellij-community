@@ -27,7 +27,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.PlatformColors;
@@ -166,7 +169,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       splitPane.setDividerLocation(0.5);
       splitPane.setRightComponent(myWrapperPanel);
 
-      JScrollPane pane = new JScrollPane(myHierarchyTree);
+      JScrollPane pane = new JBScrollPane(myHierarchyTree);
       splitPane.setLeftComponent(pane);
       add(splitPane, BorderLayout.CENTER);
 
@@ -225,7 +228,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
               glassPane.repaint();
             }
           } else {
-            myHighlightComponent = new HighlightComponent(Color.GREEN);
+            myHighlightComponent = new HighlightComponent(JBColor.GREEN);
 
             final Point pt = SwingUtilities.convertPoint(c, new Point(0, 0), rootPane);
             myHighlightComponent.setBounds(pt.x, pt.y, c.getWidth(), c.getHeight());
@@ -270,18 +273,20 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             name = component.getClass().getSuperclass().getSimpleName();
           }
         }
-        
+
         if (!selected) {
           if (!component.isVisible()) {
-            foreground = Color.GRAY;
-          } else if (component.getWidth() == 0 || component.getHeight() == 0) {
+            foreground = JBColor.GRAY;
+          }
+          else if (component.getWidth() == 0 || component.getHeight() == 0) {
             foreground = new Color(128, 10, 0);
-          } else if (component.getPreferredSize() != null &&
-                     (component.getSize().width < component.getPreferredSize().width
-                      || component.getSize().height < component.getPreferredSize().height)) {
+          }
+          else if (component.getPreferredSize() != null &&
+                   (component.getSize().width < component.getPreferredSize().width
+                    || component.getSize().height < component.getPreferredSize().height)) {
             foreground = PlatformColors.BLUE;
           }
-          
+
           if (componentNode.getToSelect() == componentNode.getOwnComponent()) {
             background = new Color(31, 128, 8, 58);
           }
@@ -467,7 +472,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     private DimensionsComponent(@NotNull final Component component) {
       myComponent = component;
       setOpaque(true);
-      setBackground(Color.WHITE);
+      setBackground(JBColor.WHITE);
       setBorder(new EmptyBorder(5, 0, 5, 0));
 
       setFont(new JLabel().getFont().deriveFont(Font.PLAIN, 9));
@@ -503,7 +508,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       g2d.drawString(sizeString, bounds.width / 2 - sizeWidth / 2, bounds.height / 2 + fontHeight / 2);
 
-      g2d.setColor(Color.GRAY);
+      g2d.setColor(JBColor.GRAY);
 
       int innerX = bounds.width / 2 - sizeWidth / 2 - 20;
       int innerY = bounds.height / 2 - fontHeight / 2 - 5;
@@ -522,10 +527,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     private static void drawInsets(Graphics2D g2d, FontMetrics fm, String name, Insets insets, int offset, int fontHeight, int innerX, int innerY, int innerWidth, int innerHeight) {
-      g2d.setColor(Color.BLACK);
+      g2d.setColor(JBColor.BLACK);
       g2d.drawString(name, innerX - offset + 5, innerY - offset + fontHeight);
 
-      g2d.setColor(Color.GRAY);
+      g2d.setColor(JBColor.GRAY);
       int dashWidth = fm.stringWidth("-");
 
       if (insets != null) {
@@ -558,7 +563,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
-    private static final Map<Class, Renderer> RENDERERS = new HashMap<Class, Renderer>();
+    private static final Map<Class, Renderer> RENDERERS = ContainerUtil.newHashMap();
 
     static {
       RENDERERS.put(Point.class, new PointRenderer());
@@ -571,45 +576,45 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       RENDERERS.put(Icon.class, new IconRenderer());
     }
 
-    private static final Renderer DEFAULT_RENDERER = new ObjectRenderer();
+    private static final Renderer<Object> DEFAULT_RENDERER = new ObjectRenderer();
 
     private static final JLabel NULL_RENDERER = new JLabel("-");
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) {
-        NULL_RENDERER.setOpaque(false);
+        NULL_RENDERER.setOpaque(isSelected);
         NULL_RENDERER.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
         NULL_RENDERER.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
         return NULL_RENDERER;
       }
 
-      Renderer renderer = getRenderer(value.getClass());
-      if (renderer == null)
-        renderer = DEFAULT_RENDERER;
+      Renderer<Object> renderer = ObjectUtils.notNull(getRenderer(value.getClass()), DEFAULT_RENDERER);
 
       JComponent result = renderer.setValue(value);
-      result.setOpaque(false);
+      result.setOpaque(isSelected);
       result.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
       result.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
       return result;
     }
 
     @Nullable
-    private static Renderer getRenderer(Class clazz) {
-      if (clazz == null)
-        return null;
-      Renderer renderer = RENDERERS.get(clazz);
-      if (renderer != null)
-        return renderer;
+    private static Renderer<Object> getRenderer(Class clazz) {
+      if (clazz == null) return null;
+
+      Renderer<Object> renderer = (Renderer<Object>)RENDERERS.get(clazz);
+      if (renderer != null) return renderer;
+
       Class[] interfaces = clazz.getInterfaces();
       for (Class aClass : interfaces) {
         renderer = getRenderer(aClass);
-        if (renderer != null)
+        if (renderer != null) {
           return renderer;
+        }
       }
       clazz = clazz.getSuperclass();
-      if (clazz != null)
+      if (clazz != null) {
         return getRenderer(clazz);
+      }
       return null;
     }
   }
@@ -676,8 +681,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ObjectRenderer extends JLabel implements Renderer<Object> {
+    {
+      putClientProperty("html.disable", Boolean.TRUE);
+    }
     public JComponent setValue(@NotNull final Object value) {
-      setText(value.toString());
+      setText(String.valueOf(value).replace('\n', ' '));
       return this;
     }
   }
@@ -697,10 +705,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class InspectorTableModel extends AbstractTableModel {
 
     private static final String[] JCOMPONENT_METHODS = new String[] {
-      "getLocation", "getLocationOnScreen", "getMinimumSize", "getMaximumSize", "getPreferredSize", "getSize",
-      "getAlignmentX", "getAlignmentY", "getTooltipText", "getVisibleRect", "getLayout",
-      "getForeground", "getBackground", "getFont", "isOpaque", "isFocusCycleRoot", "isValid", "isDisplayable",
-      "isShowing", "isEnabled", "isLightweight", "isFocusable", "isFocusOwner", "getToolTipText", "getText", "isEditable", "getIcon"
+      "getLocation", "getLocationOnScreen",
+      "getSize", "isOpaque", "getBorder",
+      "getForeground", "getBackground", "getFont",
+      "getMinimumSize", "getMaximumSize", "getPreferredSize",
+      "getAlignmentX", "getAlignmentY",
+      "getText", "isEditable", "getIcon",
+      "getTooltipText", "getToolTipText",
+      "getVisibleRect", "getLayout",
+      "isFocusCycleRoot", "isValid", "isDisplayable", "isShowing", "isEnabled", "isLightweight", "isFocusable", "isFocusOwner"
     };
 
     private Component myComponent;
