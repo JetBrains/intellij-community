@@ -196,6 +196,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                @NotNull PsiElement place) {
     final PsiElement parent = getParent();
     if (parent == null) return true;
+
+    if (!processStaticImports(processor, getContainingFile(), state, place)) return false;
+
     return doTreeWalkUp(parent, place, processor, nonCodeProcessor, state);
   }
 
