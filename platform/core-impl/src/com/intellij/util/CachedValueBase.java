@@ -50,6 +50,7 @@ public abstract class CachedValueBase<T> {
   }
 
   protected void setValue(final T value, final CachedValueProvider.Result<T> result) {
+    //noinspection unchecked
     myData = new SoftReference<Data<T>>(computeData(value == null ? (T)ObjectUtils.NULL : value, getDependencies(result)));
   }
 
@@ -66,7 +67,7 @@ public abstract class CachedValueBase<T> {
     else {
       Object[] items = result.getDependencyItems();
       T value = result.getValue();
-      return value == null ? items : items == null ? new Object[] {value}: ArrayUtil.append(items, value);
+      return value == null ? items : ArrayUtil.append(items, value);
     }
   }
 
