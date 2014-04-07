@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,7 +84,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   private boolean checkDisposed() {
     if (isDisposed()) {
-      LOG.error("Already disposed: URL='" + this+"'");
+      ProgressManager.checkCanceled();
+      LOG.error("Already disposed: URL='" + this + "'");
       return false;
     }
     return true;
