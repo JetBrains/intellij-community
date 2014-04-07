@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -115,6 +116,12 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
   private boolean confirmAndUpdate(final X509Certificate[] chain) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
+    // IDEA-123467 and IDEA-123335 workaround
+    String threadClassName = StringUtil.notNullize(Thread.currentThread().getClass().getCanonicalName());
+    if (threadClassName.equals("sun.awt.image.ImageFetcher")) {
+      LOG.debug("Image Fetcher thread is detected. Certificate check will be skipped.");
+      return true;
+    }
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       myCustomManager.addCertificate(endPoint);
       return true;

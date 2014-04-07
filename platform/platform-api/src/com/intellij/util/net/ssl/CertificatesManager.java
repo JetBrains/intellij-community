@@ -24,7 +24,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
 
@@ -71,6 +73,11 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
    * doesn't match requested hostname.
    */
   public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+  /**
+   * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
+   * {@link java.awt.MediaTracker}.
+   */
+  private static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificatesManager getInstance() {
     return (CertificatesManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
@@ -200,11 +207,17 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
     Application app = ApplicationManager.getApplication();
     final CountDownLatch proceeded = new CountDownLatch(1);
     final AtomicBoolean accepted = new AtomicBoolean();
+    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<DialogWrapper>();
     Runnable showDialog = new Runnable() {
       @Override
       public void run() {
+        // skip if certificate was already rejected due to timeout
+        if (proceeded.getCount() == 0) {
+          return;
+        }
         try {
           DialogWrapper dialog = dialogFactory.call();
+          dialogRef.set(dialog);
           accepted.set(dialog.showAndGet());
         }
         catch (Exception e) {
@@ -222,10 +235,23 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
       app.invokeLater(showDialog, ModalityState.any());
     }
     try {
-      proceeded.await();
+      // IDEA-123467 and IDEA-123335 workaround
+      boolean inTime = proceeded.await(DIALOG_VISIBILITY_TIMEOUT, TimeUnit.MILLISECONDS);
+      if (!inTime) {
+        DialogWrapper dialog = dialogRef.get();
+        if (dialog == null || !dialog.isShowing()) {
+          LOG.debug("After " + DIALOG_VISIBILITY_TIMEOUT + " ms dialog was not shown. " +
+                    "Rejecting certificate. Current thread: " + Thread.currentThread().getName());
+          proceeded.countDown();
+          return false;
+        }
+        else {
+          proceeded.await(); // if dialog is already shown continue waiting
+        }
+      }
     }
     catch (InterruptedException e) {
-      LOG.error("Interrupted", e);
+      Thread.currentThread().interrupt();
     }
     return accepted.get();
   }
