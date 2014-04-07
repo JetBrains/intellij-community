@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.graph.impl.visible.utils;
+package com.intellij.vcs.log.graph.impl.visible.adapters;
 
 import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.api.LinearGraphWithHiddenNodes;
