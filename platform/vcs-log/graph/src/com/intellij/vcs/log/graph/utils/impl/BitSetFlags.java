@@ -36,6 +36,12 @@ public class BitSetFlags implements Flags {
     myBitSet = new BitSet(size);
   }
 
+  public BitSetFlags(int size, boolean defaultValue) {
+    this(size);
+    if (defaultValue)
+      setAll(true);
+  }
+
   @Override
   public int size() {
     return mySize;
