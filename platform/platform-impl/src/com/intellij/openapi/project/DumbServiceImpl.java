@@ -283,7 +283,7 @@ public class DumbServiceImpl extends DumbService {
   }
 
   @Override
-  public void showDumbModeNotification(final String message) {
+  public void showDumbModeNotification(@NotNull final String message) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -341,14 +341,9 @@ public class DumbServiceImpl extends DumbService {
 
   private class IndexUpdateRunnable implements Runnable {
     private final CacheUpdateRunner myAction;
-    private double myProcessedItems;
-    private volatile int myTotalItems;
-    private double myCurrentBaseTotal;
 
     public IndexUpdateRunnable(@NotNull CacheUpdateRunner action) {
       myAction = action;
-      myTotalItems = 0;
-      myCurrentBaseTotal = 0;
     }
 
     @Override
@@ -389,12 +384,7 @@ public class DumbServiceImpl extends DumbService {
             });
           }
 
-          final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator) {
-            @Override
-            public void setFraction(double fraction) {
-              super.setFraction((myProcessedItems + fraction * myCurrentBaseTotal) / myTotalItems);
-            }
-          };
+          final ProgressIndicator proxy = new DelegatingProgressIndicator(indicator);
 
           final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
           final Thread self = Thread.currentThread();
@@ -421,16 +411,12 @@ public class DumbServiceImpl extends DumbService {
               indicator.setText(IdeBundle.message("progress.indexing.scanning"));
               int count = updateRunner.queryNeededFiles(indicator);
 
-              myCurrentBaseTotal = count;
-              myTotalItems += count;
-
               indicator.setIndeterminate(false);
               indicator.setText(IdeBundle.message("progress.indexing.updating"));
               if (count > 0) {
                 updateRunner.processFiles(indicator, true);
               }
               updateRunner.updatingDone();
-              myProcessedItems += count;
             }
             catch (ProcessCanceledException ignored) {
             }
