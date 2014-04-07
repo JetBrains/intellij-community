@@ -24,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -41,13 +38,12 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
   private Icon myStateIcon;
   private MethodHierarchyTreeStructure myTreeStructure;
 
-  public MethodHierarchyNodeDescriptor(
-    final Project project,
-    final HierarchyNodeDescriptor parentDescriptor,
-    final PsiClass aClass,
-    final boolean isBase,
-    final MethodHierarchyTreeStructure treeStructure
-  ){
+  public MethodHierarchyNodeDescriptor(final Project project,
+                                       final HierarchyNodeDescriptor parentDescriptor,
+                                       final PsiElement aClass,
+                                       final boolean isBase,
+                                       final MethodHierarchyTreeStructure treeStructure
+  ) {
     super(project, parentDescriptor, aClass, isBase);
     myTreeStructure = treeStructure;
   }
@@ -60,24 +56,26 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     return MethodHierarchyUtil.findBaseMethodInClass(myTreeStructure.getBaseMethod(), aClass, checkBases);
   }
 
-  public final PsiClass getPsiClass() {
-    return (PsiClass)myElement;
+  public final PsiElement getPsiClass() {
+    return myElement;
   }
 
   /**
    * Element for OpenFileDescriptor
    */
   public final PsiElement getTargetElement() {
-    final PsiClass aClass = getPsiClass();
-    if (aClass == null || !aClass.isValid()) return null;
+    final PsiElement element = getPsiClass();
+    if (!(element instanceof PsiClass)) return element;
+    final PsiClass aClass = (PsiClass)getPsiClass();
+    if (!aClass.isValid()) return null;
     final PsiMethod method = getMethod(aClass, false);
     if (method != null) return method;
     return aClass;
   }
 
   public final boolean isValid() {
-    final PsiClass aClass = getPsiClass();
-    return aClass != null && aClass.isValid();
+    final PsiElement psiElement = getPsiClass();
+    return psiElement != null && psiElement.isValid();
   }
 
   public final boolean update() {
@@ -88,7 +86,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
 
     boolean changes = super.update();
 
-    final PsiClass psiClass = getPsiClass();
+    final PsiElement psiClass = getPsiClass();
 
     if (psiClass == null){
       final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
@@ -99,7 +97,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     }
 
     final Icon newRawIcon = psiClass.getIcon(flags);
-    final Icon newStateIcon = calculateState(psiClass);
+    final Icon newStateIcon = psiClass instanceof PsiClass ? calculateState((PsiClass)psiClass) : AllIcons.Hierarchy.MethodDefined;
 
     if (changes || newRawIcon != myRawIcon || newStateIcon != myStateIcon) {
       changes = true;
@@ -133,8 +131,12 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     if (myColor != null) {
       classNameAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
-    myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass(psiClass, false), classNameAttributes);
-    myHighlightedText.getEnding().addText("  (" + JavaHierarchyUtil.getPackageName(psiClass) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+    if (psiClass instanceof PsiClass) {
+      myHighlightedText.getEnding().addText(ClassPresentationUtil.getNameForClass((PsiClass)psiClass, false), classNameAttributes);
+      myHighlightedText.getEnding().addText("  (" + JavaHierarchyUtil.getPackageName((PsiClass)psiClass) + ")", HierarchyNodeDescriptor.getPackageNameAttributes());
+    } else if (psiClass instanceof PsiFunctionalExpression) {
+      myHighlightedText.getEnding().addText(ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)psiClass, false));
+    }
     myName = myHighlightedText.getText();
 
     if (!Comparing.equal(myHighlightedText, oldText)) {
