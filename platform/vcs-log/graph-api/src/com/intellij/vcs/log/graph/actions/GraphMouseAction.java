@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  */
-public interface GraphMouseAction extends GraphAction {
+public interface GraphMouseAction {
 
   @Nullable
   PrintElement getAffectedElement();

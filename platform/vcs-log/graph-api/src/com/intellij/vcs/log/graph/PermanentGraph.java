@@ -32,7 +32,7 @@ import java.util.Set;
 public interface PermanentGraph<CommitId> {
 
   @NotNull
-  VisibleGraph<CommitId> setFilter(@Nullable List<CommitId> headsOfVisibleBranches, @Nullable Condition<CommitId> filter);
+  VisibleGraph<CommitId> setFilter(@Nullable Set<CommitId> headsOfVisibleBranches, @Nullable Condition<CommitId> filter);
 
   @NotNull
   List<GraphCommit<CommitId>> getAllCommits();

@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph;
 
+import com.intellij.vcs.log.graph.actions.ActionController;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,7 @@ public interface VisibleGraph<CommitId> {
   @NotNull
   RowInfo<CommitId> getRowInfo(int visibleRow);
 
-  boolean areLongEdgesHidden();
+  @NotNull
+  ActionController<CommitId> getActionController();
 
 }

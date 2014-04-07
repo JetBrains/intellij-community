@@ -15,5 +15,20 @@
  */
 package com.intellij.vcs.log.graph.actions;
 
-public interface GraphAction {
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author erokhins
+ */
+public interface ActionController<CommitId> {
+
+  @NotNull
+  GraphAnswer<CommitId> performMouseAction(@NotNull GraphMouseAction graphMouseAction);
+
+  boolean areLongEdgesHidden();
+
+  void setLongEdgesHidden(boolean longEdgesHidden);
+
+  void setLinearBranchesExpansion(boolean collapse);
+
 }
