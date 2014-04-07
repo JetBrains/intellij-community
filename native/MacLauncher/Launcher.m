@@ -16,7 +16,7 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
 
 //static NSString *const JVMOptions = @"JVMOptions";
 NSString *JVMOptions;
-
+NSString *WorkingDir;
 
 @interface NSString (CustomReplacements)
 - (NSString *)replaceAll:(NSString *)pattern to:(NSString *)replacement;
@@ -232,8 +232,20 @@ NSString *getDefaultPropertiesFilePath() {
     return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.properties"];
 }
 
-NSString *getDefaultVMOptionsFilePath() {
-    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/bin/idea.vmoptions"];
+// NSString *getDefaultVMOptionsFilePath() {
+//    return [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@fileName];
+
+NSString *getDefaultFilePath(NSString *fileName) {
+    NSString *fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:@"/Contents"];
+    fullFileName = [fullFileName stringByAppendingString:fileName];
+    NSLog(@"fullFileName is: %@", fullFileName);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:fullFileName]) {
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    } else{
+      fullFileName = [[[NSBundle mainBundle] bundlePath] stringByAppendingString:fileName];
+      NSLog(@"fullFileName exists: %@", fullFileName);
+    }
+    return fullFileName;
 }
 
 NSString *getVMOptionsFilePath() {
@@ -243,13 +255,23 @@ NSString *getVMOptionsFilePath() {
 NSArray *parseVMOptions() {
     NSArray *inConfig=[VMOptionsReader readFile:getVMOptionsFilePath()];
     if (inConfig) return inConfig;
-    return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+
+//    NSString *test = getDefaultVMOptionsFilePath();
+//    NSLog(@"Original value of getDefaultVMOptionsFilePath is: %@", test);
+
+//    return [VMOptionsReader readFile:getDefaultVMOptionsFilePath()];
+    return [VMOptionsReader readFile:getDefaultFilePath(@"/bin/idea.vmoptions")];
+
 }
 
 NSDictionary *parseProperties() {
     NSDictionary *inConfig = [PropertyFileReader readFile:getPropertiesFilePath()];
     if (inConfig) return inConfig;
-    return [PropertyFileReader readFile:getDefaultPropertiesFilePath()];
+//    NSString *test = getDefaultPropertiesFilePath();
+//    NSLog(@"Original value of getDefaultPropertiesFilePath is: %@", test);
+
+//    return [PropertyFileReader readFile:getDefaultPropertiesFilePath()];
+    return [PropertyFileReader readFile:getDefaultFilePath(@"/bin/idea.properties")];
 }
 
 - (void)fillArgs:(NSMutableArray *)args_array fromProperties:(NSDictionary *)properties {
@@ -289,17 +311,25 @@ NSDictionary *parseProperties() {
 
 - (const char *)mainClassName {
     NSDictionary *jvmInfo = [[NSBundle mainBundle] objectForInfoDictionaryKey:JVMOptions];
-    char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
+    WorkingDir = [jvmInfo objectForKey:@"WorkingDirectory"];
+    if (WorkingDir != NULL && WorkingDir != nil ) {
+      NSLog(@"WorkingDir: %@", WorkingDir);
+      char *answer = strdup([[jvmInfo objectForKey:@"MainClass"] UTF8String]);
     
-    char *cur = answer;
-    while (*cur) {
+      char *cur = answer;
+      while (*cur) {
         if (*cur == '.') {
             *cur = '/';
         }
         cur++;
-    }
+      }
     
-    return answer;
+      return answer;
+    } else {
+      NSLog(@"Info.plist is corrupted, Absent WorkingDir.");
+      exit(-1);
+    }
+
 }
 
 - (void)process_cwd {
