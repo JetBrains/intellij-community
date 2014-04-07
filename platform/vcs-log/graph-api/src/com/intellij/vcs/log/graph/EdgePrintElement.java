@@ -26,9 +26,18 @@ public interface EdgePrintElement extends PrintElement {
   @NotNull
   Type getType();
 
+  @NotNull
+  LineStyle getLineStyle();
+
   enum Type {
     UP,
     DOWN
+  }
+
+  enum LineStyle {
+    SOLID,
+    DASHED,
+    DOTTED
   }
 
 }

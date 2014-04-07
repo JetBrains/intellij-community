@@ -19,6 +19,8 @@ package com.intellij.vcs.log.graph;
  */
 public interface PrintElement {
 
+  int getRowIndex();
+
   int getPositionInCurrentRow();
 
   int getColorId();
