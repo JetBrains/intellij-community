@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -41,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Map;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
@@ -468,5 +470,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false);
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.Nodes.AnonymousClass;
   }
 }
