@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -27,12 +28,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Method;
 
 /**
  * @author max
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
+  private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
 
   public static JBColor getGradientLightColor() {
     return new JBColor(Gray._251, Gray._95);
@@ -306,7 +309,54 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     resetRegularThumbAnimator();
     resetMacScrollbarFadeout();
   }
+  
+  @Override
+  protected TrackListener createTrackListener() {
+    return new TrackListener() {
+      private Method mySetValueFrom;
 
+      {
+        try {
+          mySetValueFrom = TrackListener.class.getDeclaredMethod("setValueFrom", MouseEvent.class);
+          mySetValueFrom.setAccessible(true);
+        }
+        catch (Exception e) {
+          LOG.error("Cannot get TrackListener.setValueFrom method", e);
+        }
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (scrollbar.isEnabled()
+            && SwingUtilities.isLeftMouseButton(e)
+            && !getThumbBounds().contains(e.getPoint())
+            && NSScrollerHelper.getClickBehavior() == NSScrollerHelper.ClickBehavior.JumpToSpot
+            && mySetValueFrom != null) {
+
+          switch (scrollbar.getOrientation()) {
+            case Adjustable.VERTICAL:
+              offset = getThumbBounds().height / 2;
+              break;
+            case Adjustable.HORIZONTAL:
+              offset = getThumbBounds().width / 2;
+              break;
+          }
+          isDragging = true;
+          try {
+            mySetValueFrom.invoke(this, e);
+          }
+          catch (Exception ex) {
+            LOG.error(ex);
+          }
+
+          return;
+        }
+
+        super.mousePressed(e);
+      }
+    };
+  }
+  
   private void updateGlobalListeners(boolean forceRemove) {
     boolean shouldAdd = scrollbar.isDisplayable();
 
