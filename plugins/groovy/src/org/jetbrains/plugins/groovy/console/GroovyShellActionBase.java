@@ -16,16 +16,17 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,10 +43,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -94,23 +96,15 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
 
-    CompilerManager.getInstance(project).make(new CompileStatusNotification() {
+    selectModule(project, new Consumer<Module>() {
       @Override
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        if (aborted) return;
-
-        final Project project = compileContext.getProject();
-
-        if (errors == 0 ||
-            Messages.showYesNoDialog(project, "Compilation failed with errors. Do you want to run " + getTitle() + " anyway?", getTitle(),
-                                     JetgroovyIcons.Groovy.Groovy_32x32) == Messages.YES) {
-          runGroovyShell(project);
-        }
+      public void consume(final Module module) {
+        doRunShell(module);
       }
     });
   }
 
-  private void runGroovyShell(Project project) {
+  private void selectModule(Project project, final Consumer<Module> callback) {
     List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
@@ -123,7 +117,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     }
 
     if (modules.size() == 1) {
-      doRun(modules.get(0));
+      callback.consume(modules.get(0));
       return;
     }
 
@@ -150,7 +144,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
         @Override
         public PopupStep onChosen(Module selectedValue, boolean finalChoice) {
           PropertiesComponent.getInstance(selectedValue.getProject()).setValue(GROOVY_SHELL_LAST_MODULE, selectedValue.getName());
-          doRun(selectedValue);
+          callback.consume(selectedValue);
           return null;
         }
       };
@@ -171,7 +165,7 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
   }
 
-  protected void doRun(final Module module) {
+  protected void doRunShell(final Module module) {
     final GroovyShellRunner shellRunner = getRunner(module);
     if (shellRunner == null) return;
 
@@ -204,9 +198,20 @@ public abstract class GroovyShellActionBase extends DumbAwareAction {
     }
 
     @Override
-    protected LanguageConsoleView createConsoleView() {
-      LanguageConsoleView res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
+    protected List<AnAction> fillToolBarActions(DefaultActionGroup toolbarActions,
+                                                final Executor defaultExecutor,
+                                                final RunContentDescriptor contentDescriptor) {
+      BuildAndRestartConsoleAction rebuildAction = new BuildAndRestartConsoleAction(myModule, getProject(), defaultExecutor, contentDescriptor, GroovyShellActionBase.this);
+      toolbarActions.add(rebuildAction);
+      List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+      actions.add(rebuildAction);
+      Disposer.register(getConsoleView(), rebuildAction);
+      return actions;
+    }
 
+    @Override
+    protected LanguageConsoleView createConsoleView() {
+      LanguageConsoleViewImpl res = new LanguageConsoleViewImpl(createConsole(getProject(), getConsoleTitle()));
       GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
       assert file.getContext() == null;
       file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
