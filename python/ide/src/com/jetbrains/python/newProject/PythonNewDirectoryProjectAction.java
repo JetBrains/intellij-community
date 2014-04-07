@@ -17,16 +17,20 @@ package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.NewDirectoryProjectAction;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -37,6 +41,7 @@ import java.util.List;
  * User : catherine
  */
 public class PythonNewDirectoryProjectAction extends NewDirectoryProjectAction {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.newProject.PythonNewDirectoryProjectAction");
   private Sdk mySdk;
   private boolean myInstallFramework;
 
@@ -49,9 +54,19 @@ public class PythonNewDirectoryProjectAction extends NewDirectoryProjectAction {
     dlg.show();
     if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
     mySdk = dlg.getSdk();
+    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
     if (mySdk instanceof PyDetectedSdk) {
       mySdk = SdkConfigurationUtil.createAndAddSDK(mySdk.getName(), PythonSdkType.getInstance());
+      model.addSdk(mySdk);
+      try {
+        model.apply();
+      }
+      catch (ConfigurationException exception) {
+        LOG.error("Error adding detected python interpreter " + exception.getMessage());
+      }
     }
+
+    mySdk = model.findSdk(mySdk);
     myInstallFramework = dlg.installFramework();
     Project newProject = generateProject(project, dlg);
     if (newProject != null) {
