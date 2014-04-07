@@ -228,6 +228,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getComponent().setPreferredSize(new Dimension(0, 0));
     myHistoryViewer.setCaretEnabled(false);
 
+    myConsoleEditor.setHorizontalScrollbarVisible(true);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CONSOLE_EDITOR_POPUP));
     myConsoleEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(myVirtualFile, myConsoleEditor.getColorsScheme(), myProject));
 
