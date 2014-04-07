@@ -918,6 +918,22 @@ public class ResolveUtil {
     }
   }
 
+  public static boolean shouldProcessClasses(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
+  }
+
+  public static boolean shouldProcessMethods(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
+  }
+
+  public static boolean shouldProcessProperties(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
+  }
+
+  public static boolean shouldProcessPackages(ClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE);
+  }
+
   @NotNull
   public static List<Pair<PsiParameter, PsiType>> collectExpectedParamsByArg(@NotNull PsiElement place,
                                                                              @NotNull GroovyResolveResult[] variants,
