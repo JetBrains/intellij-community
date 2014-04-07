@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,4 +45,5 @@ public abstract class TabsPlacementAction extends ToggleAction implements DumbAw
   public static class Left   extends TabsPlacementAction {int getPlace() {return SwingConstants.LEFT;}}
   public static class Bottom extends TabsPlacementAction {int getPlace() {return SwingConstants.BOTTOM;}}
   public static class Right  extends TabsPlacementAction {int getPlace() {return SwingConstants.RIGHT;}}
+  public static class None   extends TabsPlacementAction {int getPlace() {return UISettings.TABS_NONE;}}
 }

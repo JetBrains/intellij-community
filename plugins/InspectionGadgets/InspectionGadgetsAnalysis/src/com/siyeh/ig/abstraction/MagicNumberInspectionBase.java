@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -90,6 +91,10 @@ public class MagicNumberInspectionBase extends BaseInspection {
       if (ignoreInitialCapacity && isInitialCapacity(expression)) {
         return;
       }
+      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+      if (field != null && PsiUtil.isCompileTimeConstant(field)) {
+        return;
+      }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
         registerError(parent, parent);
@@ -101,7 +106,7 @@ public class MagicNumberInspectionBase extends BaseInspection {
 
     private boolean isInitialCapacity(PsiLiteralExpression expression) {
       final PsiElement element =
-        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
+        PsiTreeUtil.skipParentsOfType(expression, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
       if (!(element instanceof PsiExpressionList)) {
         return false;
       }
@@ -110,8 +115,11 @@ public class MagicNumberInspectionBase extends BaseInspection {
         return false;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)parent;
-      return TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
-                                                  CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_COLLECTION) != null;
+      return TypeUtils.expressionHasTypeOrSubtype(newExpression,
+                                                  CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER,
+                                                  CommonClassNames.JAVA_UTIL_MAP,
+                                                  CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                  "java.io.ByteArrayOutputStream") != null;
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {

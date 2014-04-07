@@ -84,10 +84,20 @@ public class FileUtilLightTest {
     assertEquals("c:/", FileUtil.toCanonicalPath("c:\\a\\..\\", WINDOWS_SEPARATOR));
     assertEquals("c:/", FileUtil.toCanonicalPath("c:\\a\\..\\..", WINDOWS_SEPARATOR));
     assertEquals("c:/b", FileUtil.toCanonicalPath("c:\\a\\..\\..\\b", WINDOWS_SEPARATOR));
+
+    if (SystemInfo.isWindows) {
+      assertEquals("//", FileUtil.toCanonicalPath("\\\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host", WINDOWS_SEPARATOR));
+      assertEquals("//host/", FileUtil.toCanonicalPath("\\\\\\host\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/", FileUtil.toCanonicalPath("\\\\host\\\\share", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/path", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\path\\\\", WINDOWS_SEPARATOR));
+      assertEquals("//host/share/path", FileUtil.toCanonicalPath("\\\\host\\\\share\\\\traversal\\..\\..\\path\\", WINDOWS_SEPARATOR));
+    }
   }
 
   @Test
-  public void isAncestor() throws Exception {
+  public void isAncestor() {
     assertTrue(FileUtil.isAncestor("/", "/a/", true));
     assertTrue(FileUtil.isAncestor("/a/b/c", "/a/b/c/d/e/f", true));
     assertTrue(FileUtil.isAncestor("/a/b/c/", "/a/b/c/d/e/f", true));
@@ -105,7 +115,7 @@ public class FileUtilLightTest {
   }
 
   @Test
-  public void testRemoveAncestors() throws Exception {
+  public void testRemoveAncestors() {
     List<String> data = Arrays.asList("/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq");
     String[] expected = {"/a","/b/c","/d/e"};
     @SuppressWarnings("unchecked") Collection<String> result = FileUtil.removeAncestors(data, Convertor.SELF, PairProcessor.TRUE);
@@ -113,7 +123,7 @@ public class FileUtilLightTest {
   }
 
   @Test
-  public void testCheckImmediateChildren() throws Exception {
+  public void testCheckImmediateChildren() {
     String root = "/a";
     String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
     ThreeState[] expected1 = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
@@ -167,5 +177,16 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.isRootPath("/tmp"));
     assertFalse(FileUtil.isRootPath("c:"));
     assertFalse(FileUtil.isRootPath("X:\\Temp"));
+  }
+
+  @Test
+  public void testNormalize() {
+    assertEquals("/a/b/.././c/", FileUtil.normalize("/a//b//..///./c//"));
+    if (SystemInfo.isWindows) {
+      assertEquals("//a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
+    }
+    else {
+      assertEquals("/a/b/.././c/", FileUtil.normalize("\\\\\\a\\\\//b//..///./c//"));
+    }
   }
 }

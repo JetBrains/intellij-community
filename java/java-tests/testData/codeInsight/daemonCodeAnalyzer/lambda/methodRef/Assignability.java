@@ -1,8 +1,8 @@
 class Test {
   {
-      <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable b = Test :: length;</error>
+      Runnable b = Test :: <error descr="Cannot resolve method 'length'">length</error>;
       Comparable<String> c = Test :: length;
-      <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Comparable<java.lang.Integer>'">Comparable<Integer> c1 =  Test :: length;</error>
+      Comparable<Integer> c1 =  Test :: <error descr="Cannot resolve method 'length'">length</error>;
   }
 
   public static Integer length(String s) {
@@ -16,7 +16,7 @@ class Test {
 
 class Test1 {
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable b = Test1 :: length;</error>
+        Runnable b = Test1 :: <error descr="Cannot resolve method 'length'">length</error>;
         Comparable<String> c = Test1 :: length;
         Comparable<Integer> c1 =  Test1 :: length;
     }

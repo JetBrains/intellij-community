@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
-                                     ResolveState state) {
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
+                                     @NotNull ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     CachedValue<List<PsiElement>> value = file.getUserData(INJECTION_PARSED_CONTEXT);
     if (value == null) {

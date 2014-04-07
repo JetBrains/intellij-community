@@ -117,7 +117,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
       return method instanceof GrGdkMethod; //don't stop searching if we found only gdk method
     }
     else {
-      myInapplicableCandidates.add(candidate);
+      addInapplicableCandidate(candidate);
       return true;
     }
   }

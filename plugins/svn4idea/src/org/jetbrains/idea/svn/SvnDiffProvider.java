@@ -152,7 +152,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
                                             svnInfo.getAuthor(), message);
     }
     catch (VcsException e) {
-      LOG.debug(e);    // most likely the file is unversioned
+      LOG.info(e);    // most likely the file is unversioned
       return null;
     }
   }

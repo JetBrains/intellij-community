@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -138,12 +139,12 @@ public class GitConfigTest extends GitPlatformTest {
   private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
     String content = FileUtil.loadFile(file);
     Collection<GitBranchTrackInfo> remotes = new ArrayList<GitBranchTrackInfo>();
-    String[] remStrings = content.split("BRANCH\n");
+    List<String> remStrings = StringUtil.split(content, "BRANCH");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
         continue;
       }
-      String[] info = remString.split("\n");
+      String[] info = StringUtil.splitByLines(remString.trim());
       String branch = info[0];
       GitRemote remote = getRemote(info[1]);
       String remoteBranchAtRemote = info[2];
@@ -165,12 +166,12 @@ public class GitConfigTest extends GitPlatformTest {
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
     String content = FileUtil.loadFile(resultFile);
     Set<GitRemote> remotes = new HashSet<GitRemote>();
-    String[] remStrings = content.split("REMOTE\n");
+    List<String> remStrings = StringUtil.split(content, "REMOTE");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
         continue;
       }
-      String[] info = remString.split("\n");
+      String[] info = StringUtil.splitByLines(remString.trim());
       String name = info[0];
       List<String> urls = getSpaceSeparatedStrings(info[1]);
       Collection<String> pushUrls = getSpaceSeparatedStrings(info[2]);

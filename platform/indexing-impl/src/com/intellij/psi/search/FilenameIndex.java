@@ -151,7 +151,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
-    public Map<String, Void> map(final FileContent inputData) {
+    public Map<String, Void> map(@NotNull final FileContent inputData) {
       return Collections.singletonMap(inputData.getFileName(), null);
     }
   }

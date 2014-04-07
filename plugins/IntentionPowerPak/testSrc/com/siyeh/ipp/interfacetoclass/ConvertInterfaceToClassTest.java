@@ -22,6 +22,7 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testBasic() { doTest(); }
   public void testExtensionMethods() { doTest(); }
   public void testInnerInterface() { doTest(); }
+  public void testStaticMethods() { doTest(); }
 
   @Override
   protected String getRelativePath() {

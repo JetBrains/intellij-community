@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -219,6 +220,8 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   }
 
   private void saveDocumentsIfNecessary() {
+    if(ApplicationManager.getApplication().isDisposed()) return;
+
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Lock lock = myDocumentLock.writeLock();
     Set<Document> toKeep = ContainerUtilRt.newHashSet();

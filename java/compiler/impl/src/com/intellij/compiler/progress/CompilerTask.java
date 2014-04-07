@@ -71,13 +71,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompilerTask extends Task.Backgroundable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
-  private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
-  private static final Key<Key<?>> SESSION_ID_KEY = Key.create("SESSION_ID");
+  private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
   private static final String APP_ICON_ID = "compiler";
   @NotNull
-  private final Key<?> myContentId = Key.create("content_id");
+  private final Object myContentId = new IDObject("content_id");
+  
   @NotNull
-  private Key<?> mySessionId = myContentId; // by default sessionID should be unique, just as content ID
+  private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
@@ -111,11 +112,11 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   @NotNull
-  public Key<?> getSessionId() {
+  public Object getSessionId() {
     return mySessionId;
   }
 
-  public void setSessionId(@NotNull Key<?> sessionId) {
+  public void setSessionId(@NotNull Object sessionId) {
     mySessionId = sessionId;
   }
 
@@ -626,6 +627,18 @@ public class CompilerTask extends Task.Backgroundable {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }
+    }
+  }
+
+  public static final class IDObject {
+    private final String myDisplayName;
+  
+    public IDObject(@NotNull String displayName) {
+      myDisplayName = displayName;
+    }
+  
+    public String toString() {
+      return myDisplayName;
     }
   }
 }

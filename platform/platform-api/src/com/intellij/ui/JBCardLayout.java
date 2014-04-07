@@ -76,10 +76,20 @@ public class JBCardLayout extends CardLayout {
   }
 
   public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction) {
+    swipe(parent, name, direction, null);
+  }
+
+  public void swipe(@NotNull final Container parent, @NotNull final String name, @NotNull SwipeDirection direction,
+                    final @Nullable Runnable onDone) {
     stopSwipeIfNeed();
     mySwipeFrom = findVisible(parent);
     mySwipeTo = myMap.get(name);
-    if (mySwipeFrom == null || mySwipeTo == null || mySwipeFrom == mySwipeTo) {
+    if (mySwipeTo == null) return;
+    if (mySwipeFrom == null || mySwipeFrom == mySwipeTo) {
+      super.show(parent, name);
+      if (onDone != null) {
+        onDone.run();
+      }
       return;
     }
     final boolean isForward;
@@ -107,6 +117,9 @@ public class JBCardLayout extends CardLayout {
           Component currentFocusComponent = IdeFocusManager.getGlobalInstance().getFocusedDescendantFor(parent);
           show(parent, name);
           if (currentFocusComponent != null) currentFocusComponent.requestFocusInWindow();
+          if (onDone != null) {
+            onDone.run();
+          }
           return;
         }
         linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));

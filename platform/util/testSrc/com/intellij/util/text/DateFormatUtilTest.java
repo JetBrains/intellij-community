@@ -29,9 +29,7 @@ import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -58,14 +56,12 @@ public class DateFormatUtilTest {
       assertEquals("17:10:15", DateFormatUtil.formatTimeWithSeconds(Clock.getTime()));
     }
     else if (SystemInfo.isUnix) {
-      assertEquals("5:10:15 PM", printTimeForLocale("en_US.UTF-8"));
-      assertEquals("17:10:15", printTimeForLocale("de_DE.UTF-8"));
+      assertEquals("5:10:15 PM", printTimeForLocale("en_US.UTF-8", Clock.getTime()));
+      assertEquals("17:10:15", printTimeForLocale("de_DE.UTF-8", Clock.getTime()));
     }
     else if (SystemInfo.isWinVistaOrNewer) {
-      String[] system = getWindowsTime();
-      Date now = new Date();
-      assertEquals(system[0], DateFormatUtil.formatDate(now));
-      assertEquals(system[1], DateFormatUtil.formatTimeWithSeconds(now));
+      long time = new Date().getTime();
+      assertEquals(printWindowsTime(time), DateFormatUtil.formatTimeWithSeconds(time));
     }
     else {
       assertEquals(DateFormat.getTimeInstance(DateFormat.SHORT).format(Clock.getTime()),
@@ -115,7 +111,7 @@ public class DateFormatUtilTest {
     return new GregorianCalendar(year, month - 1, day, hour, minute, second).getTime();
   }
 
-  private static String printTimeForLocale(String locale) throws IOException {
+  private static String printTimeForLocale(String locale, long time) throws IOException {
     List<String> classpath = ContainerUtil.newArrayList();
     classpath.addAll(PathManager.getUtilClassPath());
     classpath.add(PathManager.getJarPathForClass(PrintTime.class));
@@ -124,32 +120,23 @@ public class DateFormatUtilTest {
                "-classpath",
                StringUtil.join(classpath, File.pathSeparator),
                PrintTime.class.getName(),
-               String.valueOf(Clock.getTime()))
-      .redirectErrorStream(true);
+               String.valueOf(time));
     builder.environment().put("LC_TIME", locale);
-    Process process = builder.start();
+    return execAndGetOutput(builder);
+  }
 
+  private static String printWindowsTime(long time) throws IOException {
+    String script = DateFormatUtil.class.getResource("PrintTime.js").getPath();
+    if (StringUtil.startsWithChar(script, '/')) script = script.substring(1);
+    ProcessBuilder builder = new ProcessBuilder().command("cscript", "//Nologo", script, String.valueOf(time));
+    return execAndGetOutput(builder);
+  }
+
+  private static String execAndGetOutput(ProcessBuilder builder) throws IOException {
+    Process process = builder.redirectErrorStream(true).start();
     BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
     try {
       return reader.readLine();
-    }
-    finally {
-      reader.close();
-    }
-  }
-
-  private static String[] getWindowsTime() throws IOException {
-    Process process = new ProcessBuilder("cmd", "/c", "echo %DATE%@%TIME%").start();
-
-    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-    try {
-      String datetime = reader.readLine();
-      if (datetime.matches(".+[.,]\\d\\d")) {
-        datetime = datetime.substring(0, datetime.length() - 3);
-      }
-      String[] parts = datetime.split("@");
-      assertEquals(2, parts.length);
-      return parts;
     }
     finally {
       reader.close();

@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
@@ -39,6 +40,7 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     CLASSES.put(JTable.class.getName(), JBTable.class.getName());
     CLASSES.put(JTree.class.getName(), Tree.class.getName());
     CLASSES.put(JScrollPane.class.getName(), JBScrollPane.class.getName());
+    CLASSES.put(JTabbedPane.class.getName(), JBTabbedPane.class.getName());
     CLASSES.put(JComboBox.class.getName(), ComboBox.class.getName());
     CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
     CLASSES.put(BufferedImage.class.getName(), "UIUtil.createImage()");

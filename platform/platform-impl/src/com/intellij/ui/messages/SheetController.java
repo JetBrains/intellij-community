@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
  */
 public class SheetController {
 
+  private static final int SHEET_MINIMUM_HEIGHT = 143;
   private static String fontName = "Lucida Grande";
   private static Font regularFont = new Font(fontName, Font.PLAIN, 10);
   private static Font boldFont = new Font(fontName, Font.BOLD, 12).deriveFont(Font.BOLD);
@@ -50,7 +51,7 @@ public class SheetController {
 
   public static int SHADOW_BORDER = 5;
 
-  private static int RIGHT_OFFSET = 20 + SHADOW_BORDER;
+  private static int RIGHT_OFFSET = 10 - SHADOW_BORDER;
   private static int BOTTOM_SHEET_PADDING = 10;
 
   private final static int TOP_SHEET_PADDING = 20;
@@ -64,7 +65,7 @@ public class SheetController {
   // SHEET
   public int SHEET_WIDTH = 400;
 
-  public int SHEET_HEIGHT = 150;
+  public int SHEET_HEIGHT = 143;
 
   // SHEET + shadow
   int SHEET_NC_WIDTH = SHEET_WIDTH + SHADOW_BORDER * 2;
@@ -77,6 +78,7 @@ public class SheetController {
   private JPanel mySheetPanel;
   private SheetMessage mySheetMessage;
 
+  private JEditorPane messageTextPane = new JEditorPane();
   private Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
   SheetController(final SheetMessage sheetMessage,
@@ -92,15 +94,14 @@ public class SheetController {
     }
 
     myDoNotAskOption = doNotAskOption;
-    myDoNotAskResult = (doNotAskOption == null) ? false : !doNotAskOption.isToBeShown();
+    myDoNotAskResult = (doNotAskOption != null) && !doNotAskOption.isToBeShown();
     mySheetMessage = sheetMessage;
     buttons = new JButton[buttonTitles.length];
 
     myResult = null;
 
     for (int i = 0; i < buttons.length; i++) {
-      int titleIndex = buttonTitles.length - 1 - i;
-      String buttonTitle = buttonTitles[titleIndex];
+      String buttonTitle = buttonTitles[i];
 
       buttons[i] = new JButton();
       buttons[i].setOpaque(false);
@@ -141,7 +142,7 @@ public class SheetController {
 
     ShadowRenderer renderer = new ShadowRenderer();
     renderer.setSize(SHADOW_BORDER);
-    renderer.setOpacity(.75f);
+    renderer.setOpacity(.80f);
     renderer.setColor(new JBColor(JBColor.BLACK, Gray._10));
     myShadowImage = renderer.createShadow(mySheetStencil);
   }
@@ -196,7 +197,7 @@ public class SheetController {
   }
 
   private static float getSheetAlpha() {
-    return ((UIUtil.isUnderDarcula())) ? .95f : .85f;
+    return .95f;
   }
 
   private JPanel createSheetPanel(String title, String message, JButton[] buttons) {
@@ -207,7 +208,7 @@ public class SheetController {
         super.paintComponent(g);
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
-        g.setColor(new JBColor(Gray._225, UIUtil.getPanelBackground()));
+        g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
         Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
 
         paintShadow(g);
@@ -255,8 +256,6 @@ public class SheetController {
 
     headerLabel.repaint();
 
-    JEditorPane messageTextPane = new JEditorPane();
-
     messageTextPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     messageTextPane.setFont(regularFont);
     messageTextPane.setEditable(false);
@@ -274,7 +273,7 @@ public class SheetController {
     }
 
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
-    messageTextPane.setText(message);
+    messageTextPane.setText(handleBreaks(message));
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
@@ -286,8 +285,6 @@ public class SheetController {
     sheetPanel.add(messageTextPane);
 
     messageTextPane.repaint();
-
-
 
     ico.setOpaque(false);
     ico.setSize(new Dimension(AllIcons.Logo_welcomeScreen.getIconWidth(), AllIcons.Logo_welcomeScreen.getIconHeight()));
@@ -306,6 +303,11 @@ public class SheetController {
 
     SHEET_HEIGHT += BOTTOM_SHEET_PADDING;
 
+    if (SHEET_HEIGHT < SHEET_MINIMUM_HEIGHT) {
+      SHEET_HEIGHT = SHEET_MINIMUM_HEIGHT;
+      shiftButtonsToTheBottom(SHEET_MINIMUM_HEIGHT - SHEET_HEIGHT);
+    }
+
     sheetPanel.setFocusCycleRoot(true);
 
     recalculateShadow();
@@ -313,6 +315,16 @@ public class SheetController {
     sheetPanel.setSize(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
 
     return sheetPanel;
+  }
+
+  private static String handleBreaks(final String message) {
+    return message.replaceAll("(\r\n|\n)", "<br/>");
+  }
+
+  private void shiftButtonsToTheBottom(int shiftDistance) {
+    for (JButton b : buttons) {
+      b.setLocation(b.getX(), b.getY() + shiftDistance);
+    }
   }
 
   private void recalculateShadow() {
@@ -338,28 +350,31 @@ public class SheetController {
 
   private void paintShadowFromParent(Graphics2D g2d) {
     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getShadowAlpha()));
-    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT, null);
+    g2d.drawImage(myShadowImage, 0, - SHEET_HEIGHT - SHADOW_BORDER, null);
   }
 
   private void layoutButtons(final JButton[] buttons, JPanel panel) {
 
-    int widestButtonWidth = 0;
+    //int widestButtonWidth = 0;
+    int buttonWidth = 0;
+    SHEET_HEIGHT += GAP_BETWEEN_LINES;
 
-    for (JButton button : buttons) {
-      button.repaint();
-      widestButtonWidth = Math.max(button.getPreferredSize().width, widestButtonWidth);
+    for (int i = 0; i < buttons.length; i ++) {
+      buttons[i].repaint();
+      buttons[i].setSize(buttons[i].getPreferredSize());
+      buttonWidth += buttons[i].getWidth();
+      if (i == buttons.length - 1) break;
+      buttonWidth += GAP_BETWEEN_BUTTONS;
     }
 
-    for (JButton button : buttons) {
-      button.setSize(widestButtonWidth, button.getPreferredSize().height);
-      panel.add(button);
-    }
+    int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
 
-    int buttonsWidth = (widestButtonWidth + GAP_BETWEEN_BUTTONS) * buttons.length + RIGHT_OFFSET;
+    // update the pane if the sheet is going to be wider
+    messageTextPane.setSize(Math.max(messageTextPane.getWidth(), buttonWidth), messageTextPane.getHeight());
 
-    SHEET_WIDTH = Math.max(buttonsWidth, SHEET_WIDTH);
+    SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
 
-    int buttonShift = 0;
+    int buttonShift = RIGHT_OFFSET;
 
     for (JButton button : buttons) {
       Dimension size = button.getSize();
@@ -367,6 +382,7 @@ public class SheetController {
       button.setBounds(SHEET_WIDTH - buttonShift,
                        SHEET_HEIGHT,
                        size.width, size.height);
+      panel.add(button);
       buttonShift += GAP_BETWEEN_BUTTONS;
     }
 

@@ -23,6 +23,7 @@ import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -298,8 +299,9 @@ class FindInProjectTask {
   }
 
   private static boolean isCoveredByIdIndex(VirtualFile file) {
-    return IdIndex.isIndexable(FileBasedIndexImpl.getFileType(file)) &&
-           ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isIndexingCandidate(file, IdIndex.NAME);
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    FileType fileType = file.getFileType();
+    return IdIndex.isIndexable(fileType) && fileBasedIndex.isIndexingCandidate(file, IdIndex.NAME);
   }
 
   private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {

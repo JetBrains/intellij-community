@@ -218,7 +218,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       locationFileName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      locationFileName = getSourcePosition().getFile().getName();
+      locationFileName = getFileName();
     }
     final int locationLine = location.lineNumber();
 

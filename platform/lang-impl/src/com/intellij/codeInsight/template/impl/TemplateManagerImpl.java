@@ -281,6 +281,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
+        if (editor.getCaretModel().getCaretCount() > 1 && supportsMultiCaretMode(customLiveTemplate)) {
+          continue;
+        }
         if (isApplicable(customLiveTemplate, editor, file)) {
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
@@ -302,6 +305,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       }
     }
     return startNonCustomTemplates(template2argument, editor, processor);
+  }
+
+  private static boolean supportsMultiCaretMode(CustomLiveTemplate customLiveTemplate) {
+    return customLiveTemplate instanceof CustomLiveTemplateBase && !((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
   public static boolean isApplicable(CustomLiveTemplate customLiveTemplate, Editor editor, PsiFile file) {

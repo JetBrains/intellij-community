@@ -77,4 +77,9 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   public void apply(PsiSubstitutor substitutor) {
     myT = substitutor.substitute(myT);
   }
+
+  @Override
+  public String toString() {
+    return myExpression.getText() + " -> " + myT.getPresentableText();
+  }
 }

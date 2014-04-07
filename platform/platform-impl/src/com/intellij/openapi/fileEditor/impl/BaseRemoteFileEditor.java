@@ -2,6 +2,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -22,8 +23,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChangeListener {
-  protected Editor myMockTextEditor;
-  protected volatile Navigatable myPendingNavigatable;
+  private Editor myMockTextEditor;
+  private Navigatable myPendingNavigatable;
 
   protected final Project myProject;
   private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
@@ -139,7 +140,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  public void navigateTo(@NotNull Navigatable navigatable) {
+  public final void navigateTo(@NotNull Navigatable navigatable) {
     TextEditor editor = getTextEditor();
     if (editor != null) {
       editor.navigateTo(navigatable);
@@ -149,7 +150,9 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
     }
   }
 
-  protected void checkPendingNavigable() {
+  protected final void contentLoaded() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     Navigatable navigatable = myPendingNavigatable;
     if (navigatable != null) {
       myPendingNavigatable = null;
@@ -157,5 +160,14 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
       assert editor != null;
       editor.navigateTo(navigatable);
     }
+
+    if (myMockTextEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myMockTextEditor);
+      myMockTextEditor = null;
+    }
+  }
+
+  protected final void contentRejected() {
+    myPendingNavigatable = null;
   }
 }

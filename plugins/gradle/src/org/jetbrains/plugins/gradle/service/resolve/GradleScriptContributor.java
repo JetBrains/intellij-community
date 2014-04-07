@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -48,14 +49,10 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @Nullable PsiClass aClass,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    if (place == null) {
-      return;
-    }
-
     if (!(aClass instanceof GroovyScriptClass)) {
       return;
     }

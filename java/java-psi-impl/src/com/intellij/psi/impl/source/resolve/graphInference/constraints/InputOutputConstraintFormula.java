@@ -115,4 +115,9 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
     }
     map.put(getExpression(), getT());
   }
+
+  @Override
+  public String toString() {
+    return getExpression().getText() + " -> " + getT().getPresentableText();
+  }
 }

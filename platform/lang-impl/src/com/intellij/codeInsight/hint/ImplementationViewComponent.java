@@ -330,15 +330,6 @@ public class ImplementationViewComponent extends JPanel {
         names.add(((PsiNamedElement)element).getName());
       }
     }
-    Arrays.sort(elements, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement e1, PsiElement e2) {
-        if (e1 instanceof PsiNamedElement && e2 instanceof PsiNamedElement) {
-          return Comparing.compare(((PsiNamedElement)e1).getName(), ((PsiNamedElement)e2).getName());
-        }
-        return e1.hashCode() - e2.hashCode();
-      }
-    });
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;

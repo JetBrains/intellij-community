@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,7 +104,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         if (typeParams != null) {
 
-          final HashSet<PsiTypeParameter> oldBounds = new HashSet<PsiTypeParameter>(session.getTypeParams());
+          final Set<PsiTypeParameter> oldBounds = ContainerUtil.newHashSet(session.getParamsToInfer());
           final boolean sameMethodCall = session.initBounds(typeParams);
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final HashSet<InferenceVariable> variables = new HashSet<InferenceVariable>();

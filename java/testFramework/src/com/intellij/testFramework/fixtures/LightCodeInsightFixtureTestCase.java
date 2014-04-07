@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -45,6 +46,17 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_7);
+    }
+  };
+  public static final LightProjectDescriptor JAVA_8 = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk18();
+    }
+
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
   };
   public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();

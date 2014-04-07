@@ -128,4 +128,9 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return myS.getPresentableText() + " <= " + myT.getPresentableText();
+  }
 }

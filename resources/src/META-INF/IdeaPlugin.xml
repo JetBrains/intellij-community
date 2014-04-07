@@ -107,6 +107,7 @@
     <extensionPoint name="overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
 
     <extensionPoint name="compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
@@ -277,6 +278,8 @@
 
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsScopedSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
+    
+    <functionalExpressionSearch implementation="com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
@@ -1318,6 +1321,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
 
     <stubElementTypeHolder class="com.intellij.psi.impl.java.stubs.JavaStubElementTypes"/>
 
@@ -1470,6 +1474,7 @@
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
   </extensions>
 
   <actions>

@@ -44,6 +44,7 @@
       <module name="remote-servers-agent-rt" target="1.5" />
       <module name="testng_rt" target="1.5" />
       <module name="ui-designer-jps-plugin" target="1.6" />
+      <module name="util-rt" target="1.5" />
     </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">

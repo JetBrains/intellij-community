@@ -32,18 +32,20 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.Enumeration;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
-  private static final HashMap<Object, Font> oldFonts = new HashMap<Object, Font>();
+  private static final Map<Object, Object> ourSavedValues = ContainerUtil.newLinkedHashMap();
 
   @Override
   public void update(AnActionEvent e) {
@@ -53,107 +55,143 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @Override
   public void actionPerformed(AnActionEvent e){
+    UISettings settings = UISettings.getInstance();
+    Project project = e.getProject();
+
+    setPresentationMode(project, !settings.PRESENTATION_MODE);
+  }
+
+  //public static void restorePresentationMode() {
+  //  UISettings instance = UISettings.getInstance();
+  //  tweakUIDefaults(instance, true);
+  //  tweakEditorAndFireUpdateUI(instance, true);
+  //}
+
+  public static void setPresentationMode(final Project project, final boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
-    final Project project = e.getProject();
+    settings.PRESENTATION_MODE = inPresentation;
 
-    settings.PRESENTATION_MODE = !settings.PRESENTATION_MODE;
+    final boolean layoutStored = storeToolWindows(project);
 
-    if (settings.PRESENTATION_MODE && project != null) {
-      hideToolWindows(project);
-    }
+    tweakUIDefaults(settings, inPresentation);
 
-
-    settings.fireUISettingsChanged();
-
-    UIDefaults defaults = UIManager.getDefaults();
-    Enumeration<Object> keys = defaults.keys();
-    if (settings.PRESENTATION_MODE) {
-      while (keys.hasMoreElements()) {
-        Object key = keys.nextElement();
-        if (key instanceof String && ((String)key).endsWith(".font")) {
-          Font font = defaults.getFont(key);
-          oldFonts.put(key, font);
-        }
-      }
-      for (Object key : oldFonts.keySet()) {
-        Font font = oldFonts.get(key);
-        defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), Math.min(20, settings.PRESENTATION_MODE_FONT_SIZE)));
-      }
-    } else {
-      for (Object key : oldFonts.keySet()) {
-        defaults.put(key, oldFonts.get(key));
-      }
-      oldFonts.clear();
-    }
-
-    ActionCallback callback = ActionCallback.DONE;
-    if (project != null) {
-      Window window = IdeFrameImpl.getActiveFrame();
-      if (window instanceof IdeFrameImpl) {
-        final IdeFrameImpl frame = (IdeFrameImpl)window;
-        final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
-        if (settings.PRESENTATION_MODE) {
-          propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
-          callback = frame.toggleFullScreen(true);
-        } else {
-          if (frame.isInFullScreen()) {
-            final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
-            callback = frame.toggleFullScreen("true".equalsIgnoreCase(value));
-          }
-        }
-      }
-    }
+    ActionCallback callback = project == null ? ActionCallback.DONE : tweakFrameFullScreen(project, inPresentation);
     callback.doWhenProcessed(new Runnable() {
       @Override
       public void run() {
-        int fontSize = settings.PRESENTATION_MODE
-                       ? settings.PRESENTATION_MODE_FONT_SIZE
-                       : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          if (editor instanceof EditorEx) {
-            ((EditorEx)editor).setFontSize(fontSize);
-          }
-        }
-        UISettings.getInstance().fireUISettingsChanged();
-        LafManager.getInstance().updateUI();
-        EditorUtil.reinitSettings();
+        tweakEditorAndFireUpdateUI(settings, inPresentation);
 
-        if (!settings.PRESENTATION_MODE && project != null) {
-          hideToolWindows(project);
-        }
+        restoreToolWindows(project, layoutStored, inPresentation);
       }
     });
-
   }
 
-  private static void hideToolWindows(Project project) {
-    final ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
+  private static ActionCallback tweakFrameFullScreen(Project project, boolean inPresentation) {
+    Window window = IdeFrameImpl.getActiveFrame();
+    if (window instanceof IdeFrameImpl) {
+      IdeFrameImpl frame = (IdeFrameImpl)window;
+      PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+      if (inPresentation) {
+        propertiesComponent.setValue("full.screen.before.presentation.mode", String.valueOf(frame.isInFullScreen()));
+        return frame.toggleFullScreen(true);
+      }
+      else {
+        if (frame.isInFullScreen()) {
+          final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
+          return frame.toggleFullScreen("true".equalsIgnoreCase(value));
+        }
+      }
+    }
+    return ActionCallback.DONE;
+  }
 
-    final DesktopLayout layout = new DesktopLayout();
-    layout.copyFrom(mgr.getLayout());
+  private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
+    int fontSize = inPresentation
+                   ? settings.PRESENTATION_MODE_FONT_SIZE
+                   : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      if (editor instanceof EditorEx) {
+        ((EditorEx)editor).setFontSize(fontSize);
+      }
+    }
+    UISettings.getInstance().fireUISettingsChanged();
+    LafManager.getInstance().updateUI();
+    EditorUtil.reinitSettings();
+  }
 
+  private static void tweakUIDefaults(UISettings settings, boolean inPresentation) {
+    UIDefaults defaults = UIManager.getDefaults();
+    Enumeration<Object> keys = defaults.keys();
+    if (inPresentation) {
+      while (keys.hasMoreElements()) {
+        Object key = keys.nextElement();
+        if (key instanceof String) {
+          String name = (String)key;
+          if (name.endsWith(".font")) {
+            Font font = defaults.getFont(key);
+            ourSavedValues.put(key, font);
+          }
+          else if (name.endsWith(".rowHeight")) {
+            ourSavedValues.put(key, defaults.getInt(key));
+          }
+        }
+      }
+      for (Object key : ourSavedValues.keySet()) {
+        Object v = ourSavedValues.get(key);
+        if (v instanceof Font) {
+          Font font = (Font)v;
+          defaults.put(key, new FontUIResource(font.getName(), font.getStyle(), Math.min(20, settings.PRESENTATION_MODE_FONT_SIZE)));
+        }
+        else if (v instanceof Integer) {
+          defaults.put(key, ((Integer)v).intValue() * 3 / 2);
+        }
+      }
+    }
+    else {
+      for (Object key : ourSavedValues.keySet()) {
+        defaults.put(key, ourSavedValues.get(key));
+      }
+      ourSavedValues.clear();
+    }
+  }
+
+  private static boolean hideAllToolWindows(ToolWindowManagerEx manager) {
     // to clear windows stack
-    mgr.clearSideStack();
+    manager.clearSideStack();
 
-    final String[] ids = mgr.getToolWindowIds();
+    String[] ids = manager.getToolWindowIds();
     boolean hasVisible = false;
     for (String id : ids) {
-      final ToolWindow toolWindow = mgr.getToolWindow(id);
+      final ToolWindow toolWindow = manager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);
         hasVisible = true;
       }
     }
+    return hasVisible;
+  }
 
-    if (hasVisible && UISettings.getInstance().PRESENTATION_MODE) {
-      mgr.setLayoutToRestoreLater(layout);
-      mgr.activateEditorComponent();
+  private static boolean storeToolWindows(@Nullable Project project) {
+    if (project == null) return false;
+    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
+
+    DesktopLayout layout = new DesktopLayout();
+    layout.copyFrom(manager.getLayout());
+    boolean hasVisible = hideAllToolWindows(manager);
+
+    if (hasVisible) {
+      manager.setLayoutToRestoreLater(layout);
+      manager.activateEditorComponent();
     }
-    else if (!UISettings.getInstance().PRESENTATION_MODE && !hasVisible) {
-      final DesktopLayout restoreLayout = mgr.getLayoutToRestoreLater();
-      if (restoreLayout != null) {
-        mgr.setLayout(restoreLayout);
-      }
+    return hasVisible;
+  }
+
+  private static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
+    if (project == null || !needsRestore) return;
+    ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
+    DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
+    if (!inPresentation && restoreLayout != null) {
+      manager.setLayout(restoreLayout);
     }
   }
 }

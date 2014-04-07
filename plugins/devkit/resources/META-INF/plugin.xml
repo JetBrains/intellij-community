@@ -33,6 +33,8 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.ExtensionPoint"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
@@ -42,7 +44,8 @@
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
     <compileServer.plugin classpath="jps/devkit-jps-plugin.jar"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
-    <documentationProvider implementation="org.jetbrains.idea.devkit.references.extensions.ExtensionPointQuickDocProvider"/>
+    <lang.documentationProvider language="XML"
+                                implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity"
                      bundle="org.jetbrains.idea.devkit.DevKitBundle"

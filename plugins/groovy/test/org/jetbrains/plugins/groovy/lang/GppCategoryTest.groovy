@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 
 /**
  * @author peter
@@ -29,20 +29,6 @@ class GppCategoryTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GppProjectDescriptor.instance
-  }
-
-  public void testFromSuperClass() {
-    assertResolves("""
-class Super {
-  static def category(Object foo, int bar) {}
-}
-
-class Sub extends Super {
-  def run() {
-    "".cate<caret>gory(2)
-  }
-}
-""")
   }
 
   public void testFromSuperClassClosureSyntax() {
@@ -63,49 +49,6 @@ class Super {
 }
 
 Super s = [xxx:{ "".cate<caret>gory(2) }]
-"""
-  }
-
-  public void testFromSuperClassTrait() {
-    assertResolves """
-@Trait class MyTrait {
-  static def category(Object foo, int bar) {}
-}
-
-class Super implements MyTrait {}
-
-class Sub extends Super {
-  def run() {
-    "".cate<caret>gory(2)
-  }
-}
-"""
-  }
-
-  public void testUseOnClass() {
-    assertResolves """
-class Super {
-  static def category(Object foo, int bar) {}
-}
-
-@Use(Super)
-class Sub {
-  def run() {
-    "".cate<caret>gory(2)
-  }
-}
-"""
-  }
-
-  public void testUseOnPackage() {
-    assertResolves """
-@Use([Object, Super]) package foo
-
-class Super {
-  static def category(Object foo, int bar) {}
-}
-
-"".cate<caret>gory(2)
 """
   }
 

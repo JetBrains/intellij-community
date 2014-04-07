@@ -54,7 +54,7 @@ class MyTest1 {
     }
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'todelete.MyTest1.Bar1'">Bar1 b1 = MyTest2 :: foo;</error>
+        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
         bar(MyTest1 :: foo);
     }
 }
@@ -80,7 +80,7 @@ class MyTest2 {
     }*/
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'todelete.MyTest2.Bar1'">Bar1 b1 = MyTest2 :: foo;</error>
+        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
         bar(MyTest2 :: foo);
     }
 }
@@ -106,8 +106,8 @@ class MyTest3 {
     }
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'todelete.MyTest3.Bar1'">Bar1 b1 = MyTest2 :: foo;</error>
-        bar<error descr="'bar(todelete.MyTest3.Bar2)' in 'todelete.MyTest3' cannot be applied to '(<method reference>)'">(MyTest3 :: foo)</error>;
+        Bar1 b1 = MyTest2 :: <error descr="Cannot resolve method 'foo'">foo</error>;
+        bar(MyTest3 :: <error descr="Cannot resolve method 'foo'">foo</error>);
     }
 }
 
@@ -129,7 +129,7 @@ class MyTest4 {
     }
 
     {
-         bar<error descr="'bar(todelete.MyTest4.Bar1)' in 'todelete.MyTest4' cannot be applied to '(<method reference>)'">(MyTest4:: foo)</error>;
+         bar(MyTest4:: <error descr="Cannot resolve method 'foo'">foo</error>);
     }
 }
 

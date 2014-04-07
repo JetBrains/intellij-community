@@ -312,7 +312,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     group.add(cloneAction);
     group.add(resetAction);
     addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myCurrentTab.getComponent());
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE,
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(),
                                            myCurrentTab.getComponent());
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();

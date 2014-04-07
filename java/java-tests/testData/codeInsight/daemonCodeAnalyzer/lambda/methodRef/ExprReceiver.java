@@ -5,7 +5,7 @@ class ThreadExample {
     }
     {
         A a = new A();
-        <error descr="Incompatible types. Found: '<method reference>', required: 'ThreadExample.Function<? super ThreadExample.A,? extends java.lang.String>'">Function<? super A,? extends String> foo = a::foo;</error>
+        Function<? super A,? extends String> foo = a::<error descr="Cannot resolve method 'foo'">foo</error>;
     }
 
     static class A {

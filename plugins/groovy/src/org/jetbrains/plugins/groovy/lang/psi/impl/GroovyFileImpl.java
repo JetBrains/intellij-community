@@ -178,9 +178,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (!processChildrenScopes(processor, state, lastParent, place)) return false;
     }
 
-    NameHint nameHint = processor.getHint(NameHint.KEY);
-    String expectedName = nameHint != null ? nameHint.getName(state) : null;
-
     GrImportStatement[] importStatements = getImportStatements();
     if (!processImports(processor, state, lastParent, place, importStatements, false)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
@@ -188,6 +185,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if  (!processImplicitImports(processor, state, lastParent, place, this)) return false;
 
     if (shouldProcessPackages(classHint)) {
+
+      NameHint nameHint = processor.getHint(NameHint.KEY);
+      String expectedName = nameHint != null ? nameHint.getName(state) : null;
+
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       if (expectedName != null) {
         final PsiPackage pkg = facade.findPackage(expectedName);

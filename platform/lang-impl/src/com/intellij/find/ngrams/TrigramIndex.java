@@ -61,7 +61,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> {
     return new DataIndexer<Integer, Void, FileContent>() {
       @Override
       @NotNull
-      public Map<Integer, Void> map(FileContent inputData) {
+      public Map<Integer, Void> map(@NotNull FileContent inputData) {
         final Map<Integer, Void> result = new THashMap<Integer, Void>();
         TIntHashSet built = TrigramBuilder.buildTrigram(inputData.getContentAsText());
         built.forEach(new TIntProcedure() {

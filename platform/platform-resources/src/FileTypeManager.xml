@@ -96,6 +96,24 @@
       </highlighting>
     </filetype>
 
+    <filetype binary="false" default_extension="aj" extensions="aj" description="AspectJ files" name = "AspectJ (syntax highlighting only)" icon="AllIcons.FileTypes.Custom">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="%" />
+          <option name="COMMENT_START" value="" />
+          <option name="COMMENT_END" value="" />
+          <option name="HEX_PREFIX" value="" />
+          <option name="NUM_POSTFIXES" value="" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+        </options>
+        <keywords keywords="after;begin;case;catch;cond;end;fun;if;let;of;query;receive;when" ignore_case="false" />
+        <keywords2 keywords="and;andalso;not;or;orelse" />
+        <keywords3 keywords="export;import;include;module;record" />
+      </highlighting>
+    </filetype>
+
     <filetype binary="false" default_extension="erl" extensions="erl" description="Erlang files" name="Erlang files">
       <highlighting>
         <options>
@@ -158,6 +176,40 @@
       </extensionMap>
     </filetype>
 
+    <filetype binary="false" default_extension="css" extensions="css" description="CSS files" name = "CSS files (syntax highlighting only)" icon="AllIcons.FileTypes.Css">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="" />
+          <option name="COMMENT_START" value="/*" />
+          <option name="COMMENT_END" value="*/" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="NUM_POSTFIXES" value="" />
+        </options>
+      </highlighting>
+      <extensionMap>
+        <mapping ext="css"/>
+      </extensionMap>
+    </filetype>
+
+    <filetype binary="false" default_extension="js" extensions="js" description="JavaScript files" name = "JavaScript files (syntax highlighting only)" icon="AllIcons.FileTypes.JavaScript">
+      <highlighting>
+        <options>
+          <option name="LINE_COMMENT" value="//" />
+          <option name="COMMENT_START" value="/*" />
+          <option name="COMMENT_END" value="*/" />
+          <option name="NUM_POSTFIXES" value="" />
+          <option name="HAS_BRACES" value="true" />
+          <option name="HAS_BRACKETS" value="true" />
+          <option name="HAS_PARENS" value="true" />
+          <option name="HAS_STRING_ESCAPES" value="true" />
+        </options>
+        <keywords keywords="break;case;catch;continue;defaul;delete;do;else;false;finally;for;function;if;in;instanceof;new;null;return;switch;this;throw;true;try;typeof;var;void;while;with" ignore_case="false" />
+      </highlighting>
+      <extensionMap>
+        <mapping ext="js"/>
+      </extensionMap>
+    </filetype>
+
     <filetype binary="false" default_extension="php" extensions="" description="PHP files" name="PHP files">
       <highlighting>
         <options>
@@ -171,4 +223,23 @@
       </highlighting>
     </filetype>
   </filetypes>
+
+  <filetype binary="false" default_extension="jsp" extensions="jsp;jsf;jspf;tag;tagf" description="JSP files" name = "JSP files (syntax highlighting only)" icon="AllIcons.FileTypes.Jsp">
+    <highlighting>
+      <options>
+        <option name="LINE_COMMENT" value="" />
+        <option name="COMMENT_START" value="" />
+        <option name="COMMENT_END" value="" />
+        <option name="HAS_BRACES" value="false" />
+        <option name="NUM_POSTFIXES" value="" />
+      </options>
+    </highlighting>
+    <extensionMap>
+      <mapping ext="jsp"/>
+      <mapping ext="jsf"/>
+      <mapping ext="jspf"/>
+      <mapping ext="tag"/>
+      <mapping ext="tagf"/>
+    </extensionMap>
+  </filetype>
 </component>

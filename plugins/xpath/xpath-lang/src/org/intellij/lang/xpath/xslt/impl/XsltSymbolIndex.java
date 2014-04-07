@@ -89,7 +89,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         return new DataIndexer<String, Kind, FileContent>() {
             @Override
             @NotNull
-            public Map<String, Kind> map(FileContent inputData) {
+            public Map<String, Kind> map(@NotNull FileContent inputData) {
                 CharSequence inputDataContentAsText = inputData.getContentAsText();
                 if (CharArrayUtil.indexOf(inputDataContentAsText, XsltSupport.XSLT_NS, 0) == -1) {
                   return Collections.emptyMap();

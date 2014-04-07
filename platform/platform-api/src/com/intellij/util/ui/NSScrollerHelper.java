@@ -29,7 +29,7 @@ import java.util.EventListener;
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 class NSScrollerHelper {
-  private static final Callback CALLBACK = new Callback() {
+  private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, Pointer selector, ID event) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -40,14 +40,29 @@ class NSScrollerHelper {
       });
     }
   };
+  private static final Callback BEHAVIOR_CALLBACK = new Callback() {
+    @SuppressWarnings("UnusedDeclaration")
+    public void callback(ID self, Pointer selector, ID event) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          updateBehaviorPreferences();
+        }
+      });
+    }
+  };
+
+  public enum ClickBehavior {NextPage, JumpToSpot}
 
   public enum Style {Legacy, Overlay}
 
-  private static final EventListenerList ourListeners = new EventListenerList();
+  private static ClickBehavior ourClickBehavior = null;
+  private static final EventListenerList ourStyleListeners = new EventListenerList();
 
   static {
-    if (isOverlayScrollbarSupported()) {
+    if (SystemInfo.isMac) {
       initNotificationObserver();
+      updateBehaviorPreferences();
     }
   }
 
@@ -59,20 +74,55 @@ class NSScrollerHelper {
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
 
     ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSScrollerChangesObserver");
-    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), CALLBACK, "v@")) {
+    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleScrollerStyleChanged:"), APPEARANCE_CALLBACK, "v@")) {
       throw new RuntimeException("Cannot add observer method");
     }
-    ;
+    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("handleBehaviorChanged:"), BEHAVIOR_CALLBACK, "v@")) {
+      throw new RuntimeException("Cannot add observer method");
+    }
+
     Foundation.registerObjcClassPair(delegateClass);
     ID delegate = invoke("NSScrollerChangesObserver", "new");
 
     try {
-      ID defaultCenter = invoke("NSNotificationCenter", "defaultCenter");
-      invoke(defaultCenter, "addObserver:selector:name:object:",
+      ID center;
+      center = invoke("NSNotificationCenter", "defaultCenter");
+      invoke(center, "addObserver:selector:name:object:",
              delegate,
              Foundation.createSelector("handleScrollerStyleChanged:"),
              Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
-             ID.NIL);
+             ID.NIL
+      );
+
+      center = invoke("NSDistributedNotificationCenter", "defaultCenter");
+      invoke(center, "addObserver:selector:name:object:",
+             delegate,
+             Foundation.createSelector("handleBehaviorChanged:"),
+             Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+             ID.NIL,
+             2 // NSNotificationSuspensionBehaviorCoalesce
+      );
+    }
+    finally {
+      pool.drain();
+    }
+  }
+
+  @Nullable
+  public static ClickBehavior getClickBehavior() {
+    if (!SystemInfo.isMac) return null;
+    return ourClickBehavior;
+  }
+
+  private static void updateBehaviorPreferences() {
+    if (!SystemInfo.isMac) return;
+    
+    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    try {
+      ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
+      invoke(defaults, "synchronize");
+      ourClickBehavior = invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).intValue() == 1
+                         ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
     }
     finally {
       pool.drain();
@@ -98,15 +148,15 @@ class NSScrollerHelper {
   }
 
   public static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
-    ourListeners.add(ScrollbarStyleListener.class, listener);
+    ourStyleListeners.add(ScrollbarStyleListener.class, listener);
   }
 
   public static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
-    ourListeners.remove(ScrollbarStyleListener.class, listener);
+    ourStyleListeners.remove(ScrollbarStyleListener.class, listener);
   }
 
   private static void fireStyleChanged() {
-    Object[] listeners = ourListeners.getListenerList();
+    Object[] listeners = ourStyleListeners.getListenerList();
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == ScrollbarStyleListener.class) {
         ((ScrollbarStyleListener)listeners[i + 1]).styleChanged();

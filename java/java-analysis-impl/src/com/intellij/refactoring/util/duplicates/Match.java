@@ -402,7 +402,7 @@ public final class Match {
         final PsiMethod replacedMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
         LOG.assertTrue(replacedMethod != null);
         final PsiType replacedMethodReturnType = replacedMethod.getReturnType();
-        if (weakerType(psiMethod, returnType, replacedMethodReturnType)) {
+        if (replacedMethodReturnType != null && weakerType(psiMethod, returnType, replacedMethodReturnType)) {
           return replacedMethodReturnType;
         }
       }
@@ -411,7 +411,7 @@ public final class Match {
     return null;
   }
 
-  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, final PsiType currentType) {
+  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, @NotNull final PsiType currentType) {
     final PsiTypeParameter[] typeParameters = psiMethod.getTypeParameters();
     final PsiSubstitutor substitutor =
         JavaPsiFacade.getInstance(psiMethod.getProject()).getResolveHelper().inferTypeArguments(typeParameters, new PsiType[]{returnType}, new PsiType[]{currentType}, PsiUtil.getLanguageLevel(psiMethod));

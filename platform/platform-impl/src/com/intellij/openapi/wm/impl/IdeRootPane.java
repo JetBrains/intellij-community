@@ -130,6 +130,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     super.setGlassPane(glass);
   }
 
+
   /**
    * Invoked when enclosed frame is being shown.
    */

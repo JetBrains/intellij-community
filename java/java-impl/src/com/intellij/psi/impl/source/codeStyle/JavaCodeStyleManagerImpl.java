@@ -729,7 +729,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public String variableNameToPropertyName(String name, VariableKind variableKind) {
-    if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
+    if (variableKind == VariableKind.STATIC_FINAL_FIELD || variableKind == VariableKind.STATIC_FIELD && name.contains("_")) {
       StringBuilder buffer = new StringBuilder();
       for (int i = 0; i < name.length(); i++) {
         char c = name.charAt(i);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import static org.junit.Assert.*;
@@ -122,7 +123,7 @@ public class IoTestUtil {
   }
 
   public static void deleteSubst(@NotNull String substRoot) throws InterruptedException, IOException {
-    runCommand(new ProcessBuilder("subst", StringUtil.trimEnd(substRoot,"\\"), "/d"));
+    runCommand(new ProcessBuilder("subst", StringUtil.trimEnd(substRoot, "\\"), "/d"));
   }
 
   private static char getFirstFreeDriveLetter() {
@@ -211,7 +212,12 @@ public class IoTestUtil {
   @NotNull
   public static File createTestJar() throws IOException {
     File jarFile = FileUtil.createTempFile("test.", ".jar");
-    writeEntry(jarFile, "entry.txt", "test");
+    return createTestJar(jarFile);
+  }
+
+  @NotNull
+  public static File createTestJar(File jarFile) throws IOException {
+    writeEntry(jarFile, JarFile.MANIFEST_NAME, "");
     return jarFile;
   }
 

@@ -176,6 +176,7 @@
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
+    <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>

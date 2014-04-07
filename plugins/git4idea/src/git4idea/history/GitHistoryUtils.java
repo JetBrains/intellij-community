@@ -736,7 +736,7 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<? extends VcsCommitMetadata> loadMetadata(@NotNull Project project, @NotNull final VirtualFile root,
+  public static List<VcsCommitMetadata> loadMetadata(@NotNull Project project, @NotNull final VirtualFile root,
                                                                @NotNull String... parameters) throws VcsException {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);

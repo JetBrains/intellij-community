@@ -39,7 +39,7 @@ public class XmlTagManipulator extends AbstractElementManipulator<XmlTag> {
       range.getEndOffset() - valueOffset,
       newContent
     );
-    tag.getValue().setText(replacement.toString());
+    tag.getValue().setEscapedText(replacement.toString());
     return tag;
   }
 

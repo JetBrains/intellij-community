@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,24 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
 import java.util.List;
 
 public interface Extensions extends DomElement {
+
   @NotNull
   @Attribute("defaultExtensionNs")
-  @Convert(value=ExtensionNsConverter.class, soft=true)
+  @Convert(value = ExtensionNsConverter.class, soft = true)
   @Stubbed
   GenericAttributeValue<IdeaPlugin> getDefaultExtensionNs();
 
   @NotNull
-  @Convert(value=ExtensionNsConverter.class, soft=true)
+  @Convert(value = ExtensionNsConverter.class, soft = true)
   @Stubbed
   GenericAttributeValue<IdeaPlugin> getXmlns();
 
   List<Extension> getExtensions();
+
   Extension addExtension();
 
   Extension addExtension(String name);
+
+  @NotNull
+  String getEpPrefix();
 }

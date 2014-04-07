@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,6 +89,21 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     private static void changeClassToInterface(PsiClass aClass) {
+      for (PsiMethod method : aClass.getMethods()) {
+        PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
+        if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          continue;
+        }
+        PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
+      }
+      for (PsiField field : aClass.getFields()) {
+        PsiUtil.setModifierProperty(field, PsiModifier.PUBLIC, false);
+        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, false);
+        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, false);
+      }
+      for (PsiClass innerClass : aClass.getInnerClasses()) {
+        PsiUtil.setModifierProperty(innerClass, PsiModifier.PUBLIC, false);
+      }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) {
         return;
@@ -99,11 +115,8 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       if (classKeyword == null) {
         return;
       }
-      final PsiModifierList modifierList = aClass.getModifierList();
-      if (modifierList != null) {
-        modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
-        modifierList.setModifierProperty(PsiModifier.FINAL, false);
-      }
+      PsiUtil.setModifierProperty(aClass, PsiModifier.ABSTRACT, false);
+      PsiUtil.setModifierProperty(aClass, PsiModifier.FINAL, false);
       classKeyword.replace(interfaceKeyword);
     }
 
@@ -124,7 +137,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     private static void moveSubClassExtendsToImplements(List<PsiClass> inheritors) {
-      PsiClass oldClass = inheritors.get(0);
+      final PsiClass oldClass = inheritors.get(0);
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(oldClass.getProject()).getElementFactory();
       final PsiJavaCodeReferenceElement classReference = elementFactory.createClassReferenceElement(oldClass);
       for (int i = 1; i < inheritors.size(); i++) {
@@ -170,6 +183,9 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
         return;
       }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return;
+      }
       if (!mayBeInterface(aClass)) {
         return;
       }
@@ -206,7 +222,10 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     private static boolean allMethodsPublicAbstract(PsiClass aClass) {
       final PsiMethod[] methods = aClass.getMethods();
       for (final PsiMethod method : methods) {
-        if (!(method.hasModifierProperty(PsiModifier.ABSTRACT) && method.hasModifierProperty(PsiModifier.PUBLIC))) {
+        if (!PsiUtil.isLanguageLevel8OrHigher(aClass) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          return false;
+        }
+        else if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.FINAL)) {
           return false;
         }
       }

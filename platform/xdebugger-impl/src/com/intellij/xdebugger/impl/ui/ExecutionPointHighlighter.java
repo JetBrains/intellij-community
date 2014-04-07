@@ -22,17 +22,19 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author nik
@@ -47,16 +49,29 @@ public class ExecutionPointHighlighter {
   private GutterIconRenderer myGutterIconRenderer;
   private static final Key<Boolean> EXECUTION_POINT_HIGHLIGHTER_KEY = Key.create("EXECUTION_POINT_HIGHLIGHTER_KEY");
 
+  private final AtomicBoolean updateRequested = new AtomicBoolean();
+
   public ExecutionPointHighlighter(final Project project) {
     myProject = project;
   }
 
   public void show(final @NotNull XSourcePosition position, final boolean useSelection,
                    @Nullable final GutterIconRenderer gutterIconRenderer) {
+    updateRequested.set(false);
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
       @Override
       public void run() {
-        doShow(position, useSelection, gutterIconRenderer);
+        updateRequested.set(false);
+
+        mySourcePosition = position;
+
+        myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+        myOpenFileDescriptor.setUseCurrentWindow(true);
+
+        myGutterIconRenderer = gutterIconRenderer;
+        myUseSelection = useSelection;
+
+        doShow();
       }
     });
   }
@@ -65,14 +80,19 @@ public class ExecutionPointHighlighter {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        doHide();
+        updateRequested.set(false);
+
+        removeHighlighter();
+        myOpenFileDescriptor = null;
+        myEditor = null;
+        myGutterIconRenderer = null;
       }
     });
   }
 
   public void navigateTo() {
     if (myOpenFileDescriptor != null) {
-      FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, true);
+      myOpenFileDescriptor.navigateInEditor(myProject, true);
     }
   }
 
@@ -82,7 +102,16 @@ public class ExecutionPointHighlighter {
   }
 
   public void update() {
-    show(mySourcePosition, myUseSelection, myGutterIconRenderer);
+    if (updateRequested.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (updateRequested.compareAndSet(true, false)) {
+            doShow();
+          }
+        }
+      }, myProject.getDisposed());
+    }
   }
 
   public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
@@ -96,32 +125,24 @@ public class ExecutionPointHighlighter {
     });
   }
 
-  private void doShow(@NotNull XSourcePosition position, final boolean useSelection, @Nullable GutterIconRenderer renderer) {
+  private void doShow() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeHighlighter();
 
-    mySourcePosition = position;
-    myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, mySourcePosition);
-    myEditor = myOpenFileDescriptor.getFile().isValid() ? FileEditorManager.getInstance(myProject).openTextEditor(myOpenFileDescriptor, false) : null;
-    myUseSelection = useSelection;
-    myGutterIconRenderer = renderer;
+    myEditor = myOpenFileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
     if (myEditor != null) {
       addHighlighter();
     }
   }
 
-  private void doHide() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    removeHighlighter();
-    myOpenFileDescriptor = null;
-    myEditor = null;
-  }
-
   private void removeHighlighter() {
-    if (myUseSelection && myEditor != null) {
+    if (myRangeHighlighter == null || myEditor == null) {
+      return;
+    }
+
+    if (myUseSelection) {
       myEditor.getSelectionModel().removeSelection();
     }
-    if (myRangeHighlighter == null || myEditor == null) return;
 
     myRangeHighlighter.dispose();
     myRangeHighlighter = null;

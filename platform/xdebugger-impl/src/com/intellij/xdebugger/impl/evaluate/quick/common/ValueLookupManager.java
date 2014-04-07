@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class ValueLookupManager implements EditorMouseMotionListener {
+  /**
+   * @see com.intellij.xdebugger.XDebuggerUtil#disableValueLookup(com.intellij.openapi.editor.Editor)
+   */
+  public static final Key<Boolean> DISABLE_VALUE_LOOKUP = Key.create("DISABLE_VALUE_LOOKUP");
+
   private final Project myProject;
   private final Alarm myAlarm;
   private AbstractValueHint myRequest = null;
@@ -68,7 +74,7 @@ public class ValueLookupManager implements EditorMouseMotionListener {
       return;
     }
 
-    if (e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+    if (e.getArea() != EditorMouseEventArea.EDITING_AREA || DISABLE_VALUE_LOOKUP.get(editor) == Boolean.TRUE) {
       return;
     }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -204,6 +205,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public void setDependencyState(XBreakpointDependencyState state) {
     myState.setDependencyState(state);
+  }
+
+  public String getGroup() {
+    return myState.getGroup();
+  }
+
+  public void setGroup(String group) {
+    group = StringUtil.nullize(group);
+    myState.setGroup(group);
   }
 
   public void dispose() {

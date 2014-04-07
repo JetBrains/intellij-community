@@ -146,5 +146,16 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText(false).getShortTypeText());
       }
     }
+
+    for (StubElement stubElement : stub.getChildrenStubs()) {
+      if (stubElement instanceof PsiParameterListStub) {
+        for (StubElement paramStub : ((PsiParameterListStub)stubElement).getChildrenStubs()) {
+          if (paramStub instanceof PsiParameterStub) {
+            sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, ((PsiParameterStub)paramStub).getType(false).getShortTypeText());
+          }
+        }
+        break;
+      }
+    }
   }
 }

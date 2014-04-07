@@ -51,7 +51,6 @@ public interface RemoteDeadHand extends Remote {
       ourHand = remote;
     }
 
-    @Override
     public long ping(String id) throws RemoteException {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourAskedThatManyTimes ++;

@@ -17,12 +17,12 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.NSWorkspace;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class FoundationTest {
@@ -57,5 +57,17 @@ public class FoundationTest {
     assertThat(Foundation.getEncodingCode("utf-16le"), equalTo(2483028224l));
     assertThat(Foundation.getEncodingName(2415919360l), equalTo("utf-16be"));
     assertThat(Foundation.getEncodingCode("utf-16be"), equalTo(2415919360l));
+  }
+
+  @Test
+  public void testFindingAppBundle() throws Exception {
+    String path;
+    
+    path = NSWorkspace.absolutePathForAppBundleWithIdentifier("com.apple.Finder");
+    assertThat(path, notNullValue());
+    assertThat(path, endsWith("Finder.app"));
+
+    path = NSWorkspace.absolutePathForAppBundleWithIdentifier("unexisting-bla-blah");
+    assertThat(path, nullValue());
   }
 }

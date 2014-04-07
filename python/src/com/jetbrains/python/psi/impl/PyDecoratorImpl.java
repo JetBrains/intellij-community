@@ -160,7 +160,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
   }
 
   @Override
-  public boolean isCallee(@NotNull final FQNamesProvider name) {
+  public boolean isCallee(@NotNull final FQNamesProvider... name) {
     return PyCallExpressionHelper.isCallee(this, name);
   }
 

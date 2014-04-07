@@ -20,48 +20,25 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * The tag reference object
- */
 public class GitTag extends GitReference {
-  /**
-   * Prefix for tags ({@value})
-   */
-  @NonNls public static final String REFS_TAGS_PREFIX = "refs/tags/";
+  public static final String REFS_TAGS_PREFIX = "refs/tags/";
 
-  /**
-   * The constructor
-   *
-   * @param name the used name
-   */
   public GitTag(@NotNull String name) {
     super(name);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
   public String getFullName() {
     return REFS_TAGS_PREFIX + myName;
   }
 
-  /**
-   * List tags for the git root
-   *
-   * @param project the context
-   * @param root    the git root
-   * @param tags    the tag list
-   * @param containingCommit
-   * @throws VcsException if there is a problem with running git
-   */
+  @Deprecated
   public static void listAsStrings(final Project project, final VirtualFile root, final Collection<String> tags,
                                    @Nullable final String containingCommit) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.TAG);
@@ -79,14 +56,7 @@ public class GitTag extends GitReference {
     }
   }
 
-  /**
-   * List tags for the git root
-   *
-   * @param project the context
-   * @param root    the git root
-   * @param tags    the tag list
-   * @throws VcsException if there is a problem with running git
-   */
+  @Deprecated
   public static void list(final Project project, final VirtualFile root, final Collection<? super GitTag> tags) throws VcsException {
     ArrayList<String> temp = new ArrayList<String>();
     listAsStrings(project, root, temp, null);

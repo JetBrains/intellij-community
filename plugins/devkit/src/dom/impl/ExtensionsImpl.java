@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.Extensions;
 
@@ -31,5 +32,12 @@ public abstract class ExtensionsImpl implements Extensions {
     XmlTag tag = extension.getXmlTag();
     tag.setName(name.substring(getDefaultExtensionNs().getStringValue().length() + 1));
     return extension;
+  }
+
+  @NotNull
+  public String getEpPrefix() {
+    String prefix = getDefaultExtensionNs().getStringValue();
+    if (prefix == null) prefix = getXmlns().getStringValue();
+    return prefix != null ? prefix + "." : "";
   }
 }

@@ -91,6 +91,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint.getProperties();
   }
 
+  public XBreakpoint<P> getXBreakpoint() {
+    return myXBreakpoint;
+  }
+
+  @Nullable
   public abstract PsiClass getPsiClass();
   /**
    * Request for creating all needed JPDA requests in the specified VM
@@ -474,6 +479,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   //  myLogMessage = logMessage;
   //}
 
+  @Nullable
   public abstract PsiElement getEvaluationElement();
 
   protected TextWithImports getLogMessage() {

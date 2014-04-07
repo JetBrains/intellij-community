@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -149,7 +150,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener.Adapter() {
       @Override
-      public void fileTypesChanged(FileTypeEvent event) {
+      public void fileTypesChanged(@NotNull FileTypeEvent event) {
         doInitialize();
       }
     });
@@ -753,6 +754,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     if (myDisposed) {
+      ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);
     }
   }

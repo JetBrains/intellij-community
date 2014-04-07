@@ -105,7 +105,7 @@ public class ListIntToIntMap extends AbstractUpdatableIntToIntMap {
         return longIndex;
     }
 
-    throw new IllegalAccessError("This shout be never happened");
+    throw new IllegalAccessError("This should never happen!");
   }
 
   @Override

@@ -1,14 +1,20 @@
 package com.siyeh.ig.abstraction;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
-public class MagicNumberInspectionTest extends IGInspectionTestCase {
+public class MagicNumberInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
+  public void testMagicNumber() {
+    doTest();
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
     final MagicNumberInspection tool = new MagicNumberInspection();
     tool.ignoreInHashCode = true;
     tool.ignoreInAnnotations = true;
     tool.ignoreInitialCapacity = true;
-    doTest("com/siyeh/igtest/abstraction/magic_number", tool);
+    return tool;
   }
 }

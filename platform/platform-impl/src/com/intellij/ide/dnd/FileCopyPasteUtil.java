@@ -16,8 +16,6 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -148,9 +146,7 @@ public class FileCopyPasteUtil {
         if (virtualFile == null) continue;
         result.add(virtualFile);
         // detect and store file type for Finder-2-IDEA drag-n-drop
-        if (!virtualFile.isDirectory() && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
-          FileTypeRegistry.getInstance().detectFileTypeFromContent(virtualFile);
-        }
+        virtualFile.getFileType();
       }
     }
     return result;

@@ -138,6 +138,8 @@ public class MavenResumeAction extends AnAction {
             }
             else if (textWithoutInfo.length() > 0) {
               myMavenProjectNames.add(textWithoutInfo);
+            } else if (!myMavenProjectNames.isEmpty()) {
+              myState = STATE_WAIT_FOR______;
             }
             break;
 

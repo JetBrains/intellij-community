@@ -83,7 +83,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
       new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
-        psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)),
+        psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)).andNot(psiElement().withParent(PsiMethodReferenceExpression.class)),
         psiElement().inside(PsiClassObjectAccessExpression.class),
         psiElement().inside(PsiThisExpression.class),
         psiElement().inside(PsiSuperExpression.class)

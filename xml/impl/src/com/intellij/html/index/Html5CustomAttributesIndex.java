@@ -46,7 +46,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
     @Override
     @NotNull
-    public Map<String, Void> map(FileContent inputData) {
+    public Map<String, Void> map(@NotNull FileContent inputData) {
       CharSequence input = inputData.getContentAsText();
       Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {

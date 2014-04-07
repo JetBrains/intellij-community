@@ -600,11 +600,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
   private static class SharedSchemeData {
     @NotNull private final Document original;
-    private final String name;
+    @NotNull private final String name;
     private final String user;
     private final String description;
 
-    private SharedSchemeData(@NotNull Document original, String name, String user, String description) {
+    private SharedSchemeData(@NotNull Document original, @NotNull String name, String user, String description) {
       this.original = original;
       this.name = name;
       this.user = user;

@@ -110,7 +110,7 @@ public class JumpToObjectAction extends DebuggerAction{
               SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
               // adjust position for non-anonymous classes
               if (clsType.name().indexOf('$') < 0) {
-                final PsiClass classAt = position != null? JVMNameUtil.getClassAt(position) : null;
+                final PsiClass classAt = JVMNameUtil.getClassAt(position);
                 if (classAt != null) {
                   final SourcePosition classPosition = SourcePosition.createFromElement(classAt);
                   if (classPosition != null) {

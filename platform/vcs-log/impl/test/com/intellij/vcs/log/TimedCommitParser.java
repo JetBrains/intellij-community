@@ -17,15 +17,13 @@ package com.intellij.vcs.log;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.impl.TimedVcsCommitImpl;
 import com.intellij.vcs.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- *
- */
 public class TimedCommitParser {
 
   /**
@@ -53,7 +51,7 @@ public class TimedCommitParser {
     for (int p : commit.getParentIndices()) {
       parents.add(intToHash(p));
     }
-    return new SimpleTimedVcsCommit(intToHash(commit.getIndex()), parents, timestamp);
+    return new TimedVcsCommitImpl(intToHash(commit.getIndex()), parents, timestamp);
   }
 
   private static Hash intToHash(int index) {

@@ -4,6 +4,15 @@
       <keyboard-shortcut first-keystroke="meta P"/>
     </action>
 
+    <action id="$Delete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+      <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
+    </action>
+
+    <action id="EditorDelete">
+      <keyboard-shortcut first-keystroke="DELETE"/>
+    </action>
 
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
@@ -297,6 +306,10 @@
     </action>
     <action id="Rerun">
       <keyboard-shortcut first-keystroke="control F5"/>
+    </action>
+    <action id="RerunTests">
+      <keyboard-shortcut first-keystroke="control meta R"/>
+      <keyboard-shortcut first-keystroke="shift alt R"/>
     </action>
     <action id="RunClass">
       <keyboard-shortcut first-keystroke="control shift F10"/>

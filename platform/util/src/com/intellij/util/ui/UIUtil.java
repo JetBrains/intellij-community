@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.border.Border;
@@ -49,11 +53,16 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -1914,14 +1923,30 @@ public class UIUtil {
     return getBorderColor();
   }
 
+  @Nullable
+  public static StyleSheet loadStyleSheet(@Nullable URL url) {
+    if (url == null) return null;
+    try {
+      StyleSheet styleSheet = new StyleSheet();
+      styleSheet.loadRules(new InputStreamReader(url.openStream(), CharsetToolkit.UTF8), url);
+      return styleSheet;
+    }
+    catch (IOException e) {
+      LOG.warn(url + " loading failed", e);
+      return null;
+    }
+  }
+
   public static HTMLEditorKit getHTMLEditorKit() {
     Font font = getLabelFont();
-    @NonNls String family = font != null ? font.getFamily() : "Tahoma";
+    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : 11;
 
+    final String customCss = String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size);
+
     final StyleSheet style = new StyleSheet();
-    style.addStyleSheet(DEFAULT_HTML_KIT_CSS);
-    style.addRule(String.format("body, div, p { font-family: %s; font-size: %s; } p { margin-top: 0; }", family, size));
+    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+    style.addRule(customCss);
 
     return new HTMLEditorKit() {
       @Override
@@ -2636,7 +2661,10 @@ public class UIUtil {
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
-    if (component.getBackground().equals(getPanelBackground()) || component instanceof JScrollPane || component instanceof JViewport) {
+    if (component.getBackground().equals(getPanelBackground()) 
+        || component instanceof JScrollPane 
+        || component instanceof JViewport 
+        || component instanceof JLayeredPane) {
       if (component instanceof JComponent) {
         ((JComponent)component).setOpaque(false);
       }
@@ -2825,4 +2853,60 @@ public class UIUtil {
       }
     });
   }
+
+  public static void playSoundFromResource(final String resourceName) {
+    final Class callerClass = ReflectionUtil.getGrandCallerClass();
+    if (callerClass == null) return;
+    playSoundFromStream(new Factory<InputStream>() {
+      @Override
+      public InputStream create() {
+        return callerClass.getResourceAsStream(resourceName);
+      }
+    });
+  }
+
+  public static void playSoundFromStream(final Factory<InputStream> streamProducer) {
+    new Thread(new Runnable() {
+      // The wrapper thread is unnecessary, unless it blocks on the
+      // Clip finishing; see comments.
+      public void run() {
+        try {
+          Clip clip = AudioSystem.getClip();
+          InputStream stream = streamProducer.create();
+          if (!stream.markSupported()) stream = new BufferedInputStream(stream);
+          AudioInputStream inputStream = AudioSystem.getAudioInputStream(stream);
+          clip.open(inputStream);
+
+          clip.start();
+        } catch (Exception ignore) {
+          LOG.info(ignore);
+        }
+      }
+    }).start();
+  }
+
+  // Experimental!!!
+  // It seems to work under Windows
+  @Nullable
+  public static String getCurrentKeyboardLayout() {
+    InputContext instance = InputContext.getInstance();
+    Class<? extends InputContext> instanceClass = instance.getClass();
+    if (instanceClass.getSuperclass().getName().equals("sun.awt.im.InputContext")) {
+      try {
+        Field f = instanceClass.getSuperclass().getDeclaredField("inputMethodLocator");
+        f.setAccessible(true);
+        Object o = f.get(instance);
+        f = o.getClass().getDeclaredField("locale");
+        f.setAccessible(true);
+        o = f.get(o);
+        if (o instanceof Locale) {
+          return ((Locale)o).getLanguage().toUpperCase(Locale.getDefault());
+        }
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return null;
+  }
+
 }

@@ -26,6 +26,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,11 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
   @Override
   public void initFolding() {
-    CodeFoldingManager.getInstance(myProject).buildInitialFoldings(getEditor());
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        CodeFoldingManager.getInstance(myProject).buildInitialFoldings(getEditor());
+      }
+    });
   }
 
   @Override
