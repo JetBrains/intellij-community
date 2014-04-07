@@ -50,6 +50,13 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
         return delegateGraph.nodeIsVisible(integer);
       }
     }, delegateGraph.nodesCount());
+
+    myDelegateGraph.getListenerController().addListener(new LinearGraphWithHiddenNodes.UpdateListener() {
+      @Override
+      public void update(int upNodeIndex, int downNodeIndex) {
+        myIntToIntMap.update(upNodeIndex, downNodeIndex);
+      }
+    });
   }
 
   @Override
