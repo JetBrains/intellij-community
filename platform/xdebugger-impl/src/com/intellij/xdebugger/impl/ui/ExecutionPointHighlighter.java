@@ -61,6 +61,8 @@ public class ExecutionPointHighlighter {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
       @Override
       public void run() {
+        updateRequested.set(false);
+
         mySourcePosition = position;
 
         myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
@@ -78,7 +80,12 @@ public class ExecutionPointHighlighter {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
-        doHide();
+        updateRequested.set(false);
+
+        removeHighlighter();
+        myOpenFileDescriptor = null;
+        myEditor = null;
+        myGutterIconRenderer = null;
       }
     });
   }
@@ -122,20 +129,10 @@ public class ExecutionPointHighlighter {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeHighlighter();
 
-    myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
+    myEditor = myOpenFileDescriptor == null ? null : XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
     if (myEditor != null) {
       addHighlighter();
     }
-  }
-
-  private void doHide() {
-    updateRequested.set(false);
-
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    removeHighlighter();
-    myOpenFileDescriptor = null;
-    myEditor = null;
-    myGutterIconRenderer = null;
   }
 
   private void removeHighlighter() {
