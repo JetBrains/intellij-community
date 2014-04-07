@@ -232,7 +232,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       GenericInlineHandler.collectConflicts(ref, myMethod, myInliners, conflicts);
     }
 
-    final PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(myMethod);
+    final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(myMethod);
     for (PsiReturnStatement statement : returnStatements) {
       PsiExpression value = statement.getReturnValue();
       if (value != null && !(value instanceof PsiCallExpression)) {
@@ -819,7 +819,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     if (resultName != null || tailCallType == InlineUtil.TailCallType.Simple) {
-      PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(myMethodCopy);
+      PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(myMethodCopy);
       for (PsiReturnStatement returnStatement : returnStatements) {
         final PsiExpression returnValue = returnStatement.getReturnValue();
         if (returnValue == null) continue;
@@ -1464,7 +1464,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public static boolean checkBadReturns(PsiMethod method) {
-    PsiReturnStatement[] returns = RefactoringUtil.findReturnStatements(method);
+    PsiReturnStatement[] returns = PsiUtil.findReturnStatements(method);
     if (returns.length == 0) return false;
     PsiCodeBlock body = method.getBody();
     ControlFlow controlFlow;
