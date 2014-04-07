@@ -145,6 +145,16 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
     doTest(getTestName(false), new JavaWithNotSurrounder());
   }
+  
+  public void testSurroundExpressionWithElseIf() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+  }
+  
+  public void testSurroundExpressionWithElseIfElse() {
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithIfElseExpressionSurrounder());
+  }
 
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");

@@ -24,6 +24,7 @@ import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,9 +112,19 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     final Collection<VirtualFile> files = index.getFilesToUpdate(project);
-    if (files.size() + index.getNumberOfPendingInvalidations() < 20) {
-      // the change is small, let's hope its on-demand indexing will be not very noticeable and not switch to dumb mode at all
+    if (files.isEmpty()) return null;
+
+    if (files.size() + index.getNumberOfPendingInvalidations() < 20 && !DumbService.isDumb(project)) {
+      // the changed set is small, process it immediately without entering dumb mode
       // invalidation tasks are also processed and may take some time => take them into account
+      try {
+        HeavyProcessLatch.INSTANCE.processStarted();
+        reindexRefreshedFiles(new EmptyProgressIndicator(), files, project, index);
+      }
+      finally {
+        HeavyProcessLatch.INSTANCE.processFinished();
+      }
+
       return null;
     }
 
@@ -121,13 +133,20 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
         indicator.setText(IdeBundle.message("progress.indexing.updating"));
-        CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
-          @Override
-          public void consume(FileContent content) {
-            index.processRefreshedFile(project, content);
-          }
-        });
+        reindexRefreshedFiles(indicator, files, project, index);
       }
     };
+  }
+
+  private static void reindexRefreshedFiles(ProgressIndicator indicator,
+                                            Collection<VirtualFile> files,
+                                            final Project project,
+                                            final FileBasedIndexImpl index) {
+    CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
+      @Override
+      public void consume(FileContent content) {
+        index.processRefreshedFile(project, content);
+      }
+    });
   }
 }
