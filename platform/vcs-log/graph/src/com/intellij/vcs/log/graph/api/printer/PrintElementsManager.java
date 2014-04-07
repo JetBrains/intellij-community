@@ -17,13 +17,19 @@
 package com.intellij.vcs.log.graph.api.printer;
 
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface SelectedPrintElementsController {
+import java.awt.*;
+
+public interface PrintElementsManager {
 
   boolean elementIsSelected(@NotNull PrintElement printElement);
 
-  void performOverElement(@Nullable PrintElement printElement);
+  @Nullable
+  Cursor performOverElement(@Nullable PrintElement printElement); // return special Cursor for UI
+
+  int getColorId(@NotNull GraphElement element);
 
 }
