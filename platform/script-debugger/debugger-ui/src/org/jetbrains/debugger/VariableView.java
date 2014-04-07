@@ -183,14 +183,10 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
       case STRING: {
         node.setPresentation(getIcon(), new XStringValuePresentation(valueString), false);
-        if (value instanceof StringValue) {
-          StringValue stringValue = (StringValue)value;
-          if (stringValue.isTruncated() || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
-            node.setFullValueEvaluator(new MyFullValueEvaluator(stringValue.getLength()));
-          }
-        }
-        else if (valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
-          node.setFullValueEvaluator(new MyFullValueEvaluator(valueString.length()));
+        // isTruncated in terms of debugger backend, not in our terms (i.e. sometimes we cannot control truncation),
+        // so, even in case of StringValue, we check value string length
+        if ((value instanceof StringValue && ((StringValue)value).isTruncated()) || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
+          node.setFullValueEvaluator(new MyFullValueEvaluator(value));
         }
       }
       break;
@@ -447,9 +443,13 @@ public final class VariableView extends XNamedValue implements VariableContext {
     return context.getDebugProcess().propertyNamesToString(list, false);
   }
 
-  private class MyFullValueEvaluator extends XFullValueEvaluator {
-    public MyFullValueEvaluator(int actualLength) {
-      super(actualLength);
+  private static class MyFullValueEvaluator extends XFullValueEvaluator {
+    private final Value value;
+
+    public MyFullValueEvaluator(@NotNull Value value) {
+      super(value instanceof StringValue ? ((StringValue)value).getLength() : value.getValueString().length());
+
+      this.value = value;
     }
 
     @Override
