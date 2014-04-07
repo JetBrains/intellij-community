@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.newgraph.gpaph.fragments;
+package com.intellij.vcs.log.graph.impl.visible;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.newgraph.SomeGraph;
-import com.intellij.vcs.log.newgraph.gpaph.Edge;
-import com.intellij.vcs.log.newgraph.gpaph.GraphElement;
-import com.intellij.vcs.log.newgraph.gpaph.Node;
-import com.intellij.vcs.log.newgraph.gpaph.impl.CollapsedMutableGraph;
+import com.intellij.vcs.log.graph.api.LinearGraph;
+import com.intellij.vcs.log.graph.api.elements.GraphEdge;
+import com.intellij.vcs.log.graph.api.elements.GraphElement;
+import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,60 +35,53 @@ public class FragmentGenerator {
   private static final int MAX_SEARCH_SIZE = 10;
 
   @NotNull
-  private final CollapsedMutableGraph myMutableGraph;
+  private final LinearGraph myLinearGraph;
 
   @NotNull
-  private final Set<Integer> myBranchNodeIndexes;
+  private final Condition<Integer> myThisNodeCantBeInMiddle;
 
   private final Function<Integer, List<Integer>> upNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      return myMutableGraph.getInternalGraph().getUpNodes(integer);
+      return myLinearGraph.getUpNodes(integer);
     }
   };
 
   private final Function<Integer, List<Integer>> downNodesFun = new Function<Integer, List<Integer>>() {
     @Override
     public List<Integer> fun(Integer integer) {
-      return myMutableGraph.getInternalGraph().getDownNodes(integer);
+      return myLinearGraph.getDownNodes(integer);
     }
   };
 
-  private final Function<Integer, Boolean> thisNodeCantBeInMiddle = new Function<Integer, Boolean>() {
-    @Override
-    public Boolean fun(Integer integer) {
-      return myBranchNodeIndexes.contains(integer);
-    }
-  };
-
-
-  public FragmentGenerator(@NotNull CollapsedMutableGraph mutableGraph, @NotNull Set<Integer> branchNodeIndexes) {
-    myMutableGraph = mutableGraph;
-    myBranchNodeIndexes = branchNodeIndexes;
+  public FragmentGenerator(@NotNull LinearGraph linearGraph, @NotNull Condition<Integer> thisNodeCantBeInMiddle) {
+    myLinearGraph = linearGraph;
+    myThisNodeCantBeInMiddle = thisNodeCantBeInMiddle;
   }
 
   @Nullable
   public GraphFragment getRelativeFragment(@NotNull GraphElement element) {
-    Node upNode;
-    int downVisibleIndex;
-    if (element instanceof Node) {
-      upNode = (Node) element;
-      downVisibleIndex = upNode.getVisibleNodeIndex();
+    int upNodeIndex;
+    int downNodeIndex;
+    if (element instanceof GraphNode) {
+      upNodeIndex = ((GraphNode)element).getNodeIndex();
+      downNodeIndex = upNodeIndex;
     } else {
-      Edge edge = (Edge)element;
-      upNode = myMutableGraph.getNode(edge.getUpNodeVisibleIndex());
-      downVisibleIndex = edge.getDownNodeVisibleIndex();
+      GraphEdge graphEdge = ((GraphEdge)element);
+      upNodeIndex = graphEdge.getUpNodeIndex();
+      downNodeIndex = graphEdge.getDownNodeIndex();
     }
 
     for (int i = 0; i < MAX_SEARCH_SIZE; i++) {
-      GraphFragment graphFragment = getDownFragment(upNode.getVisibleNodeIndex());
-      if (graphFragment != null && graphFragment.downVisibleNodeIndex >= downVisibleIndex)
+      GraphFragment graphFragment = getDownFragment(upNodeIndex);
+      if (graphFragment != null && graphFragment.downNodeIndex >= downNodeIndex)
         return graphFragment;
 
-      if (upNode.getUpEdges().size() != 1) {
+      List<Integer> upNodes = myLinearGraph.getUpNodes(upNodeIndex);
+      if (upNodes.size() != 1) {
         break;
       }
-      upNode = myMutableGraph.getNode(upNode.getUpEdges().get(0).getUpNodeVisibleIndex());
+      upNodeIndex = upNodes.get(0);
     }
 
     return null;
@@ -96,20 +89,14 @@ public class FragmentGenerator {
 
   @Nullable
   public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(upperVisibleNodeIndex),
-                                                  downNodesFun,
-                                                  upNodesFun,
-                                                  thisNodeCantBeInMiddle);
-    return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.first), myMutableGraph.toVisibleIndex(fragment.second));
+    Pair<Integer, Integer> fragment = getFragment(upperVisibleNodeIndex, downNodesFun, upNodesFun, myThisNodeCantBeInMiddle);
+    return fragment == null ? null : new GraphFragment(fragment.first, fragment.second);
   }
 
   @Nullable
   public GraphFragment getUpFragment(int lowerNodeIndex) {
-    Pair<Integer, Integer> fragment = getFragment(myMutableGraph.getIndexInPermanentGraph(lowerNodeIndex),
-                                                  upNodesFun,
-                                                  downNodesFun,
-                                                  thisNodeCantBeInMiddle);
-    return fragment == null ? null : new GraphFragment(myMutableGraph.toVisibleIndex(fragment.second), myMutableGraph.toVisibleIndex(fragment.first));
+    Pair<Integer, Integer> fragment = getFragment(lowerNodeIndex, upNodesFun, downNodesFun, myThisNodeCantBeInMiddle);
+    return fragment == null ? null : new GraphFragment(fragment.second, fragment.first);
   }
 
   @Nullable
@@ -135,24 +122,24 @@ public class FragmentGenerator {
 
     GraphFragment shortFragment;
 
-    int maxDown = startFragment.downVisibleNodeIndex;
-    while ((shortFragment = getDownFragment(maxDown)) != null && !myBranchNodeIndexes.contains(myMutableGraph.getIndexInPermanentGraph(maxDown))) {
-      maxDown = shortFragment.downVisibleNodeIndex;
-      if (maxDown - startFragment.downVisibleNodeIndex > bound)
+    int maxDown = startFragment.downNodeIndex;
+    while ((shortFragment = getDownFragment(maxDown)) != null && !myThisNodeCantBeInMiddle.value(maxDown)) {
+      maxDown = shortFragment.downNodeIndex;
+      if (maxDown - startFragment.downNodeIndex > bound)
         break;
     }
 
-    int maxUp = startFragment.upVisibleNodeIndex;
-    while ((shortFragment = getUpFragment(maxUp)) != null && !myBranchNodeIndexes.contains(myMutableGraph.getIndexInPermanentGraph(maxUp))) {
-      maxUp = shortFragment.upVisibleNodeIndex;
-      if (startFragment.upVisibleNodeIndex - maxUp > bound)
+    int maxUp = startFragment.upNodeIndex;
+    while ((shortFragment = getUpFragment(maxUp)) != null && !myThisNodeCantBeInMiddle.value(maxUp)) {
+      maxUp = shortFragment.upNodeIndex;
+      if (startFragment.upNodeIndex - maxUp > bound)
         break;
     }
 
-    if (maxUp != startFragment.upVisibleNodeIndex || maxDown != startFragment.downVisibleNodeIndex) {
+    if (maxUp != startFragment.upNodeIndex || maxDown != startFragment.downNodeIndex) {
       return new GraphFragment(maxUp, maxDown);
     } else {
-      if (myMutableGraph.getNode(startFragment.upVisibleNodeIndex).getDownEdges().size() != 1)
+      if (myLinearGraph.getDownNodes(startFragment.upNodeIndex).size() != 1)
         return startFragment;
     }
     return null;
@@ -162,7 +149,7 @@ public class FragmentGenerator {
   private static Pair<Integer, Integer> getFragment(int startNode,
                                                     Function<Integer, List<Integer>> getNextNodes,
                                                     Function<Integer, List<Integer>> getPrevNodes,
-                                                    Function<Integer, Boolean> thisNodeCantBeInMiddle) {
+                                                    Condition<Integer> thisNodeCantBeInMiddle) {
     Set<Integer> blackNodes = new HashSet<Integer>();
     blackNodes.add(startNode);
 
@@ -170,7 +157,7 @@ public class FragmentGenerator {
     grayNodes.addAll(getNextNodes.fun(startNode));
 
     int endNode = -1;
-    while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE && !grayNodes.contains(SomeGraph.NOT_LOAD_COMMIT)) {
+    while (blackNodes.size() < SHORT_FRAGMENT_MAX_SIZE && !grayNodes.contains(LinearGraph.NOT_LOAD_COMMIT)) {
       int nextBlackNode = -1;
       for (int grayNode : grayNodes) {
         if (blackNodes.containsAll(getPrevNodes.fun(grayNode))) {
@@ -188,7 +175,7 @@ public class FragmentGenerator {
       }
 
       List<Integer> nextGrayNodes = getNextNodes.fun(nextBlackNode);
-      if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.fun(nextBlackNode))
+      if (nextGrayNodes.isEmpty() || thisNodeCantBeInMiddle.value(nextBlackNode))
         return null;
 
       blackNodes.add(nextBlackNode);
@@ -200,5 +187,15 @@ public class FragmentGenerator {
       return Pair.create(startNode, endNode);
     else
       return null;
+  }
+
+  public static class GraphFragment {
+    public final int upNodeIndex;
+    public final int downNodeIndex;
+
+    public GraphFragment(int upNodeIndex, int downNodeIndex) {
+      this.upNodeIndex = upNodeIndex;
+      this.downNodeIndex = downNodeIndex;
+    }
   }
 }
