@@ -31,7 +31,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
@@ -48,15 +47,12 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     }) || !PsiUtil.isLanguageLevel8OrHigher(aClass)) {
       return true;
     }
-    final ArrayList<PsiFunctionalExpression> functionalExpressions = new ArrayList<>();
-    collectFunctionalExpressions(aClass, functionalExpressions, queryParameters.getEffectiveSearchScope());
-    for (PsiFunctionalExpression functionalExpression : functionalExpressions) {
-      if (!consumer.process(functionalExpression)) return false;
-    }
-    return true;
+    return collectFunctionalExpressions(aClass, queryParameters.getEffectiveSearchScope(), consumer);
   }
 
-  public static void collectFunctionalExpressions(final PsiClass aClass, final Collection<PsiFunctionalExpression> result, final SearchScope searchScope) {
+  public static boolean collectFunctionalExpressions(final PsiClass aClass,
+                                                     final SearchScope searchScope,
+                                                     final Processor<PsiFunctionalExpression> consumer) {
     final SearchScope classScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
@@ -82,20 +78,23 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
           if (candidateElement instanceof PsiCallExpression) {
             final PsiExpressionList argumentList = ((PsiCallExpression)candidateElement).getArgumentList();
             if (argumentList != null) {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                public void run() {
+              final Boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+                @Override
+                public Boolean compute() {
                   final PsiExpression[] args = argumentList.getExpressions();
                   for (PsiExpression arg : args) {
                     if (arg instanceof PsiFunctionalExpression) {
                       final PsiFunctionalExpression functionalExpression = (PsiFunctionalExpression)arg;
                       final PsiType functionalType = functionalExpression.getFunctionalInterfaceType();
                       if (PsiUtil.resolveClassInType(functionalType) == aClass) {
-                        result.add(functionalExpression);
+                        if (!consumer.process(functionalExpression)) return false;
                       }
                     }
                   }
+                  return true;
                 }
               });
+              if (!accepted) return false;
             }
           }
         }
@@ -111,7 +110,7 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
           if (gParent instanceof PsiVariable) {
             final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiVariable)gParent).getInitializer());
             if (initializer instanceof PsiFunctionalExpression) {
-              result.add((PsiFunctionalExpression)initializer);
+              if (!consumer.process((PsiFunctionalExpression)initializer)) return false;
             }
             for (PsiReference varRef : ReferencesSearch.search(parent, scope)) {
               final PsiElement varElement = varRef.getElement();
@@ -121,7 +120,7 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
                     ((PsiAssignmentExpression)varElementParent).getLExpression() == varElement) {
                   final PsiExpression rExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)varElementParent).getRExpression());
                   if (rExpression instanceof PsiFunctionalExpression) {
-                    result.add((PsiFunctionalExpression)rExpression);
+                    if (!consumer.process((PsiFunctionalExpression)rExpression)) return false;
                   }
                 }
               }
@@ -137,12 +136,13 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
             for (PsiReturnStatement returnStatement : returnStatements) {
               final PsiExpression returnValue = returnStatement.getReturnValue();
               if (returnValue instanceof PsiFunctionalExpression) {
-                result.add((PsiFunctionalExpression)returnValue);
+                if (!consumer.process((PsiFunctionalExpression)returnValue)) return false;
               }
             }
           }
         }
       }
     }
+    return true;
   }
 }
