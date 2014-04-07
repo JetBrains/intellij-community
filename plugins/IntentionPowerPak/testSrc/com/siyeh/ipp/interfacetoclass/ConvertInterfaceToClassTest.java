@@ -34,6 +34,10 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
     }
   }
 
+  public void testFunctionalInterface() throws Exception {
+    assertIntentionNotAvailable();
+  }
+
   @Override
   protected String getRelativePath() {
     return "interfaceToClass";
