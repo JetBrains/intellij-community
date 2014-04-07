@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface PrintedLinearGraph extends LinearGraphWithElementInfo {
 
-  int getLayoutIndex(int nodeIndex);
+  @NotNull
+  GraphLayout getGraphLayout();
 
 }

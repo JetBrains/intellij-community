@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class GraphWithHiddenNodesAsGraphWithCommitInfo<CommitId> extends GraphWithHiddenNodesAsPrintedGraph implements LinearGraphWithCommitInfo<CommitId> {
 
   @NotNull
-  private final PermanentCommitsInfo<CommitId> myPermanentCommitsInfo;
+  protected final PermanentCommitsInfo<CommitId> myPermanentCommitsInfo;
 
   public GraphWithHiddenNodesAsGraphWithCommitInfo(@NotNull LinearGraphWithHiddenNodes delegateGraph,
                                                    @NotNull GraphLayout permanentGraphLayout,

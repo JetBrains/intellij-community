@@ -32,13 +32,13 @@ import java.util.List;
 public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
 
   @NotNull
-  private final GraphLayout myPermanentGraphLayout;
+  protected final GraphLayout myPermanentGraphLayout;
 
   @NotNull
-  private final LinearGraphWithHiddenNodes myDelegateGraph;
+  protected final LinearGraphWithHiddenNodes myDelegateGraph;
 
   @NotNull
-  private final UpdatableIntToIntMap myIntToIntMap;
+  protected final UpdatableIntToIntMap myIntToIntMap;
 
   public GraphWithHiddenNodesAsPrintedGraph(@NotNull final LinearGraphWithHiddenNodes delegateGraph,
                                             @NotNull GraphLayout permanentGraphLayout) {
@@ -59,9 +59,27 @@ public class GraphWithHiddenNodesAsPrintedGraph implements PrintedLinearGraph {
     });
   }
 
+  @NotNull
   @Override
-  public int getLayoutIndex(int nodeIndex) {
-    return myPermanentGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
+  public GraphLayout getGraphLayout() {
+    return new GraphLayout() {
+      @Override
+      public int getLayoutIndex(int nodeIndex) {
+        return myPermanentGraphLayout.getLayoutIndex(getIndexInPermanentGraph(nodeIndex));
+      }
+
+      @Override
+      public int getOneOfHeadNodeIndex(int nodeIndex) {
+        int indexInPermanentGraph = myPermanentGraphLayout.getOneOfHeadNodeIndex(getIndexInPermanentGraph(nodeIndex));
+        return myIntToIntMap.getShortIndex(indexInPermanentGraph);
+      }
+
+      @Override
+      public int getHeadNodeIndex(int layoutIndex) {
+        int indexInPermanentGraph = myPermanentGraphLayout.getOneOfHeadNodeIndex(layoutIndex);
+        return myIntToIntMap.getShortIndex(indexInPermanentGraph);
+      }
+    };
   }
 
   @NotNull
