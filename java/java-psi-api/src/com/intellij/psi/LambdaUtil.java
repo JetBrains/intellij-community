@@ -200,9 +200,6 @@ public class LambdaUtil {
 
   @Nullable
   public static List<MethodSignature> findFunctionCandidates(PsiClass psiClass) {
-    if (psiClass instanceof PsiAnonymousClass) {
-      psiClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)psiClass).getBaseClassType());
-    }
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       final List<MethodSignature> methods = new ArrayList<MethodSignature>();
       final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();
