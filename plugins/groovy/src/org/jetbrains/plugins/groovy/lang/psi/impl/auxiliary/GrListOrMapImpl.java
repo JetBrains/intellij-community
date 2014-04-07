@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleTypeWithLazyComponents;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -213,8 +213,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     }
 
 
-    private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
+    private static PsiClassType getTupleType(final GrExpression[] initializers, GrListOrMap listOrMap) {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
       GlobalSearchScope scope = listOrMap.getResolveScope();
 
       if (initializers.length == 0) {
@@ -231,11 +231,25 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         }
       }
 
-      PsiType[] result = PsiType.createArray(initializers.length);
-      for (int i = 0; i < result.length; i++) {
-        result[i] = initializers[i].getType();
-      }
-      return new GrTupleType(result, facade, scope);
+      return new GrTupleTypeWithLazyComponents(scope, facade) {
+        @Override
+        protected PsiType[] inferComponents() {
+          return ContainerUtil.map(initializers, new Function<GrExpression, PsiType>() {
+            @Override
+            public PsiType fun(GrExpression expression) {
+              return expression.getType();
+            }
+          }, new PsiType[initializers.length]);
+        }
+
+        @Override
+        public boolean isValid() {
+          for (GrExpression initializer : initializers) {
+            if (!initializer.isValid()) return false;
+          }
+          return true;
+        }
+      };
     }
 
   }

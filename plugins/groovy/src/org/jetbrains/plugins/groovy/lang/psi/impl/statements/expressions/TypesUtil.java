@@ -519,8 +519,7 @@ public class TypesUtil {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()),
-                             tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrTupleTypeImpl(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);
@@ -842,15 +841,24 @@ public class TypesUtil {
     return null;
   }
 
-  public static PsiType getTupleByAnnotationArrayInitializer(GrAnnotationArrayInitializer value) {
-    final GrAnnotationMemberValue[] initializers = value.getInitializers();
-    PsiType[] types = ContainerUtil.map(initializers, new Function<GrAnnotationMemberValue, PsiType>() {
+  public static PsiType getTupleByAnnotationArrayInitializer(final GrAnnotationArrayInitializer value) {
+    return new GrTupleTypeWithLazyComponents(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
       @Override
-      public PsiType fun(GrAnnotationMemberValue value) {
-        return inferAnnotationMemberValueType(value);
+      protected PsiType[] inferComponents() {
+        final GrAnnotationMemberValue[] initializers = value.getInitializers();
+        return ContainerUtil.map(initializers, new Function<GrAnnotationMemberValue, PsiType>() {
+          @Override
+          public PsiType fun(GrAnnotationMemberValue value) {
+            return inferAnnotationMemberValueType(value);
+          }
+        }, PsiType.createArray(initializers.length));
       }
-    }, PsiType.createArray(initializers.length));
-    return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
+
+      @Override
+      public boolean isValid() {
+        return value.isValid();
+      }
+    };
   }
 
   public static boolean resolvesTo(PsiType type, String fqn) {
