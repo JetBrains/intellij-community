@@ -33,7 +33,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -299,9 +302,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
 
     final String qname = psiType.getCanonicalText();
-    if (qname == null) {
-      return true;
-    }
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
 

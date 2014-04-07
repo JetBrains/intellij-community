@@ -47,11 +47,15 @@ public class FileAttribute {
   }
 
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
+    this(version, fixedSize, id);
+    boolean added = ourRegisteredIds.add(id);
+    assert added : "Attribute id='" + id+ "' is not unique";
+  }
+
+  private FileAttribute(int version, boolean fixedSize,@NotNull String id) {
     myId = id;
     myVersion = version;
     myFixedSize = fixedSize;
-    boolean added = ourRegisteredIds.add(id);
-    assert added : "Attribute id='" + id+ "' is not unique";
   }
 
   @Nullable
@@ -121,5 +125,10 @@ public class FileAttribute {
 
   public boolean isFixedSize() {
     return myFixedSize;
+  }
+
+  @NotNull
+  public FileAttribute newVersion(int newVersion) {
+    return new FileAttribute(newVersion, myFixedSize, myId);
   }
 }

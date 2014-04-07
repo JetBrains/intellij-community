@@ -19,15 +19,14 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -36,7 +35,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Consumer;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -56,12 +58,10 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       startupManager.registerPreStartupActivity(new Runnable() {
         @Override
         public void run() {
-          final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
           final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
 
           startupManager.registerCacheUpdater(unindexedFilesUpdater);
           rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);
-          rootManager.registerRefreshUpdater(changedFilesUpdater);
           myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
           projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
             private boolean removed = false;
@@ -69,7 +69,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
             public void projectClosing(Project project) {
               if (!removed) {
                 removed = true;
-                rootManager.unregisterRefreshUpdater(changedFilesUpdater);
                 rootManager.unregisterRootsChangeUpdater(unindexedFilesUpdater);
                 myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
               }
@@ -109,30 +108,45 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     myIndex.removeIndexableSet(this);
   }
 
-  private class RefreshCacheUpdater implements CacheUpdater {
-    @Override
-    public int getNumberOfPendingUpdateJobs() {
-      return myIndex.getNumberOfPendingInvalidations();
+  @Nullable
+  public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
+    final FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    final Collection<VirtualFile> files = index.getFilesToUpdate(project);
+    if (files.isEmpty()) return null;
+
+    if (files.size() + index.getNumberOfPendingInvalidations() < 20 && !DumbService.isDumb(project)) {
+      // the changed set is small, process it immediately without entering dumb mode
+      // invalidation tasks are also processed and may take some time => take them into account
+      try {
+        HeavyProcessLatch.INSTANCE.processStarted();
+        reindexRefreshedFiles(new EmptyProgressIndicator(), files, project, index);
+      }
+      finally {
+        HeavyProcessLatch.INSTANCE.processFinished();
+      }
+
+      return null;
     }
 
-    @NotNull
-    @Override
-    public VirtualFile[] queryNeededFiles(@NotNull ProgressIndicator indicator) {
-      Collection<VirtualFile> files = myIndex.getFilesToUpdate(myProject);
-      return VfsUtilCore.toVirtualFileArray(files);
-    }
+    return new DumbModeTask() {
+      @Override
+      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(false);
+        indicator.setText(IdeBundle.message("progress.indexing.updating"));
+        reindexRefreshedFiles(indicator, files, project, index);
+      }
+    };
+  }
 
-    @Override
-    public void processFile(@NotNull FileContent fileContent) {
-      myIndex.processRefreshedFile(myProject, fileContent);
-    }
-
-    @Override
-    public void updatingDone() {
-    }
-
-    @Override
-    public void canceled() {
-    }
+  private static void reindexRefreshedFiles(ProgressIndicator indicator,
+                                            Collection<VirtualFile> files,
+                                            final Project project,
+                                            final FileBasedIndexImpl index) {
+    CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
+      @Override
+      public void consume(FileContent content) {
+        index.processRefreshedFile(project, content);
+      }
+    });
   }
 }

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use {@link com.intellij.openapi.project.DumbModeTask}
+ * to be removed in IDEA 15
  */
 public interface CacheUpdater {
   int getNumberOfPendingUpdateJobs();

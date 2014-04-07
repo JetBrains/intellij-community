@@ -17,6 +17,9 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -30,6 +33,9 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * @see java.util.BitSet
  */
 public class ConcurrentBitSet {
+  public ConcurrentBitSet() {
+  }
+
   /**
    * An array of 32 longword vectors.
    * Vector at index "i" has length of (1 << i) long words.
@@ -97,9 +103,10 @@ public class ConcurrentBitSet {
    * Sets the bit at the specified index to {@code true}.
    *
    * @param bitIndex a bit index
+   * @return previous value
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
-  public void set(int bitIndex) {
+  public boolean set(int bitIndex) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
@@ -109,11 +116,14 @@ public class ConcurrentBitSet {
     int wordIndexInArray = wordIndexInArray(bitIndex);
     long word;
     long newWord;
+    boolean previousBit;
     do {
       word = array.get(wordIndexInArray);
+      previousBit = (word & (1L << bitIndex)) != 0;
       newWord = word | (1L << bitIndex);
     }
     while (!array.compareAndSet(wordIndexInArray, word, newWord));
+    return previousBit;
   }
 
   /**
@@ -137,8 +147,9 @@ public class ConcurrentBitSet {
    *
    * @param bitIndex the index of the bit to be cleared
    * @throws IndexOutOfBoundsException if the specified index is negative
+   * @return previous value
    */
-  public void clear(int bitIndex) {
+  public boolean clear(int bitIndex) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
@@ -148,11 +159,14 @@ public class ConcurrentBitSet {
     int wordIndexInArray = wordIndexInArray(bitIndex);
     long word;
     long newWord;
+    boolean previousBit;
     do {
       word = array.get(wordIndexInArray);
+      previousBit = (word & (1L << bitIndex)) != 0;
       newWord = word & ~ (1L << bitIndex);
     }
     while (!array.compareAndSet(wordIndexInArray, word, newWord));
+    return previousBit;
   }
 
   @NotNull
@@ -408,4 +422,60 @@ public class ConcurrentBitSet {
     b.append('}');
     return b.toString();
   }
+
+  @NotNull
+  public long[] toLongArray() {
+    int bits = size();
+    long[] result = new long[bits/BITS_PER_WORD];
+    int i = 0;
+    for (int b=0; b<bits;b += BITS_PER_WORD){
+      AtomicLongArray array = arrays.get(arrayIndex(b));
+      long word = array == null ? 0 : array.get(wordIndexInArray(b));
+      result[i++] = word;
+    }
+    return result;
+  }
+
+  public void writeTo(@NotNull File file) throws IOException {
+    RandomAccessFile bitSetStorage = new RandomAccessFile(file,"rw");
+    try {
+      long[] words = toLongArray();
+      for (long word : words) {
+        bitSetStorage.writeLong(word);
+      }
+    }
+    finally {
+      bitSetStorage.close();
+    }
+  }
+
+  @NotNull
+  public static ConcurrentBitSet readFrom(@NotNull File file) throws IOException {
+    if (!file.exists()) {
+      return new ConcurrentBitSet();
+    }
+    RandomAccessFile bitSetStorage = new RandomAccessFile(file,"r");
+    try {
+      long length = file.length();
+      long[] words = new long[(int)(length/8)];
+      for (int i=0; i<words.length;i++) {
+        words[i] = bitSetStorage.readLong();
+      }
+      return new ConcurrentBitSet(words);
+    }
+    finally {
+      bitSetStorage.close();
+    }
+  }
+
+  private ConcurrentBitSet(@NotNull long[] words) {
+    for (int i = 0; i < words.length; i++) {
+      long word = words[i];
+      for (int b=0;b<BITS_PER_WORD;b++) {
+        boolean bit = (word & (1L << b)) != 0;
+        set(i * BITS_PER_WORD + b, bit);
+      }
+    }
+  }
+
 }

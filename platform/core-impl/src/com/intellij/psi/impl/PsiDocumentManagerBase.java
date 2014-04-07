@@ -128,7 +128,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
-  public static void cachePsi(@NotNull Document document, @NotNull PsiFile file) {
+  public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
     document.putUserData(HARD_REF_TO_PSI, file);
   }
 

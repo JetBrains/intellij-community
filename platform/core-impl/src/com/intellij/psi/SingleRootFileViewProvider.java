@@ -105,10 +105,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     FileType fileType = file.getFileType();
-    // Do not load content
-    if (fileType == UnknownFileType.INSTANCE) {
-      fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
-    }
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 

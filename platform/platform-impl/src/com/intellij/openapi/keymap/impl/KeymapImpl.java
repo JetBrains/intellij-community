@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,15 +117,19 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getPresentableName() {
     return getName();
   }
 
-  public void setName(String name) {
+  @Override
+  public void setName(@NotNull String name) {
     myName = name;
   }
 
@@ -184,10 +188,12 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return hashCode;
   }
 
+  @Override
   public Keymap getParent() {
     return myParent;
   }
 
+  @Override
   public boolean canModify() {
     return myCanModify;
   }
@@ -200,6 +206,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return myParent.getShortcuts(actionId);
   }
 
+  @Override
   public void addShortcut(String actionId, Shortcut shortcut) {
     addShortcutSilently(actionId, shortcut, true);
     fireShortcutChanged(actionId);
@@ -226,6 +233,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     myMouseShortcut2ListOfIds = null;
   }
 
+  @Override
   public void removeAllActionShortcuts(String actionId) {
     Shortcut[] allShortcuts = getShortcuts(actionId);
     for (Shortcut shortcut : allShortcuts) {
@@ -233,6 +241,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     }
   }
 
+  @Override
   public void removeShortcut(String actionId, Shortcut shortcut) {
     LinkedHashSet<Shortcut> list = myActionId2ListOfShortcuts.get(actionId);
     if (list != null) {
@@ -391,6 +400,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
   }
 
+  @Override
   public String[] getActionIds(KeyStroke firstKeyStroke) {
     // first, get keystrokes from own map
     List<String> list = getKeystroke2ListOfIds().get(firstKeyStroke);
@@ -418,6 +428,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return sortInOrderOfRegistration(ArrayUtil.toStringArray(list));
   }
 
+  @Override
   public String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke) {
     String[] ids = getActionIds(firstKeyStroke);
     ArrayList<String> actualBindings = new ArrayList<String>();
@@ -437,6 +448,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return ArrayUtil.toStringArray(actualBindings);
   }
 
+  @Override
   public String[] getActionIds(final Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
@@ -460,6 +472,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
 
+  @Override
   public String[] getActionIds(MouseShortcut shortcut) {
     // first, get shortcuts from own map
     List<String> list = getMouseShortcut2ListOfIds().get(shortcut);
@@ -497,6 +510,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return getKeymapManager().getBoundActions().contains(actionId);
   }
 
+  @Override
   public Shortcut[] getShortcuts(String actionId) {
     LinkedHashSet<Shortcut> shortcuts = myActionId2ListOfShortcuts.get(actionId);
 
@@ -815,6 +829,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     myActionId2ListOfShortcuts.clear();
   }
 
+  @Override
   public String[] getActionIds() {
     ArrayList<String> ids = new ArrayList<String>();
     if (myParent != null) {
@@ -835,6 +850,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
   }
 
 
+  @Override
   public HashMap<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut) {
     HashMap<String, ArrayList<KeyboardShortcut>> result = new HashMap<String, ArrayList<KeyboardShortcut>>();
 
@@ -887,10 +903,12 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
     return result;
   }
 
+  @Override
   public void addShortcutChangeListener(Listener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeShortcutChangeListener(Listener listener) {
     myListeners.remove(listener);
   }
@@ -916,6 +934,7 @@ public class KeymapImpl implements Keymap, ExternalizableScheme {
 
   }
 
+  @Override
   @NotNull
   public ExternalInfo getExternalInfo() {
     return myExternalInfo;

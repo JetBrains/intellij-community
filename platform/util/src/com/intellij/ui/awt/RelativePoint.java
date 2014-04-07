@@ -83,8 +83,11 @@ public class RelativePoint {
   }
 
   public Point getPoint(@Nullable Component aTargetComponent) {
-//todo: remove that after implementation of DND to html design time controls
-    if (aTargetComponent == null || aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null) return new Point();
+    //todo: remove that after implementation of DND to html design time controls
+    boolean window = aTargetComponent instanceof Window;
+    if (aTargetComponent == null || !window && (aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null)) {
+      return new Point();
+    }
 
     return SwingUtilities.convertPoint(getComponent(), getPoint(), aTargetComponent);
   }

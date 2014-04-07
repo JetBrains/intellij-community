@@ -287,7 +287,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       long time = end - start;
       if (notificationInfo != null && time > 5000) { // show notification only if process took more than 5 secs
         final JFrame frame = WindowManager.getInstance().getFrame(task.getProject());
-        if (!frame.hasFocus()) {
+        if (frame != null && !frame.hasFocus()) {
           systemNotify(notificationInfo);
         }
       }

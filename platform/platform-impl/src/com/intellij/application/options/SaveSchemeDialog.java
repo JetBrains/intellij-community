@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class SaveSchemeDialog extends DialogWrapper {
     return mySchemeName.getText();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints();
@@ -65,8 +66,9 @@ public class SaveSchemeDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected void doOKAction() {
-    if (getSchemeName().trim().length()==0) {
+    if (getSchemeName().trim().isEmpty()) {
       Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.scheme.must.have.a.name"),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;
@@ -89,10 +91,12 @@ public class SaveSchemeDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return mySchemeName;
   }

@@ -1092,4 +1092,25 @@ public final class PsiUtil extends PsiUtilCore {
     }
     return false;
   }
+
+  public static PsiReturnStatement[] findReturnStatements(PsiMethod method) {
+    ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
+    PsiCodeBlock body = method.getBody();
+    if (body != null) {
+      addReturnStatements(vector, body);
+    }
+    return vector.toArray(new PsiReturnStatement[vector.size()]);
+  }
+
+  private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {
+    if (element instanceof PsiReturnStatement) {
+      vector.add((PsiReturnStatement)element);
+    }
+    else if (!(element instanceof PsiClass)) {
+      PsiElement[] children = element.getChildren();
+      for (PsiElement child : children) {
+        addReturnStatements(vector, child);
+      }
+    }
+  }
 }

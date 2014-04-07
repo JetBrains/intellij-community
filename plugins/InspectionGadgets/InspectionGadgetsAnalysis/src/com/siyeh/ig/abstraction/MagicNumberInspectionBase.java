@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,6 +89,10 @@ public class MagicNumberInspectionBase extends BaseInspection {
         }
       }
       if (ignoreInitialCapacity && isInitialCapacity(expression)) {
+        return;
+      }
+      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+      if (field != null && PsiUtil.isCompileTimeConstant(field)) {
         return;
       }
       final PsiElement parent = expression.getParent();

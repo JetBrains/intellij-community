@@ -109,6 +109,10 @@ public final class LoadTextUtil {
   }
 
   private static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+    return detectCharset(virtualFile, content, virtualFile.getFileType());
+  }
+
+  public static Charset detectCharset(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
     Charset charset = null;
 
     Trinity<Charset,CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, content.length);
@@ -116,7 +120,6 @@ public final class LoadTextUtil {
       charset = guessed.first;
     }
     else {
-      FileType fileType = virtualFile.getFileType();
       String charsetName = fileType.getCharset(virtualFile, content);
 
       if (charsetName == null) {
@@ -131,7 +134,7 @@ public final class LoadTextUtil {
     }
 
     charset = charset == null ? EncodingRegistry.getInstance().getDefaultCharset() : charset;
-    if (EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
+    if (fileType.getName().equals("Properties") && EncodingRegistry.getInstance().isNative2AsciiForPropertiesFiles()) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
@@ -145,7 +148,11 @@ public final class LoadTextUtil {
 
   @NotNull
   private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
-    Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content);
+    return doDetectCharsetAndSetBOM(virtualFile, content, saveBOM, virtualFile.getFileType());
+  }
+  @NotNull
+  private static Pair<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM, @NotNull FileType fileType) {
+    Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content,fileType);
     Pair<Charset,byte[]> bomAndCharset = getBOMAndCharset(content, charset);
     final byte[] bom = bomAndCharset.second;
     if (saveBOM && bom != null && bom.length != 0) {
@@ -383,7 +390,14 @@ public final class LoadTextUtil {
                                                          @NotNull VirtualFile virtualFile,
                                                          boolean saveDetectedSeparators,
                                                          boolean saveBOM) {
-    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM);
+    return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, virtualFile.getFileType());
+  }
+  @NotNull
+  public static CharSequence getTextByBinaryPresentation(@NotNull byte[] bytes,
+                                                         @NotNull VirtualFile virtualFile,
+                                                         boolean saveDetectedSeparators,
+                                                         boolean saveBOM, @NotNull FileType fileType) {
+    Pair<Charset, byte[]> pair = doDetectCharsetAndSetBOM(virtualFile, bytes, saveBOM, fileType);
     Charset charset = pair.getFirst();
     byte[] bom = pair.getSecond();
     int offset = bom == null ? 0 : bom.length;

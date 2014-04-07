@@ -15,24 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
 * Created by Max Medvedev on 27/03/14
 */
-public class PackageSkippingProcessor extends DelegatingScopeProcessor {
+public class PackageSkippingProcessor extends GrDelegatingScopeProcessorWithHints {
   public PackageSkippingProcessor(PsiScopeProcessor processor) {
-    super(processor);
-  }
-
-  @Override
-  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-    if (element instanceof PsiPackage) return true;
-    return super.execute(element, state);
+    super(processor, null, ResolverProcessor.RESOLVE_KINDS_CLASS);
   }
 }

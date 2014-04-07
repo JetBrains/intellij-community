@@ -33,7 +33,8 @@ import static com.intellij.codeInsight.template.postfix.completion.PostfixTempla
 class PostfixTemplatesCompletionProvider extends CompletionProvider<CompletionParameters> {
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
-    if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates()) {
+    if (!isCompletionEnabled(parameters) || LiveTemplateCompletionContributor.shouldShowAllTemplates() ||
+        parameters.getEditor().getCaretModel().getCaretCount() != 1) {
       /**
        * disabled or covered with {@link com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor}
        */

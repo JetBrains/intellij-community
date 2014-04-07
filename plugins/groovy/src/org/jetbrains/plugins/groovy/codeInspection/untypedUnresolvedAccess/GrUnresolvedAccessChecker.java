@@ -27,7 +27,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,6 +71,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
@@ -308,7 +309,7 @@ public class GrUnresolvedAccessChecker {
 
   private static boolean doCheckContainer(final PsiMethod patternMethod, PsiElement container, final String name) {
     final Ref<Boolean> result = new Ref<Boolean>(false);
-    PsiScopeProcessor processor = new PsiScopeProcessor() {
+    PsiScopeProcessor processor = new GrScopeProcessorWithHints(name, ResolverProcessor.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiMethod &&
@@ -319,16 +320,6 @@ public class GrUnresolvedAccessChecker {
           return false;
         }
         return true;
-      }
-
-      @Nullable
-      @Override
-      public <T> T getHint(@NotNull Key<T> hintKey) {
-        return null;
-      }
-
-      @Override
-      public void handleEvent(@NotNull Event event, @Nullable Object associated) {
       }
     };
     ResolveUtil.treeWalkUp(container, processor, true);

@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
+import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -40,6 +41,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +68,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   protected final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
+  private final boolean myDoLogCachesUpdate;
 
   public ProjectRootManagerComponent(Project project,
                                      DirectoryIndex directoryIndex,
@@ -114,6 +117,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     };
 
     myConnection.subscribe(VirtualFilePointerListener.TOPIC, new MyVirtualFilePointerListener());
+    myDoLogCachesUpdate = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public void registerRootsChangeUpdater(CacheUpdater updater) {
@@ -174,10 +178,21 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (ApplicationManager.getApplication().isUnitTestMode() && (!myStartupActivityPerformed || myProject.isDisposed())) {
       return; // in test mode suppress addition to a queue unless project is properly initialized
     }
-    if (myRefreshCacheUpdaters.size() == 0) {
-      return; // default project
+    if (myProject.isDefault()) {
+      return;
     }
+
+    if (myDoLogCachesUpdate) LOG.info(new Throwable("refresh"));
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
+    if (task != null) {
+      dumbService.queueTask(task);
+    }
+
+    if (myRefreshCacheUpdaters.size() == 0) {
+      return;
+    }
+
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
     }
@@ -291,6 +306,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
+    if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (ourScheduleCacheUpdateInDumbMode) {
       dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
@@ -356,6 +372,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
         if (myInsideRefresh == 0) {
           if (affectsRoots(pointers)) {
             beforeRootsChange(false);
+            if (myDoLogCachesUpdate) LOG.info(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
           }
         }
         else if (!myPointerChangesDetected) {
@@ -363,6 +380,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
           if (affectsRoots(pointers)) {
             myPointerChangesDetected = true;
             myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+            if (myDoLogCachesUpdate) LOG.info(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
           }
         }
       }

@@ -78,6 +78,7 @@ public class SheetController {
   private JPanel mySheetPanel;
   private SheetMessage mySheetMessage;
 
+  private JEditorPane messageTextPane = new JEditorPane();
   private Dimension messageArea = new Dimension(250, Short.MAX_VALUE);
 
   SheetController(final SheetMessage sheetMessage,
@@ -100,8 +101,7 @@ public class SheetController {
     myResult = null;
 
     for (int i = 0; i < buttons.length; i++) {
-      int titleIndex = buttonTitles.length - 1 - i;
-      String buttonTitle = buttonTitles[titleIndex];
+      String buttonTitle = buttonTitles[i];
 
       buttons[i] = new JButton();
       buttons[i].setOpaque(false);
@@ -256,8 +256,6 @@ public class SheetController {
 
     headerLabel.repaint();
 
-    JEditorPane messageTextPane = new JEditorPane();
-
     messageTextPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     messageTextPane.setFont(regularFont);
     messageTextPane.setEditable(false);
@@ -275,7 +273,7 @@ public class SheetController {
     }
 
     messageTextPane.setSize(widestWordWidth, Short.MAX_VALUE);
-    messageTextPane.setText(message);
+    messageTextPane.setText(handleBreaks(message));
     messageArea.setSize(widestWordWidth, messageTextPane.getPreferredSize().height);
 
     SHEET_WIDTH = Math.max(LEFT_SHEET_OFFSET + widestWordWidth + RIGHT_OFFSET, SHEET_WIDTH);
@@ -317,6 +315,10 @@ public class SheetController {
     sheetPanel.setSize(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
 
     return sheetPanel;
+  }
+
+  private static String handleBreaks(final String message) {
+    return message.replaceAll("(\r\n|\n)", "<br/>");
   }
 
   private void shiftButtonsToTheBottom(int shiftDistance) {
@@ -366,6 +368,9 @@ public class SheetController {
     }
 
     int buttonsRowWidth = LEFT_SHEET_OFFSET + buttonWidth + RIGHT_OFFSET;
+
+    // update the pane if the sheet is going to be wider
+    messageTextPane.setSize(Math.max(messageTextPane.getWidth(), buttonWidth), messageTextPane.getHeight());
 
     SHEET_WIDTH = Math.max(buttonsRowWidth, SHEET_WIDTH);
 

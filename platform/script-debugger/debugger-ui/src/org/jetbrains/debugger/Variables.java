@@ -4,6 +4,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.ObsolescentAsyncResults;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -31,17 +32,17 @@ public final class Variables {
     }
   };
 
-  public static void consume(@NotNull Scope scope,
-                             @NotNull XCompositeNode node,
-                             @NotNull final VariableContext context,
-                             final @Nullable ActionCallback compoundActionCallback) {
+  public static void processScopeVariables(@NotNull Scope scope,
+                                           @NotNull XCompositeNode node,
+                                           @NotNull final VariableContext context,
+                                           final @Nullable ActionCallback compoundActionCallback) {
     final boolean isLast = compoundActionCallback == null;
     AsyncResult<?> result =
       ObsolescentAsyncResults.consume(scope.getVariables(), node, new PairConsumer<List<? extends Variable>, XCompositeNode>() {
         @Override
         public void consume(List<? extends Variable> variables, XCompositeNode node) {
           List<Variable> properties = new ArrayList<Variable>(variables.size());
-          List<Variable> functions = new ArrayList<Variable>();
+          List<Variable> functions = new SmartList<Variable>();
           for (Variable variable : variables) {
             if (context.getMemberFilter().isMemberVisible(variable, false)) {
               Value value = variable.getValue();
@@ -62,9 +63,14 @@ public final class Variables {
           if (!properties.isEmpty()) {
             node.addChildren(createVariablesList(properties, context), functions.isEmpty() && isLast);
           }
+
           if (!functions.isEmpty()) {
             node.addChildren(XValueChildrenList.bottomGroup(new VariablesGroup("Functions", functions, context)), isLast);
           }
+          else if (isLast && properties.isEmpty()) {
+            node.addChildren(XValueChildrenList.EMPTY, true);
+          }
+
           if (!isLast) {
             compoundActionCallback.setDone();
           }

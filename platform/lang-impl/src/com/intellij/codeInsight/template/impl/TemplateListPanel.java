@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,7 +389,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     return null;
   }
 
-  private void moveTemplates(Map<TemplateImpl, DefaultMutableTreeNode> map, String newGroupName) {
+  private void moveTemplates(Map<TemplateImpl, DefaultMutableTreeNode> map, @NotNull String newGroupName) {
     List<TreePath> toSelect = new ArrayList<TreePath>();
     for (TemplateImpl template : map.keySet()) {
       DefaultMutableTreeNode oldTemplateNode = map.get(template);

@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -93,7 +94,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   @Override
   public MessageBus getMessageBus() {
-    assert !myDisposeCompleted && !myDisposed : "Already disposed";
+    if (myDisposeCompleted || myDisposed) {
+      ProgressManager.checkCanceled();
+      throw new AssertionError("Already disposed");
+    }
     assert myMessageBus != null : "Not initialized yet";
     return myMessageBus;
   }
@@ -183,7 +187,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    assert !myDisposeCompleted : "Already disposed: "+this;
+    if (myDisposeCompleted) {
+      ProgressManager.checkCanceled();
+      throw new AssertionError("Already disposed: " + this);
+    }
     return getComponent(interfaceClass, null);
   }
 
@@ -260,7 +267,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   @NotNull
   public MutablePicoContainer getPicoContainer() {
-    assert !myDisposeCompleted : "Already disposed";
+    if (myDisposeCompleted) {
+      ProgressManager.checkCanceled();
+      throw new AssertionError("Already disposed");
+    }
     return myPicoContainer;
   }
 

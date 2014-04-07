@@ -37,8 +37,8 @@ public class GebBrowserMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,
-                                     PsiScopeProcessor processor,
-                                     PsiElement place,
+                                     @NotNull PsiScopeProcessor processor,
+                                     @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
     PsiClass pageClass = GroovyPsiManager.getInstance(aClass.getProject()).findClassWithCache("geb.Page", place.getResolveScope());
 
