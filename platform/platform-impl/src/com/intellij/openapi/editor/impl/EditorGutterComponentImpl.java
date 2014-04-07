@@ -159,6 +159,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Dimension getPreferredSize() {
+    if (isDistractionFreeMode()) {
+      centerEditorByAnnotationArea();
+    }
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
 
     if (w > 0 && UISettings.getInstance().PRESENTATION_MODE) {
