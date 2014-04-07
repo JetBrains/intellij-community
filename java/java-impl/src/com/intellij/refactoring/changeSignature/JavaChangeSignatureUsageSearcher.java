@@ -73,7 +73,7 @@ class JavaChangeSignatureUsageSearcher {
     PsiMethod[] overridingMethods = findSimpleUsagesWithoutParameters(method, result, true, true, true);
     findUsagesInCallers(result);
 
-    final ArrayList<PsiMethod> methods = new ArrayList<>(Arrays.asList(overridingMethods));
+    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(overridingMethods));
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
