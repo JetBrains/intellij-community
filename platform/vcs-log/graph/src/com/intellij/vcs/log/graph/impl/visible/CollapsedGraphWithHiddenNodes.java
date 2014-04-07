@@ -16,7 +16,7 @@
 
 package com.intellij.vcs.log.graph.impl.visible;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -25,7 +25,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.ListenerController;
-import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.graph.utils.impl.SetListenerController;
 import com.intellij.vcs.log.newgraph.utils.DfsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,61 +38,52 @@ import static com.intellij.vcs.log.newgraph.utils.MyUtils.setAllValues;
 
 public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes {
   @NotNull
-  private final LinearGraph myPermanentGraph;
+  private final LinearGraphWithHiddenNodes myDelegateGraph;
 
   @NotNull
-  private final Flags visibleNodesInBranches;
+  private final Flags myVisibleNodes;
 
   @NotNull
-  private final Flags visibleNodes;
+  private final DfsUtil myDfsUtil = new DfsUtil();
 
   @NotNull
-  private final UpdatableIntToIntMap intToIntMap;
+  private final Map<Integer, Integer> upToEdge = new HashMap<Integer, Integer>();
 
   @NotNull
-  private final DfsUtil myDfsUtil;
-
-  @NotNull
-  private final Map<Integer, Pair<Integer, Integer>> upToEdge = new HashMap<Integer, Pair<Integer, Integer>>();
-
-  @NotNull
-  private final Map<Integer, Pair<Integer, Integer>> downToEdge = new HashMap<Integer, Pair<Integer, Integer>>();
+  private final Map<Integer, Integer> downToEdge = new HashMap<Integer, Integer>();
 
   @NotNull
   private final SetListenerController<UpdateListener> myListenerController = new SetListenerController<UpdateListener>();
 
-  public CollapsedGraphWithHiddenNodes(@NotNull LinearGraph permanentGraph,
-                                       @NotNull Flags visibleNodesInBranches,
-                                       @NotNull Flags visibleNodes,
-                                       @NotNull UpdatableIntToIntMap intToIntMap,
-                                       @NotNull DfsUtil dfsUtil) {
-    myPermanentGraph = permanentGraph;
-    this.visibleNodesInBranches = visibleNodesInBranches;
-    this.visibleNodes = visibleNodes;
-    this.intToIntMap = intToIntMap;
-    myDfsUtil = dfsUtil;
+  public CollapsedGraphWithHiddenNodes(@NotNull LinearGraphWithHiddenNodes delegateGraph) {
+    myDelegateGraph = delegateGraph;
+    delegateGraph.getListenerController().addListener(new UpdateListener() {
+      @Override
+      public void update(int upNodeIndex, int downNodeIndex) {
+        callListeners(upNodeIndex, downNodeIndex);
+      }
+    });
+    myVisibleNodes = new BitSetFlags(delegateGraph.nodesCount(), true);
   }
 
   // nodes up and down must be loaded
   public void collapse(int upNodeIndex, final int downNodeIndex) {
-    Pair<Integer, Integer> edge = Pair.create(upNodeIndex, downNodeIndex);
-
     myDfsUtil.nodeDfsIterator(upNodeIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
         if (upToEdge.containsKey(currentNode)) {
-          Pair<Integer, Integer> edge = upToEdge.remove(currentNode);
-          downToEdge.remove(edge.second);
-          if (edge.second == downNodeIndex)
+          int downNode = upToEdge.remove(currentNode);
+          downToEdge.remove(downNode);
+          if (downNode == downNodeIndex)
             return NODE_NOT_FOUND;
 
-          visibleNodes.set(edge.second, false);
-          return edge.second;
+          myVisibleNodes.set(downNode, false);
+          return downNode;
         }
 
-        for (int downNode : myPermanentGraph.getDownNodes(currentNode)) {
-          if (visibleNodes.get(downNode) && downNode != downNodeIndex) {
-            visibleNodes.set(downNode, false);
+        for (int downNode : myDelegateGraph.getDownNodes(currentNode)) {
+          if (myVisibleNodes.get(downNode) && downNode != downNodeIndex) {
+            myVisibleNodes.set(downNode, false);
             return downNode;
           }
         }
@@ -100,9 +91,9 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
       }
     });
 
-    upToEdge.put(upNodeIndex, edge);
-    downToEdge.put(downNodeIndex, edge);
-    intToIntMap.update(upNodeIndex, downNodeIndex);
+    upToEdge.put(upNodeIndex, downNodeIndex);
+    downToEdge.put(downNodeIndex, upNodeIndex);
+    callListeners(upNodeIndex, downNodeIndex);
   }
 
   public void expand(int upNodeIndex, final int downNodeIndex) {
@@ -112,29 +103,39 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
     myDfsUtil.nodeDfsIterator(upNodeIndex, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
-        for (int downNode : myPermanentGraph.getDownNodes(currentNode)) {
-          if (!visibleNodes.get(downNode) && downNode != downNodeIndex) {
-            visibleNodes.set(downNode, true);
+        for (int downNode : myDelegateGraph.getDownNodes(currentNode)) {
+          if (!myVisibleNodes.get(downNode) && downNode != downNodeIndex) {
+            myVisibleNodes.set(downNode, true);
             return downNode;
           }
         }
         return NODE_NOT_FOUND;
       }
     });
-    intToIntMap.update(upNodeIndex, downNodeIndex);
+    callListeners(upNodeIndex, downNodeIndex);
   }
 
+  private void callListeners(final int upNodeIndex, final int downNodeIndex) {
+    myListenerController.callListeners(new Consumer<UpdateListener>() {
+      @Override
+      public void consume(UpdateListener updateListener) {
+        updateListener.update(upNodeIndex, downNodeIndex);
+      }
+    });
+  }
+
+  @Override
   public boolean nodeIsVisible(int nodeIndex) {
     if (nodeIndex == LinearGraph.NOT_LOAD_COMMIT)
       return true;
-    return visibleNodes.get(nodeIndex) && visibleNodesInBranches.get(nodeIndex);
+    return myVisibleNodes.get(nodeIndex) && myDelegateGraph.nodeIsVisible(nodeIndex);
   }
 
   public void expandAll() {
     upToEdge.clear();
     downToEdge.clear();
-    setAllValues(visibleNodes, true);
-    intToIntMap.update(0, myPermanentGraph.nodesCount() - 1);
+    setAllValues(myVisibleNodes, true);
+    callListeners(0, myDelegateGraph.nodesCount() - 1);
   }
 
   @NotNull
@@ -160,18 +161,18 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
 
   @Override
   public int nodesCount() {
-    return intToIntMap.shortSize();
+    return myDelegateGraph.nodesCount();
   }
 
   @NotNull
   @Override
   public List<Integer> getUpNodes(int nodeIndex) {
-    Pair<Integer, Integer> edge = downToEdge.get(nodeIndex);
-    if (edge != null)
-      return Collections.singletonList(edge.first);
+    Integer upNullableNode = downToEdge.get(nodeIndex);
+    if (upNullableNode != null)
+      return Collections.singletonList(upNullableNode);
 
     List<Integer> upNodes = new SmartList<Integer>();
-    for (int upNode : myPermanentGraph.getUpNodes(nodeIndex)) {
+    for (int upNode : myDelegateGraph.getUpNodes(nodeIndex)) {
       if (nodeIsVisible(upNode))
         upNodes.add(upNode);
     }
@@ -181,12 +182,12 @@ public class CollapsedGraphWithHiddenNodes implements LinearGraphWithHiddenNodes
   @NotNull
   @Override
   public List<Integer> getDownNodes(int nodeIndex) {
-    Pair<Integer, Integer> edge = upToEdge.get(nodeIndex);
-    if (edge != null)
-      return Collections.singletonList(edge.second);
+    Integer downNullableNode = upToEdge.get(nodeIndex);
+    if (downNullableNode != null)
+      return Collections.singletonList(downNullableNode);
 
     List<Integer> downNodes = new SmartList<Integer>();
-    for (int downNode : myPermanentGraph.getDownNodes(nodeIndex)) {
+    for (int downNode : myDelegateGraph.getDownNodes(nodeIndex)) {
       if (nodeIsVisible(downNode))
         downNodes.add(downNode);
     }
