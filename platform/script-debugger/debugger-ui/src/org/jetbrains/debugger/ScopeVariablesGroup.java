@@ -103,7 +103,7 @@ public class ScopeVariablesGroup extends XValueGroup {
         });
       }
     });
-    Variables.consume(scope, node, context, callback);
+    Variables.processScopeVariables(scope, node, context, callback);
   }
 
   private static final class ParentlessVariableContext extends VariableContextBase {
