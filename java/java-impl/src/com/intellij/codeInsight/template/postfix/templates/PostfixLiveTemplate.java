@@ -92,6 +92,11 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     return computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), editor.getCaretModel().getOffset());
   }
 
+  @Override
+  public boolean supportsMultiCaret() {
+    return false;
+  }
+
   @Nullable
   public String computeTemplateKeyWithoutContextChecking(@NotNull CharSequence documentContent, int currentOffset) {
     int startOffset = currentOffset;
@@ -174,7 +179,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     String key = computeTemplateKeyWithoutContextChecking(editor.getDocument().getCharsSequence(), offset);
-    if (key != null) {
+    if (key != null && editor.getCaretModel().getCaretCount() == 1) {
       Map<String, CustomLiveTemplateLookupElement> result = ContainerUtil.newHashMap();
       Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(key, file, editor);
       for (Map.Entry<String, PostfixTemplate> entry : myTemplates.entrySet()) {
