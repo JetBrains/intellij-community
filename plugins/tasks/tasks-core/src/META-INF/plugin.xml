@@ -36,7 +36,8 @@
       <action id="tasks.open.in.browser" class="com.intellij.tasks.actions.OpenTaskInBrowserAction" text="Open in _Browser">
         <keyboard-shortcut keymap="$default" first-keystroke="alt shift B"/>
       </action>
-      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction" text="Analyze _Stacktrace From Task..."/>
+      <action id="tasks.analyze.stacktrace" class="com.intellij.tasks.actions.AnalyzeTaskStacktraceAction"
+              text="Analyze _Stacktrace From Task..."/>
       <separator/>
       <action id="tasks.configure.servers" class="com.intellij.tasks.actions.ConfigureServersAction" text="Configure Servers..."/>
     </group>
@@ -56,6 +57,8 @@
 
     <group id="tasks.internal" text="_Tasks" internal="true" popup="true">
       <action id="show.certificate" class="com.intellij.tasks.actions.ShowCertificateInfoAction" text="_Show certificate dialog"/>
+      <action id="deadlock.with.certificate.dialog" class="com.intellij.tasks.actions.DeadlockWithCertificateDialogAction"
+              text="_Deadlock IDE with certificate dialog"/>
       <add-to-group group-id="Internal"/>
     </group>
 
