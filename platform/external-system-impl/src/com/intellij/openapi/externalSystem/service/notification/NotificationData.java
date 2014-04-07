@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public class NotificationData {
 
   @NotNull private String myTitle;
   @NotNull private String myMessage;
-  @NotNull private NotificationType myNotificationType;
+  @NotNull private NotificationCategory myNotificationCategory;
   @NotNull private final NotificationSource myNotificationSource;
   @NotNull private NotificationListener myListener;
   @Nullable private String myFilePath;
@@ -48,14 +47,14 @@ public class NotificationData {
 
   public NotificationData(@NotNull String title,
                           @NotNull String message,
-                          @NotNull NotificationType notificationType,
+                          @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource) {
-    this(title, message, notificationType, notificationSource, null, -1, -1, false);
+    this(title, message, notificationCategory, notificationSource, null, -1, -1, false);
   }
 
   public NotificationData(@NotNull String title,
                           @NotNull String message,
-                          @NotNull NotificationType notificationType,
+                          @NotNull NotificationCategory notificationCategory,
                           @NotNull NotificationSource notificationSource,
                           @Nullable String filePath,
                           int line,
@@ -63,7 +62,7 @@ public class NotificationData {
                           boolean balloonNotification) {
     myTitle = title;
     myMessage = message;
-    myNotificationType = notificationType;
+    myNotificationCategory = notificationCategory;
     myNotificationSource = notificationSource;
     myListenerMap = ContainerUtil.newHashMap();
     myListener = new NotificationListener.Adapter() {
@@ -102,12 +101,12 @@ public class NotificationData {
   }
 
   @NotNull
-  public NotificationType getNotificationType() {
-    return myNotificationType;
+  public NotificationCategory getNotificationCategory() {
+    return myNotificationCategory;
   }
 
-  public void setNotificationType(@NotNull NotificationType notificationType) {
-    myNotificationType = notificationType;
+  public void setNotificationCategory(@NotNull NotificationCategory notificationCategory) {
+    myNotificationCategory = notificationCategory;
   }
 
   @NotNull
