@@ -1,6 +1,8 @@
 package ru.compscicenter.edide;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Log;
@@ -11,18 +13,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 
 
 /**
@@ -44,36 +41,42 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
                         if (currentTask < finishedTask) {
                             return;
                         }
-                        String fileName = vfOpenedFile.getNameWithoutExtension() + ".meta";
+                        String fileName = vfOpenedFile.getNameWithoutExtension() + ".json";
                         InputStream metaIS = StudyEditorFactoryListener.class.getResourceAsStream(fileName);
                         if (metaIS == null) {
                             return;
                         }
                         BufferedReader metaReader = new BufferedReader(new InputStreamReader(metaIS));
-                        int replaceNum = Integer.parseInt(metaReader.readLine());
+                        JsonReader reader = new JsonReader(metaReader);
+                        JsonParser parser = new JsonParser();
+                        com.google.gson.JsonObject obj = parser.parse(reader).getAsJsonObject();
+                        int replaceNum = obj.get("windows_num").getAsInt();
                         int startOffset0 = 0;
                         Project project = editor.getProject();
                         PsiFile psiOpenFile = PsiManager.getInstance(project).findFile(vfOpenedFile);
                         TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiOpenFile);
-                        for (int i = 0; i < replaceNum; i++) {
-                            int line = Integer.parseInt(metaReader.readLine()) - 1;
+                        JsonArray replaceList = obj.get("windows_description").getAsJsonArray();
+                        int i = 0;
+                        for (com.google.gson.JsonElement replacement : replaceList){
+                            int line = replacement.getAsJsonObject().get("line").getAsInt() - 1;
                             int lineOffset = editor.getDocument().getLineStartOffset(line);
-                            int startOffset = lineOffset + Integer.parseInt(metaReader.readLine());
+                            int startOffset = lineOffset + replacement.getAsJsonObject().get("start").getAsInt();
                             if (i == 0) {
                                 startOffset0 = startOffset;
                             }
-                            String textToWrite = metaReader.readLine();
-                            String answer = metaReader.readLine();
+                            String textToWrite = replacement.getAsJsonObject().get("text").getAsString();
+                            String answer = replacement.getAsJsonObject().get("possible answer").getAsString();
                             editor.getDocument().createRangeMarker(startOffset, startOffset + textToWrite.length());
                             int endOffset = startOffset + textToWrite.length();
                             TextRange range = new TextRange(startOffset, endOffset);
                             builder.replaceRange(range, textToWrite);
+                            i++;
                         }
                         Template template = ((TemplateBuilderImpl) builder).buildInlineTemplate();
                         TemplateManager.getInstance(project).startTemplate(editor, template);
                         editor.getCaretModel().moveToOffset(startOffset0);
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Log.print("Something wrong with meta file:" + e.getCause());
                     Log.flush();
                 }

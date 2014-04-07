@@ -1,5 +1,7 @@
 package ru.compscicenter.edide;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 import com.intellij.openapi.diagnostic.Log;
 
 import java.io.BufferedReader;
@@ -31,31 +33,29 @@ public class TaskManager {
     }
 
     private void load() {
-        InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.meta");
+        InputStream metaIS = StudyDirectoryProjectGenerator.class.getResourceAsStream("tasks.json");
         BufferedReader reader = new BufferedReader(new InputStreamReader(metaIS));
+        com.google.gson.stream.JsonReader r = new com.google.gson.stream.JsonReader(reader);
+        JsonParser parser = new JsonParser();
+        com.google.gson.JsonElement el = parser.parse(r);
         try {
-
-            final int tasksNumber = Integer.parseInt(reader.readLine());
-            for (int task = 0; task < tasksNumber; task++) {
-
-                int n = Integer.parseInt(reader.readLine());
+            JsonArray tasks_list = el.getAsJsonObject().get("tasks_list").getAsJsonArray();
+            int taskIndex = 0;
+            for (com.google.gson.JsonElement e: tasks_list) {
+                int n = e.getAsJsonObject().get("file_num").getAsInt();
                 this.addTask(n);
-                for (int h = 0; h < n; h++) {
-                    this.setFileName(task, reader.readLine());
+                JsonArray files_in_task = e.getAsJsonObject().get("file_names").getAsJsonArray();
+                for (com.google.gson.JsonElement fileName:files_in_task){
+                    this.setFileName(taskIndex, fileName.getAsString());
                 }
-                String taskTextFileName = Integer.toString(task + 1) + ".meta";
-                System.out.println(taskTextFileName);
+                String taskTextFileName = Integer.toString(taskIndex + 1) + ".meta";
                 InputStream taskTextIS = StudyDirectoryProjectGenerator.class.getResourceAsStream(taskTextFileName);
-                System.out.println((taskTextIS == null));
                 BufferedReader taskTextReader = new BufferedReader(new InputStreamReader(taskTextIS));
-                System.out.println((taskTextReader == null));
                 while (taskTextReader.ready()) {
-                    this.addTaskTextLine(task, taskTextReader.readLine());
+                    this.addTaskTextLine(taskIndex, taskTextReader.readLine());
                 }
-
+                taskIndex++;
             }
-
-
         } catch (IOException e) {
             Log.print("Something wrong with meta file: " + e.getCause());
             Log.flush();

@@ -1,0 +1,6 @@
+{
+   "windows_num":1,
+   "windows_description":[
+    {"line":2, "start":0, "text":"type operator", "possible answer":"print"}
+    ]
+}
