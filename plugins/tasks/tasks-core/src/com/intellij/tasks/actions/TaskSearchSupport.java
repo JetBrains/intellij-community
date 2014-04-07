@@ -68,7 +68,7 @@ public class TaskSearchSupport {
                                                 boolean forceRequest,
                                                 final boolean withClosed,
                                                 @NotNull final ProgressIndicator cancelled) {
-    List<Task> tasks = myManager.getIssues(pattern, offset, limit, forceRequest, withClosed, cancelled);
+    List<Task> tasks = myManager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
     ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     return tasks;
   }

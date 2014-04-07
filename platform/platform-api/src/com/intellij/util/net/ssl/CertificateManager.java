@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
@@ -18,11 +19,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
 
@@ -69,6 +73,11 @@ public class CertificateManager implements ApplicationComponent, PersistentState
    * doesn't match requested hostname.
    */
   public static final HostnameVerifier HOSTNAME_VERIFIER = new ConfirmingHostnameVerifier(BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+  /**
+   * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
+   * {@link java.awt.MediaTracker}.
+   */
+  private static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificateManager getInstance() {
     return (CertificateManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
@@ -137,39 +146,40 @@ public class CertificateManager implements ApplicationComponent, PersistentState
   @NotNull
   public synchronized SSLContext getSslContext() {
     if (mySslContext == null) {
-      try {
-        mySslContext = createSslContext();
+      SSLContext context = getSystemSslContext();
+      if (Registry.is("ide.certificate.manager")) {
+        try {
+          // SSLContext context = SSLContext.getDefault();
+          // NOTE: existence of default trust manager can be checked here as
+          // assert systemManager.getAcceptedIssuers().length != 0
+          context.init(null, new TrustManager[]{getTrustManager()}, null);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-      catch (Exception e) {
-        LOG.error(e);
-        mySslContext = getSystemSslContext();
-      }
+      mySslContext = context;
     }
     return mySslContext;
   }
 
   @NotNull
-  public SSLContext createSslContext() throws Exception {
-    // SSLContext context = SSLContext.getDefault();
-    // can also check, that default trust store exists, on this step
-    //assert systemManager.getAcceptedIssuers().length != 0
-
-    SSLContext context = getSystemSslContext();
-    context.init(null, new TrustManager[]{getTrustManager()}, null);
-    return context;
-  }
-
-  @NotNull
-  public static SSLContext getSystemSslContext() {
-    // NOTE SSLContext.getDefault() should not be called because it automatically creates
-    // default context with can't be initialized twice
+  private static SSLContext getSystemSslContext() {
+    // NOTE: SSLContext.getDefault() should not be called because it automatically creates
+    // default context which can't be initialized twice
     try {
       // actually TLSv1 support is mandatory for Java platform
-      return SSLContext.getInstance(CertificateUtil.TLS);
+      SSLContext context = SSLContext.getInstance(CertificateUtil.TLS);
+      context.init(null, null, null);
+      return context;
     }
     catch (NoSuchAlgorithmException e) {
       LOG.error(e);
-      throw new AssertionError("Can't get system SSL context");
+      throw new AssertionError("Cannot get system SSL context");
+    }
+    catch (KeyManagementException e) {
+      LOG.error(e);
+      throw new AssertionError("Cannot initialize default SSL context");
     }
   }
 
@@ -197,11 +207,17 @@ public class CertificateManager implements ApplicationComponent, PersistentState
     Application app = ApplicationManager.getApplication();
     final CountDownLatch proceeded = new CountDownLatch(1);
     final AtomicBoolean accepted = new AtomicBoolean();
+    final AtomicReference<DialogWrapper> dialogRef = new AtomicReference<DialogWrapper>();
     Runnable showDialog = new Runnable() {
       @Override
       public void run() {
+        // skip if certificate was already rejected due to timeout
+        if (proceeded.getCount() == 0) {
+          return;
+        }
         try {
           DialogWrapper dialog = dialogFactory.call();
+          dialogRef.set(dialog);
           accepted.set(dialog.showAndGet());
         }
         catch (Exception e) {
@@ -219,10 +235,23 @@ public class CertificateManager implements ApplicationComponent, PersistentState
       app.invokeLater(showDialog, ModalityState.any());
     }
     try {
-      proceeded.await();
+      // IDEA-123467 and IDEA-123335 workaround
+      boolean inTime = proceeded.await(DIALOG_VISIBILITY_TIMEOUT, TimeUnit.MILLISECONDS);
+      if (!inTime) {
+        DialogWrapper dialog = dialogRef.get();
+        if (dialog == null || !dialog.isShowing()) {
+          LOG.debug("After " + DIALOG_VISIBILITY_TIMEOUT + " ms dialog was not shown. " +
+                    "Rejecting certificate. Current thread: " + Thread.currentThread().getName());
+          proceeded.countDown();
+          return false;
+        }
+        else {
+          proceeded.await(); // if dialog is already shown continue waiting
+        }
+      }
     }
     catch (InterruptedException e) {
-      LOG.error("Interrupted", e);
+      Thread.currentThread().interrupt();
     }
     return accepted.get();
   }
