@@ -176,25 +176,30 @@ def process_exec_queue(interpreter):
             exit()
 
 
+if 'IPYTHONENABLE' in os.environ:
+    import ast
+    IPYTHON = ast.literal_eval(os.environ['IPYTHONENABLE'])
+else:
+    IPYTHON = False
+
 try:
     try:
         exitfunc = sys.exitfunc
     except AttributeError:
         exitfunc = None
-    from pydev_ipython_console import InterpreterInterface
 
-    IPYTHON = True
-    if exitfunc is not None:
-        sys.exitfunc = exitfunc
-
-    else:
-        try:
-            delattr(sys, 'exitfunc')
-        except:
-            pass
+    if IPYTHON:
+        from pydev_ipython_console import InterpreterInterface
+        if exitfunc is not None:
+            sys.exitfunc = exitfunc
+        else:
+            try:
+                delattr(sys, 'exitfunc')
+            except:
+                pass
 except:
     IPYTHON = False
-    #sys.stderr.write('PyDev console: started.\n')
+    sys.stderr.write('Unable to import IPython, using PyDev console instead.\n')
     pass #IPython not available, proceed as usual.
 
 #=======================================================================================================================

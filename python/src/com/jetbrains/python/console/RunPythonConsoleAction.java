@@ -38,12 +38,14 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author oleg
@@ -140,8 +142,12 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setupFragment = new String[]{selfPathAppend};
     }
 
+    Map<String, String> envs  = Maps.newHashMap(settingsProvider.getEnvs());
+    String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
+    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+
     return PydevConsoleRunner
-      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, Maps.newHashMap(settingsProvider.getEnvs()), setupFragment);
+      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, envs, setupFragment);
   }
 
   public static PathMappingSettings getMappings(Project project, Sdk sdk) {

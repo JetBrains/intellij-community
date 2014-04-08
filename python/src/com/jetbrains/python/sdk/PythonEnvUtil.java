@@ -34,6 +34,7 @@ public class PythonEnvUtil {
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
   @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
+  @SuppressWarnings("SpellCheckingInspection") public static final String IPYTHONENABLE = "IPYTHONENABLE";
 
   private PythonEnvUtil() { }
 
