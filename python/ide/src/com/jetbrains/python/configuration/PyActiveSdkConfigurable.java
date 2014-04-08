@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.projectRoots.impl.SdkListCellRenderer;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -178,13 +177,23 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         if (!PySdkListCellRenderer.SEPARATOR.equals(item))
           super.setSelectedItem(item);
       }
+      @Override
+      public void paint(Graphics g) {
+        try {
+          putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+          super.paint(g);
+        } finally {
+          putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        }
+      }
     };
     mySdkCombo.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    mySdkCombo.setRenderer(new SdkListCellRenderer("<None>"));
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
 
     final PackagesNotificationPanel notificationsArea = new PackagesNotificationPanel(myProject);
     final JComponent notificationsComponent = notificationsArea.getComponent();
     final Dimension preferredSize = mySdkCombo.getPreferredSize();
+    mySdkCombo.setPreferredSize(preferredSize);
     notificationsArea.hide();
     myDetailsButton = new FixedSizeButton();
     myDetailsButton.setIcon(PythonIcons.Python.InterpreterGear);
