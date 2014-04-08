@@ -73,7 +73,7 @@ public class JBMacMessages extends MacMessagesEmulation {
 
     Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
-    defaultOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : defaultOptionIndex;
+    focusedOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : focusedOptionIndex;
 
     SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, buttons[defaultOptionIndex],
                                                  buttons[focusedOptionIndex]);
@@ -168,7 +168,8 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow(null);
     }
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(), new String [] {yesButton, noButton}, null, noButton, yesButton);
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
+                                                 new String [] {yesButton, noButton}, null, yesButton, noButton);
     return sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
   }
 
@@ -183,7 +184,7 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {yesButton, noButton}, doNotAskDialogOption, noButton, yesButton);
+                                                 new String [] {yesButton, noButton}, doNotAskDialogOption, yesButton, noButton);
     int result = sheetMessage.getResult().equals(yesButton) ? Messages.YES : Messages.NO;
     if (doNotAskDialogOption != null) {
       doNotAskDialogOption.setToBeShown(sheetMessage.toBeShown(), result);
