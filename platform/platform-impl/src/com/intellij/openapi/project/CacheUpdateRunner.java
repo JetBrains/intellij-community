@@ -251,8 +251,10 @@ public class CacheUpdateRunner {
               myInnerIndicator.checkCanceled();
               if (!myProject.isDisposed()) {
                 final VirtualFile file = fileContent.getVirtualFile();
-                myProgressUpdater.consume(file);
-                myProcessor.consume(fileContent);
+                if (file.isValid()) {
+                  myProgressUpdater.consume(file);
+                  myProcessor.consume(fileContent);
+                }
               }
             }
           };
