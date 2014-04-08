@@ -130,6 +130,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myInSpareTimeUpdate;
   private boolean myInDocumentUpdate;
 
+  // If true, then a document is being cleared right now.
+  // Should be accessed in EDT only.
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private boolean myDocumentClearing;
+
   public Editor getEditor() {
     return myEditor;
   }
@@ -629,10 +634,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             document.setInBulkUpdate(true);
             try {
               myInDocumentUpdate = true;
+              myDocumentClearing = true;
               document.deleteString(0, documentTextLength);
             }
             finally {
               document.setInBulkUpdate(false);
+              myDocumentClearing = false;
               myInDocumentUpdate = false;
             }
           }
@@ -871,7 +878,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       synchronized (LOCK) {
         ConsoleUtil.updateTokensOnTextRemoval(myTokens, event.getOffset(), event.getOffset() + event.getOldLength());
         int toRemoveLen = event.getOldLength();
-        myContentSize -= Math.min(myContentSize, toRemoveLen);
+        if (!myDocumentClearing) {
+          // If document is being cleared now, then this event has been occurred as a result of calling clear() method.
+          // At start clear() method sets 'myContentSize' to 0, so there is no need to perform update again.
+          // Moreover, performing update of 'myContentSize' breaks executing "console.print();" immediately after "console.clear();".
+          myContentSize -= Math.min(myContentSize, toRemoveLen);
+        }
       }
     }
     else if (!myInDocumentUpdate) {
