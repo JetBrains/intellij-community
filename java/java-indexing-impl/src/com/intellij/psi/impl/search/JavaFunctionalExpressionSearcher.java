@@ -47,7 +47,12 @@ public class JavaFunctionalExpressionSearcher implements QueryExecutor<PsiFuncti
     }) || !PsiUtil.isLanguageLevel8OrHigher(aClass)) {
       return true;
     }
-    return collectFunctionalExpressions(aClass, queryParameters.getEffectiveSearchScope(), consumer);
+    return collectFunctionalExpressions(aClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return queryParameters.getEffectiveSearchScope();
+      }
+    }), consumer);
   }
 
   public static boolean collectFunctionalExpressions(final PsiClass aClass,
