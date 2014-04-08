@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -49,6 +50,7 @@ import java.util.Map;
 public class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = ContainerUtil.newLinkedHashMap();
   private static boolean ourSavedDistractionMode;
+  private static int ourSavedConsoleFontSize;
 
   @Override
   public void update(AnActionEvent e) {
@@ -117,9 +119,15 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   }
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
-    int fontSize = inPresentation
-                   ? settings.PRESENTATION_MODE_FONT_SIZE
-                   : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
+    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+    int fontSize = inPresentation ? settings.PRESENTATION_MODE_FONT_SIZE : globalScheme.getEditorFontSize();
+    if (inPresentation) {
+      ourSavedConsoleFontSize = globalScheme.getConsoleFontSize();
+      globalScheme.setConsoleFontSize(fontSize);
+    }
+    else {
+      globalScheme.setConsoleFontSize(ourSavedConsoleFontSize);
+    }
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).setFontSize(fontSize);
