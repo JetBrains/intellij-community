@@ -80,7 +80,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
               return true;
             }
           });
-          httpsConnection.setSSLSocketFactory(CertificatesManager.getInstance().createSslContext().getSocketFactory());
+          httpsConnection.setSSLSocketFactory(CertificatesManager.getInstance().getSslContext().getSocketFactory());
         }
         catch (Exception e) {
           LOG.warn(e);

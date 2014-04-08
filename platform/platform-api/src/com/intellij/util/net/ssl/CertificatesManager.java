@@ -8,6 +8,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedHashSet;
 import java.util.concurrent.Callable;
@@ -137,39 +139,40 @@ public class CertificatesManager implements ApplicationComponent, PersistentStat
   @NotNull
   public synchronized SSLContext getSslContext() {
     if (mySslContext == null) {
-      try {
-        mySslContext = createSslContext();
+      SSLContext context = getSystemSslContext();
+      if (Registry.is("ide.certificate.manager")) {
+        try {
+          // SSLContext context = SSLContext.getDefault();
+          // NOTE: existence of default trust manager can be checked here as
+          // assert systemManager.getAcceptedIssuers().length != 0
+          context.init(null, new TrustManager[]{getTrustManager()}, null);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-      catch (Exception e) {
-        LOG.error(e);
-        mySslContext = getSystemSslContext();
-      }
+      mySslContext = context;
     }
     return mySslContext;
   }
 
   @NotNull
-  public SSLContext createSslContext() throws Exception {
-    // SSLContext context = SSLContext.getDefault();
-    // can also check, that default trust store exists, on this step
-    //assert systemManager.getAcceptedIssuers().length != 0
-
-    SSLContext context = getSystemSslContext();
-    context.init(null, new TrustManager[]{getTrustManager()}, null);
-    return context;
-  }
-
-  @NotNull
-  public static SSLContext getSystemSslContext() {
-    // NOTE SSLContext.getDefault() should not be called because it automatically creates
-    // default context with can't be initialized twice
+  private static SSLContext getSystemSslContext() {
+    // NOTE: SSLContext.getDefault() should not be called because it automatically creates
+    // default context which can't be initialized twice
     try {
       // actually TLSv1 support is mandatory for Java platform
-      return SSLContext.getInstance(CertificateUtil.TLS);
+      SSLContext context = SSLContext.getInstance(CertificateUtil.TLS);
+      context.init(null, null, null);
+      return context;
     }
     catch (NoSuchAlgorithmException e) {
       LOG.error(e);
-      throw new AssertionError("Can't get system SSL context");
+      throw new AssertionError("Cannot get system SSL context");
+    }
+    catch (KeyManagementException e) {
+      LOG.error(e);
+      throw new AssertionError("Cannot initialize default SSL context");
     }
   }
 
