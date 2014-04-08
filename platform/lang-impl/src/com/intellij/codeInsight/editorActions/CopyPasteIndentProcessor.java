@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -28,11 +29,11 @@ import java.io.IOException;
  */
 public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTransferableData> {
   @Override
-  public IndentTransferableData collectTransferableData(PsiFile file,
+  public IndentTransferableData collectTransferableData(@Nullable PsiFile file,
                                                           Editor editor,
                                                           int[] startOffsets,
                                                           int[] endOffsets) {
-    if (!acceptFileType(file.getFileType())) {
+    if (file == null || !acceptFileType(file.getFileType())) {
       return null;
     }
     return new IndentTransferableData(editor.getCaretModel().getOffset());

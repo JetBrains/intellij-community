@@ -33,7 +33,7 @@ public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
   ExtensionPointName<CopyPastePostProcessor> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
 
   @Nullable
-  T collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
+  T collectTransferableData(@Nullable final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
 
   @Nullable
   T extractTransferableData(final Transferable content);

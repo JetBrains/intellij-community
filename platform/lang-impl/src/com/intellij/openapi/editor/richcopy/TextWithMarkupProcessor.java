@@ -32,12 +32,12 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.model.*;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -65,7 +65,7 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
 
   @Nullable
   @Override
-  public TextBlockTransferableData collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
+  public TextBlockTransferableData collectTransferableData(@Nullable PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
     if (!Registry.is("editor.richcopy.enable")) {
       return null;
     }
@@ -91,9 +91,16 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
       logInitial(document, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = document.getCharsSequence();
       EditorColorsScheme schemeToUse = settings.getColorsScheme(editor.getColorsScheme());
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+
+      EditorHighlighter highlighter;
+      if (file == null) {
+        highlighter = HighlighterFactory.createHighlighter(editor.getProject(), FileTypes.PLAIN_TEXT);
+      }
+      else {
+        highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+      }
       highlighter.setText(text);
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(document, file.getProject(), false);
+      MarkupModel markupModel = editor.getMarkupModel();
       Context context = new Context(text, schemeToUse, indentSymbolsToStrip);
 
       for (int i = 0; i < startOffsets.length; i++) {
@@ -462,6 +469,9 @@ public class TextWithMarkupProcessor implements CopyPastePostProcessor<TextBlock
           if (key != null) {
             attributes = colorsScheme.getAttributes(key);
           }
+        }
+        else {
+          attributes = highlighter.getTextAttributes();
         }
 
         if (attributes == null) {
