@@ -82,7 +82,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
           final String memberName = getValue();
           if ("super".equals(memberName) && GppTypeConverter.hasTypedContext(myElement)) {
             final LiteralConstructorReference reference = (LiteralConstructorReference)map.getReference();
-            if (reference != null) {
+            if (reference != null && reference.getConstructedClassType() != null) {
               return reference.multiResolve(incompleteCode);
             }
           }
