@@ -519,6 +519,28 @@ public class GithubApiUtil {
     }
   }
 
+  public static void setIssueState(@NotNull GithubConnection connection,
+                                   @NotNull String user,
+                                   @NotNull String repo,
+                                   @NotNull String id,
+                                   boolean open)
+    throws IOException {
+    try {
+      String path = "/repos/" + user + "/" + repo + "/issues/" + id;
+
+      GithubChangeIssueStateRequest request = new GithubChangeIssueStateRequest(open ? "open" : "closed");
+
+      JsonElement result = connection.patchRequest(path, gson.toJson(request), ACCEPT_V3_JSON);
+
+      createDataFromRaw(fromJson(result, GithubIssueRaw.class), GithubIssue.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't set issue state: " + user + "/" + repo + " - " + id + "@" + (open ? "open" : "closed"));
+      throw e;
+    }
+  }
+
+
   @NotNull
   public static GithubCommitDetailed getCommit(@NotNull GithubConnection connection,
                                                @NotNull String user,

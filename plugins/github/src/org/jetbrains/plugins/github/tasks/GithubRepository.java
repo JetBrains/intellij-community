@@ -5,10 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.Function;
@@ -271,6 +268,28 @@ public class GithubRepository extends BaseRepositoryImpl {
     }
   }
 
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+    GithubConnection connection = getConnection();
+    try {
+      boolean isOpen;
+      switch (state) {
+        case OPEN:
+          isOpen = true;
+          break;
+        case RESOLVED:
+          isOpen = false;
+          break;
+        default:
+          throw new IllegalStateException("Unknown state: " + state);
+      }
+      GithubApiUtil.setIssueState(connection, getRepoAuthor(), getRepoName(), task.getNumber(), isOpen);
+    }
+    finally {
+      connection.close();
+    }
+  }
+
   @NotNull
   @Override
   public BaseRepository clone() {
@@ -353,6 +372,6 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | BASIC_HTTP_AUTHORIZATION;
+    return super.getFeatures() | STATE_UPDATING;
   }
 }
