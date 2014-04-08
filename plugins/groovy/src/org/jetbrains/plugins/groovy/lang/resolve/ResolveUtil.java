@@ -531,7 +531,8 @@ public class ResolveUtil {
     PsiClassType type;
     if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
       type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());
-    } else {
+    }
+    else {
       type = LiteralConstructorReference.getTargetConversionType(closure);
     }
     return type != null ? type.resolve() : null;

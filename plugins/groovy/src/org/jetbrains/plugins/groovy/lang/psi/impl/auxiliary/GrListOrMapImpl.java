@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +42,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -61,6 +57,8 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
+
+  private PsiReference myLiteralReference = new LiteralConstructorReference(this);
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
@@ -150,41 +148,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public PsiReference getReference() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiReference>() {
-      @Nullable
-      @Override
-      public Result<PsiReference> compute() {
-        return Result.create(getReferenceImpl(), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
-  }
-
-  @Nullable
-  private PsiReference getReferenceImpl() {
-    final PsiClassType conversionType = LiteralConstructorReference.getTargetConversionType(this);
-    if (conversionType == null) return null;
-
-    PsiType ownType = getTypeWithoutGenerics();
-    if (ownType != null && TypesUtil.isAssignableWithoutConversions(conversionType.rawType(), ownType, this)) return null;
-
-    final PsiClass resolved = conversionType.resolve();
-    if (resolved != null) {
-      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_SET)) return null;
-      if (InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_LIST)) return null;
-    }
-
-    return new LiteralConstructorReference(this, conversionType);
-  }
-
-  @Nullable
-  private PsiType getTypeWithoutGenerics() {
-    PsiType ownType = getType();
-    if (ownType instanceof PsiClassType) {
-      return ((PsiClassType)ownType).rawType();
-    }
-    else {
-      return ownType;
-    }
+    return myLiteralReference;
   }
 
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {

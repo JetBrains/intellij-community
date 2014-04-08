@@ -418,7 +418,7 @@ class Point {
     myFixture.addClass(""" class Point { }""")
 
     configureGppScript "def p = <caret>[]"
-    assertNull findReference()
+    assertNull findReference().resolve()
   }
 
   public void testHighlightInapplicableLiteralConstructor() throws Exception {
