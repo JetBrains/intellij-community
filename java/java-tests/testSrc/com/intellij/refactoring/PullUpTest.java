@@ -95,7 +95,12 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testNotFunctionalAnymore() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class));
+    doTest(true, "Functional expression demands functional interface to have exact one method", new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, true));
+  }
+
+  public void testStillFunctional() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTest(true, new RefactoringTestUtil.MemberDescriptor("get", PsiMethod.class, false));
   }
 
   public void testAsDefault() {
