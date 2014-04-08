@@ -512,8 +512,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       return fileType;
     }
     catch (IOException e) {
-      LOG.info(e);
-      return UnknownFileType.INSTANCE;
+      return UnknownFileType.INSTANCE; // return unknown, do not cache
     }
   }
 
