@@ -104,6 +104,8 @@
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
     </action>
 
+    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter..."/>
+
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
@@ -285,6 +287,7 @@
       <!--<reference ref="EditSource"/>-->
       <separator/>
       <reference ref="ExportThreads"/>
+      <reference ref="Debugger.AddSteppingFilter"/>
       <separator/>
       <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
